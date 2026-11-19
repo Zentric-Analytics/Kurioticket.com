@@ -173,11 +173,11 @@ test("missing and malformed explicitly referenced aircraft fail closed while abs
   );
 
   const changedEquipment = structuredClone(fixture);
-  changedEquipment.data.references.aircraft.arc_airbus_350 = {
+  Reflect.set(changedEquipment.data.references.aircraft, "arc_airbus_350", {
     id: "arc_airbus_350",
     iata_code: "359",
     name: "Airbus A350-900",
-  };
+  });
   changedEquipment.data.slices[0].itineraries[0].segments[0].aircraft =
     "arc_airbus_350";
   const parsedChangedEquipment = parseDuffelItineraryView(changedEquipment);
@@ -211,7 +211,7 @@ test("itinerary identity is stable across different provider reference IDs", () 
     alternateReferences.data.references;
   const airlines = fixtureAirlines as Record<
     string,
-    (typeof fixtureAirlines)["arl_british_airways"]
+    (typeof fixtureAirlines)[keyof typeof fixtureAirlines]
   >;
   const places = fixturePlaces as Record<
     string,
@@ -312,8 +312,8 @@ test("nullable provider fare brands are excluded without poisoning valid brands"
   const nullBrand = structuredClone(
     nullable.data.slices[0].itineraries[0].brands[0],
   );
-  nullBrand.fare_brand_name = null as unknown as string;
-  nullable.data.slices[0].itineraries[0].brands.unshift(nullBrand);
+  Reflect.set(nullBrand, "fare_brand_name", null);
+  Reflect.apply(Array.prototype.unshift, nullable.data.slices[0].itineraries[0].brands, [nullBrand]);
 
   const parsed = parseDuffelItineraryView(nullable);
   assert.ok(parsed);

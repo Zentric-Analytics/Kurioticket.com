@@ -3,8 +3,9 @@ import { getMobileSession } from "@/lib/mobile-auth";
 import { supportTicketSchema } from "@/lib/validation";
 import { createSupportTicket } from "@/services/supportService";
 import { checkSupportSubmissionRateLimit, type SupportLimitResult } from "@/lib/support-submission-rate-limit";
+import { resolveApplicationSource } from "@/lib/application-source";
 
-type MobileSupportSession = { user: { id: string; email: string | null; status: string } } | null;
+type MobileSupportSession = { user: { id: string; email: string | null; status: string }; platform?: string | null; appVersion?: string | null } | null;
 type Dependencies = {
   session: (request: Request) => Promise<MobileSupportSession>;
   create: typeof createSupportTicket;
@@ -40,13 +41,15 @@ export function createMobileSupportHandler(deps: Dependencies = {
           { status: 429, headers: { "Retry-After": String(limited.retryAfterSeconds) } },
         );
       }
+      const application = resolveApplicationSource(request, session ? { client: "MOBILE", platform: session.platform, appVersion: session.appVersion } : null);
       const ticket = await deps.create({
         ...parsed.data,
         userId: user?.id,
         email,
         sourceContext: {
           page: "mobile_support",
-          platform: "native",
+          platform: application.applicationSource.toLowerCase(),
+          ...application,
         },
       });
       return NextResponse.json({ ticket: { id: ticket.id, subject: ticket.subject } }, { status: 201 });

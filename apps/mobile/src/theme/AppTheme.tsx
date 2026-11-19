@@ -42,7 +42,7 @@ export const darkTheme = {
 } as const;
 
 type ThemeValue = {
-  theme: typeof lightTheme | typeof darkTheme;
+  theme: { [K in keyof typeof lightTheme]: K extends "dark" ? boolean : string };
   darkMode: boolean;
   setDarkMode: (enabled: boolean) => Promise<void>;
 };
@@ -76,4 +76,14 @@ export function useAppTheme() {
   const value = useContext(ThemeContext);
   if (!value) throw new Error("useAppTheme must be used within AppThemeProvider");
   return value;
+}
+
+// Override only Profile text tokens; preserve app-wide actions, surfaces and dark mode.
+export function ProfileThemeProvider({ children }: { children: ReactNode }) {
+  const parent = useAppTheme();
+  const value = useMemo(() => parent.theme.dark ? parent : ({
+    ...parent,
+    theme: { ...parent.theme, text: "#1A1A1A", textPrimary: "#1A1A1A", textOnSurface: "#1A1A1A", textSecondary: "#595959", textMuted: "#595959", muted: "#595959" },
+  }), [parent]);
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

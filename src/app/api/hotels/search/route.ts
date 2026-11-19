@@ -1,15 +1,25 @@
-import { NextResponse } from "next/server";
-import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
+import { after, NextResponse } from "next/server";
+import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
+import { createHash } from "node:crypto";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicHotel } from "@/lib/searchCache";
 import { hotelSearchSchema } from "@/lib/validation";
 import { classifyHotels } from "@/lib/travel/searchContract";
+import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
-import { searchHotels } from "@/services/travel/hotelAggregator";
+import {
+  searchHotels,
+  searchHotelsByProvider,
+  type HotelProviderMode,
+} from "@/services/travel/hotelAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
+import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
+import { getKayakClientIp } from "@/lib/kayak-client-ip";
+import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
+import { resolveSearchRequestId } from "@/lib/search-journey";
 
 export async function POST(request: Request) {
-  const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
+  const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("HOTEL_SEARCH_ENABLED"))) return NextResponse.json({ error: "Hotel search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
   const ip = getClientIp(request);
   const rate = checkRateLimit(`hotel-search:${ip}`, 35, 60_000);
@@ -18,33 +28,91 @@ export async function POST(request: Request) {
   }
 
   const payload = await request.json();
-  const parsed = hotelSearchSchema.safeParse(payload);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Search needs a little more detail.", issues: parsed.error.flatten() }, { status: 400 });
+  const requestedProvider =
+    request.headers.get("x-hotel-provider-mode")?.trim() ||
+    new URL(request.url).searchParams.get("provider");
+  const providerMode: HotelProviderMode | null =
+    requestedProvider === "kayak-sandbox" ? requestedProvider : null;
+  if (requestedProvider && !providerMode) {
+    return NextResponse.json(
+      { error: "Unsupported Hotel provider mode." },
+      { status: 400 },
+    );
+  }
+  if (providerMode === "kayak-sandbox" && !isKayakSandboxEnabled()) {
+    return NextResponse.json(
+      { error: "Hotel provider mode is unavailable." },
+      { status: 404 },
+    );
   }
 
-  const session = (await resolveOptionalWebApiSession())?.session;
-  const aggregate = await searchHotels(parsed.data);
-  if (aggregate.unavailableMessage) {
-    await Promise.all(
-      aggregate.providerStatuses.map((provider) =>
-        logProviderCall({
-          provider: provider.provider,
-          service: "hotel-search",
-          status:
-            provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
-          latencyMs: provider.latencyMs,
-          errorMessage: provider.error,
-        }),
-      ),
-    );
-
+  const rawDestinationId =
+    payload && typeof payload === "object" && "destinationId" in payload
+      ? String((payload as { destinationId?: unknown }).destinationId ?? "").trim()
+      : "";
+  const providerDestinationId =
+    providerMode === "kayak-sandbox" && /^kplace:\d+$/.test(rawDestinationId)
+      ? rawDestinationId
+      : undefined;
+  const validationPayload = providerDestinationId
+    ? { ...(payload as Record<string, unknown>), destinationId: undefined }
+    : payload;
+  const parsed = hotelSearchSchema.safeParse(validationPayload);
+  if (!parsed.success) {
     return NextResponse.json(
+      { error: "Search needs a little more detail.", issues: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+  const search = providerDestinationId
+    ? { ...parsed.data, destinationId: providerDestinationId }
+    : parsed.data;
+  // Display currency is analytics-only. KAYAK's hotel provider criteria
+  // require USD and must not depend on the customer's display preference.
+  const providerSearch = { ...search };
+  delete providerSearch.currency;
+  const operationalSession = prepareOperationalSearchSession(request);
+  const recordedSearch = { ...search, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) };
+
+  const kayakContext = {
+    clientIp: getKayakClientIp(request),
+    userAgent: request.headers.get("user-agent") || undefined,
+    signal: request.signal,
+  };
+  const aggregate = providerMode
+    ? await searchHotelsByProvider(providerSearch, providerMode, { kayak: kayakContext, defer: after })
+    : await searchHotels(providerSearch, { kayak: kayakContext, defer: after });
+  if (aggregate.unavailableMessage) {
+    after(async () => {
+      try {
+        const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
+        await Promise.all([
+          logSearchHistory({ ...application,
+            userId, visitorId, requestId, type: "HOTEL", destination: search.destination,
+            checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
+            query: recordedSearch, resultCount: 0, latencyMs: aggregate.latencyMs, status: "FAILED",
+          }),
+          ...aggregate.providerStatuses.map((provider) =>
+            logProviderCall({
+              provider: provider.provider,
+              service: "hotel-search",
+              status:
+                provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
+              latencyMs: provider.latencyMs,
+              errorMessage: provider.error,
+              metadata: { ...application, requestId },
+            }),
+          ),
+        ]);
+      } catch (error) { console.error("[hotel-search:logging]", error); }
+    });
+
+    return attachOperationalSearchSession(NextResponse.json(
       {
         error: aggregate.unavailableMessage,
         results: [],
         status: "unavailable",
-        source: "kurioticket-static-hotels",
+        source: providerMode || "kayak-sandbox",
         warnings: aggregate.warnings,
         partial: false,
         requestId,
@@ -56,32 +124,46 @@ export async function POST(request: Request) {
         })),
       },
       { status: 503 },
-    );
+    ), operationalSession);
   }
 
   const publicResults = aggregate.results.map(toPublicHotel);
-  const status = aggregate.providerStatuses.some((provider) => provider.status === "failed")
-      ? "PARTIAL"
-      : "SUCCESS";
+  console.info("[hotel-search-summary]", {
+    requestId,
+    searchFingerprint: createHash("sha256").update(JSON.stringify(providerSearch)).digest("hex"),
+    offerCount: publicResults.length,
+    propertyCount: new Set(publicResults.map(result => JSON.stringify([result.provider, result.propertyGroupId ?? result.id]))).size,
+    latencyMs: aggregate.latencyMs,
+    providers: aggregate.providerStatuses.map(provider => ({
+      provider: provider.provider, status: provider.status, offerCount: provider.results.length,
+      latencyMs: provider.latencyMs, error: sanitizeProviderError(provider.error),
+    })),
+  });
+  const status = hotelSearchRecordedStatus(aggregate.providerStatuses, publicResults.length);
 
-  await Promise.all([
-    logSearchHistory({
-      userId: session?.user?.id,
+  after(async () => {
+    const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
+    await Promise.all([
+    logSearchHistory({ ...application,
+      userId,
+      visitorId,
+      requestId,
       type: "HOTEL",
-      destination: parsed.data.destination,
-      checkIn: new Date(parsed.data.checkIn),
-      checkOut: new Date(parsed.data.checkOut),
-      query: parsed.data,
+      destination: search.destination,
+      checkIn: new Date(search.checkIn),
+      checkOut: new Date(search.checkOut),
+      query: recordedSearch,
       resultCount: publicResults.length,
       latencyMs: aggregate.latencyMs,
       status,
     }),
-    trackAnalyticsEvent({
-      userId: session?.user?.id,
+    trackAnalyticsEvent({ ...application,
+      userId,
+      visitorId,
       type: "SEARCH",
       name: "hotel_search",
       metadata: {
-        destination: parsed.data.destination,
+        destination: search.destination,
         resultCount: publicResults.length,
       },
     }),
@@ -93,12 +175,16 @@ export async function POST(request: Request) {
           provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
         latencyMs: provider.latencyMs,
         errorMessage: provider.error,
+        metadata: { ...application, requestId },
       }),
     ),
-  ]);
+    ]);
+  });
 
-  return NextResponse.json({
-    ...classifyHotels(publicResults, aggregate.warnings, requestId),
+  const classified = classifyHotels(publicResults, aggregate.warnings, requestId);
+  return attachOperationalSearchSession(NextResponse.json({
+    ...classified,
+    source: providerMode || classified.source,
     providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs, error }) => ({
       provider,
       status,
@@ -107,7 +193,7 @@ export async function POST(request: Request) {
     })),
     warningCategory: deriveHotelWarningCategory(aggregate),
     latencyMs: aggregate.latencyMs,
-  });
+  }), operationalSession);
 }
 
 function sanitizeProviderError(error?: string) {
@@ -116,7 +202,16 @@ function sanitizeProviderError(error?: string) {
   return "provider_unavailable";
 }
 
-function deriveHotelWarningCategory(aggregate: Awaited<ReturnType<typeof searchHotels>>) {
+function deriveHotelWarningCategory(
+  aggregate: Pick<
+    Awaited<ReturnType<typeof searchHotels>>,
+    "providerStatuses" | "results"
+  >,
+) {
+  if (!aggregate.results.length && aggregate.providerStatuses.every(provider => provider.status === "skipped") &&
+      aggregate.providerStatuses.some(provider => provider.errorReason === "unsupported_search" || provider.errorReason === "unsupported_location")) {
+    return "unsupported_search";
+  }
   if (aggregate.providerStatuses.some((provider) => provider.error === "unsupported_destination")) {
     return "unsupported_destination";
   }

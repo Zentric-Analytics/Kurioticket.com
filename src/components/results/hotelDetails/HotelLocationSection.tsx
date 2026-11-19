@@ -1,27 +1,32 @@
 "use client";
 
-import { ExternalLink, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { useState } from "react";
 
 import type { PublicHotelPropertyDetails } from "@/lib/types";
 import {
-  buildHotelDirectionsUrl,
-  buildHotelMapEmbedUrl,
+  buildGoogleHotelMapEmbedUrl,
   buildGoogleHotelStreetViewEmbedUrl,
+  buildHotelMapEmbedUrl,
 } from "@/lib/hotels/hotelMap";
 
 type HotelLocationSectionProps = {
+  variant?: "default" | "desktop";
   hotelName: string;
+  locationIsSimulated?: boolean;
   propertyDetails: PublicHotelPropertyDetails;
   locationLabel: string;
-  directionsLabel: string;
   mapLabel: string;
   streetViewLabel: string;
+  stayFitFacts?: string[];
+  accessibilityDetails?: string[];
 };
 
 function getSecondaryLocation(details: PublicHotelPropertyDetails): string {
   const address = details.streetAddress.toLocaleLowerCase();
-  return [details.neighbourhood, details.city, details.country]
+  const country = details.country.trim();
+  const countryName = /^[a-z]{2}$/i.test(country) ? new Intl.DisplayNames(["en"], { type: "region" }).of(country.toUpperCase()) ?? country : country;
+  return [details.neighbourhood, details.city, countryName]
     .map((part) => part.trim())
     .filter(
       (part, index, parts) =>
@@ -36,68 +41,147 @@ function getSecondaryLocation(details: PublicHotelPropertyDetails): string {
 }
 
 export function HotelLocationSection({
+  variant = "default",
   hotelName,
+  locationIsSimulated = false,
   propertyDetails,
   locationLabel,
-  directionsLabel,
   mapLabel,
   streetViewLabel,
+  stayFitFacts = [],
+  accessibilityDetails = [],
 }: HotelLocationSectionProps) {
   const [view, setView] = useState<"map" | "streetview">("map");
   const googleMapsEmbedApiKey =
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY;
-  const mapUrl = buildHotelMapEmbedUrl({
-    hotelName,
-    propertyDetails,
-    googleMapsEmbedApiKey,
-  });
+  const mapHotelName = locationIsSimulated ? "" : hotelName;
+  const mapUrl = variant === "desktop"
+    ? buildHotelMapEmbedUrl({ hotelName: mapHotelName, propertyDetails, googleMapsEmbedApiKey })
+    : buildGoogleHotelMapEmbedUrl({ hotelName: mapHotelName, propertyDetails, googleMapsEmbedApiKey });
   const streetViewUrl = buildGoogleHotelStreetViewEmbedUrl({
-    hotelName,
+    hotelName: mapHotelName,
     propertyDetails,
     googleMapsEmbedApiKey,
   });
   const activeEmbedUrl = view === "streetview" ? streetViewUrl : mapUrl;
-  const directionsUrl = buildHotelDirectionsUrl(propertyDetails);
   const streetAddress = propertyDetails.streetAddress.trim();
   const secondaryLocation = getSecondaryLocation(propertyDetails);
   const hasAddress = Boolean(streetAddress || secondaryLocation);
 
-  if (!mapUrl && !hasAddress && !directionsUrl) return null;
+  if (variant === "desktop") {
+    return (
+      <section
+        id="hotel-location"
+        className="scroll-mt-[84px] border-b border-[#d9e2e8] py-6 text-[#192024]"
+        aria-labelledby="hotel-location-heading"
+        data-hotel-location-section
+        data-hotel-desktop-location
+      >
+        <h2 id="hotel-location-heading" tabIndex={-1} className="text-xl font-semibold leading-7">
+          {locationLabel}
+        </h2>
+        <div className="mt-3 flex flex-wrap items-start justify-between gap-x-8 gap-y-3 text-sm leading-6">
+          {hasAddress ? (
+            <div className="flex min-w-0 items-start gap-2">
+              <MapPin className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />
+              <address className="min-w-0 break-words not-italic">
+                {[streetAddress, secondaryLocation].filter(Boolean).join(", ")}
+              </address>
+            </div>
+          ) : null}
+        </div>
+        <div className="mt-4 flex min-h-11 items-center gap-1 border-b border-[#d9e2e8]" role="tablist" aria-label="Location views">
+          {(["map", "streetview"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              id={`hotel-desktop-location-${option}-tab`}
+              role="tab"
+              aria-selected={view === option}
+              aria-controls="hotel-desktop-location-panel"
+              onClick={() => setView(option)}
+              className={`focus-ring min-h-11 border-b-2 px-4 text-sm font-semibold transition-colors ${view === option ? "border-[#004bb8] text-[#004bb8]" : "border-transparent text-[#59636a] hover:text-[#192024]"}`}
+            >
+              {option === "map" ? mapLabel : streetViewLabel}
+            </button>
+          ))}
+        </div>
+        <div id="hotel-desktop-location-panel" role="tabpanel" aria-labelledby={`hotel-desktop-location-${view}-tab`} className="mt-3 overflow-hidden rounded-xl border border-[#d9e2e8] bg-[#f3f5f7]">
+          {activeEmbedUrl ? (
+            <iframe
+              key={`${hotelName}:${propertyDetails.latitude}:${propertyDetails.longitude}:${view}`}
+              title={view === "streetview" ? `Street View near ${hotelName}` : `Map showing the location of ${hotelName}`}
+              src={activeEmbedUrl}
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              className="h-[280px] w-full border-0"
+            />
+          ) : (
+            <div className="flex h-[280px] flex-col items-center justify-center gap-3 text-sm">
+              <MapPin className="h-6 w-6" aria-hidden="true" />
+              <p>{view === "streetview" ? "Street View unavailable" : "Map preview unavailable"}</p>
+            </div>
+          )}
+        </div>
+        {(
+          <div className="mt-5 grid grid-cols-1 gap-5" data-hotel-stay-fit-facts>
+            {(
+              <div>
+                <h3 className="text-base font-semibold">Why this location works</h3>
+                {stayFitFacts.length ? <ul className="mt-2 list-none p-0 text-sm leading-6 text-[#303b42]">
+                  {stayFitFacts.map((fact) => <li key={fact}>{fact}</li>)}
+                </ul> : <p className="mt-2 text-sm leading-6 text-[#595959]">{locationIsSimulated ? "Location details are limited to the provider’s sandbox address and map." : "Location fit details are limited to the verified address and map."}</p>}
+              </div>
+            )}
+            {accessibilityDetails.length ? (
+              <div>
+                <h3 className="text-base font-semibold">Accessibility and location details</h3>
+                <ul className="mt-2 list-none p-0 text-sm leading-6 text-[#303b42]">
+                  {accessibilityDetails.map((detail) => <li key={detail}>{detail}</li>)}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section
-      className="mt-5"
+      id="hotel-location"
+      className="scroll-mt-16 border-b border-slate-200 px-4 py-5 lg:px-0 lg:py-10"
       aria-labelledby="hotel-location-heading"
       data-hotel-location-section
     >
       <h2
         id="hotel-location-heading"
-        className="text-[17px] font-bold text-slate-950"
+        className="text-[17px] font-bold tracking-tight text-slate-950 lg:text-xl lg:font-extrabold"
       >
         {locationLabel}
       </h2>
 
       {hasAddress ? (
-        <div className="mt-3 flex items-start gap-3">
+        <div className="mt-2.5 flex items-start gap-3 lg:mt-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue">
             <MapPin className="h-[18px] w-[18px]" aria-hidden="true" />
           </span>
-          <div className="min-w-0 pt-0.5">
+          <address className="min-w-0 pt-0.5 not-italic">
             {streetAddress ? (
-              <p className="text-[13px] font-semibold leading-5 text-slate-800">
+              <p className="break-words text-[13px] font-semibold leading-5 text-slate-800">
                 {streetAddress}
               </p>
             ) : null}
             {secondaryLocation ? (
-              <p className="text-xs leading-5 text-slate-500">
+              <p className="mt-0.5 break-words text-xs leading-5 text-slate-500">
                 {secondaryLocation}
               </p>
             ) : null}
-          </div>
+          </address>
         </div>
       ) : null}
 
-      <div className="mt-3 overflow-hidden rounded-[14px] border border-slate-200 bg-white">
+      <div className="mt-3.5 overflow-hidden rounded-[14px] border border-slate-200 bg-white lg:mt-4">
         {streetViewUrl ? (
           <div
             className="flex min-h-11 border-b border-slate-200 px-1"
@@ -131,21 +215,15 @@ export function HotelLocationSection({
             src={activeEmbedUrl}
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
-            className="h-[200px] w-full border-0 sm:h-[220px] lg:h-[240px]"
+            className="h-[216px] w-full border-0 sm:h-[220px] lg:h-[240px]"
           />
         ) : null}
-        {directionsUrl ? (
-          <a
-            href={directionsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`focus-ring flex min-h-11 items-center justify-between border-slate-200 bg-white px-4 text-sm font-bold text-blue hover:bg-slate-50 ${activeEmbedUrl ? "border-t" : ""}`}
-          >
-            {directionsLabel}
-            <ExternalLink className="h-4 w-4" aria-hidden="true" />
-          </a>
-        ) : null}
       </div>
+      <div className="mt-5 lg:mt-7" data-hotel-stay-fit-facts>
+          <h3 className="text-[16px] font-bold leading-6 text-slate-950">Why this location works</h3>
+          {stayFitFacts.length ? <div className="mt-2.5 flex flex-wrap gap-2">{stayFitFacts.map((fact) => <span key={fact} className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">{fact}</span>)}</div> : <p className="mt-2.5 text-[13px] leading-5 text-slate-600 sm:text-sm">Location fit details are limited to the verified address and map.</p>}
+          <div className="hidden lg:block"><h3 className="mt-7 text-base font-bold text-slate-950">Accessibility and location details</h3>{accessibilityDetails.length ? <ul className="mt-3 list-disc space-y-2 ps-5 text-sm leading-6 text-slate-700">{accessibilityDetails.map((detail) => <li key={detail}>{detail}</li>)}</ul> : <p className="mt-3 text-sm leading-6 text-slate-600">Confirm specific accessibility requirements with the property before travel.</p>}</div>
+        </div>
     </section>
   );
 }

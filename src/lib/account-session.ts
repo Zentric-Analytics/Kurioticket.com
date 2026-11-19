@@ -1,6 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
 import { canAuthenticateAccount } from "@/lib/account-security-policy";
+import { createRestrictedMobileRecoverySession, pendingMobileDeletion, permitsMobileDeletionRecovery } from "@/lib/mobile-deletion-recovery";
 
 export const RECENT_REAUTHENTICATION_MS = 10 * 60_000;
 export const MOBILE_SESSION_DAYS = 30;
@@ -10,6 +11,26 @@ const LAST_SEEN_WRITE_MS = 60_000;
 type AuthMethod = "PASSWORD" | "EMAIL_CODE" | "GOOGLE" | "PASSKEY" | "UNKNOWN";
 type Assurance = "PRIMARY" | "MFA" | "PHISHING_RESISTANT";
 const hash = (secret: string) => createHash("sha256").update(secret).digest("hex");
+
+async function findMobileBearerSession(id: string) {
+  return getPrisma().accountSession.findUnique({ where: { id }, include: { user: { include: { accounts: { select: { provider: true } }, securitySettings: { select: { twoFactorEnabled: true, twoFactorEnabledAt: true } } } } } });
+}
+
+type MobileBearerSession = NonNullable<Awaited<ReturnType<typeof findMobileBearerSession>>>;
+type MobileBearerLookup = (id: string) => Promise<MobileBearerSession | null>;
+
+async function validateMobileBearerToken(request: Request, lookup: MobileBearerLookup) {
+  const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  const match = /^ktm1\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]{43})$/.exec(token);
+  if (!match) return null;
+
+  const session = await lookup(match[1]);
+  const supplied = Buffer.from(hash(match[2]), "hex");
+  const stored = Buffer.from(session?.tokenHash || "", "hex");
+  if (!session || session.client !== "MOBILE" || stored.length !== supplied.length || !timingSafeEqual(stored, supplied)) return null;
+  if (session.expiresAt <= new Date()) return null;
+  return session;
+}
 
 export async function createAccountSession(input: { userId: string; client: "WEB" | "MOBILE"; authMethod: AuthMethod; assuranceLevel: Assurance; expiresAt?: Date; platform?: string; appVersion?: string }) {
   const prisma = getPrisma();
@@ -28,38 +49,56 @@ export async function createAccountSession(input: { userId: string; client: "WEB
   });
 }
 
-export async function issueMobileSession(userId: string, authMethod: AuthMethod, assuranceLevel: Assurance, metadata?: { platform?: string; appVersion?: string }) {
+export async function issueMobileSession(userId: string, authMethod: AuthMethod, assuranceLevel: Assurance, metadata?: { platform?: string; appVersion?: string; recoveryProtocol?: "1" }, proof?: { sessionVersion: number; status: string; verifiedAt?: Date }) {
   const secret = randomBytes(32).toString("base64url");
-  const session = await createAccountSession({ userId, client: "MOBILE", authMethod, assuranceLevel, ...metadata });
+  const user = await getPrisma().user.findUnique({ where: { id: userId }, select: { status: true, sessionVersion: true } });
+  if (proof && (user?.sessionVersion !== proof.sessionVersion || user.status !== proof.status)) throw new Error("AccountUnavailable");
+  if (user?.status === "PENDING_DELETION") {
+    if (!proof || !Number.isInteger(proof.sessionVersion) || !proof.verifiedAt) throw new Error("RecoveryAuthenticationRequired");
+    const restricted = await createRestrictedMobileRecoverySession(userId, authMethod, assuranceLevel, hash(secret), metadata, proof.sessionVersion, proof.verifiedAt);
+    return { token: `ktm1.${restricted.session.id}.${secret}`, expires: restricted.session.expiresAt.toISOString(), recovery: { deadline: restricted.deadline.toISOString() } };
+  }
+  if (!user || user.status !== "ACTIVE") throw new Error("AccountUnavailable");
+  const session = await createAccountSession({ userId, client: "MOBILE", authMethod, assuranceLevel, platform: metadata?.platform, appVersion: metadata?.appVersion });
   await getPrisma().accountSession.update({ where: { id: session.id }, data: { tokenHash: hash(secret) } });
   return { token: `ktm1.${session.id}.${secret}`, expires: session.expiresAt.toISOString() };
 }
 
-export async function validateMobileBearer(request: Request) {
-  const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-  const match = /^ktm1\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]{43})$/.exec(token);
-  if (!match) return null;
-  const session = await getPrisma().accountSession.findUnique({ where: { id: match[1] }, include: { user: { include: { accounts: { select: { provider: true } }, securitySettings: { select: { twoFactorEnabled: true } } } } } });
-  const supplied = Buffer.from(hash(match[2]), "hex");
-  const stored = Buffer.from(session?.tokenHash || "", "hex");
-  if (!session || session.client !== "MOBILE" || stored.length !== supplied.length || !timingSafeEqual(stored, supplied)) return null;
-  if (session.revokedAt || session.expiresAt <= new Date() || session.sessionVersion !== session.user.sessionVersion) return null;
-  if (!(await canAuthenticateAccount(session.user, session.authMethod === "GOOGLE" ? "google" : "credentials"))) return null;
+export async function validateMobileBearer(request: Request, lookup: MobileBearerLookup = findMobileBearerSession) {
+  const session = await validateMobileBearerToken(request, lookup);
+  if (!session || session.revokedAt || session.sessionVersion !== session.user.sessionVersion) return null;
+  if (!(await canAuthenticateAccount(session.user, session.authMethod === "GOOGLE" ? "google" : session.authMethod === "PASSKEY" ? "passkey" : "credentials"))) return null;
   if (session.user.securitySettings?.twoFactorEnabled && session.assuranceLevel === "PRIMARY") return null;
   if (Date.now() - session.lastSeenAt.getTime() >= LAST_SEEN_WRITE_MS) void getPrisma().accountSession.updateMany({ where: { id: session.id, revokedAt: null }, data: { lastSeenAt: new Date() } });
   return session;
 }
 
+/** Accepts only the obsolete bearer created by the account-deletion transition. */
+export async function validateMobileDeletionReactivationBearer(request: Request, lookup: MobileBearerLookup = findMobileBearerSession, findRequest = pendingMobileDeletion) {
+  const session = await validateMobileBearerToken(request, lookup);
+  if (!session) return null;
+  const deletion = await findRequest(session.userId);
+  if (!deletion || !permitsMobileDeletionRecovery(session, deletion, session.userId)) return null;
+  return { ...session, user: { ...session.user, email: session.user.email! }, recoveryDeadline: deletion.deletionScheduledAt };
+}
+
 export async function validateAccountSession(id: string, userId: string, options: { requireCompletedTwoFactor?: boolean } = {}) {
   const session = await getPrisma().accountSession.findFirst({ where: { id, userId }, include: { user: { include: { securitySettings: { select: { twoFactorEnabled: true } } } } } });
   if (!session || session.revokedAt || session.expiresAt <= new Date() || session.sessionVersion !== session.user.sessionVersion) return null;
-  if (!(await canAuthenticateAccount(session.user, session.authMethod === "GOOGLE" ? "google" : "credentials"))) return null;
+  if (!(await canAuthenticateAccount(session.user, session.authMethod === "GOOGLE" ? "google" : session.authMethod === "PASSKEY" ? "passkey" : "credentials"))) return null;
   if (options.requireCompletedTwoFactor !== false && session.user.securitySettings?.twoFactorEnabled && session.assuranceLevel === "PRIMARY") return null;
   return session;
 }
 
+async function lockAccountSessionRevocation(tx: { $executeRaw: (query: TemplateStringsArray, ...values: unknown[]) => Promise<number> }, userId: string) {
+  // pg_advisory_xact_lock returns PostgreSQL void. Execute it as a statement so
+  // Prisma does not try to deserialize the void result through $queryRaw.
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('account-session-revocation'), hashtext(${userId}))`;
+}
+
 export async function revokeSession(userId: string, sessionId: string, reason = "user_revoked") {
   return getPrisma().$transaction(async tx => {
+    await lockAccountSessionRevocation(tx, userId);
     const result = await tx.accountSession.updateMany({ where: { id: sessionId, userId, revokedAt: null }, data: { revokedAt: new Date(), revokeReason: reason } });
     if (result.count) await tx.securityEvent.create({ data: { userId, accountSessionId: sessionId, type: "SESSION_REVOKED", metadata: { reason } } });
     return result.count === 1;
@@ -68,9 +107,40 @@ export async function revokeSession(userId: string, sessionId: string, reason = 
 
 export async function revokeAllSessions(userId: string, reason = "sign_out_everywhere") {
   return getPrisma().$transaction(async tx => {
+    await lockAccountSessionRevocation(tx, userId);
     await tx.user.update({ where: { id: userId }, data: { sessionVersion: { increment: 1 } } });
     await tx.accountSession.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date(), revokeReason: reason } });
     return tx.securityEvent.create({ data: { userId, type: "ALL_SESSIONS_REVOKED", metadata: { reason } } });
+  });
+}
+
+/** Revokes a user's other sessions while preserving and revalidating the authoritative current mobile session. */
+export async function revokeOtherSessions(userId: string, currentSessionId: string, reason = "sign_out_other_sessions") {
+  return getPrisma().$transaction(async tx => {
+    await lockAccountSessionRevocation(tx, userId);
+    const current = await tx.accountSession.findFirst({
+      where: { id: currentSessionId, userId, client: "MOBILE", revokedAt: null, expiresAt: { gt: new Date() } },
+      select: { id: true },
+    });
+    if (!current) throw new Error("CurrentSessionUnavailable");
+
+    const targets = await tx.accountSession.findMany({
+      where: { userId, id: { not: currentSessionId }, revokedAt: null },
+      select: { id: true },
+    });
+    if (!targets.length) return 0;
+
+    const revokedAt = new Date();
+    const result = await tx.accountSession.updateMany({
+      where: { userId, id: { not: currentSessionId }, revokedAt: null },
+      data: { revokedAt, revokeReason: reason },
+    });
+    if (result.count !== targets.length) throw new Error("SessionRevocationConflict");
+
+    await tx.securityEvent.createMany({
+      data: targets.map(({ id }) => ({ userId, accountSessionId: id, type: "SESSION_REVOKED", metadata: { reason, bulk: true } })),
+    });
+    return result.count;
   });
 }
 

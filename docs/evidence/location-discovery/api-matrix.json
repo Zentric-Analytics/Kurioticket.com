@@ -1,0 +1,642 @@
+{
+  "capturedAt": "2026-09-13T21:08:12.267Z",
+  "baseUrl": "local Next.js development server",
+  "results": {
+    "flights": {
+      "New": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "airport:JFK",
+            "kind": "airport",
+            "primaryLabel": "New York (JFK)",
+            "supportingLabel": "John F. Kennedy International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:DEL",
+            "kind": "airport",
+            "primaryLabel": "New Delhi (DEL)",
+            "supportingLabel": "Indira Gandhi International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": [
+          {
+            "provider": "duffel",
+            "status": "failed",
+            "count": 0,
+            "failure": "PROVIDER_UNAVAILABLE"
+          }
+        ]
+      },
+      "Lon": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "airport:LHR",
+            "kind": "airport",
+            "primaryLabel": "London (LHR)",
+            "supportingLabel": "Heathrow Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:LGW",
+            "kind": "airport",
+            "primaryLabel": "London (LGW)",
+            "supportingLabel": "Gatwick Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:LCY",
+            "kind": "airport",
+            "primaryLabel": "London (LCY)",
+            "supportingLabel": "London City Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:STN",
+            "kind": "airport",
+            "primaryLabel": "London (STN)",
+            "supportingLabel": "London Stansted Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:LTN",
+            "kind": "airport",
+            "primaryLabel": "London (LTN)",
+            "supportingLabel": "London Luton Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": [
+          {
+            "provider": "duffel",
+            "status": "failed",
+            "count": 0,
+            "failure": "PROVIDER_UNAVAILABLE"
+          }
+        ]
+      },
+      "Par": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "airport:CDG",
+            "kind": "airport",
+            "primaryLabel": "Paris (CDG)",
+            "supportingLabel": "Charles de Gaulle Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:ORY",
+            "kind": "airport",
+            "primaryLabel": "Paris (ORY)",
+            "supportingLabel": "Paris Orly Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:PBH",
+            "kind": "airport",
+            "primaryLabel": "Paro (PBH)",
+            "supportingLabel": "Paro International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": [
+          {
+            "provider": "duffel",
+            "status": "failed",
+            "count": 0,
+            "failure": "PROVIDER_UNAVAILABLE"
+          }
+        ]
+      },
+      "Lag": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "airport:LOS",
+            "kind": "airport",
+            "primaryLabel": "Lagos (LOS)",
+            "supportingLabel": "Murtala Muhammed International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": [
+          {
+            "provider": "duffel",
+            "status": "failed",
+            "count": 0,
+            "failure": "PROVIDER_UNAVAILABLE"
+          }
+        ]
+      },
+      "Los": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "airport:LOS",
+            "kind": "airport",
+            "primaryLabel": "Lagos (LOS)",
+            "supportingLabel": "Murtala Muhammed International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:LAX",
+            "kind": "airport",
+            "primaryLabel": "Los Angeles (LAX)",
+            "supportingLabel": "Los Angeles International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": [
+          {
+            "provider": "duffel",
+            "status": "failed",
+            "count": 0,
+            "failure": "PROVIDER_UNAVAILABLE"
+          }
+        ]
+      },
+      "San": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "airport:SFO",
+            "kind": "airport",
+            "primaryLabel": "San Francisco (SFO)",
+            "supportingLabel": "San Francisco International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:SAL",
+            "kind": "airport",
+            "primaryLabel": "San Salvador (SAL)",
+            "supportingLabel": "Monseñor Óscar Arnulfo Romero International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:SAP",
+            "kind": "airport",
+            "primaryLabel": "San Pedro Sula (SAP)",
+            "supportingLabel": "Ramón Villeda Morales International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:SJO",
+            "kind": "airport",
+            "primaryLabel": "San José (SJO)",
+            "supportingLabel": "Juan Santamaría International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:SDQ",
+            "kind": "airport",
+            "primaryLabel": "Santo Domingo (SDQ)",
+            "supportingLabel": "Las Américas International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:MBJ",
+            "kind": "airport",
+            "primaryLabel": "Montego Bay (MBJ)",
+            "supportingLabel": "Sangster International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:VVI",
+            "kind": "airport",
+            "primaryLabel": "Santa Cruz (VVI)",
+            "supportingLabel": "Viru Viru International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "airport:SCL",
+            "kind": "airport",
+            "primaryLabel": "Santiago (SCL)",
+            "supportingLabel": "Arturo Merino Benítez International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": [
+          {
+            "provider": "duffel",
+            "status": "failed",
+            "count": 0,
+            "failure": "PROVIDER_UNAVAILABLE"
+          }
+        ]
+      }
+    },
+    "hotels": {
+      "New": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "hotel:us-new-york",
+            "kind": "city",
+            "primaryLabel": "New York",
+            "supportingLabel": "New York, United States",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "hotel:us-jfk-area",
+            "kind": "airport",
+            "primaryLabel": "JFK Airport area",
+            "supportingLabel": "New York, United States",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": []
+      },
+      "Lon": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "hotel:gb-london",
+            "kind": "city",
+            "primaryLabel": "London",
+            "supportingLabel": "England, United Kingdom",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "hotel:gb-heathrow-area",
+            "kind": "airport",
+            "primaryLabel": "Heathrow Airport area",
+            "supportingLabel": "London, United Kingdom",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": []
+      },
+      "Par": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "hotel:fr-paris",
+            "kind": "city",
+            "primaryLabel": "Paris",
+            "supportingLabel": "Île-de-France, France",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "hotel:fr-cdg-area",
+            "kind": "airport",
+            "primaryLabel": "Charles de Gaulle Airport area",
+            "supportingLabel": "Paris, France",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": []
+      },
+      "Lag": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "hotel:ng-lagos",
+            "kind": "city",
+            "primaryLabel": "Lagos",
+            "supportingLabel": "Nigeria",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": []
+      },
+      "Los": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "hotel:us-los-angeles",
+            "kind": "city",
+            "primaryLabel": "Los Angeles",
+            "supportingLabel": "California, United States",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": []
+      },
+      "San": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "hotel:us-san-francisco",
+            "kind": "city",
+            "primaryLabel": "San Francisco",
+            "supportingLabel": "California, United States",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": []
+      }
+    },
+    "cars": {
+      "New": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "car:airport-jfk",
+            "kind": "airport",
+            "primaryLabel": "New York (JFK)",
+            "supportingLabel": "John F. Kennedy International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-del",
+            "kind": "airport",
+            "primaryLabel": "New Delhi (DEL)",
+            "supportingLabel": "Indira Gandhi International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:city-us-new-york",
+            "kind": "city",
+            "primaryLabel": "New York",
+            "supportingLabel": "United States",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:city-in-new-delhi",
+            "kind": "city",
+            "primaryLabel": "New Delhi",
+            "supportingLabel": "India",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": []
+      },
+      "Lon": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "car:airport-lhr",
+            "kind": "airport",
+            "primaryLabel": "London (LHR)",
+            "supportingLabel": "Heathrow Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-lgw",
+            "kind": "airport",
+            "primaryLabel": "London (LGW)",
+            "supportingLabel": "Gatwick Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-lcy",
+            "kind": "airport",
+            "primaryLabel": "London (LCY)",
+            "supportingLabel": "London City Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-stn",
+            "kind": "airport",
+            "primaryLabel": "London (STN)",
+            "supportingLabel": "London Stansted Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-ltn",
+            "kind": "airport",
+            "primaryLabel": "London (LTN)",
+            "supportingLabel": "London Luton Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:city-gb-london",
+            "kind": "city",
+            "primaryLabel": "London",
+            "supportingLabel": "United Kingdom",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": []
+      },
+      "Par": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "car:airport-cdg",
+            "kind": "airport",
+            "primaryLabel": "Paris (CDG)",
+            "supportingLabel": "Charles de Gaulle Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-ory",
+            "kind": "airport",
+            "primaryLabel": "Paris (ORY)",
+            "supportingLabel": "Paris Orly Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-pbh",
+            "kind": "airport",
+            "primaryLabel": "Paro (PBH)",
+            "supportingLabel": "Paro International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:city-fr-paris",
+            "kind": "city",
+            "primaryLabel": "Paris",
+            "supportingLabel": "France",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:city-bt-paro",
+            "kind": "city",
+            "primaryLabel": "Paro",
+            "supportingLabel": "Bhutan",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:area-fr-paris-centre",
+            "kind": "rental-area",
+            "primaryLabel": "Paris City Centre",
+            "supportingLabel": "Paris, France",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": []
+      },
+      "Lag": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "car:airport-los",
+            "kind": "airport",
+            "primaryLabel": "Lagos (LOS)",
+            "supportingLabel": "Murtala Muhammed International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:city-ng-lagos",
+            "kind": "city",
+            "primaryLabel": "Lagos",
+            "supportingLabel": "Nigeria",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:area-ng-lagos-lagos-island",
+            "kind": "rental-area",
+            "primaryLabel": "Lagos Island",
+            "supportingLabel": "Lagos, Nigeria",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": []
+      },
+      "Los": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "car:airport-los",
+            "kind": "airport",
+            "primaryLabel": "Lagos (LOS)",
+            "supportingLabel": "Murtala Muhammed International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-lax",
+            "kind": "airport",
+            "primaryLabel": "Los Angeles (LAX)",
+            "supportingLabel": "Los Angeles International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:city-us-los-angeles",
+            "kind": "city",
+            "primaryLabel": "Los Angeles",
+            "supportingLabel": "United States",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": []
+      },
+      "San": {
+        "status": 200,
+        "suggestions": [
+          {
+            "id": "car:airport-sfo",
+            "kind": "airport",
+            "primaryLabel": "San Francisco (SFO)",
+            "supportingLabel": "San Francisco International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-sal",
+            "kind": "airport",
+            "primaryLabel": "San Salvador (SAL)",
+            "supportingLabel": "Monseñor Óscar Arnulfo Romero International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-sap",
+            "kind": "airport",
+            "primaryLabel": "San Pedro Sula (SAP)",
+            "supportingLabel": "Ramón Villeda Morales International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-sjo",
+            "kind": "airport",
+            "primaryLabel": "San José (SJO)",
+            "supportingLabel": "Juan Santamaría International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-sdq",
+            "kind": "airport",
+            "primaryLabel": "Santo Domingo (SDQ)",
+            "supportingLabel": "Las Américas International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-mbj",
+            "kind": "airport",
+            "primaryLabel": "Montego Bay (MBJ)",
+            "supportingLabel": "Sangster International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-vvi",
+            "kind": "airport",
+            "primaryLabel": "Santa Cruz (VVI)",
+            "supportingLabel": "Viru Viru International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          },
+          {
+            "id": "car:airport-scl",
+            "kind": "airport",
+            "primaryLabel": "Santiago (SCL)",
+            "supportingLabel": "Arturo Merino Benítez International Airport",
+            "hasOpaqueSelectionToken": true,
+            "providerBindings": []
+          }
+        ],
+        "sources": []
+      }
+    }
+  }
+}

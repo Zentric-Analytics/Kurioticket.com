@@ -34,13 +34,15 @@ test("guided Hotel results adapt the shared results experience and HotelCard", a
     assert.doesNotMatch(stage, new RegExp(forbidden));
   assert.match(shared, /<HotelCard/);
   assert.match(shared, /allowExternalAttribution=\{!guided\}/);
-  assert.match(card, /allowExternalAttribution && isSafeHttpUrl/);
+  assert.match(card, /allowExternalAttribution &&\s*isSafeHttpUrl/);
   assert.match(shared, /buildDetailsHref\?\.\(hotel\.id\) \?\? null/);
   assert.doesNotMatch(shared, /detailsHref=\{guided \?[^\n]*"#"/);
-  assert.match(shared, /packages\.guided\.hotelResults\.viewRooms/);
-  assert.match(shared, /packages\.guided\.hotelResults\.viewRoomsFor/);
-  assert.match(shared, /packages\.guided\.hotelResults\.roomsUnavailableFor/);
-  assert.match(card, /hotelResults\.estimatedStayTotal/);
+  assert.match(shared, /deals\.guided\.hotelResults\.viewRooms/);
+  assert.match(shared, /deals\.guided\.hotelResults\.viewRoomsFor/);
+  assert.match(shared, /deals\.guided\.hotelResults\.roomsUnavailableFor/);
+  // The simplified shared card displays a nightly price, not the removed stay-total row.
+  assert.match(card, /amount: priceDetails\.pricePerNight/);
+  assert.match(card, /\{nightlyDisplayPrice\.formatted\}/);
   assert.match(card, /hotelResults\.pricePerNight/);
   assert.doesNotMatch(card, /package total/i);
   assert.match(card, /resolvedDetailsHref === null/);
@@ -77,7 +79,7 @@ test("guided Hotel results are a labelled region without a nested main", async (
   );
   assert.match(
     shared,
-    /role: "region", "aria-labelledby": "deals-guided-hotel-results-heading"/,
+    /role: "region",\s*"aria-labelledby": "deals-guided-hotel-results-heading"/,
   );
   assert.match(
     shared,

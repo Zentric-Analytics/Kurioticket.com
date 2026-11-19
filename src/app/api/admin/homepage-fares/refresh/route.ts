@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
+import { HomepageFareRefreshInProgressError } from "@/services/homepageFareRefreshLock";
 import {
   getHomepageFareDateStrategy,
   refreshPhase3AHomepageFareSnapshots,
@@ -27,6 +28,16 @@ export async function POST(request: Request) {
       dateStrategy,
     });
   } catch (error) {
+    if (error instanceof HomepageFareRefreshInProgressError) {
+      return NextResponse.json(
+        {
+          error: "Homepage fare refresh is already running.",
+          errorCode: "homepage_fare_refresh_in_progress",
+          safeReason: "Wait for the active refresh to finish before starting another run.",
+        },
+        { status: 409 },
+      );
+    }
     console.error("[homepage-fares:admin-refresh]", error);
     return NextResponse.json(
       buildSafeHomepageFareRefreshErrorResponse(error),

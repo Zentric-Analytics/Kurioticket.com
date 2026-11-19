@@ -5,7 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { PREVIEW_IDENTITY, PREVIEW_WORKER_BUILD_PATHS, assertExactSha } from "./config.mjs";
-import { normalizePreviewUpdatePage } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
+import { canonicalPreviewOtaRemoteIdentity, inspectPreviewUpdateHistory, normalizePreviewUpdatePage } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
 import { fetchWithDeadline, LOCAL_COMMAND_TIMEOUT_MS } from "./deadlines.mjs";
 
 const exec = promisify(execFile);
@@ -55,6 +55,7 @@ export class RenderClient {
     assertExactSha(sha);
     const excluded = new Set(excludeIds);
     for (const deploy of await this.findDeploysBySha(sha)) excluded.add(deploy.id);
+    await this.getService();
     try {
       const deploy = await this.request(`/services/${this.serviceId}/deploys`, { method: "POST", body: { commitId: sha, clearCache: "do_not_clear" } });
       if (!deploy?.id) throw new Error("Render create-deploy response has no deployment ID.");
@@ -76,7 +77,10 @@ export class RenderClient {
     if (this.serviceId !== PREVIEW_IDENTITY.renderStagingServiceId) throw new Error("Unapproved Render service identity.");
     const service = await this.request(`/services/${this.serviceId}`);
     if (service?.id !== this.serviceId || typeof service?.name !== "string") throw new Error("Render service response is malformed or mismatched.");
-    return service;
+    const autoDeployOff = service.autoDeployTrigger === "off"
+      || (service.autoDeployTrigger === undefined && (service.autoDeploy === false || service.autoDeploy === "no"));
+    if (!autoDeployOff) throw new Error("Render Preview staging auto-deploy must be Off; the release worker is the exclusive deployment owner.");
+    return { ...service, autoDeployOff };
   }
   async getPreviewWorkerService() {
     if (this.serviceId !== PREVIEW_IDENTITY.renderWorkerServiceId) throw new Error("Unapproved Render worker identity.");
@@ -130,12 +134,29 @@ export class RenderClient {
 }
 
 export class EasClient {
-  constructor({ expoToken, cwd, command = process.platform === "win32" ? "npx.cmd" : "npx", fetchImpl = fetch }) { this.expoToken = expoToken; this.cwd = cwd; this.command = command; this.fetch = fetchImpl; }
+  constructor({ expoToken, cwd, command = process.platform === "win32" ? "npx.cmd" : "npx", fetchImpl = fetch, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)) }) { this.expoToken = expoToken; this.cwd = cwd; this.command = command; this.fetch = fetchImpl; this.sleep = sleep; }
   async listIosBuilds(targetSha) {
     return this.listBuilds("ios", targetSha);
   }
   async listAndroidBuilds(targetSha) {
     return this.listBuilds("android", targetSha);
+  }
+  async historicalAndroidHistory(action) {
+    if (action?.remote_id != null || action?.state !== "RESERVED"
+      || !new RegExp(`^native-build:android:${PREVIEW_IDENTITY.easProjectId}:[a-f0-9]{40}$`).test(action?.identity_key ?? "")) {
+      throw new Error("Historical inspection requires an unresolved canonical Android reservation.");
+    }
+    const project = await this.projectInfo();
+    const builds = await this.listAndroidBuilds(action.source_sha);
+    // Bound extra provider reads; an oversized result is not complete proof.
+    if (builds.length > 20) throw new Error("Historical inspection candidate limit exceeded.");
+    const expected = action.identity_key.split(":").at(-1);
+    for (const build of builds) {
+      if (build.gitCommitHash !== action.source_sha || build.fingerprint?.hash) continue;
+      const comparison = await this.compareBuildFingerprint(build.id, expected);
+      build.historicalProviderFingerprint = comparison.buildHash;
+    }
+    return { builds, projectId: project.projectId };
   }
   async projectInfo() {
     const raw = await this.runText(["eas-cli@16.17.4", "project:info"]);
@@ -226,9 +247,10 @@ export class EasClient {
     }
     throw new Error("Expo submission history exceeded the bounded pagination limit.");
   }
-  async publishUpdate(message, platform, expectedRuntime) {
+  async publishUpdate(message, platform, expectedRuntime, targetSha) {
     if (platform !== "ios" && platform !== "android") throw new Error("EAS Update platform is invalid.");
     if (!/^[0-9a-f]{40,128}$/.test(expectedRuntime ?? "")) throw new Error("EAS Update expected runtime is invalid.");
+    assertExactSha(targetSha, "EAS Update target SHA");
     await this.validateOtaStartup();
     const value = await this.run(["eas-cli@16.17.4", "update", "--channel", "preview", "--platform", platform, "--environment", "preview", "--message", message, "--non-interactive", "--json"]);
     const entries = Array.isArray(value) ? value : [value];
@@ -236,7 +258,35 @@ export class EasClient {
     if (entries.some((entry) => entry.runtimeVersion !== expectedRuntime)) {
       throw new EasUpdateRuntimeMismatchError(platform, expectedRuntime, entries);
     }
-    return entries;
+    const publishedIdentity = canonicalPreviewOtaRemoteIdentity({ [platform]: entries });
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const history = await this.listUpdates();
+      const replay = inspectPreviewUpdateHistory(history, targetSha, platform, expectedRuntime);
+      if (replay.matchingUpdates > 1) throw new Error(`EAS Update ${platform} post-publish history contains conflicting exact-SHA groups.`);
+      if (replay.alreadyPublished) {
+        const visible = history.filter((entry) => {
+          if (
+            entry.branch !== PREVIEW_IDENTITY.channel
+            || entry.runtimeVersion !== expectedRuntime
+            || !Array.isArray(entry.platforms)
+            || !entry.platforms.includes(platform)
+          ) return false;
+          try {
+            return canonicalPreviewOtaRemoteIdentity({ [platform]: [entry] }) === publishedIdentity;
+          } catch {
+            return false;
+          }
+        });
+        if (visible.length !== 1) throw new Error(`EAS Update ${platform} published group is not uniquely visible on the Preview branch.`);
+        const visibleReplay = inspectPreviewUpdateHistory(visible, targetSha, platform, expectedRuntime);
+        if (!visibleReplay.alreadyPublished || visibleReplay.matchingUpdates !== 1) {
+          throw new Error(`EAS Update ${platform} published group does not attest the requested target SHA.`);
+        }
+        return visible;
+      }
+      if (attempt < 5) await this.sleep(2_000);
+    }
+    throw new Error(`EAS Update ${platform} publication was not observable in Preview history after the bounded verification window.`);
   }
   async validateOtaStartup() {
     try {
@@ -325,8 +375,9 @@ export function easCommandFailureMessage(command, error, secrets = []) {
 
 export function easCommandEnvironment({ baseEnvironment = process.env, directory, expoToken, isUpdatePublish, isBuildCreate = false, platform = null }) {
   if (!directory) throw new Error("EAS command temporary directory is required.");
-  if (isBuildCreate && !["ios", "android"].includes(platform)) throw new Error("EAS build platform is required for app-config parity.");
-  const { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: _inheritedGoogleIosClientId, ...sanitizedBaseEnvironment } = baseEnvironment;
+  if ((isBuildCreate || isUpdatePublish) && !["ios", "android"].includes(platform)) throw new Error("EAS platform is required for app-config parity.");
+  const sanitizedBaseEnvironment = { ...baseEnvironment };
+  delete sanitizedBaseEnvironment.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
   return {
     ...sanitizedBaseEnvironment,
     EXPO_TOKEN: expoToken,
@@ -334,7 +385,12 @@ export function easCommandEnvironment({ baseEnvironment = process.env, directory
     APP_BUILD_MODE: "release",
     EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
     ...(platform === "ios" ? { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: PREVIEW_IDENTITY.googleIosClientId } : {}),
-    ...(isBuildCreate ? { EAS_BUILD: "true", EAS_BUILD_PLATFORM: platform } : {}),
+    // Fingerprint runtime policy must resolve app.config.ts under the same
+    // platform-specific native configuration for builds and OTA exports. In
+    // particular, the iOS Google Sign-In plugin is intentionally conditional
+    // on this context; omitting it during update export produces a different
+    // runtime from the already-delivered native binary.
+    ...((isBuildCreate || isUpdatePublish) ? { EAS_BUILD: "true", EAS_BUILD_PLATFORM: platform } : {}),
     CI: "1",
     // Expo, Metro, and the EAS CLI create temporary artifacts outside their
     // output directory. Scope every platform-specific temp variable to the
@@ -376,7 +432,10 @@ export function isExactEasObjectMissing(error, kind, remoteId) {
   if (kind !== "build" || !/^[0-9a-f-]{36}$/i.test(String(remoteId ?? ""))) return false;
   const output = [error?.stderr, error?.stdout, error?.message].filter((value) => typeof value === "string").join("\n");
   const escaped = String(remoteId).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`^Build with id ['\"]${escaped}['\"] does not exist\\.$`, "mi").test(output);
+  // runText deliberately collapses provider stderr into a bounded, redacted
+  // single-line envelope. Match the provider's exact sentence wherever it
+  // appears in that envelope while still requiring the exact requested ID.
+  return new RegExp(`(?:^|\\s)Build with id ['\"]${escaped}['\"] does not exist\\.(?:\\s|$)`, "i").test(output);
 }
 
 export function createExactCheckoutDirectory(workspaceRoot = runtimeRoot) {
@@ -405,7 +464,7 @@ export async function exactCheckout({ repository, token, sha }) {
   } catch (error) { await rm(directory, { recursive: true, force: true }); throw error; }
 }
 
-export async function exactChangeSet({ directory, repository, token, previousSha, targetSha }) {
+export async function exactChangeSet({ directory, token, previousSha, targetSha }) {
   assertExactSha(previousSha, "Previous SHA");
   assertExactSha(targetSha, "Target SHA");
   const auth = gitAuthEnvironment(token);
@@ -480,7 +539,8 @@ export async function nativeFingerprints(directory, { commandRunner = exec, expo
     const startedAt = Date.now();
     console.log(JSON.stringify({ event: "preview-release-fingerprint-started", platform, rssBytes: process.memoryUsage().rss }));
     const fingerprintCommand = `npx eas-cli@16.17.4 fingerprint:generate --build-profile preview --platform ${platform} --json --non-interactive`;
-    const { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: _inheritedGoogleIosClientId, ...sanitizedBaseEnvironment } = baseEnvironment;
+    const sanitizedBaseEnvironment = { ...baseEnvironment };
+    delete sanitizedBaseEnvironment.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
     const { stdout } = await commandRunner(command, ["eas-cli@16.17.4", "env:exec", "preview", fingerprintCommand, "--non-interactive"], {
       cwd,
       encoding: "utf8",

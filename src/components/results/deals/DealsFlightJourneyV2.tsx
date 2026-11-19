@@ -303,7 +303,7 @@ export function DealsFlightJourneyV2({
     (search.mode === "hotel-flight-car" || search.mode === "hotel-flight") &&
     !plan.hotel;
 
-  const commitRuntime = (next: DealsFlightRuntimeV2) => {
+  const commitRuntime = useCallback((next: DealsFlightRuntimeV2) => {
     const written = writeDealsFlightRuntimeV2(sessionStorage, next);
     if (!written.ok) {
       fail(new DealsFlightInventoryClientError(written.code, true));
@@ -311,7 +311,7 @@ export function DealsFlightJourneyV2({
     }
     setRuntime(written.value);
     return written.value;
-  };
+  }, [fail]);
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void (async () => {
@@ -603,7 +603,7 @@ export function DealsFlightJourneyV2({
     setStatus("success");
   };
 
-  const recoverExactFares = async (
+  const recoverExactFares = useCallback(async (
     message: string,
     event: "FLIGHT_OFFER_EXPIRED" | "FLIGHT_OFFER_UNAVAILABLE",
   ) => {
@@ -667,7 +667,7 @@ export function DealsFlightJourneyV2({
     } finally {
       coordinator.current.finish(pending);
     }
-  };
+  }, [runtime, fail, plan, search, cancel, commitRuntime, installPlan, request, current]);
 
   const confirmFlight = async () => {
     if (status === "loading") return;

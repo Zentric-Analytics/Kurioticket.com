@@ -584,7 +584,7 @@ export function CountryCurrencySelector({
         ? createPortal(
             <div
               ref={overlayRef}
-              className="fixed inset-0 z-[1000] flex items-end justify-center md:items-start md:px-4 md:pt-[max(64px,6vh)]"
+              className="fixed inset-0 z-[1200] flex items-end justify-center md:z-[1000] md:items-start md:px-4 md:pt-[max(64px,6vh)]"
               aria-hidden={false}
               data-selector-debug-overlay="true"
             >
@@ -604,7 +604,7 @@ export function CountryCurrencySelector({
                 aria-modal="true"
                 aria-labelledby={titleId}
                 aria-describedby={descriptionId}
-                className={`relative z-[1001] h-[100dvh] max-h-[100dvh] w-full max-w-full overflow-y-auto overscroll-contain rounded-none bg-white text-slate-900 shadow-2xl transition duration-200 ease-out [-webkit-overflow-scrolling:touch] md:flex md:h-auto md:max-h-[86vh] md:w-[min(720px,94vw)] md:flex-col md:rounded-3xl md:border md:border-slate-200 md:overflow-hidden ${
+                className={`relative z-[1201] h-[100dvh] max-h-[100dvh] w-full max-w-full overflow-y-auto overscroll-contain rounded-none bg-white text-slate-900 shadow-2xl transition duration-200 ease-out [-webkit-overflow-scrolling:touch] md:z-[1001] md:flex md:h-auto md:max-h-[86vh] md:w-[min(720px,94vw)] md:flex-col md:rounded-3xl md:border md:border-slate-200 md:overflow-hidden ${
                   dialogEntered
                     ? "translate-y-0 opacity-100"
                     : "translate-y-4 opacity-0 md:translate-y-0"

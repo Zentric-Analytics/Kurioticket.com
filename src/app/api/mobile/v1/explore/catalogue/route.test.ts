@@ -18,6 +18,8 @@ const catalogue = {
           country: "Nigeria",
           countryCode: "NG",
           primaryAirportCode: "LOS",
+          latitude: 6.5774,
+          longitude: 3.3212,
           airportCodes: ["LOS"],
           airportNames: ["Murtala Muhammed International Airport"],
           searchAliases: ["Lagos"],

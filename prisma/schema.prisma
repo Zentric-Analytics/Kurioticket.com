@@ -65,6 +65,8 @@ enum PreviewTesterStatus {
 enum SearchType {
   FLIGHT
   HOTEL
+  CAR
+  PACKAGE
 }
 
 enum SearchStatus {
@@ -125,6 +127,7 @@ enum ProviderStatus {
 enum RedirectType {
   FLIGHT
   HOTEL
+  CAR
 }
 
 enum AnalyticsEventType {
@@ -135,6 +138,28 @@ enum AnalyticsEventType {
   SIGNUP
   SUPPORT_TICKET
   PROVIDER_FAILURE
+}
+
+enum VisitorConsentPurpose {
+  ANALYTICS
+}
+
+enum VisitorConsentStatus {
+  GRANTED
+  WITHDRAWN
+}
+
+enum VisitorIdentityLinkSource {
+  SIGN_IN
+  SIGN_UP
+  ACCOUNT_API
+}
+
+enum JourneyEventType {
+  SEARCH_COMPLETED
+  RESULTS_VIEWED
+  OFFER_SELECTED
+  PROVIDER_HANDOFF_STARTED
 }
 
 enum LegalDocumentStatus {
@@ -194,6 +219,15 @@ enum MyTripSource {
   MIGRATED_LEGACY
 }
 
+enum FlightOperationalStatus {
+  SCHEDULED
+  DELAYED
+  DEPARTED
+  ARRIVED
+  CANCELLED
+  UNKNOWN
+}
+
 model User {
   id                       String                        @id @default(cuid())
   name                     String?
@@ -212,6 +246,7 @@ model User {
   sessions                 Session[]
   savedFlights             SavedFlight[]
   savedHotels              SavedHotel[]
+  savedCars                SavedCar[]
   savedSearches            SavedSearch[]
   recentSearches           RecentSearch[]
   searchHistory            SearchHistory[]
@@ -219,7 +254,10 @@ model User {
   supportTickets           SupportTicket[]
   redirectLogs             RedirectLog[]
   apiEvents                AnalyticsEvent[]
+  visitors                 Visitor[]                     @relation("VisitorCurrentUser")
+  visitorIdentityLinks     VisitorIdentityLink[]
   notifications            Notification[]
+  adminNotificationPreference AdminNotificationPreference?
   profile                  UserProfile?
   securitySettings         UserSecuritySettings?
   customizationPreferences UserCustomizationPreferences?
@@ -280,10 +318,24 @@ model AccountSession {
   locationLabel       String?
   user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   securityEvents      SecurityEvent[]
+  onlinePresence      OnlinePresenceSession[]
 
   @@index([userId, revokedAt, expiresAt])
   @@index([userId, lastSeenAt])
   @@index([expiresAt])
+}
+
+model OnlinePresenceSession {
+  environment      String
+  sourceId         String
+  platform         String
+  accountSessionId String?
+  lastSeenAt       DateTime
+  accountSession   AccountSession? @relation(fields: [accountSessionId], references: [id], onDelete: Cascade)
+
+  @@id([environment, sourceId])
+  @@index([environment, lastSeenAt])
+  @@index([accountSessionId])
 }
 
 model SecurityEvent {
@@ -487,6 +539,33 @@ model SavedHotel {
   @@index([createdAt])
 }
 
+model SavedCar {
+  id                String   @id @default(cuid())
+  userId            String
+  signature         String
+  provider          String
+  modelName         String
+  categoryLabel     String
+  pickupLocation    String
+  dropoffLocation   String
+  pickupDate        String
+  pickupTime        String
+  dropoffDate       String
+  dropoffTime       String
+  driverAge         String
+  totalPrice        Decimal  @db.Decimal(12, 2)
+  currency          String   @default("USD")
+  payload           Json
+  createdAt         DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, signature])
+  @@index([userId])
+  @@index([pickupLocation, dropoffLocation])
+  @@index([pickupDate, dropoffDate])
+  @@index([createdAt])
+}
+
 model SavedSearch {
   id          String       @id @default(cuid())
   userId      String
@@ -530,6 +609,8 @@ model RecentSearch {
 model SearchHistory {
   id          String       @id @default(cuid())
   userId      String?
+  visitorId   String?
+  requestId   String?      @unique
   type        SearchType
   origin      String?
   destination String?
@@ -541,8 +622,11 @@ model SearchHistory {
   status      SearchStatus @default(SUCCESS)
   createdAt   DateTime     @default(now())
   user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  visitor     Visitor?     @relation(fields: [visitorId], references: [id], onDelete: SetNull)
+  journeyEvents JourneyEvent[]
 
   @@index([userId])
+  @@index([visitorId])
   @@index([type])
   @@index([origin, destination])
   @@index([createdAt])
@@ -661,6 +745,7 @@ model SupportTicket {
   @@index([status])
   @@index([priority])
   @@index([createdAt])
+  @@index([updatedAt, id])
 }
 
 model SupportMessage {
@@ -677,7 +762,9 @@ model SupportMessage {
 
 model RedirectLog {
   id             String       @id @default(cuid())
+  handoffKey     String?      @unique
   userId         String?
+  visitorId      String?
   type           RedirectType
   provider       String
   route          String?
@@ -689,8 +776,11 @@ model RedirectLog {
   metadata       Json?
   createdAt      DateTime     @default(now())
   user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  visitor        Visitor?     @relation(fields: [visitorId], references: [id], onDelete: SetNull)
+  journeyEvents  JourneyEvent[]
 
   @@index([userId])
+  @@index([visitorId])
   @@index([type])
   @@index([provider])
   @@index([createdAt])
@@ -751,6 +841,15 @@ model AdminAuditLog {
   @@index([createdAt])
 }
 
+model AdminNotificationPreference {
+  id                       String   @id @default(cuid())
+  adminUserId              String   @unique
+  showAcknowledgedWarnings Boolean  @default(true)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  user                     User     @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+}
+
 model Notification {
   id         String              @id @default(cuid())
   userId     String
@@ -762,12 +861,15 @@ model Notification {
   eventKey   String?             @unique
   actionPath String?
   readAt     DateTime?
+  // Inbox tombstone. Keep the row/eventKey so canonical events cannot be recreated after dismissal.
+  deletedAt  DateTime?
   metadata   Json?
   createdAt  DateTime            @default(now())
   user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, readAt, createdAt(sort: Desc)])
+  @@index([userId, deletedAt, createdAt(sort: Desc)])
   @@index([type])
   @@index([readAt])
   @@index([createdAt])
@@ -809,6 +911,7 @@ model MyTrip {
   providerManageUrl        String?
   source                   MyTripSource
   partnerConversionId      String?
+  partnerConfirmationOccurredAt DateTime?
   origin                   String?
   destination              String
   departureDate            DateTime
@@ -819,6 +922,8 @@ model MyTrip {
   createdAt                DateTime     @default(now())
   updatedAt                DateTime     @updatedAt
   user                     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flightStatusSnapshot     FlightStatusSnapshot?
+  confirmationDeliveries   PartnerConfirmationDelivery[]
 
   @@unique([userId, providerName, providerConfirmationCode])
   @@unique([providerName, partnerConversionId])
@@ -826,6 +931,52 @@ model MyTrip {
   @@index([userId, status, departureDate])
   @@index([providerConfirmationCode])
   @@index([providerTripId])
+}
+
+// Append-only receipts for authenticated callback attempts. This is not a booking
+// ledger: an accepted callback can be an idempotent retry of an existing My Trip.
+enum PartnerConfirmationDeliveryOutcome {
+  ACCEPTED
+  REJECTED
+}
+
+model PartnerConfirmationDelivery {
+  id              String                             @id @default(cuid())
+  providerName    String
+  myTripId        String?
+  outcome         PartnerConfirmationDeliveryOutcome
+  reason          String
+  eventOccurredAt DateTime?
+  reportedStatus  MyTripStatus?
+  receivedAt      DateTime                           @default(now())
+  myTrip          MyTrip?                            @relation(fields: [myTripId], references: [id], onDelete: SetNull)
+
+  @@index([providerName, receivedAt])
+  @@index([outcome, receivedAt])
+  @@index([myTripId, receivedAt])
+}
+
+model FlightStatusSnapshot {
+  id                   String                  @id @default(cuid())
+  myTripId             String                  @unique
+  status               FlightOperationalStatus
+  flightNumber         String
+  carrierCode          String
+  originAirport        String
+  destinationAirport   String
+  scheduledDepartureAt DateTime
+  scheduledArrivalAt   DateTime?
+  estimatedDepartureAt DateTime?
+  actualDepartureAt    DateTime?
+  estimatedArrivalAt   DateTime?
+  actualArrivalAt      DateTime?
+  observedAt           DateTime
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  myTrip               MyTrip                  @relation(fields: [myTripId], references: [id], onDelete: Cascade)
+
+  @@index([status, scheduledDepartureAt])
+  @@index([observedAt])
 }
 
 model LegalDocument {
@@ -841,6 +992,100 @@ model LegalDocument {
 
   @@index([status])
   @@index([lastUpdatedAt])
+}
+
+enum CmsContentType {
+  HOMEPAGE_DESTINATION
+  FLIGHT_ROUTE
+  HOTEL_DESTINATION
+  FAQ
+}
+
+enum CmsContentStatus {
+  DRAFT
+  PUBLISHED
+  HIDDEN
+  ARCHIVED
+}
+
+enum CmsContentRevisionAction {
+  CREATED
+  UPDATED
+  PUBLISHED
+  HIDDEN
+  ARCHIVED
+  RESTORED
+  ORDER_NORMALIZED
+}
+
+model CmsContentScope {
+  id                    String         @id @default(cuid())
+  type                  CmsContentType
+  market                String
+  locale                String
+  version               Int            @default(1)
+  legacyFallbackRetiredAt DateTime?
+  legacyFallbackRetiredByAdminUserId String?
+  activatedAt           DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  @@unique([type, market, locale])
+  @@index([updatedAt])
+}
+
+model CmsContentItem {
+  id                   String           @id @default(cuid())
+  type                 CmsContentType
+  key                  String
+  status               CmsContentStatus @default(DRAFT)
+  market               String           @default("GLOBAL")
+  locale               String           @default("en")
+  sortOrder            Int              @default(0)
+  publishedMarket      String?
+  publishedLocale      String?
+  publishedSortOrder   Int?
+  draftPayload         Json
+  publishedPayload     Json?
+  version              Int              @default(1)
+  publishedVersion     Int?
+  createdByAdminUserId String?
+  updatedByAdminUserId String?
+  publishedByAdminUserId String?
+  publishedAt          DateTime?
+  archivedAt           DateTime?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  revisions            CmsContentRevision[]
+
+  @@unique([type, key, market, locale])
+  @@unique([type, key, publishedMarket, publishedLocale])
+  @@index([type, status, market, locale, sortOrder])
+  @@index([type, publishedMarket, publishedLocale, publishedSortOrder])
+  @@index([updatedAt])
+}
+
+model CmsContentRevision {
+  id           String                   @id @default(cuid())
+  contentItemId String
+  version      Int
+  action       CmsContentRevisionAction
+  status       CmsContentStatus
+  market       String
+  locale       String
+  sortOrder    Int
+  publishedMarket String?
+  publishedLocale String?
+  publishedSortOrder Int?
+  draftPayload Json
+  publishedPayload Json?
+  actorUserId  String?
+  actorEmail   String
+  createdAt    DateTime                 @default(now())
+  contentItem  CmsContentItem           @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@unique([contentItemId, version])
+  @@index([contentItemId, createdAt(sort: Desc)])
+  @@index([action, createdAt])
 }
 
 model FeatureFlag {
@@ -905,16 +1150,107 @@ model HomepageFareSnapshot {
   @@index([searchedAt])
 }
 
+/// A privacy-safe, first-party identity for a consenting anonymous visitor.
+/// The browser receives only a random opaque token; this table retains its hash.
+model Visitor {
+  id                 String                @id @default(cuid())
+  tokenHash          String                @unique
+  currentUserId      String?
+  consentStatus      VisitorConsentStatus  @default(GRANTED)
+  firstSeenAt        DateTime              @default(now())
+  lastSeenAt         DateTime              @default(now())
+  trackingDisabledAt DateTime?
+  // Optional, consent-gated foreground website heartbeat; separate from general activity and native traffic.
+  websitePresenceAt DateTime?
+  websitePresenceEnvironment String?
+  currentUser        User?                 @relation("VisitorCurrentUser", fields: [currentUserId], references: [id], onDelete: SetNull)
+  consentRecords     VisitorConsent[]
+  identityLinks      VisitorIdentityLink[]
+  searchHistory      SearchHistory[]
+  analyticsEvents    AnalyticsEvent[]
+  journeys           SearchJourney[]
+  redirectLogs       RedirectLog[]
+
+  @@index([currentUserId, lastSeenAt])
+  @@index([consentStatus, lastSeenAt])
+  @@index([websitePresenceEnvironment, websitePresenceAt])
+}
+
+/// A short-lived, consented visitor session that groups search-funnel activity.
+model SearchJourney {
+  id             String         @id @default(cuid())
+  visitorId      String
+  startedAt      DateTime       @default(now())
+  lastActivityAt DateTime       @default(now())
+  visitor        Visitor        @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  events         JourneyEvent[]
+
+  @@index([visitorId, lastActivityAt(sort: Desc)])
+  @@index([lastActivityAt])
+}
+
+/// A deduplicated activity record in a consenting visitor's search journey.
+model JourneyEvent {
+  id              String           @id @default(cuid())
+  journeyId       String
+  type            JourneyEventType
+  eventKey        String           @unique
+  product         SearchType?
+  provider        String?
+  searchHistoryId String?
+  redirectLogId   String?          @unique
+  metadata        Json?
+  createdAt       DateTime         @default(now())
+  journey         SearchJourney    @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  searchHistory   SearchHistory?   @relation(fields: [searchHistoryId], references: [id], onDelete: SetNull)
+  redirectLog     RedirectLog?     @relation(fields: [redirectLogId], references: [id], onDelete: SetNull)
+
+  @@index([journeyId, createdAt])
+  @@index([type, createdAt])
+  @@index([searchHistoryId])
+}
+
+/// Append-only evidence of analytics consent changes for an anonymous visitor.
+model VisitorConsent {
+  id            String                @id @default(cuid())
+  visitorId     String
+  purpose       VisitorConsentPurpose
+  status        VisitorConsentStatus
+  policyVersion String?
+  recordedAt    DateTime              @default(now())
+  visitor       Visitor               @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+
+  @@index([visitorId, recordedAt])
+  @@index([purpose, status, recordedAt])
+}
+
+/// Records a deterministic link without treating browser/device fingerprints as identity.
+model VisitorIdentityLink {
+  id        String                    @id @default(cuid())
+  visitorId String
+  userId    String
+  source    VisitorIdentityLinkSource
+  linkedAt  DateTime                  @default(now())
+  visitor   Visitor                   @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  user      User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([visitorId, userId])
+  @@index([userId, linkedAt])
+}
+
 model AnalyticsEvent {
   id        String             @id @default(cuid())
   userId    String?
+  visitorId String?
   type      AnalyticsEventType
   name      String
   metadata  Json?
   createdAt DateTime           @default(now())
   user      User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  visitor   Visitor?           @relation(fields: [visitorId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([visitorId])
   @@index([type])
   @@index([name])
   @@index([createdAt])
@@ -948,4 +1284,18 @@ model FlightResultCache {
 
   @@index([expiresAt])
   @@index([searchKey, itineraryKey, expiresAt])
+}
+
+model ProviderResultCache {
+  cacheKey         String   @id
+  vertical         String
+  resultId         String
+  normalizedResult Json
+  searchContext    Json?
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([vertical, resultId])
+  @@index([expiresAt])
 }

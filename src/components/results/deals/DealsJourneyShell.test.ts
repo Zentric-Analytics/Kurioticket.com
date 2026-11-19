@@ -73,7 +73,7 @@ test("guided shell uses breadcrumbs as primary navigation without changing share
   );
   assert.doesNotMatch(
     source,
-    /packages\.guided\.back|ArrowLeft|getPreviousDealsJourneyStage|backHref/,
+    /deals\.guided\.back|ArrowLeft|getPreviousDealsJourneyStage|backHref/,
   );
   assert.match(source, /data-deals-guided-journey-foundation/);
   assert.equal((source.match(/<h1/g) ?? []).length, 1);

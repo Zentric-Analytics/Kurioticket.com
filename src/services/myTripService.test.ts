@@ -14,7 +14,8 @@ const originalNodeEnv = process.env.NODE_ENV;
 
 afterEach(() => {
   __myTripServiceTest.setPrismaClientForTesting(null);
-  process.env.NODE_ENV = originalNodeEnv;
+  if (originalNodeEnv === undefined) Reflect.deleteProperty(process.env, "NODE_ENV");
+  else Reflect.set(process.env, "NODE_ENV", originalNodeEnv);
 });
 
 test("listing is user-scoped, status-filtered, and serializes only safe provider actions", async () => {
@@ -30,6 +31,8 @@ test("listing is user-scoped, status-filtered, and serializes only safe provider
   assert.deepEqual(upcoming.trips.map((trip) => trip.id), ["a-safe"]);
   assert.equal(upcoming.trips[0].providerAction?.external, true);
   assert.equal(upcoming.trips[0].providerAction?.url, "https://provider-a.test/manage");
+  assert.equal(upcoming.trips[0].providerConfirmed, false);
+  assert.equal(upcoming.trips[0].providerConfirmedAt, null);
   assert.deepEqual(past.trips.map((trip) => trip.id), ["a-legacy"]);
   assert.equal(past.trips[0].providerAction, null);
   assert.equal([...upcoming.trips, ...past.trips].some((trip) => trip.id === "b-private"), false);
@@ -39,10 +42,12 @@ test("trusted ingestion creates and retries idempotently for the same provider, 
   const db = memoryClient([]); __myTripServiceTest.setPrismaClientForTesting(db.client);
   const input = confirmation({ userId: "user-a", providerName: "Provider A", partnerConversionId: "conversion-x" });
   const first = await upsertPartnerConfirmedMyTrip(input);
-  const retry = await upsertPartnerConfirmedMyTrip({ ...input, destination: "SFO" });
+  const retry = await upsertPartnerConfirmedMyTrip({ ...input, destination: "SFO", confirmationOccurredAt: new Date("2026-09-02T00:00:00Z") });
   assert.equal(first.id, retry.id);
   assert.equal(db.records.length, 1);
   assert.equal(retry.destination, "SFO");
+  assert.equal(retry.providerConfirmed, true);
+  assert.equal(retry.providerConfirmedAt, "2026-09-02T00:00:00.000Z");
 });
 
 test("a composite collision from a different user fails closed without updating the winner", async () => {
@@ -74,6 +79,58 @@ test("a composite collision from the same user updates the canonical winning tri
   assert.equal(db.updateCalls, 1);
   assert.equal(db.records.length, 1);
   assert.equal(db.records[0].userId, "user-a");
+});
+
+
+test("signed partner confirmation upgrades an imported canonical trip to verified provenance", async () => {
+  const winner = record({
+    id: "canonical-trip",
+    userId: "user-a",
+    source: "CONFIRMATION_IMPORT",
+    partnerConversionId: "conversion-x",
+    partnerConfirmationOccurredAt: new Date("2026-08-31T00:00:00Z"),
+  });
+  const db = memoryClient([winner]);
+  db.collideNextCreate();
+  __myTripServiceTest.setPrismaClientForTesting(db.client);
+
+  const result = await upsertPartnerConfirmedMyTrip(confirmation({
+    source: "PARTNER_CONFIRMATION",
+    confirmationOccurredAt: new Date("2026-09-02T00:00:00Z"),
+  }));
+  assert.equal(result.providerConfirmed, true);
+  assert.equal(result.providerConfirmedAt, "2026-09-02T00:00:00.000Z");
+  assert.equal(db.records[0].source, "PARTNER_CONFIRMATION");
+});
+
+test("an older or equal provider event cannot overwrite a newer canonical trip", async () => {
+  const winner = record({
+    userId: "user-a",
+    status: "CANCELLED",
+    destination: "LHR",
+    partnerConversionId: "conversion-x",
+    partnerConfirmationOccurredAt: new Date("2026-09-03T00:00:00Z"),
+  });
+  const db = memoryClient([winner]);
+  __myTripServiceTest.setPrismaClientForTesting(db.client);
+
+  const result = await upsertPartnerConfirmedMyTrip(confirmation({
+    status: "UPCOMING",
+    destination: "SFO",
+    confirmationOccurredAt: new Date("2026-09-02T00:00:00Z"),
+  }));
+  assert.equal(result.status, "cancelled");
+  assert.equal(result.destination, "LHR");
+  assert.equal(db.updateCalls, 0);
+
+  const equalResult = await upsertPartnerConfirmedMyTrip(confirmation({
+    status: "UPCOMING",
+    destination: "ABV",
+    confirmationOccurredAt: new Date("2026-09-03T00:00:00Z"),
+  }));
+  assert.equal(equalResult.status, "cancelled");
+  assert.equal(equalResult.destination, "LHR");
+  assert.equal(db.updateCalls, 0);
 });
 
 test("ordinary ingestion creates directly without entering collision recovery", async () => {
@@ -115,7 +172,7 @@ test("trusted ingestion fails closed on a cross-user provider conversion mismatc
 
 test("trusted ingestion rejects unsafe external destinations", async () => {
   const db = memoryClient([]); __myTripServiceTest.setPrismaClientForTesting(db.client);
-  process.env.NODE_ENV = "production";
+  Reflect.set(process.env, "NODE_ENV", "production");
   for (const providerManageUrl of ["/dashboard/trips", "javascript:alert(1)", "data:text/html,no", "http://provider.test/manage", "https://kurioticket.com/dashboard/trips", "not a url"]) {
     await assert.rejects(upsertPartnerConfirmedMyTrip(confirmation({ providerManageUrl, partnerConversionId: providerManageUrl })));
   }
@@ -130,11 +187,11 @@ test("there is no public MyTrip creation route", () => {
 });
 
 function confirmation(overrides: Record<string, unknown> = {}) {
-  return { userId: "user-a", partnerConversionId: "conversion-x", providerName: "Provider A", providerConfirmationCode: "ABC123", providerManageUrl: "https://provider-a.test/manage", tripType: "FLIGHT" as const, status: "UPCOMING" as const, origin: "LAX", destination: "JFK", departureDate: new Date("2026-09-01T00:00:00Z"), returnDate: null, travelerCount: 1, currency: "USD", totalAmount: 250, ...overrides };
+  return { userId: "user-a", partnerConversionId: "conversion-x", providerName: "Provider A", providerConfirmationCode: "ABC123", providerManageUrl: "https://provider-a.test/manage", tripType: "FLIGHT" as const, status: "UPCOMING" as const, origin: "LAX", destination: "JFK", departureDate: new Date("2026-09-01T00:00:00Z"), returnDate: null, travelerCount: 1, currency: "USD", totalAmount: 250, confirmationOccurredAt: new Date("2026-09-01T00:00:00Z"), ...overrides };
 }
 
 function record(overrides: Record<string, unknown> = {}) {
-  return { id: "trip-1", userId: "user-a", tripType: "FLIGHT" as const, status: "UPCOMING" as const, providerName: "Provider A", providerConfirmationCode: "ABC123", partnerConversionId: null as string | null, origin: "LAX", destination: "JFK", departureDate: new Date("2026-09-01T00:00:00Z"), returnDate: null, travelerCount: 1, currency: "USD", totalAmount: 250, providerManageUrl: null as string | null, ...overrides };
+  return { id: "trip-1", userId: "user-a", tripType: "FLIGHT" as const, status: "UPCOMING" as const, providerName: "Provider A", providerConfirmationCode: "ABC123", source: "MIGRATED_LEGACY" as const, partnerConversionId: null as string | null, partnerConfirmationOccurredAt: null as Date | null, origin: "LAX", destination: "JFK", departureDate: new Date("2026-09-01T00:00:00Z"), returnDate: null, travelerCount: 1, currency: "USD", totalAmount: 250, providerManageUrl: null as string | null, ...overrides };
 }
 
 function memoryClient(seed: TripRecord[]) {
@@ -162,11 +219,13 @@ function memoryClient(seed: TripRecord[]) {
         }
         const created = record({ ...data, id: `trip-${records.length + 1}` }); records.push(created); return created;
       },
-      async update({ where, data }: any) {
+      async updateMany({ where, data }: any) {
         updateCalls += 1;
         const existing = records.find((item) => item.id === where.id);
-        if (!existing) throw new Error("Missing test MyTrip update target.");
-        Object.assign(existing, data); return existing;
+        const allowsUpdate = existing && (existing.partnerConfirmationOccurredAt === null
+          || existing.partnerConfirmationOccurredAt < where.OR?.[1]?.partnerConfirmationOccurredAt?.lt);
+        if (!allowsUpdate) return { count: 0 };
+        Object.assign(existing, data); return { count: 1 };
       },
     },
     async $transaction(queries: Promise<unknown>[]) { return Promise.all(queries); },

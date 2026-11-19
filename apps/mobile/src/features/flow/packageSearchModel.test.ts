@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyPackageDates, applyPackageDestination, createPackageSearch, includedProducts, packageModes, transitionPackageMode, updatePackageParty } from "./packageSearchModel";
+import { applyPackageDates, applyPackageDestination, createPackageSearch, includedProducts, packageApiPayload, packageModes, packageRouteParams, swapPackageAirports, transitionPackageMode, updatePackageParty, validatePackageSearch } from "./packageSearchModel";
 
 test("package modes keep the exact customer order and internal mapping", () => {
   assert.deepEqual(packageModes, [
@@ -15,12 +15,71 @@ test("fresh package searches start with one traveler and one room", () => {
   const search = createPackageSearch();
 
   assert.equal(search.mode, "hotel-flight");
+  assert.equal(search.origin, "");
+  assert.equal(search.originCode, "");
   assert.equal(search.adults, 1);
   assert.equal(search.children, 0);
   assert.equal(search.infants, 0);
   assert.equal(search.rooms, 1);
   assert.equal(search.petFriendly, false);
   assert.equal(search.adults + search.children + search.infants, 1);
+  assert.equal(search.carPickupTime, "10:00");
+  assert.equal(search.carReturnTime, "10:00");
+});
+
+test("package airport swap keeps text and code pairs and updates linked Car pickup", () => {
+  const search = {
+    ...createPackageSearch(),
+    origin: "Los Angeles (LAX)",
+    originCode: "LAX",
+    destination: "New York (JFK)",
+    destinationCode: "JFK",
+    carPickupLocation: "New York (JFK)",
+  };
+
+  const swapped = swapPackageAirports(search);
+
+  assert.deepEqual(
+    { origin: swapped.origin, originCode: swapped.originCode },
+    { origin: "New York (JFK)", originCode: "JFK" },
+  );
+  assert.deepEqual(
+    { destination: swapped.destination, destinationCode: swapped.destinationCode },
+    { destination: "Los Angeles (LAX)", destinationCode: "LAX" },
+  );
+  assert.equal(swapped.carPickupLocation, "Los Angeles (LAX)");
+});
+
+test("package airport swap preserves a custom unlinked Car pickup", () => {
+  const swapped = swapPackageAirports({
+    ...createPackageSearch(),
+    origin: "Los Angeles (LAX)",
+    originCode: "LAX",
+    destination: "New York (JFK)",
+    destinationCode: "JFK",
+    carPickupLinked: false,
+    carPickupLocation: "Custom downtown pickup",
+  });
+
+  assert.equal(swapped.carPickupLocation, "Custom downtown pickup");
+});
+
+test("package airport swap exchanges an origin with an empty destination", () => {
+  const swapped = swapPackageAirports({
+    ...createPackageSearch(),
+    origin: "Los Angeles (LAX)",
+    originCode: "LAX",
+  });
+
+  assert.deepEqual(
+    {
+      origin: swapped.origin,
+      originCode: swapped.originCode,
+      destination: swapped.destination,
+      destinationCode: swapped.destinationCode,
+    },
+    { origin: "", originCode: "", destination: "Los Angeles (LAX)", destinationCode: "LAX" },
+  );
 });
 
 test("package adults can be increased by the user but cannot fall below one", () => {
@@ -65,4 +124,19 @@ test("package party limits coordinate adults, children, infants, and rooms", () 
   search = transitionPackageMode(search, "hotel-car");
   search = updatePackageParty(search, { adults: 12, children: 3, infants: 0 });
   assert.ok(search.adults + search.children <= 12);
+});
+
+test("all four complete package modes serialize every included product", () => {
+  const base = { ...createPackageSearch(), origin: "Lagos (LOS)", originCode: "LOS", destination: "London (LHR)", destinationCode: "LHR", startDate: "2030-04-01", endDate: "2030-04-04", carPickupLocation: "London (LHR)", carPickupDate: "2030-04-01", carReturnDate: "2030-04-04" };
+  for (const mode of packageModes.map((item) => item.value)) {
+    const search = transitionPackageMode(base, mode);
+    assert.equal(validatePackageSearch(search, "2030-01-01"), true, mode);
+    const payload = packageApiPayload(search);
+    assert.equal(payload.mode, mode);
+    assert.equal(packageRouteParams(search).mode, mode);
+    const included = includedProducts(mode);
+    if (included.flight) assert.equal(payload.flightOriginCode, "LOS");
+    if (included.hotel) assert.equal(payload.hotelRooms, 1);
+    if (included.car) assert.equal(payload.carPickupLocation, "London (LHR)");
+  }
 });

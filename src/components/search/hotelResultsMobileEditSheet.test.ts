@@ -1,0 +1,113 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
+const searchBar = read("./HotelSearchBar.tsx");
+const sheet = read("./MobileResultsEditSheet.tsx");
+const results = read("../results/HotelResultsClient.tsx");
+
+test("Hotel results editor keeps three canonical independent field cards", () => {
+  assert.match(searchBar, /compact && !mobileResultsSheet \? \(/);
+  assert.match(searchBar, /data-hotel-results-edit-fields=/);
+  assert.match(searchBar, /className=\{mobileResultsSheet \? "flex flex-col gap-2" : "contents"\}/);
+  assert.equal(searchBar.match(/data-hotel-mobile-edit-row=/g)?.length, 3);
+  assert.equal(searchBar.match(/min-h-16 rounded-\[12px\] border border-\[#D8E1EC\] bg-white px-4 py-2/g)?.length, 3);
+  assert.doesNotMatch(searchBar, /mobileResultsEditGroupClass/);
+
+  const fieldsStart = searchBar.indexOf("data-hotel-results-edit-fields");
+  const destination = searchBar.indexOf("ref={destinationWrapperRef}", fieldsStart);
+  const dates = searchBar.indexOf("ref={datesWrapperRef}", destination);
+  const guests = searchBar.indexOf("ref={guestsRoomsWrapperRef}", dates);
+  const fieldsEnd = searchBar.indexOf("data-hotel-mobile-edit-search-action", guests);
+  assert.ok(fieldsStart < destination && destination < dates && dates < guests && guests < fieldsEnd);
+  assert.doesNotMatch(searchBar.slice(fieldsStart, fieldsEnd), /type="submit"/);
+  assert.match(searchBar.slice(fieldsEnd), /type="submit"/);
+});
+
+test("Hotel Results keeps page summaries mounted but omits the sheet summary", () => {
+  assert.doesNotMatch(results, /mobileHotelSearchOpen && "hidden"/);
+  assert.match(results, /aria-hidden=\{mobileHotelSearchOpen \? true : undefined\}/);
+  assert.match(results, /inert=\{mobileHotelSearchOpen \? true : undefined\}/);
+  assert.match(results, /mobileHotelSearchOpen && "pointer-events-none"/);
+  assert.doesNotMatch(results, /!guided && !mobileHotelSearchOpen \? \(/);
+  assert.match(searchBar, /mobileLayout === "controls"/);
+
+  const summary = searchBar.indexOf("{compact && !mobileResultsSheet ? (");
+  const form = searchBar.indexOf("<form", summary);
+  assert.ok(summary >= 0 && form > summary);
+  assert.doesNotMatch(searchBar.slice(form), /\{mobileSearchSummary\}/);
+});
+
+test("hotel editing retains its navbar launcher and floating bottom sheet", () => {
+  assert.doesNotMatch(results, /mobileResultsSearch=/);
+  assert.doesNotMatch(results, /placement="top"/);
+  assert.match(results, /createPortal\(renderMobileHotelNavSearch\(\), mobileNavSearchTarget\)/);
+  assert.match(results, /backdropClassName=\{mobileStyles.editBackdrop\}[\s\S]*smoothMotion[\s\S]*isolatedBackdrop/);
+  assert.match(results, /aria-expanded=\{mobileHotelSearchOpen\}/);
+});
+
+test("Hotel results cards place their icons and approved affordances in value rows", () => {
+  const destination = searchBar.slice(searchBar.indexOf("ref={destinationWrapperRef}"), searchBar.indexOf("ref={datesWrapperRef}"));
+  const dates = searchBar.slice(searchBar.indexOf("ref={datesWrapperRef}"), searchBar.indexOf("ref={guestsRoomsWrapperRef}"));
+  const guests = searchBar.slice(searchBar.indexOf("ref={guestsRoomsWrapperRef}"), searchBar.indexOf("data-hotel-mobile-edit-search-action"));
+
+  assert.match(destination, /data-hotel-destination-value=[\s\S]*?<MapPin/);
+  assert.doesNotMatch(destination, /ChevronRight/);
+  assert.match(destination, /data-hotel-mobile-edit-chevron=[\s\S]*?"false"/);
+  assert.match(dates, /grid-cols-\[20px_minmax\(0,1fr\)_16px\][\s\S]*?<Calendar[\s\S]*?<ChevronRight/);
+  assert.match(guests, /grid-cols-\[20px_minmax\(0,1fr\)_16px\][\s\S]*?<UserRound[\s\S]*?<ChevronRight/);
+  assert.equal((searchBar.match(/<ChevronRight aria-hidden="true" className=/g) ?? []).length, 2);
+});
+
+test("Hotel results sheet uses the Cars bottom-sheet surface and motion contract", () => {
+  assert.match(results, /browserCanvasColor="#ffffff"/);
+  assert.match(results, /className=\{mobileStyles.editSheet\}/);
+  assert.match(read("../results/HotelResultsMobile.module.css"), /padding: 10px 12px max\(20px, env\(safe-area-inset-bottom\)\)/);
+  assert.match(results, /closing=\{mobileHotelSearchClosing\}/);
+  assert.match(results, /onCloseAnimationComplete=\{finishMobileHotelSearchClose\}/);
+  assert.doesNotMatch(results, /mobileHotelSearchCloseTimerRef|mobileHotelSearchCloseMotionMs/);
+  assert.match(results, /prefers-reduced-motion: reduce/);
+  assert.match(results, /backdropClassName=\{mobileStyles.editBackdrop\}/);
+  assert.match(read("../results/HotelResultsMobile.module.css"), /\.editSheet \{[^}]*margin: 0 12px 12px/);
+  assert.doesNotMatch(results, /placement="top"/);
+  assert.match(sheet, /placement === "top"/);
+});
+
+test("Hotel results launcher avoids touch flash while retaining keyboard focus", () => {
+  assert.match(searchBar, /\[-webkit-tap-highlight-color:transparent\]/);
+  assert.match(searchBar, /focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/35/);
+  assert.doesNotMatch(searchBar, /group-active:bg-slate-200/);
+  assert.ok((searchBar.match(/h-4 w-4 shrink-0 text-slate-700/g)?.length ?? 0) >= 3);
+});
+
+test("the shared sheet exclusively owns locking while nested Hotel pickers are open", () => {
+  assert.match(results, /nestedLayerOpen=\{mobileHotelNestedLayerOpen\}/);
+  assert.match(
+    results,
+    /onMobileNestedLayerChange=\{setMobileHotelNestedLayerOpen\}/,
+  );
+  assert.match(
+    searchBar,
+    /destinationMobilePickerOpen \|\| datesOpen \|\| guestsRoomsOpen/,
+  );
+  assert.doesNotMatch(results, /mobileHotelSearchScrollLockRef/);
+  assert.equal(
+    results.match(/acquireMobileResultsScrollLock\(/g)?.length,
+    2,
+    "the independent mobile Filters drawer and desktop compact panel own Results-level locking",
+  );
+});
+
+test("submitting a Hotel results edit closes the sheet before navigation", () => {
+  const close = searchBar.indexOf("if (mobileLayout === \"drawer\")");
+  const navigation = searchBar.indexOf("router.push(nextUrl)", close);
+  assert.ok(close !== -1 && navigation > close);
+  assert.match(searchBar.slice(close, navigation), /closeMobileSearchPanel\(\)/);
+});
+
+test("results edit sheet retains accessible neutral focus handling", () => {
+  assert.match(sheet, /dialogRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(sheet, /role="dialog"[\s\S]*?tabIndex=\{-1\}/);
+  assert.doesNotMatch(sheet, /closeRef\.current\?\.focus/);
+});

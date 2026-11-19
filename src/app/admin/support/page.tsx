@@ -1,54 +1,169 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
-import { AdminDataTable, AdminEmptyState, AdminPageShell, AdminStatusBadge } from "@/components/admin/AdminPageShell";
-import { formatDateTime } from "@/lib/admin-data";
-import { withOptionalDb } from "@/lib/prisma";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import { AdminSupportToolbar } from "@/components/admin/AdminSupportToolbar";
+import { supportTicketDetailHref } from "@/lib/adminSupportInboxNavigation";
+import { resolveAdminQueueWindow } from "@/lib/adminQueueDateRange";
+import type { AdminSupportPriority, AdminSupportStatus } from "@/services/adminOperationalReadContract";
+import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const metadata = { title: "Admin Support" };
 
-export default async function AdminSupportPage() {
-  const tickets = await withOptionalDb(
-    (db) => db.supportTicket.findMany({ orderBy: { createdAt: "desc" }, take: 100, include: { user: { select: { email: true, name: true } } } }),
-    [],
-  );
-  const deletionRequests = await withOptionalDb(
-    (db) => db.accountDeletionRequest.findMany({
-      where: { supportTicketId: { in: tickets.map((ticket) => ticket.id) } },
-      select: { id: true, supportTicketId: true },
-    }),
-    [],
-  );
-  const deletionRequestByTicketId = new Map(deletionRequests.map((request) => [request.supportTicketId, request.id]));
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+type Query = Record<string, string | string[] | undefined>;
+
+const statusStyle: Record<AdminSupportStatus, { label: string; dot: string; text: string }> = {
+  OPEN: { label: "Open", dot: "bg-amber-400", text: "text-[#6B4A10]" },
+  WAITING_ON_TEAM: { label: "Awaiting team", dot: "bg-orange-400", text: "text-[#92400E]" },
+  WAITING_ON_USER: { label: "Awaiting customer", dot: "bg-[#004BB8]", text: "text-[#004BB8]" },
+  RESOLVED: { label: "Resolved", dot: "bg-emerald-500", text: "text-emerald-700" },
+  CLOSED: { label: "Closed", dot: "bg-slate-400", text: "text-[#64748B]" },
+};
+
+function one(value: string | string[] | undefined) {
+  return typeof value === "string" ? value : "";
+}
+
+function scopedParams(raw: Query) {
+  const params = new URLSearchParams();
+  for (const key of ["status", "priority", "category", "q", "from", "to", "limit"] as const) {
+    const value = one(raw[key]);
+    if (value) params.set(key, value);
+  }
+  return params;
+}
+
+function cursorHref(raw: Query, cursor: string) {
+  const params = scopedParams(raw);
+  params.set("cursor", cursor);
+  params.set("limit", one(raw.limit) || "50");
+  return "/admin/support?" + params.toString();
+}
+
+function ticketHref(id: string, params: URLSearchParams) {
+  return supportTicketDetailHref(id, params);
+}
+
+function priorityStyle(priority: AdminSupportPriority) {
+  if (priority === "URGENT") return "text-rose-700";
+  if (priority === "HIGH") return "text-amber-700";
+  return "text-[#475569]";
+}
+
+export default async function AdminSupportPage({ searchParams }: { searchParams: SearchParams }) {
+  const raw = await searchParams;
+  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) });
+  const applied = { ...raw, from: window.from || undefined, to: window.to || undefined };
+  const params = scopedParams(applied);
+  // Forward the continuation cursor only to the ticket read. Status tabs and
+  // filter submissions use scopedParams without cursor, so they start at page one.
+  if (one(raw.cursor)) params.set("cursor", one(raw.cursor));
+  if (!params.has("limit")) params.set("limit", "50");
+  // Keep the current activity-based ticket ordering and cursor contract unchanged.
+  const result = await adminOperationalReads.support.list(params);
+  const toolbarParams = scopedParams(applied);
+  toolbarParams.set("range", window.range);
+  const pageHref = "/admin/support?" + toolbarParams.toString();
 
   return (
-    <AdminPageShell title="Support" description="Support ticket management for Kurioticket users and guests.">
-      {tickets.length === 0 ? (
-        <AdminEmptyState title="No support tickets" message="Support tickets will appear here when real users or guests submit support requests." />
-      ) : (
-        <AdminDataTable
-          columns={["Subject", "Category", "User / email", "Status", "Priority", "Created", "Action"]}
-          rows={tickets.map((ticket) => ({
-            id: ticket.id,
-            cells: [
-              <span key="subject" className="font-black text-slate-950">{ticket.subject}</span>,
-              ticket.category,
-              ticket.user?.email || ticket.email,
-              <AdminStatusBadge key="status" tone={ticket.status === "OPEN" ? "warn" : ticket.status === "RESOLVED" || ticket.status === "CLOSED" ? "good" : "info"}>{ticket.status}</AdminStatusBadge>,
-              ticket.priority,
-              formatDateTime(ticket.createdAt),
-              (() => {
-                const deletionRequestId = ticket.category === "account_deletion" ? deletionRequestByTicketId.get(ticket.id) : null;
-                const href = deletionRequestId ? `/admin/account-deletions/${deletionRequestId}` : `/admin/support/${ticket.id}`;
-                return (
-                  <Link key="action" href={href} className="inline-flex rounded-xl bg-indigo-700 px-3 py-2 text-xs font-black text-white transition hover:bg-indigo-800">
-                    {deletionRequestId ? "View request" : "Open"}
+    <AdminPageShell title="Support" hideHeader>
+      <div className="mx-auto w-full max-w-[1500px] text-[#374151]">
+        <AdminSupportToolbar query={one(raw.q)} status={one(raw.status)} priority={one(raw.priority)} category={one(raw.category)} range={window.range} from={window.from} to={window.to} pageHref={pageHref}>
+        {result.status === "ok" ? (
+          result.data.items.length === 0 ? (
+            <div className="border-b border-[#E5E7EB] px-2 py-10 text-center">
+              <p className="text-[14px] font-semibold text-[#111827]">No support tickets found</p>
+              <p className="mt-1 text-[12px] text-[#64748B]">There are no tickets matching the selected filters.</p>
+            </div>
+          ) : (
+            <>
+              <div className="admin-responsive-records overflow-x-auto">
+                <table className="w-full min-w-[1100px] table-fixed text-left text-[13px]">
+                  <colgroup><col className="w-[18%]" /><col className="w-[29%]" /><col className="w-[9%]" /><col className="w-[12%]" /><col className="w-[8%]" /><col className="w-[12%]" /><col className="w-[12%]" /></colgroup>
+                  <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
+                    <tr>
+                      {["Ticket", "Requester", "Priority", "Status", "Messages", "Last updated", "Action"].map((label) => (
+                        <th key={label} scope="col" className="px-3 py-3 font-medium">{label.toUpperCase()}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E7ECF5]">
+                    {result.data.items.map((ticket) => {
+                      const status = statusStyle[ticket.status];
+                      const updatedAt = new Date(ticket.updatedAt);
+                      return (
+                        <tr key={ticket.id} className="group h-[64px] align-middle text-[13px] text-[#374151] transition-colors hover:bg-[#F8FAFC] focus-within:bg-[#F8FAFC]">
+                          <td data-label="Ticket" className="max-w-[330px] px-3 py-1.5 align-middle">
+                            <Link
+                              href={ticketHref(ticket.id, params)}
+                              className="block break-words font-semibold text-[#111827] hover:text-[#004BB8] hover:underline focus-visible:outline-[#004BB8]"
+                            >
+                              {ticket.subject}
+                            </Link>
+                          </td>
+                          <td data-label="Requester" className="min-w-0 px-3 py-1.5 align-middle">
+                            <span className="block min-w-0 truncate whitespace-nowrap font-medium text-[#374151]" title={ticket.email || undefined}>
+                              {ticket.email || "—"}
+                            </span>
+                          </td>
+                          <td data-label="Priority" className={"whitespace-nowrap px-3 py-1.5 align-middle font-semibold " + priorityStyle(ticket.priority)}>
+                            {ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()}
+                          </td>
+                          <td data-label="Status" className="whitespace-nowrap px-3 py-1.5 align-middle">
+                            <span className={"inline-flex items-center gap-1.5 font-medium " + status.text}>
+                              <span aria-hidden="true" className={"h-1.5 w-1.5 rounded-full " + status.dot} />
+                              {status.label}
+                            </span>
+                          </td>
+                          <td data-label="Messages" className="px-3 py-1.5 align-middle">{ticket.messageCount}</td>
+                          <td data-label="Last updated" className="px-3 py-1.5 align-middle">
+                            <time dateTime={updatedAt.toISOString()} className="block whitespace-nowrap text-[13px] font-medium text-[#374151]">
+                              {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(updatedAt)}
+                              <span className="mt-0.5 block text-[12px] font-normal text-[#64748B]">
+                                {new Intl.DateTimeFormat("en", { timeStyle: "short" }).format(updatedAt)}
+                              </span>
+                            </time>
+                          </td>
+                          <td data-label="Action" className="whitespace-nowrap px-3 py-1.5 align-middle">
+                            <Link
+                              href={ticketHref(ticket.id, params)}
+                              aria-label={"View ticket: " + ticket.subject}
+                              className="focus-ring inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-sm px-0.5 text-[13px] font-medium text-[#004BB8] underline-offset-4 transition-colors hover:underline"
+                            >
+                              View ticket <ChevronRight size={15} aria-hidden="true" />
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {result.data.nextCursor ? (
+                <div className="flex justify-end border-b border-[#E5E7EB] px-2 py-3">
+                  <Link
+                    href={cursorHref(applied, result.data.nextCursor) + "&range=" + window.range}
+                    className="text-[13px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-[#004BB8]"
+                  >
+                    Next page
                   </Link>
-                );
-              })(),
-            ],
-          }))}
-        />
-      )}
+                </div>
+              ) : null}
+            </>
+          )
+        ) : (
+          <div className="border-b border-[#E5E7EB] px-2 py-10 text-center">
+            <p className="text-[14px] font-semibold text-[#111827]">
+              {result.status === "invalid" ? "Invalid support filters" : result.status === "forbidden" ? "Admin access required" : "Support data unavailable"}
+            </p>
+            <p className="mt-1 text-[12px] text-[#64748B]">
+              {"issues" in result ? result.issues.map((issue) => issue.field + ": " + issue.message).join(" ") : "Unable to read tickets. This is not an empty inbox."}
+            </p>
+          </div>
+        )}
+        </AdminSupportToolbar>
+      </div>
     </AdminPageShell>
   );
 }

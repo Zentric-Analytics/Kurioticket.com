@@ -1,31 +1,6 @@
-import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import test from "node:test";
-
-const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
-const airportSheet = panel.slice(panel.indexOf("function AirportSheet"), panel.indexOf("type TravelerCabinDraft"));
-
-test("the native airport sheet adapts to the iOS and Android keyboard viewport", () => {
-  assert.match(airportSheet, /<KeyboardAvoidingView/);
-  assert.match(airportSheet, /behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/);
-  assert.match(airportSheet, /<SafeAreaView edges=\{\["top", "bottom"\]\}/);
-  assert.match(panel, /keyboardViewport:\{flex:1\}/);
-
-  assert.doesNotMatch(airportSheet, /keyboardHeight|useWindowDimensions|Dimensions\.get/);
-  assert.doesNotMatch(airportSheet, /(?:top|bottom|marginTop|translateY):\s*-/);
-  assert.doesNotMatch(airportSheet, /Platform\.OS\s*===\s*["'](?:ios|android)["']\s*\?\s*-?\d+/);
-});
-
-test("the keyboard-aware sheet preserves airport search and scrolling interactions", () => {
-  assert.match(airportSheet, /accessibilityLabel="Search airports"/);
-  assert.match(airportSheet, /placeholder="Search code, airport, city, or country"/);
-  assert.match(airportSheet, /<FlatList keyboardShouldPersistTaps="handled"/);
-  assert.match(airportSheet, /onPress=\{\(\) => isMetro \? setExpanded\(airport\) : onChoose/);
-});
-
-test("origin and destination share the sheet and selection still updates and closes the form", () => {
-  assert.match(panel, /kind=\{picker === "from" \|\| picker === "to" \? picker : undefined\}/);
-  assert.match(panel, /const chooseAirport = \(airport: Airport\) => \{ const key = picker as "from" \| "to";/);
-  assert.match(panel, /setForm\(\{ \.\.\.form, \[key\]: airport \}\); clear\(key\); setPicker\(undefined\);/);
-  assert.match(panel, /<AirportSheet[^>]*onChoose=\{chooseAirport\}/);
-});
+import assert from "node:assert/strict"; import { readFileSync } from "node:fs"; import test from "node:test";
+const panel=readFileSync("src/features/flow/FlightSearchPanel.tsx","utf8"); const sheet=panel.slice(panel.indexOf("function AirportSheet"),panel.indexOf("type TravelerCabinDraft"));
+test("Flight airport picker opens stationary and focuses from modal layout",()=>{assert.match(sheet,/useRef<TextInput>/);assert.match(sheet,/useSearchPickerMotion\(active, \{ controlledOpening: true, stationaryOpening: true \}\)/);assert.match(sheet,/useSearchPickerKeyboardPresentation\(active, motion\.rendered, kind, inputRef, motion, \{ focusOnPresentation: true \}\)/);assert.match(sheet,/onShow=\{keyboardPresentation\.onModalShow\}/);assert.match(sheet,/onLayout=\{keyboardPresentation\.onSheetLayout\}/);assert.doesNotMatch(sheet,/keyboardSynchronizedOpening|motion\.openSettled/);assert.doesNotMatch(sheet,/requestAnimationFrame|setTimeout\([^)]*focus|InteractionManager|autoFocus/);});
+test("Flight computes results keyboard overlap from screen coordinates without moving the sheet",()=>{assert.doesNotMatch(sheet,/KeyboardAvoidingView/);assert.match(sheet,/resultsViewportRef=useRef<View>/);assert.match(sheet,/measureInWindow/);assert.match(sheet,/event\.endCoordinates\.screenY/);assert.match(sheet,/const inset=Math\.min\(height,Math\.max\(0,y\+height-screenY\)\)/);assert.match(sheet,/contentContainerStyle=\{\{paddingBottom:resultsKeyboardInset\}\}/);assert.match(panel,/airportSheet:\{height:"82%"\},airportResultsViewport:\{flex:1,minHeight:0\},airportResultsList:\{flex:1\}/);assert.doesNotMatch(sheet,/keyboardHeight|KEYBOARD_HEIGHT|Dimensions\.get|useWindowDimensions/);});
+test("Flight final airports commit immediately while city groups remain intermediate",()=>{assert.match(sheet,/if\(place.type==="city"\)[\s\S]*?return;\}const airport=/);assert.match(sheet,/setDraftAirport\(airport\);setQuery\(value\)[\s\S]*?onChoose\(airport\);/);assert.doesNotMatch(sheet,/<PrimaryButton label="Done"/);assert.match(sheet,/keyboardShouldPersistTaps="handled"/);});
+test("Flight gates actual airport search without threshold helper copy",()=>{assert.match(sheet,/searchFlightPlaces\(query/);assert.match(sheet,/hasMinimumLocationSearchLetters\(query\)/);assert.match(sheet,/Start typing to find an airport/);assert.match(sheet,/query\.trim\(\)\.length===0/);assert.match(sheet,/!eligible\?null/);assert.doesNotMatch(sheet,/Type at least 2 letters to see suggestions\./);});

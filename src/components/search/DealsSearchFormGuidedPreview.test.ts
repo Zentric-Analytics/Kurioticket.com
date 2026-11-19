@@ -169,19 +169,24 @@ test("preview entry does not call guided storage shortcuts", () => {
 });
 
 test("preview panel and action keep accessibility contracts", () => {
+  const start = form.indexOf("const guidedPreviewPanel =");
+  const end = form.indexOf("const displayedHotelDestination", start);
+  assert.ok(start >= 0 && end > start);
+  const preview = form.slice(start, end);
   assert.match(
-    form,
+    preview,
     /<section[\s\S]*aria-labelledby="deals-guided-preview-title"/,
   );
-  assert.match(form, /aria-describedby="deals-guided-preview-description"/);
+  assert.match(preview, /aria-describedby="deals-guided-preview-description"/);
   assert.match(
-    form,
+    preview,
     /aria-label=\{t\("deals\.guidedPreview\.accessibleName"\)\}/,
   );
-  assert.equal((form.match(/<h1/g) ?? []).length, 0);
+  assert.equal((preview.match(/<h1/g) ?? []).length, 0);
+  assert.match(preview, /<h2\s+id="deals-guided-preview-title"/);
   assert.match(
-    form,
+    preview,
     /<button[\s\S]*type="button"[\s\S]*disabled=\{submitting \|\| pending\}/,
   );
-  assert.match(form, /min-h-11/);
+  assert.match(preview, /min-h-11/);
 });

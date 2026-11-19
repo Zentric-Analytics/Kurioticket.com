@@ -1,6 +1,12 @@
+import {
+  clampPersonalDetailsDateOfBirth,
+  isEligiblePersonalDetailsDateOfBirth,
+  personalDetailsLatestDateOfBirth,
+} from "../../../../../src/lib/personalDetailsAge";
 import { personalDetailsCountryOptions } from "../../../../../src/lib/region/supportedRegions";
 import {
   defaultPhoneCountryOption,
+  formatPhoneDraftValue,
   getSupportedPhoneCountryCode,
   parsePhoneDraftValue,
   phoneCountryOptions,
@@ -70,12 +76,19 @@ export function getCountryFlagUri(value: string | null | undefined) {
 }
 
 export function normalizeProfile(profile: MobileProfile): MobileProfile {
+  const countryCode =
+    getSupportedPhoneCountryCode(profile.phoneCountryCode) ||
+    defaultPhoneCountryOption.isoCode;
+  const phoneNumber = profile.phoneNumber?.trim() || "";
+  // Legacy profiles may contain a full international number in the local field.
+  // Only split recognized explicit prefixes; never strip digits from local numbers.
+  const parsed = phoneNumber.startsWith("+")
+    ? parsePhoneDraftValue(phoneNumber, countryCode)
+    : null;
   return {
     fullName: profile.fullName?.trim() || "",
-    phoneCountryCode:
-      getSupportedPhoneCountryCode(profile.phoneCountryCode) ||
-      defaultPhoneCountryOption.isoCode,
-    phoneNumber: profile.phoneNumber?.trim() || "",
+    phoneCountryCode: parsed?.hasRecognizedDialCode ? parsed.countryCode : countryCode,
+    phoneNumber: parsed?.hasRecognizedDialCode ? parsed.localNumber : phoneNumber,
     dateOfBirth: profile.dateOfBirth?.trim() || "",
     gender: profile.gender?.trim() || "",
     nationality: profile.nationality?.trim() || "",
@@ -97,6 +110,11 @@ export function profilesDiffer(a: MobileProfile, b: MobileProfile) {
     ] as const
   ).some((key) => left[key] !== right[key]);
 }
+
+function addressString(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
 export function parseAddress(value: string): AddressParts {
   const trimmed = value.trim();
   if (!trimmed) return { ...EMPTY_ADDRESS };
@@ -106,14 +124,15 @@ export function parseAddress(value: string): AddressParts {
         trimmed.slice(STRUCTURED_ADDRESS_PREFIX.length),
       );
       if (raw && typeof raw === "object") {
-        const p = raw as Partial<AddressParts> & { streetAddress?: string };
+        const p = raw as Record<string, unknown>;
         return {
-          countryCode: p.countryCode || "",
-          addressLine1: p.addressLine1 || p.streetAddress || "",
-          apartmentOrSuite: p.apartmentOrSuite || "",
-          city: p.city || "",
-          stateOrRegion: p.stateOrRegion || "",
-          postalCode: p.postalCode || "",
+          countryCode: addressString(p.countryCode),
+          addressLine1:
+            addressString(p.addressLine1) || addressString(p.streetAddress),
+          apartmentOrSuite: addressString(p.apartmentOrSuite),
+          city: addressString(p.city),
+          stateOrRegion: addressString(p.stateOrRegion),
+          postalCode: addressString(p.postalCode),
         };
       }
     } catch {
@@ -152,19 +171,30 @@ export function serializeAddress(parts: AddressParts) {
 export function displayAddress(value: string) {
   if (!value.startsWith(STRUCTURED_ADDRESS_PREFIX)) return value.trim();
   const p = parseAddress(value);
-  const street = [p.apartmentOrSuite, p.addressLine1]
+  const clean = (part: string) => part.trim();
+  const street = [clean(p.apartmentOrSuite), clean(p.addressLine1)]
     .filter(Boolean)
     .join(", ");
   const locality = [
-    [p.city, p.stateOrRegion].filter(Boolean).join(", "),
-    p.postalCode,
+    [clean(p.city), clean(p.stateOrRegion)].filter(Boolean).join(", "),
+    clean(p.postalCode),
   ]
     .filter(Boolean)
     .join(" ");
+  const countryCode = clean(p.countryCode);
   const country =
-    COUNTRY_OPTIONS.find((x) => x.code === p.countryCode)?.label ||
-    p.countryCode;
+    COUNTRY_OPTIONS.find((x) => x.code === countryCode)?.label || countryCode;
   return [street, locality, country].filter(Boolean).join("\n");
+}
+export function displayPhone(countryCode: string, localNumber: string) {
+  const trimmedLocalNumber = localNumber.trim();
+  if (!trimmedLocalNumber) return "";
+
+  const fallbackCountry =
+    getSupportedPhoneCountryCode(countryCode) || defaultPhoneCountryOption.isoCode;
+  const parsed = parsePhoneDraftValue(trimmedLocalNumber, fallbackCountry);
+
+  return formatPhoneDraftValue(parsed.countryCode, parsed.localNumber);
 }
 export function serializePhone(countryCode: string, localNumber: string) {
   const country =
@@ -193,3 +223,23 @@ export function canonicalDate(year: string, month: string, day: string) {
     return null;
   return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
+
+/** Read-only picker projection for canonical dates and historical English dates.
+ * Never normalize the saved profile or its PATCH draft as a side effect. */
+export function personalDetailsDateParts(value?: string | null) {
+  const text = value?.trim() || "";
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  const legacy = /^(\d{1,2}) ([A-Za-z]+) (\d{4})$/.exec(text);
+  const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+  const monthIndex = legacy ? months.indexOf(legacy[2].toLowerCase()) : -1;
+  const date = iso ? canonicalDate(iso[1], iso[2], iso[3])
+    : legacy && monthIndex >= 0 ? canonicalDate(legacy[3], String(monthIndex + 1), legacy[1]) : null;
+  const [year = "", month = "", day = ""] = date?.split("-") || [];
+  return { year, month, day };
+}
+
+export {
+  clampPersonalDetailsDateOfBirth,
+  isEligiblePersonalDetailsDateOfBirth,
+  personalDetailsLatestDateOfBirth,
+};

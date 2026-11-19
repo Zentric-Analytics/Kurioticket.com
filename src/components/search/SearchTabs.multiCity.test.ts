@@ -5,13 +5,38 @@ import test from "node:test";
 const searchTabs = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
 const editor = readFileSync("src/components/search/MultiCityFlightEditor.tsx", "utf8");
 const results = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
+const drawer = readFileSync("src/components/search/FlightEditSearchDrawer.tsx", "utf8");
 const native = readFileSync("apps/mobile/src/features/flow/FlightSearchPanel.tsx", "utf8");
 
 test("every visible web Multi-city selector is enabled and has no coming-soon copy", () => {
   assert.doesNotMatch(searchTabs, /const unavailable = mode === "multi-city"|Multi-city search coming soon|aria-disabled=\{unavailable\}|disabled=\{unavailable\}/);
   assert.doesNotMatch(results, /aria-disabled=\{option\.value === "multi-city"\}|disabled=\{option\.value === "multi-city"\}|multiCityComingSoon/);
-  assert.match(searchTabs, /onClick=\{\(\) => onSelectTripType\(mode\)\}/);
+  assert.match(searchTabs, /data-trip-type=\{mode\}/);
+  assert.match(searchTabs, /onClick=\{\(event\) => selectTripTypeFromControl\(event\.currentTarget\)\}/);
   assert.match(results, /handleTripTypeChange\("multi-city"\)/);
+});
+
+test("homepage trip-type controls share one guarded pointer and keyboard state path", () => {
+  const keyboardHandler = searchTabs.slice(
+    searchTabs.indexOf("const onTripTypeKeyDown"),
+    searchTabs.indexOf("const selectTripTypeFromControl"),
+  );
+  assert.match(searchTabs, /committedHomepageTripType\(pointerDownTripTypeRef\.current, mode\)/);
+  assert.match(keyboardHandler, /nextHomepageTripType\(/);
+  assert.match(searchTabs, /tabIndex=\{selected \? 0 : -1\}/);
+  assert.match(keyboardHandler, /event\.currentTarget\.closest\('\[role="radiogroup"\]'\)/);
+  assert.match(keyboardHandler, /querySelector<HTMLButtonElement>\(/);
+  assert.match(keyboardHandler, /nextControl\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.doesNotMatch(keyboardHandler, /tripTypeButtonRefs|requestAnimationFrame/);
+  assert.ok(
+    keyboardHandler.indexOf("nextControl?.focus") < keyboardHandler.indexOf("onSelectTripType(nextMode)"),
+    "DOM focus must move before the selected trip type commits",
+  );
+  assert.equal(
+    searchTabs.match(/onKeyDown=\{\(event\) => onTripTypeKeyDown\(mode, event\)\}/g)?.length,
+    2,
+    "desktop and mobile radiogroups must share the synchronized handler",
+  );
 });
 
 test("homepage uses the canonical leg editor, limits, and indexed URL encoder", () => {
@@ -32,15 +57,17 @@ test("homepage validates provider-backed airport suggestions before enabling sea
   assert.match(searchTabs, /!multiCityAirportsValid/);
 });
 
-test("Results transitions Multi-city edits to the canonical full-leg editor", () => {
-  assert.match(results, /if \(nextTripType === "multi-city"\)/);
-  assert.match(results, /projectSearchLegs\("multi-city", legs\)/);
-  assert.match(results, /appendFlightLegParams\(params, legs\)/);
-  assert.match(results, /router\.push\(`\/flights\?\$\{params\.toString\(\)\}`\)/);
-  assert.match(results, /tripTypeInput === "multi-city"[\s\S]*?router\.push\(`\/flights\?\$\{searchQueryString\}`\)/);
+test("Results mobile drawer consumes the canonical full-leg editor", () => {
+  assert.match(results, /<FlightEditSearchDrawer/);
+  assert.match(drawer, /draft\.tripType === "multi-city" \? \(/);
+  assert.match(drawer, /<MultiCityFlightEditor[\s\S]*?legs=\{draft\.legs\}[\s\S]*?setDraft\(\(current\) => \(\{ \.\.\.current, legs \}\)\)/);
+  assert.match(drawer, /onSearch\(draft\)/);
+  assert.match(results, /projectSearchLegs\(value\.tripType, value\.legs\)/);
+  assert.match(results, /appendFlightLegParams\(nextParams, value\.legs\)/);
+  assert.match(results, /router\.push\(`\/flights\/results\?\$\{nextParams\.toString\(\)\}`/);
 });
 
 test("native Multi-city remains explicitly out of scope for the web fix", () => {
-  assert.match(native, /if \(tripType === "multi-city"\) return/);
-  assert.match(native, /disabled: true/);
+  assert.match(native, /form\.tripType === "multi-city" \? <MultiCityEditor/);
+  assert.match(native, /changeFlightTripType\(form, tripType/);
 });

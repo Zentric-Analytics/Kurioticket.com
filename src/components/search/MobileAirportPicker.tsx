@@ -42,6 +42,7 @@ type MobileAirportPickerProps = {
   launcherRef?: RefObject<HTMLElement | null>;
   labels?: LegacyLabels;
   locale?: string | null;
+  commitOnSelect?: boolean;
   onCommit: (option: AirportOption | null) => void;
   onClose: () => void;
 };
@@ -60,17 +61,21 @@ export function MobileAirportOptionRow({
   selected,
   locale,
   onSelect,
+  id,
 }: {
   airport: AirportOption;
   selected: boolean;
   locale?: string | null;
   onSelect: () => void;
+  id: string;
 }) {
   const city = getLocalizedCityName(airport.city, locale);
   return (
     <button
+      id={id}
       type="button"
-      aria-pressed={selected}
+      role="option"
+      aria-selected={selected}
       aria-label={`${city}, ${airport.airport}, ${airport.code}`}
       onClick={onSelect}
       className={cn(
@@ -105,6 +110,7 @@ export function MobileAirportPicker({
   launcherRef,
   labels,
   locale,
+  commitOnSelect = true,
   onCommit,
   onClose,
 }: MobileAirportPickerProps) {
@@ -114,6 +120,7 @@ export function MobileAirportPicker({
   const [draft, setDraft] = useState<AirportOption | null>(null);
   const [suggestions, setSuggestions] = useState<AirportOption[]>([]);
   const [loading, setLoading] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [recentEntries, setRecentEntries] = useState<RecentSearchEntry[]>([]);
   const titleId = `${inputId}-title`;
   const normalizedQuery = query.trim();
@@ -134,6 +141,7 @@ export function MobileAirportPicker({
     setQuery("");
     setSuggestions([]);
     setLoading(false);
+    setHighlightedIndex(-1);
     const local = readRecentSearches();
     setRecentEntries(local);
     const controller = new AbortController();
@@ -145,13 +153,14 @@ export function MobileAirportPicker({
       );
       setRecentEntries(merged);
     });
-    const focusId = window.setTimeout(
-      () => inputRef.current?.focus({ preventScroll: true }),
-      100,
-    );
+    const focusId = window.requestAnimationFrame(() => {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        inputRef.current.focus({ preventScroll: true });
+      }
+    });
     return () => {
       controller.abort();
-      window.clearTimeout(focusId);
+      window.cancelAnimationFrame(focusId);
     };
   }, [open, selectedAirport, selectedCode, value]);
 
@@ -165,14 +174,20 @@ export function MobileAirportPicker({
     const timeout = window.setTimeout(async () => {
       setLoading(true);
       try {
-        const params = new URLSearchParams({ q: normalizedQuery, context: field });
+        const params = new URLSearchParams({
+          q: normalizedQuery,
+          context: field,
+        });
         const response = await fetch(`/api/flights/places?${params}`, {
           signal: controller.signal,
           cache: "no-store",
         });
         if (!response.ok) throw new Error("Airport lookup failed");
-        const payload = (await response.json()) as { suggestions?: AirportOption[] };
+        const payload = (await response.json()) as {
+          suggestions?: AirportOption[];
+        };
         setSuggestions(payload.suggestions?.slice(0, 8) ?? []);
+        setHighlightedIndex(-1);
       } catch {
         if (!controller.signal.aborted) setSuggestions([]);
       } finally {
@@ -197,6 +212,9 @@ export function MobileAirportPicker({
     requestClose();
   };
   const list = normalizedQuery.length < 2 ? recentAirports : suggestions;
+  const listboxId = `${inputId}-listbox`;
+  const statusId = `${inputId}-status`;
+  const activeId = highlightedIndex >= 0 && list[highlightedIndex] ? `${listboxId}-option-${highlightedIndex}` : undefined;
 
   return (
     <FlightMobilePickerShell
@@ -208,91 +226,116 @@ export function MobileAirportPicker({
       onClose={onClose}
       showCancelAction={false}
       contentClassName="bg-[#fcfdff] px-4 py-6"
-      footer={(requestClose) => (
-        <button
-          type="button"
-          onClick={() => commit(requestClose)}
-          className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-semibold text-white transition-colors hover:bg-[#004bb8] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {labels?.done || t.done}
-        </button>
-      )}
+      footer={
+        commitOnSelect
+          ? undefined
+          : (requestClose) => (
+              <button
+                type="button"
+                onClick={() => commit(requestClose)}
+                className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-semibold text-white transition-colors hover:bg-[#004bb8] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {labels?.done || t.done}
+              </button>
+            )
+      }
     >
-      <div className="mx-auto w-full max-w-xl">
-        <div className="relative">
-          <MapPin
-            className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-700"
-            aria-hidden="true"
-          />
-          <label className="sr-only" htmlFor={inputId}>
-            {labels?.searchAirportsAndCities || t.searchAirportsAndCities}
-          </label>
-          <input
-            ref={inputRef}
-            id={inputId}
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setDraft(null);
-            }}
-            placeholder={
-              labels?.searchAirportsAndCities ||
-              labels?.searchAirportsOrCities ||
-              t.searchAirportsAndCities
-            }
-            autoComplete="off"
-            className="h-[50px] w-full rounded-[10px] border border-slate-300 bg-white py-3 ps-12 pe-12 text-[15px] font-medium text-slate-950 outline-none transition-colors placeholder:text-slate-500 focus:border-[#075ee8] focus:ring-2 focus:ring-[#075ee8]/10"
-          />
-          <button
-            type="button"
-            aria-label={
-              field === "origin"
-                ? labels?.clearOrigin || t.clearOrigin
-                : labels?.clearDestination || t.clearDestination
-            }
-            onClick={() => {
-              setQuery("");
-              setDraft(null);
-              setSuggestions([]);
-              window.requestAnimationFrame(() =>
-                inputRef.current?.focus({ preventScroll: true }),
-              );
-            }}
-            className="focus-ring absolute end-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-50"
-          >
-            <X className="h-[18px] w-[18px]" aria-hidden="true" />
-          </button>
-        </div>
+      {(requestClose) => (
+        <div className="mx-auto w-full max-w-xl">
+          <div className="relative">
+            <MapPin
+              className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-700"
+              aria-hidden="true"
+            />
+            <label className="sr-only" htmlFor={inputId}>
+              {labels?.searchAirportsAndCities || t.searchAirportsAndCities}
+            </label>
+            <input
+              ref={inputRef}
+              id={inputId}
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setDraft(null);
+                setHighlightedIndex(-1);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") { event.preventDefault(); requestClose(); return; }
+                if (event.key === "ArrowDown" && list.length) { event.preventDefault(); setHighlightedIndex((current) => Math.min(list.length - 1, current + 1)); return; }
+                if (event.key === "ArrowUp" && list.length) { event.preventDefault(); setHighlightedIndex((current) => current <= 0 ? list.length - 1 : current - 1); return; }
+                if (event.key === "Enter" && highlightedIndex >= 0 && list[highlightedIndex]) {
+                  event.preventDefault();
+                  if (commitOnSelect) { onCommit(list[highlightedIndex]); requestClose(); } else { selectDraft(list[highlightedIndex]); }
+                }
+              }}
+              placeholder={
+                labels?.searchAirportsAndCities ||
+                labels?.searchAirportsOrCities ||
+                t.searchAirportsAndCities
+              }
+              autoComplete="off"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={list.length > 0}
+              aria-controls={listboxId}
+              aria-activedescendant={activeId}
+              aria-describedby={statusId}
+              className="h-[50px] w-full rounded-[10px] border border-slate-300 bg-white py-3 ps-12 pe-12 text-[15px] font-medium text-slate-950 outline-none transition-colors placeholder:text-slate-500 focus:border-[#075ee8] focus:ring-2 focus:ring-[#075ee8]/10"
+            />
+            <button
+              type="button"
+              aria-label={
+                field === "origin"
+                  ? labels?.clearOrigin || t.clearOrigin
+                  : labels?.clearDestination || t.clearDestination
+              }
+              onClick={() => {
+                setQuery("");
+                setDraft(null);
+                setSuggestions([]);
+                window.requestAnimationFrame(() =>
+                  inputRef.current?.focus({ preventScroll: true }),
+                );
+              }}
+              className="focus-ring absolute end-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-50"
+            >
+              <X className="h-[18px] w-[18px]" aria-hidden="true" />
+            </button>
+          </div>
 
-        <div className="mt-8">
-          {normalizedQuery.length < 2 && recentAirports.length ? (
-            <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-              {t["recentSearches.title"]}
-            </h3>
-          ) : null}
-          {loading ? (
-            <p className="px-4 py-8 text-center text-sm font-medium text-slate-500">
-              {labels?.searchingAirportsAndCities || t.searchingAirportsAndCities}
+          <div className="mt-8">
+            {normalizedQuery.length < 2 && recentAirports.length ? (
+              <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                {t["recentSearches.title"]}
+              </h3>
+            ) : null}
+            <p id={statusId} role="status" aria-live="polite" className={loading || (!list.length && normalizedQuery.length >= 2) ? "px-4 py-8 text-center text-sm font-medium text-slate-500" : "sr-only"}>
+              {loading ? (labels?.searchingAirportsAndCities || t.searchingAirportsAndCities) : !list.length && normalizedQuery.length >= 2 ? `${labels?.noMatchingAirportsOrCities || t.noMatchingAirportsOrCities} ${labels?.searchAirportsAndCities || t.searchAirportsAndCities}` : list.length ? `${list.length} ${labels?.searchAirportsAndCities || t.searchAirportsAndCities}` : ""}
             </p>
-          ) : list.length ? (
-            <div className="overflow-hidden rounded-[11px] border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
-              {list.map((airport) => (
-                <MobileAirportOptionRow
-                  key={airport.code}
-                  airport={airport}
-                  selected={draft?.code === airport.code}
-                  locale={locale}
-                  onSelect={() => selectDraft(airport)}
-                />
-              ))}
-            </div>
-          ) : normalizedQuery.length >= 2 ? (
-            <p className="px-4 py-8 text-center text-sm font-medium text-slate-500">
-              {labels?.noMatchingAirportsOrCities || t.noMatchingAirportsOrCities}
-            </p>
-          ) : null}
+            {loading ? null : list.length ? (
+              <div id={listboxId} role="listbox" aria-label={labels?.searchAirportsAndCities || t.searchAirportsAndCities} className="overflow-hidden rounded-[11px] border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
+                {list.map((airport, index) => (
+                  <MobileAirportOptionRow
+                    id={`${listboxId}-option-${index}`}
+                    key={airport.code}
+                    airport={airport}
+                    selected={highlightedIndex === index || draft?.code === airport.code}
+                    locale={locale}
+                    onSelect={() => {
+                      if (commitOnSelect) {
+                        onCommit(airport);
+                        requestClose();
+                        return;
+                      }
+                      selectDraft(airport);
+                    }}
+                  />
+                ))}
+              </div>
+            ) : normalizedQuery.length >= 2 ? null : null}
+          </div>
         </div>
-      </div>
+      )}
     </FlightMobilePickerShell>
   );
 }

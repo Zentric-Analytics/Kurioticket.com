@@ -1,0 +1,138 @@
+import { CmsRetryButton } from "@/components/admin/CmsRetryButton";
+import Link from "next/link";
+
+import { ContentDirectoryToolbar } from "@/components/admin/ContentDirectoryToolbar";
+import { ContentPageFrame, ContentEmptyState, ContentStatusPill } from "@/components/admin/ContentWorkspace";
+import { FaqCmsInitializeButton } from "@/components/admin/FaqCmsInitializeButton";
+import { FaqCmsListClient } from "@/components/admin/FaqCmsListClient";
+import { CmsCreateLink } from "@/components/admin/CmsCreateLink";
+import type { CmsContentStatus } from "@/generated/prisma/enums";
+import {
+  CmsContentError,
+  getCmsContentScopeSummary,
+  listAdminCmsFaqPage,
+} from "@/services/cmsContentService";
+import { faqCmsScope } from "@/services/faqCmsService";
+import { faqCmsListNavigation } from "@/lib/adminContentNavigation";
+
+export const metadata = { title: "Admin FAQs" };
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+const validStatuses = new Set<CmsContentStatus>(["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"]);
+
+export default async function AdminFaqCmsPage({ searchParams }: { searchParams: SearchParams }) {
+  const raw = await searchParams;
+  const statusRaw = one(raw.status).trim();
+  const status = validStatuses.has(statusRaw as CmsContentStatus)
+    ? statusRaw as CmsContentStatus
+    : undefined;
+  const nav = faqCmsListNavigation(raw);
+  const cursor = one(raw.cursor) || undefined;
+
+  const summary = await getCmsContentScopeSummary("FAQ", faqCmsScope.market, faqCmsScope.locale)
+    .catch(() => ({
+      available: false,
+      active: false,
+      total: 0,
+      draft: 0,
+      published: 0,
+      hidden: 0,
+      archived: 0,
+    }));
+
+  let listing:
+    | Awaited<ReturnType<typeof listAdminCmsFaqPage>>
+    | null = null;
+  let listingError: string | null = null;
+
+  if (summary.available) {
+    try {
+      listing = await listAdminCmsFaqPage({
+        status,
+        cursor,
+        search: one(raw.q) || undefined,
+      });
+    } catch (error) {
+      listingError = error instanceof CmsContentError ? error.message : "FAQ CMS data is unavailable.";
+    }
+  }
+
+  return (
+    <ContentPageFrame
+      wide
+      title="FAQs"
+      subtitle="Manage English FAQ questions and answers."
+      actions={summary.active ? <CmsCreateLink path="/admin/content/faqs/new" label="Add FAQ" /> : null}
+    >
+      <div>
+        {!summary.available ? (
+          <ContentEmptyState
+            title="FAQ CMS unavailable"
+            message="CMS storage could not be verified. The public FAQ keeps using the existing translated code-backed content while storage is unavailable."
+            action={<CmsRetryButton />}
+          />
+        ) : !summary.active ? (
+          <div className="rounded-lg border border-[#E5E7EB] bg-white p-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-black text-slate-950">Initialize English FAQ CMS</h2>
+                  <ContentStatusPill status="Setup required" />
+                </div>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                  Import the current English FAQs as the first published CMS version. This is an explicit audited action; nothing is imported merely by opening this page.
+                </p>
+              </div>
+              <FaqCmsInitializeButton />
+            </div>
+          </div>
+        ) : (
+          <>
+            <ContentDirectoryToolbar
+              path="/admin/content/faqs"
+              query={nav.query}
+              status={statusRaw}
+              faqSearchOnly
+              searchLabel="Search FAQs"
+            >
+            {listingError ? (
+              <ContentEmptyState title="FAQ list unavailable" message={listingError} action={<Link href={nav.listHref.replace(/([?&])cursor=[^&]*&?/, "$1").replace(/[?&]$/, "")} className="text-[13px] text-[#004BB8] underline">Return to first page</Link>} />
+            ) : listing && listing.items.length > 0 ? (
+              <>
+                <FaqCmsListClient items={listing.items} listQuery={nav.query} />
+                {listing.nextCursor ? (
+                  <div className="flex justify-end">
+                    <Link
+                      href={nextPageHref(nav.query, listing.nextCursor)}
+                      className="inline-flex h-9 items-center rounded-lg border border-[#D9DDE3] bg-white px-3 text-[13px] font-medium text-[#374151] hover:bg-[#F8FAFC]"
+                    >
+                      Next page
+                    </Link>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <ContentEmptyState
+                title="No FAQs found"
+                message="No FAQ records match the selected lifecycle status."
+                action={<CmsCreateLink path="/admin/content/faqs/new" label="Add FAQ" />}
+              />
+            )}
+            </ContentDirectoryToolbar>
+          </>
+        )}
+      </div>
+    </ContentPageFrame>
+  );
+}
+
+function one(value: string | string[] | undefined) {
+  return typeof value === "string" ? value : "";
+}
+
+function nextPageHref(query: string, cursor: string) {
+  const params = new URLSearchParams(query);
+  params.set("cursor", cursor);
+  return "/admin/content/faqs?" + params.toString();
+}

@@ -47,6 +47,30 @@ test("homepage alone owns the logo and notification action", () => {
   assert.doesNotMatch(products, /<HomeTopNavigation/);
 });
 
+test("homepage notification badge is anchored to the bell without changing its action", () => {
+  const home = source("src/features/flow/HomeFlowScreen.tsx");
+
+  assert.equal(home.match(/accessibilityLabel="Notifications"/g)?.length, 1);
+  assert.match(
+    home,
+    /<Pressable\s+accessibilityRole="button"\s+accessibilityLabel="Notifications"\s+onPress=\{\(\) => router\.push\("\/notifications"\)\}\s+style=\{ft\.styles\.iconButton\}\s*>/,
+  );
+  assert.match(
+    home,
+    /<View pointerEvents="none" style=\{styles\.notificationIconWrap\}>\s*<FlowIcon name="bell" color=\{ft\.colors\.icon\} \/>\s*\{unreadCount > 0 \? <View[^>]*style=\{styles\.notificationBadge\}>/,
+  );
+  assert.match(
+    home,
+    /notificationIconWrap:\s*\{\s*width: 28,\s*height: 28,\s*alignItems: "center",\s*justifyContent: "center"\s*\}/,
+  );
+  assert.match(
+    home,
+    /notificationBadge:\s*\{[^}]*right: -4,\s*top: -4,\s*minWidth: 18,\s*height: 18,\s*paddingHorizontal: 4,\s*borderRadius: 9,/s,
+  );
+  assert.match(home, /unreadCount > 99 \? "99\+" : unreadCount/);
+  assert.equal(home.match(/router\.push\("\/notifications"\)/g)?.length, 1);
+});
+
 test("hero directly follows the complete header for guests and signed-in users", () => {
   const home = source("src/features/flow/HomeFlowScreen.tsx");
   assert.match(
@@ -57,7 +81,7 @@ test("hero directly follows the complete header for guests and signed-in users",
   assert.doesNotMatch(home, /isAuthenticated\s*\?[^:]*HomeHero/s);
 });
 
-test("Hotels starts with its hero and overlaps it with search without marketing copy", () => {
+test("Hotels mirrors the mobile-web hero, product heading, search, and shared destinations", () => {
   const products = source("src/features/flow/ProductScreens.tsx");
   const hotelSearch = source("src/features/flow/HotelSearchPanel.tsx");
   const hotels = products.slice(
@@ -69,16 +93,18 @@ test("Hotels starts with its hero and overlaps it with search without marketing 
   assert.match(hotels, /assets\/heroes\/hotels-room\.png/);
   assert.match(hotels, /<View pointerEvents="none" style=\{styles\.hotelHeroOverlay\} \/>/);
   assert.match(hotels, /<HotelSearchPanel ref=\{panel\} params=\{params\} \/>/);
-  assert.match(hotels, /title="Featured destinations"/);
+  assert.match(hotels, /travelEntryPresentation\.hotels\.heroTitle/);
+  assert.match(hotels, /travelEntryPresentation\.hotels\.product/);
+  assert.match(hotels, /title="Explore hotel stays by destination"/);
+  assert.match(hotels, /primaryHotelDestinationCards\.map/);
   assert.match(products, /hotelBody:\s*\{\s*marginTop:\s*-22/);
-  assert.match(hotelSearch, />Destination<\/Text>/);
+  assert.match(hotelSearch, /<CompactSearchField label="Destination"/);
   assert.match(hotelSearch, /label="Travel dates"/);
   assert.match(hotelSearch, /label="Guests"/);
   assert.match(hotelSearch, /submitLabel = "Search hotels"/);
   assert.doesNotMatch(hotels, /HomeTopNavigation|accessibilityLabel="Notifications"/);
-  assert.doesNotMatch(hotels, /accessibilityRole="header"/);
-  assert.doesNotMatch(hotels, /Find the stays that start the right trip/);
-  assert.doesNotMatch(hotels, /Compare hotels in one place, from city breaks to luxury resorts\./);
+  assert.match(hotels, /accessibilityRole="header"/);
+  assert.doesNotMatch(hotels, /\{ name: "Bali" \}/);
 });
 
 test("bottom navigation remains owned by the fixed tabs layout", () => {

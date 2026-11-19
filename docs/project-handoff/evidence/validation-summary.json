@@ -1,0 +1,74 @@
+{
+  "engineeringBaseline": "c17240c48771d23d5002af0676208930cbe45ec4",
+  "recordedDate": "2026-11-14",
+  "newTestsExecutedForHandoff": false,
+  "web": {
+    "total": 5081,
+    "passed": 5081,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "native": {
+    "total": 2367,
+    "passed": 2367,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "exitRecords": {
+    "webAndTypes": {
+      "types": 0,
+      "web": 0
+    },
+    "nativeAndTypes": {
+      "nativeTypes": 0,
+      "native": 0
+    },
+    "metro": {
+      "android": 0,
+      "ios": 0
+    }
+  },
+  "reportedChecks": {
+    "build": "pass",
+    "lint": {
+      "errors": 0,
+      "codeWarnings": 22,
+      "ignoredFileNotices": 11
+    },
+    "expoDoctor": {
+      "passed": 18,
+      "total": 18
+    },
+    "worker": {
+      "passed": 247,
+      "existingOptInPostgresSkips": 4
+    },
+    "focusedRecoveryPassed": 93,
+    "capturedOldClientCases": 20
+  },
+  "dependencyAudits": {
+    "root": {
+      "critical": 0,
+      "high": 0,
+      "moderate": 0,
+      "low": 0,
+      "exit": 0
+    },
+    "native": {
+      "critical": 0,
+      "high": 0,
+      "moderate": 0,
+      "lowEntries": 13,
+      "uniqueResidualAdvisories": 1,
+      "advisory": "GHSA-gcqx-w48m-w2h4",
+      "exit": 1
+    }
+  },
+  "limits": [
+    "Historical local results, not fresh exact-head GitHub CI",
+    "JS exports are not native builds",
+    "No actual restore or physical-device uptake certified"
+  ]
+}

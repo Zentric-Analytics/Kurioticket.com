@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "service_id": "srv-dabmo50jo6nc73881d60",
+  "commit": "7041310cfb158ab285f82e04ef165f21e113bda1",
+  "database": "kurioticket_web_staging",
+  "read_only": "on",
+  "private_hostname": true,
+  "client_private": true,
+  "server_private": true,
+  "connections": 1,
+  "connection_closed": true,
+  "observed_utc": "2026-11-16T05:03:48.197Z",
+  "elapsed_ms": 98
+}

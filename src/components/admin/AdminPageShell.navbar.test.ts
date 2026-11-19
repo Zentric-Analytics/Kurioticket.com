@@ -34,7 +34,7 @@ test("admin topbar restores internal workspace controls", () => {
 
 test("administrator profile keeps all original destinations", () => {
   assert.match(shell, /href="\/admin\/settings" label="Admin settings"/);
-  assert.match(shell, /href="\/admin\/logs" label="Audit logs"/);
+  assert.match(shell, /href="\/admin\/logs" label="Audit Logs"/);
   assert.match(shell, /href="\/" label="Switch to public site"/);
   assert.match(shell, /href="\/api\/auth\/signout" label="Logout"/);
 });

@@ -1,3 +1,4 @@
+import { Text } from "./HomePresentation";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -5,17 +6,19 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
+import { usePublishedHome } from "./usePublishedContent";
+import { useMobileMarketplace } from "../../localization/MobileLocalizationProvider";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowStyles, useFlowTheme } from "../flow/flowStyles";
 import { discoverAdventureNavigation } from "./homepageCardNavigation";
-import { regionalDestinationRoutes, type RegionalDestinationRoute } from "./RegionalDestinationRoutesData";
+import { type RegionalDestinationRoute } from "./RegionalDestinationRoutesData";
+import type { MarketplaceContext } from "../../../../../src/shared/marketplace/marketplaceContext";
 
-function RegionalRouteCard({ route, width }: { route: RegionalDestinationRoute; width: number }) {
+function RegionalRouteCard({ route, width, marketplace }: { route: RegionalDestinationRoute; width: number; marketplace: MarketplaceContext }) {
   const ft = useFlowTheme();
   const [imageFailed, setImageFailed] = useState(false);
   const routeLabel = `${route.originCity} → ${route.destinationCity}`;
@@ -24,7 +27,7 @@ function RegionalRouteCard({ route, width }: { route: RegionalDestinationRoute; 
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${route.originCity} to ${route.destinationCity} flight search.`}
-      onPress={() => router.push(discoverAdventureNavigation(route))}
+      onPress={() => router.push(discoverAdventureNavigation(route, marketplace))}
       style={({ pressed }) => [styles.card, { width, height: width * 0.75 }, ft.styles.shadow, pressed && flowStyles.pressed]}
     >
       {imageFailed ? (
@@ -55,12 +58,16 @@ export function RegionalDestinationRoutes() {
   const ft = useFlowTheme();
   const { width } = useWindowDimensions();
   const cardWidth = Math.min(width * 0.78, 250);
+  const marketplace = useMobileMarketplace();
+  const published = usePublishedHome();
+  const regionalDestinationRoutes = published.data?.flightRoutes.items.slice(8, 18) ?? [];
+  if (!regionalDestinationRoutes.length) return null;
 
   return (
     <View collapsable={false} testID="regional-destination-routes" style={styles.section}>
       <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>Discover destinations from your region</Text>
       <ScrollView horizontal nestedScrollEnabled removeClippedSubviews={false} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carousel}>
-        {regionalDestinationRoutes.map((route) => <RegionalRouteCard key={route.id} route={route} width={cardWidth} />)}
+        {regionalDestinationRoutes.map((route) => <RegionalRouteCard key={route.id} route={route} width={cardWidth} marketplace={marketplace} />)}
       </ScrollView>
     </View>
   );
@@ -68,12 +75,12 @@ export function RegionalDestinationRoutes() {
 
 const styles = StyleSheet.create({
   section: { gap: 16, marginTop: 4 },
-  heading: { fontSize: 20, lineHeight: 26, fontWeight: "800", letterSpacing: -0.25 },
+  heading: { fontSize: 20, lineHeight: 26, fontWeight: "700", letterSpacing: -0.25 },
   carousel: { gap: 16, paddingBottom: 2, paddingRight: 40 },
   card: { borderRadius: 16, backgroundColor: "#0F172A", overflow: "hidden" },
   image: { width: "100%", height: "100%" },
   imageFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 4 },
   fallbackLabel: { fontSize: 10, fontWeight: "600", letterSpacing: 1.4 },
   fallbackCode: { fontSize: 12, fontWeight: "900", letterSpacing: 1.4 },
-  routeLabel: { position: "absolute", left: 16, right: 16, bottom: 20, color: "white", fontSize: 16, lineHeight: 20, fontWeight: "600", textShadowColor: "rgba(0,0,0,0.55)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 8 },
+  routeLabel: { position: "absolute", left: 16, right: 16, bottom: 20, color: "white", fontSize: 15, lineHeight: 20, fontWeight: "600", textShadowColor: "rgba(0,0,0,0.55)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 8 },
 });

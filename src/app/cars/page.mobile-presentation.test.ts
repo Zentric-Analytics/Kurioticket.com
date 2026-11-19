@@ -54,11 +54,11 @@ test("Cars keeps one screen-reader heading while the mobile hero stays text-free
 test("mobile pickup and conditional return launchers lead values with MapPin and retain picker actions", () => {
   assert.match(
     searchBarSource,
-    /onClick=\{\(\) => openMobilePicker\("pickupLocation"\)\}[\s\S]*?<MapPin[\s\S]*?h-4 w-4 shrink-0 text-slate-500[\s\S]*?values\.pickupLocation/,
+    /onClick=\{\(\) => openMobilePicker\("pickupLocation"\)\}[\s\S]*?<MapPin[\s\S]*?h-\[18px\] w-\[18px\] shrink-0 text-slate-500[\s\S]*?values\.pickupLocation/,
   );
   assert.match(
     searchBarSource,
-    /values\.returnToDifferentLocation \? \([\s\S]*?onClick=\{\(\) => openMobilePicker\("dropoffLocation"\)\}[\s\S]*?<MapPin[\s\S]*?h-4 w-4 shrink-0 text-slate-500[\s\S]*?values\.dropoffLocation/,
+    /values\.returnToDifferentLocation \? \([\s\S]*?onClick=\{\(\) => openMobilePicker\("dropoffLocation"\)\}[\s\S]*?<MapPin[\s\S]*?h-\[18px\] w-\[18px\] shrink-0 text-slate-500[\s\S]*?values\.dropoffLocation/,
   );
 });
 
@@ -73,7 +73,7 @@ test("rental dates keep Calendar and their dynamic summary left-aligned on mobil
   );
   assert.match(
     rentalDatesSource,
-    /<Calendar[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"/,
+    /<Calendar[\s\S]*?className="h-\[18px\] w-\[18px\] shrink-0 text-slate-500 sm:h-4 sm:w-4"/,
   );
   assert.match(
     rentalDatesSource,
@@ -86,7 +86,7 @@ test("time keeps its Clock across breakpoints, hides only the mobile chevron, an
     timeFieldSource.indexOf("<Clock") <
       timeFieldSource.indexOf("{timeSummary}"),
   );
-  assert.match(timeFieldSource, /className="h-4 w-4 shrink-0 text-slate-500"/);
+  assert.match(timeFieldSource, /className="h-\[18px\] w-\[18px\] shrink-0 text-slate-500 sm:h-4 sm:w-4"/);
   assert.match(
     timeFieldSource,
     /<ChevronDown[\s\S]*?hidden h-4 w-4[\s\S]*?sm:block/,
@@ -116,13 +116,13 @@ test("mobile Driver Age leads its dynamic value with UserRound and retains its l
   );
   assert.match(
     mobileLauncherSource,
-    /<UserRound[\s\S]*?aria-hidden="true"[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"/,
+    /<UserRound[\s\S]*?aria-hidden="true"[\s\S]*?className="h-\[18px\] w-\[18px\] shrink-0 text-slate-500 sm:h-4 sm:w-4"/,
   );
   assert.match(mobileLauncherSource, /flex min-w-0 flex-1 items-center gap-2/);
   assert.match(mobileLauncherSource, /className="truncate"/);
   assert.match(
     mobileLauncherSource,
-    /values\.driverAge === defaultDriverAge[\s\S]*?t\("carsSearch\.driverAgeAnyAgeRange"\)[\s\S]*?: getDriverAgeOptionLabel\(values\.driverAge\)/,
+    /values\.driverAge === defaultDriverAge[\s\S]*?"Select driver age"[\s\S]*?: getDriverAgeOptionLabel\(values\.driverAge\)/,
   );
   assert.ok(
     mobileLauncherSource.indexOf("values.driverAge") <
@@ -170,4 +170,17 @@ test("Driver Age icon leads both launcher values and mobile picker uses the shar
 test("homepage Cars SearchTabs remains independently owned", () => {
   assert.match(homepageSource, /<SearchTabs/);
   assert.doesNotMatch(homepageSource, /function CarsSearchBar/);
+});
+
+test("main Cars child editors use an independent native-style mobile presentation", () => {
+  const pickers = carsPageSource.slice(
+    carsPageSource.indexOf("function CarsMobilePickerDialogs"),
+    carsPageSource.indexOf("function CarsPageShell"),
+  );
+  assert.equal((pickers.match(/presentation="carsMain"/g) ?? []).length, 5);
+  assert.match(pickers, /<MobileCarLocationPicker[\s\S]*?mode="pickup"/);
+  assert.match(pickers, /<MobileCarLocationPicker[\s\S]*?mode="return"/);
+  assert.match(pickers, /<MobileCarTimePickerDialog/);
+  assert.match(pickers, /<MobileCarDriverAgePickerDialog/);
+  assert.doesNotMatch(pickers, /presentation="carsResultsEdit"/);
 });

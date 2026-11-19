@@ -1,12 +1,21 @@
 "use client";
 
+import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+
+
 import Image from "next/image";
+import styles from "./HotelResultsMobile.module.css";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   Award,
   Building2,
+  Check,
+  ChevronLeft,
+  ChevronRight,
   Heart,
   MapPin,
+  Share2,
   Star,
   Tag,
   type LucideIcon,
@@ -19,6 +28,8 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { MobileHotelPriceText } from "./MobileHotelPriceText";
+import { formatMobileHotelPrice } from "./hotelDetails/mobileHotelDetailsPresentation";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import {
   normalizeHotelClassificationStars,
@@ -28,7 +39,6 @@ import {
 import {
   getHotelReviewBand,
   getHotelReviewCount,
-  type HotelReviewBand,
 } from "@/components/results/hotelReviewPresentation";
 import {
   buildHotelGalleryCandidates,
@@ -60,25 +70,6 @@ function normalizeWhitespace(value: string) {
   return value.trim().replace(/\s+/g, " ");
 }
 
-function toTitleCase(value: string) {
-  const normalized = normalizeWhitespace(value);
-
-  if (!normalized) return "";
-
-  const shouldNormalizeCase =
-    normalized === normalized.toLocaleUpperCase() ||
-    normalized === normalized.toLocaleLowerCase();
-  const title = shouldNormalizeCase
-    ? normalized.toLocaleLowerCase()
-    : normalized;
-
-  return title.replace(
-    /(^|[\s/-])([\p{L}\p{N}])/gu,
-    (_match, separator: string, character: string) =>
-      `${separator}${character.toLocaleUpperCase()}`,
-  );
-}
-
 function toSentenceCase(value: string) {
   const normalized = normalizeWhitespace(value);
 
@@ -92,12 +83,6 @@ function toSentenceCase(value: string) {
     : normalized;
 
   return `${sentence.charAt(0).toLocaleUpperCase()}${sentence.slice(1)}`;
-}
-
-function isMealPlanText(value: string) {
-  return /breakfast|room only|accommodation only|half board|full board|all[-\s]?inclusive/i.test(
-    value,
-  );
 }
 
 function getCancellationDisplay(
@@ -135,120 +120,6 @@ function getCancellationDisplay(
   return null;
 }
 
-function getDistanceDisplay(distanceFromCenter?: string) {
-  const distanceText = distanceFromCenter
-    ? toSentenceCase(distanceFromCenter)
-    : "";
-
-  if (!distanceText) return "";
-
-  if (
-    /^(central|transit-friendly area|central or transit-friendly area)$/i.test(
-      distanceText,
-    )
-  ) {
-    return "";
-  }
-
-  return distanceText;
-}
-
-function translateKnownHotelLabel(value: string, t: (key: string) => string) {
-  const normalized = normalizeWhitespace(value).toLocaleLowerCase();
-
-  if (/^half board$/.test(normalized)) {
-    return t("hotelResults.filter.halfBoard");
-  }
-
-  if (/^full board$/.test(normalized)) {
-    return t("hotelResults.filter.fullBoard");
-  }
-
-  if (/^all[-\s]?inclusive$/.test(normalized)) {
-    return t("hotelResults.filter.allInclusive");
-  }
-
-  if (/^double business$/.test(normalized)) {
-    return t("hotelResults.filter.doubleBusiness");
-  }
-
-  if (/^bed and breakfast$/.test(normalized)) {
-    return t("hotelResults.filter.bedAndBreakfast");
-  }
-
-  if (/^breakfast$/.test(normalized)) {
-    return t("hotelResults.filter.breakfastIncludedAvailable");
-  }
-
-  if (/^(room only|accommodation only)$/.test(normalized)) {
-    return t("hotelResults.filter.roomOnly");
-  }
-
-  if (/^double room$/.test(normalized)) {
-    return t("hotelResults.filter.doubleRoom");
-  }
-
-  if (/^king bed$/.test(normalized)) {
-    return t("hotelResults.filter.kingBed");
-  }
-
-  if (/^deluxe king room$/.test(normalized)) {
-    return t("hotelResults.filter.deluxeKingRoom");
-  }
-
-  if (/^classic room$/.test(normalized)) {
-    return t("hotelResults.filter.classicRoom");
-  }
-
-  if (/^luxury king$/.test(normalized)) {
-    return t("hotelResults.filter.luxuryKing");
-  }
-
-  if (/^single standard$/.test(normalized)) {
-    return t("hotelResults.filter.singleStandard");
-  }
-
-  if (/^superior room$/.test(normalized)) {
-    return t("hotelResults.filter.superiorRoom");
-  }
-
-  if (/^superior double room$/.test(normalized)) {
-    return t("hotelResults.filter.superiorDoubleRoom");
-  }
-
-  return value;
-}
-
-function getMealPlanDisplay(
-  hotel: PublicHotelResult,
-  roomTypeText: string,
-  t: (key: string) => string,
-) {
-  const mealText = [hotel.roomType, ...hotel.amenities]
-    .map((value) => toSentenceCase(value || ""))
-    .find((value) => value && isMealPlanText(value));
-
-  if (!mealText || toTitleCase(mealText) === roomTypeText) return "";
-
-  return translateKnownHotelLabel(mealText, t);
-}
-
-const reviewLabelKeys: Record<HotelReviewBand, string> = {
-  exceptional: "hotelResults.review.exceptional",
-  veryGood: "hotelResults.review.veryGood",
-  good: "hotelResults.review.good",
-  pleasant: "hotelResults.review.pleasant",
-  reviewScore: "hotelResults.review.score",
-};
-
-const reviewLabelFallbacks: Record<HotelReviewBand, string> = {
-  exceptional: "Exceptional",
-  veryGood: "Very good",
-  good: "Good",
-  pleasant: "Pleasant",
-  reviewScore: "Review score",
-};
-
 type HotelSortBadge = "cheapest" | "bestValue" | "topRated";
 
 type HotelCardProps = {
@@ -256,22 +127,42 @@ type HotelCardProps = {
   detailsHref?: string | null;
   sortBadge?: HotelSortBadge;
   actionLabel?: string;
+  providerLabel?: string;
   actionAriaLabel?: string;
   unavailableActionLabel?: string;
   unavailableActionAriaLabel?: string;
   allowExternalAttribution?: boolean;
   allowSave?: boolean;
+  stayNights?: number;
+  searchRequestId?: string | null;
 };
 
-export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAriaLabel, unavailableActionLabel, unavailableActionAriaLabel, allowExternalAttribution = true, allowSave = true }: HotelCardProps) {
+export function HotelCard({
+  hotel,
+  detailsHref,
+  sortBadge,
+  actionLabel,
+  providerLabel,
+  actionAriaLabel,
+  unavailableActionLabel,
+  unavailableActionAriaLabel,
+  allowExternalAttribution = true,
+  allowSave = true,
+  searchRequestId,
+}: HotelCardProps) {
+  const journeyEvents = useJourneyEvents();
+  const rememberDetailsContext = () => journeyEvents.rememberDetailsContext("hotel", hotel.id, searchRequestId ?? null);
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const starRating = normalizeHotelClassificationStars(hotel.classificationStars);
-  const resolvedDetailsHref = detailsHref === undefined
-    ? `/hotels/details/${encodeURIComponent(hotel.id)}`
-    : detailsHref;
+  const starRating = normalizeHotelClassificationStars(
+    hotel.classificationStars,
+  );
+  const resolvedDetailsHref =
+    detailsHref === undefined
+      ? `/hotels/details/${encodeURIComponent(hotel.id)}`
+      : detailsHref;
   const explicitGalleryImages = useMemo(
     () => buildHotelGalleryCandidates(hotel.imageUrls, hotel.imageUrl),
     [hotel.imageUrl, hotel.imageUrls],
@@ -279,10 +170,14 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
   const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(
     () => new Set(),
   );
+  const [requestedImageIndex, setRequestedImageIndex] = useState(0);
+  const [shareStatus, setShareStatus] = useState<
+    "idle" | "shared" | "unavailable"
+  >("idle");
   const resolvedActiveImageIndex = resolveHotelGalleryIndex(
     explicitGalleryImages,
     failedImageUrls,
-    0,
+    requestedImageIndex,
   );
   const availableImageIndices = explicitGalleryImages.reduce<number[]>(
     (indices, url, index) => {
@@ -296,13 +191,12 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
       ? explicitGalleryImages[resolvedActiveImageIndex]
       : "";
   const displayImageUrl = activeGalleryImageUrl;
-  const rawRoomTypeText = hotel.roomType ? toTitleCase(hotel.roomType) : "";
-  const roomTypeText = rawRoomTypeText
-    ? translateKnownHotelLabel(rawRoomTypeText, t)
+  const mealPlanText = hotel.catalogueProfile?.mealPlan
+    ? toSentenceCase(hotel.catalogueProfile.mealPlan)
     : "";
-  const distanceText = getDistanceDisplay(hotel.distanceFromCenter);
-  const mealPlanText = getMealPlanDisplay(hotel, rawRoomTypeText, t);
-  const cancellationDisplay = getCancellationDisplay(hotel.cancellationInfo, t);
+  const cancellationDisplay = hotel.catalogueProfile?.cancellationPolicy
+    ? getCancellationDisplay(hotel.catalogueProfile.cancellationPolicy, t)
+    : null;
   const expandedAmenityItems = buildHotelAmenityPresentation(
     hotel.amenities,
     8,
@@ -318,9 +212,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
   const reviewScore = normalizeHotelReviewScore(hotel.reviewScore, reviewScale);
   const reviewBand = getHotelReviewBand(reviewScore, reviewScale);
   const reviewCount = getHotelReviewCount(hotel.reviewCount);
-  const reviewLabel = reviewBand
-    ? t(reviewLabelKeys[reviewBand]) || reviewLabelFallbacks[reviewBand]
-    : "";
+  const reviewLabel = hotel.reviewSentiment?.trim() || "";
   const formattedReviewScore = reviewBand
     ? new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(
         typeof reviewScore === "number" ? reviewScore : 0,
@@ -347,39 +239,36 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
   const saveRequiresLiveRateText =
     t("hotelResults.saveRequiresLiveRate") ||
     "Saving is available once a live room rate is provided.";
-  const taxesAndFeesText =
-    hotel.taxesAndFeesIncluded === true
-      ? t("hotelResults.taxesFeesIncluded") || "Includes taxes and fees"
-      : hotel.taxesAndFeesIncluded === false
-        ? t("hotelResults.taxesFeesNotIncluded") ||
-          "Taxes and fees not included"
-        : "";
-  const sortBadgeConfig = sortBadge && ((sortBadge !== "cheapest" && sortBadge !== "bestValue") || hasValidPrice)
-    ? ({
-        cheapest: {
-          label: t("hotelResults.cheapest") || "Cheapest",
-          Icon: Tag,
-          className: "border-emerald-100 bg-emerald-50 text-emerald-700",
-        },
-        bestValue: {
-          label: t("hotelResults.bestValue") || "Best value",
-          Icon: Award,
-          className: "border-blue-100 bg-blue-50 text-[#004BB8]",
-        },
-        topRated: {
-          label: t("hotelResults.topRated") || "Top rated",
-          Icon: Star,
-          className: "border-amber-100 bg-amber-50 text-amber-700",
-        },
-      } satisfies Record<
-        HotelSortBadge,
-        {
-          label: string;
-          Icon: LucideIcon;
-          className: string;
-        }
-      >)[sortBadge]
-    : null;
+  const sortBadgeConfig =
+    sortBadge &&
+    ((sortBadge !== "cheapest" && sortBadge !== "bestValue") || hasValidPrice)
+      ? (
+          {
+            cheapest: {
+              label: t("hotelResults.cheapest") || "Cheapest",
+              Icon: Tag,
+              className: "border-emerald-100 bg-emerald-50 text-emerald-700",
+            },
+            bestValue: {
+              label: t("hotelResults.bestValue") || "Best value",
+              Icon: Award,
+              className: "border-blue-100 bg-blue-50 text-[#004BB8]",
+            },
+            topRated: {
+              label: t("hotelResults.topRated") || "Top rated",
+              Icon: Star,
+              className: "border-amber-100 bg-amber-50 text-amber-700",
+            },
+          } satisfies Record<
+            HotelSortBadge,
+            {
+              label: string;
+              Icon: LucideIcon;
+              className: string;
+            }
+          >
+        )[sortBadge]
+      : null;
   const SortBadgeIcon = sortBadgeConfig?.Icon;
   const sourceAttributions = (hotel.sourceAttributions || [])
     .map((attribution) => ({
@@ -387,16 +276,6 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
       providerUri: attribution.providerUri?.trim(),
     }))
     .filter((attribution) => attribution.provider);
-  const totalDisplayPrice = priceDetails
-    ? formatDisplayPrice({
-        amount: priceDetails.totalPrice,
-        sourceCurrency: priceDetails.currency,
-        displayCurrency: selectedOption.currency,
-        convertSourceEstimate: true,
-        rates: currencyRates.rates,
-        isFallbackRate: currencyRates.isFallback,
-      })
-    : null;
   const nightlyDisplayPrice = priceDetails
     ? formatDisplayPrice({
         amount: priceDetails.pricePerNight,
@@ -407,6 +286,10 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
         isFallbackRate: currencyRates.isFallback,
       })
     : null;
+  const pricePerNightTemplate = t("hotelResults.pricePerNight");
+  const perNightLabel = pricePerNightTemplate
+    .replace(/\{\{\s*price\s*\}\}/g, "")
+    .trim();
 
   function getHotelSnapshot(): SavedHotelSnapshot {
     if (resolvedDetailsHref === null) {
@@ -419,7 +302,8 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
     }
 
     const params = new URLSearchParams(window.location.search);
-    const checkIn = params.get("checkIn") || new Date().toISOString().slice(0, 10);
+    const checkIn =
+      params.get("checkIn") || new Date().toISOString().slice(0, 10);
     const checkOut = params.get("checkOut") || checkIn;
     const image = displayImageUrl || undefined;
 
@@ -455,7 +339,6 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
         : saveRequiresLiveRateText
   ).replace("{{name}}", hotel.name);
 
-
   function markImageFailed(url: string) {
     if (!url) return;
 
@@ -477,31 +360,162 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
     .replace("{{current}}", String(activeGalleryPosition + 1))
     .replace("{{total}}", String(availableImageIndices.length));
 
+  function renderSaveButton(
+    className: string,
+    horizontalAlignment = "justify-center",
+  ) {
+    if (!allowSave) return null;
+
+    return (
+      <button
+        type="button"
+        aria-label={savedHotelLabel}
+        aria-pressed={isSaved}
+        title={
+          isSaved || hasValidPrice ? savedHotelLabel : saveRequiresLiveRateText
+        }
+        disabled={!isSaved && !hasValidPrice}
+        className={`${className} ${horizontalAlignment} z-20 flex min-h-11 min-w-11 shrink-0 items-center rounded-full border border-transparent bg-transparent transition hover:bg-slate-100/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] ${
+          isSaved ? "text-[#E92D55] sm:text-rose-600" : "text-slate-700"
+        }`}
+        onClick={() => {
+          if (isSaved || hasValidPrice) void toggleSavedHotel();
+        }}
+      >
+        <Heart
+          size={20}
+          aria-hidden="true"
+          fill={isSaved ? "currentColor" : "none"}
+        />
+      </button>
+    );
+  }
+
+  async function shareHotel() {
+    if (!resolvedDetailsHref) return;
+    const url = new URL(resolvedDetailsHref, window.location.origin).toString();
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: hotel.name, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+      }
+      setShareStatus("shared");
+      window.setTimeout(() => setShareStatus("idle"), 2400);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setShareStatus("unavailable");
+      window.setTimeout(() => setShareStatus("idle"), 2400);
+    }
+  }
+
+  function moveGallery(direction: -1 | 1) {
+    if (availableImageIndices.length < 2) return;
+    const currentPosition = Math.max(0, activeGalleryPosition);
+    const nextPosition =
+      (currentPosition + direction + availableImageIndices.length) %
+      availableImageIndices.length;
+    setRequestedImageIndex(availableImageIndices[nextPosition]);
+  }
+
+  function renderShareButton(
+    className: string,
+    horizontalAlignment = "justify-center",
+  ) {
+    if (!resolvedDetailsHref || !allowSave) return null;
+    return (
+      <button
+        type="button"
+        aria-label={
+          shareStatus === "shared"
+            ? `${hotel.name} shared`
+            : shareStatus === "unavailable"
+              ? `Sharing ${hotel.name} is unavailable`
+            : `Share ${hotel.name}`
+        }
+        className={`${className} ${horizontalAlignment} z-20 flex min-h-11 min-w-11 shrink-0 items-center rounded-full border border-transparent bg-transparent text-slate-700 transition hover:bg-slate-100/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]`}
+        onClick={() => void shareHotel()}
+      >
+        {shareStatus === "shared" ? (
+          <Check size={19} aria-hidden="true" />
+        ) : (
+          <Share2 size={19} aria-hidden="true" />
+        )}
+      </button>
+    );
+  }
+
+  function renderReviewSummary(className: string, desktop = false) {
+    if (!reviewBand && !reviewCountText) return null;
+
+    if (desktop) {
+      return (
+        <div
+          data-hotel-card-reviews-desktop
+          className={`items-center gap-2 ${className}`}
+        >
+          {reviewBand ? (
+            <span className="inline-flex min-h-7 min-w-8 shrink-0 items-center justify-center rounded-md bg-slate-900 px-2 text-[12px] font-semibold leading-4 text-white tabular-nums">
+              {formattedReviewScore}
+            </span>
+          ) : null}
+          <div className="min-w-0 text-left">
+            {reviewBand ? (
+              <p className="text-[13px] font-semibold leading-4 text-slate-800">
+                {reviewLabel}
+              </p>
+            ) : null}
+            {reviewCountText ? (
+              <p className="mt-0.5 text-[12px] font-normal leading-4 text-slate-500">
+                {reviewCountText}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div data-hotel-card-reviews className={`flex-wrap items-center gap-1 text-[11px] font-normal leading-[15px] text-[#071A48] sm:text-[12px] sm:font-semibold sm:leading-4 sm:text-slate-600 md:gap-1.5 ${className}`}>
+        {reviewBand ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#0754F7] px-2 py-0.5 text-white sm:bg-slate-900 lg:rounded-md">
+            <span>{formattedReviewScore} / {reviewScale}</span>
+            <span>{reviewLabel}</span>
+          </span>
+        ) : null}
+        {reviewCountText ? (
+          <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-slate-600 lg:bg-transparent lg:px-0">
+            {reviewCountText}
+          </span>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
-    <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)]">
-      <div className="grid md:grid-cols-[40%_minmax(0,1fr)]">
-        <div className="relative h-[clamp(280px,78vw,340px)] bg-surface-muted md:aspect-auto md:h-auto md:min-h-[230px] lg:min-h-[240px]">
-          {allowSave ? <button
-            type="button"
-            aria-label={savedHotelLabel}
-            aria-pressed={isSaved}
-            title={isSaved || hasValidPrice ? savedHotelLabel : saveRequiresLiveRateText}
-            disabled={!isSaved && !hasValidPrice}
-            className={
-              isSaved
-                ? "absolute right-2 top-2 z-20 flex min-h-10 min-w-10 items-center justify-center rounded-full border border-rose-200 bg-white/95 text-rose-600 shadow-lg transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
-                : "absolute right-2 top-2 z-20 flex min-h-10 min-w-10 items-center justify-center rounded-full border border-white/80 bg-white/90 text-slate-800 shadow-lg transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
-            }
-            onClick={() => {
-              if (isSaved || hasValidPrice) void toggleSavedHotel();
-            }}
-          >
-            <Heart
-              size={20}
-              aria-hidden="true"
-              fill={isSaved ? "currentColor" : "none"}
-            />
-          </button> : null}
+    <Card className={`${styles.card} group relative mx-auto w-full max-w-[800px] overflow-hidden rounded-[13px] border-[#D8E1EC] bg-white shadow-[0_2px_10px_rgba(24,48,91,0.08)] transition sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] sm:hover:-translate-y-0.5 sm:hover:border-slate-300 sm:hover:shadow-[0_22px_50px_-24px_rgba(2,28,43,0.30)] focus-within:border-[#004BB8]/40 focus-within:ring-2 focus-within:ring-[#004BB8]/10 motion-reduce:transform-none motion-reduce:transition-none sm:w-full lg:mx-0 lg:max-w-none lg:border-[#CFD9E5] lg:bg-white lg:shadow-none lg:hover:translate-y-0 lg:hover:border-[#AEB1BA] lg:hover:shadow-none`}>
+      {resolvedDetailsHref ? (
+        <Link
+          href={resolvedDetailsHref}
+          onClick={rememberDetailsContext}
+          aria-hidden="true"
+          tabIndex={-1}
+          className="absolute inset-0 z-10 cursor-pointer"
+        />
+      ) : null}
+      {providerLabel ? <p className="hidden px-4 pt-3 text-xs font-semibold text-amber-800 sm:block">{providerLabel}</p> : null}
+      <div
+        data-hotel-card-mobile-grid
+        className="grid min-h-[calc((100vw-2rem)*0.7)] grid-cols-[38%_minmax(0,1fr)] min-[430px]:min-h-[260px] min-[430px]:grid-cols-[39%_minmax(0,1fr)] sm:min-h-[260px] sm:grid-cols-[39%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[33.333%_minmax(0,1fr)]"
+      >
+        <div
+          data-hotel-card-image
+          className="relative h-full min-h-[calc((100vw-2rem)*0.7)] overflow-hidden bg-[#E9EDF3] min-[430px]:min-h-[260px] sm:min-h-[260px] sm:bg-slate-200 md:min-h-[230px] lg:min-h-[206px]"
+        >
+          <div className="absolute right-2 top-2 z-20 hidden items-center gap-0.5 md:flex lg:hidden">
+            {renderSaveButton("flex hover:bg-white/90")}
+            {renderShareButton("flex hover:bg-white/90")}
+          </div>
           {displayImageUrl ? (
             <>
               <Image
@@ -515,15 +529,33 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                       : "",
                   )}
                 fill
-                className="object-cover"
-                sizes="(min-width: 768px) 40vw, 100vw"
+                className="bg-slate-200 object-cover"
+                sizes="(min-width: 1024px) 252px, (min-width: 768px) 40vw, 38vw"
                 onError={() => markImageFailed(displayImageUrl)}
               />
               {showGalleryControls ? (
-                <div className="absolute bottom-2 right-2 rounded-full bg-slate-950/75 px-2.5 py-1 text-xs font-semibold text-white shadow-lg ring-1 ring-white/30">
-                  {photoCounterText}
-                </div>
+                <>
+                  <button
+                    type="button"
+                    aria-label={`Previous photo of ${hotel.name}`}
+                    onClick={() => moveGallery(-1)}
+                    className="absolute left-0 top-1/2 z-30 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-transparent text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-reduce:transition-none lg:left-2 lg:h-8 lg:w-8 lg:rounded-full lg:bg-slate-950/65 lg:drop-shadow-none"
+                  >
+                    <ChevronLeft className="h-5 w-5 -translate-x-2.5 lg:translate-x-0" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Next photo of ${hotel.name}`}
+                    onClick={() => moveGallery(1)}
+                    className="absolute right-0 top-1/2 z-30 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-transparent text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-reduce:transition-none lg:right-2 lg:h-8 lg:w-8 lg:rounded-full lg:bg-slate-950/65 lg:drop-shadow-none"
+                  >
+                    <ChevronRight className="h-5 w-5 translate-x-2.5 lg:translate-x-0" aria-hidden="true" />
+                  </button>
+                </>
               ) : null}
+              <div data-hotel-photo-counter data-single-photo={!showGalleryControls} className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] whitespace-nowrap rounded-full bg-slate-950/75 px-2 py-1 text-[11px] font-semibold text-white shadow-lg ring-1 ring-white/30 sm:text-xs" aria-live="polite" aria-label={photoCounterText}>
+                <span aria-hidden="true" className="sm:hidden">{activeGalleryPosition + 1} / {availableImageIndices.length}</span><span className="hidden sm:inline">{photoCounterText}</span>
+              </div>
             </>
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue/10 via-surface to-surface-subtle px-5 text-center">
@@ -534,29 +566,55 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
             </div>
           )}
         </div>
-        <div className="flex min-h-[200px] flex-col px-3.5 py-3.5 md:min-h-0 md:px-3 md:py-3">
+        <div
+          data-hotel-card-details
+          className="relative flex min-w-0 flex-col bg-white p-2 min-[430px]:p-3 sm:bg-white sm:p-3 md:min-h-0 md:p-3 lg:bg-white lg:p-3"
+        >
           <div className="flex flex-1 flex-col">
             <div className="min-w-0">
               <div>
-                <div className="flex min-w-0 items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <h2 className="min-w-0 text-base font-bold leading-6 text-slate-950 lg:text-[17px]">
+                <div className="relative min-w-0">
+                  <div className="min-w-0 sm:pe-[88px] md:pe-0 lg:flex lg:items-start lg:gap-2 lg:pe-[88px]">
+                    <h2 className="min-w-0 text-[15px] font-bold leading-5 text-[#071A48] sm:line-clamp-2 sm:text-base sm:font-bold sm:leading-5 lg:line-clamp-2 lg:text-[19px] lg:leading-6 lg:group-hover:underline">
+                      <span aria-hidden="true" className="float-end h-9 w-[76px] sm:hidden" />
                       {hotel.name}
                     </h2>
+                    {sortBadgeConfig && SortBadgeIcon ? (
+                      <span className={`mt-0.5 hidden max-w-full shrink-0 items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-semibold leading-4 lg:inline-flex ${sortBadgeConfig.className}`}>
+                        <SortBadgeIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                        {sortBadgeConfig.label}
+                      </span>
+                    ) : null}
                   </div>
-
-                  {sortBadgeConfig && SortBadgeIcon ? (
-                    <span
-                      className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-semibold leading-4 ${sortBadgeConfig.className}`}
-                    >
-                      <SortBadgeIcon
-                        className="h-3.5 w-3.5"
-                        aria-hidden="true"
-                      />
-                      {sortBadgeConfig.label}
-                    </span>
-                  ) : null}
+                  <div
+                    data-hotel-utility-actions
+                    className="absolute -end-2.5 -top-2 flex shrink-0 items-center gap-0 sm:-end-3 md:hidden"
+                  >
+                    {renderSaveButton("flex pe-1", "justify-end")}
+                    {renderShareButton("flex ps-1", "justify-start")}
+                  </div>
+                  <div
+                    data-hotel-desktop-utility-actions
+                    className="absolute -end-3 -top-2 z-20 hidden shrink-0 items-center gap-0 lg:flex"
+                  >
+                    {renderSaveButton("flex pe-1", "justify-end")}
+                    {renderShareButton("flex ps-1", "justify-start")}
+                  </div>
                 </div>
+                {providerLabel ? (
+                  <p data-hotel-provider-label className="mt-1 line-clamp-1 text-[10px] font-normal leading-[14px] text-[#56658E] sm:hidden">
+                    {providerLabel}
+                  </p>
+                ) : null}
+
+                {sortBadgeConfig && SortBadgeIcon ? (
+                  <span
+                    className={`mt-1 inline-flex max-w-full items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-semibold leading-4 md:px-2 lg:hidden ${sortBadgeConfig.className}`}
+                  >
+                    <SortBadgeIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                    {sortBadgeConfig.label}
+                  </span>
+                ) : null}
 
                 {starRating ? (
                   <div
@@ -572,53 +630,41 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                   >
                     <span
                       aria-hidden="true"
-                      className="text-[14px] leading-5 tracking-[0.08em] text-amber-500"
+                      className="text-[14px] leading-5 tracking-[0.06em] text-[#FFB800] sm:text-[14px] sm:leading-5 sm:tracking-[0.08em]"
                     >
                       {"★".repeat(starRating)}
                     </span>
                   </div>
                 ) : null}
 
-                <p className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[13px] font-semibold leading-5 text-[#004BB8] lg:text-sm">
-                  <MapPin size={15} className="shrink-0 text-[#004BB8]" />
-                  <span className="min-w-0">{hotel.location}</span>
-                  {distanceText ? (
-                    <>
-                      <span
-                        aria-hidden="true"
-                        className="shrink-0 font-normal text-slate-400"
-                      >
-                        ·
-                      </span>
-                      <span className="font-normal text-slate-600">
-                        {distanceText}
-                      </span>
-                    </>
-                  ) : null}
+                <p className="mt-1 flex min-w-0 items-start gap-x-1 text-[12px] font-semibold leading-4 text-[#004BB8] sm:text-[13px] sm:font-semibold sm:leading-4 sm:text-[#004BB8] lg:text-[13px] lg:font-normal lg:text-slate-700">
+                  <MapPin
+                    size={14}
+                    className="mt-px shrink-0 text-[#004BB8] lg:text-slate-600"
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0 line-clamp-1 sm:line-clamp-none">{hotel.location}</span>
                 </p>
+                {hotel.provider === "KAYAK sandbox" ? <p data-hotel-test-location className="mt-1 text-xs text-slate-600">Provider test location — not verified for travel.</p> : null}
               </div>
-              {reviewBand || reviewCountText ? (
-                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-600">
-                  {reviewBand ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-white">
-                      <span>{formattedReviewScore} / {reviewScale}</span>
-                      <span>{reviewLabel}</span>
-                    </span>
-                  ) : null}
-                  {reviewCountText ? (
-                    <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">
-                      {reviewCountText}
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
+              {renderReviewSummary("mt-1.5 flex md:mt-2 lg:hidden")}
               {sourceAttributions.length ? (
-                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-slate-600">
+                <div className="mt-1.5 hidden flex-wrap items-center gap-1 text-[11px] font-medium leading-4 text-slate-600 sm:flex md:mt-2 md:gap-1.5">
                   {sourceAttributions.map((attribution, index) => (
-                    <span key={`${attribution.provider}-${index}`} className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5">
+                    <span
+                      key={`${attribution.provider}-${index}`}
+                      className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5"
+                    >
                       <span>Data:</span>
-                      {allowExternalAttribution && isSafeHttpUrl(attribution.providerUri) ? (
-                        <a href={attribution.providerUri} target="_blank" rel="noopener noreferrer" translate="no" className="text-[#004BB8] hover:underline">
+                      {allowExternalAttribution &&
+                      isSafeHttpUrl(attribution.providerUri) ? (
+                        <a
+                          href={attribution.providerUri}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          translate="no"
+                          className="relative z-20 text-[#004BB8] hover:underline"
+                        >
                           {attribution.provider}
                         </a>
                       ) : (
@@ -629,111 +675,120 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAr
                 </div>
               ) : null}
             </div>
-            <div className="mt-3 grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] border-t border-slate-200 pt-3">
-              <div className="min-w-0 pe-2.5 md:pe-3">
-                {roomTypeText ||
-                shouldShowMealPlanText ||
-                collapsedAmenityItems.length > 0 ? (
-                  <div className="space-y-1">
-                    {roomTypeText ? (
-                      <p className="text-sm font-medium leading-5 text-slate-800">
-                        {roomTypeText}
-                      </p>
-                    ) : null}
-                    {shouldShowMealPlanText ? (
-                      <p className="text-[13px] font-normal leading-5 text-slate-600">
-                        {mealPlanText}
-                      </p>
-                    ) : null}
-                    <HotelAmenityList
-                      items={collapsedAmenityItems}
-                      t={t}
-                    />
-                  </div>
-                ) : null}
-                {cancellationDisplay ? (
-                  <p
-                    className={
-                      cancellationDisplay.positive
-                        ? "mt-2 text-[13px] font-medium leading-5 text-emerald-700"
-                        : "mt-2 text-[13px] font-medium leading-5 text-slate-600"
-                    }
-                  >
-                    {cancellationDisplay.label}
-                  </p>
-                ) : null}
-              </div>
-              <div className="flex min-w-0 flex-col border-s border-slate-200 ps-2.5 text-end md:ps-3">
+            <div data-hotel-card-amenities className="mt-2 min-w-0 md:mt-3 lg:mt-2">
+              {shouldShowMealPlanText || collapsedAmenityItems.length > 0 ? (
+                <div className="space-y-1.5">
+                  {shouldShowMealPlanText ? (
+                    <p className="text-[11px] font-normal leading-[15px] text-[#071A48] sm:text-[12px] sm:leading-[18px] sm:text-slate-600 md:text-[13px] md:leading-5">
+                      {mealPlanText}
+                    </p>
+                  ) : null}
+                  <HotelAmenityList
+                    items={collapsedAmenityItems}
+                    t={t}
+                    className="grid grid-cols-1 gap-y-[3px] text-[13px] font-normal leading-[19px] text-[#56658E] max-sm:[&>li]:text-[13px] max-sm:[&>li]:font-normal max-sm:[&>li]:leading-[19px] max-sm:[&>li]:text-[#56658E] max-sm:[&>li>svg]:h-[15px] max-sm:[&>li>svg]:w-[15px] max-sm:[&>li>svg]:text-[#1A1A1A] sm:gap-y-1 sm:text-[12px] sm:leading-[18px] md:grid-cols-2 md:gap-x-3 md:gap-y-1.5 md:text-xs md:leading-4 lg:flex lg:flex-wrap lg:gap-x-3 lg:gap-y-1"
+                  />
+                </div>
+              ) : null}
+              {cancellationDisplay ? (
+                <p
+                  className={
+                    cancellationDisplay.positive
+                      ? "mt-1.5 text-[11px] font-normal leading-[15px] text-[#071A48] sm:text-[12px] sm:font-medium sm:leading-[18px] sm:text-emerald-700 md:mt-2 md:text-[13px] md:leading-5"
+                      : "mt-1.5 text-[11px] font-normal leading-[15px] text-[#071A48] sm:text-[12px] sm:font-medium sm:leading-[18px] sm:text-slate-600 md:mt-2 md:text-[13px] md:leading-5"
+                  }
+                >
+                  {cancellationDisplay.label}
+                </p>
+              ) : null}
+              {sourceAttributions.length ? (
+                <p className="mt-1 line-clamp-1 text-[10px] font-normal leading-[14px] text-[#56658E] sm:hidden">
+                  <span>Source: </span>
+                  {allowExternalAttribution && isSafeHttpUrl(sourceAttributions[0]?.providerUri) ? (
+                    <a
+                      href={sourceAttributions[0]?.providerUri}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      translate="no"
+                      className="relative z-20 text-[#004BB8] hover:underline"
+                    >
+                      {sourceAttributions[0]?.provider}
+                    </a>
+                  ) : (
+                    <span translate="no">{sourceAttributions[0]?.provider}</span>
+                  )}
+                  {sourceAttributions.length > 1 ? <span>{` +${sourceAttributions.length - 1}`}</span> : null}
+                </p>
+              ) : null}
+            </div>
+            <div className="mt-auto pt-2 md:pt-3 lg:flex lg:items-end lg:justify-between lg:gap-3 lg:pt-1">
+              {renderReviewSummary("hidden lg:flex lg:max-w-[48%] lg:shrink-0", true)}
+              <div className="contents lg:ml-auto lg:flex lg:flex-col lg:items-end">
+              <div data-hotel-card-price className="min-w-0 text-end">
                 <div className="min-w-0 text-end">
-                  {priceDetails && totalDisplayPrice && nightlyDisplayPrice ? (
-                    <>
-                      <div
-                        className="text-lg font-bold leading-7 tracking-[-0.01em] text-slate-950 tabular-nums min-[380px]:whitespace-nowrap md:text-xl"
-                        dir="ltr"
-                        title={totalDisplayPrice.title}
-                        aria-label={totalDisplayPrice.ariaLabel}
+                  {priceDetails && nightlyDisplayPrice ? (
+                    <div
+                      className="min-w-0"
+                      title={nightlyDisplayPrice.title}
+                      aria-label={nightlyDisplayPrice.ariaLabel}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="block whitespace-nowrap text-[18px] font-bold leading-6 text-[#071A48] tabular-nums sm:text-xl sm:font-bold sm:leading-6 sm:text-slate-950"
                       >
-                        {totalDisplayPrice.formatted}
-                      </div>
-
-                    <div className="mt-1 text-[13px] font-medium leading-5 text-slate-500">
-                      {t("hotelResults.estimatedStayTotal")}
-                    </div>
-
-                    <div className="mt-3 space-y-1.5">
-                      <div
-                        className="text-sm font-semibold leading-5 text-slate-800 tabular-nums"
-                        title={nightlyDisplayPrice.title}
-                        aria-label={nightlyDisplayPrice.ariaLabel}
+                        <MobileHotelPriceText text={nightlyDisplayPrice.formatted} mobileText={formatMobileHotelPrice(nightlyDisplayPrice, nightlyDisplayPrice.formatted)} />
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="mt-px block text-[12px] font-medium leading-4 text-[#56658E] sm:mt-0.5 sm:text-xs sm:leading-4 sm:text-slate-500"
                       >
-                        {t("hotelResults.pricePerNight").replace(
-                          "{{price}}",
-                          nightlyDisplayPrice.formatted,
-                        )}
-                      </div>
-
-                      {taxesAndFeesText ? (
-                        <div className="text-xs font-medium leading-[18px] text-slate-500">
-                          {taxesAndFeesText}
-                        </div>
-                      ) : null}
+                        {perNightLabel}
+                      </span>
                     </div>
-                    </>
                   ) : (
                     <div className="min-w-0 space-y-1">
                       <p className="text-lg font-bold leading-6 text-slate-950">
                         {priceUnavailableText}
                       </p>
                       <p className="text-xs font-medium leading-5 text-slate-500">
-                        {liveRateUnavailableText}
+                        <span className="sm:hidden">No live rate</span>
+                        <span className="hidden sm:inline">{liveRateUnavailableText}</span>
                       </p>
                     </div>
                   )}
                 </div>
-                <div className="mt-3 text-end">
-                  {resolvedDetailsHref === null ? (
+              </div>
+              <div data-hotel-card-action className="mt-1 flex justify-end sm:mt-1.5 lg:mt-0 lg:shrink-0">
+                {resolvedDetailsHref === null ? (
+                  <>
+                    <span className="min-h-9 text-end text-[13px] font-semibold leading-5 text-slate-500 sm:hidden">
+                      {unavailableActionLabel || t("deals.guided.hotelResults.roomsUnavailable")}
+                    </span>
                     <Button
                       type="button"
                       disabled
                       aria-label={unavailableActionAriaLabel}
                       variant="secondary"
                       size="sm"
-                      className="w-full whitespace-normal rounded-lg px-2 text-sm font-semibold md:px-3"
+                      className="hidden h-10 min-h-10 w-auto whitespace-normal rounded-lg px-3 text-sm font-semibold sm:inline-flex"
                     >
                       {unavailableActionLabel || t("deals.guided.hotelResults.roomsUnavailable")}
                     </Button>
-                  ) : (
-                    <LinkButton
-                      href={resolvedDetailsHref}
-                      aria-label={actionAriaLabel}
-                      variant="accent"
-                      size="sm"
-                      className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] md:px-3"
-                    >
-                      {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
-                    </LinkButton>
-                  )}
-                </div>
+                  </>
+                ) : (
+                  <LinkButton
+                    href={resolvedDetailsHref}
+                    onClick={rememberDetailsContext}
+                    aria-label={actionAriaLabel}
+                    variant="accent"
+                    size="sm"
+                    className="relative z-20 h-9 min-h-9 w-auto whitespace-nowrap rounded-lg border border-transparent bg-transparent px-0 text-[13px] font-semibold leading-4 text-[#0754F7] shadow-none hover:border-transparent hover:bg-transparent hover:text-[#003B91] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 sm:gap-1 sm:active:opacity-70 lg:h-6 lg:min-h-6"
+                  >
+                    {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
+                    <ChevronRight className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
+                  </LinkButton>
+                )}
+              </div>
               </div>
             </div>
           </div>

@@ -2,8 +2,14 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const picker = readFileSync("src/components/search/MobileAirportPicker.tsx", "utf8");
-const shell = readFileSync("src/components/search/FlightMobilePickerShell.tsx", "utf8");
+const picker = readFileSync(
+  "src/components/search/MobileAirportPicker.tsx",
+  "utf8",
+);
+const shell = readFileSync(
+  "src/components/search/FlightMobilePickerShell.tsx",
+  "utf8",
+);
 const consumers = [
   "src/components/search/SearchTabs.tsx",
   "src/components/search/StandaloneFlightSearchForm.tsx",
@@ -43,23 +49,39 @@ test("origin and destination headers keep Back and centered titles without Cance
   );
 });
 
-test("draft selection commits only through Done while shell close discards it", () => {
+test("selection defaults to immediate commit while draft mode remains available", () => {
   assert.match(picker, /const \[draft, setDraft\]/);
-  assert.match(picker, /onSelect=\{\(\) => selectDraft\(airport\)\}/);
+  assert.match(picker, /commitOnSelect = true/);
+  assert.match(picker, /if \(commitOnSelect\)[\s\S]*?selectDraft\(airport\)/);
   assert.match(picker, /onClick=\{\(\) => commit\(requestClose\)\}/);
   assert.match(picker, /onClose=\{onClose\}/);
-  assert.doesNotMatch(picker, /onClick=\{\(\) => \{\s*onCommit/);
+  assert.match(
+    picker,
+    /footer=\{[\s\S]*?commitOnSelect[\s\S]*?\? undefined[\s\S]*?: \(requestClose\) =>/,
+  );
+});
+
+test("immediate mode commits a real airport and closes through the shared shell", () => {
+  assert.match(picker, /commitOnSelect\?: boolean/);
+  assert.match(
+    picker,
+    /if \(commitOnSelect\) \{[\s\S]*?onCommit\(airport\);[\s\S]*?requestClose\(\);[\s\S]*?return;/,
+  );
+  assert.match(picker, /\{\(requestClose\) =>/);
 });
 
 test("all mobile flight-airport consumers render the same shared picker", () => {
-  for (const source of consumers) {
+  for (const source of consumers.slice(0, 3)) {
     assert.match(source, /import \{ MobileAirportPicker \}/);
     assert.match(source, /<MobileAirportPicker/);
+    assert.doesNotMatch(source, /commitOnSelect/);
   }
+  assert.match(consumers[3], /import \{ FlightEditSearchDrawer/);
+  assert.match(consumers[3], /<FlightEditSearchDrawer/);
   assert.match(consumers[0], /field: "origin"[\s\S]*?field: "destination"/);
   assert.match(consumers[1], /field: "origin"[\s\S]*?field: "destination"/);
   assert.match(consumers[2], /field=\{kind\}/);
-  assert.match(consumers[3], /field="origin"[\s\S]*?field="destination"/);
+  assert.match(consumers[3], /<FlightEditSearchDrawer/);
 });
 
 test("opening and clearing the airport picker focus without moving the page", () => {

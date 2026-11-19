@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildSearchPlan, validBookableCar, validBookableHotel, validFlight } from "./travelSearchModel";
+import { buildSearchPlan, safeCanonicalCarResult, safeCanonicalHotelResult, validFlight } from "./travelSearchModel";
+import { isHotelTodayOrFutureLocalDate } from "./localDateModel";
 
 const now = new Date("2026-07-30T12:00:00Z");
 test("flight plans preserve stable parameters and premium economy", () => {
@@ -10,6 +11,12 @@ test("flight plans preserve stable parameters and premium economy", () => {
   assert.equal(first.key, second.key);
   assert.equal(first.payload.cabinClass, "premium-economy");
   assert.equal(first.payload.adults, 1);
+});
+test("flight plans preserve a valid marketplace currency and safely default legacy routes", () => {
+  const base = { tripType: "one-way", from: "LHR", to: "CDG", departureDate: "2026-08-10", travelers: "1" };
+  assert.equal(buildSearchPlan("flight", { ...base, currency: "eur" }, now).plan?.payload.currency, "EUR");
+  assert.equal(buildSearchPlan("flight", base, now).plan?.payload.currency, "USD");
+  assert.equal(buildSearchPlan("flight", { ...base, currency: "not-money" }, now).plan?.payload.currency, "USD");
 });
 test("invalid flight, hotel, and car dates are blocked before requests", () => {
   assert.ok(buildSearchPlan("flight", { from: "JFK", to: "JFK", departureDate: "2026-08-10" }, now).error);
@@ -22,6 +29,34 @@ test("hotel guests, rooms and car driver age are preserved", () => {
   assert.deepEqual(buildSearchPlan("hotel", { destination: "Paris", checkIn: "2026-08-10", checkOut: "2026-08-12", guests: "4", rooms: "2" }, now).plan?.payload, { destination: "Paris", checkIn: "2026-08-10", checkOut: "2026-08-12", guests: 4, rooms: 2 });
   assert.equal(buildSearchPlan("car", { pickupLocation: "LAX", dropoffLocation: "SFO", pickupDate: "2026-08-10", pickupTime: "10:00", dropoffDate: "2026-08-12", dropoffTime: "10:00", driverAge: "42" }, now).plan?.payload.driverAge, "42");
 });
+test("Hotel plans enforce the native 12 guest, 6 room occupancy contract", () => {
+  const params = { destination: "Paris", checkIn: "2026-08-10", checkOut: "2026-08-12" };
+  assert.ok(buildSearchPlan("hotel", { ...params, guests: "1", rooms: "2" }, now).error);
+  assert.ok(buildSearchPlan("hotel", { ...params, guests: "2", rooms: "2" }, now).plan);
+  assert.ok(buildSearchPlan("hotel", { ...params, guests: "12", rooms: "6" }, now).plan);
+  assert.ok(buildSearchPlan("hotel", { ...params, guests: "13", rooms: "6" }, now).error);
+  assert.ok(buildSearchPlan("hotel", { ...params, guests: "12", rooms: "7" }, now).error);
+});
+test("Hotel plans use the device-local calendar baseline across the UTC midnight boundary", () => {
+  const params = { destination: "Paris", checkIn: "2026-09-04", checkOut: "2026-09-07", guests: "1", rooms: "1" };
+  assert.equal(isHotelTodayOrFutureLocalDate("2026-09-04", "2026-09-04"), true);
+  assert.equal(isHotelTodayOrFutureLocalDate("2026-09-03", "2026-09-04"), false);
+  assert.ok(buildSearchPlan("hotel", params, new Date(2026, 8, 4, 23, 30)).plan);
+  assert.ok(buildSearchPlan("hotel", { ...params, checkIn: "2026-09-03" }, new Date(2026, 8, 4, 23, 30)).error);
+  assert.ok(buildSearchPlan("hotel", { ...params, checkOut: "2026-09-04" }, new Date(2026, 8, 4, 23, 30)).error);
+});
+test("Hotel plans preserve canonical destination identity when provided", () => {
+  assert.equal(buildSearchPlan("hotel", { destinationId: "fr-paris", destination: "Paris, France", checkIn: "2026-08-10", checkOut: "2026-08-12", guests: "2", rooms: "1" }, now).plan?.payload.destinationId, "fr-paris");
+});
+test("Hotel plans preserve the selected canonical destination target", () => {
+  const destinationLocation = JSON.stringify({ id: "hotel:tempe", kind: "city", primaryLabel: "Tempe", supportingLabel: "Arizona, United States", submittedValue: "Tempe, Arizona, United States", selectionToken: "opaque-server-selection-token-123456789" });
+  const plan = buildSearchPlan("hotel", { destination: "Tempe, Arizona, United States", destinationLocation, checkIn: "2026-08-10", checkOut: "2026-08-12", guests: "1", rooms: "1" }, now).plan!;
+  assert.deepEqual(plan.payload.destinationLocation, JSON.parse(destinationLocation));
+});
+test("destination-only Hotel intent cannot become a canonical search plan", () => {
+  assert.equal(buildSearchPlan("hotel", { destination: "London" }, now).plan, undefined);
+  assert.match(buildSearchPlan("hotel", { destination: "London" }, now).error ?? "", /Complete your stay/);
+});
 test("car plans reject every server-unsupported driver age from 71 through 99", () => {
   const base = { pickupLocation: "LAX", dropoffLocation: "SFO", pickupDate: "2026-08-10", pickupTime: "10:00", dropoffDate: "2026-08-12", dropoffTime: "10:00" };
   for (let age = 71; age <= 99; age += 1) assert.ok(buildSearchPlan("car", { ...base, driverAge: String(age) }, now).error);
@@ -31,8 +66,27 @@ test("shared result policy accepts website inventory and still rejects malformed
   const internalAction = { source: "duffel", bookable: true, action: { kind: "internal-detail", href: "/flights/details/f", enabled: true } };
   const flight = { id: "f", provider: "Duffel", airlineName: "Air", originAirport: "JFK", destinationAirport: "LAX", departureTime: "2026-08-10T12:00:00Z", arrivalTime: "2026-08-10T15:00:00Z", price: 100, currency: "USD", bookingUrl: "", partnerRedirectUrl: "", searchPolicy: internalAction };
   assert.equal(validFlight(flight as never, plan), true);
-  assert.equal(validFlight({ ...flight, destinationAirport: "SFO" } as never, plan), false);
+  assert.equal(validFlight({ ...flight, destinationAirport: "SFO" } as never, plan), true);
+  assert.equal(validFlight({ ...flight, originAirport: { code: "JFK" } } as never, plan), false);
+  assert.equal(validFlight({ ...flight, destinationAirport: "LONDON" } as never, plan), false);
+  assert.equal(validFlight({ ...flight, departureTime: "not-a-date" } as never, plan), false);
   const staticCar = { id: "c", rentalCompanyName: "Kurioticket", inventorySource: "kurioticket-static-cars", offers: [{ bookingProviderName: "Kurioticket", totalPrice: 50, currency: "USD" }], searchPolicy: { source: "kurioticket-static-cars", bookable: false, action: { kind: "internal-detail", href: "/cars/details/c", enabled: true } } };
-  assert.equal(validBookableCar(staticCar as never), true);
-  assert.equal(validBookableCar({ ...staticCar, searchPolicy: { ...staticCar.searchPolicy, bookable: true } } as never), true);
+  assert.equal(safeCanonicalCarResult(staticCar as never), true);
+  assert.equal(safeCanonicalCarResult({ ...staticCar, searchPolicy: { ...staticCar.searchPolicy, bookable: true } } as never), true);
+  const staticHotel = { id: "h", provider: "Kurioticket static catalogue", name: "Hotel", totalPrice: 300, currency: "USD", imageUrl: "/images/hotel.webp", searchPolicy: { source: "kurioticket-static-hotels", bookable: false, action: { kind: "internal-detail", href: "/hotels/details/h", enabled: true } } };
+  assert.equal(safeCanonicalHotelResult(staticHotel as never), true);
+  const discoveryHotel = { id: "d", provider: "Kurioticket verified destination coverage", name: "Discovery Hotel", inventoryKind: "discovery", imageUrl: "/images/hotel.webp", searchPolicy: { source: "kurioticket-static-hotels", bookable: false, action: { kind: "internal-detail", href: "/hotels/details/d", enabled: true } } };
+  assert.equal(safeCanonicalHotelResult(discoveryHotel as never), true);
+  assert.equal(safeCanonicalHotelResult({ ...discoveryHotel, totalPrice: 10 } as never), false);
+});
+test("multi-city plans and results validate every authoritative leg",()=>{
+ const params={tripType:"multi-city",legCount:"3",origin1:"LAX",destination1:"JFK",departureDate1:"2026-08-10",origin2:"JFK",destination2:"LHR",departureDate2:"2026-08-10",origin3:"LHR",destination3:"CDG",departureDate3:"2026-08-14",adults:"2",children:"1",infants:"0",cabin:"Business"}; const plan=buildSearchPlan("flight",params,now).plan!; assert.equal(plan.payload.destination,"CDG"); assert.equal((plan.payload.legs as unknown[]).length,3); assert.equal("returnDate" in plan.payload,false);
+ const action={source:"duffel",bookable:true,action:{kind:"internal-detail",href:"/flights/details/f",enabled:true}}; const legs=[{originAirport:"LAX",destinationAirport:"JFK",departureTime:"2026-08-10T10:00:00Z"},{originAirport:"JFK",destinationAirport:"LHR",departureTime:"2026-08-10T20:00:00Z"},{originAirport:"LHR",destinationAirport:"CDG",departureTime:"2026-08-14T10:00:00Z"}]; const result={id:"f",provider:"Duffel",airlineName:"Air",originAirport:"LAX",destinationAirport:"JFK",departureTime:legs[0].departureTime,arrivalTime:"2026-08-14T12:00:00Z",price:100,currency:"USD",searchPolicy:action,legs}; assert.equal(validFlight(result as never,plan),true); assert.equal(validFlight({...result,legs:legs.slice(0,2)} as never,plan),true); assert.equal(validFlight({...result,currency:"US"} as never,plan),false);
+ assert.ok(buildSearchPlan("flight",{...params,legCount:"6"},now).error); assert.ok(buildSearchPlan("flight",{...params,destination2:"JFK"},now).error); assert.ok(buildSearchPlan("flight",{...params,departureDate2:"2026-08-09"},now).error);
+});
+
+test("multi-city search identity includes normalized requested currency", () => {
+ const params={tripType:"multi-city",legCount:"2",origin1:"LOS",destination1:"LHR",departureDate1:"2026-08-10",origin2:"LHR",destination2:"JFK",departureDate2:"2026-08-12",adults:"1",cabin:"Economy"};
+ const usd=buildSearchPlan("flight",{...params,currency:"usd"},now).plan!; const sameUsd=buildSearchPlan("flight",{...params,currency:"USD"},now).plan!; const ngn=buildSearchPlan("flight",{...params,currency:"NGN"},now).plan!;
+ assert.equal(usd.payload.currency,"USD"); assert.equal(ngn.payload.currency,"NGN"); assert.equal(usd.key,sameUsd.key); assert.notEqual(usd.key,ngn.key);
 });

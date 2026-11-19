@@ -5,6 +5,8 @@ export type HotelAmenityIconKey =
   | "spa"
   | "airportShuttle"
   | "parking"
+  | "petFriendly"
+  | "evCharging"
   | "fitness"
   | "workspace"
   | "quietRooms"
@@ -15,6 +17,7 @@ export type HotelAmenityIconKey =
   | "courtyard"
   | "lounge"
   | "restaurant"
+  | "bar"
   | "airConditioning"
   | "generic";
 
@@ -33,24 +36,27 @@ type ClassifiedAmenity = {
 };
 
 const iconPriority: Record<HotelAmenityIconKey, number> = {
-  wifi: 1,
-  breakfast: 2,
-  pool: 3,
-  spa: 4,
-  airportShuttle: 5,
-  parking: 6,
-  fitness: 7,
-  workspace: 8,
-  restaurant: 9,
-  airConditioning: 10,
-  frontDesk: 11,
-  lateCheckIn: 12,
-  quietRooms: 13,
-  kitchenette: 14,
-  bikeStorage: 15,
-  courtyard: 16,
-  lounge: 17,
-  generic: 18,
+  petFriendly: 1,
+  parking: 2,
+  evCharging: 3,
+  pool: 4,
+  spa: 5,
+  fitness: 6,
+  wifi: 7,
+  breakfast: 8,
+  airportShuttle: 9,
+  workspace: 10,
+  restaurant: 11,
+  bar: 12,
+  airConditioning: 13,
+  frontDesk: 14,
+  lateCheckIn: 15,
+  quietRooms: 16,
+  kitchenette: 17,
+  bikeStorage: 18,
+  courtyard: 19,
+  lounge: 20,
+  generic: 21,
 };
 
 const knownAmenityIconKeys = new Set<HotelAmenityIconKey>([
@@ -60,6 +66,8 @@ const knownAmenityIconKeys = new Set<HotelAmenityIconKey>([
   "spa",
   "airportShuttle",
   "parking",
+  "petFriendly",
+  "evCharging",
   "fitness",
   "workspace",
   "quietRooms",
@@ -70,6 +78,7 @@ const knownAmenityIconKeys = new Set<HotelAmenityIconKey>([
   "courtyard",
   "lounge",
   "restaurant",
+  "bar",
   "airConditioning",
 ]);
 
@@ -98,6 +107,13 @@ const exactIconKeys: Record<string, HotelAmenityIconKey> = {
   "free parking": "parking",
   "onsite parking": "parking",
   "on-site parking": "parking",
+  "pet friendly": "petFriendly",
+  "pet-friendly": "petFriendly",
+  "pets allowed": "petFriendly",
+  "ev charging": "evCharging",
+  "ev charger": "evCharging",
+  "electric vehicle charging": "evCharging",
+  "electric car charging": "evCharging",
   "fitness room": "fitness",
   "fitness centre": "fitness",
   "fitness center": "fitness",
@@ -133,6 +149,7 @@ const exactIconKeys: Record<string, HotelAmenityIconKey> = {
   "onsite restaurant": "restaurant",
   "on-site restaurant": "restaurant",
   dining: "restaurant",
+  bar: "bar",
   "air conditioning": "airConditioning",
   "air-conditioned": "airConditioning",
   "climate control": "airConditioning",

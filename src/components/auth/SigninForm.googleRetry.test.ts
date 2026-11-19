@@ -5,7 +5,7 @@ import test from "node:test";
 
 test("web Google sign-in passes select_account as an OAuth authorization parameter", () => {
   const source = readFileSync(resolve(process.cwd(), "src/components/auth/SigninForm.tsx"), "utf8");
-  assert.match(source, /signIn\(\s*"google",\s*\{ callbackUrl: callbackUrl \|\| "\/" \},\s*\{ prompt: "select_account" \}/s);
+  assert.match(source, /signIn\(\s*"google",\s*\{ callbackUrl: callbackUrl \|\| "\/" \},\s*\{ prompt: "select_account" \}/);
 });
 
 test("web Google sign-in renders a decorative multicolor Google logo before its label", () => {
@@ -13,7 +13,7 @@ test("web Google sign-in renders a decorative multicolor Google logo before its 
   const logoSource = readFileSync(resolve(process.cwd(), "src/components/auth/GoogleLogo.tsx"), "utf8");
 
   assert.match(signinSource, /className="w-full gap-2\.5 focus-visible:ring-blue\/30"/);
-  assert.match(signinSource, /<GoogleLogo\s*\/>\s*<span>\{t\.loginGoogle\}<\/span>/s);
+  assert.match(signinSource, /<GoogleLogo\s*\/>\s*<span>\{t\.loginGoogle\}<\/span>/);
   assert.match(logoSource, /aria-hidden="true"/);
   assert.match(logoSource, /className="h-5 w-5 shrink-0"/);
   for (const brandColor of ["#4285F4", "#34A853", "#FBBC05", "#EA4335"]) {

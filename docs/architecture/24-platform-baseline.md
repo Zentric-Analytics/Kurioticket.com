@@ -23,7 +23,7 @@ Scope: repository and delivery architecture baseline snapshot
 
 ## Web
 
-- Render staging service: `kurioticket.com-staging` (`srv-d86ulfgg4nts73bctt20`)
+- Render staging service: `Kurioticket-web-staging` (`srv-dabmo50jo6nc73881d60`)
 - Trigger branch: `dev`
 - Build: `npm ci && npm run build`
 - Predeploy: `npm run db:deploy:render`

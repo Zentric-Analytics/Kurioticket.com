@@ -13,11 +13,13 @@ import {
   deduplicateFlightOffers,
   isFlightProviderOfferUsableAt,
 } from "@/services/travel/flightOfferInventory";
+import { searchKayakFlights, type KayakRequestContext } from "./kayakMetasearchProvider";
+import { providerSearchWarnings } from "./providerSearchOutcome";
 
 /** The sole production flight pipeline. Provider policy is deliberately not configurable. */
 export async function searchFlights(
   search: FlightSearchParams,
-  options: { signal?: AbortSignal; deadlineMs?: number; onProviderStart?: () => void; requestId?: string } = {},
+  options: { signal?: AbortSignal; deadlineMs?: number; onProviderStart?: () => void; requestId?: string; kayak?: KayakRequestContext } = {},
 ): Promise<AggregatedResult<NormalizedFlightResult> & {
   performance: {
     supplierMs: number;
@@ -31,20 +33,20 @@ export async function searchFlights(
   resultsCacheValidUntil?: number;
 }> {
   const startedAt = Date.now();
-  const provider = await runWithFlightSearchDeadline(
+  const [provider, kayak] = await Promise.all([runWithFlightSearchDeadline(
     (signal) => {
       options.onProviderStart?.();
       return searchDuffelFlights(search, signal);
     },
     options,
-  );
+  ), searchKayakFlights(search, options.kayak)]);
   const providerPerformance = (provider as typeof provider & {
     performance?: { supplierMs: number; normalizationMs: number; offerCount: number; connectingOfferCount: number };
   }).performance;
   const now = Date.now();
   const aggregationStartedAt = performance.now();
   const deduplicationStartedAt = performance.now();
-  const usableResults = provider.results.filter(
+  const usableResults = [...provider.results, ...kayak.results].filter(
     (result) =>
       matchesRequestedLegs(result, search) &&
       isFlightProviderOfferUsableAt(result, now),
@@ -65,11 +67,11 @@ export async function searchFlights(
   const cacheUnavailable = results.length > 0 && !cacheResult.persisted;
   return {
     results: actionableResults,
-    providerStatuses: [provider],
+    providerStatuses: [provider, kayak],
     warnings:
-      provider.status === "failed" || cacheUnavailable
+      provider.status === "failed" || kayak.status === "failed" || cacheUnavailable
         ? ["Flight results are temporarily unavailable. Please try again."]
-        : [],
+        : providerSearchWarnings([provider, kayak], actionableResults.length),
     latencyMs: Date.now() - startedAt,
     performance: {
       supplierMs: providerPerformance?.supplierMs ?? provider.latencyMs,
@@ -82,7 +84,7 @@ export async function searchFlights(
     },
     resultsCacheValidForMs: cacheResult.validForMs,
     resultsCacheValidUntil: now + cacheResult.validForMs,
-    ...(provider.status !== "success" || cacheUnavailable
+    ...((!actionableResults.length && (provider.status === "failed" || kayak.status === "failed")) || cacheUnavailable
       ? {
           unavailableMessage:
             "Flight results are temporarily unavailable. Please try again.",

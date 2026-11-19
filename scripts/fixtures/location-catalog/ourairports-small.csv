@@ -1,0 +1,8 @@
+id,ident,type,name,latitude_deg,longitude_deg,iso_country,municipality,scheduled_service,gps_code,iata_code,local_code
+1,KLAX,large_airport,Los Angeles International Airport,33.9425,-118.4081,US,Los Angeles,yes,KLAX,LAX,LAX
+2,MMMX,large_airport,Mexico City International Airport,19.4363,-99.0721,MX,México City,yes,MMMX,MEX,MEX
+3,EGLL,large_airport,Heathrow Airport,51.4700,-0.4543,GB,London,yes,EGLL,LHR,
+4,XXXX,closed,Closed Field,10,20,US,Nowhere,no,XXXX,ZZZ,
+5,KDUP,medium_airport,Duplicate One,10,20,US,One,yes,KDUP,DUP,
+6,CDUP,medium_airport,Duplicate Two,11,21,CA,Two,yes,CDUP,DUP,
+7,SHORT,small_airport,Invalid Code Field,12,22,US,Three,yes,SHORT,AB,

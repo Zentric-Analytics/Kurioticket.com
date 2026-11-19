@@ -45,6 +45,17 @@ test("customer and legacy routes share the existing package screen", () => {
   assert.match(packagesRoute, /DealsScreen as default/);
 });
 
+test("package submit has a real canonical results route", () => {
+  const form = source("src/features/flow/PackageSearchForm.tsx");
+  const route = source("app/package-results.tsx");
+  const results = source("src/features/flow/PackageResultsScreen.tsx");
+  assert.match(form, /pathname: "\/package-results"/);
+  assert.doesNotMatch(form, /pathname: "\/(?:car|hotel|flight)-results"/);
+  assert.match(route, /PackageResultsScreen/);
+  assert.match(results, /travelApi\.searchPackages/);
+  assert.match(results, /packageOffers/);
+});
+
 test("package destination uses customer-facing copy while preserving internal models", () => {
   const products = source("src/features/flow/ProductScreens.tsx");
 

@@ -1,3 +1,4 @@
+import { hotelPropertyKey } from "@/lib/hotels/groupHotelOffers";
 export type HotelStarRating = 1 | 2 | 3 | 4 | 5;
 export type HotelStarRatingSelection = 0 | HotelStarRating;
 
@@ -25,7 +26,7 @@ export function hotelMatchesStarRating(
 }
 
 export function countHotelsByStarRating(
-  hotels: readonly { classificationStars?: unknown }[],
+  hotels: readonly { classificationStars?: unknown; id?: string; provider?: string; propertyGroupId?: string }[],
 ): Record<HotelStarRatingSelection, number> {
   const counts = {
     [ALL_HOTEL_STAR_RATINGS]: hotels.length,
@@ -36,12 +37,21 @@ export function countHotelsByStarRating(
     5: 0,
   } satisfies Record<HotelStarRatingSelection, number>;
 
-  for (const hotel of hotels) {
+  const all = new Set<string>();
+  const seen = new Map<number, Set<string>>();
+  for (const [index, hotel] of hotels.entries()) {
+    const key = hotel.id ? hotelPropertyKey({ ...hotel, id: hotel.id, provider: hotel.provider ?? "" }) : String(index);
+    all.add(key);
     const category = getHotelStarRatingCategory(hotel.classificationStars);
     if (category !== null && HOTEL_STAR_RATING_COUNTS.includes(category)) {
+      const properties = seen.get(category) ?? new Set<string>();
+      if (properties.has(key)) continue;
+      properties.add(key);
+      seen.set(category, properties);
       counts[category] += 1;
     }
   }
 
+  counts[ALL_HOTEL_STAR_RATINGS] = all.size;
   return counts;
 }

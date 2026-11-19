@@ -5,18 +5,41 @@ import test from "node:test";
 const source = readFileSync(new URL("./CarLocationAutocomplete.tsx", import.meta.url), "utf8");
 const contract = readFileSync(new URL("./useCarsDesktopPopover.ts", import.meta.url), "utf8");
 
-test("desktop Cars locations use the shared moderate popover contract", () => {
+test("desktop Cars locations keep the shared popover contract with a tighter Results width", () => {
   assert.match(source, /useCarsDesktopPopover/);
-  assert.match(source, /preferredWidth: 420/);
+  assert.match(source, /preferredWidth: desktopResultsPresentation \? 340 : 420/);
   assert.match(source, /maxHeight: 320/);
   assert.match(contract, /rounded-\[10px\]/);
   assert.match(contract, /border-\[#DEE5ED\]/);
   assert.match(contract, /z-\[1100\]/);
 });
 
-test("desktop location suggestion icons remain neutral", () => {
-  assert.match(source, /bg-slate-100 text-slate-600/);
-  assert.doesNotMatch(source, /bg-slate-100 text-\[#004BB8\]/);
+test("Cars Results desktop suggestions use a compact neutral car icon treatment", () => {
+  assert.match(source, /import \{[^}]*CarFront[^}]*\} from "lucide-react"/);
+  assert.match(source, /data-cars-results-location-icon/);
+  assert.match(
+    source,
+    /h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-500/,
+  );
+  assert.match(source, /<CarFront className="h-4 w-4" \/>/);
+});
+
+test("Cars Results desktop suggestions mirror the compact Hotels hierarchy without a visible scrollbar thumb", () => {
+  assert.match(
+    source,
+    /desktopResultsPresentation[\s\S]*?p-1\.5 \[scrollbar-width:none\] \[&::?-webkit-scrollbar\]:hidden/,
+  );
+  assert.match(source, /data-cars-results-location-option/);
+  assert.match(
+    source,
+    /rounded-xl px-3 py-2\.5 text-start transition-colors/,
+  );
+  assert.match(source, /text-sm font-semibold text-slate-950/);
+  assert.match(source, /text-xs font-medium text-slate-600/);
+  assert.match(
+    source,
+    /rounded-full bg-slate-100 px-2 py-1 text-\[11px\] font-bold text-slate-600/,
+  );
 });
 
 test("desktop results omit the visible heading but retain listbox labeling", () => {
@@ -31,30 +54,31 @@ test("location combobox retains keyboard selection semantics", () => {
   assert.match(source, /aria-activedescendant=\{activeId\}/);
 });
 
-test("desktop location suggestions require a user-edited non-empty query", () => {
-  assert.match(source, /open && hasUserEditedQuery && trimmedQuery\.length > 0/);
-  assert.match(source, /if \(usesDesktopPanel && \(!hasUserEditedQuery \|\| !trimmedQuery\)\)/);
-  assert.match(source, /if \(!usesDesktopPanel\) setOpen\(true\)/);
-  assert.doesNotMatch(source, /onFocus=\{\(\) => setOpen\(true\)\}/);
-  assert.match(source, /new URLSearchParams\(\{ q: trimmedQuery, limit: "8" \}\)/);
-});
-
-test("clearing a desktop location query immediately removes stale search state", () => {
-  const emptyQueryBranch = source.slice(
-    source.indexOf("if (!nextQuery)"),
-    source.indexOf("return;", source.indexOf("if (!nextQuery)")) + "return;".length,
+test("Cars Results desktop location focus stays clean while empty and opens once a query exists", () => {
+  assert.match(
+    source,
+    /usesDesktopPanel && desktopResultsPresentation[\s\S]*?open && trimmedQuery\.length >= 1/,
   );
-  assert.match(emptyQueryBranch, /requestIdRef\.current \+= 1/);
-  assert.match(emptyQueryBranch, /abortRef\.current\?\.abort\(\)/);
-  assert.match(emptyQueryBranch, /setSuggestions\(\[\]\)/);
-  assert.match(emptyQueryBranch, /setLoading\(false\)/);
-  assert.match(emptyQueryBranch, /setError\(false\)/);
-  assert.match(emptyQueryBranch, /setOpen\(false\)/);
+  assert.match(source, /onFocus=\{\(\) => setOpen\(true\)\}/);
+  assert.match(source, /onClick=\{\(\) => setOpen\(true\)\}/);
+  assert.match(
+    source,
+    /usesDesktopPanel &&[\s\S]*?desktopResultsPresentation &&[\s\S]*?trimmedQuery\.length < 1[\s\S]*?setSuggestions\(\[\]\)[\s\S]*?return;/,
+  );
+  assert.match(
+    source,
+    /limit:[\s\S]*?usesDesktopPanel && desktopResultsPresentation \? "6" : "8"/,
+  );
 });
 
-test("desktop empty focus never renders the Popular Locations experience", () => {
-  assert.match(source, /const label = usesDesktopPanel\s*\? strings\.locationSuggestions/);
+test("Cars Results desktop location dropdown keeps existing-value and edited-query behavior", () => {
+  assert.match(
+    source,
+    /const onChange = \(event: ChangeEvent<HTMLInputElement>\) => \{[\s\S]*?onValueChange\(event\.target\.value\);[\s\S]*?setOpen\(true\);/,
+  );
   assert.match(source, /aria-expanded=\{showPanel\}/);
+  assert.match(source, /const label = usesDesktopPanel\s*\? strings\.locationSuggestions/);
+  assert.doesNotMatch(source, /hasUserEditedQuery/);
 });
 
 test("desktop pickup and return use one input-anchored request and selection lifecycle", () => {
@@ -67,7 +91,7 @@ test("desktop pickup and return use one input-anchored request and selection lif
   );
   assert.match(
     source,
-    /const selectSuggestion = \(suggestion: CarLocationSuggestion\) => \{[\s\S]*?onValueChange\(suggestion\.value\);[\s\S]*?setHasUserEditedQuery\(false\);[\s\S]*?close\(\);/,
+    /const selectSuggestion = \(suggestion: CarLocationSuggestion\) => \{[\s\S]*?onValueChange\(suggestion\.value\);[\s\S]*?onSelect\?\.\(suggestion\);[\s\S]*?close\(\);/,
   );
   assert.match(source, /onClick=\{\(\) => selectSuggestion\(suggestion\)\}/);
 });

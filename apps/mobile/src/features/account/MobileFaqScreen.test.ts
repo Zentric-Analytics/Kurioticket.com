@@ -1,0 +1,45 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { fileURLToPath, URL } from "node:url";
+import test from "node:test";
+import { getMobileFaqCopy } from "./mobileFaqCopy";
+
+const screenSource = readFileSync(fileURLToPath(new URL("./MobileFaqScreen.tsx", import.meta.url)), "utf8");
+const routeSource = readFileSync(fileURLToPath(new URL("../../../app/faq.tsx", import.meta.url)), "utf8");
+
+test("FAQ route uses the dedicated native mobile FAQ screen", () => {
+  assert.match(routeSource, /MobileFaqScreen/);
+  assert.match(screenSource, /usePublishedFaqs/);
+  assert.doesNotMatch(screenSource, /TextInput/);
+  assert.doesNotMatch(screenSource, /faqSearch/);
+  assert.doesNotMatch(screenSource, /clearSearch/);
+});
+
+test("mobile FAQ mirrors the web hierarchy without web navigation chrome", () => {
+  const english = getMobileFaqCopy("en-us");
+  assert.equal(english.heading, "Frequently asked questions");
+  assert.equal(english.generalQuestions, "General questions");
+  assert.match(english.intro, /compare flights, hotels, and travel options/);
+  assert.match(screenSource, /presentation\.heading/);
+  assert.match(screenSource, /presentation\.intro/);
+  assert.match(screenSource, /presentation\.generalQuestions/);
+  assert.match(screenSource, /borderBottomWidth: StyleSheet\.hairlineWidth/);
+  assert.match(screenSource, /expanded \? "−" : "\+"/);
+});
+
+test("FAQ keeps inline expansion and ends after the questions list", () => {
+  assert.match(screenSource, /faqAccessibility\(open, item\.question\)/);
+  assert.match(screenSource, /toggleExpanded\(current, item\.question\)/);
+  assert.match(screenSource, /accessibilityHint=\{accessibilityState\.expanded \? t\("collapseAnswer"\) : t\("expandAnswer"\)\}/);
+  assert.doesNotMatch(screenSource, /supportCta/);
+  assert.doesNotMatch(screenSource, /router\.push\("\/support"\)/);
+  assert.doesNotMatch(screenSource, /t\("contactSupport"\)/);
+});
+
+test("FAQ scrolling stops at the content boundaries without overscroll", () => {
+  assert.match(screenSource, /alwaysBounceVertical=\{false\}/);
+  assert.match(screenSource, /bounces=\{false\}/);
+  assert.match(screenSource, /overScrollMode="never"/);
+  assert.match(screenSource, /paddingBottom: 20/);
+  assert.doesNotMatch(screenSource, /paddingBottom: 40/);
+});

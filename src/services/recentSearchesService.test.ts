@@ -39,9 +39,31 @@ const validHotelRecentSearch = {
   },
 } as const;
 
-test("recentSearchInputSchema accepts valid internal flight and hotel result hrefs", () => {
+const validCarRecentSearch = {
+  id: "car:lagos",
+  type: "car",
+  createdAt: "2026-07-06T00:00:00.000Z",
+  label: "Lagos Airport",
+  subtitle: "Jul 10 – Jul 12",
+  href: "/cars/results?pickupLocation=Lagos+Airport",
+  params: { pickupLocation: "Lagos Airport", dropoffLocation: "Lagos Airport", pickupDate: "2027-07-10", pickupTime: "10:00", dropoffDate: "2027-07-12", dropoffTime: "10:00", driverAge: "30" },
+} as const;
+
+test("recentSearchInputSchema accepts valid internal flight, hotel and car result hrefs", () => {
   assert.equal(recentSearchInputSchema.safeParse(validFlightRecentSearch).success, true);
   assert.equal(recentSearchInputSchema.safeParse(validHotelRecentSearch).success, true);
+  assert.equal(recentSearchInputSchema.safeParse(validCarRecentSearch).success, true);
+});
+
+test("recentSearchInputSchema accepts the canonical any-age Car value", () => {
+  assert.equal(recentSearchInputSchema.safeParse({
+    ...validCarRecentSearch,
+    params: { ...validCarRecentSearch.params, driverAge: "18-70" },
+  }).success, true);
+});
+
+test("recentSearchInputSchema rejects car entries routed to another product", () => {
+  assert.equal(recentSearchInputSchema.safeParse({ ...validCarRecentSearch, href: "/hotels/results" }).success, false);
 });
 
 test("recentSearchInputSchema rejects absolute external hrefs", () => {

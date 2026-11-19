@@ -1,37 +1,141 @@
+import { applicationMetadata } from "@/lib/application-source";
+import { after } from "next/server";
+import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
+import { resolveSearchRequestId } from "@/lib/search-journey";
+import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
+import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { validateCarsForm, type CarsFormValues } from "@/lib/cars/carsSearchUtils";
-import type { CarSearchParams } from "@/lib/cars/types";
+import type { LocationBoundCarSearchParams } from "@/lib/cars/types";
 import { searchCars } from "@/services/travel/carAggregator";
 import { classifyCars } from "@/lib/travel/searchContract";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
+import { getKayakClientIp } from "@/lib/kayak-client-ip";
+import { searchLocationSchema } from "@/lib/locations/searchTargetSchema";
 
 const noStore = { "Cache-Control": "no-store" };
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
 
-function canonicalSearch(value: unknown): CarSearchParams | null {
+function canonicalSearch(value: unknown): LocationBoundCarSearchParams | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const body = value as Record<string, unknown>;
-  const search: CarSearchParams = { pickupLocation: text(body.pickupLocation), dropoffLocation: text(body.dropoffLocation), pickupDate: text(body.pickupDate), pickupTime: text(body.pickupTime), dropoffDate: text(body.dropoffDate), dropoffTime: text(body.dropoffTime), driverAge: text(body.driverAge) };
-  const values: CarsFormValues = { ...search, returnToDifferentLocation: search.dropoffLocation !== search.pickupLocation };
+  const pickupTarget = searchLocationSchema.safeParse(body.pickupLocationTarget);
+  const dropoffTarget = searchLocationSchema.safeParse(body.dropoffLocationTarget);
+  const search: LocationBoundCarSearchParams = { pickupLocation: text(body.pickupLocation), dropoffLocation: text(body.dropoffLocation), pickupDate: text(body.pickupDate), pickupTime: text(body.pickupTime), dropoffDate: text(body.dropoffDate), dropoffTime: text(body.dropoffTime), driverAge: text(body.driverAge), ...(pickupTarget.success ? { pickupLocationTarget: pickupTarget.data } : {}), ...(dropoffTarget.success ? { dropoffLocationTarget: dropoffTarget.data } : {}) };
+  const values: CarsFormValues = {
+    pickupLocation: search.pickupLocation,
+    pickupDate: search.pickupDate,
+    pickupTime: search.pickupTime,
+    dropoffDate: search.dropoffDate,
+    dropoffTime: search.dropoffTime,
+    driverAge: search.driverAge,
+    returnToDifferentLocation:
+      search.dropoffLocation !== search.pickupLocation,
+    dropoffLocation: search.dropoffLocation,
+  };
   const today = new Date().toISOString().slice(0, 10);
   if (Object.keys(validateCarsForm(values, today)).length) return null;
   return search;
 }
 
 export async function POST(request: Request) {
-  const requestId = text(request.headers.get("x-search-request-id")) || crypto.randomUUID();
+  const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("CAR_SEARCH_ENABLED"))) return Response.json({ error: "Car search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503, headers: noStore });
   let body: unknown;
   try { body = await request.json(); } catch { return Response.json({ error: "Invalid JSON request body.", requestId }, { status: 400, headers: noStore }); }
   const search = canonicalSearch(body);
   if (!search) return Response.json({ error: "Invalid car search parameters.", requestId }, { status: 400, headers: noStore });
+  const operationalSession = prepareOperationalSearchSession(request);
+  const recordedSearch = { ...search, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) };
+  const started = performance.now();
+  let activityIdentity: ReturnType<typeof resolveRequestActivityIdentity> | undefined;
+  const requestActivityIdentity = () => activityIdentity ??= resolveRequestActivityIdentity(request);
+  const recordSearch = (resultCount: number, status: "SUCCESS" | "PARTIAL" | "FAILED") => {
+    after(async () => {
+      try {
+        const { userId, visitorId, ...application } = await requestActivityIdentity();
+        await Promise.all([
+          logSearchHistory({ ...application,
+            userId, visitorId, requestId, type: "CAR",
+            origin: search.pickupLocation, destination: search.dropoffLocation,
+            query: recordedSearch, resultCount, latencyMs: Math.max(0, Math.round(performance.now() - started)), status,
+          }),
+          trackAnalyticsEvent({ ...application,
+            userId, visitorId, type: "SEARCH", name: "car_search",
+            metadata: { resultCount },
+          }),
+        ]);
+      } catch {
+        // Optional analytics cannot affect results or disclose search criteria.
+      }
+    });
+  };
   try {
-    const { results, status } = await searchCars(search);
-    const response = classifyCars(results, search, requestId);
-    if (status === "unavailable") {
-      return Response.json({ ...response, error: "Car search is temporarily unavailable." }, { status: 503, headers: noStore });
+    const { results, status, warnings, providerStatuses, unsupported } = await searchCars(search, { requestId, kayak: { requestId, clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
+    const response = classifyCars(results, search, requestId, warnings);
+    if (unsupported) {
+      recordSearch(0, "FAILED");
+      after(async () => {
+        try {
+          const application = applicationMetadata(await requestActivityIdentity());
+          await Promise.all(providerStatuses.map((provider) =>
+            logProviderCall({
+              provider: provider.provider,
+              service: "car-search",
+              status: provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
+              latencyMs: provider.latencyMs,
+              errorMessage: provider.errorReason || provider.error,
+              metadata: { ...application, requestId },
+            }),
+          ));
+        } catch {
+          // Provider diagnostics are optional and must not affect the search response.
+        }
+      });
+      return attachOperationalSearchSession(Response.json({ ...response, code: "SEARCH_UNSUPPORTED", error: "The available providers cannot search these rental options. Please change your search." }, { status: 422, headers: noStore }), operationalSession);
     }
-    return Response.json(response, { headers: noStore });
+    if (status === "unavailable") {
+      recordSearch(0, "FAILED");
+      after(async () => {
+        try {
+          const application = applicationMetadata(await requestActivityIdentity());
+          await Promise.all(providerStatuses.map((provider) =>
+            logProviderCall({
+              provider: provider.provider,
+              service: "car-search",
+              status: provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
+              latencyMs: provider.latencyMs,
+              errorMessage: provider.errorReason || provider.error,
+              metadata: { ...application, requestId },
+            }),
+          ));
+        } catch {
+          // Provider diagnostics are optional and must not affect the search response.
+        }
+      });
+      return attachOperationalSearchSession(Response.json({ ...response, error: "Car search is temporarily unavailable." }, { status: 503, headers: noStore }), operationalSession);
+    }
+    const searchStatus = providerStatuses.some((provider) => provider.status === "failed") ? "PARTIAL" : "SUCCESS";
+    recordSearch(results.length, searchStatus);
+    after(async () => {
+      try {
+        const application = applicationMetadata(await requestActivityIdentity());
+          await Promise.all(providerStatuses.map((provider) =>
+          logProviderCall({
+            provider: provider.provider,
+            service: "car-search",
+            status: provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
+            latencyMs: provider.latencyMs,
+            errorMessage: provider.errorReason || provider.error,
+            metadata: { ...application, requestId },
+          }),
+        ));
+      } catch {
+        // Provider diagnostics are optional and must not affect the search response.
+      }
+    });
+    return attachOperationalSearchSession(Response.json(response, { headers: noStore }), operationalSession);
   } catch {
-    return Response.json({ error: "Car search is temporarily unavailable.", requestId }, { status: 500, headers: noStore });
+    recordSearch(0, "FAILED");
+    return attachOperationalSearchSession(Response.json({ error: "Car search is temporarily unavailable.", requestId }, { status: 500, headers: noStore }), operationalSession);
   }
 }

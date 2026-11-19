@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Building2, Images } from "lucide-react";
+import { Building2, ChevronLeft, ChevronRight, Images } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -11,12 +11,16 @@ import {
   type PointerEvent,
 } from "react";
 import { Card } from "@/components/ui/Card";
-import { getHotelGallerySwipeDirection } from "@/components/results/hotelGalleryPresentation";
+import {
+  getHotelGalleryMosaicIndices,
+  getHotelGallerySwipeDirection,
+} from "@/components/results/hotelGalleryPresentation";
 import { HotelDetailsGalleryDialog } from "@/components/results/hotelDetails/HotelDetailsGalleryDialog";
+import { HotelDetailsGalleryGridDialog } from "@/components/results/hotelDetails/HotelDetailsGalleryGridDialog";
 
 type HotelDetailsGalleryProps = {
   embedded?: boolean;
-  layout?: "hero" | "mosaic";
+  layout?: "hero" | "mosaic" | "desktop";
   remainingPhotosLabel?: string;
   activeUrl: string;
   imageAlt: string;
@@ -78,10 +82,16 @@ export function HotelDetailsGallery({
   onImageError,
 }: HotelDetailsGalleryProps) {
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [gridOpen, setGridOpen] = useState(false);
   const openerRef = useRef<HTMLElement | null>(null);
+  const gridScrollTopRef = useRef(0);
   const restoreFocusFrameRef = useRef<number | null>(null);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const thumbnailStripRef = useRef<HTMLDivElement>(null);
+  const getGridScrollTop = useCallback(() => gridScrollTopRef.current, []);
+  const updateGridScrollTop = useCallback((scrollTop: number) => {
+    gridScrollTopRef.current = scrollTop;
+  }, []);
 
   useEffect(() => {
     const strip = thumbnailStripRef.current;
@@ -98,6 +108,18 @@ export function HotelDetailsGallery({
 
   const closeViewer = useCallback(() => {
     setViewerOpen(false);
+    if (gridOpen) return;
+    if (restoreFocusFrameRef.current !== null)
+      window.cancelAnimationFrame(restoreFocusFrameRef.current);
+    restoreFocusFrameRef.current = window.requestAnimationFrame(() => {
+      openerRef.current?.focus();
+      restoreFocusFrameRef.current = null;
+    });
+  }, [gridOpen]);
+
+  const closeGrid = useCallback(() => {
+    setGridOpen(false);
+    gridScrollTopRef.current = 0;
     if (restoreFocusFrameRef.current !== null)
       window.cancelAnimationFrame(restoreFocusFrameRef.current);
     restoreFocusFrameRef.current = window.requestAnimationFrame(() => {
@@ -118,6 +140,12 @@ export function HotelDetailsGallery({
     if (!activeUrl) return;
     openerRef.current = opener;
     setViewerOpen(true);
+  }
+
+  function openGrid(opener: HTMLElement) {
+    openerRef.current = opener;
+    gridScrollTopRef.current = 0;
+    setGridOpen(true);
   }
 
   function handlePointerUp(event: PointerEvent<HTMLElement>) {
@@ -148,12 +176,92 @@ export function HotelDetailsGallery({
     .replace("{{total}}", String(usableIndices.length))
     .replace("{{hotelName}}", hotelName);
 
-  const visibleIndices = usableIndices.slice(0, 4);
-  const remainingPhotoCount = Math.max(usableIndices.length - visibleIndices.length, 0);
+  const visibleIndices = getHotelGalleryMosaicIndices(
+    usableIndices,
+    activeIndex,
+  );
+  const remainingPhotoCount = Math.max(
+    usableIndices.length - visibleIndices.length,
+    0,
+  );
+  const desktopIndices = getHotelGalleryMosaicIndices(
+    usableIndices,
+    activeIndex,
+    5,
+  );
+
+  const desktopGallery = (
+    <div
+      className="relative grid aspect-[2.32/1] max-h-[440px] min-w-0 grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-xl bg-slate-100"
+      data-hotel-desktop-gallery
+    >
+      {desktopIndices.map((imageIndex, tileIndex) => {
+        const url = displayCandidates[imageIndex];
+        const tileLabel = openPhotoViewerLabel
+          .replace("{{current}}", String(usableIndices.indexOf(imageIndex) + 1))
+          .replace("{{total}}", String(usableIndices.length))
+          .replace("{{hotelName}}", hotelName);
+        const tileLayout =
+          desktopIndices.length === 1
+            ? "col-span-4 row-span-2"
+            : desktopIndices.length === 2 || tileIndex === 0
+              ? "col-span-2 row-span-2"
+              : desktopIndices.length === 3 ||
+                  (desktopIndices.length === 4 && tileIndex === 1)
+                ? "col-span-2"
+                : "";
+
+        return (
+          <button
+            key={url}
+            type="button"
+            className={`group relative min-h-0 min-w-0 cursor-zoom-in overflow-hidden focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-blue ${tileLayout}`}
+            aria-label={tileLabel}
+            onClick={(event) => {
+              onSelectImage(imageIndex);
+              openViewer(event.currentTarget);
+            }}
+          >
+            <Image
+              src={url}
+              alt={tileIndex === 0 ? imageAlt : ""}
+              fill
+              className="object-cover transition-transform duration-200 group-hover:scale-[1.015]"
+              sizes={
+                desktopIndices.length === 1
+                  ? "(min-width: 1080px) 1020px, calc(100vw - 60px)"
+                  : tileLayout.includes("col-span-2")
+                    ? "(min-width: 1080px) 506px, calc(50vw - 34px)"
+                    : "(min-width: 1080px) 249px, calc(25vw - 21px)"
+              }
+              onError={() => onImageError(url)}
+              loading="eager"
+              fetchPriority={tileIndex === 0 ? "high" : "auto"}
+            />
+          </button>
+        );
+      })}
+      {!desktopIndices.length ? (
+        <div className="col-span-4 row-span-2 flex flex-col items-center justify-center gap-3 px-6 text-center text-[#192024]">
+          <Building2 className="h-11 w-11" aria-hidden="true" />
+          <span className="max-w-xs text-sm">{imageUnavailableText}</span>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={(event) => openGrid(event.currentTarget)}
+          className="focus-ring absolute bottom-4 right-4 inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#d9e2e8] bg-white px-4 text-sm font-semibold text-[#192024] shadow-sm transition-colors hover:bg-[#f3f5f7]"
+        >
+          <Images className="h-4 w-4" aria-hidden="true" />
+          {viewAllPhotosLabel}
+        </button>
+      )}
+    </div>
+  );
 
   const mosaic = (
     <div
-      className="grid h-[300px] min-w-0 grid-cols-1 gap-2 overflow-hidden sm:h-[300px] lg:h-[300px] lg:grid-cols-[1.42fr_1fr] lg:grid-rows-2"
+      className="relative hidden h-[300px] min-w-0 grid-cols-[1.42fr_1fr] grid-rows-2 gap-2 overflow-hidden lg:grid"
       data-hotel-gallery-mosaic
     >
       {visibleIndices.map((imageIndex, tileIndex) => {
@@ -186,13 +294,18 @@ export function HotelDetailsGallery({
               alt={tileIndex === 0 ? imageAlt : ""}
               fill
               className="object-cover transition-transform duration-200 group-hover:scale-[1.01]"
-              sizes={tileIndex === 0 ? "(min-width: 1024px) 520px, 100vw" : "340px"}
+              sizes={
+                tileIndex === 0 ? "(min-width: 1024px) 520px, 100vw" : "340px"
+              }
               onError={() => onImageError(url)}
               priority={tileIndex < 2}
             />
             {tileIndex === 3 && remainingPhotoCount > 0 ? (
               <span className="absolute inset-0 flex items-center justify-center bg-slate-950/30 text-sm font-bold text-white">
-                {remainingPhotosLabel.replace("{{count}}", String(remainingPhotoCount))}
+                {remainingPhotosLabel.replace(
+                  "{{count}}",
+                  String(remainingPhotoCount),
+                )}
               </span>
             ) : null}
           </button>
@@ -201,69 +314,168 @@ export function HotelDetailsGallery({
       {!visibleIndices.length ? (
         <div className="flex h-full flex-col items-center justify-center gap-3 rounded-[10px] bg-surface-subtle px-6 text-center lg:col-span-2 lg:row-span-2">
           <Building2 className="h-11 w-11 text-blue" aria-hidden="true" />
-          <span className="max-w-xs text-sm font-semibold text-slate-600">{imageUnavailableText}</span>
+          <span className="max-w-xs text-sm font-semibold text-slate-600">
+            {imageUnavailableText}
+          </span>
+        </div>
+      ) : null}
+      {showGalleryControls ? (
+        <div className="pointer-events-none absolute inset-0 z-10 grid grid-cols-[1.42fr_1fr] gap-2">
+          <div className="relative min-w-0 overflow-hidden rounded-[10px]">
+            <button
+              type="button"
+              aria-label={previousPhotoLabel}
+              onClick={onPrevious}
+              className="pointer-events-auto absolute left-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-start bg-transparent ps-1 text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.9)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white"
+            >
+              <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              aria-label={nextPhotoLabel}
+              onClick={onNext}
+              className="pointer-events-auto absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-end bg-transparent pe-1 text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.9)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white"
+            >
+              <ChevronRight className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
         </div>
       ) : null}
     </div>
   );
 
-  const content = (
-    <>
-      {layout === "mosaic" ? mosaic : <div
-        className="relative aspect-[4/3] min-h-[240px] max-h-[420px] w-full overflow-hidden bg-slate-100 sm:aspect-[16/10] sm:min-h-0"
-        style={{ touchAction: "pan-y" }}
-        onPointerDown={(event) => {
-          if (event.pointerType !== "mouse")
-            pointerStartRef.current = { x: event.clientX, y: event.clientY };
-        }}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={() => {
-          pointerStartRef.current = null;
-        }}
-      >
-        {activeUrl ? (
+  const mobileThumbnailIndices = usableIndices.slice(0, 5);
+  const mobileRemainingCount = Math.max(usableIndices.length - 5, 0);
+
+  const hero = (
+    <div
+      className="relative aspect-[16/10] min-h-[190px] max-h-[420px] w-full overflow-hidden rounded-[11px] bg-slate-100 lg:rounded-none"
+      style={{ touchAction: "pan-y" }}
+      onPointerDown={(event) => {
+        if (event.pointerType !== "mouse")
+          pointerStartRef.current = { x: event.clientX, y: event.clientY };
+      }}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={() => {
+        pointerStartRef.current = null;
+      }}
+    >
+      {activeUrl ? (
+        <button
+          type="button"
+          className="absolute inset-0 cursor-zoom-in focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-blue"
+          aria-label={openLabel}
+          onClick={(event) => openViewer(event.currentTarget)}
+        >
+          <Image
+            key={activeUrl}
+            src={activeUrl}
+            alt={imageAlt}
+            fill
+            className="object-cover"
+            sizes="(min-width: 1024px) 680px, 100vw"
+            onError={() => onImageError(activeUrl)}
+            preload
+          />
+        </button>
+      ) : (
+        <div className="flex h-full flex-col items-center justify-center gap-3 bg-surface-subtle px-6 text-center">
+          <Building2 className="h-11 w-11 text-blue" aria-hidden="true" />
+          <span className="max-w-xs text-sm font-semibold text-slate-600">
+            {imageUnavailableText}
+          </span>
+        </div>
+      )}
+      {showGalleryControls ? (
+        <>
           <button
             type="button"
-            className="absolute inset-0 cursor-zoom-in focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-blue"
-            aria-label={openLabel}
-            onClick={(event) => openViewer(event.currentTarget)}
+            aria-label={previousPhotoLabel}
+            onClick={onPrevious}
+            className="focus-ring absolute left-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-start rounded-lg bg-transparent ps-2 text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.8)]"
+          >
+            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label={nextPhotoLabel}
+            onClick={onNext}
+            className="focus-ring absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-end rounded-lg bg-transparent pe-2 text-white drop-shadow-[0_1px_2px_rgba(15,23,42,0.8)]"
+          >
+            <ChevronRight className="h-5 w-5" aria-hidden="true" />
+          </button>
+          <div className="absolute bottom-3 right-3 rounded-full bg-slate-950/80 px-3 py-1 text-xs font-semibold text-white">
+            {activePosition} / {usableIndices.length}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+
+  const mobileThumbnails = showGalleryControls ? (
+    <div
+      ref={thumbnailStripRef}
+      className="mt-2 grid grid-cols-5 gap-1.5 lg:hidden"
+      data-hotel-mobile-thumbnail-strip
+    >
+      {mobileThumbnailIndices.map((imageIndex, visibleIndex) => {
+        const thumbnailUrl = displayCandidates[imageIndex];
+        const isRemainingTile = visibleIndex === 4 && mobileRemainingCount > 0;
+        return (
+          <button
+            key={thumbnailUrl}
+            type="button"
+            data-gallery-index={imageIndex}
+            aria-pressed={activeIndex === imageIndex}
+            aria-label={
+              isRemainingTile
+                ? viewAllPhotosLabel
+                : selectPhotoLabel.replace(
+                    "{{number}}",
+                    String(visibleIndex + 1),
+                  )
+            }
+            className={`relative aspect-[4/3] min-w-0 overflow-hidden rounded-md bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue ${activeIndex === imageIndex ? "ring-2 ring-blue" : "ring-1 ring-slate-200"}`}
+            onClick={(event) => {
+              onSelectImage(imageIndex);
+              if (isRemainingTile) openViewer(event.currentTarget);
+            }}
           >
             <Image
-              key={activeUrl}
-              src={activeUrl}
-              alt={imageAlt}
+              src={thumbnailUrl}
+              alt=""
               fill
               className="object-cover"
-              sizes="(min-width: 1024px) 680px, 100vw"
-              onError={() => onImageError(activeUrl)}
-              priority
+              sizes="20vw"
+              onError={() => onImageError(thumbnailUrl)}
             />
+            {isRemainingTile ? (
+              <span className="absolute inset-0 flex items-center justify-center bg-slate-950/55 text-xs font-bold text-white">
+                <Images className="mr-1 h-4 w-4" aria-hidden="true" />+
+                {mobileRemainingCount}
+              </span>
+            ) : null}
           </button>
-        ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-3 bg-surface-subtle px-6 text-center">
-            <Building2 className="h-11 w-11 text-blue" aria-hidden="true" />
-            <span className="max-w-xs text-sm font-semibold text-slate-600">
-              {imageUnavailableText}
-            </span>
-          </div>
-        )}
+        );
+      })}
+    </div>
+  ) : null;
 
-        {showGalleryControls ? (
-          <>
-            <div className="absolute bottom-3 right-3 rounded-full bg-slate-950/75 px-3 py-1 text-xs font-semibold text-white">
-              {photoCounter}
-            </div>
-            <button
-              type="button"
-              className="focus-ring absolute bottom-3 left-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-surface/95 px-3 text-xs font-semibold text-navy shadow-md hover:bg-surface"
-              onClick={(event) => openViewer(event.currentTarget)}
-            >
-              <Images className="h-4 w-4" aria-hidden="true" />
-              {viewAllPhotosLabel}
-            </button>
-          </>
-        ) : null}
-      </div>}
+  const content = (
+    <>
+      {layout === "desktop" ? (
+        desktopGallery
+      ) : layout === "mosaic" ? (
+        <>
+          <div className="mx-3 lg:hidden" data-hotel-mobile-gallery-unit>
+            {hero}
+            {mobileThumbnails}
+          </div>
+          {mosaic}
+        </>
+      ) : (
+        hero
+      )}
 
       {layout === "hero" && showGalleryControls ? (
         <div
@@ -303,8 +515,28 @@ export function HotelDetailsGallery({
         {activeIndex >= 0 ? photoPositionAnnouncement : ""}
       </span>
 
+      {layout === "desktop" && gridOpen && !viewerOpen ? (
+        <HotelDetailsGalleryGridDialog
+          hotelName={hotelName}
+          closeLabel={closePhotoViewerLabel}
+          selectPhotoLabel={selectPhotoLabel}
+          usableIndices={usableIndices}
+          displayCandidates={displayCandidates}
+          activeIndex={activeIndex}
+          getInitialScrollTop={getGridScrollTop}
+          onScrollTopChange={updateGridScrollTop}
+          onClose={closeGrid}
+          onSelectImage={(imageIndex) => {
+            onSelectImage(imageIndex);
+            setViewerOpen(true);
+          }}
+          onImageError={onImageError}
+        />
+      ) : null}
+
       {viewerOpen && activeUrl ? (
         <HotelDetailsGalleryDialog
+          desktop={layout === "desktop"}
           activeUrl={activeUrl}
           imageAlt={imageAlt}
           title={photoViewerTitle}

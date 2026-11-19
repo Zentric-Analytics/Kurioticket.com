@@ -1,7 +1,7 @@
+import { decodeProviderRouteId } from "@/lib/travel/providerRouteId";
 import { cookies } from "next/headers";
 
 import { AppHeader } from "@/components/layout/AppHeader";
-import { Footer } from "@/components/layout/Footer";
 import { FlightDetailsClient } from "@/components/results/FlightDetailsClient";
 import { getTranslations } from "@/lib/i18n";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
@@ -17,17 +17,21 @@ export async function generateMetadata() {
 }
 
 export default async function FlightDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+  const { id: routeId } = await params;
+  const id = decodeProviderRouteId(routeId);
   return (
     <>
-      <AppHeader
-        flushDesktopBottom
-        flushMobileBottom
-        hideDesktopTravelNav
-        hideMobileCategoryTabs
-      />
-      <FlightDetailsClient id={id} />
-      <Footer />
+      <div className="hidden lg:block" data-flight-details-desktop-header>
+        <AppHeader
+          flushDesktopBottom
+          flushMobileBottom
+          hideDesktopTravelNav
+          hideMobileCategoryTabs
+        />
+      </div>
+      <div data-flight-details-mobile-edge-to-edge>
+        <FlightDetailsClient id={id} />
+      </div>
     </>
   );
 }

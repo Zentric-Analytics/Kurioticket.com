@@ -4,6 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { hasFreshProviderPrice } from "@/lib/homepageFareDisplay";
+import { buildMaintainedHotelDiscoveryResultsHref } from "@/lib/hotels/hotelDiscoveryIntent";
+import { buildHotelExplorationHref } from "@/lib/hotels/hotelExplorationSearch";
+import { resolveHomeHotelDestination, type HomeHotelDestination } from "@/shared/home/homeMerchandising";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -20,11 +24,13 @@ import {
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOverlay";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
+import { RecentSearches } from "@/components/search/RecentSearches";
 import { LinkButton } from "@/components/ui/Button";
 import {
   HOME_DISCOVERY_IMAGE_CARD_COUNT,
@@ -43,6 +49,7 @@ import { CountryFlag } from "@/components/home/CountryFlag";
 import {
   getPopularDestinationFareCandidatesByRegion,
   getPopularDestinationsByRegion,
+  type PopularDestination,
 } from "@/data/marketHomeContent";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
@@ -378,6 +385,29 @@ type HomeDiscoveryCardItem = {
   imageAlt: string;
 };
 
+type HomepageCmsDestinationItem = {
+  id: string;
+  city: string;
+  country: string;
+  destinationCode: string;
+  originCode: string;
+  image: string;
+  imageAlt: string;
+  canonicalDestinationId?: string;
+  destinationSearchValue?: string;
+};
+
+type HomepageCmsContentState = {
+  market: string;
+  destinations: { source: "cms" | "fallback"; items: HomepageCmsDestinationItem[] };
+  flightRoutes: { source: "cms" | "fallback"; items: HomeDiscoveryCardItem[] };
+};
+
+type HomepagePopularDestinationItem = PopularDestination & {
+  canonicalDestinationId?: string;
+  destinationSearchValue?: string;
+};
+
 type HomepageFare = Omit<DestinationPrice, "id" | "code" | "unavailable">;
 
 type HomeDiscoveryFareCard = {
@@ -404,6 +434,7 @@ type HomepageRecommendationOrder = Partial<Record<HomepageRecommendationSurface,
 // onboarding belongs on /auth/signin, /onboarding/security, /dashboard/security,
 // and passkey API routes only.
 export default function Home() {
+  const router = useRouter();
   const { locale, t: dictionary } = useLocale();
   const { mode: regionCode, selectedOption } = useRegion();
   const { status: sessionStatus } = useSession();
@@ -425,6 +456,8 @@ export default function Home() {
     });
   const [homepageRecommendationOrder, setHomepageRecommendationOrder] =
     useState<HomepageRecommendationOrder>({});
+  const [homepageCmsContent, setHomepageCmsContent] =
+    useState<HomepageCmsContentState | null>(null);
   const effectiveHomepageRecommendationOrder =
     sessionStatus === "authenticated" ? homepageRecommendationOrder : {};
   const mobileSearchCardRef = useRef<HTMLDivElement>(null);
@@ -557,14 +590,39 @@ export default function Home() {
       );
   };
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void fetch(`/api/content/homepage?market=${encodeURIComponent(regionCode)}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json() as Promise<{
+          destinations?: HomepageCmsContentState["destinations"];
+          flightRoutes?: HomepageCmsContentState["flightRoutes"];
+        }>;
+      })
+      .then((payload) => {
+        if (!payload?.destinations || !payload.flightRoutes) return;
+        setHomepageCmsContent({
+          market: regionCode,
+          destinations: payload.destinations,
+          flightRoutes: payload.flightRoutes,
+        });
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      });
+
+    return () => controller.abort();
+  }, [regionCode]);
+
   const t = useCallback(
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
     [dictionary],
   );
-  const translateDiscoveryItemCopy = (
-    item: HomeDiscoveryCardItem,
-    field: "title" | "routeNote",
-  ) => translateHomeDiscoveryField(dictionary, item, field);
   const homepageHeroImage = useMemo(
     () => getHomepageHeroImageForMarket(regionCode),
     [regionCode],
@@ -578,11 +636,41 @@ export default function Home() {
     effectiveMarketCode: popularDestinationMarket,
     fallbackLevel: popularDestinationFallbackLevel,
     fallbackUsed: popularDestinationFallbackUsed,
-    items: popularDestinations,
   } = popularDestinationResolution;
-  const popularDestinationFareCandidates = useMemo(
-    () => getPopularDestinationFareCandidatesByRegion(regionCode).items,
-    [regionCode],
+  const cmsContentForMarket =
+    homepageCmsContent?.market === regionCode ? homepageCmsContent : null;
+  const translateDiscoveryItemCopy = (
+    item: HomeDiscoveryCardItem,
+    field: "title" | "routeNote",
+  ) => {
+    if (cmsContentForMarket?.flightRoutes.source === "cms") {
+      return item[field];
+    }
+    return translateHomeDiscoveryField(dictionary, item, field);
+  };
+  const popularDestinations = useMemo<HomepagePopularDestinationItem[]>(
+    () =>
+      cmsContentForMarket
+        ? cmsContentForMarket.destinations.items.map((destination) => ({
+            id: destination.id,
+            code: destination.destinationCode,
+            originCode: destination.originCode,
+            city: destination.city,
+            country: destination.country,
+            image: destination.image,
+            imageAlt: destination.imageAlt,
+            canonicalDestinationId: destination.canonicalDestinationId,
+            destinationSearchValue: destination.destinationSearchValue,
+          }))
+        : popularDestinationResolution.items,
+    [cmsContentForMarket, popularDestinationResolution.items],
+  );
+  const popularDestinationFareCandidates = useMemo<HomepagePopularDestinationItem[]>(
+    () =>
+      cmsContentForMarket
+        ? popularDestinations
+        : getPopularDestinationFareCandidatesByRegion(regionCode).items,
+    [cmsContentForMarket, popularDestinations, regionCode],
   );
   const visiblePopularDestinations = useMemo(() => {
     const replacementAwareDestinations = destinationPriceState.loading
@@ -614,7 +702,19 @@ export default function Home() {
       homepageOrderedDestinations,
       effectiveHomepageRecommendationOrder.popular,
       (destination) => destination.id,
-    ).slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT);
+    )
+      .flatMap((destination) => {
+        if (destination.canonicalDestinationId && destination.destinationSearchValue) {
+          return [{
+            ...destination,
+            canonicalDestinationId: destination.canonicalDestinationId,
+            destinationSearchValue: destination.destinationSearchValue,
+          } satisfies HomeHotelDestination];
+        }
+        const resolved = resolveHomeHotelDestination(destination);
+        return resolved ? [resolved] : [];
+      })
+      .slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT);
   }, [
     destinationPriceState.loading,
     destinationPriceState.prices,
@@ -623,9 +723,12 @@ export default function Home() {
     popularDestinations,
   ]);
 
-  const genericCuratedDiscoveryItems = useMemo(
-    () => getHomeDiscoveryImageCardsByRegion(regionCode),
-    [regionCode],
+  const genericCuratedDiscoveryItems = useMemo<HomeDiscoveryCardItem[]>(
+    () =>
+      cmsContentForMarket
+        ? cmsContentForMarket.flightRoutes.items.slice(0, HOME_DISCOVERY_IMAGE_CARD_COUNT)
+        : getHomeDiscoveryImageCardsByRegion(regionCode),
+    [cmsContentForMarket, regionCode],
   );
   const curatedDiscoveryItems = useMemo(
     () =>
@@ -684,9 +787,15 @@ export default function Home() {
     () => mobileDiscoveryCards.filter((_, index) => index % 2 === 1),
     [mobileDiscoveryCards],
   );
-  const genericRegionalRouteItems = useMemo(
-    () => getHomepageRegionalRouteCards(regionCode, genericCuratedDiscoveryItems),
-    [genericCuratedDiscoveryItems, regionCode],
+  const genericRegionalRouteItems = useMemo<HomeDiscoveryCardItem[]>(
+    () =>
+      cmsContentForMarket
+        ? cmsContentForMarket.flightRoutes.items.slice(
+            HOME_DISCOVERY_IMAGE_CARD_COUNT,
+            HOME_DISCOVERY_IMAGE_CARD_COUNT + 10,
+          )
+        : getHomepageRegionalRouteCards(regionCode, genericCuratedDiscoveryItems),
+    [cmsContentForMarket, genericCuratedDiscoveryItems, regionCode],
   );
   const regionalRouteItems = useMemo(
     () =>
@@ -1017,28 +1126,31 @@ export default function Home() {
   if (carsResultsPending) {
     return (
       <>
-        <AppHeader
-          flushDesktopBottom
-          flushMobileBottom
-          hideDesktopTravelNav
-          hideMobileCategoryTabs
-        />
-        <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
-          <BrandedLoading
-            variant="fullscreen"
-            visual="logoPulse"
-            showProgress={false}
-            className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
-            contentClassName="max-w-md text-center"
-            title={t("carsResults.loading.title")}
-            messages={[
-              t("carsResults.loading.checkingCarsAndRates"),
-              t("carsResults.loading.comparingVehiclesAndProviders"),
-              t("carsResults.loading.findingBestAvailableOptions"),
-              t("carsResults.loading.preparingResults"),
-            ]}
+        <CarsRouteLoadingOverlay active />
+        <div className="hidden lg:contents">
+          <AppHeader
+            flushDesktopBottom
+            flushMobileBottom
+            hideDesktopTravelNav
+            hideMobileCategoryTabs
           />
-        </main>
+          <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
+            <BrandedLoading
+              variant="fullscreen"
+              visual="logoPulse"
+              showProgress={false}
+              className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
+              contentClassName="max-w-md text-center"
+              title={t("carsResults.loading.title")}
+              messages={[
+                t("carsResults.loading.checkingCarsAndRates"),
+                t("carsResults.loading.comparingVehiclesAndProviders"),
+                t("carsResults.loading.findingBestAvailableOptions"),
+                t("carsResults.loading.preparingResults"),
+              ]}
+            />
+          </main>
+        </div>
       </>
     );
   }
@@ -1113,6 +1225,9 @@ export default function Home() {
         >
           <div className="mx-auto h-px w-[calc(100%-2rem)] max-w-[1280px] bg-slate-200/80 sm:hidden" />
           <div className="page-shell pt-5 sm:pt-0">
+            <div className="mb-6">
+              <RecentSearches />
+            </div>
             <div className="flex items-center">
               <h2 className="text-xl font-bold tracking-normal text-slate-900 sm:text-2xl">
                 {t("homePopularDestinations")}
@@ -1173,12 +1288,13 @@ export default function Home() {
                       originCode={destination.originCode}
                       destinationCode={destination.code}
                       href={buildDestinationCardHref(price, {
-                        city: destination.city,
+                        destination,
                         originCode: destination.originCode,
                         destinationCode: destination.code,
                         displayCurrency: selectedOption.currency,
                         market: regionCode,
                       })}
+                      navigationDestination={destination}
                       isPriceLoading={destinationPriceState.loading}
                       isSaved={savedItemIds.includes(destination.id)}
                       onHeartToggle={handleSavedItemToggle}
@@ -1507,7 +1623,15 @@ export default function Home() {
                                 <Link
                                   href={country.links[category][0].href}
                                   className="focus-ring rounded-sm hover:text-[#00327A]"
-                                  onClick={(event) => event.stopPropagation()}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    if (category !== "Hotels" || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                                    const destination = country.links.Hotels[0].label.replace(/ stays$/, "");
+                                    const freshHref = buildMaintainedHotelDiscoveryResultsHref(destination, "home-country-directory", new Date());
+                                    if (!freshHref) return;
+                                    event.preventDefault();
+                                    router.push(freshHref);
+                                  }}
                                 >
                                   {category.toUpperCase()}
                                 </Link>
@@ -1587,6 +1711,13 @@ export default function Home() {
                                         <Link
                                           key={link.label}
                                           href={link.href}
+                                          onClick={(event) => {
+                                            if (category !== "Hotels" || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                                            const freshHref = buildMaintainedHotelDiscoveryResultsHref(link.label.replace(/ stays$/, ""), "home-country-directory", new Date());
+                                            if (!freshHref) return;
+                                            event.preventDefault();
+                                            router.push(freshHref);
+                                          }}
                                           className="focus-ring group flex items-center justify-between gap-3 rounded-sm py-1.5 text-sm font-normal leading-5 text-slate-800 transition hover:text-[#004BB8] focus-visible:text-[#004BB8]"
                                         >
                                           <span>{link.label}</span>
@@ -1976,7 +2107,7 @@ function DiscoverySuggestionCard({
 function buildDestinationCardHref(
   price: HomepageFare | undefined,
   options: {
-    city: string;
+    destination: HomeHotelDestination;
     originCode: string;
     destinationCode: string;
     displayCurrency: string;
@@ -1989,12 +2120,13 @@ function buildDestinationCardHref(
   void options.displayCurrency;
   void options.market;
 
-  return {
-    pathname: "/hotels/results",
-    query: {
-      destination: options.city,
-    },
-  };
+  const href = buildHotelExplorationHref({
+    destination: options.destination.destinationSearchValue,
+    destinationId: options.destination.canonicalDestinationId,
+    source: "home-popular-stays",
+  });
+  if (!href) throw new Error("Invalid canonical Home Hotel destination");
+  return href;
 }
 
 function getRouteKey(originCode: string, destinationCode: string) {
@@ -2059,6 +2191,7 @@ function DestinationCard({
   originCode,
   destinationCode,
   href,
+  navigationDestination,
   isPriceLoading,
   isSaved,
   onHeartToggle,
@@ -2074,6 +2207,7 @@ function DestinationCard({
   originCode: string;
   destinationCode: string;
   href: ComponentProps<typeof Link>["href"];
+  navigationDestination: HomeHotelDestination;
   isPriceLoading: boolean;
   isSaved: boolean;
   onHeartToggle: (
@@ -2082,13 +2216,25 @@ function DestinationCard({
     display?: SavedDiscoveryDisplayDetails,
   ) => void;
 }) {
+  const router = useRouter();
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [imageSource, setImageSource] = useState(image);
 
   return (
     <article className="group min-w-[17.25rem] flex-[0_0_17.25rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[20.5rem] sm:flex-[0_0_20.5rem]">
-      <Link href={href} className="focus-ring block">
+      <Link href={href} onClick={(event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const freshHref = buildHotelExplorationHref({
+          destination: navigationDestination.destinationSearchValue,
+          destinationId: navigationDestination.canonicalDestinationId,
+          source: "home-popular-stays",
+          now: new Date(),
+        });
+        if (!freshHref) throw new Error("Invalid canonical Home Hotel destination");
+        event.preventDefault();
+        router.push(freshHref);
+      }} className="focus-ring block">
         <div className="relative h-72 sm:h-80">
           <Image
             src={imageSource}

@@ -59,6 +59,16 @@ const offer = () => ({
   slices: [slice("LHR", "JFK", "2027-01-01T08:00:00Z", "2027-01-01T16:00:00Z")],
 });
 
+test("preserves real Duffel local itinerary clocks", () => {
+  const departingAt = "2026-08-27T20:07:00";
+  const arrivingAt = "2026-08-28T03:43:00";
+  const raw = { ...offer(), slices: [slice("LOS", "JNB", departingAt, arrivingAt)] };
+  const result = normalizeFlightResult("Duffel", raw, { ...search("one-way"), origin: "LOS", destination: "JNB", departureDate: "2026-08-27" });
+  assert.ok(result);
+  assert.equal(result.departureTime, departingAt);
+  assert.equal(result.arrivalTime, arrivingAt);
+});
+
 test("normalizes a complete one-way Duffel provider offer", () => {
   const result = normalizeFlightResult("Duffel", offer(), search("one-way"));
   assert.ok(result);

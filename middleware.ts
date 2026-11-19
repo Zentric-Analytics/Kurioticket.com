@@ -3,10 +3,12 @@ import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { REGION_COOKIE_KEY, REGION_OVERRIDE_COOKIE_KEY } from "@/config/regionConfig";
 import { countryToRegion, normalizeRegion } from "@/lib/region/detectRegion";
+import { resolveAuthSecret } from "@/lib/authSecret";
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET });
+  const secret = resolveAuthSecret(process.env);
+  const token = secret ? await getToken({ req: request, secret }) : null;
 
   if (token?.twoFactorEnabled && !token.twoFactorVerified && pathname !== "/auth/two-factor" && !pathname.startsWith("/api/auth/two-factor") && !pathname.startsWith("/api/auth/signout")) {
     if (pathname.startsWith("/dashboard") || pathname.startsWith("/account") || pathname.startsWith("/api/account")) {

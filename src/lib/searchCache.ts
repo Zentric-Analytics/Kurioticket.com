@@ -1,5 +1,6 @@
 import type {
   FlightSearchParams,
+  HotelSearchParams,
   NormalizedFlightResult,
   NormalizedHotelResult,
   PublicFlightResult,
@@ -11,6 +12,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { getSearchLegs } from "@/lib/flights/flightSearchJourney";
 import { buildFlightItineraryKey } from "@/services/travel/flightOfferInventory";
 import { createHash } from "node:crypto";
+import { runCacheWrite } from "@/lib/search/cacheWriteGate";
+import { hotelOccupancy } from "@/lib/hotels/hotelOccupancy";
 
 type CacheRecord<T> = {
   value: T;
@@ -36,7 +39,14 @@ export interface SharedFlightCacheBackend {
 export const FLIGHT_CACHE_TTL_MS = 1000 * 60 * 30;
 const CLEANUP_LIMIT = 200;
 const CLEANUP_INTERVAL_MS = 60_000;
-const hotelCache = new Map<string, CacheRecord<NormalizedHotelResult>>();
+type HotelCacheRecord = CacheRecord<NormalizedHotelResult> & {
+  cohort: NormalizedHotelResult[];
+  searchKey: string | null;
+  searchContext: HotelSearchParams | null;
+};
+
+const hotelCache = new Map<string, HotelCacheRecord>();
+const hotelSearchCache = new Map<string, CacheRecord<NormalizedHotelResult[]>>();
 
 const clone = <T>(value: T): T => structuredClone(value);
 const jsonClone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
@@ -77,7 +87,7 @@ function withoutUnusedRawProviderReference(result: NormalizedFlightResult) {
   return persisted;
 }
 
-function purgeExpired<T>(cache: Map<string, CacheRecord<T>>, now = Date.now()) {
+function purgeExpired<T extends { expiresAt: number }>(cache: Map<string, T>, now = Date.now()) {
   for (const [key, record] of cache.entries()) {
     if (record.expiresAt <= now) cache.delete(key);
   }
@@ -112,14 +122,19 @@ export function createPrismaFlightCacheBackend(
     async write(records) {
       if (!records.length) return [];
       const db = getDatabase();
-      // One PostgreSQL statement is atomic and keeps the database round-trip
-      // count constant for large provider result sets. ON CONFLICT preserves
-      // the existing refresh behavior for an opaque ID without a long-running
-      // interactive transaction or partial chunk commits.
-      const rows = await db.$queryRaw<Array<{ publicResultId: string }>>(
-        buildFlightCacheUpsertQuery(records),
-      );
-      return rows.map(({ publicResultId }) => publicResultId);
+      // Bound statement size without exposing partial inventory: every batch
+      // commits in one transaction, or every batch rolls back on failure.
+      return runCacheWrite(() => db.$transaction(async tx => {
+        await tx.$executeRaw`SET LOCAL statement_timeout = '4000ms'`;
+        const ids: string[] = [];
+        for (let offset = 0; offset < records.length; offset += 50) {
+          const rows = await tx.$queryRaw<Array<{ publicResultId: string }>>(
+            buildFlightCacheUpsertQuery(records.slice(offset, offset + 50)),
+          );
+          ids.push(...rows.map(({ publicResultId }) => publicResultId));
+        }
+        return ids;
+      }, { maxWait: 1000, timeout: 10000 }));
     },
     async find(publicResultId, now) {
       const row = await getDatabase().flightResultCache.findFirst({
@@ -394,20 +409,104 @@ export async function getFlightDetailsCacheContext(id: string, now = Date.now())
   return flightResultCache.getDetailsContext(id, now);
 }
 
-export function rememberHotels(results: NormalizedHotelResult[]) {
-  purgeExpired(hotelCache);
-  for (const result of results) {
-    hotelCache.set(result.id, { value: result, expiresAt: Date.now() + FLIGHT_CACHE_TTL_MS });
+function hotelSearchIdentity(search: HotelSearchParams) {
+  return JSON.stringify([
+    "hotel-search-context-v2",
+    search.destinationId ?? "",
+    search.destination.trim().toLocaleLowerCase(),
+    search.checkIn,
+    search.checkOut,
+    search.guests,
+    hotelOccupancy(search).adults,
+    hotelOccupancy(search).children,
+    search.rooms,
+  ]);
+}
+
+export function rememberHotels(
+  results: NormalizedHotelResult[],
+  search?: HotelSearchParams,
+  now = Date.now(),
+) {
+  purgeExpired(hotelCache, now);
+  purgeExpired(hotelSearchCache, now);
+  const expiresAt = now + FLIGHT_CACHE_TTL_MS;
+  const searchKey = search ? hotelSearchIdentity(search) : null;
+  const searchContext = search ? clone(search) : null;
+  const snapshot = clone(results);
+  if (searchKey) {
+    hotelSearchCache.set(searchKey, {
+      value: snapshot,
+      expiresAt,
+    });
+  }
+  for (const result of snapshot) {
+    hotelCache.set(result.id, {
+      value: result,
+      cohort: search ? snapshot : [],
+      expiresAt,
+      searchKey,
+      searchContext,
+    });
   }
 }
 
-export function getHotelFromCache(id: string) {
-  purgeExpired(hotelCache);
-  return hotelCache.get(id)?.value ?? null;
+export function getHotelFromCache(id: string, now = Date.now()) {
+  purgeExpired(hotelCache, now);
+  const result = hotelCache.get(id)?.value;
+  return result ? clone(result) : null;
+}
+
+export function getHotelDetailsCacheContext(
+  id: string,
+  search?: HotelSearchParams,
+  now = Date.now(),
+) {
+  purgeExpired(hotelCache, now);
+  purgeExpired(hotelSearchCache, now);
+
+  if (search) {
+    const cohort = hotelSearchCache.get(hotelSearchIdentity(search))?.value ?? [];
+    const selected = cohort.find((hotel) => hotel.id === id);
+    if (!selected) return null;
+    return {
+      hotel: clone(selected),
+      searchContext: clone(search),
+      relatedHotels: cohort
+        .filter((hotel) => hotel.id !== id)
+        .map(clone),
+    };
+  }
+
+  const selected = hotelCache.get(id);
+  if (!selected) return null;
+  // Keep the exact array that produced this offer. The latest criteria-keyed
+  // search can belong to a different provider snapshot with identical criteria.
+  const cohort = selected.cohort;
+  return {
+    hotel: clone(selected.value),
+    searchContext: selected.searchContext ? clone(selected.searchContext) : null,
+    relatedHotels: cohort
+      .filter((hotel) => hotel.id !== id)
+      .map(clone),
+  };
 }
 
 export function toPublicFlight(result: NormalizedFlightResult): PublicFlightResult {
   const publicResult = { ...result };
+  // Old KAYAK snapshots could derive fareTerms from arbitrary flattened fee labels.
+  // Their supplier-row marker identifies that legacy shape; keep no unverified terms publicly.
+  if (/^kayak(?: sandbox)?$/i.test(result.provider.trim()) && result.providerDetails && Object.hasOwn(result.providerDetails, "suppliedFacts")) {
+    publicResult.fareTerms = [];
+  }
+  // Explicit projection also strips raw rows from offers cached before structured normalization.
+  if (result.providerDetails) {
+    const source = result.providerDetails;
+    publicResult.providerDetails = {};
+    for (const key of ["airlineBaggagePolicies", "offerOwner", "price", "totalEmissionsKg", "updatedAt", "passengerIdentityDocumentsRequired", "supportedIdentityDocumentTypes", "supportedLoyaltyProgrammes", "conditions", "optionalServices"] as const) {
+      if (source[key] !== undefined) Object.assign(publicResult.providerDetails, { [key]: source[key] });
+    }
+  }
   delete publicResult.rawProviderReference;
   delete publicResult.providerOfferId;
   delete publicResult.providerExpiresAt;

@@ -1,0 +1,69 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { fileURLToPath, URL } from "node:url";
+import test from "node:test";
+
+const hotel = readFileSync(fileURLToPath(new URL("./HotelSearchPanel.tsx", import.meta.url)), "utf8");
+const primitives = readFileSync(fileURLToPath(new URL("./FlowPrimitives.tsx", import.meta.url)), "utf8");
+const packages = readFileSync(fileURLToPath(new URL("./PackageSearchForm.tsx", import.meta.url)), "utf8");
+const closedFields = hotel.slice(hotel.indexOf("return <View"), hotel.indexOf("<DateRangeSheet"));
+
+test("Hotel closed rows reuse the Packages CompactSearchField architecture", () => {
+  assert.match(hotel, /import \{ CompactSearchField, PickerSheetHeader, PrimaryButton, UnavailableNotice \} from "\.\/FlowPrimitives"/);
+  assert.match(packages, /import \{ CompactSearchField, PickerSheetHeader, PrimaryButton \} from "\.\/FlowPrimitives"/);
+  assert.equal(closedFields.match(/<CompactSearchField/g)?.length, 3);
+  assert.doesNotMatch(closedFields, /<Field\b|locationFieldRow|locationFieldContent/);
+  assert.equal(closedFields.match(/trailing=\{false\}/g)?.length, 1);
+  assert.doesNotMatch(hotel, /function (?:HotelCompactField|HotelSearchRow|PackageStyleHotelField)/);
+});
+
+test("Destination uses the Hotel wording inside the separate-card architecture", () => {
+  assert.match(hotel, /const fieldAppearance = editAppearance \? "resultsEdit" : "resultsModalCard"/);
+  assert.match(closedFields, /<CompactSearchField label="Destination"[^>]*value=\{destinationDisplay\.primary \|\| form\.destination\.trim\(\) \|\| "City or hotel"\}[^>]*meta=\{editAppearance \? undefined : destinationDisplay\.secondary\}[^>]*trailing=\{false\}[^>]*appearance=\{fieldAppearance\}/);
+  assert.doesNotMatch(closedFields, /City, area, or hotel/);
+});
+
+test("Travel dates truncate only for edit appearance and otherwise wrap without limit", () => {
+  assert.match(closedFields, /<CompactSearchField label="Travel dates"[^\n]*valueNumberOfLines=\{editAppearance \? 1 : 0\}/);
+  assert.doesNotMatch(closedFields, /label="Destination"[^>]*valueNumberOfLines/);
+  assert.doesNotMatch(closedFields, /label="Guests"[^>]*valueNumberOfLines/);
+});
+
+test("Guests keeps the existing Hotel count summary in its own card", () => {
+  assert.match(closedFields, /<CompactSearchField label="Guests" value=\{`\$\{countLabel\(form\.guests, "guest"\)\}, \$\{countLabel\(form\.rooms, "room"\)\}`\}[^>]*appearance=\{fieldAppearance\}/);
+});
+
+test("the obsolete closed input ref stays removed while the real picker ref remains", () => {
+  assert.doesNotMatch(hotel, /destinationRef/);
+  assert.match(hotel, /const inputRef = useRef<TextInput>\(null\)/);
+  assert.match(hotel, /useSearchPickerKeyboardPresentation\(sheetVisible, motion\.rendered, value, inputRef, motion, \{ focusOnPresentation: true \}\)/);
+  assert.match(hotel, /export type HotelSearchHandle = \{ useDestination:/);
+  assert.match(hotel, /setNotice\(`\$\{destination\} selected\. Review your details, then search\.`\)/);
+});
+
+
+test("Hotel main and Results Edit forms use three separate rounded field cards above Search", () => {
+  assert.match(hotel, /mainStack:\{width:"100%",gap:8\}/);
+  assert.match(hotel, /mainCard:\{width:"100%",borderWidth:1,borderRadius:15,overflow:"hidden"\}/);
+  assert.match(hotel, /resultsEditStack:\{width:"100%",gap:10\}/);
+  assert.match(hotel, /resultsEditCard:\{width:"100%",borderWidth:1,borderRadius:13,overflow:"hidden"\}/);
+  assert.equal(closedFields.match(/<View style=\{fieldCardStyle\}>/g)?.length, 3);
+  assert.doesNotMatch(closedFields, /hotel-results-edit-divider|resultsEditFields|resultsEditDivider/);
+  const destination = closedFields.indexOf('label="Destination"');
+  const dates = closedFields.indexOf('label="Travel dates"');
+  const guests = closedFields.indexOf('label="Guests"');
+  const search = closedFields.indexOf('<PrimaryButton appearance="resultsEdit"');
+  assert.ok(destination >= 0 && dates > destination && guests > dates && search > guests);
+  assert.match(closedFields, /label="Destination"[^>]*trailing=\{false\}/);
+  assert.equal(closedFields.match(/trailing=\{false\}/g)?.length, 1);
+});
+
+test("Results Edit appearance leaves shared primitive defaults intact", () => {
+  assert.match(primitives, /compactField: \{ minHeight: 66, paddingHorizontal: 12, paddingVertical: 9, borderBottomWidth: 1/);
+  assert.match(primitives, /resultsEditCompactField: \{ minHeight: 72, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0/);
+  assert.match(primitives, /resultsEditCompactLabel: \{ fontSize: 11, lineHeight: 15, fontWeight: "700", letterSpacing: 1\.1 \}/);
+  assert.match(primitives, /resultsEditCompactValue: \{ fontSize: 16, lineHeight: 20, fontWeight: "600" \}/);
+  assert.match(primitives, /resultsEditPrimary: \{ minHeight: 52, borderRadius: 12 \}/);
+  assert.match(primitives, /resultsEditPrimaryText: \{ fontSize: 16, fontWeight: "600" \}/);
+  assert.match(primitives, /appearance\?: "default" \| "resultsEdit"/);
+});

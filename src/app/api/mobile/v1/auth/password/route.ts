@@ -1,11 +1,13 @@
+import { mobileRecoveryFallback } from "@/lib/mobile-recovery-compatibility";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { checkAuthRateLimit, AuthRateLimitError } from "@/lib/auth-rate-limit";
 import { signinSchema } from "@/lib/validation";
 import { getPrisma } from "@/lib/prisma";
-import { createMobileSession } from "@/lib/mobile-auth";
+import { createMobileSession, mobileSessionMetadata } from "@/lib/mobile-auth";
 import { canUseStagingCredentials } from "@/lib/previewTesterAccess";
 import { createMobileTwoFactorChallenge } from "@/lib/mobile-two-factor";
+import { canAuthenticateMobileAccount } from "@/lib/mobile-deletion-recovery";
 
 export const runtime = "nodejs";
 
@@ -17,15 +19,17 @@ export async function POST(request: Request) {
   try {
     checkAuthRateLimit({ action: "mobile-password", email: parsed.data.email, request, limit: 8, windowMs: 15 * 60_000 });
     const user = await getPrisma().user.findUnique({ where: { email: parsed.data.email }, include: { securitySettings: { select: { twoFactorEnabled: true } } } });
-    if (!user?.passwordHash || !user.emailVerified || user.status !== "ACTIVE" || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
+    if (!user?.passwordHash || !user.emailVerified || !(await canAuthenticateMobileAccount(user)) || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
       return NextResponse.json({ error: "Check your password and try again." }, { status: 401 });
     }
     if (user.securitySettings?.twoFactorEnabled) {
-      return NextResponse.json(await createMobileTwoFactorChallenge(user.id, "PASSWORD"), { status: 202 });
+      return NextResponse.json(await createMobileTwoFactorChallenge(user.id, "PASSWORD", { sessionVersion: user.sessionVersion, status: user.status }), { status: 202 });
     }
-    const session = await createMobileSession(user.id);
+    const session = await createMobileSession(user.id, "credentials", "PRIMARY", mobileSessionMetadata(request), { sessionVersion: user.sessionVersion, status: user.status, verifiedAt: new Date() });
     return NextResponse.json({ session, user: { id: user.id, email: user.email, name: user.name } });
   } catch (error) {
+    const fallback = mobileRecoveryFallback(error);
+    if (fallback) return fallback;
     if (error instanceof AuthRateLimitError) return NextResponse.json({ error: "Too many attempts. Please wait and try again." }, { status: 429 });
     return NextResponse.json({ error: "Unable to sign in right now." }, { status: 503 });
   }

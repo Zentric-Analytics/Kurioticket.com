@@ -1,0 +1,106 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
+
+const resultsPage = readFileSync("src/app/hotels/results/page.tsx", "utf8");
+const resultsClient = readFileSync("src/components/results/HotelResultsClient.tsx", "utf8");
+const searchBar = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
+const searchRoute = readFileSync("src/app/api/hotels/search/route.ts", "utf8");
+const aggregator = readFileSync("src/services/travel/hotelAggregator.ts", "utf8");
+const detailsPage = readFileSync("src/app/hotels/details/[id]/page.tsx", "utf8");
+const detailsClient = readFileSync("src/components/results/HotelDetailsClient.tsx", "utf8");
+const sandboxSearch = readFileSync("src/app/sandbox/kayak/search.tsx", "utf8");
+
+test("sandbox Hotel results use the canonical Hotel results shell", () => {
+  assert.match(resultsPage, /const sandboxProviderMode = first\(query\.provider\) === "kayak-sandbox"/);
+  assert.match(resultsPage, /<HotelResultsClient \/>/);
+  assert.doesNotMatch(resultsPage, /KayakSandboxResults|adaptKayakHotelSearch/);
+
+  assert.match(resultsClient, /provider:\s*params\.get\("provider"\) === "kayak-sandbox"/);
+  assert.match(resultsClient, /fetch\("\/api\/hotels\/search"/);
+  assert.match(
+    resultsClient,
+    /providerMode \? \{ "x-hotel-provider-mode": providerMode \} : \{\}/,
+  );
+  assert.match(searchRoute, /request\.headers\.get\("x-hotel-provider-mode"\)/);
+  assert.match(resultsClient, /return <section key=\{hotel\.id\}/);
+  assert.match(resultsClient, /<HotelCard hotel=\{hotel\}/);
+  assert.doesNotMatch(resultsClient, /<HotelCard key=\{offer\.id\} hotel=\{offer\}/);
+  assert.doesNotMatch(resultsClient, /additionalHotelOffers|alternatives\.length/);
+  assert.match(resultsClient, /allowSave=\{!guided\}/);
+  assert.doesNotMatch(resultsClient, /allowSave=\{!guided&&!isKayakSandboxResult\(hotel\)\}/);
+  assert.doesNotMatch(resultsClient, /useKayakResults|KayakResultCard|kayakHotelCardModel|kayak\.offers/);
+  assert.doesNotMatch(resultsClient, /\/sandbox\/kayak\/details/);
+});
+
+test("KAYAK Hotel place ids are validated at the provider boundary without weakening normal destination ids", () => {
+  assert.ok(resultsPage.includes("/^kplace:\\d+$/.test(requestedDestinationId)"));
+  assert.match(
+    resultsPage,
+    /destinationId: sandboxDestinationId \? undefined : requestedDestinationId/,
+  );
+  assert.ok(
+    searchRoute.includes(
+      'providerMode === "kayak-sandbox" && /^kplace:\\d+$/.test(rawDestinationId)',
+    ),
+  );
+  assert.match(
+    searchRoute,
+    /validationPayload = providerDestinationId[\s\S]*?destinationId: undefined/,
+  );
+  assert.match(
+    searchRoute,
+    /const search = providerDestinationId[\s\S]*?destinationId: providerDestinationId/,
+  );
+});
+
+test("provider-only Hotel search still uses the canonical server search and details cache", () => {
+  const route = ts.createSourceFile("route.ts", searchRoute, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const providerCalls: ts.CallExpression[] = [];
+  const criteria: ts.VariableDeclaration[] = [];
+  const currencyDeletes: ts.DeleteExpression[] = [];
+  function visit(node: ts.Node) {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "searchHotelsByProvider") providerCalls.push(node);
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === "providerSearch") criteria.push(node);
+    if (ts.isDeleteExpression(node) && node.expression.getText(route) === "providerSearch.currency") currencyDeletes.push(node);
+    ts.forEachChild(node, visit);
+  }
+  visit(route);
+  assert.equal(providerCalls.length, 1);
+  assert.equal(providerCalls[0].arguments[0].getText(route), "providerSearch");
+  assert.equal(providerCalls[0].arguments[1].getText(route), "providerMode");
+  assert.equal(criteria.length, 1);
+  assert.equal(criteria[0].initializer?.getText(route), "{ ...search }");
+  assert.equal(currencyDeletes.length, 1);
+  assert.ok(currencyDeletes[0].getStart() < providerCalls[0].getStart());
+  const canonicalSearch = { destination: "Fixture City", destinationId: "kplace:123", checkIn: "2030-11-18", checkOut: "2030-11-21", guests: 2, rooms: 1 };
+  for (const currency of ["USD", "NGN"]) {
+    const search = { ...canonicalSearch, currency };
+    const sanitized = runInNewContext(`const ${criteria[0].getText(route)}; ${currencyDeletes[0].getText(route)}; providerSearch`, { search });
+    assert.deepEqual(JSON.parse(JSON.stringify(sanitized)), canonicalSearch);
+    assert.equal(Object.hasOwn(sanitized, "currency"), false);
+    assert.equal(search.currency, currency, "display currency remains available to the response/UI");
+  }
+  assert.match(searchRoute, /source: providerMode \|\| classified\.source/);
+  assert.match(aggregator, /export async function searchHotelsByProvider/);
+  assert.match(aggregator, /rememberProviderResults\("hotel", results, search\)/);
+  assert.match(aggregator, /rememberHotelSearchCohort\(results, search\)/);
+  assert.match(aggregator, /rememberHotels\(results, search\)/);
+});
+
+test("Hotel provider mode survives edit search and Results to Details navigation", () => {
+  assert.match(searchBar, /searchParams\.get\("provider"\)/);
+  assert.match(searchBar, /params\.set\("provider", providerMode\)/);
+  assert.match(resultsClient, /\.\.\.\(providerMode \? \{ provider: providerMode \} : \{\}\)/);
+  assert.match(detailsPage, /getFirstSearchParam\(query\.provider\) === "kayak-sandbox"/);
+  assert.match(detailsClient, /provider: searchContext\?\.provider/);
+});
+
+test("sandbox Hotel entry provides a display destination while retaining provider destination id", () => {
+  assert.match(sandboxSearch, /const \[destinationLabel, setDestinationLabel\] = useState\(""/);
+  assert.match(sandboxSearch, /destinationId: destination, destination: destinationLabel \|\| "KAYAK sandbox destination"/);
+  assert.match(sandboxSearch, /setDestinationLabel\(place\.label\)/);
+  assert.match(sandboxSearch, /new URLSearchParams\(\{ provider: "kayak-sandbox" \}\)/);
+});

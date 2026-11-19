@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
-import { homepageAdventureDiscoveryBottomRow, homepageAdventureDiscoveryItems, homepageAdventureDiscoveryTopRow, readFreshDiscoveryFare } from "./HomepageAdventureDiscoveryData";
+import { getHomepageAdventureDiscoveryItems, readFreshDiscoveryFare, splitAdventureDiscoveryRows } from "./HomepageAdventureDiscoveryData";
+
+const homepageAdventureDiscoveryItems = getHomepageAdventureDiscoveryItems("NG", "https://staging.kurioticket.com");
+const { top: homepageAdventureDiscoveryTopRow, bottom: homepageAdventureDiscoveryBottomRow } = splitAdventureDiscoveryRows(homepageAdventureDiscoveryItems);
 
 const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 const section = source("src/features/home/HomepageAdventureDiscovery.tsx");
@@ -10,12 +13,11 @@ const home = source("src/features/flow/HomeFlowScreen.tsx");
 const regional = source("src/features/home/RegionalDestinationRoutes.tsx");
 
 test("new adventure discovery is independently inserted in the required Home order", () => {
-  const flightSearch = home.indexOf('{availability.flightSearch ? <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker /> : <UnavailableNotice text="Flight search is temporarily unavailable. Hotels and cars remain available." />}');
+  const flightSearch = home.indexOf("flights: availability.flightSearch");
   const adventure = home.indexOf("<HomepageAdventureDiscovery />");
-  const promos = home.indexOf("<HomepageDealPromos />");
   const regionalSection = home.indexOf("<RegionalDestinationRoutes />");
-  assert.ok(flightSearch < adventure && adventure < promos && promos < regionalSection);
-  assert.match(home, /availability\.flightSearch[\s\S]*<PopularDestinationStays \/>\s*<HomepageAdventureDiscovery \/>\s*<HomepageDealPromos \/>/);
+  assert.ok(flightSearch < adventure && adventure < regionalSection);
+  assert.match(home, /availability\.flightSearch[\s\S]*<PopularDestinationStays compactTopSpacing=\{activeProduct === "flights"\} \/>\s*<HomepageAdventureDiscovery \/>\s*<RegionalDestinationRoutes \/>/);
   assert.match(section, /Discover your next adventure here/);
   assert.match(section, /Compare smart route ideas, flexible fares, and destinations picked for your region\./);
   assert.match(regional, /Discover destinations from your region/);
@@ -28,9 +30,10 @@ test("discovery cards use the web route content and existing mobile contracts", 
     { title: "London business and weekend mix", originCode: "LOS", destinationCode: "LHR" },
     { title: "Dubai shopping stopover", originCode: "LOS", destinationCode: "DXB" },
   ]);
-  assert.match(section, /router\.push\(discoverAdventureNavigation\(item\)\)/);
+  assert.match(section, /router\.push\(discoverAdventureNavigation\(item, marketplace\)\)/);
   assert.match(section, /event\.stopPropagation\(\); onFavorite\(\);/);
-  assert.match(section, /toggle\(item\.id\)/);
+  assert.match(section, /toggle\(item\.savedDestinationId\)/);
+  assert.match(section, /usePublishedHome/);
 });
 
 test("only fresh, exact-route, provider-backed fares can be displayed", () => {
@@ -42,18 +45,31 @@ test("only fresh, exact-route, provider-backed fares can be displayed", () => {
   assert.equal(readFreshDiscoveryFare({ ...fresh, fare: { ...fresh.fare, code: "DXB" } }, item), undefined);
   assert.equal(readFreshDiscoveryFare({ ...fresh, fare: { ...fresh.fare, expiresAt: "2020-01-01T00:00:00.000Z" } }, item), undefined);
   assert.doesNotMatch(section, /priceFromUsd/);
+  assert.match(section, /regionCode=\$\{encodeURIComponent\(marketplace\.marketCountryCode\)\}/);
+  assert.match(section, /currency=\$\{encodeURIComponent\(marketplace\.displayCurrency\)\}/);
+  assert.doesNotMatch(section, /regionCode=NG|currency=USD/);
 });
 
-test("every discovery card shows From while only valid fares show an amount", () => {
-  assert.match(section, /<View style=\{styles\.fare\}><Text[^>]*>From<\/Text>\{formattedFare \? <Text[^>]*>\{formattedFare\}<\/Text> : null\}<\/View>/);
-  assert.doesNotMatch(section, /formattedFare \? <View style=\{styles\.fare\}>/);
-  assert.match(section, /fare \? new Intl\.NumberFormat\("en", \{ style: "currency", currency: fare\.currency, maximumFractionDigits: 0 \}\)\.format\(fare\.price\) : undefined/);
+test("From and its amount render together only for a valid fare", () => {
+  assert.match(section, /\{formattedFare \? <View style=\{styles\.fare\}><Text[^>]*>From<\/Text><Text[^>]*>\{formattedFare\}<\/Text><\/View> : null\}/);
+  assert.match(section, /fare \? new Intl\.NumberFormat\(marketplace\.locale, \{ style: "currency", currency: fare\.currency, maximumFractionDigits: 0 \}\)\.format\(fare\.price\) : undefined/);
   assert.doesNotMatch(section, />\s*(?:\$0|N\/A|--|Unavailable)\s*</i);
   assert.match(section, /accessibilityLabel=\{`\$\{item\.title\}\. \$\{item\.originCode\} to \$\{item\.destinationCode\}\.\$\{formattedFare \? ` From \$\{formattedFare\}\.` : ""\}`\}/);
 });
 
 test("cards form two independent responsive horizontal rows with safe image fallback", () => {
-  assert.match(section, /Math\.min\(210, Math\.max\(170, width \* 0\.44\)\)/);
+  assert.match(section, /REFERENCE_CARD_SCREEN_FRACTION = 332 \/ 592/);
+  assert.match(section, /Math\.min\(320, Math\.max\(200, Math\.round\(width \* REFERENCE_CARD_SCREEN_FRACTION\)\)\)/);
+  assert.doesNotMatch(section, /REFERENCE_CARD_HEIGHT_RATIO/);
+  assert.match(section, /minHeight: copyHeight/);
+  assert.match(section, /copyMeasurements\.title \+ copyMeasurements\.details \+ 22/);
+  assert.equal(section.match(/copyHeight=\{copyHeight\}/g)?.length, 2);
+  assert.match(section, /\[cardWidth, fontScale, marketplace\.locale, items\.map/);
+  assert.match(section, /rowContent: \{ alignItems: "flex-start",/);
+  assert.match(section, /copy: \{ padding: 8, gap: 6, justifyContent: "space-between" \}/);
+  assert.match(section, /fare: \{ marginTop: 12,/);
+  assert.match(section, /imageFrame: \{ width: "100%", aspectRatio: 4 \/ 3 \}/);
+  assert.doesNotMatch(section, /card: \{ height:|numberOfLines=\{2\} style=\{\[styles\.title/);
   assert.doesNotMatch(section, /flexWrap|homepage-adventure-grid/);
   assert.equal(section.match(/<ScrollView/g)?.length, 2);
   assert.equal(section.match(/\bhorizontal\b/g)?.length, 2);
@@ -61,8 +77,8 @@ test("cards form two independent responsive horizontal rows with safe image fall
   assert.equal(section.match(/showsHorizontalScrollIndicator=\{false\}/g)?.length, 2);
   assert.match(section, /testID="homepage-adventure-row-top"/);
   assert.match(section, /testID="homepage-adventure-row-bottom"/);
-  assert.match(section, /homepageAdventureDiscoveryTopRow\.map/);
-  assert.match(section, /homepageAdventureDiscoveryBottomRow\.map/);
+  assert.match(section, /rows\.top\.map/);
+  assert.match(section, /rows\.bottom\.map/);
   assert.doesNotMatch(section, /\bref=|scrollTo|contentOffset|onScroll/);
   assert.notStrictEqual(homepageAdventureDiscoveryTopRow, homepageAdventureDiscoveryBottomRow);
   assert.deepEqual(homepageAdventureDiscoveryTopRow.map(({ id }) => id), homepageAdventureDiscoveryItems.filter((_, index) => index % 2 === 0).map(({ id }) => id));

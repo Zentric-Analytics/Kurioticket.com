@@ -88,7 +88,8 @@ test("selection replacement invalidates only the product and its downstream prod
     "hotel-car",
     "hotel-flight-car",
   ] as const;
-  const expected = {
+  type Product = "flight" | "hotel" | "car";
+  const expected: Record<(typeof modes)[number], Partial<Record<Product, readonly Product[]>>> = {
     "hotel-flight": { flight: [], hotel: ["flight"] },
     "flight-car": { flight: [], car: ["flight"] },
     "hotel-car": { hotel: [], car: ["hotel"] },
@@ -99,9 +100,7 @@ test("selection replacement invalidates only the product and its downstream prod
     },
   } as const;
   for (const mode of modes)
-    for (const product of Object.keys(expected[mode]) as Array<
-      keyof (typeof expected)[typeof mode]
-    >) {
+    for (const product of Object.keys(expected[mode]) as Product[]) {
       const plan = { ...base(), mode };
       const next =
         product === "flight"
@@ -109,7 +108,7 @@ test("selection replacement invalidates only the product and its downstream prod
           : product === "hotel"
             ? replaceDealsHotelSelection(plan, { ...hotel, id: "h2" }, 110)
             : replaceDealsCarSelection(plan, { ...car, id: "c2" }, 110);
-      for (const preserved of expected[mode][product])
+      for (const preserved of expected[mode][product] ?? [])
         assert.ok(next[preserved], `${mode}:${product} preserves ${preserved}`);
       const order =
         mode === "hotel-flight"

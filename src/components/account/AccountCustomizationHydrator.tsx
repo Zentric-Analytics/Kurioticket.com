@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { observeAccountResume } from "@/lib/accountResume";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 
@@ -33,6 +34,8 @@ export function AccountCustomizationHydrator() {
     currencies,
   } = useRegion();
   const hydratedSessionKeyRef = useRef<string | null>(null);
+  const [resumeVersion, setResumeVersion] = useState(0);
+  useEffect(() => observeAccountResume(() => { hydratedSessionKeyRef.current = null; setResumeVersion(value => value + 1); }, window, document), []);
 
   const supportedLocaleCodes = useMemo(
     () =>
@@ -154,6 +157,7 @@ export function AccountCustomizationHydrator() {
     supportedCurrencyCodes,
     supportedRegionCodes,
     storageResolutionComplete,
+    resumeVersion,
   ]);
 
   return null;

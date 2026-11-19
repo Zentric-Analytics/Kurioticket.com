@@ -3,115 +3,156 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { AdminButton, AdminSectionCard, AdminSelect, AdminTextarea } from "@/components/admin/AdminPageShell";
+import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
+import { supportStatusTabs } from "@/lib/adminSupportInboxNavigation";
 import { supportTicketStatuses } from "@/lib/supportTickets";
 
 type SupportStatus = (typeof supportTicketStatuses)[number];
+const replyMaxLength = 4000;
+const statusChoices = supportStatusTabs.filter(option => option.value !== "") as Array<{ value: SupportStatus; label: string }>;
 
-export function SupportTicketActions({ ticketId, status }: { ticketId: string; status: SupportStatus }) {
+export function SupportReplyForm({ ticketId }: { ticketId: string }) {
   const router = useRouter();
   const [reply, setReply] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState<SupportStatus>(status);
   const [replyMessage, setReplyMessage] = useState<string | null>(null);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isReplyPending, startReplyTransition] = useTransition();
-  const [isStatusPending, startStatusTransition] = useTransition();
+  const validReply = reply.trim().length >= 2 && reply.trim().length <= replyMaxLength;
 
   function submitReply() {
+    if (!validReply || isReplyPending) return;
     setReplyMessage(null);
-    setStatusMessage(null);
     setError(null);
     startReplyTransition(async () => {
-      const response = await fetch(`/api/admin/support/${ticketId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: reply }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError(typeof payload.error === "string" ? payload.error : "Unable to add reply.");
-        return;
+      try {
+        const response = await fetch("/api/admin/support/" + encodeURIComponent(ticketId), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ body: reply }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          setError(typeof payload.error === "string" ? payload.error : "Unable to add reply.");
+          return;
+        }
+        setReply("");
+        setReplyMessage(payload.emailStatus === "accepted"
+          ? "Reply saved. Email accepted by provider; delivery is not confirmed."
+          : payload.emailStatus === "failed"
+            ? "Reply saved, but email sending failed. Check email delivery records."
+            : "Reply saved. Email sending status is unknown; check email delivery records.");
+        router.refresh();
+      } catch {
+        setError("Unable to send reply. Check the conversation before retrying.");
       }
-      setReply("");
-      setReplyMessage("Reply sent.");
-      router.refresh();
-    });
-  }
-
-  function updateStatus() {
-    setReplyMessage(null);
-    setStatusMessage(null);
-    setError(null);
-    startStatusTransition(async () => {
-      const response = await fetch(`/api/admin/support/${ticketId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: selectedStatus }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError(typeof payload.error === "string" ? payload.error : "Unable to update status.");
-        return;
-      }
-      setStatusMessage("Ticket status updated.");
-      router.refresh();
     });
   }
 
   return (
-    <div className="space-y-5">
-      <AdminSectionCard className="space-y-4 p-5">
-        <div>
-          <h2 className="text-lg font-black text-slate-950">Reply to customer</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-600">Send a visible support reply to the ticket email address.</p>
-        </div>
-        <label className="block" htmlFor="support-reply-body">
-          <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Reply message</span>
-          <AdminTextarea
-            id="support-reply-body"
-            value={reply}
-            onChange={(event) => setReply(event.target.value)}
-            rows={6}
-            className="mt-2"
-            placeholder="Write a concise support reply..."
-            disabled={isReplyPending}
-          />
-        </label>
-        <div className="flex flex-wrap items-center gap-3">
-          <AdminButton type="button" onClick={submitReply} loading={isReplyPending} disabled={reply.trim().length < 2} aria-disabled={isReplyPending || reply.trim().length < 2}>
-            {isReplyPending ? "Sending" : "Reply"}
-          </AdminButton>
-          {replyMessage ? <p className="text-sm font-bold text-emerald-700" role="status" aria-live="polite">{replyMessage}</p> : null}
-        </div>
-      </AdminSectionCard>
-
-      <AdminSectionCard className="space-y-4 p-5">
-        <div>
-          <h2 className="text-lg font-black text-slate-950">Ticket controls</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-600">Update the ticket lifecycle status without sending a customer email.</p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,280px)_auto] sm:items-end">
-          <label className="block" htmlFor="support-ticket-status">
-            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Ticket status</span>
-            <AdminSelect
-              id="support-ticket-status"
-              value={selectedStatus}
-              onChange={(event) => setSelectedStatus(event.target.value as SupportStatus)}
-              disabled={isStatusPending}
-              className="mt-2"
+    <section aria-labelledby="support-reply-heading" className="min-w-0">
+      <h3 id="support-reply-heading" className="mb-2 text-[14px] font-semibold leading-5 text-[#111827]">Reply</h3>
+      <div className="min-w-0 overflow-hidden rounded-xl border border-[#D8E1EC] bg-white transition-colors focus-within:border-[#9DB4DC] focus-within:ring-2 focus-within:ring-[#EAF2FF]">
+        <label htmlFor="support-reply-body" className="sr-only">Reply message</label>
+        <textarea
+          id="support-reply-body"
+          value={reply}
+          onChange={event => setReply(event.target.value)}
+          maxLength={replyMaxLength}
+          rows={5}
+          className="block h-[128px] min-h-[116px] w-full resize-y border-0 bg-white px-4 py-3 text-[13px] leading-6 text-[#374151] outline-none placeholder:text-[#9CA3AF] focus-visible:ring-0"
+          placeholder="Write your reply..."
+          disabled={isReplyPending}
+        />
+        <div className="flex min-h-[54px] flex-wrap items-center justify-end gap-3 border-t border-[#E5E7EB] bg-white px-4 py-2">
+          <div className="flex shrink-0 items-center gap-4">
+            <span className="whitespace-nowrap text-[11px] tabular-nums text-[#64748B]">{reply.length.toLocaleString()} / {replyMaxLength.toLocaleString()}</span>
+            <button
+              type="button"
+              onClick={submitReply}
+              disabled={isReplyPending || !validReply}
+              className="focus-ring inline-flex h-9 items-center justify-center rounded-lg bg-[#3154EF] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#2445D7] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-75"
             >
-              {supportTicketStatuses.map((item) => <option key={item} value={item}>{item.replaceAll("_", " ")}</option>)}
-            </AdminSelect>
-          </label>
-          <AdminButton type="button" variant="secondary" onClick={updateStatus} loading={isStatusPending} disabled={selectedStatus === status} aria-disabled={isStatusPending || selectedStatus === status}>
-            {isStatusPending ? "Saving" : "Save status"}
-          </AdminButton>
+              {isReplyPending ? "Sending…" : "Send reply"}
+            </button>
+          </div>
         </div>
-        {statusMessage ? <p className="text-sm font-bold text-emerald-700" role="status" aria-live="polite">{statusMessage}</p> : null}
-      </AdminSectionCard>
+      </div>
+      {replyMessage ? <p className="mt-3 text-[12px] font-medium text-emerald-700" role="status" aria-live="polite">{replyMessage}</p> : null}
+      {error ? <p className="mt-3 text-[12px] font-medium text-rose-700" role="alert">{error}</p> : null}
+    </section>
+  );
+}
 
-      {error ? <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700" role="alert">{error}</p> : null}
-    </div>
+export function SupportTicketStatusControl({ ticketId, status }: { ticketId: string; status: SupportStatus }) {
+  const router = useRouter();
+  const [selectedStatus, setSelectedStatus] = useState<SupportStatus>(status);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isStatusPending, startStatusTransition] = useTransition();
+
+  const syncKey = JSON.stringify([ticketId,status]);
+  const [previousSyncKey, setPreviousSyncKey] = useState(syncKey);
+  if (previousSyncKey !== syncKey) {
+    setPreviousSyncKey(syncKey);
+    setSelectedStatus(status); setError(null); setStatusMessage(null);
+  }
+
+  function updateStatus() {
+    if (selectedStatus === status || isStatusPending) return;
+    setStatusMessage(null);
+    setError(null);
+    startStatusTransition(async () => {
+      try {
+        const response = await fetch("/api/admin/support/" + encodeURIComponent(ticketId), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: selectedStatus }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          setError(typeof payload.error === "string" ? payload.error : "Unable to update ticket status.");
+          return;
+        }
+        setStatusMessage("Ticket status updated.");
+        router.refresh();
+      } catch {
+        setError("Unable to update ticket status. Check your connection.");
+      }
+    });
+  }
+
+  return (
+    <section aria-labelledby="support-ticket-controls-heading" className="min-w-0">
+      <h3 id="support-ticket-controls-heading" className="border-b border-[#E7ECF5] pb-2.5 text-[14px] font-semibold leading-5 text-[#0F172A]">
+        Manage ticket
+      </h3>
+      <fieldset disabled={isStatusPending} className="min-w-0 pt-3">
+        <span className="mb-1 block text-[12px] font-medium text-[#64748B]">Status</span>
+        <div className="grid min-w-0 grid-cols-1 items-center gap-2 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-1 xl:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-2.5 [&_button]:h-9 [&_button]:w-full [&_button]:justify-between [&_select]:h-9 [&_select]:w-full [&_select]:border-0 [&_select]:bg-transparent">
+            <AdminDirectorySelect
+              key={ticketId + "-" + status}
+              label="Ticket status"
+              name="status"
+              value={status}
+              options={statusChoices}
+              plain
+              spaciousMenu
+              onValueChange={value => { setSelectedStatus(value as SupportStatus); setStatusMessage(null); setError(null); }}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={updateStatus}
+            disabled={isStatusPending || selectedStatus === status}
+            className="focus-ring inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#374151] transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-65"
+          >
+            {isStatusPending ? "Saving…" : "Save status"}
+          </button>
+        </div>
+        {statusMessage ? <p className="mt-3 text-[12px] font-medium text-emerald-700" role="status" aria-live="polite">{statusMessage}</p> : null}
+        {error ? <p className="mt-3 text-[12px] font-medium text-rose-700" role="alert">{error}</p> : null}
+      </fieldset>
+    </section>
   );
 }

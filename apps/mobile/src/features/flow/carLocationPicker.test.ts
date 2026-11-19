@@ -1,35 +1,10 @@
-import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import test from "node:test";
+import assert from "node:assert/strict"; import { readFileSync } from "node:fs"; import test from "node:test";
+const source=readFileSync("src/features/flow/CarSearchPanel.tsx","utf8");const sheet=source.slice(source.indexOf("export function CarLocationSheet"),source.indexOf("function FieldError"));
+test("Cars shares one canonical immediate-selection picker",()=>{assert.equal(source.match(/export function CarLocationSheet/g)?.length,1);assert.match(sheet,/searchCarLocations\(query,\{limit:8,signal:controller\.signal\}\)/);assert.match(sheet,/setDraft\(item\);setQuery\(item\.value\)[\s\S]*?Keyboard\.dismiss\(\);onChoose\(item\)/);assert.doesNotMatch(sheet,/<PrimaryButton label="Done"/);});
+test("Cars coordinates stationary opening focus and gates search",()=>{assert.match(sheet,/useSearchPickerKeyboardPresentation\(sheetVisible, motion\.rendered, mode, inputRef, motion, \{ focusOnPresentation: true \}\)/);assert.match(sheet,/onShow=\{keyboardPresentation\.onModalShow\}/);assert.match(sheet,/onFocus=\{keyboardPresentation\.onInputFocus\}/);assert.doesNotMatch(sheet,/motion\.openSettled/);assert.doesNotMatch(sheet,/requestAnimationFrame\(\(\)=>inputRef\.current\?\.focus/);assert.match(sheet,/if\(!eligible\)/);assert.match(sheet,/hasMinimumLocationSearchLetters\(query\)/);assert.doesNotMatch(sheet,/autoFocus/);assert.match(sheet,/keyboardShouldPersistTaps="handled"/);});
+test("Cars invalidates requests and discards typed input after dismissing the keyboard",()=>{assert.match(sheet,/requestSequence\.current\+=1/);assert.match(sheet,/const dismissLocationSheet=\(\)=>\{Keyboard\.dismiss\(\);onClose\(\);\};/);assert.match(sheet,/onRequestClose=\{dismissLocationSheet\}/);assert.match(sheet,/setDraft\(undefined\);setSuggestions/);});
 
-const source = readFileSync("src/features/flow/CarSearchPanel.tsx", "utf8");
-const sheet = source.slice(source.indexOf("export function CarLocationSheet"), source.indexOf("function FieldError"));
+test("Car locations use dynamic discard close headers without a bottom action",()=>{assert.match(sheet,/<PickerSheetHeader title=\{context\.mode==="return"\?"Choose return location":"Choose pick-up location"\} onClose=\{dismissLocationSheet\}/);assert.match(sheet,/closeLabel=\{context\.mode==="return"\?"Close return location picker":"Close pick-up location picker"\}/);assert.doesNotMatch(sheet,/>Cancel<|accessibilityLabel="Cancel car location picker"/);});
+test("Car locations omit Clear and below-threshold helper chrome",()=>{assert.doesNotMatch(sheet,/accessibilityLabel="Clear car location search"|>Clear|Type at least 2 letters to see suggestions\./);assert.match(sheet,/query\.trim\(\)\.length===0/);assert.match(sheet,/!eligible\?null/);assert.match(sheet,/Start typing to find a location\./);assert.match(sheet,/No matching locations\./);});
 
-test("Cars uses one canonical searchable picker for pickup and return", () => {
-  assert.equal(source.match(/export function CarLocationSheet/g)?.length, 1);
-  assert.match(source, /from "@\/lib\/cars\/carLocationSuggestions"/);
-  assert.match(sheet, /searchCarLocationSuggestions\(query,\{limit:8\}\)/);
-  assert.match(sheet, /mode === "return" \? "Choose return location" : "Choose pick-up location"/);
-  assert.match(sheet, /onPress=\{\(\) => onChoose\(item\.value\)\}/);
-});
-
-test("Cars picker follows the native modal and keyboard contract", () => {
-  assert.match(sheet, /<Modal[^>]*onRequestClose=\{onClose\}><KeyboardAvoidingView[^>]*behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}><SafeAreaView edges=\{\["top","bottom"\]\}/);
-  assert.match(sheet, /<Pressable style=\{StyleSheet\.absoluteFill\}[^>]*onPress=\{onClose\}/);
-  assert.match(sheet, /<View accessibilityViewIsModal/);
-  assert.match(sheet, /<FlatList keyboardShouldPersistTaps="handled"/);
-  assert.doesNotMatch(sheet, /autoFocus/);
-  assert.match(sheet, /value=\{query\} onChangeText=\{setQuery\}/);
-  assert.match(sheet, /onPress=\{\(\) => setQuery\(""\)\}/);
-});
-
-test("renderer supports every canonical Cars result kind", () => {
-  assert.match(sheet, /item\.kind === "airport" \? "flight" : item\.kind === "city" \? "city" : "location"/);
-  assert.match(sheet, /item\.airportCode \? `\$\{item\.secondaryText\} · \$\{item\.airportCode\}`/);
-  assert.match(sheet, /onChoose\(item\.value\)/);
-});
-
-test("validation opens the first invalid location picker instead of focusing an inline input", () => {
-  assert.match(source, /nextErrors\.pickupLocation\) setLocationPicker\("pickup"\); else if \(nextErrors\.dropoffLocation\) setLocationPicker\("return"\)/);
-  assert.doesNotMatch(source, /pickupRef|\.focus\(\)/);
-});
+test("Car suggestions always use the Car product icon while retaining result-kind data",()=>{assert.match(sheet,/<SearchResultProductIcons icons=\{\["car"\]\}\/>/);assert.doesNotMatch(sheet,/item\.kind==="airport"\?"flight"|item\.kind==="city"\?"city"/);assert.match(source,/type CarLocationSuggestion/);assert.match(source,/resultCopy:\{flex:1,minWidth:0/);});

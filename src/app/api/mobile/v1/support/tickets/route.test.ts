@@ -18,7 +18,14 @@ test("guest submission delegates canonical fields once and enforces native conte
   const response = await handler(request({ ...valid, sourceContext: { page: "attacker", platform: "web" } }, { "x-mobile-platform": "ios" }));
   assert.equal(response.status, 201);
   assert.equal(calls.length, 1);
-  assert.deepEqual(calls[0], { ...valid, userId: undefined, sourceContext: { page: "mobile_support", platform: "native" } });
+  assert.deepEqual(calls[0], { ...valid, userId: undefined, sourceContext: { page: "mobile_support", platform: "unknown", applicationSource: "UNKNOWN" } });
+});
+
+for (const platform of ["ios", "android"] as const) test(`support retains authenticated ${platform} source instead of a generic native label`, async () => {
+  const { calls, handler } = setup(async () => ({ user: { id: "user-1", email: "owner@example.com", status: "ACTIVE" }, platform, appVersion: "0.3.0" }));
+  assert.equal((await handler(request(valid, { "x-mobile-platform": "forged" }))).status, 201);
+  assert.equal(calls[0].sourceContext?.platform, platform);
+  assert.equal(calls[0].sourceContext?.applicationSource, platform.toUpperCase());
 });
 
 test("canonical guest validation rejects unsafe inputs without creating", async (t) => {

@@ -1,0 +1,19 @@
+projectName: Kurioticket mobile web
+buildName: Real iOS Safari QA
+buildIdentifier: "#${BUILD_NUMBER}"
+
+platforms:
+  - browserName: safari
+    osVersion: 18
+    deviceName: iPhone 16 Pro
+
+parallelsPerPlatform: 1
+browserstackLocal: true
+browserstackLocalOptions:
+  forceLocal: true
+framework: playwright
+source: kurioticket-mobile-web:v1
+
+debug: true
+networkLogs: true
+testObservability: true

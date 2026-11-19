@@ -1,0 +1,110 @@
+import { useState } from "react";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { usePublishedFaqs } from "../home/usePublishedContent";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
+import { useAppTheme } from "../../theme/AppTheme";
+import { FlowIcon } from "../flow/FlowIcon";
+import { faqAccessibility, toggleExpanded } from "./nativeAccountModels";
+import { getMobileFaqCopy } from "./mobileFaqCopy";
+
+export function MobileFaqScreen() {
+  const { theme } = useAppTheme();
+  const { t, locale } = useMobileLocalization();
+  const [open, setOpen] = useState<string | null>(null);
+  const presentation = getMobileFaqCopy(locale);
+  const published = usePublishedFaqs();
+  const faqs = published.data?.items ?? [];
+
+  return (
+    <SafeAreaView style={[s.safe, { backgroundColor: theme.background }]} edges={["top", "bottom"]}>
+      <View style={s.header}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("back")}
+          onPress={() => router.back()}
+          style={s.headerHit}
+        >
+          <FlowIcon name="back" color={theme.icon} />
+        </Pressable>
+        <Text accessibilityRole="header" style={[s.headerTitle, { color: theme.text }]}>
+          {t("faqTitle")}
+        </Text>
+        <View style={s.headerHit} />
+      </View>
+
+      <ScrollView
+        refreshControl={<RefreshControl refreshing={published.state === "loading"} onRefresh={() => { void published.refresh(); }} />}
+        alwaysBounceVertical={false}
+        bounces={false}
+        contentContainerStyle={s.content}
+        overScrollMode="never"
+      >
+        <View style={s.hero}>
+          <Text accessibilityRole="header" style={[s.heading, { color: theme.text }]}>
+            {presentation.heading}
+          </Text>
+          <Text style={[s.intro, { color: theme.muted }]}>
+            {presentation.intro}
+          </Text>
+        </View>
+
+        <View style={s.faqSection}>
+          <Text accessibilityRole="header" style={[s.sectionTitle, { color: theme.text }]}>
+            {presentation.generalQuestions}
+          </Text>
+
+          <View style={s.faqList}>
+            {published.state === "unavailable" ? <Pressable accessibilityRole="button" onPress={() => { void published.refresh(); }}><Text style={{ color: theme.muted }}>{t("retry")}</Text></Pressable> : null}
+            {faqs.map((item) => {
+              const accessibilityState = faqAccessibility(open, item.question);
+              return (
+                <Pressable
+                  key={item.question}
+                  accessibilityRole="button"
+                  accessibilityState={accessibilityState}
+                  accessibilityHint={accessibilityState.expanded ? t("collapseAnswer") : t("expandAnswer")}
+                  onPress={() => setOpen((current) => toggleExpanded(current, item.question))}
+                  style={[s.faqRow, { borderColor: theme.border }]}
+                >
+                  <View style={s.questionRow}>
+                    <Text style={[s.question, { color: theme.text }]}>{item.question}</Text>
+                    <Text
+                      accessible={false}
+                      style={[s.expandIndicator, { color: theme.muted }]}
+                    >
+                      {accessibilityState.expanded ? "−" : "+"}
+                    </Text>
+                  </View>
+                  {accessibilityState.expanded ? (
+                    <Text style={[s.answer, { color: theme.muted }]}>{item.answer}</Text>
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const s = StyleSheet.create({
+  safe: { flex: 1 },
+  header: { minHeight: 62, flexDirection: "row", alignItems: "center" },
+  headerHit: { width: 52, minHeight: 52, alignItems: "center", justifyContent: "center" },
+  headerTitle: { flex: 1, textAlign: "center", fontSize: 22, lineHeight: 28, fontWeight: "800" },
+  content: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 20 },
+  hero: { maxWidth: 620 },
+  heading: { fontSize: 28, lineHeight: 34, fontWeight: "700", letterSpacing: -0.4 },
+  intro: { marginTop: 10, fontSize: 15, lineHeight: 23 },
+  faqSection: { marginTop: 34 },
+  sectionTitle: { fontSize: 20, lineHeight: 26, fontWeight: "800" },
+  faqList: { marginTop: 12 },
+  faqRow: { borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 16 },
+  questionRow: { flexDirection: "row", alignItems: "flex-start", gap: 16 },
+  question: { flex: 1, fontSize: 16, lineHeight: 23, fontWeight: "700" },
+  expandIndicator: { width: 22, textAlign: "center", fontSize: 22, lineHeight: 24, fontWeight: "400" },
+  answer: { marginTop: 8, paddingRight: 38, fontSize: 15, lineHeight: 22 },
+});

@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils";
 
 export type DealsPackageSort =
   | "recommended"
-  | "lowest-total"
   | "shortest-flight"
   | "highest-hotel"
   | "highest-car";
@@ -45,11 +44,6 @@ export function DealsPackageResultsToolbar({
     () =>
       [
         { value: "recommended", label: t("deals.results.sort.recommended"), visible: true },
-        {
-          value: "lowest-total",
-          label: t("deals.results.sort.lowestTotal"),
-          visible: true,
-        },
         {
           value: "shortest-flight",
           label: t("deals.results.sort.shortestFlight"),

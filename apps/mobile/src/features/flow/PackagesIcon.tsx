@@ -4,10 +4,11 @@ import { View } from "react-native";
 type PackagesIconProps = {
   size?: number;
   color?: string;
+  strokeWidth?: number;
 };
 
 /** The canonical customer-facing mark for the combined Flights + Hotels + Cars product. */
-export function PackagesIcon({ size = 24, color = "#071A48" }: PackagesIconProps) {
+export function PackagesIcon({ size = 24, color = "#071A48", strokeWidth }: PackagesIconProps) {
   return (
     <View
       accessibilityElementsHidden
@@ -17,13 +18,13 @@ export function PackagesIcon({ size = 24, color = "#071A48" }: PackagesIconProps
       style={{ width: size, height: size }}
     >
       <View style={{ position: "absolute", left: "27%", top: 0 }}>
-        <Building2 color={color} size={size * 0.68} strokeWidth={1.8} />
+        <Building2 color={color} size={size * 0.68} strokeWidth={strokeWidth ?? 1.8} />
       </View>
       <View style={{ position: "absolute", bottom: 0, left: 0, transform: [{ rotate: "-12deg" }] }}>
-        <Plane color={color} size={size * 0.58} strokeWidth={2} />
+        <Plane color={color} size={size * 0.58} strokeWidth={strokeWidth ?? 2} />
       </View>
       <View style={{ position: "absolute", bottom: 0, right: 0 }}>
-        <CarFront color={color} size={size * 0.5} strokeWidth={2} />
+        <CarFront color={color} size={size * 0.5} strokeWidth={strokeWidth ?? 2} />
       </View>
     </View>
   );

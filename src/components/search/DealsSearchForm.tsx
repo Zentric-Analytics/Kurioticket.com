@@ -41,12 +41,15 @@ import { removeDealsStagedJourneyPlan } from "@/lib/deals/dealsTripPlanStorage";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
+import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobilePackageTravelersRoomsPicker } from "@/components/search/MobilePackageTravelersRoomsPicker";
 import { MobileCarDriverAgePickerDialog, MobileCarTimePickerDialog } from "@/components/search/CarsPickerContent";
 import { translations as en } from "@/lib/i18n/en";
-import { driverAgeOptions, timeOptions } from "@/lib/cars/carsSearchUtils";
+import { timeOptions } from "@/lib/cars/carsSearchUtils";
+import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
+import { getHotelLocationFieldDisplay } from "@/lib/search/hotelLocationFieldDisplay";
 import {
   createDefaultDealsSearch,
   dealsProductOrder,
@@ -75,8 +78,9 @@ import {
   type AirportOption,
 } from "@/data/airports";
 import {
-  getLocalizedHotelDestinationCityName,
-  getLocalizedHotelDestinationDetail,
+  getHotelDestinationPrimaryLabel,
+  getHotelDestinationSupportingLabel,
+  type HotelDestinationSuggestion,
 } from "@/data/hotelDestinations";
 import {
   formatFlightsDateSummary,
@@ -84,6 +88,7 @@ import {
   formatFlightsWeekdays,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
+import { formatTravelDateRangeDisplay } from "@/lib/dateFormatting/travelDateDisplay";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 import { calculateDesktopPopoverGeometry } from "@/components/search/desktopPopoverPosition";
 
@@ -94,7 +99,8 @@ type HotelSuggestion = {
   searchValue: string;
   countryCode?: string;
   region?: string;
-  kind?: string;
+  kind?: HotelDestinationSuggestion["kind"];
+  canonical?: import("@/lib/locations/types").CanonicalLocation;
 };
 type DealsPlacesApiResponse = { defaultOriginAirport?: AirportOption | null };
 type LocationApiResponse = {
@@ -325,7 +331,6 @@ function DealsCarPopover({
   width: preferredWidth,
   marker,
   desktopLanding = false,
-  minimumDesktopWidth = 1024,
   onDismiss,
   children,
 }: {
@@ -930,7 +935,6 @@ export function DealsSearchForm({
   const [draftHotelPetFriendly, setDraftHotelPetFriendly] = useState(
     search.hotelPetFriendly,
   );
-  const carPickupLocationRef = useRef<HTMLInputElement>(null);
   const carPickupLocationLauncherRef = useRef<HTMLButtonElement>(null);
   const carReturnLocationLauncherRef = useRef<HTMLButtonElement>(null);
   const carReturnLocationInputRef = useRef<HTMLInputElement>(null);
@@ -982,7 +986,7 @@ export function DealsSearchForm({
     search.carReturnTime,
   );
   const [mobileCarDriverAgeOpen, setMobileCarDriverAgeOpen] = useState(false);
-  const [draftCarDriverAge, setDraftCarDriverAge] = useState(
+  const [, setDraftCarDriverAge] = useState(
     search.carDriverAge,
   );
   const included = getIncludedProducts(search.mode);
@@ -1367,13 +1371,8 @@ export function DealsSearchForm({
       checkOut <= checkIn
     )
       return t("hotelSearchDatePlaceholder");
-    const formatter = new Intl.DateTimeFormat(hotelCalendarLocale, {
-      month: "short",
-      day: "numeric",
-    });
-    return t("hotelSearch.dateRange")
-      .replace("{{checkIn}}", formatter.format(checkIn))
-      .replace("{{checkOut}}", formatter.format(checkOut));
+    return formatTravelDateRangeDisplay(displayedHotelCheckIn, displayedHotelCheckOut, hotelCalendarLocale)
+      ?? t("hotelSearchDatePlaceholder");
   }, [
     hotelCalendarLocale,
     isBeforeToday,
@@ -1391,13 +1390,13 @@ export function DealsSearchForm({
         ? desktopStayDatesLauncherRef
         : stayDatesLauncherRef
       : hotelDatesLauncherRef;
-  const restoreHotelDatesFocus = () =>
+  const restoreHotelDatesFocus = useCallback(() =>
     requestAnimationFrame(() =>
       (window.matchMedia("(max-width: 639px)").matches
         ? hotelDatesLauncherRef
         : desktopHotelDatesLauncherRef
       ).current?.focus({ preventScroll: true }),
-    );
+    ), [desktopHotelDatesLauncherRef]);
   const openHotelDates = () => {
     closeDesktopLandingPanels();
     resetHotelDatesDraft();
@@ -1417,7 +1416,7 @@ export function DealsSearchForm({
       setHotelDatesOpen(false);
       if (restoreFocus) restoreHotelDatesFocus();
     },
-    [resetHotelDatesDraft],
+    [resetHotelDatesDraft, restoreHotelDatesFocus],
   );
   const validDraftHotelRange = useMemo(() => {
     const checkIn = parseIsoDate(draftHotelCheckIn);
@@ -1477,7 +1476,7 @@ export function DealsSearchForm({
     mobileHotelDatesCommittedRef.current = false;
     setMobileHotelDatesOpen(false);
     restoreHotelDatesFocus();
-  }, [resetHotelDatesDraft]);
+  }, [resetHotelDatesDraft, restoreHotelDatesFocus]);
 
   const travelerSummary = useMemo(() => {
     const total =
@@ -1583,47 +1582,6 @@ export function DealsSearchForm({
       }),
     [carIntlLocale],
   );
-  const carShortDateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(carIntlLocale, {
-        month: "short",
-        day: "numeric",
-      }),
-    [carIntlLocale],
-  );
-  const carDatesSummary = useMemo(() => {
-    const pickup = parseIsoDate(search.carPickupDate);
-    const returning = parseIsoDate(search.carReturnDate);
-    return pickup &&
-      returning &&
-      !isBeforeToday(pickup) &&
-      !isBeforeToday(returning) &&
-      returning >= pickup
-      ? `${carShortDateFormatter.format(pickup)} — ${carShortDateFormatter.format(returning)}`
-      : t("carsSearch.rentalDatePlaceholder");
-  }, [
-    carShortDateFormatter,
-    isBeforeToday,
-    search.carPickupDate,
-    search.carReturnDate,
-    t,
-  ]);
-  const carTimesSummary = useMemo(
-    () =>
-      timeOptions.includes(search.carPickupTime) &&
-      timeOptions.includes(search.carReturnTime)
-        ? t("carsSearch.pickupReturnTimeSummary")
-            .replace(
-              "{pickupTime}",
-              formatCarTimeLabel(search.carPickupTime, carIntlLocale),
-            )
-            .replace(
-              "{returnTime}",
-              formatCarTimeLabel(search.carReturnTime, carIntlLocale),
-            )
-        : t("carsSearch.pickupReturnTimeLabel"),
-    [carIntlLocale, search.carPickupTime, search.carReturnTime, t],
-  );
   const carDriverAgeLabel = (age: string) =>
     age === "18-70" ? t("carsSearch.driverAgeAnyAgeRange") : age;
   const resetCarDatesDraft = useCallback(() => {
@@ -1641,39 +1599,6 @@ export function DealsSearchForm({
   }, [search.carPickupTime, search.carReturnTime]);
   const restoreCarFocus = (ref: RefObject<HTMLButtonElement | null>) =>
     requestAnimationFrame(() => ref.current?.focus({ preventScroll: true }));
-  const closeOtherDealsPickers = () => {
-    setFlightOriginOpen(false);
-    setFlightDestinationOpen(false);
-    setFlightMobileAirport(null);
-    setHotelDestinationOpen(false);
-    setHotelDestinationMobileOpen(false);
-    dismissDesktopFlightDates();
-    setMobileFlightDatesOpen(false);
-    dismissDesktopHotelDates();
-    setMobileHotelDatesOpen(false);
-    setTravelersOpen(false);
-    setMobileTravelersOpen(false);
-  };
-  const closeCarMobilePickers = () => {
-    setMobileCarLocation(null);
-    setMobileCarDatesOpen(false);
-    setMobileCarTimesOpen(false);
-    setMobileCarDriverAgeOpen(false);
-  };
-  const openCarLocation = (kind: "pickup" | "return") => {
-    closeDesktopLandingPanels();
-    closeOtherDealsPickers();
-    resetCarDatesDraft();
-    resetCarTimesDraft();
-    setCarDatesOpen(false);
-    setCarTimesOpen(false);
-    closeCarMobilePickers();
-    if (kind === "return") setDraftCarReturnLocation(search.carReturnLocation);
-    if (window.matchMedia("(max-width: 639px)").matches)
-      setMobileCarLocation(kind);
-    else if (kind === "return") setCarReturnLocationOpen(true);
-    else setMobileCarLocation(kind);
-  };
   const dismissCarReturnLocation = useCallback(() => {
     setDraftCarReturnLocation(search.carReturnLocation);
     setCarReturnLocationOpen(false);
@@ -1686,20 +1611,6 @@ export function DealsSearchForm({
     setCarReturnLocationOpen(false);
     restoreCarFocus(carReturnLocationLauncherRef);
   };
-  const openCarDates = () => {
-    closeDesktopLandingPanels();
-    resetCarDatesDraft();
-    resetCarTimesDraft();
-    closeOtherDealsPickers();
-    closeCarMobilePickers();
-    setCarTimesOpen(false);
-    const pickup = parseIsoDate(search.carPickupDate);
-    const visible = pickup && !isBeforeToday(pickup) ? pickup : todayLocal;
-    setVisibleCarMonth(new Date(visible.getFullYear(), visible.getMonth(), 1));
-    if (window.matchMedia("(max-width: 639px)").matches)
-      setMobileCarDatesOpen(true);
-    else setCarDatesOpen(true);
-  };
   const dismissCarDates = useCallback(
     (focus = false) => {
       resetCarDatesDraft();
@@ -1708,17 +1619,6 @@ export function DealsSearchForm({
     },
     [resetCarDatesDraft],
   );
-  const openCarTimes = () => {
-    closeDesktopLandingPanels();
-    resetCarTimesDraft();
-    resetCarDatesDraft();
-    closeOtherDealsPickers();
-    closeCarMobilePickers();
-    setCarDatesOpen(false);
-    if (window.matchMedia("(max-width: 639px)").matches)
-      setMobileCarTimesOpen(true);
-    else setCarTimesOpen(true);
-  };
   const dismissCarTimes = useCallback(
     (focus = false) => {
       resetCarTimesDraft();
@@ -2110,7 +2010,12 @@ export function DealsSearchForm({
       !mobile && (!isPackagesLanding || query.length >= 2);
     setFlightOriginOpen(showDesktopPanel && kind === "origin");
     setFlightDestinationOpen(showDesktopPanel && kind === "destination");
-    setFlightMobileAirport(mobile ? kind : null);
+    if (mobile) {
+      openMobilePickerWithKeyboard(
+        () => setFlightMobileAirport(kind),
+        `deals-flight-mobile-${kind}-input`,
+      );
+    } else setFlightMobileAirport(null);
   };
   const openHotelDestination = (mobile = false) => {
     closeDesktopLandingPanels();
@@ -2119,7 +2024,12 @@ export function DealsSearchForm({
     setFlightDestinationOpen(false);
     setFlightMobileAirport(null);
     setHotelDestinationOpen(!mobile);
-    setHotelDestinationMobileOpen(mobile);
+    if (mobile) {
+      openMobilePickerWithKeyboard(
+        () => setHotelDestinationMobileOpen(true),
+        "deals-hotel-mobile-destination-input",
+      );
+    } else setHotelDestinationMobileOpen(false);
   };
 
   useEffect(() => {
@@ -3015,18 +2925,17 @@ export function DealsSearchForm({
               >
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-extrabold text-slate-950">
-                    {getLocalizedHotelDestinationCityName(option.name, locale)}
+                    {getHotelDestinationPrimaryLabel({ ...option, countryCode: option.countryCode ?? "", kind: option.kind ?? "city" }, locale)}
                   </span>
                   <span className="block truncate text-xs font-medium text-slate-500">
-                    {getLocalizedHotelDestinationDetail(
-                      { ...option, countryCode: option.countryCode ?? "" },
-                      locale,
+                    {getHotelDestinationSupportingLabel(
+                      { ...option, countryCode: option.countryCode ?? "", kind: option.kind ?? "city" }, locale,
                     )}
                   </span>
                 </span>
                 {option.kind ? (
                   <span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-600">
-                    {t(`hotelDestinationKind.${option.kind}`)}
+                    {t(option.kind === "custom" ? "hotelSearchDestinationLabel" : `hotelDestinationKind.${option.kind}`)}
                   </span>
                 ) : null}
               </button>
@@ -3285,6 +3194,7 @@ export function DealsSearchForm({
     icon: ReactNode,
     value: ReactNode,
     placeholder = false,
+    supportingText = "",
   ) => (
     <span className={compactFieldContentClassName}>
       <span className={compactLabelClassName}>{label}</span>
@@ -3293,10 +3203,26 @@ export function DealsSearchForm({
         <span
           className={`${compactValueTextClassName} ${placeholder ? "text-slate-500" : ""}`}
         >
-          {value}
+          <span className="block truncate">{value}</span>
+          {supportingText ? (
+            <span className="block truncate text-[11px] font-medium leading-4 text-slate-600">
+              {supportingText}
+            </span>
+          ) : null}
         </span>
       </span>
     </span>
+  );
+
+  const compactFlightOriginDisplay = getLocationFieldDisplay(
+    search.flightOriginText,
+  );
+  const compactFlightDestinationDisplay = getLocationFieldDisplay(
+    search.flightDestinationText,
+  );
+  const compactHotelDestinationDisplay = getHotelLocationFieldDisplay(
+    displayedHotelDestination,
+    locale,
   );
 
   const compactMobileControls =
@@ -3400,17 +3326,15 @@ export function DealsSearchForm({
               type="button"
               aria-haspopup="dialog"
               aria-expanded={flightMobileAirport === "origin"}
-              onClick={() => setFlightMobileAirport("origin")}
+              onClick={() => openMobilePickerWithKeyboard(() => setFlightMobileAirport("origin"), "deals-flight-mobile-origin-input")}
               className={compactFieldClassName}
             >
               {compactPackageFieldContent(
                 t("origin"),
-                <MapPin
-                  aria-hidden="true"
-                  className={compactValueIconClassName}
-                />,
-                search.flightOriginText || t("cityOrAirport"),
+                <MapPin aria-hidden="true" className={compactValueIconClassName} />,
+                compactFlightOriginDisplay.primary || t("cityOrAirport"),
                 !search.flightOriginText,
+                compactFlightOriginDisplay.secondary,
               )}
             </button>
             <button
@@ -3431,22 +3355,19 @@ export function DealsSearchForm({
               type="button"
               aria-haspopup="dialog"
               aria-expanded={flightMobileAirport === "destination"}
-              onClick={() => setFlightMobileAirport("destination")}
+              onClick={() => openMobilePickerWithKeyboard(() => setFlightMobileAirport("destination"), "deals-flight-mobile-destination-input")}
               className={compactFieldClassName}
             >
               {compactPackageFieldContent(
                 t("destination"),
-                <MapPin
-                  aria-hidden="true"
-                  className={compactValueIconClassName}
-                />,
-                search.flightDestinationText ||
-                  t(
+                <MapPin aria-hidden="true" className={compactValueIconClassName} />,
+                compactFlightDestinationDisplay.primary || t(
                     isPackagesLanding
                       ? "flightSearchDestinationPlaceholderShort"
                       : "deals.destinationLabel",
                   ),
                 !search.flightDestinationText,
+                compactFlightDestinationDisplay.secondary,
               )}
             </button>
             <button
@@ -3483,17 +3404,14 @@ export function DealsSearchForm({
             >
               {compactPackageFieldContent(
                 t("destination"),
-                <MapPin
-                  aria-hidden="true"
-                  className={compactValueIconClassName}
-                />,
-                displayedHotelDestination ||
-                  t(
+                <MapPin aria-hidden="true" className={compactValueIconClassName} />,
+                compactHotelDestinationDisplay.primary || t(
                     isPackagesLanding
                       ? "flightSearchDestinationPlaceholderShort"
                       : "deals.destinationLabel",
                   ),
                 !displayedHotelDestination,
+                compactHotelDestinationDisplay.secondary,
               )}
             </button>
             <button
@@ -4308,11 +4226,6 @@ export function DealsSearchForm({
                           ? hotelDatesOpen
                           : undefined
                       }
-                      aria-haspopup={
-                        isDesktopLanding && isPackagesLanding
-                          ? "dialog"
-                          : undefined
-                      }
                       aria-controls={
                         isDesktopLanding && isPackagesLanding
                           ? "deals-hotel-desktop-dates"
@@ -4630,7 +4543,7 @@ export function DealsSearchForm({
         )}
       >
         <p className="mx-auto mb-5 w-full max-w-xl text-[14px] font-medium text-slate-600">{t("deals.mobileTravelersRoomsIntro")}</p>
-        <MobilePackageTravelersRoomsPicker adults={draftAdults} children={draftChildren} infants={draftInfants} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} includeFlight={included.flight} includeHotel={included.hotel} strings={{ adults: t("adults"), adultDescription: t("deals.mobileAdultDescription"), children: t("children"), childDescription: t("childAgeRange"), infants: t("infantsOnLap"), infantDescription: t("deals.mobileInfantDescription"), rooms: t("rooms"), roomDescription: t("hotelGuests.roomDescription"), petFriendly: t("deals.petFriendlyRooms"), petDescription: t("onlyShowPetFriendlyStays"), decrease: (label) => t("deals.decreaseCountAria").replace("{{label}}", label), increase: (label) => t("deals.increaseCountAria").replace("{{label}}", label) }} onAdultsChange={setDraftAdults} onChildrenChange={setDraftChildren} onInfantsChange={setDraftInfants} onRoomsChange={setDraftHotelRooms} onPetFriendlyChange={setDraftHotelPetFriendly} />
+        <MobilePackageTravelersRoomsPicker adults={draftAdults} childCount={draftChildren} infants={draftInfants} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} includeFlight={included.flight} includeHotel={included.hotel} strings={{ adults: t("adults"), adultDescription: t("deals.mobileAdultDescription"), children: t("children"), childDescription: t("childAgeRange"), infants: t("infantsOnLap"), infantDescription: t("deals.mobileInfantDescription"), rooms: t("rooms"), roomDescription: t("hotelGuests.roomDescription"), petFriendly: t("deals.petFriendlyRooms"), petDescription: t("onlyShowPetFriendlyStays"), decrease: (label) => t("deals.decreaseCountAria").replace("{{label}}", label), increase: (label) => t("deals.increaseCountAria").replace("{{label}}", label) }} onAdultsChange={setDraftAdults} onChildrenChange={setDraftChildren} onInfantsChange={setDraftInfants} onRoomsChange={setDraftHotelRooms} onPetFriendlyChange={setDraftHotelPetFriendly} />
       </FlightMobilePickerShell>
       <DealsHotelDatesPopover
         open={hotelDatesOpen}
@@ -4821,6 +4734,7 @@ export function DealsSearchForm({
             key={kind}
             open={mobileCarLocation === kind}
             mode={pickup ? "pickup" : "return"}
+            inputId={`deals-car-${kind}-mobile-input`}
             value={value}
             launcherRef={launcherRef}
             onClose={() => {

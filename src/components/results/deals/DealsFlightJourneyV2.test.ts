@@ -41,7 +41,7 @@ test("one-way trips proceed from Outbound directly to exact Fare", async () => {
 test("exact Fare recovery preserves itinerary keys and refreshes without Fare substitution", async () => {
   const source = await readFile(journeyUrl, "utf8");
   const recovery = source.slice(
-    source.indexOf("const recoverExactFares = async"),
+    source.indexOf("const recoverExactFares = useCallback(async"),
     source.indexOf("const confirmFlight = async"),
   );
   assert.match(recovery, /selectedFareKey: undefined/);

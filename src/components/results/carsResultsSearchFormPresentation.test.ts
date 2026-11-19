@@ -11,9 +11,80 @@ const carsPageSource = readFileSync(
   "utf8",
 );
 
-test("results search preserves both desktop grid geometries and outer footprint", () => {
-  assert.match(source, /mx-auto w-full min-w-0 max-w-5xl/);
-  assert.match(source, /lg:min-h-\[58px\]/);
+test("results desktop search typography mirrors the polished mobile-web hierarchy", () => {
+  const labelClass = source.match(
+    /const fieldLabelClass =\s*\n\s*"([^"]+)";/,
+  )?.[1];
+  const valueClass = source.match(
+    /const fieldInputClass =\s*\n\s*"([^"]+)";/,
+  )?.[1];
+  const fullValueClass = source.match(
+    /const desktopFullSelectedValueClass =\s*\n\s*"([^"]+)";/,
+  )?.[1];
+  const compactValueClass = source.match(
+    /const desktopCompactSelectedValueClass =\s*\n\s*"([^"]+)";/,
+  )?.[1];
+
+  assert.ok(labelClass, "fieldLabelClass should remain defined");
+  assert.ok(valueClass, "fieldInputClass should remain defined");
+  assert.ok(fullValueClass, "desktopFullSelectedValueClass should remain defined");
+  assert.ok(compactValueClass, "desktopCompactSelectedValueClass should remain defined");
+
+  for (const token of [
+    "lg:mb-1",
+    "lg:text-[12px]",
+    "lg:font-bold",
+    "lg:uppercase",
+    "lg:leading-4",
+    "lg:tracking-[0.05em]",
+    "lg:text-[#475569]",
+  ])
+    assert.ok(labelClass.includes(token), `missing desktop label token: ${token}`);
+
+  for (const token of [
+    "lg:placeholder:font-medium",
+    "lg:placeholder:text-slate-400",
+  ])
+    assert.ok(valueClass.includes(token), `missing shared value token: ${token}`);
+
+  assert.equal(
+    fullValueClass,
+    "cars-results-desktop-filter-heading-type",
+    "full-search selected values must use the same rendered typography contract as filter headings",
+  );
+
+  for (const token of [
+    "lg:text-[15px]",
+    "lg:font-bold",
+    "lg:leading-5",
+    "lg:tracking-[-0.005em]",
+    "lg:text-[#07133B]",
+  ])
+    assert.ok(compactValueClass.includes(token), `missing compact-search value token: ${token}`);
+
+  assert.doesNotMatch(
+    labelClass,
+    /lg:normal-case|lg:font-medium|lg:tracking-wide|lg:text-slate-500/,
+  );
+  assert.equal(
+    (
+      source.match(
+        /isCompact \? desktopCompactSelectedValueClass : desktopFullSelectedValueClass/g,
+      ) ?? []
+    ).length,
+    4,
+    "pickup location, rental dates, time, and driver age must explicitly preserve separate full and compact value tiers",
+  );
+});
+
+test("results search preserves both desktop grid geometries with the refined compact height", () => {
+  assert.match(source, /cn\("mx-auto w-full min-w-0", isNavbarSearch \? "max-w-full" : "max-w-5xl"/);
+  const fieldShellClass = source.match(
+    /const fieldShellClass =\s*\n\s*"([^"]+)";/,
+  )?.[1];
+  assert.ok(fieldShellClass, "fieldShellClass should remain defined");
+  assert.match(fieldShellClass, /lg:min-h-\[54px\]/);
+  assert.doesNotMatch(fieldShellClass, /lg:min-h-\[58px\]/);
   assert.match(
     source,
     /minmax\(0,1\.18fr\).*minmax\(0,1\.08fr\).*_118px_116px/,
@@ -22,6 +93,25 @@ test("results search preserves both desktop grid geometries and outer footprint"
   assert.match(
     source,
     /returnToDifferentLocation\s*\? differentReturnSearchGridClass/,
+  );
+});
+
+test("desktop-full Cars Results search matches the homepage near-white surface without changing compact color", () => {
+  assert.match(
+    source,
+    /rounded-\[1\.15rem\] border border-slate-200 bg-white\/95 p-1 shadow-\[0_18px_42px_-30px_rgba\(15,23,42,0\.58\)\] ring-1 ring-slate-200\/50/,
+  );
+  assert.match(
+    source,
+    /isCompactSearch[\s\S]*?\? "rounded-xl border border-slate-200 bg-white p-0 shadow-\[0_14px_34px_-28px_rgba\(15,23,42,0\.64\)\]"/,
+  );
+  assert.match(
+    source,
+    /lg:h-auto lg:min-h-\[54px\] lg:w-\[calc\(100%-8px\)\]/,
+  );
+  assert.doesNotMatch(
+    source,
+    /rounded-xl border border-slate-200 bg-white\/95 p-0/,
   );
 });
 
@@ -67,47 +157,39 @@ test("results location autocomplete owns the remaining value-row width", () => {
   );
 });
 
-test("pickup alone removes its clear action and reclaims the input width", () => {
+test("desktop pickup exposes an easy clear control while return keeps its compact width", () => {
   const pickupCell = source.match(
     /<SearchInputCell[\s\S]*?name="pickupLocation"[\s\S]*?\/>/,
   )?.[0];
   const returnCell = source.match(/name="dropoffLocation"[\s\S]*?\/>/)?.[0];
 
   assert.ok(pickupCell, "Pickup SearchInputCell should remain rendered");
-  assert.match(pickupCell, /showClearButton=\{false\}/);
+  assert.match(pickupCell, /showClearButton(?:\s|\n)/);
+  assert.doesNotMatch(pickupCell, /showClearButton=\{false\}/);
+  assert.match(
+    pickupCell,
+    /onClear=\{\(\) => \{[\s\S]*?setPickupLocation\(""\)[\s\S]*?setPickupLocationTarget\(""\)[\s\S]*?pickupInputRef\.current\?\.focus\(\)/,
+  );
   assert.ok(returnCell, "Return SearchInputCell should remain rendered");
-  assert.doesNotMatch(returnCell, /showClearButton=\{false\}/);
+  assert.match(returnCell, /showClearButton=\{false\}/);
   assert.match(returnCell, /onClear=\{\(\) => \{/);
   assert.match(
     source,
-    /inputClassName=\{cn\(fieldInputClass, showClearButton && "pr-8"\)\}/,
+    /inputClassName=\{cn\("cars-results-navbar-location-value", fieldInputClass, isCompact \? desktopCompactSelectedValueClass : desktopFullSelectedValueClass, showClearButton && "pr-8"\)\}/,
   );
   assert.match(source, /\{showClearButton && value \? \(/);
-  assert.doesNotMatch(
-    source,
-    /inputClassName=\{cn\(fieldInputClass, "pr-8"\)\}/,
-  );
 });
 
-test("desktop-full rental dates use compact dates and localized duration", () => {
+test("desktop-full rental dates show only the selected date range, without a visible duration line", () => {
   assert.match(source, /useCompactDateSummary=\{placement !== "mobile"\}/);
   assert.match(source, /showRentalDuration=\{placement === "desktop-full"\}/);
   assert.match(
     source,
     /dateFormatter = useCompactDateSummary \? formatCompactDate : formatDate/,
   );
-  assert.match(
-    source,
-    /const rentalDayCount =[\s\S]*?Math\.max\([\s\S]*?0,[\s\S]*?Math\.round\([\s\S]*?dropoffParsed\.getTime\(\) - pickupParsed\.getTime\(\)[\s\S]*?86_400_000/,
-  );
-  assert.match(
-    source,
-    /t\("carsSearch\.rentalDays"\)\.replace\([\s\S]*?"\{count\}"[\s\S]*?String\(rentalDayCount\)/,
-  );
-  assert.match(
-    source,
-    /showRentalDuration && rentalDayCount > 0[\s\S]*?\{rentalDaysLabel\}/,
-  );
+  assert.doesNotMatch(source, /const rentalDayCount =/);
+  assert.doesNotMatch(source, /const rentalDaysLabel =/);
+  assert.doesNotMatch(source, /showRentalDuration && rentalDayCount > 0/);
   assert.match(source, /name="pickupDate" value=\{pickupDate\}/);
   assert.match(source, /name="dropoffDate" value=\{dropoffDate\}/);
 });
@@ -126,7 +208,7 @@ test("desktop-sticky compact date summary is independent from rental duration", 
   );
 });
 
-test("desktop-full rental dates compose calendar, value stack, then chevron", () => {
+test("desktop-full rental dates compose calendar, date value, then chevron without duration copy", () => {
   const searchDateCell = source.match(
     /function SearchDateCell\([\s\S]*?\n}\n\nfunction SearchTimeCell/,
   )?.[0];
@@ -134,10 +216,11 @@ test("desktop-full rental dates compose calendar, value stack, then chevron", ()
   assert.ok(searchDateCell, "SearchDateCell should remain defined");
   assert.match(
     searchDateCell,
-    /\{showRentalDuration \? \(\s*<Calendar[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*?<span className="min-w-0 flex-1">[\s\S]*?\{summary\}[\s\S]*?showRentalDuration && rentalDayCount > 0[\s\S]*?\{rentalDaysLabel\}[\s\S]*?<ChevronDown/,
+    /\{showRentalDuration \? \(\s*<Calendar[\s\S]*?className="cars-results-navbar-leading-icon h-4 w-4 shrink-0 text-slate-500"[\s\S]*?<span className="min-w-0 flex-1">[\s\S]*?\{summary\}[\s\S]*?<ChevronDown/,
   );
+  assert.doesNotMatch(searchDateCell, /rentalDaysLabel|rentalDayCount/);
   const labelRow = searchDateCell.match(
-    /<div className=\{fieldLabelClass\}>[\s\S]*?<\/div>/,
+    /<div data-cars-results-navbar-label[^>]*>[\s\S]*?<\/div>/,
   )?.[0];
   assert.ok(labelRow, "SearchDateCell label row should remain defined");
   assert.doesNotMatch(labelRow, /<Calendar\b/);
@@ -157,6 +240,27 @@ test("Cars main search retains its location-width and rental-date references", (
     rentalDatesField,
     /<Calendar[\s\S]*?\{dateSummary\}[\s\S]*?\{rentalDaysLabel\}[\s\S]*?<ChevronDown/,
   );
+});
+
+test("desktop-full and compact sticky Edit cars search share the same polished location autocomplete", () => {
+  assert.match(
+    source,
+    /const isCompactSearch = placement === "desktop-sticky"/,
+  );
+  const searchInputCell = source.match(
+    /function SearchInputCell\([\s\S]*?\n}\n\nfunction ResultsDesktopPopover/,
+  )?.[0];
+  assert.ok(searchInputCell, "SearchInputCell should remain shared");
+  assert.match(
+    searchInputCell,
+    /<CarLocationAutocomplete[\s\S]*?desktopResultsPresentation/,
+  );
+  assert.match(
+    source,
+    /placement === "mobile" \? \([\s\S]*?\) : \([\s\S]*?<SearchInputCell/,
+  );
+  assert.match(source, /renderCarsSearchForm\("desktop-sticky"\)/);
+  assert.match(source, /renderCarsSearchForm\("desktop-full"\)/);
 });
 
 test("desktop controls reuse Cars autocomplete, picker content, and fixed popovers", () => {
@@ -213,10 +317,13 @@ test("outside pointer handling includes each launcher and its exact portal", () 
     source,
     /document\.addEventListener\("pointerdown", onPointerDown\)/,
   );
-  assert.doesNotMatch(source, /closest\([^)]*popover/i);
+  // Portaled calendar controls carry this exact marker; unrelated popovers must not be exempted.
+  assert.ok(source.includes("target.closest('[data-cars-results-picker-popover=\"true\"]')"));
+  assert.ok(source.includes("if (clickedInsidePickerPopover) return;"));
+  assert.doesNotMatch(source, /closest\(['"](?:\.popover|\[data-popover)/);
 });
 
-test("desktop time cell matches the main search while retaining the full range wiring", () => {
+test("desktop time cell matches the main compact range while retaining full picker wiring", () => {
   const searchTimeCell = source.match(
     /function SearchTimeCell\([\s\S]*?\n}\n\nfunction DriverAgeCell/,
   )?.[0];
@@ -225,12 +332,16 @@ test("desktop time cell matches the main search while retaining the full range w
   assert.match(searchTimeCell, /useMainPageDesktopPresentation: boolean/);
   assert.match(
     searchTimeCell,
-    /<Clock[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*?formatTimeLabel\(pickupTime, intlLocale\)/,
+    /<Clock[\s\S]*?className="cars-results-navbar-leading-icon h-4 w-4 shrink-0 text-slate-500"[\s\S]*?formatCarsCompactTimeRange\(pickupTime, dropoffTime\)/,
   );
   assert.match(searchTimeCell, /<ChevronDown/);
   assert.match(
     searchTimeCell,
-    /useMainPageDesktopPresentation \? \([\s\S]*?formatTimeLabel\(pickupTime, intlLocale\)[\s\S]*?\) : \([\s\S]*?formatTimeLabel\(pickupTime, intlLocale\)[\s\S]*?formatTimeLabel\(dropoffTime, intlLocale\)/,
+    /useMainPageDesktopPresentation \? \([\s\S]*?formatCarsCompactTimeRange\(pickupTime, dropoffTime\)/,
+  );
+  assert.match(
+    source,
+    /const timeSummary = formatCarsCompactTimeRange\(pickupTime, dropoffTime\);/,
   );
   assert.match(
     searchTimeCell,
@@ -255,7 +366,7 @@ test("desktop driver age cell uses the compact main-search label and icon", () =
   assert.match(driverAgeCell, /useMainPageDesktopPresentation: boolean/);
   assert.match(
     driverAgeCell,
-    /<UserRound[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"/,
+    /<UserRound[\s\S]*?className="cars-results-navbar-leading-icon h-4 w-4 shrink-0 text-slate-500"/,
   );
   assert.match(
     driverAgeCell,
@@ -297,7 +408,7 @@ test("results desktop popovers pass explicit alignment without changing the defa
   assert.match(resultsDesktopPopover, /shellClassName\?: string/);
   assert.match(
     resultsDesktopPopover,
-    /className=\{cn\(carsDesktopPopoverClassName, shellClassName\)\}/,
+    /className=\{cn\("cars-results-desktop-typeface", carsDesktopPopoverClassName, shellClassName\)\}/,
   );
   assert.match(resultsDesktopPopover, /align\?: "start" \| "center" \| "end"/);
   assert.match(

@@ -111,11 +111,11 @@ test("mobile Packages fields use label then left icon and value with one canonic
 test("standalone mobile Packages alone uses the short localized destination placeholder", () => {
   assert.match(
     compact,
-    /search\.flightDestinationText \|\|[\s\S]*?isPackagesLanding[\s\S]*?"flightSearchDestinationPlaceholderShort"[\s\S]*?: "deals\.destinationLabel"/,
+    /compactFlightDestinationDisplay\.primary \|\|[\s\S]*?isPackagesLanding[\s\S]*?"flightSearchDestinationPlaceholderShort"[\s\S]*?: "deals\.destinationLabel"/,
   );
   assert.match(
     compact,
-    /displayedHotelDestination \|\|[\s\S]*?isPackagesLanding[\s\S]*?"flightSearchDestinationPlaceholderShort"[\s\S]*?: "deals\.destinationLabel"/,
+    /compactHotelDestinationDisplay\.primary \|\|[\s\S]*?isPackagesLanding[\s\S]*?"flightSearchDestinationPlaceholderShort"[\s\S]*?: "deals\.destinationLabel"/,
   );
   assert.match(
     form,
@@ -272,7 +272,7 @@ test("desktop Packages stay-date override is a visible semantic checkbox", () =>
   assert.match(checkbox, /onChange=\{\(event\) =>/);
   assert.match(checkbox, /customizeInheritedField\(current, "stayDates"/);
   assert.match(checkbox, /relinkInheritedField\(current, "stayDates"\)/);
-  assert.match(checkbox, /aria-haspopup=[\s\S]*\? "dialog"/);
+  assert.doesNotMatch(checkbox.slice(0, checkbox.indexOf("/>", checkbox.indexOf("<input"))), /aria-haspopup=/);
   assert.match(checkbox, /aria-controls=[\s\S]*"deals-hotel-desktop-dates"/);
   assert.match(
     checkbox,

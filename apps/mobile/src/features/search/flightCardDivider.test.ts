@@ -5,32 +5,48 @@ import test from "node:test";
 
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 const flightCard = source.slice(source.indexOf("function FlightCard"), source.indexOf("function FlightJourneyRow"));
-const benefitsStyle = source.slice(source.indexOf("  benefits: {"), source.indexOf("  benefitList:"));
+const footerStyles = source.slice(source.indexOf("  flightCardFooter:"), source.indexOf("  hotelCard:"));
 
-test("the flight card summary and action area has spacing without a divider", () => {
-  assert.match(flightCard, /<View style=\{s0\.benefits\}>/);
-  assert.doesNotMatch(flightCard, /borderTopColor|borderBottomColor|divider|separator|hairlineWidth/i);
-  assert.doesNotMatch(benefitsStyle, /borderTopWidth|borderBottomWidth|borderColor/);
-  assert.match(benefitsStyle, /paddingTop: 8/);
+test("the flight card has one subtle theme-aware horizontal metadata divider", () => {
+  assert.match(flightCard, /<View style=\{\[s0\.flightCardFooter, \{ borderTopColor: theme\.dark \? theme\.border : flightResultsColors\.cardDivider \}\]\}>/);
+  assert.equal(flightCard.match(/s0\.flightCardFooter/g)?.length, 1);
+  assert.match(footerStyles, /flightCardFooter: \{[^\n]*borderTopWidth: 1[^\n]*borderTopColor: "#E2E8F0"/);
+  assert.doesNotMatch(footerStyles, /borderLeftWidth|borderRightWidth/);
 });
 
-test("flight details navigation remains wired to the action", () => {
-  assert.match(flightCard, /accessibilityLabel="View details"[\s\S]*?onPress=\{\(\) =>[\s\S]*?router\.push\(\{/);
+test("the whole flight card owns details navigation without a separate visual CTA", () => {
+  assert.match(flightCard, /const openDetails = \(\) => \{[\s\S]*?router\.push\(\{ pathname: "\/flight-details"/);
+  assert.doesNotMatch(flightCard, /Linking\.openURL\(result\.searchPolicy\.action\.href\)/);
+  assert.match(flightCard, /<Pressable[\s\S]*?accessibilityRole="button"[\s\S]*?onPress=\{openDetails\}/);
   assert.match(flightCard, /pathname: "\/flight-details"/);
-  assert.match(flightCard, /<Text style=\{s0\.detailsButtonText\}[^>]*>View details<\/Text>/);
+  assert.match(flightCard, /accessibilityLabel=\{cardAccessibilityLabel\}/);
+  assert.match(flightCard, /journeys\.map\(\(journey\) => flightCardJourneyAccessibility\(journey, clock\)\)\.join\(", "\)/);
+  assert.doesNotMatch(flightCard, /View deal\b|labels\.viewDeal\b|flightDealAction/);
+  assert.doesNotMatch(flightCard, /<PlaneTakeoff[^>]*>[\s\S]*?View deal\b/);
+  assert.doesNotMatch(flightCard, /labels\.viewFlight|viewFlightButton/);
+  assert.doesNotMatch(flightCard, /detailsButton|detailsButtonText/);
+  assert.equal((flightCard.match(/<Pressable/g) || []).length, 1);
+  assert.doesNotMatch(flightCard, /stopPropagation|onToggleSaved|favoriteButton/);
+  const cardStyle = source.slice(source.indexOf("card: {"), source.indexOf("cardPressed:"));
+  assert.match(cardStyle, /borderWidth: 1/);
+  assert.match(flightCard, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
 });
 
-test("baggage, seat, and fare-rule summaries remain visible", () => {
+test("only provider-backed baggage and refundable benefits remain eligible", () => {
   assert.match(flightCard, /summarizeBaggage\(result\.baggageInfo\)/);
-  assert.match(flightCard, />Seat unavailable<\/Text>/);
+  assert.doesNotMatch(flightCard, /Seat unavailable/);
   assert.match(flightCard, /summarizeFareRules\(result\.refundInfo\)/);
 });
 
 test("the flight card retains its light and dark mode theming", () => {
   assert.match(flightCard, /backgroundColor: theme\.surface/);
   assert.match(flightCard, /shadowColor: theme\.dark \?/);
-  assert.match(flightCard, /theme\.dark && \{ backgroundColor:/);
+  assert.match(flightCard, /const highlightBackgroundColor = highlightUsesGreen[\s\S]*?theme\.dark \? "#153D2A" : "#E3F6EA"[\s\S]*?: theme\.dark \? "#173568" : "#EEF4FF"/);
+  assert.match(flightCard, /const highlightTextColor = highlightUsesGreen[\s\S]*?theme\.dark \? "#8BE0B0" : "#157347"[\s\S]*?: theme\.dark \? "#8FB5FF" : ui\.blue/);
+  assert.match(flightCard, /style=\{\[s0\.resultBadge, \{ backgroundColor: highlightBackgroundColor \}\]\}/);
+  assert.match(flightCard, /color: highlightTextColor/);
   assert.match(flightCard, /color: theme\.textPrimary/);
-  assert.match(flightCard, /color: theme\.textSecondary/);
-  assert.match(flightCard, /color=\{theme\.icon\}/);
+  assert.match(flightCard, /supportTextColor = theme\.dark \? flightSupportText\.dark : flightSupportText\.light/);
+  assert.match(flightCard, /s0\.flightMetadataLabel, \{ color: metadataTextColor \}/);
+  assert.match(flightCard, /borderTopColor: theme\.dark \? theme\.border : flightResultsColors\.cardDivider/);
 });

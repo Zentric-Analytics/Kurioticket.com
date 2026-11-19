@@ -2,14 +2,27 @@ const WEB_PREFIXES = ["src/", "public/", "prisma/", "scripts/"];
 const MOBILE_PREFIX = "apps/mobile/";
 const DOC_PATTERNS = [/^docs\//, /\/docs\//, /\.md$/i];
 const NATIVE_COMMON = [
+  // Vendored production decoder participates in immutable native dependency fingerprints.
+  /^apps\/mobile\/vendor\/decode-uri-component\//,
   /^(?:package|package-lock)\.json$/,
   /^apps\/mobile\/(?:app\.config\.(?:js|ts)|app\.json|eas\.json|release-policy\.json)$/,
   /^apps\/mobile\/(?:package|package-lock)\.json$/,
   /^apps\/mobile\/(?:plugins?|config-plugins?)\//,
   /^apps\/mobile\/assets\/.*(?:icon|splash|adaptive|notification|font)/i,
 ];
-const IOS_NATIVE = [/^apps\/mobile\/ios\//, /(?:^|\/)Podfile(?:\.lock)?$/, /\.entitlements$/];
-const ANDROID_NATIVE = [/^apps\/mobile\/android\//, /(?:AndroidManifest\.xml|build\.gradle|settings\.gradle|gradle\.properties)$/];
+const IOS_NATIVE = [
+  /^apps\/mobile\/ios\//,
+  /^apps\/mobile\/modules\/[^/]+\/ios\//,
+  /^apps\/mobile\/fingerprint\.config\.js$/,
+  /(?:^|\/)Podfile(?:\.lock)?$/,
+  /\.entitlements$/,
+];
+const ANDROID_NATIVE = [
+  /^apps\/mobile\/android\//,
+  /^apps\/mobile\/modules\/[^/]+\/android\//,
+  /(?:AndroidManifest\.xml|build\.gradle|settings\.gradle|gradle\.properties)$/,
+];
+const LOCAL_EXPO_MODULE_CONFIG = /^apps\/mobile\/modules\/([^/]+)\/expo-module\.config\.json$/;
 const OTA_SAFE = [
   /^apps\/mobile\/(?:app|src|components|hooks|lib|utils)\//,
   /^apps\/mobile\/assets\/(?!.*(?:icon|splash|adaptive|notification|font))/i,
@@ -23,10 +36,12 @@ const MOBILE_SHARED_RUNTIME = [
   /^src\/lib\/geo\/(?:context|distance)\.ts$/,
   /^src\/lib\/region\/countryDisplayNames\.ts$/,
   /^src\/lib\/supportedLocales\.ts$/,
+  /^src\/shared\/presentation\/searchLoadingPresentation\.ts$/,
   /^src\/(?:data\/(?:airports|carRentalAreas)|shared\/airports)\.ts$/,
 ];
 const MOBILE_TOOLING = [
   /^apps\/mobile\/scripts\//,
+  /^apps\/mobile\/testAssetSetup\.cjs$/,
   // Reviewed release evidence describes artifacts that already exist. It is
   // neither bundled by Metro nor consumed by native configuration, so it must
   // not block a later OTA-compatible source progression.
@@ -34,6 +49,20 @@ const MOBILE_TOOLING = [
   /^apps\/mobile\/src\/__tests__\//,
   /^apps\/mobile\/src\/.*\.(?:test|spec)\.[cm]?[jt]sx?$/,
 ];
+
+function localExpoModuleConfigTargets(file, files) {
+  const match = file.match(LOCAL_EXPO_MODULE_CONFIG);
+  if (!match) return [];
+  const root = `apps/mobile/modules/${match[1]}/`;
+  const hasIosChange = files.some((candidate) => candidate.startsWith(`${root}ios/`));
+  const hasAndroidChange = files.some((candidate) => candidate.startsWith(`${root}android/`));
+  if (hasIosChange || hasAndroidChange) {
+    return [hasIosChange ? "ios" : null, hasAndroidChange ? "android" : null].filter(Boolean);
+  }
+  // A standalone module metadata edit can change autolinking for either platform,
+  // so fail conservatively toward both native targets.
+  return ["ios", "android"];
+}
 
 export function classifyChangeSet(files) {
   if (!Array.isArray(files) || files.some((file) => typeof file !== "string" || !file || file.includes("\\"))) {
@@ -44,9 +73,15 @@ export function classifyChangeSet(files) {
 
   const iosNative = unique.filter((file) => NATIVE_COMMON.concat(IOS_NATIVE).some((pattern) => pattern.test(file)));
   const androidNative = unique.filter((file) => NATIVE_COMMON.concat(ANDROID_NATIVE).some((pattern) => pattern.test(file)));
+  for (const file of unique) {
+    const targets = localExpoModuleConfigTargets(file, unique);
+    if (targets.includes("ios") && !iosNative.includes(file)) iosNative.push(file);
+    if (targets.includes("android") && !androidNative.includes(file)) androidNative.push(file);
+  }
+
   const mobile = unique.filter((file) => file.startsWith(MOBILE_PREFIX));
   const docsOnly = unique.every((file) => DOC_PATTERNS.some((pattern) => pattern.test(file)));
-  const web = unique.filter((file) => WEB_PREFIXES.some((prefix) => file.startsWith(prefix)) || ["package.json", "package-lock.json", "next.config.ts"].includes(file));
+  const web = unique.filter((file) => WEB_PREFIXES.some((prefix) => file.startsWith(prefix)) || ["package.json", "package-lock.json", "next.config.ts", "render.yaml"].includes(file));
   const mobileTooling = mobile.filter((file) => MOBILE_TOOLING.some((pattern) => pattern.test(file)));
   const otaCandidates = [
     ...mobile.filter((file) => !mobileTooling.includes(file) && OTA_SAFE.some((pattern) => pattern.test(file))),

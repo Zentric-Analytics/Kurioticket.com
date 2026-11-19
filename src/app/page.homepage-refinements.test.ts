@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { countryDirectoryCountries } from "@/data/homepageCountryDirectory";
+import { getInitialValues } from "@/lib/cars/carsSearchUtils";
 
 const countryDirectoryCategories = ["Hotels", "Flights", "Cars"] as const;
 
@@ -131,22 +132,18 @@ test("previous-to-start programmatic completion clears the next-arrow gate and p
   assert.match(scrollHandlerSource, /updateDestinationArrowState\(\)/);
 });
 
-test("homepage country directory replaces the hotel mosaic between promo panels and newsletter", () => {
+test("homepage country directory follows promo panels without the retired newsletter", () => {
   const promoIndex = pageSource.indexOf("homePromoHotelsTitle");
   const directoryIndex = pageSource.indexOf(
     'aria-labelledby="homepage-country-directory-heading"',
   );
-  const newsletterIndex = pageSource.indexOf("homeNewsletterTitle");
 
   assert.ok(promoIndex >= 0, "hotel promo panel should exist");
   assert.ok(
     directoryIndex > promoIndex,
     "country directory should follow promo panels",
   );
-  assert.ok(
-    newsletterIndex > directoryIndex,
-    "newsletter should follow country directory",
-  );
+  assert.doesNotMatch(pageSource, /homeNewsletterTitle/);
   assert.match(pageSource, /getSortedCountryDirectoryCountries\(locale, t\)/);
   assert.match(pageSource, /distributeCountryDirectoryColumns\(sortedCountryDirectoryCountries, 4\)/);
   assert.doesNotMatch(pageSource, /homepageHotelDestinationCards/);
@@ -155,7 +152,6 @@ test("homepage country directory replaces the hotel mosaic between promo panels 
 test("homepage country directory uses closed-first inline independent column accordions", () => {
   const directorySource = pageSource.slice(
     pageSource.indexOf('aria-labelledby="homepage-country-directory-heading"'),
-    pageSource.indexOf("homeNewsletterTitle"),
   );
 
   assert.match(pageSource, /getSortedCountryDirectoryCountries\(locale, t\)/);
@@ -183,7 +179,7 @@ test("homepage country directory uses closed-first inline independent column acc
   assert.match(directorySource, /"Hotels",\s*"Flights",\s*"Cars"/);
   assert.match(
     directorySource,
-    /onClick=\{\(event\) => event\.stopPropagation\(\)\}/,
+    /onClick=\{\(event\) => \{\s*event\.stopPropagation\(\);/,
   );
   assert.match(directorySource, /<CountryFlag\s+countryCode=\{country\.countryCode\}/);
   assert.doesNotMatch(directorySource, /Apple_Color_Emoji|Segoe_UI_Emoji|Noto_Color_Emoji/);
@@ -219,7 +215,7 @@ test("hotels page source remains on the shared destination image catalog", () =>
   assert.doesNotMatch(hotelsPageSource, /homepageHotelCountryCards/);
 });
 
-test("homepage country directory hotel links use existing hotel results contract", () => {
+test("homepage country directory Hotel links use complete maintained exploration intent", () => {
   const directoryDataSource = readFileSync(
     new URL("../data/homepageCountryDirectory.ts", import.meta.url),
     "utf8",
@@ -233,12 +229,8 @@ test("homepage country directory hotel links use existing hotel results contract
     ),
   );
 
-  assert.match(hrefSource, /pathname: "\/hotels\/results"/);
+  assert.match(hrefSource, /buildMaintainedHotelDiscoveryResultsHref/);
   assert.match(hrefSource, /destination/);
-  assert.match(hrefSource, /checkIn/);
-  assert.match(hrefSource, /checkOut/);
-  assert.match(hrefSource, /guests: "2"/);
-  assert.match(hrefSource, /rooms: "1"/);
 });
 
 test("homepage country directory flag, row, service, and dropdown typography are production-refined", () => {
@@ -297,7 +289,8 @@ test("homepage country directory links preserve exact search contracts", () => {
       assert.match(link.routeKey ?? "", /^[A-Z]{3}-[A-Z]{3}$/);
       const [origin, destination] = link.routeKey?.split("-") ?? [];
       assert.notEqual(origin, destination, `${country.id} flight route should not reuse the same airport code`);
-      assert.equal(typeof link.href, "object");
+      assert.ok(typeof link.href === "object");
+      assert.ok(link.href.query && typeof link.href.query === "object");
       assert.equal(link.href.pathname, "/flights/results");
       assert.equal(link.href.query?.origin, origin);
       assert.equal(link.href.query?.destination, destination);
@@ -311,21 +304,21 @@ test("homepage country directory links preserve exact search contracts", () => {
     }
 
     for (const link of country.links.Hotels) {
-      assert.equal(typeof link.href, "object");
-      assert.equal(link.href.pathname, "/hotels/results");
-      assert.ok(link.href.query?.destination);
-      assert.match(String(link.href.query?.checkIn), /^\d{4}-\d{2}-\d{2}$/);
-      assert.match(String(link.href.query?.checkOut), /^\d{4}-\d{2}-\d{2}$/);
-      assert.equal(link.href.query?.guests, "2");
-      assert.equal(link.href.query?.rooms, "1");
+      assert.ok(typeof link.href === "string");
+      const hotelUrl = new URL(link.href, "https://www.kurioticket.test");
+      assert.equal(hotelUrl.pathname, "/hotels/results");
+      assert.ok(hotelUrl.searchParams.get("destination"));
+      for (const required of ["checkIn", "checkOut", "guests", "rooms"]) assert.ok(hotelUrl.searchParams.get(required));
     }
 
     for (const link of country.links.Cars) {
-      assert.equal(typeof link.href, "string");
+      assert.ok(typeof link.href === "string");
       const url = new URL(link.href, "https://www.kurioticket.test");
       assert.equal(url.pathname, "/cars/results");
       assert.ok(url.searchParams.get("pickupLocation"));
-      assert.equal(url.searchParams.get("dropoffLocation"), url.searchParams.get("pickupLocation"));
+      const form = getInitialValues(url.searchParams);
+      assert.equal(form.returnToDifferentLocation, false);
+      assert.equal(form.dropoffLocation, "");
       assert.match(url.searchParams.get("pickupDate") ?? "", /^\d{4}-\d{2}-\d{2}$/);
       assert.match(url.searchParams.get("dropoffDate") ?? "", /^\d{4}-\d{2}-\d{2}$/);
       assert.equal(url.searchParams.get("pickupTime"), "10:00");

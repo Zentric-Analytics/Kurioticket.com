@@ -3,12 +3,11 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import Svg, { Path } from "react-native-svg";
 import { AuthButton, authColors } from "./AuthPrimitives";
 import { AuthIcon } from "./AuthIcon";
+import { PRIVACY_URL as PRIVACY, TERMS_URL as TERMS } from "../../config/legalUrls";
 
 const hero = require("../../../assets/auth-mediterranean-hero.jpeg");
 const heroSource = Image.resolveAssetSource(hero);
 const logo = require("../../../assets/kurioticket-logo-primary-light-bg.png");
-const TERMS = "https://kurioticket.com/terms";
-const PRIVACY = "https://kurioticket.com/privacy";
 const COMPACT_SCREEN_HEIGHT = 800;
 const BASE_HERO_SHIFT = 18;
 const MAX_HERO_SHIFT = 84;
@@ -20,7 +19,6 @@ function GoogleG() {
 export function AuthWelcomeScreen({ onEmail, onGoogle, onGuest, busy, error }: { onEmail: () => void; onGoogle: () => void; onGuest: () => void; busy?: boolean; error?: string }) {
   const { height, width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const panelOffset = Math.min(height < 720 ? 6 : 12, Math.max(0, insets.bottom / 2));
   const coverScale = Math.max(width / heroSource.width, height / heroSource.height);
   const renderedHeroWidth = heroSource.width * coverScale;
   const renderedHeroHeight = heroSource.height * coverScale;
@@ -32,10 +30,10 @@ export function AuthWelcomeScreen({ onEmail, onGoogle, onGuest, busy, error }: {
     top: -heroShift,
     width: renderedHeroWidth,
   };
-  return <View style={styles.background}><Image source={hero} resizeMode="cover" style={[styles.image, heroStyle]} /><View style={styles.overlay} /><SafeAreaView style={styles.safe}>
+  return <View style={styles.background}><Image source={hero} resizeMode="cover" style={[styles.image, heroStyle]} /><View style={styles.overlay} /><SafeAreaView style={styles.safe} edges={["top"]}>
     <View style={styles.brand}><Image source={logo} resizeMode="contain" style={styles.logo} accessibilityLabel="Kurioticket" /><Text style={styles.tagline}>Your journey starts here</Text></View>
-    <View style={[styles.panel, { transform: [{ translateY: panelOffset }] }]}><Text style={styles.title}>Continue your journey</Text><Text style={styles.body}>Sign in or create an account to get the{"\n"}best travel experience.</Text>
-      <View style={styles.buttons}><AuthButton label="Continue with Email" onPress={onEmail} disabled={busy} icon={<AuthIcon name="mail" color="white" size={21} />} /><AuthButton label="Continue with Google" onPress={onGoogle} disabled={busy} secondary icon={<GoogleG />} /><AuthButton label="Continue as Guest" onPress={onGuest} disabled={busy} secondary icon={<AuthIcon name="user" color={authColors.navy} size={21} />} /></View>
+    <View style={[styles.panel, height < 700 && styles.compactPanel, { paddingBottom: 10 + insets.bottom }]}><Text style={styles.title}>Continue your journey</Text><Text style={styles.body}>Sign in or create an account to get the{"\n"}best travel experience.</Text>
+      <View style={[styles.buttons, height < 700 && styles.compactButtons]}><AuthButton label="Continue with Email" onPress={onEmail} disabled={busy} icon={<AuthIcon name="mail" color="white" size={21} />} /><AuthButton label="Continue with Google" onPress={onGoogle} disabled={busy} secondary icon={<GoogleG />} /><AuthButton label="Continue as Guest" onPress={onGuest} disabled={busy} secondary icon={<AuthIcon name="user" color={authColors.navy} size={21} />} /></View>
       {error ? <Text accessibilityLiveRegion="assertive" style={styles.error}>{error}</Text> : null}
       <Text style={styles.legal}>By continuing, you agree to our{"\n"}<Text accessibilityRole="link" onPress={() => void Linking.openURL(TERMS)} style={styles.link}>Terms of Service</Text> and <Text accessibilityRole="link" onPress={() => void Linking.openURL(PRIVACY)} style={styles.link}>Privacy Policy</Text></Text>
     </View>
@@ -44,6 +42,7 @@ export function AuthWelcomeScreen({ onEmail, onGoogle, onGuest, busy, error }: {
 const styles = StyleSheet.create({
   background: { flex: 1, overflow: "hidden" }, image: { position: "absolute" }, overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(255,255,255,.06)" }, safe: { flex: 1, justifyContent: "space-between" },
   brand: { marginTop: 12, marginLeft: 26, alignItems: "flex-start" }, logo: { width: 208, height: 58 }, tagline: { color: authColors.navy, fontSize: 15, marginLeft: 8, marginTop: -5, fontWeight: "500" },
+  compactPanel: { paddingTop: 10 }, compactButtons: { gap: 6, marginTop: 8 },
   panel: { backgroundColor: "white", marginHorizontal: 14, borderTopLeftRadius: 27, borderTopRightRadius: 27, paddingHorizontal: 20, paddingTop: 17, paddingBottom: 10, alignItems: "stretch" },
   title: { color: authColors.navy, fontSize: 20, lineHeight: 25, fontWeight: "800", textAlign: "center" }, body: { color: authColors.text, fontSize: 13, lineHeight: 18, textAlign: "center", marginTop: 4 },
   buttons: { gap: 8, marginTop: 12 }, legal: { color: authColors.text, fontSize: 11, lineHeight: 16, textAlign: "center", marginTop: 8 }, link: { color: authColors.blue, textDecorationLine: "underline", fontWeight: "600" },

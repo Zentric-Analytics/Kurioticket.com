@@ -2,8 +2,8 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "مؤخرًا",
   ...en,
+  "accountDashboard.recently": "مؤخرًا",
   "deals.mobileTravelersTitle": "المسافرون",
   "mobileTravelerCabin.title": "المسافرون ودرجة المقصورة",
   "mobileTravelerCabin.adultDescription": "18 سنة فأكثر",
@@ -258,7 +258,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.personalization.title": "التخصيص",
   "accountDashboard.preferences.customization.personalization.description": "تحكم في كيفية تخصيص Kurioticket لتوصياتك.",
   "accountDashboard.preferences.customization.personalizeSearches": "استخدم عمليات بحثي لتخصيص التوصيات",
-  "accountDashboard.preferences.customization.personalizedTravelباقات السفر": "عرض عروض سفر مخصصة",
+  "accountDashboard.preferences.customization.personalizedTravelDeals": "عرض عروض سفر مخصصة",
   "accountDashboard.preferences.customization.rememberRecentSearches": "تذكر عمليات البحث الأخيرة الخاصة بي",
   "accountDashboard.preferences.customization.communicationStyle.title": "أسلوب التواصل",
   "accountDashboard.preferences.customization.communicationStyle.description": "اختر كيف تريد أن يتواصل Kurioticket معك",
@@ -1261,10 +1261,12 @@ export const translations: TranslationDictionary = {
   displayEstimateConvertedFromProviderPrice: "{{formatted}}. تقدير عرض محوّل من {{providerPrice}}. قد يختلف السعر النهائي لدى المزوّد.",
   convertedDisplayEstimateProviderPrice: "تقدير عرض محوّل. سعر المزوّد: {{providerPrice}}. قد يختلف السعر النهائي لدى المزوّد.",
   viewFlight: "عرض الرحلة",
+  viewDeal: "عرض العرض",
   flightCardProviderHandoff: "يتم تأكيد السعر النهائي والتوافر وتفاصيل الحجز وقواعد السعر على موقع المزوّد.",
   flightCardProviderHandoffConverted: "يتم تأكيد السعر النهائي والتوافر وتفاصيل الحجز وقواعد السعر على موقع المزوّد. قد تختلف عملة المزوّد النهائية عن عملة العرض التي اخترتها.",
   providerNormalizedItineraryPrefix: "تُعرض تفاصيل رحلة الذهاب والعودة من بيانات خط السير التي وحّدها المزوّد.",
   checkProvider: "تحقق لدى المزوّد",
+  notSuppliedByProvider: "غير مقدم من المزوّد",
   carryOnIncluded: "تشمل حقيبة يد",
   flightLeg: "مقطع الرحلة",
   layover: "توقف انتظار",

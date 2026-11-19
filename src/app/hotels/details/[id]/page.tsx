@@ -9,6 +9,7 @@ import {
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
+import { decodeHotelRouteId } from "@/lib/hotels/hotelRouteId";
 
 type HotelDetailsPageProps = {
   params: Promise<{ id: string }>;
@@ -35,28 +36,47 @@ export default async function HotelDetailsPage({
   params,
   searchParams,
 }: HotelDetailsPageProps) {
-  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const [{ id: routeId }, query] = await Promise.all([params, searchParams]);
+  const id = decodeHotelRouteId(routeId);
   const searchContext = {
+    destinationId: getFirstSearchParam(query.destinationId),
     destination: getFirstSearchParam(query.destination),
     checkIn: getFirstSearchParam(query.checkIn),
     checkOut: getFirstSearchParam(query.checkOut),
     guests: getFirstSearchParam(query.guests),
+    adults: getFirstSearchParam(query.adults),
+    children: getFirstSearchParam(query.children),
+    destinationLocation: getFirstSearchParam(query.destinationLocation),
     rooms: getFirstSearchParam(query.rooms),
+    provider:
+      getFirstSearchParam(query.provider) === "kayak-sandbox"
+        ? "kayak-sandbox"
+        : undefined,
   } satisfies HotelDetailsSearchContext;
 
   return (
     <>
-      <AppHeader
-        flushDesktopBottom
-        flushMobileBottom
-        hideDesktopTravelNav
-        hideMobileCategoryTabs
-      />
-      <HotelDetailsClient
-        id={id}
-        searchContext={searchContext}
-      />
-      <Footer />
+      <div className="hidden lg:block" data-hotel-details-desktop-header>
+        <AppHeader
+          flushDesktopBottom
+          hotelDesktopBoundary
+          flushMobileBottom
+          hideDesktopTravelNav
+          hideMobileCategoryTabs
+        />
+      </div>
+      <div
+        className="pt-[env(safe-area-inset-top)] lg:pt-0"
+        data-hotel-details-mobile-safe-area
+      >
+        <HotelDetailsClient
+          id={id}
+          searchContext={searchContext}
+        />
+      </div>
+      <div className="hidden lg:block" data-hotel-details-desktop-footer>
+        <Footer variant="brand-legal-only" />
+      </div>
     </>
   );
 }

@@ -1,4 +1,5 @@
 import type { PublicHotelResult } from "@/lib/types";
+import { hotelPropertyKey } from "@/lib/hotels/groupHotelOffers";
 
 import { buildHotelAmenityPresentation } from "./hotelAmenityPresentation";
 
@@ -15,6 +16,8 @@ const canonicalFacilityLabels: Record<string, string> = {
   spa: "Spa",
   airportShuttle: "Airport shuttle",
   parking: "Parking",
+  petFriendly: "Pet friendly",
+  evCharging: "EV charging",
   fitness: "Fitness center",
   workspace: "Workspace",
   quietRooms: "Quiet rooms",
@@ -63,6 +66,7 @@ export function buildHotelFacilityFilterOptions(
 ): FilterOption[] {
   const optionCounts = new Map<string, number>();
   const optionLabels = new Map<string, string>();
+  const seen = new Map<string, Set<string>>();
 
   hotels.forEach((hotel) => {
     const hotelValues = new Set<string>();
@@ -76,6 +80,11 @@ export function buildHotelFacilityFilterOptions(
     });
 
     hotelValues.forEach((value) => {
+      const properties = seen.get(value) ?? new Set<string>();
+      const key = hotelPropertyKey(hotel);
+      if (properties.has(key)) return;
+      properties.add(key);
+      seen.set(value, properties);
       optionCounts.set(value, (optionCounts.get(value) ?? 0) + 1);
     });
   });
@@ -87,10 +96,17 @@ export function buildHotelFacilityFilterOptions(
       label: optionLabels.get(value) ?? value,
       count,
     }))
-    .sort(
-      (first, second) =>
-        second.count - first.count || first.label.localeCompare(second.label),
-    );
+    .sort((first, second) => {
+      const priority = ["petFriendly", "parking", "evCharging", "pool", "spa", "fitness"];
+      const firstPriority = priority.indexOf(first.value);
+      const secondPriority = priority.indexOf(second.value);
+      if (firstPriority >= 0 || secondPriority >= 0) {
+        if (firstPriority < 0) return 1;
+        if (secondPriority < 0) return -1;
+        return firstPriority - secondPriority;
+      }
+      return second.count - first.count || first.label.localeCompare(second.label);
+    });
 }
 
 export function hotelMatchesFacilityFilters(

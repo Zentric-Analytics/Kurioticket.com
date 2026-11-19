@@ -1,9 +1,13 @@
 import { addCalendarDays, compareLocalDateTimes, localDateFromIso, localIsoDate } from "./localDateModel";
 import type { RouteValue } from "./hotelSearchModel";
+import {
+  getRentalLocationClock,
+  locationTargetTimeZone,
+} from "../../../../../src/shared/cars/rentalLocationClock";
 
 export const CAR_AGE = { min: 18, max: 70, default: 30 } as const;
 export const DEFAULT_CAR_TIME = "10:00";
-export type CarForm = { pickupLocation: string; separateDropoff: boolean; dropoffLocation: string; pickupDate: string; pickupTime: string; dropoffDate: string; dropoffTime: string; driverAge?: number };
+export type CarForm = { pickupLocation: string; pickupLocationTarget?: string; separateDropoff: boolean; dropoffLocation: string; dropoffLocationTarget?: string; pickupDate: string; pickupTime: string; dropoffDate: string; dropoffTime: string; driverAge?: number };
 export type CarFormErrors = Partial<Record<"pickupLocation" | "dropoffLocation" | "pickupDate" | "pickupTime" | "dropoffDate" | "dropoffTime" | "driverAge", string>>;
 export const firstRouteParam = (value: RouteValue) => (Array.isArray(value) ? value[0] : value) ?? "";
 export const validTime = (value: string) => /^(?:[01]\d|2[0-3]):(?:00|30)$/.test(value);
@@ -14,21 +18,36 @@ export const rentalTimesSummary = (pickupTime: string, returnTime: string) => `$
 export const parseDriverAge = (value: string) => /^\d+$/.test(value) && Number(value) >= CAR_AGE.min && Number(value) <= CAR_AGE.max ? Number(value) : undefined;
 export const boundedAge = (age: number, delta: number) => Math.max(CAR_AGE.min, Math.min(CAR_AGE.max, age + delta));
 
+const carRentalClock = (pickupLocationTarget: string | undefined, now: Date) => {
+  const rental = getRentalLocationClock(
+    now,
+    locationTargetTimeZone(pickupLocationTarget),
+  );
+  return {
+    todayIso: rental?.date ?? localIsoDate(now),
+    currentTime:
+      rental?.time ??
+      `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
+  };
+};
+
 export function defaultCarForm(today = new Date()): CarForm {
   const iso = localIsoDate(today);
   return { pickupLocation: "", separateDropoff: false, dropoffLocation: "", pickupDate: addCalendarDays(iso, 14), pickupTime: DEFAULT_CAR_TIME, dropoffDate: addCalendarDays(iso, 17), dropoffTime: DEFAULT_CAR_TIME, driverAge: CAR_AGE.default };
 }
 
 export function initializeCarForm(params: Record<string, RouteValue>, today = new Date()): { form: CarForm; notice?: string } {
-  const defaults = defaultCarForm(today); const todayIso = localIsoDate(today);
+  const defaults = defaultCarForm(today);
   const pickupLocation = firstRouteParam(params.pickupLocation); const dropoffLocation = firstRouteParam(params.dropoffLocation);
+  const pickupLocationTarget = firstRouteParam(params.pickupLocationTarget).trim(); const dropoffLocationTarget = firstRouteParam(params.dropoffLocationTarget).trim();
+  const todayIso = carRentalClock(pickupLocationTarget, today).todayIso;
   const pickupDate = firstRouteParam(params.pickupDate); const dropoffDate = firstRouteParam(params.dropoffDate);
   const pickupTime = firstRouteParam(params.pickupTime); const dropoffTime = firstRouteParam(params.dropoffTime); const ageText = firstRouteParam(params.driverAge);
   const datesValid = Boolean(localDateFromIso(pickupDate) && localDateFromIso(dropoffDate) && pickupDate >= todayIso && dropoffDate >= pickupDate);
   const timesValid = validTime(pickupTime) && validTime(dropoffTime) && (!datesValid || compareLocalDateTimes(dropoffDate, dropoffTime, pickupDate, pickupTime) > 0);
   const age = parseDriverAge(ageText); const separateDropoff = Boolean(dropoffLocation.trim() && dropoffLocation.trim() !== pickupLocation.trim());
   const hadInvalid = Boolean((pickupDate || dropoffDate) && !datesValid) || Boolean((pickupTime || dropoffTime) && !timesValid) || Boolean(ageText && age === undefined);
-  return { form: { ...defaults, pickupLocation, dropoffLocation, separateDropoff, ...(datesValid && timesValid ? { pickupDate, dropoffDate, pickupTime, dropoffTime } : {}), driverAge: age ?? CAR_AGE.default }, notice: hadInvalid ? "Some search details were invalid, so safe defaults were used." : undefined };
+  return { form: { ...defaults, pickupLocation, ...(pickupLocation.trim() && pickupLocationTarget ? { pickupLocationTarget } : {}), dropoffLocation, ...(dropoffLocation.trim() && dropoffLocationTarget ? { dropoffLocationTarget } : {}), separateDropoff, ...(datesValid && timesValid ? { pickupDate, dropoffDate, pickupTime, dropoffTime } : {}), driverAge: age ?? CAR_AGE.default }, notice: hadInvalid ? "Some search details were invalid, so safe defaults were used." : undefined };
 }
 
 /** Home initialization: keep standard time defaults without inventing rental dates or driver age. */
@@ -37,7 +56,7 @@ export function initializeHomeCarForm(params: Record<string, RouteValue>, today 
   const pickupDate = firstRouteParam(params.pickupDate);
   const dropoffDate = firstRouteParam(params.dropoffDate);
   const driverAge = parseDriverAge(firstRouteParam(params.driverAge));
-  const todayIso = localIsoDate(today);
+  const todayIso = carRentalClock(initialized.form.pickupLocationTarget, today).todayIso;
   const datesValid = Boolean(localDateFromIso(pickupDate) && localDateFromIso(dropoffDate) && pickupDate >= todayIso && dropoffDate >= pickupDate);
   return { ...initialized, form: { ...initialized.form, pickupDate: datesValid ? pickupDate : "", dropoffDate: datesValid ? dropoffDate : "", driverAge } };
 }
@@ -54,9 +73,11 @@ export function initializeCarsPageForm(params: Record<string, RouteValue>, today
     dropoffTime: "",
     driverAge: undefined,
   };
-  const todayIso = localIsoDate(today);
   const pickupLocation = firstRouteParam(params.pickupLocation);
   const dropoffLocation = firstRouteParam(params.dropoffLocation);
+  const pickupLocationTarget = firstRouteParam(params.pickupLocationTarget).trim();
+  const dropoffLocationTarget = firstRouteParam(params.dropoffLocationTarget).trim();
+  const todayIso = carRentalClock(pickupLocationTarget, today).todayIso;
   const incomingPickupDate = firstRouteParam(params.pickupDate);
   const incomingDropoffDate = firstRouteParam(params.dropoffDate);
   const incomingPickupTime = firstRouteParam(params.pickupTime);
@@ -71,8 +92,10 @@ export function initializeCarsPageForm(params: Record<string, RouteValue>, today
     form: {
       ...emptyForm,
       pickupLocation,
+      ...(pickupLocation.trim() && pickupLocationTarget ? { pickupLocationTarget } : {}),
       separateDropoff: Boolean(dropoffLocation.trim() && dropoffLocation.trim() !== pickupLocation.trim()),
       dropoffLocation,
+      ...(dropoffLocation.trim() && dropoffLocationTarget ? { dropoffLocationTarget } : {}),
       pickupDate,
       pickupTime,
       dropoffDate,
@@ -94,12 +117,14 @@ export function selectCarsPickupTime(form: CarForm, pickupTime: string): CarForm
 }
 
 export function validateCarForm(form: CarForm, today = new Date()): CarFormErrors {
-  const errors: CarFormErrors = {}; const todayIso = localIsoDate(today);
+  const errors: CarFormErrors = {};
+  const { todayIso, currentTime } = carRentalClock(form.pickupLocationTarget, today);
   if (!form.pickupLocation.trim()) errors.pickupLocation = "Enter a pick-up location.";
   if (form.separateDropoff && !form.dropoffLocation.trim()) errors.dropoffLocation = "Enter a drop-off location.";
   if (!localDateFromIso(form.pickupDate) || form.pickupDate < todayIso) errors.pickupDate = "Choose a current or future pick-up date.";
   if (!localDateFromIso(form.dropoffDate) || form.dropoffDate < form.pickupDate || form.dropoffDate < todayIso) errors.dropoffDate = "Choose a return date on or after pick-up.";
   if (!validTime(form.pickupTime)) errors.pickupTime = "Choose a valid pick-up time.";
+  else if (!errors.pickupDate && form.pickupDate === todayIso && form.pickupTime <= currentTime) errors.pickupTime = "Choose a pick-up time that has not passed.";
   if (!validTime(form.dropoffTime)) errors.dropoffTime = "Choose a valid return time.";
   if (!errors.pickupDate && !errors.dropoffDate && !errors.pickupTime && !errors.dropoffTime && compareLocalDateTimes(form.dropoffDate, form.dropoffTime, form.pickupDate, form.pickupTime) <= 0) errors.dropoffTime = "Return must be later than pick-up.";
   if (form.driverAge === undefined || !Number.isInteger(form.driverAge) || form.driverAge < CAR_AGE.min || form.driverAge > CAR_AGE.max) errors.driverAge = "Driver age must be a whole number from 18 to 70.";
@@ -112,4 +137,20 @@ export function adjustDropoff(form: CarForm): { form: CarForm; adjusted: boolean
   return option ? { form: { ...form, dropoffDate: form.pickupDate, dropoffTime: option }, adjusted: true } : { form: { ...form, dropoffDate: addCalendarDays(form.pickupDate, 1), dropoffTime: "00:00" }, adjusted: true };
 }
 
-export const carSearchParams = (form: CarForm) => ({ pickupLocation: form.pickupLocation.trim(), dropoffLocation: (form.separateDropoff ? form.dropoffLocation : form.pickupLocation).trim(), pickupDate: form.pickupDate, pickupTime: form.pickupTime, dropoffDate: form.dropoffDate, dropoffTime: form.dropoffTime, driverAge: form.driverAge === undefined ? "" : String(form.driverAge) });
+export const carSearchParams = (form: CarForm) => {
+  const pickupLocation = form.pickupLocation.trim();
+  const dropoffLocation = (form.separateDropoff ? form.dropoffLocation : form.pickupLocation).trim();
+  const pickupLocationTarget = form.pickupLocationTarget?.trim();
+  const dropoffLocationTarget = (form.separateDropoff ? form.dropoffLocationTarget : form.pickupLocationTarget)?.trim();
+  return {
+    pickupLocation,
+    dropoffLocation,
+    ...(pickupLocationTarget ? { pickupLocationTarget } : {}),
+    ...(dropoffLocationTarget ? { dropoffLocationTarget } : {}),
+    pickupDate: form.pickupDate,
+    pickupTime: form.pickupTime,
+    dropoffDate: form.dropoffDate,
+    dropoffTime: form.dropoffTime,
+    driverAge: form.driverAge === undefined ? "" : String(form.driverAge),
+  };
+};

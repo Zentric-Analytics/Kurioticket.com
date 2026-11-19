@@ -1,8 +1,13 @@
-import { withOptionalDb } from "@/lib/prisma";
+import type { Prisma, PrismaClient } from "@/generated/prisma/client";
+import { getOptionalPrisma, withOptionalDb } from "@/lib/prisma";
 import { withEnvironmentMetadata } from "@/lib/stagingSafety";
+import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
+import { applicationMetadata, type ApplicationAttribution } from "@/lib/application-source";
+export { recordSearchHistory as logSearchHistory } from "@/services/searchJourneyService";
 
-export async function trackAnalyticsEvent(input: {
+export type AnalyticsEventInput = ApplicationAttribution & {
   userId?: string | null;
+  visitorId?: string | null;
   type:
     | "SEARCH"
     | "REDIRECT"
@@ -13,22 +18,34 @@ export async function trackAnalyticsEvent(input: {
     | "PROVIDER_FAILURE";
   name: string;
   metadata?: Record<string, unknown>;
-}) {
-  await withOptionalDb(
-    async (db) => {
-      await db.analyticsEvent.create({
-        data: {
-          userId: input.userId || undefined,
+};
+
+/** The production writer and lifecycle tests share the same transactional check. */
+export function createAnalyticsEventRecorder(getDatabase: () => Pick<PrismaClient, "$transaction"> | null) {
+  return async function trackAnalyticsEvent(input: AnalyticsEventInput): Promise<void> {
+    try {
+      const db = getDatabase();
+      if (!db) return;
+      await db.$transaction(async tx => {
+        const userId = input.userId || null;
+        const visitorId = input.visitorId && await lockConsentedVisitor(tx, input.visitorId, userId)
+          ? input.visitorId : null;
+        await tx.analyticsEvent.create({ data: {
+          userId: userId || undefined,
+          visitorId: visitorId || undefined,
           type: input.type,
           name: input.name,
-          metadata: withEnvironmentMetadata(input.metadata) as never,
-        },
+          metadata: withEnvironmentMetadata({ ...input.metadata, ...applicationMetadata(input) }) as Prisma.InputJsonValue,
+        } });
       });
-      return true;
-    },
-    false,
-  );
+    } catch {
+      // Optional analytics cannot interrupt travel, support or account actions.
+      // Retain no database payloads or identity credentials in error output.
+    }
+  };
 }
+
+export const trackAnalyticsEvent = createAnalyticsEventRecorder(getOptionalPrisma);
 
 export async function logProviderCall(input: {
   provider: string;
@@ -45,40 +62,6 @@ export async function logProviderCall(input: {
         data: {
           ...input,
           metadata: withEnvironmentMetadata(input.metadata) as never,
-        },
-      });
-      return true;
-    },
-    false,
-  );
-}
-
-export async function logSearchHistory(input: {
-  userId?: string | null;
-  type: "FLIGHT" | "HOTEL";
-  origin?: string | null;
-  destination?: string | null;
-  checkIn?: Date | null;
-  checkOut?: Date | null;
-  query: Record<string, unknown>;
-  resultCount: number;
-  latencyMs: number;
-  status: "SUCCESS" | "PARTIAL" | "FAILED";
-}) {
-  await withOptionalDb(
-    async (db) => {
-      await db.searchHistory.create({
-        data: {
-          userId: input.userId || undefined,
-          type: input.type,
-          origin: input.origin || undefined,
-          destination: input.destination || undefined,
-          checkIn: input.checkIn || undefined,
-          checkOut: input.checkOut || undefined,
-          query: withEnvironmentMetadata(input.query) as never,
-          resultCount: input.resultCount,
-          latencyMs: input.latencyMs,
-          status: input.status,
         },
       });
       return true;

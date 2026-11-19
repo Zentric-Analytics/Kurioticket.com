@@ -1,3 +1,5 @@
+import ts from "typescript";
+import { parseSource, nodesWhere, evaluateExpression } from "../../test-support/sourceStructure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -22,27 +24,22 @@ test("source-contract: Cars uses the full form measurement and in-place dialog",
 });
 
 test("source-contract: sticky editor lifecycle keeps scroll locking independent from nested controls", () => {
-  assert.match(
-    source,
-    /const desktopStickySearchOpen = desktopStickySearchSection !== null/,
-  );
-  assert.match(
-    source,
-    /const scrollLock = lockDesktopPageScroll\(\);[\s\S]*?scrollLock\.restore\(\);[\s\S]*?\}, \[desktopStickySearchOpen\]\);/,
-  );
-  const scrollLockEffect =
-    source.match(
-      /useEffect\(\(\) => \{[\s\S]*?const scrollLock = lockDesktopPageScroll\(\);[\s\S]*?\}, \[desktopStickySearchOpen\]\);/,
-    )?.[0] ?? "";
-  assert.doesNotMatch(scrollLockEffect, /datesOpen|timesOpen|driverAgeOpen/);
-  assert.match(
-    source,
-    /const frame = requestAnimationFrame[\s\S]*?stickyDialogRef\.current\?\.focus\(\{ preventScroll: true \}\)[\s\S]*?cancelAnimationFrame\(frame\)[\s\S]*?\[desktopStickySearchSection\]/,
-  );
-  assert.doesNotMatch(
-    source,
-    /if \(!next\) setDesktopStickySearchSection\(null\)/,
-  );
+  const root = parseSource(source);
+  const effects = nodesWhere(root, node => ts.isCallExpression(node) && node.expression.getText(root) === 'useEffect' && node.arguments[1]?.getText(root) === '[desktopStickySearchOpen]') as ts.CallExpression[];
+  assert.equal(effects.length, 1);
+  const effect = effects[0].arguments[0].getText(root);
+  assert.doesNotMatch(effect, /datesOpen|timesOpen|driverAgeOpen/);
+  for (const open of [false, true]) {
+    let locks = 0, restores = 0;
+    const callback = evaluateExpression<() => undefined | (() => void)>(effect, { desktopStickySearchOpen: open, stickyScrollLockRef: { current: null }, lockDesktopPageScroll: () => { locks++; return { restore: () => { restores++; } }; } });
+    const cleanup = callback();
+    assert.equal(locks, Number(open));
+    assert.equal(restores, 0);
+    cleanup?.();
+    assert.equal(restores, Number(open));
+  }
+  assert.match(source, /stickyDialogRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.doesNotMatch(source, /if \(!next\) setDesktopStickySearchSection\(null\)/);
 });
 
 test("source-contract: sticky editor opens with nested controls closed and focuses the dialog", () => {
@@ -103,7 +100,8 @@ test("source-contract: portaled picker interactions are not treated as outside c
 });
 
 test("source-contract: sticky rental dates keep the icon and compact calendar actions visible", () => {
-  assert.match(source, /showRentalDuration \|\| isCompact/);
+  assert.match(source, /showRentalDuration \? \(\s*<Calendar/);
+  assert.match(source, /!showRentalDuration && isCompact \? \(\s*<Calendar/);
   assert.match(source, /desiredHeight=\{isCompact \? 420 : 480\}/);
   assert.match(
     source,
@@ -163,7 +161,7 @@ test("source-contract: expanded sticky editor uses the Flights-style floating sh
   );
   assert.match(
     source,
-    /w-full rounded-2xl border border-slate-200\/90 bg-\[#fbfaf7\]\/95 p-4 text-start shadow-\[0_30px_90px_-32px_rgba\(15,23,42,0\.72\)\] ring-1 ring-white\/80 backdrop-blur-md/,
+    /w-full rounded-2xl border border-slate-200 bg-white p-4 text-start shadow-\[0_30px_90px_-32px_rgba\(15,23,42,0\.72\)\] ring-1 ring-white/,
   );
   assert.match(
     source,
@@ -185,7 +183,7 @@ test("source-contract: expanded sticky editor uses the Flights-style floating sh
 test("source-contract: sticky controls form one restrained segmented row", () => {
   assert.match(
     source,
-    /isCompactSearch[\s\S]*?"rounded-xl border-slate-200\/85 bg-white\/90 p-0 shadow-\[0_14px_34px_-28px_rgba\(15,23,42,0\.64\)\]"/,
+    /isCompactSearch[\s\S]*?"rounded-xl border border-slate-200 bg-white p-0 shadow-\[0_14px_34px_-28px_rgba\(15,23,42,0\.64\)\]"/,
   );
   assert.doesNotMatch(source, /isCompactSearch \? "p-1" : "p-1\.5"/);
 });
@@ -202,8 +200,32 @@ test("source-contract: collapsed Cars search icons use neutral slate styling", (
 
   assert.notEqual(compactStart, -1);
   assert.notEqual(compactEnd, -1);
-  assert.match(compactToolbar, /className="h-4 w-4 shrink-0 text-slate-500"/);
+  assert.match(compactToolbar, /className="cars-results-navbar-leading-icon h-4 w-4 shrink-0 text-slate-500"/);
   assert.doesNotMatch(compactToolbar, /className="h-4 w-4 shrink-0 text-\[#004BB8\]"/);
+});
+
+test("source-contract: collapsed Cars search uses the lighter result-card surface family", () => {
+  const compactStart = source.indexOf(
+    '"pointer-events-none fixed inset-x-0 top-0 z-[1000]',
+  );
+  const compactEnd = source.indexOf(
+    "{desktopStickySearchSection ? (",
+    compactStart,
+  );
+  const compactToolbar = source.slice(compactStart, compactEnd);
+
+  assert.notEqual(compactStart, -1);
+  assert.notEqual(compactEnd, -1);
+  assert.match(compactToolbar, /data-cars-results-compact-search-summary/);
+  assert.match(compactToolbar, /bg-\[#EEF1F5\]/);
+  assert.match(
+    compactToolbar,
+    /hover:bg-\[#E7EBF1\] focus-visible:bg-\[#E7EBF1\]/,
+  );
+  assert.doesNotMatch(
+    compactToolbar,
+    /max-w-\[920px\][^"]*bg-white/,
+  );
 });
 
 test("source-contract: the full expanded backdrop closes while dialog clicks stay inside", () => {

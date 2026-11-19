@@ -12,15 +12,19 @@ const standalone = read("./HotelSearchBar.tsx");
 const recents = read("../../lib/recent-searches.ts");
 const english = read("../../lib/i18n/en.ts");
 
-test("hotel destination uses draft selection, real recents, and Done-only footer", () => {
+const editStyles = read("../results/HotelResultsMobile.module.css");
+
+test("hotel destination preserves its query and applies a suggestion immediately", () => {
   assert.match(
     destination,
     /deriveRecentHotelDestinations\(readRecentSearches\(\), 3\)/,
   );
-  assert.match(destination, /setDraftValue\(option\.searchValue\)/);
-  assert.match(destination, /onChange\(draftValue\.trim\(\)\)/);
+  assert.match(destination, /setQuery\(value\); setDraftValue\(value\)/);
+  assert.match(destination, /onChange\(option\.searchValue\); onSelect\?\.\(option\); requestClose\(\)/);
   assert.match(destination, /showCancelAction=\{false\}/);
   assert.match(destination, /Building2/);
+  assert.match(destination, /className="h-4 w-4" strokeWidth=\{1\.8\}/);
+  assert.doesNotMatch(destination, /footer=/);
   assert.doesNotMatch(destination, /hotelDestinationKindLabels/);
   assert.doesNotMatch(destination, />\s*\{t\("clear"\)\}/);
 });
@@ -112,9 +116,28 @@ test("compact Hotel guest density is scoped to approved mobile integrations", ()
   assert.match(home, /density=\{mobileHomepage \? "compact" : undefined\}/);
   assert.match(
     standalone,
-    /density=\{mobileLandingPresentation \? "compact" : undefined\}/,
+    /density=\{mobileLandingPresentation \|\| mobileResultsSheet \? "compact" : undefined\}/,
   );
   assert.doesNotMatch(standalone, /density="compact"/);
+});
+
+test("Hotel results edit flow uses compact guest spacing and separate rounded field cards", () => {
+  assert.match(
+    standalone,
+    /mobileResultsSheet \? "py-4" : "py-6"/,
+  );
+  assert.match(standalone, /data-hotel-results-edit-fields=/);
+  assert.match(
+    standalone,
+    /className=\{mobileResultsSheet \? "flex flex-col gap-2" : "contents"\}/,
+  );
+  assert.equal(
+    (standalone.match(/min-h-16 rounded-\[12px\] border border-\[#D8E1EC\] bg-white px-4 py-2/g) ?? []).length,
+    3,
+  );
+  assert.match(editStyles, /data-hotel-results-edit-fields[\s\S]*?gap: 10px/);
+  assert.match(editStyles, /data-hotel-mobile-edit-row[\s\S]*?border-radius: 13px/);
+  assert.match(editStyles, /margin: 0 12px 12px/);
 });
 
 test("both mobile Hotel picker shells use the dedicated Guests & Rooms title", () => {

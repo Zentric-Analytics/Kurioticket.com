@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useRef } from "react";
 import { SessionProvider, signOut, useSession } from "next-auth/react";
 import { revokeCurrentAccountSession } from "@/lib/currentSessionRevocation";
+import { AnalyticsConsentBridge } from "@/components/privacy/AnalyticsConsentBridge";
+import { JourneyEventsProvider } from "@/components/privacy/JourneyEventsProvider";
+import { WebsiteOnlinePresence } from "./WebsiteOnlinePresence";
 
 const inactivityTimeoutMs = 15 * 60 * 1000;
 const activityStorageKey = "kurioticket:last-authenticated-activity";
@@ -21,7 +24,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <InactivitySignOut />
-      {children}
+      <WebsiteOnlinePresence />
+      <JourneyEventsProvider>
+        {children}
+        <AnalyticsConsentBridge />
+      </JourneyEventsProvider>
     </SessionProvider>
   );
 }
@@ -53,6 +60,8 @@ function InactivitySignOut() {
       await revokeCurrentAccountSession();
       await signOut({ redirect: false, callbackUrl: "/" });
     } finally {
+      // Discard cached authenticated UI even if session revocation fails.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.assign("/");
     }
   }, [clearInactivityTimer]);

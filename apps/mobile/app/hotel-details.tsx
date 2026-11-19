@@ -1,2 +1,10 @@
-import { ApprovedDetailScreen } from "../src/features/search/ApprovedDetailScreen";
-export default function HotelDetails() { return <ApprovedDetailScreen product="hotel" />; }
+import { HotelDetailsScreen } from "../src/features/search/HotelDetailsScreen";
+import { ProfileThemeProvider } from "../src/theme/AppTheme";
+
+export default function HotelDetails() {
+  return (
+    <ProfileThemeProvider>
+      <HotelDetailsScreen />
+    </ProfileThemeProvider>
+  );
+}

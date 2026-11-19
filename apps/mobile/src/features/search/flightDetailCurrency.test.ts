@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import test from "node:test";
 import { resolveDisplayCurrencyContext, type DisplayPrice } from "../currency/displayCurrency";
 import {
@@ -11,7 +12,8 @@ import {
 const passedNgnFare: DisplayPrice = {
   amount: 92_720,
   currency: "NGN",
-  formatted: "NGN 92,720",
+  formatted: "₦92,720",
+  accessibilityLabel: "92,720 Nigerian nairas",
   providerAmount: 67,
   providerCurrency: "USD",
   converted: true,
@@ -19,7 +21,6 @@ const passedNgnFare: DisplayPrice = {
 const rates = { USD: 1, NGN: 1383.8806, EUR: 0.9 };
 
 test("keeps the Results NGN snapshot when Details location fails with en-US locale", () => {
-  // Automatic location is deliberately absent. A new automatic resolution would be USD.
   const freshResolution = resolveDisplayCurrencyContext({
     preferredCurrency: null,
     ipCountryCode: null,
@@ -32,7 +33,7 @@ test("keeps the Results NGN snapshot when Details location fails with en-US loca
     providerCurrency: "USD",
     preferredCurrency: null,
   }), true);
-  assert.equal(passedNgnFare.formatted, "NGN 92,720");
+  assert.equal(passedNgnFare.formatted, "₦92,720");
   assert.notEqual(passedNgnFare.formatted, "$67");
 });
 
@@ -64,6 +65,7 @@ test("a new explicit USD preference replaces the passed NGN fare", () => {
     amount: 67,
     currency: "USD",
     formatted: "$67",
+    accessibilityLabel: "67 US dollars",
     providerAmount: 67,
     providerCurrency: "USD",
     converted: false,
@@ -103,17 +105,8 @@ test("direct Saved-flight entry resolves Nigeria and explicit EUR normally", () 
   assert.equal(createFlightDetailFare(67, "USD", explicit.resolvedCurrency, rates)?.currency, "EUR");
 });
 
-test("both booking areas use the one shared formatted fare", () => {
-  const detailScreen = readFileSync(new URL("./ApprovedDetailScreen.tsx", import.meta.url).pathname, "utf8");
-  const flightDetail = detailScreen.slice(
-    detailScreen.indexOf("function FlightDetail"),
-    detailScreen.indexOf("function HotelDetail"),
-  );
-  assert.equal(flightDetail.match(/\{formattedFare\}/g)?.length, 2);
-  assert.doesNotMatch(flightDetail, /money\(result\.currency, result\.price\)/);
-});
-
-test("Results uses the collision-safe navigation contract", () => {
-  const resultsScreen = readFileSync(new URL("./ApprovedResultsScreen.tsx", import.meta.url).pathname, "utf8");
-  assert.match(resultsScreen, /params: buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
+test("Results uses the authoritative ID-only navigation contract", () => {
+  const resultsScreen = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
+  assert.match(resultsScreen, /params: buildFlightDetailParams\(\{ searchParams: params, result, requestId \}\)/);
+  assert.doesNotMatch(resultsScreen, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
 });

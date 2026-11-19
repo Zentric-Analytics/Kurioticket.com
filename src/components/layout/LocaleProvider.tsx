@@ -86,7 +86,7 @@ export function LocaleProvider({
     (nextLocale: string) => {
       const normalized = normalizeLanguage(nextLocale);
 
-      if (selectionSource !== "default" || !isPublicLocale(normalized))
+      if (selectionSource === "manual" || !isPublicLocale(normalized))
         return false;
 
       setLocaleState(normalized);

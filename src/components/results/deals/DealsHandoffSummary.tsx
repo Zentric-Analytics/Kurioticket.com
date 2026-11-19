@@ -1,4 +1,4 @@
-type Props = { modeLabel: string; opened: number; total: number; totalLabel: string | null; progressLabel: string; allOpened: boolean; hasExpired: boolean; hasUnavailableAction?: boolean; t: (key: string) => string };
+type Props = { modeLabel: string; opened: number; total: number; progressLabel: string; allOpened: boolean; hasExpired: boolean; hasUnavailableAction?: boolean; t: (key: string) => string };
 
 type OpenLineSide = "left" | "right";
 type OpenLineTurn = "top" | "bottom";
@@ -16,7 +16,7 @@ function OpenSectionLine({ side, turn }: { side: OpenLineSide; turn: OpenLineTur
   </div>;
 }
 
-export function DealsHandoffSummary({ modeLabel, opened, total, totalLabel, progressLabel, allOpened, hasExpired, hasUnavailableAction = false, t }: Props) {
+export function DealsHandoffSummary({ modeLabel, opened, total, progressLabel, allOpened, hasExpired, hasUnavailableAction = false, t }: Props) {
   const percent = total ? Math.round(opened / total * 100) : 0;
   return <aside aria-labelledby="trip-summary-title" className="order-1 min-w-0 xl:order-2 xl:sticky xl:top-24">
     <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-none">
@@ -33,9 +33,7 @@ export function DealsHandoffSummary({ modeLabel, opened, total, totalLabel, prog
       </div>
       <OpenSectionLine side="left" turn="bottom" />
       <div className="p-5 pt-3 sm:p-6 sm:pt-4">
-        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{t("deals.handoff.estimatedCombinedTotal")}</p>
-        <p className="mt-1 break-words text-2xl font-bold tracking-tight tabular-nums text-slate-950" dir="ltr">{totalLabel ?? t("deals.handoff.combinedEstimateUnavailable")}</p>
-        <p className="mt-3 text-sm leading-6 text-slate-600">{t("deals.handoff.estimateDisclosure")}</p>
+        <p className="text-sm leading-6 text-slate-600">Component prices remain separate. No combined package price or discount is claimed.</p>
       </div>
       <OpenSectionLine side="right" turn="top" />
       <div className="space-y-4 p-5 pt-3 sm:p-6 sm:pt-4">

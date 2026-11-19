@@ -19,9 +19,7 @@ import { Logo } from "../../components/Logo";
 import { Screen } from "../../components/Screen";
 import { colors, spacing } from "../../theme/tokens";
 import { writeOnboardingCompleted } from "../../storage/onboardingStorage";
-
-const TERMS_URL = "https://kurioticket.com/terms";
-const PRIVACY_URL = "https://kurioticket.com/privacy";
+import { PRIVACY_URL, TERMS_URL } from "../../config/legalUrls";
 
 type ButtonProps = {
   label: string;

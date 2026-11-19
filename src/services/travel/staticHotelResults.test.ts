@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { buildHotelGalleryCandidates } from "@/components/results/hotelGalleryPresentation";
 import {
+  buildStaticHotelResult,
   buildStaticHotelResults,
   buildStaticHotelRoomOptions,
   buildRelatedStaticHotelResults,
@@ -13,6 +14,8 @@ import {
   staticHotelCatalogue,
   supportedStaticHotelDestinations,
 } from "./staticHotelCatalogue";
+import { hotelDestinations } from "@/data/hotelDestinations";
+import { verifiedHotelCoverageProperties } from "./verifiedHotelCoverage";
 
 const search = {
   destination: "London",
@@ -22,17 +25,48 @@ const search = {
   rooms: 2,
 } as const;
 
+test("canonical autocomplete hotel IDs resolve the same catalogue as legacy IDs", () => {
+  const legacy = searchStaticHotelCatalogue("London", "gb-london");
+  assert.ok(legacy.length > 0);
+  assert.deepEqual(searchStaticHotelCatalogue("Selected destination", "hotel:gb-london"), legacy);
+});
+
 test("static hotel catalogue is authoritative and destination relevant", () => {
-  assert.equal(staticHotelCatalogue.length, 14);
-  assert.deepEqual(
-    [...supportedStaticHotelDestinations],
-    ["London", "Paris", "New York", "Tokyo"],
-  );
+  assert.equal(staticHotelCatalogue.length, 111);
+  assert.equal(supportedStaticHotelDestinations.length, 83);
   assert.ok(
     searchStaticHotelCatalogue("LON").every((hotel) => hotel.city === "London"),
   );
   assert.deepEqual(searchStaticHotelCatalogue("Atlantis"), []);
-  assert.deepEqual(searchStaticHotelCatalogue("Lagos, Nigeria"), []);
+  assert.ok(searchStaticHotelCatalogue("Lagos, Nigeria").length > 0);
+  assert.equal(
+    new Set(staticHotelCatalogue.map((hotel) => hotel.id)).size,
+    staticHotelCatalogue.length,
+  );
+  assert.equal(
+    new Set(staticHotelCatalogue.map((hotel) => hotel.slug)).size,
+    staticHotelCatalogue.length,
+  );
+  assert.ok(staticHotelCatalogue.every((hotel) => hotelDestinations.some((destination) => destination.id === hotel.destinationId)));
+  assert.ok(searchStaticHotelCatalogue("Paris, France", "ae-dubai").every((hotel) => hotel.destinationId === "ae-dubai"));
+});
+
+test("every maintained destination resolves to source-backed Hotel coverage", () => {
+  for (const destination of hotelDestinations) {
+    const results = buildStaticHotelResults({ ...search, destination: destination.searchValue });
+    assert.ok(results.length > 0, destination.id);
+    assert.equal(new Set(results.map((hotel) => hotel.id)).size, results.length, destination.id);
+  }
+  assert.equal(verifiedHotelCoverageProperties.length, 79);
+  assert.ok(verifiedHotelCoverageProperties.every((property) => property.officialSourceUrl.startsWith("http") && property.locationSourceUrl.startsWith("https://www.openstreetmap.org/")));
+});
+
+test("citizenM Paris Gare de Lyon has its complete corrected street address", () => {
+  const citizenM = getStaticHotelById("citizenm-paris-gare-de-lyon");
+  assert.ok(citizenM);
+  assert.equal(citizenM.location, "8 Rue van Gogh, 75012 Paris");
+  assert.equal(citizenM.city, "Paris");
+  assert.equal(citizenM.country, "France");
 });
 
 test("decorated supported destinations resolve only to their catalogue city", () => {
@@ -62,13 +96,30 @@ test("static hotel results are deterministic planning estimates", () => {
   assert.ok(firstHotel?.pricePerNight);
   assert.equal(calculateHotelStayNights(search.checkIn, search.checkOut), 3);
   assert.equal(firstHotel.totalPrice, firstHotel.pricePerNight * 3 * 2);
-  assert.equal(firstHotel.provider, "Kurioticket static catalogue");
+  assert.equal(firstHotel.provider, "Kurioticket catalogue");
   assert.equal(firstHotel.bookingUrl, "");
   assert.equal(firstHotel.partnerRedirectUrl, "");
 });
 
-test("every static hotel supplies a distinct ten-image gallery with its approved lead image", () => {
+test("catalogue results expose only explicitly owned structured card facts", () => {
+  for (const result of buildStaticHotelResults(search)) {
+    assert.ok(result.catalogueProfile, result.id);
+    assert.ok(result.catalogueProfile.propertyType.trim(), result.id);
+    assert.ok(result.catalogueProfile.room.name.trim(), result.id);
+    assert.ok(result.catalogueProfile.room.bedConfiguration.trim(), result.id);
+    assert.deepEqual(result.catalogueProfile.amenities, result.amenities);
+    assert.equal(result.catalogueProfile.cancellationPolicy, undefined);
+    assert.equal(result.catalogueProfile.paymentPolicy, undefined);
+    assert.equal(result.reviewScore, undefined);
+  }
+});
+
+test("every static hotel supplies a deterministic curated lead image and gallery", () => {
   for (const hotel of staticHotelCatalogue) {
+    if (hotel.inventoryKind === "discovery") continue;
+    assert.ok(hotel.imageUrl.trim(), hotel.id);
+    assert.ok(hotel.imageProvenance.trim(), hotel.id);
+    assert.match(hotel.imageUrl, /^https:\/\/images\.unsplash\.com\//, hotel.id);
     assert.equal(hotel.imageUrls.length, 10, hotel.id);
     assert.equal(new Set(hotel.imageUrls).size, 10, hotel.id);
     assert.equal(hotel.imageUrls[0], hotel.imageUrl, hotel.id);
@@ -87,6 +138,7 @@ test("every static hotel supplies a distinct ten-image gallery with its approved
 
 test("every static property has safe, stable multi-room planning options with room-count pricing", () => {
   for (const hotel of staticHotelCatalogue) {
+    if (hotel.inventoryKind === "discovery") continue;
     assert.ok(hotel.roomOptions.length >= 2);
     assert.equal(
       new Set(hotel.roomOptions.map((option) => option.id)).size,
@@ -170,49 +222,101 @@ test("related hotels are same-city, deterministic, capped, and preserve stay pri
   assert.deepEqual(related, buildRelatedStaticHotelResults(parkPlaza, search));
 });
 
-test("every London property has exactly seven unique same-city alternatives", () => {
-  const londonHotels = searchStaticHotelCatalogue("London");
-  assert.ok(londonHotels.length >= 8);
-
-  for (const current of londonHotels) {
-    const related = buildRelatedStaticHotelResults(current, search);
-    assert.equal(related.length, 7, current.id);
-    assert.equal(new Set(related.map((hotel) => hotel.id)).size, 7, current.id);
-    assert.equal(
-      new Set(related.map((hotel) => hotel.name)).size,
-      7,
-      current.id,
-    );
-    assert.ok(
-      related.every((hotel) => hotel.id !== current.id),
-      current.id,
-    );
-    assert.ok(
-      related.every((hotel) => hotel.location.startsWith("London")),
-      current.id,
-    );
-    assert.ok(
-      related.every(
-        (hotel) =>
-          typeof hotel.pricePerNight === "number" &&
-          hotel.totalPrice === hotel.pricePerNight * 3 * 2,
-      ),
-      current.id,
-    );
+test("established multi-property destinations retain seven same-city alternatives", () => {
+  for (const city of ["London", "Paris", "New York", "Tokyo"] as const) {
+    const cityHotels = searchStaticHotelCatalogue(city);
+    assert.ok(cityHotels.length >= 8, city);
+    for (const current of cityHotels) {
+      const citySearch = { ...search, destination: city };
+      const related = buildRelatedStaticHotelResults(current, citySearch);
+      assert.equal(related.length, 7, current.id);
+      assert.equal(
+        new Set(related.map((hotel) => hotel.id)).size,
+        7,
+        current.id,
+      );
+      assert.equal(
+        new Set(related.map((hotel) => hotel.name)).size,
+        7,
+        current.id,
+      );
+      assert.ok(
+        related.every((hotel) => hotel.id !== current.id),
+        current.id,
+      );
+      assert.ok(
+        related.every((hotel) => hotel.location.startsWith(city)),
+        current.id,
+      );
+      assert.ok(
+        related.every((hotel) => hotel.imageUrl?.trim()),
+        current.id,
+      );
+      assert.ok(
+        related.every(
+          (hotel) =>
+            typeof hotel.pricePerNight === "number" &&
+            hotel.totalPrice === hotel.pricePerNight * 3 * 2,
+        ),
+        current.id,
+      );
+      assert.deepEqual(
+        related.map((hotel) => hotel.id),
+        buildRelatedStaticHotelResults(current, citySearch).map(
+          (hotel) => hotel.id,
+        ),
+        current.id,
+      );
+      assert.equal(
+        buildRelatedStaticHotelResults(current, citySearch, 3).length,
+        3,
+        current.id,
+      );
+    }
   }
 });
 
-test("destinations with smaller inventories return available same-city alternatives", () => {
-  const parisHotels = searchStaticHotelCatalogue("Paris");
-  assert.equal(parisHotels.length, 2);
-
-  const related = buildRelatedStaticHotelResults(parisHotels[0]!, {
-    ...search,
-    destination: "Paris",
-  });
-  assert.equal(related.length, 1);
-  assert.equal(related[0]?.id, parisHotels[1]?.id);
-  assert.ok(related.every((hotel) => hotel.location.startsWith("Paris")));
+test("all catalogue facts and coordinates are structurally valid", () => {
+  const coordinates = new Set<string>();
+  for (const hotel of staticHotelCatalogue) {
+    assert.ok(hotel.name.trim() && hotel.location.trim(), hotel.id);
+    assert.ok(
+      supportedStaticHotelDestinations.includes(hotel.city as never),
+      hotel.id,
+    );
+    assert.ok(hotel.country.trim() && hotel.region.trim(), hotel.id);
+    assert.ok(
+      Number.isFinite(hotel.latitude) &&
+        hotel.latitude >= -90 &&
+        hotel.latitude <= 90,
+      hotel.id,
+    );
+    assert.ok(
+      Number.isFinite(hotel.longitude) &&
+        hotel.longitude >= -180 &&
+        hotel.longitude <= 180,
+      hotel.id,
+    );
+    const coordinate = `${hotel.latitude},${hotel.longitude}`;
+    assert.ok(
+      !coordinates.has(coordinate),
+      `duplicate coordinates: ${hotel.id}`,
+    );
+    coordinates.add(coordinate);
+    if (hotel.inventoryKind === "discovery") {
+      assert.equal(hotel.indicativeNightlyPrice, undefined, hotel.id);
+      assert.equal(hotel.classificationStars, undefined, hotel.id);
+      assert.equal(hotel.roomOptions.length, 0, hotel.id);
+      assert.ok(hotel.officialSourceUrl?.startsWith("http"), hotel.id);
+      assert.ok(hotel.locationSourceUrl?.startsWith("https://www.openstreetmap.org/"), hotel.id);
+      const result = buildStaticHotelResult(hotel, search);
+      assert.equal(result.imageUrl, undefined, `${hotel.id}: no implied property photo`);
+      assert.equal(result.imageUrls, undefined, `${hotel.id}: no implied property gallery`);
+    } else {
+      assert.ok((hotel.indicativeNightlyPrice ?? 0) > 0, hotel.id);
+    }
+    assert.equal(hotel.lastReviewed, hotel.lastReviewed.trim(), hotel.id);
+  }
 });
 
 test("new London records retain verified identity and location facts", () => {

@@ -1,5 +1,5 @@
 import { after, NextResponse } from "next/server";
-import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
+import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicFlight } from "@/lib/searchCache";
 import { flightSearchSchema } from "@/lib/validation";
@@ -7,11 +7,15 @@ import { classifyFlights } from "@/lib/travel/searchContract";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { searchFlights } from "@/services/travel/flightAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
+import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
+import { getKayakClientIp } from "@/lib/kayak-client-ip";
+import { logNativeFlightProviderDiagnostics } from "./providerDiagnostics";
+import { resolveSearchRequestId } from "@/lib/search-journey";
 
 export async function POST(request: Request) {
   const routeStartedAt = performance.now();
   let providerStartedAt = routeStartedAt;
-  const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
+  const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("FLIGHT_SEARCH_ENABLED"))) return NextResponse.json({ error: "Flight search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
   const ip = getClientIp(request);
   const rate = checkRateLimit(`flight-search:${ip}`, 35, 60_000);
@@ -25,10 +29,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Search needs a little more detail.", issues: parsed.error.flatten() }, { status: 400 });
   }
 
+  const operationalSession = prepareOperationalSearchSession(request);
+  const operationalQuery = (query: Record<string, unknown>) => ({ ...query, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) });
+  const mobilePlatformHeader = request.headers.get("x-mobile-platform")?.trim().toLowerCase();
+  const mobilePlatform = mobilePlatformHeader === "android" || mobilePlatformHeader === "ios"
+    ? mobilePlatformHeader
+    : null;
+  const kayakClientIp = getKayakClientIp(request);
+  const userAgent = request.headers.get("user-agent") || undefined;
+
   const aggregate = await searchFlights(parsed.data, {
     signal: request.signal,
     requestId,
     onProviderStart: () => { providerStartedAt = performance.now(); },
+    kayak: { clientIp: kayakClientIp, userAgent, signal: request.signal },
+  });
+  logNativeFlightProviderDiagnostics({
+    requestId,
+    mobilePlatform,
+    kayakClientIpPresent: Boolean(kayakClientIp),
+    userAgentPresent: Boolean(userAgent),
+    providerStatuses: aggregate.providerStatuses,
+    finalResults: aggregate.results,
   });
   const performanceMetrics = aggregate.performance!;
   const routeDurationMs = performance.now() - routeStartedAt;
@@ -53,20 +75,31 @@ export async function POST(request: Request) {
     routeDurationMs,
   });
   if (aggregate.unavailableMessage) {
-    after(() => Promise.all(
-      aggregate.providerStatuses.map((provider) =>
-        logProviderCall({
-          provider: provider.provider,
-          service: "flight-search",
-          status:
-            provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
-          latencyMs: provider.latencyMs,
-          errorMessage: provider.error,
-        }),
-      ),
-    ).catch((error) => console.error("[flight-search:logging]", error)));
+    after(async () => {
+      try {
+        const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
+        await Promise.all([
+          logSearchHistory({ ...application,
+            userId, visitorId, requestId, type: "FLIGHT",
+            origin: parsed.data.origin, destination: parsed.data.destination,
+            query: operationalQuery(parsed.data), resultCount: 0, latencyMs: aggregate.latencyMs, status: "FAILED",
+          }),
+          ...aggregate.providerStatuses.map((provider) =>
+            logProviderCall({
+              provider: provider.provider,
+              service: "flight-search",
+              status:
+                provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
+              latencyMs: provider.latencyMs,
+              errorMessage: provider.error,
+              metadata: { ...application, requestId },
+            }),
+          ),
+        ]);
+      } catch (error) { console.error("[flight-search:logging]", error); }
+    });
 
-    return NextResponse.json(
+    return attachOperationalSearchSession(NextResponse.json(
       {
         error: aggregate.unavailableMessage,
         results: [],
@@ -77,7 +110,7 @@ export async function POST(request: Request) {
         requestId,
       },
       { status: 503, headers: { "Server-Timing": serverTiming } },
-    );
+    ), operationalSession);
   }
 
   const publicResults = aggregate.results.map(toPublicFlight);
@@ -86,20 +119,23 @@ export async function POST(request: Request) {
       : "SUCCESS";
 
   after(async () => {
-    const session = (await resolveOptionalWebApiSession())?.session;
+    const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
     return Promise.all([
-    logSearchHistory({
-      userId: session?.user?.id,
+    logSearchHistory({ ...application,
+      userId,
+      visitorId,
+      requestId,
       type: "FLIGHT",
       origin: parsed.data.origin,
       destination: parsed.data.destination,
-      query: parsed.data,
+      query: operationalQuery(parsed.data),
       resultCount: publicResults.length,
       latencyMs: aggregate.latencyMs,
       status,
     }),
-    trackAnalyticsEvent({
-      userId: session?.user?.id,
+    trackAnalyticsEvent({ ...application,
+      userId,
+      visitorId,
       type: "SEARCH",
       name: "flight_search",
       metadata: {
@@ -118,16 +154,38 @@ export async function POST(request: Request) {
           provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
         latencyMs: provider.latencyMs,
         errorMessage: provider.error,
+        metadata: { ...application, requestId },
       }),
     ),
     ]).catch((error) => console.error("[flight-search:logging]", error));
   });
 
-  return NextResponse.json({
+  const responseBody = {
     ...classifyFlights(publicResults, parsed.data, aggregate.warnings, requestId),
     resultsCacheValidForMs: aggregate.resultsCacheValidForMs,
     resultsCacheValidUntil: aggregate.resultsCacheValidUntil,
     latencyMs: aggregate.latencyMs,
     performance: { ...performanceMetrics, beforeProviderMs, routeDurationMs },
-  }, { headers: { "Server-Timing": serverTiming } });
+  };
+  // This is the response's required serialization, not a diagnostics-only copy.
+  // Supplying its byte length lets native clients diagnose pressure without
+  // retaining a second complete JSON string after parsing.
+  const serializedResponse = JSON.stringify(responseBody);
+  const responseBytes = Buffer.byteLength(serializedResponse);
+  const legCount = publicResults.reduce((count, result) => count + (result.legs?.length ?? 0), 0);
+  const segmentCount = publicResults.reduce((count, result) => count + (result.legs?.reduce((sum, leg) => sum + leg.segments.length, 0) ?? 0), 0);
+  console.info("[flight-search:response-pressure]", {
+    requestId,
+    resultCount: publicResults.length,
+    responseBytes,
+    legCount,
+    segmentCount,
+  });
+  return attachOperationalSearchSession(new Response(serializedResponse, {
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Content-Length": String(responseBytes),
+      "Server-Timing": serverTiming,
+    },
+  }), operationalSession);
 }

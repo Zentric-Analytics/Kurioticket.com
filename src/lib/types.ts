@@ -6,6 +6,8 @@ export type FlightSearchLeg = {
   origin: string;
   destination: string;
   departureDate: string;
+  originLocation?: import("./locations/searchTarget").SearchLocation;
+  destinationLocation?: import("./locations/searchTarget").SearchLocation;
 };
 
 export type FlightSearchParams = {
@@ -23,15 +25,21 @@ export type FlightSearchParams = {
   cabinClass: CabinClass;
   sort?: SortMode;
   currency?: string;
+  originLocation?: import("./locations/searchTarget").SearchLocation;
+  destinationLocation?: import("./locations/searchTarget").SearchLocation;
 };
 
 export type HotelSearchParams = {
+  destinationId?: string;
   destination: string;
   checkIn: string;
   checkOut: string;
   guests: number;
+  adults?: number;
+  children?: number;
   rooms: number;
   sort?: "cheapest" | "best" | "rating" | "location";
+  destinationLocation?: import("./locations/searchTarget").SearchLocation;
 };
 
 export type Layover = {
@@ -46,6 +54,7 @@ export type FlightSegment = {
   departureTime: string;
   arrivalTime: string;
   airlineName?: string;
+  airlineLogo?: string | null;
   flightNumber?: string;
   originDetails?: FlightAirportDetails;
   destinationDetails?: FlightAirportDetails;
@@ -88,7 +97,18 @@ export type FlightCabinAmenities = {
   power?: { state: FlightProviderState };
   seat?: { type?: string; pitch?: string; legroom?: string };
 };
+export type FlightOnboardFeature = {
+  kind: "seat" | "power" | "entertainment" | "meal" | "wifi" | "overnight";
+  description: string;
+};
+export type FlightAirlineBaggagePolicy = {
+  carrierName: string;
+  carrierCode?: string;
+  carryOn?: string[];
+  checked?: string[];
+};
 export type FlightCabinDetails = {
+  onboardFeatures?: FlightOnboardFeature[];
   cabinClass?: string;
   cabinMarketingName?: string;
   fareBrandName?: string;
@@ -105,11 +125,9 @@ export type FlightProviderCondition = {
   penaltyCurrency?: string;
 };
 
-export type FlightOptionalService = {
+type FlightOptionalServiceScope = {
   type: string;
   description: string;
-  price: number;
-  currency: string;
   maximumQuantity?: number;
   travelerCount?: number;
   journeyContext?: string;
@@ -117,8 +135,14 @@ export type FlightOptionalService = {
   pricedPerTraveler?: boolean;
 };
 
-/** Deliberately normalized provider-authored customer facts; never raw Duffel data. */
+export type FlightOptionalService = FlightOptionalServiceScope & (
+  | { price: number; currency: string; pricing?: "exact" }
+  | { pricing: "fee-unspecified"; price?: never; currency?: never }
+);
+
+/** Deliberately normalized provider-authored customer facts; never raw provider data. */
 export type FlightProviderDetails = {
+  airlineBaggagePolicies?: FlightAirlineBaggagePolicy[];
   offerOwner?: {
     name: string;
     iataCode?: string;
@@ -168,6 +192,10 @@ export type FlightFareTerm = {
 export type NormalizedFlightResult = {
   id: string;
   provider: string;
+  /** Provider-supplied booking seller used only for customer-facing deal presentation. */
+  bookingProviderName?: string;
+  /** Provider-supplied booking seller logo. Never synthesize or infer this asset. */
+  bookingProviderLogoUrl?: string;
   airlineName: string;
   airlineLogo?: string | null;
   flightNumber?: string;
@@ -242,8 +270,11 @@ type HotelInventoryDiscovery = {
 type HotelInventory = HotelInventoryBookable | HotelInventoryDiscovery;
 
 type NormalizedHotelBase = {
+  propertyGroupId?: string;
   id: string;
   provider: string;
+  bookingProviderName?: string;
+  providerLogoUrl?: string;
   name: string;
   imageUrl?: string;
   imageUrls?: string[];
@@ -254,6 +285,8 @@ type NormalizedHotelBase = {
   reviewScale?: HotelReviewScale;
   reviewCount?: number;
   reviewSource?: string;
+  /** Exact supplier-authored review description; never inferred from score bands. */
+  reviewSentiment?: string;
   neighbourhood?: string;
   location: string;
   distanceFromCenter?: string;
@@ -271,11 +304,15 @@ type NormalizedHotelBase = {
   sourceUrl?: string;
   sourceAttributions?: HotelSourceAttribution[];
   rawProviderReference?: unknown;
+  catalogueProfile?: HotelCatalogueProfile;
 };
 
 type PublicHotelBase = {
+  propertyGroupId?: string;
   id: string;
   provider: string;
+  bookingProviderName?: string;
+  providerLogoUrl?: string;
   name: string;
   imageUrl?: string;
   imageUrls?: string[];
@@ -286,6 +323,8 @@ type PublicHotelBase = {
   reviewScale?: HotelReviewScale;
   reviewCount?: number;
   reviewSource?: string;
+  /** Exact supplier-authored review description; never inferred from score bands. */
+  reviewSentiment?: string;
   neighbourhood?: string;
   location: string;
   distanceFromCenter?: string;
@@ -302,6 +341,29 @@ type PublicHotelBase = {
   badges: string[];
   sourceUrl?: string;
   sourceAttributions?: HotelSourceAttribution[];
+  catalogueProfile?: HotelCatalogueProfile;
+};
+
+export type HotelCatalogueProfile = {
+  propertyType: string;
+  neighbourhood?: string;
+  coordinates?: { latitude: number; longitude: number };
+  amenities: string[];
+  accessibilityFeatures: string[];
+  room: {
+    name: string;
+    bedConfiguration: string;
+    capacity?: { adults: number; children?: number };
+  };
+  mealPlan?: string;
+  cancellationPolicy?: string;
+  paymentPolicy?: string;
+  checkIn?: string;
+  checkOut?: string;
+  houseRules?: string[];
+  brand?: string;
+  sustainabilityFeatures?: string[];
+  travellerFeatures?: string[];
 };
 
 export type NormalizedHotelResult = NormalizedHotelBase & HotelInventory;
@@ -310,12 +372,19 @@ export type PublicHotelResult = PublicHotelBase & HotelInventory;
 
 export type PublicHotelPropertyDetails = {
   description: string;
+  propertyType?: string;
   latitude: number;
   longitude: number;
   streetAddress: string;
   city: string;
   country: string;
   neighbourhood: string;
+  roomSummary?: string;
+  bedSummary?: string;
+  interestTags?: string[];
+  familySuitable?: boolean;
+  businessSuitable?: boolean;
+  accessibility?: string[];
 };
 
 export type ProviderErrorCategory =
@@ -327,7 +396,10 @@ export type ProviderErrorCategory =
   | "server"
   | "invalid_response"
   | "failed"
-  | "skipped";
+  | "skipped"
+  | "unsupported_location"
+    | "unsupported_search"
+  | "invalid_search";
 
 export type ProviderErrorReason =
   | "provider_no_inventory"
@@ -338,7 +410,10 @@ export type ProviderErrorReason =
   | "provider_server_error"
   | "provider_invalid_response"
   | "provider_failed"
-  | "provider_skipped";
+  | "provider_skipped"
+  | "unsupported_location"
+    | "unsupported_search"
+  | "pickup_time_past";
 
 export type ProviderResult<T> = {
   provider: string;

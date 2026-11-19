@@ -20,7 +20,8 @@ test("guided Review replaces the placeholder and keeps shell-owned page structur
 test("guided Review uses safe internal builders and no provider exits or writes", () => {
   assert.match(presentation, /getIncludedProductList/);
   assert.match(presentation, /buildDealsJourneyUrl/);
-  assert.match(stage, /getDealsTripPlanEstimatedTotal/);
+  assert.doesNotMatch(stage + summary, /getDealsTripPlanEstimatedTotal|estimatedTotal|Estimated trip total/);
+  assert.match(summary, /Review coordinated options/);
   assert.match(stage + card, /formatDisplayPrice/);
   assert.match(presentation + stage, /isDealsTripPlanProductExpired|getDealsReviewStatus/);
   assert.doesNotMatch(stage + card + summary + presentation, /bookingUrl|partnerRedirectUrl|buildDealsInternalRedirectHref|getNextDealsProviderStep|markDealsProviderOpened|writeDealsTripPlan|target="_blank"|rel="noopener noreferrer"|\/api\/redirect|window\.open|location\.assign|location\.replace/);

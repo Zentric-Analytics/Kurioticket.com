@@ -1,0 +1,534 @@
+[
+  {
+    "path": "src/app/admin/confirmed-trips/alerts/page.test.ts",
+    "hunks": 2,
+    "resolution": "Adapt source-aware no-telemetry assertion while retaining actual section ID/accessibility/no-collapsed-details requirement.",
+    "choices": [
+      "theirs",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/app/admin/confirmed-trips/records/page.test.ts",
+    "hunks": 1,
+    "resolution": "Combine read-only embedded directory and newer Trip workspace navigation assertions.",
+    "choices": [
+      "combine"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/app/admin/flight-status/page.test.ts",
+    "hunks": 5,
+    "resolution": "Preserve signed-confirmation eligibility, read-only controls and per-section unknown/empty state assertions. New monitoring component source retained; focused tests pass.",
+    "choices": [
+      "ours",
+      "ours",
+      "ours",
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/app/admin/logs/page.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/app/admin/settings/page.test.ts",
+    "hunks": 3,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours",
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/app/api/admin/notifications/route.test.ts",
+    "hunks": 3,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours",
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/app/api/cars/search/route.test.ts",
+    "hunks": 2,
+    "resolution": "Retain once-only session preparation/attachment, request identity, consent and secret-leak guards. Add real applicationMetadata adapter and WEB attribution assertions. Fix integrated route to memoize deferred request identity for history and provider diagnostics.",
+    "choices": [
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/app/api/mobile/v1/price-alerts/route.test.ts",
+    "hunks": 1,
+    "resolution": "Keep full native tracking create/pause/reactivate/conflict-canonicalization/401/offline/duplicate-write behavior tests over weaker empty replacement.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/admin/ActivityFiltersBar.tsx",
+    "hunks": 1,
+    "resolution": "Retain explicit value-based scope and debounce cancellation; equivalent newer JSON key does not add behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing mounted state/feature browser regressions, changed-code lint and final production build.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/admin/AdminAuditLogsToolbar.tsx",
+    "hunks": 1,
+    "resolution": "Retain separate date/search scopes and guarded draft hydration; keep newer source-aware navigation outside conflict.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing mounted state/feature browser regressions, changed-code lint and final production build.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/admin/AdminDirectorySelect.tsx",
+    "hunks": 1,
+    "resolution": "Use combined value/disabled scope to reset selection and close menu on either change, preserving native fallback.",
+    "choices": [
+      "theirs"
+    ],
+    "verification": "Passing mounted state/feature browser regressions, changed-code lint and final production build.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/admin/AdminHorizontalShell.navigation.test.ts",
+    "hunks": 3,
+    "resolution": "Keep rendered active-link/ARIA/current-page, source-structure ownership and nested Settings whitespace assertions; retain newer platform workspace implementation.",
+    "choices": [
+      "ours",
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/admin/AdminOverviewControls.tsx",
+    "hunks": 1,
+    "resolution": "Retain accepted-range clearing plus newer pending-ref cleanup; retain navigation failure recovery.",
+    "choices": [
+      "theirs"
+    ],
+    "verification": "Passing mounted state/feature browser regressions, changed-code lint and final production build.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/admin/ConfirmedTripRecordsTable.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/admin/ConfirmedTripsBreakdowns.test.ts",
+    "hunks": 1,
+    "resolution": "Retain section accessibility ownership and explicit newer empty-state copy.",
+    "choices": [
+      "combine"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/admin/ContentDirectoryToolbar.tsx",
+    "hunks": 2,
+    "resolution": "Retain URLSearchParams accumulation and overview provenance; combine newer stable href callback.",
+    "choices": [
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing mounted state/feature browser regressions, changed-code lint and final production build.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/admin/FeatureControlsPanel.tsx",
+    "hunks": 1,
+    "resolution": "Retain server scope snapshot and stale confirmation/permission guards; do not reinstate obsolete setControls API.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing mounted state/feature browser regressions, changed-code lint and final production build.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/admin/ProviderHealthWindowFilter.tsx",
+    "hunks": 1,
+    "resolution": "Retain value-based date scope; equivalent newer implementation adds no behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing mounted state/feature browser regressions, changed-code lint and final production build.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/admin/RecentConfirmedTripTable.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/admin/SearchMonitorSelect.tsx",
+    "hunks": 2,
+    "resolution": "Retain value-based menu/input hydration and close semantics; equivalent newer implementation.",
+    "choices": [
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing mounted state/feature browser regressions, changed-code lint and final production build.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/admin/SupportTicketActions.tsx",
+    "hunks": 1,
+    "resolution": "Combine ticket identity/status scope with newer stale feedback reset to avoid carrying state across tickets.",
+    "choices": [
+      "theirs"
+    ],
+    "verification": "Passing mounted state/feature browser regressions, changed-code lint and final production build.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/layout/AppHeader.mobileNavigation.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/CarResultCard.test.ts",
+    "hunks": 2,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/CarsResultsMobileParity.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/carPriceAlertControl.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/carsFilterResultsTransition.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/carsResultsAlertSummaryPresentation.test.ts",
+    "hunks": 4,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours",
+      "ours",
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/carsResultsDesktopSurfaceParity.test.ts",
+    "hunks": 3,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours",
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/carsResultsDesktopTypography.test.ts",
+    "hunks": 3,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours",
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/carsResultsDesktopTypographyPolish.test.ts",
+    "hunks": 2,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/carsResultsStickySearch.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/desktopFlightMobileParityPort.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/flightDesktopFiltersLayout.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/flightResultsCompactToolbar.test.ts",
+    "hunks": 2,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/flightResultsHotelDesktopChrome.test.ts",
+    "hunks": 1,
+    "resolution": "Retain preparing-state desktop header owner assertion; correct auto-merged contradictory nearby-fare check to mobile rail before alert and no desktop rail.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/hotelMobileResultsNavEditIcon.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/hotelProviderFlowConsolidation.test.ts",
+    "hunks": 1,
+    "resolution": "Keep AST/executable provider currency isolation assertion; adapt to newer copy-then-delete implementation, assert deletion precedes provider call and original display currency is preserved.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/nearbyFarePrice.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/results/supplierInformation.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/search/__tests__/SearchTabs.sharedFlightForm.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/components/ui/CarCardSkeleton.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/lib/__tests__/language.test.ts",
+    "hunks": 5,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours",
+      "ours",
+      "ours",
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/lib/adminSupportInboxNavigation.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/services/adminAlertServiceExpansion.test.ts",
+    "hunks": 2,
+    "resolution": "Keep typed transactional audit fixture and exact database identity/occurrence tests; reconcile newer fixture names without unsafe casts.",
+    "choices": [
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/services/adminExpandedAlertOccurrences.test.ts",
+    "hunks": 2,
+    "resolution": "Keep typed advisory-lock transaction fixture, incident recurrence and escalation tests; reconcile transaction variable name/type without circular annotation.",
+    "choices": [
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/services/adminExpandedAlertReader.test.ts",
+    "hunks": 3,
+    "resolution": "Keep discriminated query fixture and authoritative environment/window/invalid-count tests; remove duplicate types introduced by automatic merge.",
+    "choices": [
+      "ours",
+      "ours",
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "src/services/homepageFareSnapshotCoverage.test.ts",
+    "hunks": 1,
+    "resolution": "Retain executable/AST, typed fixture, privacy and scoped mutation assertions over weaker source regex or removed assertions; newer non-conflicting tests remain. Verify against integrated behavior.",
+    "choices": [
+      "ours"
+    ],
+    "verification": "Passing focused (582) and final web (5,225) regression suites; no removed security/privacy behavior assertions.",
+    "status": "resolved"
+  },
+  {
+    "path": "package.json",
+    "resolution": "Adopt newer Next/eslint-config-next patch range; retain stronger existing FTP/sharp and transitive overrides.",
+    "verification": "Clean npm ci and npm ls; root audit0, native13low/0moderate-high-critical; native dependency probes, typecheck and offline iOS/Android exports pass.",
+    "status": "resolved"
+  },
+  {
+    "path": "apps/mobile/package.json",
+    "resolution": "Retain Metro0.83.8/Expo/query-string9.5.1/UUID/glob protections. Add PostCSS8.5.33, scoped registry decoder0.5.1 for modern query-string, and transitive React DOM19.1.0 override matching Expo. Preserve vendored decoder for direct legacy compatibility checks. No direct React DOM or web target. Metro0.83.8 internal parser supersedes unused image-size backport resolution; security probes exercise actual Metro parser.",
+    "verification": "Clean npm ci and npm ls; root audit0, native13low/0moderate-high-critical; native dependency probes, typecheck and offline iOS/Android exports pass.",
+    "status": "resolved"
+  },
+  {
+    "path": "apps/mobile/src/storage/sessionEvents.ts",
+    "resolution": "Combine recovery deadline metadata with monotonically increasing session revision and subscription semantics. No token or recovery-policy weakening.",
+    "verification": "Passing added recovery/revision and slow-storage account-switch checks, final native suite (2,403) and native typecheck.",
+    "status": "resolved"
+  },
+  {
+    "path": "package-lock.json",
+    "resolution": "Regenerated using reconciled manifest; clean npm ci and npm ls pass. Next/eslint-config-next resolve 16.4.6; root audit zero.",
+    "verification": "Clean npm ci and npm ls; root audit0, native13low/0moderate-high-critical; native dependency probes, typecheck and offline iOS/Android exports pass.",
+    "status": "resolved"
+  },
+  {
+    "path": "apps/mobile/package-lock.json",
+    "resolution": "Initial preserved lock seed contained stale registry metadata and empty decoder entries. Regenerated in clean scratch directory with retained overrides; clean npm ci/npm ls/typecheck pass. Within-range patches include Expo54.0.38; React19.1.0/RN0.81.5 retained. Review lock delta; native fingerprints invalidated.",
+    "verification": "Clean npm ci and npm ls; root audit0, native13low/0moderate-high-critical; native dependency probes, typecheck and offline iOS/Android exports pass.",
+    "status": "resolved"
+  }
+]

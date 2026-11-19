@@ -1,0 +1,274 @@
+"use client";
+
+import * as React from "react";
+import { Check } from "lucide-react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+
+export type SearchMonitorOption = { value: string; label: string; shortLabel?: string; disabled?: boolean; description?: string };
+
+export function SearchMonitorSelect({
+  label,
+  name,
+  value,
+  options,
+  appearance = "underlined",
+  align = "start",
+  autoSubmit = false,
+  clearFieldNamesOnChange = [],
+  truncateLabel = false,
+  disabled = false,
+  onValueChange,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  options: readonly SearchMonitorOption[];
+  appearance?: "underlined" | "plain" | "boxed" | "fare";
+  align?: "start" | "end";
+  autoSubmit?: boolean;
+  /** Omit a stale scoped field from submission when this filter changes. */
+  clearFieldNamesOnChange?: readonly string[];
+  truncateLabel?: boolean;
+  disabled?: boolean;
+  onValueChange?: (value: string) => void;
+}) {
+  const id = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const hiddenRef = useRef<HTMLInputElement>(null);
+  const [selected, setSelected] = useState(value);
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const selectedIndex = Math.max(0, options.findIndex((option) => option.value === selected));
+  const selectedLabel = options[selectedIndex]?.label ?? "";
+  const nextEnabledIndex = (start: number, direction: 1 | -1) => {
+    for (let step = 1; step <= options.length; step++) {
+      const index = (start + direction * step + options.length * (step + 1)) % options.length;
+      if (!options[index].disabled) return index;
+    }
+    return start;
+  };
+  const triggerLabel = appearance === "boxed" ? options[selectedIndex]?.shortLabel ?? selectedLabel : selectedLabel;
+
+  const [previousValue, setPreviousValue] = useState(value);
+  if (previousValue !== value) {
+    setPreviousValue(value);
+    setSelected(value);
+    setOpen(false);
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    listRef.current?.focus({ preventScroll: true });
+    const dismiss = (event: PointerEvent) => {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false);
+    };
+    const dismissFocus = (event: FocusEvent) => {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", dismiss);
+    document.addEventListener("focusin", dismissFocus);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      document.removeEventListener("focusin", dismissFocus);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    // Scroll only within the popup. scrollIntoView also scrolls ancestor containers,
+    // which can horizontally shift the entire admin page on open.
+    const list = listRef.current;
+    const option = list?.querySelectorAll<HTMLElement>('[role="option"]')[activeIndex];
+    if (!list || !option) return;
+    if (option.offsetTop < list.scrollTop) list.scrollTop = option.offsetTop;
+    else if (option.offsetTop + option.offsetHeight > list.scrollTop + list.clientHeight)
+      list.scrollTop = option.offsetTop + option.offsetHeight - list.clientHeight;
+  }, [activeIndex, open]);
+
+  const close = (restoreFocus = true) => {
+    setOpen(false);
+    if (restoreFocus) triggerRef.current?.focus({ preventScroll: true });
+  };
+  const show = (index: number) => {
+    setActiveIndex(index);
+    setOpen(true);
+  };
+  const choose = (next: string) => {
+    if (!options.some((option) => option.value === next && !option.disabled)) return;
+    const changed = next !== selected;
+    if (changed) {
+      // A different identity must not carry the former customer's userId or
+      // visitorId into a new query. Disabling these existing hidden fields
+      // removes them from FormData immediately, before React commits state.
+      const form = triggerRef.current?.form;
+      for (const fieldName of clearFieldNamesOnChange) {
+        const field = form?.elements.namedItem(fieldName);
+        if (field instanceof HTMLInputElement && field.type === "hidden") {
+          field.disabled = true;
+        }
+      }
+    }
+    setSelected(next);
+    close();
+    if (changed && onValueChange) onValueChange(next);
+    if (autoSubmit && changed) {
+      // Request submission only after writing the selected value into the real
+      // hidden form control: React state does not commit synchronously.
+      if (hiddenRef.current) {
+        hiddenRef.current.value = next;
+        hiddenRef.current.name = next ? name : "";
+      }
+      triggerRef.current?.form?.requestSubmit();
+    }
+  };
+
+  const handleListKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    switch (event.key) {
+      case "ArrowDown":
+        event.preventDefault();
+        setActiveIndex((current) => nextEnabledIndex(current, 1));
+        break;
+      case "ArrowUp":
+        event.preventDefault();
+        setActiveIndex((current) => nextEnabledIndex(current, -1));
+        break;
+      case "Home":
+        event.preventDefault();
+        setActiveIndex(options.findIndex(option => !option.disabled) >= 0 ? options.findIndex(option => !option.disabled) : 0);
+        break;
+      case "End":
+        event.preventDefault();
+        setActiveIndex(options.findLastIndex(option => !option.disabled) >= 0 ? options.findLastIndex(option => !option.disabled) : 0);
+        break;
+      case "Enter":
+      case " ":
+        event.preventDefault();
+        choose(options[activeIndex].value);
+        break;
+      case "Escape":
+        event.preventDefault();
+        close();
+        break;
+      case "Tab":
+        close(false);
+        break;
+      default:
+        if (event.key.length === 1 && !event.altKey && !event.ctrlKey && !event.metaKey) {
+          const letter = event.key.toLocaleLowerCase();
+          const next = options.findIndex((option, index) => !option.disabled && index > activeIndex && option.label.toLocaleLowerCase().startsWith(letter));
+          const wrapped = options.findIndex((option) => !option.disabled && option.label.toLocaleLowerCase().startsWith(letter));
+          if (next >= 0 || wrapped >= 0) setActiveIndex(next >= 0 ? next : wrapped);
+        }
+    }
+  };
+
+  return (
+    <div ref={rootRef} className={"relative min-w-0 " + (appearance === "plain" ? "inline-flex shrink-0" : "block w-full")}>
+      <input
+        ref={hiddenRef}
+        type="hidden"
+        name={!disabled && selected ? name : undefined}
+        value={selected}
+        readOnly
+      />
+      <button
+        ref={triggerRef}
+        type="button"
+        disabled={disabled}
+        aria-label={label + ": " + selectedLabel}
+        title={truncateLabel ? selectedLabel : undefined}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={open ? id : undefined}
+        onClick={() => open ? close() : show(selectedIndex)}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            show(selectedIndex);
+          }
+        }}
+        className={
+          "inline-flex min-w-0 items-center justify-start gap-2 whitespace-nowrap text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " + (appearance === "fare" ? "h-10 " : "h-9 ") +
+          (disabled ? "cursor-not-allowed text-slate-500 opacity-75 " : "cursor-pointer text-[#475569] hover:text-[#111827] ") +
+          (appearance === "plain"
+            ? "bg-transparent px-0 text-[13px] font-semibold"
+            : appearance === "boxed"
+              ? "w-full max-w-full rounded-lg border border-slate-200 bg-white px-2 text-[11px] font-medium focus-visible:border-indigo-500 2xl:text-xs"
+              : appearance === "fare"
+                ? "w-full max-w-full rounded-md border border-[#CBD5E1] bg-white px-3 text-[13px] font-medium text-[#020617] hover:border-[#94A3B8] focus-visible:border-[#004BB8]"
+                : "w-full border-b border-[#AEB8C6] bg-transparent px-0 text-[13px] font-semibold focus-visible:border-[#004BB8]")
+        }
+      >
+        <span className={truncateLabel ? "min-w-0 flex-1 truncate" : "whitespace-nowrap"}>{triggerLabel}</span>
+        <svg aria-hidden="true" viewBox="0 0 8 5" className="mt-px h-[5px] w-[8px] shrink-0" fill="currentColor">
+          <path d="M0 0h8L4 5z" />
+        </svg>
+      </button>
+      {open ? (
+        <div
+          id={id}
+          ref={listRef}
+          role="listbox"
+          aria-label={label}
+          aria-activedescendant={id + "-option-" + activeIndex}
+          tabIndex={-1}
+          onKeyDown={handleListKeyDown}
+          className={
+            "absolute top-full z-50 mt-1.5 max-h-64 min-w-[160px] max-w-[min(90vw,280px)] overflow-y-auto rounded-lg border border-[#D8E1EC] bg-white p-1.5 shadow-[0_10px_28px_-12px_rgba(2,6,23,0.25)] outline-none " +
+            (align === "end" ? "right-0" : "left-0")
+          }
+        >
+          {options.map((option, index) => (
+            <button
+              key={option.value}
+              id={id + "-option-" + index}
+              type="button"
+              role="option"
+              tabIndex={-1}
+              aria-selected={selected === option.value}
+              aria-disabled={option.disabled || undefined}
+              disabled={option.disabled}
+              onMouseEnter={() => { if (!option.disabled) setActiveIndex(index); }}
+              onClick={() => choose(option.value)}
+              className={
+                "flex min-h-9 w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-[13px] transition-colors " +
+                (option.disabled ? "cursor-not-allowed text-slate-400" : "cursor-pointer ") +
+                (!option.disabled && index === activeIndex ? "bg-[#F1F7FF]" : !option.disabled ? "hover:bg-[#F8FAFC]" : "") +
+                (option.disabled ? "" : selected === option.value ? " font-semibold text-[#004BB8]" : " font-normal text-[#1A1A1A]")
+              }
+            >
+              <span className={truncateLabel ? "min-w-0 whitespace-normal break-words" : "whitespace-nowrap"}>{option.label}</span>
+              {option.disabled && option.description ? <span className="shrink-0 text-[10px] font-medium text-slate-400">{option.description}</span> : null}
+              {selected === option.value ? <Check aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[#004BB8]" /> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function SearchMonitorProviderInput({ value }: { value: string }) {
+  const [provider, setProvider] = useState(value);
+
+  const [previousValue, setPreviousValue] = useState(value);
+  if (previousValue !== value) {
+    setPreviousValue(value);
+    setProvider(value);
+  }
+
+  return (
+    <input
+      type="text"
+      aria-label="Provider"
+      name={provider.trim() ? "provider" : undefined}
+      value={provider}
+      onChange={(event) => setProvider(event.target.value)}
+      placeholder="Provider"
+      autoComplete="off"
+      className="h-9 w-full min-w-0 border-0 border-b border-[#AEB8C6] bg-transparent px-0 text-[12px] font-medium text-[#475569] outline-none placeholder:text-[#9CA3AF] focus:border-[#004BB8] focus:ring-0"
+    />
+  );
+}

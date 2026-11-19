@@ -1,6 +1,7 @@
 import {
   AirVent,
   Armchair,
+  BatteryCharging,
   Bike,
   BusFront,
   CircleDot,
@@ -12,11 +13,13 @@ import {
   Dumbbell,
   Flower2,
   Laptop,
+  PawPrint,
   Trees,
   UtensilsCrossed,
   VolumeX,
   Waves,
   Wifi,
+  Wine,
   type LucideIcon,
 } from "lucide-react";
 import type {
@@ -31,6 +34,8 @@ const hotelAmenityIcons: Record<HotelAmenityIconKey, LucideIcon> = {
   spa: Flower2,
   airportShuttle: BusFront,
   parking: CircleParking,
+  petFriendly: PawPrint,
+  evCharging: BatteryCharging,
   fitness: Dumbbell,
   workspace: Laptop,
   quietRooms: VolumeX,
@@ -41,6 +46,7 @@ const hotelAmenityIcons: Record<HotelAmenityIconKey, LucideIcon> = {
   courtyard: Trees,
   lounge: Armchair,
   restaurant: UtensilsCrossed,
+  bar: Wine,
   airConditioning: AirVent,
   generic: CircleDot,
 };

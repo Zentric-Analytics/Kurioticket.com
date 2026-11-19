@@ -20,6 +20,19 @@ Static hotel prices are planning estimates. No live room availability, cancellat
 
 Web, mobile web, and Android all call the shared Kurioticket endpoints and consume the same normalized contract. Clients render server-owned capabilities and do not choose hotel sources.
 
+The server owns result eligibility, inventory classification, provider policy, and
+handoff actions. Client checks are limited to malformed transport data, unsafe URLs,
+unsafe image locations, and impossible render states. No client may independently
+redefine canonical travel result eligibility. If a canonical response contains
+results but a client cannot safely render any of them, that is a contract error—not
+a genuine empty search—and must be surfaced diagnostically.
+
+Future providers enter the platform before the canonical API boundary:
+
+`provider adapter -> normalization -> aggregator -> classification -> canonical API -> web + mobile`
+
+Mobile must not integrate a travel provider directly.
+
 ## Environment contract
 
 Duffel is the only travel provider requiring inventory credentials. Static hotels and cars require none. Scheduled jobs retain independent server-only secrets.

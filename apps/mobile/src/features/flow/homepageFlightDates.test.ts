@@ -14,18 +14,18 @@ import {
 const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 const today = new Date(2026, 7, 1, 12);
 
-test("fresh homepage dates are empty with manual-selection placeholders for every user", () => {
+test("fresh homepage dates are empty with a manual-selection placeholder for every user", () => {
   const home = source("src/features/flow/HomeFlowScreen.tsx");
   const panel = source("src/features/flow/FlightSearchPanel.tsx");
   const fresh = initializeFlightForm({}, today).form;
 
-  assert.match(home, /<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker \/>/);
+  assert.match(home, /<FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker \/>/);
   assert.doesNotMatch(home, /initializeHomepageDates/);
   assert.doesNotMatch(home, /isAuthenticated\s*\?[^:]*FlightSearchPanel/s);
   assert.equal(fresh.departureDate, "");
   assert.equal(fresh.returnDate, "");
-  assert.match(panel, /"Select departure date"/);
-  assert.match(panel, /"Select return date"/);
+  assert.match(panel, /: "Travel dates";/);
+  assert.doesNotMatch(panel, /"Select (?:departure|return) date"/);
 });
 
 test("homepage departure selection preserves a valid return and clears an invalid return", () => {

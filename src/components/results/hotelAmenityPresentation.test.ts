@@ -13,6 +13,8 @@ const supportedIconKeys = new Set<HotelAmenityIconKey>([
   "spa",
   "airportShuttle",
   "parking",
+  "petFriendly",
+  "evCharging",
   "fitness",
   "workspace",
   "quietRooms",
@@ -23,6 +25,7 @@ const supportedIconKeys = new Set<HotelAmenityIconKey>([
   "courtyard",
   "lounge",
   "restaurant",
+  "bar",
   "airConditioning",
   "generic",
 ]);
@@ -96,6 +99,10 @@ test("Parking maps to parking", () =>
     buildHotelAmenityPresentation(["Parking"])[0]?.iconKey,
     "parking",
   ));
+test("pet and EV aliases map to canonical amenities", () => {
+  assert.equal(buildHotelAmenityPresentation(["Pets allowed"])[0]?.iconKey, "petFriendly");
+  assert.equal(buildHotelAmenityPresentation(["Electric vehicle charging"])[0]?.iconKey, "evCharging");
+});
 test("Fitness room maps to fitness", () =>
   assert.equal(
     buildHotelAmenityPresentation(["Fitness room"])[0]?.iconKey,
@@ -143,6 +150,8 @@ test("Waterfront lounge maps to lounge", () =>
     buildHotelAmenityPresentation(["Waterfront lounge"])[0]?.iconKey,
     "lounge",
   ));
+test("Bar maps to the dedicated drinks icon", () =>
+  assert.equal(buildHotelAmenityPresentation(["Bar"])[0]?.iconKey, "bar"));
 test("Unknown amenity uses generic", () =>
   assert.equal(
     buildHotelAmenityPresentation(["Pet grooming"])[0]?.iconKey,
@@ -187,7 +196,7 @@ test("priority ordering is correct", () => {
       ["Pet grooming", "Parking", "Breakfast available", "Wi-Fi"],
       8,
     ).map((item) => item.iconKey),
-    ["wifi", "breakfast", "parking", "generic"],
+    ["parking", "wifi", "breakfast", "generic"],
   );
 });
 

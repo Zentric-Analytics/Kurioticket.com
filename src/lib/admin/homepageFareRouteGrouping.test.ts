@@ -383,6 +383,42 @@ test("View All scope is separate from the All status filter and paginates all fi
   assert.deepEqual([...new Set((selectedAll?.routes ?? []).map((route) => route.status))], ["fresh"]);
 });
 
+test("All routes filters cover each distinct stored snapshot status without overlapping aliases", () => {
+  const actualStatuses = ["fresh", "last_known_good", "expired", "missing", "failed", "unavailable"] as const;
+  const allStatuses: AdminHomepageFareRoute[] = actualStatuses.map((status, index) => ({
+    id: `route-${index}`,
+    market: index % 2 === 0 ? "US" : "NG",
+    label: `Route ${index}`,
+    origin: "JFK",
+    destination: "LAX",
+    section: "popular",
+    status,
+  }));
+
+  const full = buildAdminHomepageFareAllRoutesGroup(allStatuses, "all");
+  assert.equal(full.routes.length, 6);
+  assert.deepEqual(new Set(full.routes.map((route) => route.status)), new Set(actualStatuses));
+  const distinctFilters = [
+    ["fresh", "fresh"],
+    ["last_known_good", "last_known_good"],
+    ["stale", "expired"],
+    ["missing", "missing"],
+    ["failed", "failed"],
+    ["unavailable", "unavailable"],
+  ] as const;
+
+  const seen = new Set<string>();
+  for (const [filter, expectedStatus] of distinctFilters) {
+    const group = buildAdminHomepageFareAllRoutesGroup(allStatuses, filter);
+    assert.equal(group.routes.length, 1, `${filter} must match exactly one snapshot status`);
+    assert.equal(group.routes[0]?.status, expectedStatus);
+    assert.equal(seen.has(group.routes[0].id), false, `${filter} must not duplicate another filter`);
+    seen.add(group.routes[0].id);
+  }
+  assert.equal(seen.size, allStatuses.length);
+  assert.equal(buildAdminHomepageFareAllRoutesGroup(allStatuses, "failed").routes.some((route) => route.status === "unavailable"), false);
+});
+
 test("changing status filters preserves the selected route scope", () => {
   const missingGroups = buildAdminHomepageFareRouteGroups({
     routes,

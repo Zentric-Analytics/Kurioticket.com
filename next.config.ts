@@ -2,6 +2,14 @@ import type { NextConfig } from "next";
 import { imageLocalPatterns, imageRemotePatterns } from "./src/config/imagePatterns";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Shared build hosts expose more CPUs than their memory allocation supports.
+    // Bound page-generation concurrency instead of spawning one worker per CPU.
+    cpus: 2,
+  },
+  // The floating dev toolbar throws releasePointerCapture errors on touch devices.
+  // Runtime and compile errors remain visible with the indicator disabled.
+  devIndicators: false,
   async redirects() {
     return [
       {
@@ -13,6 +21,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     qualities: [75, 92, 100],
+    // Keep curated asset versions aligned with the shared image-source helper.
     localPatterns: imageLocalPatterns,
     remotePatterns: imageRemotePatterns,
   },

@@ -15,6 +15,7 @@ const PLATFORM_RULES = {
     artifact: /\.apk(?:\?|$)/i,
     nativePaths: [
       /^apps\/mobile\/android\//,
+      /^apps\/mobile\/modules\/[^/]+\/android\//,
       /(^|\/)AndroidManifest\.xml$/,
       /(^|\/)(build|settings)\.gradle$/,
       /(^|\/)gradle\.properties$/,
@@ -26,9 +27,11 @@ const PLATFORM_RULES = {
     artifact: /(?:\.ipa(?:\?|$)|^https:\/\/)/i,
     nativePaths: [
       /^apps\/mobile\/ios\//,
+      /^apps\/mobile\/modules\/[^/]+\/ios\//,
       /(^|\/)Info\.plist$/,
       /(^|\/).*\.entitlements$/,
       /(^|\/)Podfile(?:\.lock)?$/,
+      /(^|\/).*\.podspec$/,
     ],
   },
 };

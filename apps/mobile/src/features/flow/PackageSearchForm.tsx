@@ -1,61 +1,198 @@
-import { useEffect, useMemo, useState } from "react";
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { Text, TextInput } from "../home/HomePresentation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Animated, Keyboard, Modal, Pressable, ScrollView, StyleSheet, Switch, View, type KeyboardEvent } from "react-native";
 import { router } from "expo-router";
-import { CompactSearchField, PrimaryButton } from "./FlowPrimitives";
+import { ArrowRightLeft, Baby, BedDouble, Minus, PersonStanding, Plus, UserRound, type LucideIcon } from "lucide-react-native";
+import { CompactSearchField, PickerSheetHeader, PrimaryButton } from "./FlowPrimitives";
 import { useFlowTheme } from "./flowStyles";
-import { searchAirports, type Airport } from "./airportData";
+import type { Airport } from "./airportData";
 import { HotelDestinationSheet } from "./HotelSearchPanel";
 import { CarRentalDatesSheet } from "./CarSearchPickers";
-import { rentalTimesSummary } from "./carSearchModel";
-import { CarTimeRangeSheet } from "./CarSearchPickers";
-import { applyPackageDates, applyPackageDestination, createPackageSearch, includedProducts, packageModes, transitionPackageMode, updatePackageParty, type PackageMode, type PackageSearch } from "./packageSearchModel";
+import { applyPackageDates, applyPackageDestination, createPackageSearch, includedProducts, packageModes, packageRouteParams, swapPackageAirports, transitionPackageMode, updatePackageParty, validatePackageSearch, type PackageMode, type PackageSearch } from "./packageSearchModel";
+import { fetchHomepageDefaultOrigin } from "../home/homepageDefaultOrigin";
+import { SEARCH_PICKER_BACKDROP_COLOR, useSearchPickerMotion } from "./searchPickerPresentation";
+import { useSearchPickerKeyboardPresentation } from "./searchPickerKeyboardPresentation";
+import { useRetainedPickerContext } from "./retainedPickerContext";
+import { FlowIcon } from "./FlowIcon";
+import { hasMinimumLocationSearchLetters } from "./locationSearchQuery";
+import { searchFlightPlaces, type FlightPlaceSuggestion } from "../../api/locationSuggestions";
+import { PACKAGE_SUGGESTION_ICONS, SearchResultProductIcons } from "./SearchResultProductIcons";
 
 const dateText = (value: string) => value ? new Date(`${value}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "Select";
 
 export function PackageSearchForm({ presentation }: { presentation: "home" | "standalone" }) {
   const ft = useFlowTheme();
+  const isHome = presentation === "home";
+  const fieldAppearance = isHome ? "resultsModalCard" : "default";
   const [search, setSearch] = useState(createPackageSearch);
   const travelerCount = search.adults + search.children + search.infants;
   const [airportField, setAirportField] = useState<"origin" | "destination">();
   const [hotelDestinationOpen, setHotelDestinationOpen] = useState(false);
   const [datesOpen, setDatesOpen] = useState(false);
   const [partyOpen, setPartyOpen] = useState(false);
-  const [timesOpen, setTimesOpen] = useState(false);
+  const [validationError, setValidationError] = useState("");
+  const userControlsOrigin = useRef(false);
   const included = includedProducts(search.mode);
+  useEffect(() => {
+    if (!included.flight || search.origin.trim() || search.originCode.trim() || userControlsOrigin.current) return;
+
+    let active = true;
+    void fetchHomepageDefaultOrigin().then(airport => {
+      if (!active || !airport || userControlsOrigin.current) return;
+
+      const origin = `${airport.city} (${airport.code})`;
+      setSearch(current => {
+        if (current.origin.trim() || current.originCode.trim() || userControlsOrigin.current) return current;
+        return { ...current, origin, originCode: airport.code };
+      });
+    }).catch(() => undefined);
+
+    return () => { active = false; };
+  }, [included.flight, search.origin, search.originCode]);
   const chooseAirport = (airport: Airport) => {
     const text = `${airport.city} (${airport.code})`;
+    if (airportField === "origin") userControlsOrigin.current = true;
     setSearch(current => airportField === "origin" ? { ...current, origin: text, originCode: airport.code } : applyPackageDestination(current, text, airport.code));
     setAirportField(undefined);
   };
+  const swapAirports = () => {
+    userControlsOrigin.current = true;
+    setSearch(current => swapPackageAirports(current));
+  };
   const submit = () => {
-    // Native has no combined package journey. Preserve the pre-existing final-child handoff.
-    if (included.car) router.push({ pathname: "/car-results", params: { pickupLocation: search.carPickupLocation, pickupDate: search.carPickupDate, dropoffDate: search.carReturnDate, pickupTime: search.carPickupTime, dropoffTime: search.carReturnTime, driverAge: String(search.carDriverAge) } });
-    else router.push({ pathname: "/hotel-results", params: { destination: search.destination, checkIn: search.startDate, checkOut: search.endDate, guests: String(search.adults + search.children), rooms: String(search.rooms) } });
+    if (!validatePackageSearch(search)) { setValidationError("Complete every required package detail before searching."); return; }
+    setValidationError("");
+    router.push({ pathname: "/package-results", params: packageRouteParams(search) });
   };
   return <>
     <View accessibilityRole="radiogroup" accessibilityLabel="Choose package type">
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.rail, presentation === "standalone" && styles.standaloneRail]}>
-        {packageModes.map(option => { const selected = search.mode === option.value; return <Pressable key={option.value} accessibilityRole="radio" accessibilityState={{ checked: selected, selected }} onPress={() => setSearch(current => transitionPackageMode(current, option.value))} style={[styles.mode, selected && { borderBottomColor: ft.colors.selectedBorder }]}><Text style={[styles.modeText, { color: selected ? ft.colors.selectedBorder : ft.colors.secondaryText }]}>{option.label}</Text></Pressable>; })}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.rail, presentation === "home" && styles.homeRail, presentation === "standalone" && styles.standaloneRail]}>
+        {packageModes.map(option => { const selected = search.mode === option.value; return <Pressable key={option.value} accessibilityRole="radio" accessibilityState={{ checked: selected, selected }} onPress={() => setSearch(current => transitionPackageMode(current, option.value))} style={[styles.mode, selected && { borderBottomColor: ft.colors.selectedBorder }, presentation === "home" && styles.homeMode]}><Text style={[styles.modeText, { color: selected ? ft.colors.selectedBorder : ft.colors.secondaryText }, presentation === "home" && styles.homeModeText, presentation === "home" && { color: selected ? ft.colors.textPrimary : ft.colors.textSecondary, fontWeight: selected ? "700" : "400" }]}>{option.label}</Text></Pressable>; })}
       </ScrollView>
     </View>
-    <View style={[styles.fields, { borderColor: ft.colors.border, backgroundColor: ft.colors.input }]}>
-      {included.flight ? <CompactSearchField label="Origin" value={search.origin || "City or airport"} muted={!search.origin} icon="location" onPress={() => setAirportField("origin")}/> : null}
-      <CompactSearchField label="Destination" value={search.destination || "Select destination"} muted={!search.destination} icon="location" onPress={() => included.flight ? setAirportField("destination") : setHotelDestinationOpen(true)}/>
-      <CompactSearchField label="Travel dates" value={search.startDate ? `${dateText(search.startDate)} — ${dateText(search.endDate)}` : "Choose dates"} muted={!search.startDate} icon="calendar" onPress={() => setDatesOpen(true)}/>
-      <CompactSearchField label={included.hotel ? "Travelers & Rooms" : "Travelers"} value={`${travelerCount} ${travelerCount === 1 ? "traveler" : "travelers"}${included.hotel ? ` · ${search.rooms} ${search.rooms === 1 ? "room" : "rooms"}` : ""}`} icon="person" onPress={() => setPartyOpen(true)}/>
-      {included.car ? <CompactSearchField label="Pick-up / Return time" value={rentalTimesSummary(search.carPickupTime, search.carReturnTime)} icon="clock" onPress={() => setTimesOpen(true)}/> : null}
+    <View style={isHome ? styles.homeFields : [styles.fields, { borderColor: ft.colors.border, backgroundColor: ft.colors.input }]}>
+      <View style={isHome && [styles.homeFieldCard, { borderColor: ft.colors.border, backgroundColor: ft.colors.card }]}>
+      {included.flight ? <View style={styles.originBoundary}>
+        <CompactSearchField label="Origin" appearance={fieldAppearance} valueNumberOfLines={isHome ? 0 : 1} modalCardDivider={isHome} value={search.origin || "City or airport"} muted={!search.origin} icon="location" trailing={false} onPress={() => { userControlsOrigin.current = true; setAirportField("origin"); }}/>
+        <Pressable accessibilityRole="button" accessibilityLabel="Swap origin and destination" onPress={swapAirports} style={({ pressed }) => [styles.swapTarget, pressed && ft.styles.pressed]}>
+          <View style={[styles.swapCircle, { backgroundColor: ft.colors.surface, borderColor: ft.colors.border, shadowColor: ft.colors.shadow }]}>
+            <ArrowRightLeft accessible={false} size={17} color={ft.colors.blue}/>
+          </View>
+        </Pressable>
+      </View> : null}
+      <CompactSearchField label="Destination" appearance={fieldAppearance} valueNumberOfLines={isHome ? 0 : 1} value={search.destination || "Where to?"} muted={!search.destination} icon="location" trailing={false} onPress={() => included.flight ? setAirportField("destination") : setHotelDestinationOpen(true)}/>
+      </View>
+      <View style={isHome && [styles.homeFieldCard, { borderColor: ft.colors.border, backgroundColor: ft.colors.card }]}><CompactSearchField label="Travel dates" appearance={fieldAppearance} valueNumberOfLines={isHome ? 0 : 1} value={search.startDate ? `${dateText(search.startDate)} — ${dateText(search.endDate)}` : "Choose dates"} muted={!search.startDate} icon="calendar" onPress={() => setDatesOpen(true)}/>
+      </View>
+      <View style={isHome && [styles.homeFieldCard, { borderColor: ft.colors.border, backgroundColor: ft.colors.card }]}><CompactSearchField label={included.hotel ? "Travelers & Rooms" : "Travelers"} appearance={fieldAppearance} valueNumberOfLines={isHome ? 0 : 1} value={`${travelerCount} ${travelerCount === 1 ? "traveler" : "travelers"}${included.hotel ? ` · ${search.rooms} ${search.rooms === 1 ? "room" : "rooms"}` : ""}`} icon="person" onPress={() => setPartyOpen(true)}/></View>
     </View>
-    <View style={styles.submit}><PrimaryButton label="Search package" icon={null} onPress={submit}/></View>
-    <AirportSheet visible={Boolean(airportField)} title={airportField === "origin" ? "Choose origin" : "Choose destination"} onChoose={chooseAirport} onClose={() => setAirportField(undefined)}/>
-    <HotelDestinationSheet visible={hotelDestinationOpen} value={search.destination} onDone={destination => { setSearch(current => applyPackageDestination(current, destination)); setHotelDestinationOpen(false); }} onCancel={() => setHotelDestinationOpen(false)}/>
+    {validationError ? <Text accessibilityRole="alert" style={[styles.validationError, { color: ft.colors.red }]}>{validationError}</Text> : null}
+    <View style={isHome ? styles.homeSubmit : styles.submit}><PrimaryButton label="Search package" icon={null} onPress={submit}/></View>
+    <AirportSheet visible={Boolean(airportField)} title={airportField === "origin" ? "Choose origin" : "Choose destination"} mode={search.mode} onChoose={chooseAirport} onClose={() => setAirportField(undefined)}/>
+    <HotelDestinationSheet visible={hotelDestinationOpen} value={search.destination} suggestionIcons={PACKAGE_SUGGESTION_ICONS[search.mode]} onChoose={destination => { setSearch(current => applyPackageDestination(current, destination)); setHotelDestinationOpen(false); }} onCancel={() => setHotelDestinationOpen(false)}/>
     <CarRentalDatesSheet visible={datesOpen} title="Travel dates" pickupDate={search.startDate} returnDate={search.endDate} onDone={(start, end) => { setSearch(current => applyPackageDates(current, start, end)); setDatesOpen(false); }} onCancel={() => setDatesOpen(false)}/>
     <PackagePartySheet visible={partyOpen} search={search} onDone={next => { setSearch(next); setPartyOpen(false); }} onClose={() => setPartyOpen(false)}/>
-    <CarTimeRangeSheet visible={timesOpen} pickupTime={search.carPickupTime} returnTime={search.carReturnTime} onDone={(carPickupTime, carReturnTime) => { setSearch(current => ({ ...current, carPickupTime, carReturnTime })); setTimesOpen(false); }} onCancel={() => setTimesOpen(false)}/>
   </>;
 }
 
-function AirportSheet({ visible, title, onChoose, onClose }: { visible: boolean; title: string; onChoose: (airport: Airport) => void; onClose: () => void }) { const ft = useFlowTheme(); const [query, setQuery] = useState(""); useEffect(() => { if (visible) setQuery(""); }, [visible]); const choices = useMemo(() => searchAirports(query, 12), [query]); return <Modal transparent animationType="slide" visible={visible} onRequestClose={onClose}><KeyboardAvoidingView style={styles.modalRoot} behavior={Platform.OS === "ios" ? "padding" : "height"}><Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close airport search" onPress={onClose}/><View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: ft.colors.surface }]}><Text accessibilityRole="header" style={ft.styles.title}>{title}</Text><TextInput autoFocus accessibilityLabel="Search airports" value={query} onChangeText={setQuery} placeholder="City or airport" placeholderTextColor={ft.colors.placeholder} style={[styles.airportInput, { color: ft.colors.text, borderColor: ft.colors.border }]}/><ScrollView keyboardShouldPersistTaps="handled">{choices.map(airport => <Pressable key={airport.code} accessibilityRole="button" onPress={() => onChoose(airport)} style={[styles.choice, { borderBottomColor: ft.colors.border }]}><Text style={ft.styles.value}>{airport.city} ({airport.code})</Text><Text style={ft.styles.meta}>{airport.name}</Text></Pressable>)}</ScrollView><Pressable onPress={onClose} style={styles.cancel}><Text style={{ color: ft.colors.selectedBorder, fontWeight: "800" }}>Cancel</Text></Pressable></View></KeyboardAvoidingView></Modal>; }
+function AirportSheet({ visible, title, mode, onChoose, onClose }: { visible: boolean; title: string; mode: PackageMode; onChoose: (airport: Airport) => void; onClose: () => void }) {
+  const ft=useFlowTheme();const motion=useSearchPickerMotion(visible, { controlledOpening: true, stationaryOpening: true });const context=useRetainedPickerContext(visible,{title,mode});const inputRef=useRef<TextInput>(null);const resultsViewportRef=useRef<View>(null);const keyboardScreenYRef=useRef<number|undefined>(undefined);const requestSequence=useRef(0);const filledQuery=useRef<string | undefined>(undefined);
+  const [query,setQuery]=useState("");const [draft,setDraft]=useState<Airport>();const [choices,setChoices]=useState<FlightPlaceSuggestion[]>([]);const [loading,setLoading]=useState(false);const [error,setError]=useState(false);const [resultsKeyboardInset,setResultsKeyboardInset]=useState(0);
+  useEffect(()=>{if(!visible)return;requestSequence.current+=1;filledQuery.current=undefined;setQuery("");setDraft(undefined);setChoices([]);setLoading(false);setError(false);setResultsKeyboardInset(0);},[visible,title]);
+  const keyboardPresentation = useSearchPickerKeyboardPresentation(visible, motion.rendered, title, inputRef, motion, { focusOnPresentation: true });
+  const updateResultsKeyboardInset=useCallback((screenY?:number)=>{keyboardScreenYRef.current=screenY;if(!visible||screenY===undefined){setResultsKeyboardInset(0);return;}resultsViewportRef.current?.measureInWindow((_x,y,_width,height)=>{if(!visible||keyboardScreenYRef.current!==screenY)return;const inset=Math.min(height,Math.max(0,y+height-screenY));setResultsKeyboardInset(current=>current===inset?current:inset);});},[visible]);
+  useEffect(()=>{if(!visible){keyboardScreenYRef.current=undefined;setResultsKeyboardInset(0);return;}const show=(event:KeyboardEvent)=>updateResultsKeyboardInset(event.endCoordinates.screenY);const hide=()=>updateResultsKeyboardInset(undefined);const subscriptions=[Keyboard.addListener("keyboardWillChangeFrame",show),Keyboard.addListener("keyboardDidShow",show),Keyboard.addListener("keyboardWillHide",hide),Keyboard.addListener("keyboardDidHide",hide)];const metrics=Keyboard.metrics();if(Keyboard.isVisible()&&metrics)updateResultsKeyboardInset(metrics.screenY);return()=>subscriptions.forEach(subscription=>subscription.remove());},[updateResultsKeyboardInset,visible]);
+  const syncResultsViewportLayout=()=>{const metrics=Keyboard.metrics();if(Keyboard.isVisible()&&metrics)updateResultsKeyboardInset(metrics.screenY);else if(keyboardScreenYRef.current!==undefined)updateResultsKeyboardInset(keyboardScreenYRef.current);};
+  const dismissAirportSheet=()=>{Keyboard.dismiss();onClose();};
+  const eligible=hasMinimumLocationSearchLetters(query);
+  useEffect(()=>{if(!visible)return;const sequence=++requestSequence.current;if(filledQuery.current===query){filledQuery.current=undefined;setLoading(false);setError(false);return;}if(!eligible){setChoices([]);setLoading(false);setError(false);return;}const controller=new AbortController();const timer=setTimeout(()=>{setLoading(true);setError(false);searchFlightPlaces(query,{context:title==="Choose origin"?"origin":"destination",signal:controller.signal}).then(items=>{if(sequence===requestSequence.current&&!controller.signal.aborted)setChoices(items);}).catch(()=>{if(sequence===requestSequence.current&&!controller.signal.aborted){setChoices([]);setError(true);}}).finally(()=>{if(sequence===requestSequence.current&&!controller.signal.aborted)setLoading(false);});},180);return()=>{clearTimeout(timer);controller.abort();};},[eligible,query,title,visible]);
+  const changeQuery=(value:string)=>{filledQuery.current=undefined;setQuery(value);if(draft&&value!==`${draft.city} (${draft.code})`)setDraft(undefined);};
+  const choose=(place:FlightPlaceSuggestion)=>{if(place.type!=="airport")return;const airport={...place,name:place.airport,countryCode:place.countryCode??"",latitude:place.latitude??0,longitude:place.longitude??0,priority:0} as Airport;const value=`${airport.city} (${airport.code})`;requestSequence.current+=1;filledQuery.current=value;setDraft(airport);setQuery(value);setLoading(false);setError(false);Keyboard.dismiss();onChoose(airport);};
+  return <Modal transparent animationType="none" visible={motion.rendered} onShow={keyboardPresentation.onModalShow} onRequestClose={dismissAirportSheet}><View pointerEvents={motion.pointerEvents} style={styles.modalRoot}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/><Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close airport search" onPress={dismissAirportSheet}/><Animated.View accessibilityViewIsModal onLayout={keyboardPresentation.onSheetLayout} style={[styles.sheet,styles.airportSheet,{backgroundColor:ft.colors.surface,paddingBottom:18+motion.bottomSafeAreaInset},motion.sheetStyle]}><PickerSheetHeader title={context.title} onClose={dismissAirportSheet} closeLabel={context.title === "Choose origin" ? "Close origin picker" : "Close destination picker"}/><View style={[styles.airportSearchShell,{backgroundColor:ft.colors.input,borderColor:ft.colors.border}]}><FlowIcon name="location" size={20} color={ft.colors.icon}/><TextInput ref={inputRef} onFocus={keyboardPresentation.onInputFocus} accessibilityLabel="Search airports" value={query} onChangeText={changeQuery} autoCorrect={false} spellCheck={false} placeholder="Search code, airport, city, or country" placeholderTextColor={ft.colors.placeholder} style={[styles.airportSearchInput,{color:ft.colors.text}]}/></View><View ref={resultsViewportRef} onLayout={syncResultsViewportLayout} style={styles.airportResultsViewport}><ScrollView style={styles.airportResultsScroll} contentContainerStyle={{paddingBottom:resultsKeyboardInset}} keyboardShouldPersistTaps="handled">{loading?<Text style={[styles.airportStatus,{color:ft.colors.secondaryText}]}>Finding airports…</Text>:error&&!draft?<Text accessibilityRole="alert" style={[styles.airportStatus,{color:ft.colors.secondaryText}]}>Couldn’t load airports. Please try again.</Text>:<>{choices.map(place=>{const selected=place.type==="airport"&&place.code===draft?.code;return <Pressable key={`${place.type}-${place.code}`} accessibilityRole="button" accessibilityState={{selected}} onPress={()=>choose(place)} style={[styles.choice,{borderBottomColor:ft.colors.border},selected&&{backgroundColor:ft.colors.selected}]}><SearchResultProductIcons icons={PACKAGE_SUGGESTION_ICONS[context.mode]}/><View style={styles.airportChoiceCopy}><Text numberOfLines={1} style={[ft.styles.value,selected&&{color:ft.colors.selectedPrimaryText}]}>{place.city} ({place.code})</Text><Text numberOfLines={1} style={ft.styles.meta}>{place.type==="city"?"All airports":place.airport}</Text></View></Pressable>;})}{!draft&&choices.length===0?(query.trim().length===0?<Text style={[styles.airportStatus,{color:ft.colors.secondaryText}]}>Start typing to find an airport.</Text>:!eligible?null:<Text style={[styles.airportStatus,{color:ft.colors.secondaryText}]}>No airports match this search.</Text>):null}</>}</ScrollView></View></Animated.View></View></Modal>;
+}
+const PACKAGE_TRAVELER_ROWS = [
+  { key: "adults", label: "Adults", description: "18+ years", icon: UserRound },
+  { key: "children", label: "Children", description: "Ages 2–17", icon: PersonStanding },
+  { key: "infants", label: "Infants on lap", description: "Under 2 years", icon: Baby },
+] as const;
 
-function PackagePartySheet({ visible, search, onDone, onClose }: { visible: boolean; search: PackageSearch; onDone: (value: PackageSearch) => void; onClose: () => void }) { const ft = useFlowTheme(); const [draft, setDraft] = useState(search); useEffect(() => { if (visible) setDraft(search); }, [visible, search]); const included = includedProducts(search.mode); if (!visible) return null; const row = (label: "Adults" | "Children" | "Infants" | "Rooms", key: "adults" | "children" | "infants" | "rooms") => <View style={[styles.counterRow, { borderBottomColor: ft.colors.border }]}><Text style={ft.styles.value}>{label}</Text><View style={styles.counter}><Pressable accessibilityRole="button" accessibilityLabel={`Decrease ${label}`} onPress={() => setDraft(current => updatePackageParty(current, { [key]: current[key] - 1 }))} style={styles.counterButton}><Text style={{ color: ft.colors.selectedBorder, fontSize: 22 }}>−</Text></Pressable><Text style={[ft.styles.value, styles.number]}>{draft[key]}</Text><Pressable accessibilityRole="button" accessibilityLabel={`Increase ${label}`} onPress={() => setDraft(current => updatePackageParty(current, { [key]: current[key] + 1 }))} style={styles.counterButton}><Text style={{ color: ft.colors.selectedBorder, fontSize: 22 }}>+</Text></Pressable></View></View>; return <Modal transparent animationType="slide" visible onRequestClose={onClose}><View style={styles.modalRoot}><Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close Travelers & Rooms picker" onPress={onClose}/><View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: ft.colors.surface }]}><Text accessibilityRole="header" style={ft.styles.title}>{included.hotel ? "Travelers & Rooms" : "Travelers"}</Text>{row("Adults", "adults")}{row("Children", "children")}{included.flight ? row("Infants", "infants") : null}{included.hotel ? row("Rooms", "rooms") : null}{included.hotel ? <View style={styles.pet}><View><Text style={ft.styles.value}>Pet-friendly</Text><Text style={ft.styles.meta}>Only show pet-friendly stays</Text></View><Switch value={draft.petFriendly} onValueChange={petFriendly => setDraft(current => ({ ...current, petFriendly }))}/></View> : null}<PrimaryButton label="Done" icon={null} onPress={() => onDone(draft)}/></View></View></Modal>; }
+function PackagePartySheet({ visible, search, onDone, onClose }: { visible: boolean; search: PackageSearch; onDone: (value: PackageSearch) => void; onClose: () => void }) {
+  const ft = useFlowTheme();
+  const motion = useSearchPickerMotion(visible);
+  const [draft, setDraft] = useState(search);
+  useEffect(() => { if (visible) setDraft(search); }, [visible, search]);
+  const included = includedProducts(search.mode);
+  if (!motion.rendered) return null;
 
-const styles = StyleSheet.create({ rail:{flexDirection:"row",flexWrap:"nowrap",borderBottomWidth:1,paddingHorizontal:6},standaloneRail:{minHeight:46},mode:{height:42,justifyContent:"center",paddingHorizontal:10,borderBottomWidth:2,borderBottomColor:"transparent"},modeText:{fontSize:12,fontWeight:"700"},fields:{borderWidth:1,borderRadius:11,overflow:"hidden",margin:10},submit:{paddingHorizontal:10,paddingBottom:10},modalRoot:{flex:1,justifyContent:"flex-end"},sheet:{maxHeight:"86%",borderTopLeftRadius:24,borderTopRightRadius:24,padding:18,gap:8},airportInput:{minHeight:48,borderWidth:1,borderRadius:9,paddingHorizontal:12,fontSize:15},choice:{paddingVertical:12,borderBottomWidth:1},cancel:{height:44,alignItems:"center",justifyContent:"center"},counterRow:{minHeight:68,flexDirection:"row",alignItems:"center",justifyContent:"space-between",borderBottomWidth:1},counter:{flexDirection:"row",alignItems:"center",gap:7},counterButton:{width:42,height:42,borderRadius:21,alignItems:"center",justifyContent:"center"},number:{width:28,textAlign:"center"},pet:{minHeight:68,flexDirection:"row",alignItems:"center",justifyContent:"space-between"},fieldsStandalone:{marginTop:8} });
+  const maximumTravelers = included.flight ? 9 : 12;
+  const totalTravelers = draft.adults + draft.children + draft.infants;
+  const travelerRows = included.flight ? PACKAGE_TRAVELER_ROWS : PACKAGE_TRAVELER_ROWS.slice(0, 2);
+  const updateCount = (key: "adults" | "children" | "infants" | "rooms", value: number) => {
+    setDraft(current => updatePackageParty(current, { [key]: value }));
+  };
+
+  return <Modal transparent animationType="none" visible onRequestClose={onClose}>
+    <View pointerEvents={motion.pointerEvents} style={styles.modalRoot}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/>
+      <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close Travelers & Rooms picker" onPress={onClose}/>
+      <Animated.View accessibilityViewIsModal onLayout={motion.onSheetLayout} style={[styles.sheet, styles.partySheet, { backgroundColor: ft.colors.surface, paddingBottom: 13 + motion.bottomSafeAreaInset },motion.sheetStyle]}>
+        <Text accessibilityRole="header" style={[styles.partyTitle,{color:ft.colors.text}]}>{included.hotel ? "Travelers & Rooms" : "Travelers"}</Text>
+        <ScrollView style={styles.partyScroll} bounces={false} contentContainerStyle={styles.partyContent}>
+          <View style={[styles.partyCard, { backgroundColor: ft.colors.input, borderColor: ft.colors.border }]}>
+            {travelerRows.map((row, index) => {
+              const value = draft[row.key];
+              const decreaseDisabled = value <= (row.key === "adults" ? 1 : 0);
+              const increaseDisabled = totalTravelers >= maximumTravelers || (row.key === "infants" && value >= draft.adults);
+              return <View key={row.key}>
+                <PackagePartyRow icon={row.icon} label={row.label} description={row.description} value={value} decreaseDisabled={decreaseDisabled} increaseDisabled={increaseDisabled} onDecrease={() => updateCount(row.key, value - 1)} onIncrease={() => updateCount(row.key, value + 1)}/>
+                {index < travelerRows.length - 1 ? <View style={[styles.partyDivider, { backgroundColor: ft.colors.border }]}/> : null}
+              </View>;
+            })}
+          </View>
+          {included.hotel ? <View style={[styles.partyCard, { backgroundColor: ft.colors.input, borderColor: ft.colors.border }]}>
+            <PackagePartyRow icon={BedDouble} label="Rooms" description="Separate rooms" value={draft.rooms} decreaseDisabled={draft.rooms <= 1} increaseDisabled={draft.rooms >= 6} onDecrease={() => updateCount("rooms", draft.rooms - 1)} onIncrease={() => updateCount("rooms", draft.rooms + 1)}/>
+            <View style={[styles.partyDivider, { backgroundColor: ft.colors.border }]}/>
+            <View style={styles.petRow}>
+              <View style={styles.partyCopy}>
+                <Text style={ft.styles.value}>Pet-friendly rooms</Text>
+                <Text style={ft.styles.meta}>Only show stays that allow pets</Text>
+              </View>
+              <View style={styles.petSwitchSlot}>
+                <Switch accessibilityLabel="Pet-friendly rooms" accessibilityRole="switch" accessibilityState={{ checked: draft.petFriendly }} value={draft.petFriendly} onValueChange={petFriendly => setDraft(current => ({ ...current, petFriendly }))} trackColor={{ false: ft.colors.border, true: ft.colors.selectedBorder }} thumbColor={ft.colors.surface}/>
+              </View>
+            </View>
+          </View> : null}
+        </ScrollView>
+        <PrimaryButton label="Done" icon={null} size="compact" onPress={() => onDone(draft)}/>
+      </Animated.View>
+    </View>
+  </Modal>;
+}
+
+function PackagePartyRow({ icon: Icon, label, description, value, decreaseDisabled, increaseDisabled, onDecrease, onIncrease }: { icon: LucideIcon; label: string; description: string; value: number; decreaseDisabled: boolean; increaseDisabled: boolean; onDecrease: () => void; onIncrease: () => void }) {
+  const ft = useFlowTheme();
+  return <View style={styles.partyRow}>
+    <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.partyIcon, { backgroundColor: ft.colors.selected }]}>
+      <Icon size={18} color={ft.colors.selectedBorder}/>
+    </View>
+    <View style={styles.partyCopy}>
+      <Text style={ft.styles.value}>{label}</Text>
+      <Text style={ft.styles.meta}>{description}</Text>
+    </View>
+    <View style={styles.partyCounter}>
+      <PackageCounterButton label={`Decrease ${label}`} disabled={decreaseDisabled} icon={Minus} onPress={onDecrease}/>
+      <Text accessibilityLabel={`${value} ${label}`} style={[styles.partyNumber, { color: ft.colors.text }]}>{value}</Text>
+      <PackageCounterButton label={`Increase ${label}`} disabled={increaseDisabled} icon={Plus} onPress={onIncrease}/>
+    </View>
+  </View>;
+}
+
+function PackageCounterButton({ label, disabled, icon: Icon, onPress }: { label: string; disabled: boolean; icon: LucideIcon; onPress: () => void }) {
+  const ft = useFlowTheme();
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.partyCounterTarget, pressed && !disabled && ft.styles.pressed]}>
+    <View style={[styles.partyCounterCircle, { borderColor: disabled ? ft.colors.border : ft.colors.selectedBorder }, disabled && styles.partyDisabled]}>
+      <Icon accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" size={16} color={disabled ? ft.colors.secondaryText : ft.colors.selectedBorder}/>
+    </View>
+  </Pressable>;
+}
+
+const styles = StyleSheet.create({ rail:{flexDirection:"row",flexWrap:"nowrap",borderBottomWidth:1,paddingHorizontal:6},homeRail:{borderBottomWidth:0},homeMode:{height:50,borderBottomWidth:0},homeModeText:{fontSize:14,lineHeight:20},standaloneRail:{minHeight:46},mode:{height:42,justifyContent:"center",paddingHorizontal:10,borderBottomWidth:2,borderBottomColor:"transparent"},modeText:{fontSize:12,fontWeight:"700"},fields:{borderWidth:1,borderRadius:11,margin:10},homeFields:{width:"100%"},homeFieldCard:{borderWidth:1,borderRadius:13,overflow:"hidden",marginTop:10},homeSubmit:{paddingHorizontal:0,paddingTop:16,paddingBottom:8},originBoundary:{position:"relative",zIndex:1},swapTarget:{position:"absolute",left:"50%",bottom:-22,transform:[{translateX:-22}],width:44,height:44,alignItems:"center",justifyContent:"center",zIndex:2},swapCircle:{width:36,height:36,borderRadius:18,borderWidth:1,alignItems:"center",justifyContent:"center",shadowOpacity:0.12,shadowRadius:4,shadowOffset:{width:0,height:2},elevation:3},submit:{paddingHorizontal:10,paddingBottom:10},validationError:{paddingHorizontal:12,paddingBottom:8,fontSize:13,fontWeight:"700"},modalRoot:{flex:1,justifyContent:"flex-end"},scrim:{backgroundColor:SEARCH_PICKER_BACKDROP_COLOR},sheet:{maxHeight:"86%",borderTopLeftRadius:24,borderTopRightRadius:24,padding:18,gap:12},airportSheet:{height:"82%"},airportResultsViewport:{flex:1,minHeight:0},airportResultsScroll:{flex:1},partySheet:{maxHeight:"64%",paddingHorizontal:15,paddingVertical:13,gap:8},airportSearchShell:{minHeight:52,borderWidth:1,borderRadius:10,paddingHorizontal:14,flexDirection:"row",alignItems:"center",gap:10},airportSearchInput:{flex:1,minWidth:0,fontSize:15},airportStatus:{paddingVertical:28,textAlign:"center"},airportInput:{minHeight:48,borderWidth:1,borderRadius:9,paddingHorizontal:12,fontSize:15},choice:{minHeight:76,flexDirection:"row",alignItems:"center",gap:12,paddingVertical:10,paddingHorizontal:8,borderBottomWidth:1},airportChoiceCopy:{flex:1,minWidth:0,gap:2},partyTitle:{fontSize:18,lineHeight:24,fontWeight:"800"},partyScroll:{flexShrink:1,minHeight:0},partyContent:{gap:9,paddingBottom:2},partyCard:{borderWidth:1,borderRadius:12,overflow:"hidden"},partyDivider:{height:1,marginHorizontal:14},partyRow:{minHeight:62,flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:10,paddingVertical:6},partyIcon:{width:36,height:36,borderRadius:18,flexShrink:0,alignItems:"center",justifyContent:"center"},partyCopy:{flex:1,minWidth:0,gap:2},partyCounter:{flexShrink:0,flexDirection:"row",alignItems:"center",gap:2},partyCounterTarget:{width:44,height:44,alignItems:"center",justifyContent:"center"},partyCounterCircle:{width:34,height:34,borderRadius:17,borderWidth:1,alignItems:"center",justifyContent:"center"},partyDisabled:{opacity:.42},partyNumber:{minWidth:20,textAlign:"center",fontSize:15,fontWeight:"800",fontVariant:["tabular-nums"]},petRow:{minHeight:62,flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:10,paddingVertical:6},petSwitchSlot:{width:52,flexShrink:0,alignItems:"flex-end",justifyContent:"center"},fieldsStandalone:{marginTop:8} });

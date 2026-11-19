@@ -1,4 +1,4 @@
-import { supportedRegions } from "@/lib/region/supportedRegions";
+import { supportedRegions } from "../region/supportedRegions";
 
 export type MarketGroup =
   | "US"

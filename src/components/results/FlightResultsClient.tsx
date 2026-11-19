@@ -1,12 +1,15 @@
 "use client";
 
+import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+import { displayedJourneyRequest, journeyRequestId } from "@/lib/journeyEventClient";
+import { resultIdKey, ResultsViewport, VirtualResultsList } from "./VirtualResultsList";
+
 import Image from "next/image";
 import Link from "next/link";
 import type {
   Dispatch,
   FormEvent,
   MouseEvent as ReactMouseEvent,
-  ReactNode,
   RefObject,
   SetStateAction,
 } from "react";
@@ -22,33 +25,64 @@ import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
-  ArrowLeft,
   ArrowRightLeft,
-  Bell,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
+  ArrowUp,
   Calendar,
+  Check,
   ChevronDown,
   Heart,
   MapPin,
   Minus,
   SquarePen,
-  Users,
   UserRound,
   Plus,
   SlidersHorizontal,
+  Search,
   X,
 } from "lucide-react";
+import {
+  getCenteredRailScrollLeft,
+  isHorizontallyVisibleWithinContainer,
+} from "@/components/results/mobileNearbyFareRail";
 
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
-import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { clearSearchResultsLoadingSession, SearchResultsLoadingTransition } from "@/components/layout/SearchResultsLoadingTransition";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { Footer } from "@/components/layout/Footer";
 import { FlightCard } from "@/components/results/FlightCard";
+import { useKayakResults } from "./KayakResultsContext";
+import { resultActionHref } from "@/lib/travel/resultAction";
+import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
+import { kayakFlightCardModel } from "./kayakCardModels";
+import { KayakResultCard } from "./KayakResultCard";
 import { DesktopFlightFilters } from "@/components/results/DesktopFlightFilters";
-import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
+import { FlightPriceAlertControl } from "@/components/results/FlightPriceAlertControl";
+import { FlightResultsScrollIndicator } from "@/components/results/FlightResultsScrollIndicator";
+import { MobileFlightResultsState } from "@/components/results/MobileFlightResultsState";
+import {
+  MobileFlightFiltersSheet,
+  type MobileJourneyTimeMaximums,
+} from "@/components/results/MobileFlightFiltersSheet";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { FlightEditSearchDrawer, type FlightEditSearchValue } from "@/components/search/FlightEditSearchDrawer";
+import { acquireMobileResultsScrollLock, type MobileResultsScrollLockRelease } from "@/lib/search/mobileResultsScrollLock";
+import { getOverlayActivationModality, restoreOverlayLauncherFocus, type OverlayActivationModality } from "@/lib/search/mobileResultsOverlayFocus";
+import {
+  activeFlightFilterCount as countAuthoritativeFlightFilters,
+  flightAirportEndpoints,
+  flightJourneyDurationMinutes,
+  flightMatchesFilters,
+  flightStopBucket,
+  hasStructuredBaggage,
+  hasStructuredFlexibility,
+  matchingFlightCount,
+  type FlightFilterState,
+} from "@/lib/flights/flightFilters";
+import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
+import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
+
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -88,7 +122,7 @@ import {
 } from "@/lib/flights/preferredAirlineFilters";
 import {
   buildFlightResultsSearchKey,
-  readFlightResultsSessionSnapshot,
+  readFlightResultsSessionSnapshotForRefresh,
   writeFlightResultsSessionSnapshot,
 } from "@/lib/flights/flightResultsSessionCache";
 import { isFlightResultsPreparing } from "@/components/results/flightResultsReadiness";
@@ -105,31 +139,181 @@ import {
   type SavedDiscoveryDisplayDetails,
   type SavedDiscoveryFlightSearch,
 } from "@/lib/saved-items-api";
-import { formatCurrency, formatDisplayPrice } from "@/lib/currency/formatCurrency";
-import type { FlightSearchParams, PublicFlightResult, SortMode } from "@/lib/types";
-import { appendFlightLegParams, parseFlightLegParams, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
-import { cn, getItineraryDateKey } from "@/lib/utils";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import {
-  calculateCompactFilterPlacement,
-  shouldRenderFlightQualityFilter,
-  shouldShowDesktopCompactFilter,
-} from "@/lib/flights/desktopCompactFilter";
+  compareFlightPrices,
+  getComparableFlightPrice,
+  getComparableFlightPriceBounds,
+  getLowestComparableFlightFare,
+} from "@/lib/flights/flightResultPrices";
+import type { FlightSearchLeg, PublicFlightResult, SortMode } from "@/lib/types";
+import {
+  appendFlightLegParams,
+  MULTI_CITY_MAX_LEGS,
+  MULTI_CITY_MIN_LEGS,
+  parseFlightLegParams,
+  projectSearchLegs,
+} from "@/lib/flights/flightSearchJourney";
+import { cn, getItineraryDateKey } from "@/lib/utils";
+import { shouldRenderFlightQualityFilter } from "@/lib/flights/desktopCompactFilter";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   formatFlightsDateSummary,
   formatFlightsMonthHeading,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
-import { MAX_PRICE_ALERT_TARGET, buildCanonicalFlightPriceAlertQuery } from "@/lib/price-alerts/flightPriceAlerts";
 
 const resultStackClass = "w-full min-w-0";
-const desktopCompactFilterTopOffset = 116;
-type MobileShortcutMenu = "sort" | "airlines" | "stops" | "airports";
-type MobileShortcutMenuPosition = { top: number; left: number; width: number };
-type DesktopCompactFilterFrame = {
-  left: number;
-  width: number;
+export const FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
+
+const desktopFlightStickyFilterTop = 88;
+const desktopFlightResultsScrollOffset = desktopFlightStickyFilterTop + 16;
+
+
+type StickyFlightPopularFilterGroup =
+  | "stops"
+  | "airlines"
+  | "airports"
+  | "quality";
+
+type StickyFlightPopularFilterOption = {
+  value: string;
+  label: string;
+  count: number;
 };
+
+function StickyFlightPopularFilters({
+  t,
+  stopOptions,
+  airlineOptions,
+  airportOptions,
+  flightQualityOptions,
+  renderFlightQualityFilter,
+  selectedStops,
+  selectedAirlines,
+  selectedAirports,
+  selectedFlightQuality,
+  onToggle,
+}: {
+  t: (key: string) => string;
+  stopOptions: StickyFlightPopularFilterOption[];
+  airlineOptions: StickyFlightPopularFilterOption[];
+  airportOptions: StickyFlightPopularFilterOption[];
+  flightQualityOptions: StickyFlightPopularFilterOption[];
+  renderFlightQualityFilter: boolean;
+  selectedStops: string[];
+  selectedAirlines: string[];
+  selectedAirports: string[];
+  selectedFlightQuality: string[];
+  onToggle: (group: StickyFlightPopularFilterGroup, value: string) => void;
+}) {
+  const groups: Array<{
+    group: StickyFlightPopularFilterGroup;
+    options: StickyFlightPopularFilterOption[];
+    selected: string[];
+    limit: number;
+  }> = [
+    { group: "stops", options: stopOptions, selected: selectedStops, limit: 3 },
+    {
+      group: "airlines",
+      options: airlineOptions,
+      selected: selectedAirlines,
+      limit: 5,
+    },
+    {
+      group: "airports",
+      options: airportOptions,
+      selected: selectedAirports,
+      limit: 2,
+    },
+    {
+      group: "quality",
+      options: renderFlightQualityFilter ? flightQualityOptions : [],
+      selected: selectedFlightQuality,
+      limit: 2,
+    },
+  ];
+
+  const popularFilters = groups
+    .flatMap(({ group, options, selected, limit }) =>
+      [...options]
+        .sort(
+          (first, second) =>
+            second.count - first.count ||
+            first.label.localeCompare(second.label),
+        )
+        .slice(0, limit)
+        .map((option) => ({
+          key: `${group}-${option.value}`,
+          group,
+          value: option.value,
+          label: option.label,
+          count: option.count,
+          selected: selected.includes(option.value),
+        })),
+    )
+    .sort(
+      (first, second) =>
+        second.count - first.count ||
+        first.label.localeCompare(second.label),
+    );
+
+  if (!popularFilters.length) return null;
+
+  return (
+    <section
+      data-flight-sticky-popular-filters
+      aria-label={t("hotelResults.popularFilters")}
+      className="sticky top-[88px] z-10 mt-3 max-h-[calc(100vh-100px)] overflow-y-auto rounded-lg border border-[#CFD9E5] bg-white px-3 py-3 shadow-[0_4px_16px_-12px_rgba(15,23,42,0.35)]"
+    >
+      <h2 className="mb-1.5 text-[13px] font-bold leading-5 text-[#142033]">
+        {t("hotelResults.popularFilters")}
+      </h2>
+      <div className="space-y-0.5">
+        {popularFilters.map((filter) => (
+          <label
+            key={filter.key}
+            className="group flex min-h-7 cursor-pointer items-center gap-2 rounded px-0.5 text-[12px] font-normal leading-4 text-[#142033] hover:bg-slate-50"
+          >
+            <span className="relative flex shrink-0 items-center justify-center">
+              <input
+                type="checkbox"
+                checked={filter.selected}
+                onChange={() => onToggle(filter.group, filter.value)}
+                className="peer sr-only"
+              />
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[2px] border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2",
+                  filter.selected
+                    ? "border-[#0067DB] bg-[#0067DB] text-white"
+                    : "border-slate-300 bg-white group-hover:border-slate-400",
+                )}
+              >
+                {filter.selected ? (
+                  <Check
+                    className="h-2.5 w-2.5"
+                    strokeWidth={3}
+                    aria-hidden="true"
+                  />
+                ) : null}
+              </span>
+            </span>
+            <span className="min-w-0 flex-1 truncate" title={filter.label}>
+              {filter.label}
+            </span>
+            <span className="shrink-0 tabular-nums text-slate-500">
+              {filter.count}
+            </span>
+          </label>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+type MobileShortcutSheet = "sort" | "airlines" | "stops" | "airports";
 type NearbyFareState =
   | { date: string; status: "idle" }
   | { date: string; status: "loading" }
@@ -149,16 +333,10 @@ type NearbyFareRequest = {
 };
 
 const nearbyFareRangeSize = 10;
-const nearbyFareVisibleCount = 7;
 const nearbyFareDaysBeforeAnchor = 4;
-const nearbyFareRequestConcurrency = 4;
+const nearbyFareRequestConcurrency = 1;
 const nearbyFareCacheTtlMs = 10 * 60 * 1000;
 
-type DesktopCompactFilterPlacementState = "hidden" | "fixed" | "docked";
-
-type BodyScrollLock = {
-  restore: (options?: { restoreScroll?: boolean }) => void;
-};
 
 type MobileOverlayCloseOptions = {
   restoreFocus?: boolean;
@@ -174,17 +352,6 @@ const scrollWindowToPageTop = () => {
   });
 };
 
-type CompactFilterSectionId =
-  | "price"
-  | "times"
-  | "duration"
-  | "quality"
-  | "stops"
-  | "airlines"
-  | "airports"
-  | "amenities"
-  | null;
-
 const filterQueryParamKeys = [
   "fPrice",
   "fTakeoff",
@@ -193,6 +360,8 @@ const filterQueryParamKeys = [
   "fStop",
   "fAirline",
   "fAirport",
+  "fFromAirport",
+  "fToAirport",
   "fQuality",
   "fBaggage",
   "fFlexible",
@@ -344,7 +513,7 @@ const beachVacationVisualsByDestinationCode: Record<
   },
   PVR: {
     image:
-      "https://images.unsplash.com/photo-1665039400840-b6b2a5786fef?auto=format&fit=crop&w=1200&q=90",
+      "/images/staging-remediation/puerto-vallarta.webp",
     imageAltKey: "flightResults.beachVisual.PVR.alt",
   },
   FAO: {
@@ -719,98 +888,6 @@ function FlightBookingFaqSection() {
   );
 }
 
-function lockMobileOverlayScroll() {
-  const bodyElement = document.body;
-  const rootElement = document.documentElement;
-  const scrollbarWidth = Math.max(
-    0,
-    window.innerWidth - rootElement.clientWidth,
-  );
-  let restored = false;
-  const previousBodyStyles = {
-    overflow: bodyElement.style.overflow,
-    overscrollBehavior: bodyElement.style.overscrollBehavior,
-    paddingRight: bodyElement.style.paddingRight,
-  };
-  const previousRootStyles = {
-    overflow: rootElement.style.overflow,
-    overscrollBehavior: rootElement.style.overscrollBehavior,
-  };
-
-  if (scrollbarWidth > 0) {
-    const computedPaddingRight =
-      window.getComputedStyle(bodyElement).paddingRight;
-    bodyElement.style.paddingRight = `calc(${computedPaddingRight} + ${scrollbarWidth}px)`;
-  }
-
-  bodyElement.style.overflow = "hidden";
-  bodyElement.style.overscrollBehavior = "none";
-  rootElement.style.overflow = "hidden";
-  rootElement.style.overscrollBehavior = "none";
-
-  return {
-    restore: () => {
-      if (restored) return;
-      restored = true;
-      bodyElement.style.overflow = previousBodyStyles.overflow;
-      bodyElement.style.overscrollBehavior =
-        previousBodyStyles.overscrollBehavior;
-      bodyElement.style.paddingRight = previousBodyStyles.paddingRight;
-      rootElement.style.overflow = previousRootStyles.overflow;
-      rootElement.style.overscrollBehavior =
-        previousRootStyles.overscrollBehavior;
-    },
-  };
-}
-
-function lockDocumentScrollWithoutLayoutShift() {
-  const bodyElement = document.body;
-  const rootElement = document.documentElement;
-  const scrollY = window.scrollY;
-  const scrollbarWidth = window.innerWidth - rootElement.clientWidth;
-  let restored = false;
-  const previousBodyStyles = {
-    overflow: bodyElement.style.overflow,
-    overscrollBehavior: bodyElement.style.overscrollBehavior,
-    paddingRight: bodyElement.style.paddingRight,
-  };
-  const previousRootStyles = {
-    overflow: rootElement.style.overflow,
-    overscrollBehavior: rootElement.style.overscrollBehavior,
-  };
-
-  rootElement.style.overflow = "hidden";
-  bodyElement.style.overflow = "hidden";
-  rootElement.style.overscrollBehavior = "none";
-  bodyElement.style.overscrollBehavior = "none";
-
-  if (scrollbarWidth > 0) {
-    bodyElement.style.paddingRight = `${scrollbarWidth}px`;
-  }
-
-  return {
-    restore: ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
-      if (restored) return;
-      restored = true;
-      rootElement.style.overflow = previousRootStyles.overflow;
-      rootElement.style.overscrollBehavior =
-        previousRootStyles.overscrollBehavior;
-      bodyElement.style.overflow = previousBodyStyles.overflow;
-      bodyElement.style.overscrollBehavior =
-        previousBodyStyles.overscrollBehavior;
-      bodyElement.style.paddingRight = previousBodyStyles.paddingRight;
-
-      if (restoreScroll && window.scrollY !== scrollY) {
-        window.requestAnimationFrame(() => {
-          if (window.scrollY !== scrollY) {
-            window.scrollTo(0, scrollY);
-          }
-        });
-      }
-    },
-  };
-}
-
 export type FlightResultsPresentationMode = "standalone" | "deals-guided";
 
 export type FlightResultsSearchInput = {
@@ -834,6 +911,7 @@ export type FlightResultsClientProps = {
   actionLabel?: string;
   actionAriaLabel?: (flight: PublicFlightResult) => string;
   onSelectFlight?: (flight: PublicFlightResult) => void;
+  externalResultsHeader?: boolean;
 };
 
 const searchInputToParams = (input: FlightResultsSearchInput) => {
@@ -853,7 +931,9 @@ const searchInputToParams = (input: FlightResultsSearchInput) => {
   return params;
 };
 
-export function FlightResultsClient({ presentationMode = "standalone", searchInput, buildDetailsHref, actionLabel, actionAriaLabel, onSelectFlight }: FlightResultsClientProps = {}) {
+export function FlightResultsClient({ presentationMode = "standalone", searchInput, buildDetailsHref, actionLabel, actionAriaLabel, onSelectFlight, externalResultsHeader = false }: FlightResultsClientProps = {}) {
+  const journeyEvents = useJourneyEvents();
+  const [journeyResponse, setJourneyResponse] = useState<{ searchKey: string; requestId: string | null } | null>(null);
   const { t: dictionary, locale } = useLocale();
   const t = useCallback(
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
@@ -862,38 +942,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const calendarLocale = useMemo(
     () => normalizeFlightResultsCalendarLocale(locale),
     [locale],
-  );
-  const airportPickerLabels = useMemo(
-    () => ({
-      clear: dictionary.clear ?? enTranslations.clear ?? "",
-      done: dictionary.done ?? enTranslations.done ?? "",
-      chooseOrigin:
-        dictionary.chooseOrigin ?? enTranslations.chooseOrigin ?? "",
-      clearOrigin: dictionary.clearOrigin ?? enTranslations.clearOrigin ?? "",
-      clearDestination:
-        dictionary.clearDestination ?? enTranslations.clearDestination ?? "",
-      searchAirportsAndCities:
-        dictionary.searchAirportsAndCities ??
-        enTranslations.searchAirportsAndCities ??
-        "",
-      searchAirportsOrCities:
-        dictionary.searchAirportsOrCities ??
-        enTranslations.searchAirportsOrCities ??
-        "",
-      startTypingCityOrAirport:
-        dictionary.startTypingCityOrAirport ??
-        enTranslations.startTypingCityOrAirport ??
-        "",
-      searchingAirportsAndCities:
-        dictionary.searchingAirportsAndCities ??
-        enTranslations.searchingAirportsAndCities ??
-        "",
-      noMatchingAirportsOrCities:
-        dictionary.noMatchingAirportsOrCities ??
-        enTranslations.noMatchingAirportsOrCities ??
-        "",
-    }),
-    [dictionary],
   );
   const urlParams = useSearchParams();
   const router = useRouter();
@@ -944,11 +992,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [desktopSortOpen, setDesktopSortOpen] = useState(false);
   const desktopSortRef = useRef<HTMLDivElement | null>(null);
   const desktopSortButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [results, setResults] = useState<PublicFlightResult[]>([]);
+  const [providerResults, setResults] = useState<PublicFlightResult[]>([]);
+  const kayak = useKayakResults();
+  const results = useMemo(() => guidedMode || kayak?.vertical !== "flights" ? providerResults : [
+    ...providerResults, ...kayak.offers.map(offer => kayakFlightCardModel(offer, kayak.criteria)).filter((flight): flight is PublicFlightResult => flight !== null),
+  ],[guidedMode,kayak,providerResults]);
   const activeFlightSearchKeyRef = useRef<string>("");
   const [error, setError] = useState("");
-  const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
   const [filtersReadySearchKey, setFiltersReadySearchKey] = useState<
     string | null
   >(null);
@@ -956,21 +1008,25 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const userInitiatedRetryRef = useRef(false);
   const loadingFocusRef = useRef<HTMLDivElement | null>(null);
   const resultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const mobileResultsPageTopRef = useRef<HTMLDivElement | null>(null);
+  const paginationListRef = useRef<HTMLDivElement | null>(null);
   const errorHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const emptyHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [mobileSortMenuOpen, setMobileSortMenuOpen] = useState(false);
-  const [mobileAirportMenuOpen, setMobileAirportMenuOpen] = useState(false);
-  const [mobileStopsMenuOpen, setMobileStopsMenuOpen] = useState(false);
-  const [mobileAirlineMenuOpen, setMobileAirlineMenuOpen] = useState(false);
-  const [mobileShortcutMenuPosition, setMobileShortcutMenuPosition] =
-    useState<MobileShortcutMenuPosition | null>(null);
-  const [showMobileBackToTop, setShowMobileBackToTop] = useState(false);
-  const mobileSortMenuRef = useRef<HTMLDivElement | null>(null);
-  const mobileAirportMenuRef = useRef<HTMLDivElement | null>(null);
-  const mobileStopsMenuRef = useRef<HTMLDivElement | null>(null);
-  const mobileAirlineMenuRef = useRef<HTMLDivElement | null>(null);
-  const mobileShortcutMenuContentRef = useRef<HTMLDivElement | null>(null);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [mobileShortcutSheet, setMobileShortcutSheet] = useState<MobileShortcutSheet | null>(null);
+
+  const [mobileDraftSort, setMobileDraftSort] = useState<SortMode>(sortMode);
+  const [mobileDraftAirlines, setMobileDraftAirlines] = useState<string[]>([]);
+  const [mobileDraftStops, setMobileDraftStops] = useState<string[]>([]);
+  const [mobileDraftFromAirports, setMobileDraftFromAirports] = useState<string[]>([]);
+  const [mobileDraftToAirports, setMobileDraftToAirports] = useState<string[]>([]);
+  const [mobileAirlineSearch, setMobileAirlineSearch] = useState("");
+  const [mobileShowAllAirlines, setMobileShowAllAirlines] = useState(false);
+  const mobileShortcutLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const mobileShortcutSheetRef = useRef<HTMLElement | null>(null);
+  const mobileShortcutSheetCloseRef = useRef<HTMLButtonElement | null>(null);
+  const mobileShortcutScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
   const [filterApplying, setFilterApplying] = useState(false);
   const [maxPrice, setMaxPrice] = useState(0);
   const [timeFilterMode, setTimeFilterMode] = useState<"takeoff" | "landing">(
@@ -982,12 +1038,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [maxLandingMinutes, setMaxLandingMinutes] = useState<number | null>(
     null,
   );
+  const [mobileJourneyTimeMaximums, setMobileJourneyTimeMaximums] =
+    useState<MobileJourneyTimeMaximums>({});
   const [maxDurationMinutes, setMaxDurationMinutes] = useState<number | null>(
     null,
   );
   const [selectedStops, setSelectedStops] = useState<string[]>([]);
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
   const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
+  const [selectedFromAirports, setSelectedFromAirports] = useState<string[]>([]);
+  const [selectedToAirports, setSelectedToAirports] = useState<string[]>([]);
   const [selectedFlightQuality, setSelectedFlightQuality] = useState<string[]>(
     [],
   );
@@ -1011,11 +1071,24 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const nearbyFareCacheRef = useRef(new Map<string, NearbyFareState>());
   const nearbyFareRequestsRef = useRef(new Map<string, NearbyFareRequest>());
   const nearbyFareGenerationRef = useRef(0);
+  const mobileNearbyFareRailRef = useRef<HTMLDivElement>(null);
+  const mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>(null);
+  const alignedMobileNearbyFareSearchRef = useRef<string | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
-  const [nearbyFareVisibleStart, setNearbyFareVisibleStart] = useState(0);
+  const [mobileNearbyFaresEnabled, setMobileNearbyFaresEnabled] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 639px)").matches,
+  );
   const [returnDateInput, setReturnDateInput] = useState(
     initialDateSafeParams.get("returnDate") || "",
   );
+  const [multiCityLegs, setMultiCityLegs] = useState<FlightSearchLeg[]>(() =>
+    initialDateSafeParams.get("tripType") === "multi-city"
+      ? parseFlightLegParams(params)
+      : [],
+  );
+  const [multiCityAirportsValid, setMultiCityAirportsValid] = useState(false);
   const [adultCount, setAdultCount] = useState(() => {
     const adultsParam = params.get("adults");
     const travelersParam = params.get("travelers");
@@ -1059,22 +1132,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     startOfMonth(new Date()),
   );
   const [travelerPopoverOpen, setTravelerPopoverOpen] = useState(false);
-  const [draftMobileDepartureDate, setDraftMobileDepartureDate] =
-    useState(departureDateInput);
-  const [draftMobileReturnDate, setDraftMobileReturnDate] =
-    useState(returnDateInput);
-  const [draftAdultCount, setDraftAdultCount] = useState(adultCount);
-  const [draftChildCount, setDraftChildCount] = useState(childCount);
-  const [draftInfantCount, setDraftInfantCount] = useState(infantCount);
-  const [draftCabinClassInput, setDraftCabinClassInput] =
-    useState<CabinClassValue>(cabinClassInput);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [mobileCompactHeaderVisible, setMobileCompactHeaderVisible] =
-    useState(false);
-  const [activeMobileAirportPicker, setActiveMobileAirportPicker] = useState<
-    "origin" | "destination" | null
-  >(null);
-  const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchScrollRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchScrollTopRef = useRef(0);
   const pendingMobileDatePickerRef = useRef<"departure" | "return" | null>(
@@ -1085,6 +1143,20 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [isSearchCollapsed, setIsSearchCollapsed] = useState(false);
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
     useState(false);
+  const [activeStickySearchTarget, setActiveStickySearchTarget] = useState<
+    "trip" | "origin" | "destination" | "dates" | "return" | "travelers" | null
+  >(null);
+  const [desktopNavSearchTarget, setDesktopNavSearchTarget] =
+    useState<HTMLElement | null>(null);
+  const [mobileNavSummaryTarget, setMobileNavSummaryTarget] =
+    useState<HTMLElement | null>(null);
+  const [mobileNavFiltersTarget, setMobileNavFiltersTarget] =
+    useState<HTMLElement | null>(null);
+  const [desktopSearchPopoverFrame, setDesktopSearchPopoverFrame] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
   const [travelerPopoverPosition, setTravelerPopoverPosition] = useState<{
     top: number;
     left: number;
@@ -1108,13 +1180,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     Record<string, string>
   >({});
   const [savedItemError, setSavedItemError] = useState("");
-  const [priceAlertDialogOpen, setPriceAlertDialogOpen] = useState(false);
-  const [priceAlertTarget, setPriceAlertTarget] = useState("");
-  const [priceAlertError, setPriceAlertError] = useState("");
-  const [priceAlertStatusMessage, setPriceAlertStatusMessage] = useState("");
-  const [priceAlertSubmitting, setPriceAlertSubmitting] = useState(false);
-  const priceAlertButtonRef = useRef<HTMLButtonElement | null>(null);
-  const priceAlertInputRef = useRef<HTMLInputElement | null>(null);
 
   const refreshBackendRecentSearches = useCallback(
     async (signal?: AbortSignal) => {
@@ -1129,8 +1194,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const tripTypeMenuRef = useRef<HTMLDivElement | null>(null);
   const originInputRef = useRef<HTMLInputElement | null>(null);
   const destinationInputRef = useRef<HTMLInputElement | null>(null);
-  const mobileOriginLauncherRef = useRef<HTMLButtonElement | null>(null);
-  const mobileDestinationLauncherRef = useRef<HTMLButtonElement | null>(null);
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
   const stickyOriginWrapRef = useRef<HTMLDivElement | null>(null);
@@ -1141,12 +1204,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
   const stickySentinelRef = useRef<HTMLDivElement | null>(null);
-  const stickySearchPanelRef = useRef<HTMLDivElement | null>(null);
   const stickySearchPopoutRef = useRef<HTMLFormElement | null>(null);
-  const stickySearchCloseButtonRef = useRef<HTMLButtonElement | null>(null);
-  const stickySearchLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const stickySearchLauncherRef = useRef<HTMLElement | null>(null);
+  const stickySearchRestoreTargetRef = useRef<
+    "trip" | "origin" | "destination" | "dates" | "return" | "travelers" | null
+  >(null);
   const pendingStickySearchTargetRef = useRef<
-    "route" | "dates" | "travelers" | null
+    "trip" | "origin" | "destination" | "dates" | "return" | "travelers" | null
   >(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const expandedSearchScrollYRef = useRef(0);
@@ -1157,16 +1221,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const travelPreferencesRequestedRef = useRef(false);
   const preferredAirlineDefaultResolvedRef = useRef(false);
   const preferredAirlineDefaultAppliedRef = useRef(false);
-  const mobileSearchScrollLockRef = useRef<BodyScrollLock | null>(null);
-  const mobileFiltersScrollLockRef = useRef<BodyScrollLock | null>(null);
+  const mobileFiltersScrollLockRef = useRef<MobileResultsScrollLockRelease | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLElement | null>(null);
   const mobileFiltersDialogRef = useRef<HTMLElement | null>(null);
   const mobileFiltersCloseButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mobileSearchModalityRef = useRef<OverlayActivationModality>("programmatic");
+  const mobileFiltersModalityRef = useRef<OverlayActivationModality>("programmatic");
   const shouldRestoreMobileSearchFocusRef = useRef(true);
   const shouldRestoreMobileFiltersFocusRef = useRef(true);
   const shouldScrollToTopAfterFilterApplyRef = useRef(false);
-  const stickySearchScrollLockRef = useRef<BodyScrollLock | null>(null);
   const stickySearchPanelOpenRef = useRef(false);
   const queryString = params.toString();
   const searchQueryString = getSearchQueryString(params);
@@ -1212,6 +1276,24 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     mobileTravelerTotal === 1 && adultCount === 1
       ? `1 ${t("adultSingular")}`
       : `${mobileTravelerTotal} ${t("travelerPlural")}`;
+  const mobileFlightPriceAlertQuery = useMemo(
+    () => tripTypeInput === "multi-city" ? null : {
+      tripType: tripTypeInput === "one-way" ? "one-way" : "round-trip",
+      origin: originCode || originInput.trim().toUpperCase(),
+      destination: destinationCode || destinationInput.trim().toUpperCase(),
+      departureDate: departureDateInput,
+      ...(tripTypeInput === "round-trip" ? { returnDate: returnDateInput } : {}),
+      adults: adultCount,
+      children: childCount,
+      infants: infantCount,
+      travelers: adultCount + childCount + infantCount,
+      cabinClass: cabinClassInput,
+      currency: selectedCurrency,
+    },
+    [adultCount, cabinClassInput, childCount, departureDateInput, destinationCode, destinationInput, infantCount, originCode, originInput, returnDateInput, selectedCurrency, tripTypeInput],
+  );
+  const mobileCabinClassSummary = cabinClassLabel(cabinClassInput, t);
+  const mobileSearchSummaryLabel = `${mobileRouteSummary} · ${mobileTripTypeSummary} · ${mobileDateSummary} · ${mobileTravelerSummary} · ${mobileCabinClassSummary}`;
   const travelerCabinSummary = buildTravelerCabinSummary(
     adultCount,
     childCount,
@@ -1219,16 +1301,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     cabinClassInput,
     t,
   );
-  const shouldRenderDesktopFullSearchForm = true;
-  const shouldShowDesktopCompactSummary = false;
-  const showFullSearchForm =
-    shouldRenderDesktopFullSearchForm ||
-    !isSearchCollapsed ||
-    isSearchExpandedWhileSticky;
-  const showCompactSearchSummary =
-    !shouldRenderDesktopFullSearchForm &&
-    isSearchCollapsed &&
-    !isSearchExpandedWhileSticky;
+  const shouldRenderDesktopFullSearchForm = false;
+  const shouldShowDesktopCompactSummary = true;
+  const showFullSearchForm = isSearchExpandedWhileSticky;
+  const showCompactSearchSummary = !isSearchExpandedWhileSticky;
   const savedRoutes = useMemo(
     () =>
       savedItemIds
@@ -1240,46 +1316,101 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const markExpandedSearchInteraction = useCallback(() => {}, []);
 
   const expandStickySearch = useCallback(() => {
-    if (tripTypeInput === "multi-city") {
-      router.push(`/flights?${searchQueryString}`);
-      return;
-    }
     const currentScrollY = window.scrollY;
     expandedSearchScrollYRef.current = currentScrollY;
     setIsSearchExpandedWhileSticky(true);
-  }, [router, searchQueryString, tripTypeInput]);
+  }, []);
+
+  const updateDesktopSearchPopoverFrame = useCallback(
+    (compactForm?: HTMLElement | null) => {
+      if (typeof window === "undefined" || window.innerWidth < 1024) {
+        setDesktopSearchPopoverFrame(null);
+        return false;
+      }
+
+      const resolvedCompactForm =
+        compactForm ??
+        document.querySelector<HTMLElement>(
+          "[data-flight-results-nav-search-form]",
+        );
+      if (!resolvedCompactForm) {
+        setDesktopSearchPopoverFrame(null);
+        return false;
+      }
+
+      const rect = resolvedCompactForm.getBoundingClientRect();
+      const viewportGutter = 16;
+      const availableWidth = Math.max(
+        0,
+        window.innerWidth - viewportGutter * 2,
+      );
+      const width = Math.min(rect.width, availableWidth);
+      const left = Math.min(
+        Math.max(viewportGutter, rect.left),
+        Math.max(viewportGutter, window.innerWidth - viewportGutter - width),
+      );
+
+      setDesktopSearchPopoverFrame({
+        top: rect.bottom,
+        left,
+        width,
+      });
+      return true;
+    },
+    [],
+  );
 
   const openStickySearchEditor = useCallback(
     (
-      event: React.MouseEvent<HTMLButtonElement>,
-      target: "route" | "dates" | "travelers",
+      launcher: HTMLElement,
+      target: "trip" | "origin" | "destination" | "dates" | "return" | "travelers",
     ) => {
-      if (tripTypeInput === "multi-city") {
-        router.push(`/flights?${searchQueryString}`);
-        return;
-      }
-      stickySearchLauncherRef.current = event.currentTarget;
-      pendingStickySearchTargetRef.current = target;
+      stickySearchLauncherRef.current = launcher;
+      const compactForm = launcher.closest<HTMLElement>(
+        "[data-flight-results-nav-search-form]",
+      );
+      updateDesktopSearchPopoverFrame(compactForm);
+      const resolvedTarget =
+        tripTypeInput === "multi-city" &&
+        (target === "origin" ||
+          target === "destination" ||
+          target === "dates" ||
+          target === "return")
+          ? "trip"
+          : target;
+      stickySearchRestoreTargetRef.current = resolvedTarget;
+      pendingStickySearchTargetRef.current =
+        resolvedTarget === "trip" ? null : resolvedTarget;
       const currentScrollY = window.scrollY;
       expandedSearchScrollYRef.current = currentScrollY;
+      stickySearchPanelOpenRef.current = true;
       setIsSearchExpandedWhileSticky(true);
+      setActiveStickySearchTarget(resolvedTarget);
       setActiveDesktopSearchSurface("sticky");
       setTripTypeMenuOpen(false);
       setActiveSuggest(
-        target === "route" && originInput.trim().length >= 2
+        resolvedTarget === "origin" && originInput.trim().length >= 2
           ? "origin"
-          : null,
+          : resolvedTarget === "destination" &&
+              destinationInput.trim().length >= 2
+            ? "destination"
+            : null,
       );
       setDropdownPosition(null);
-      setActiveDatePicker(target === "dates" ? "departure" : null);
+      setActiveDatePicker(
+        resolvedTarget === "dates"
+          ? "departure"
+          : resolvedTarget === "return"
+            ? "return"
+            : null,
+      );
       setDatePickerPosition(null);
-      setTravelerPopoverOpen(target === "travelers");
+      setTravelerPopoverOpen(resolvedTarget === "travelers");
       setTravelerPopoverPosition(null);
     },
     [
+      destinationInput,
       originInput,
-      router,
-      searchQueryString,
       setActiveDatePicker,
       setActiveSuggest,
       setDatePickerPosition,
@@ -1288,26 +1419,74 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setTravelerPopoverPosition,
       setTripTypeMenuOpen,
       tripTypeInput,
+      updateDesktopSearchPopoverFrame,
     ],
   );
 
-  const isStickySearchPanelOpen =
-    isSearchCollapsed && isSearchExpandedWhileSticky;
+  const isStickySearchPanelOpen = isSearchExpandedWhileSticky;
+
+  useEffect(() => {
+    if (guidedMode || typeof window === "undefined") return undefined;
+    const update = () =>
+      setShowBackToTop(window.scrollY >= FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, [guidedMode]);
+
+  useEffect(() => {
+    if (guidedMode || typeof window === "undefined") return undefined;
+
+    let frame = 0;
+
+    const syncResultsHeaderTargets = () => {
+      frame = window.requestAnimationFrame(() => {
+        const nextDesktopTarget = document.querySelector<HTMLElement>(
+          "[data-flight-results-nav-search]",
+        );
+        const nextMobileSummaryTarget = document.querySelector<HTMLElement>(
+          "[data-flight-results-mobile-nav-summary]",
+        );
+        const nextMobileFiltersTarget = document.querySelector<HTMLElement>(
+          "[data-flight-results-mobile-nav-filters]",
+        );
+
+        setDesktopNavSearchTarget((current) =>
+          current === nextDesktopTarget ? current : nextDesktopTarget,
+        );
+        setMobileNavSummaryTarget((current) =>
+          current === nextMobileSummaryTarget ? current : nextMobileSummaryTarget,
+        );
+        setMobileNavFiltersTarget((current) =>
+          current === nextMobileFiltersTarget ? current : nextMobileFiltersTarget,
+        );
+      });
+    };
+
+    syncResultsHeaderTargets();
+
+    const observer = new MutationObserver(syncResultsHeaderTargets);
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => {
+      observer.disconnect();
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [guidedMode]);
 
   useEffect(() => {
     stickySearchPanelOpenRef.current = isStickySearchPanelOpen;
   }, [isStickySearchPanelOpen]);
 
   const collapseStickySearch = useCallback(
-    ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
-      const activeScrollLock = stickySearchScrollLockRef.current;
-
-      if (!restoreScroll && activeScrollLock) {
-        activeScrollLock.restore({ restoreScroll: false });
-        stickySearchScrollLockRef.current = null;
-      }
-
+    () => {
+      stickySearchPanelOpenRef.current = false;
       setIsSearchExpandedWhileSticky(false);
+      setActiveStickySearchTarget(null);
       setTripTypeMenuOpen(false);
       setActiveSuggest(null);
       setDropdownPosition(null);
@@ -1316,9 +1495,30 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setTravelerPopoverOpen(false);
       setTravelerPopoverPosition(null);
       setActiveDesktopSearchSurface(null);
+      setDesktopSearchPopoverFrame(null);
 
       window.requestAnimationFrame(() => {
-        stickySearchLauncherRef.current?.focus();
+        const restoreTarget = stickySearchRestoreTargetRef.current;
+
+        if (restoreTarget === "origin" || restoreTarget === "destination") {
+          stickySearchRestoreTargetRef.current = null;
+          return;
+        }
+
+        const selector =
+          restoreTarget === "trip"
+            ? "[data-flight-results-header-trip]"
+            : restoreTarget === "dates" || restoreTarget === "return"
+              ? "[data-flight-results-header-dates]"
+              : restoreTarget === "travelers"
+                ? "[data-flight-results-header-travelers]"
+                : null;
+        const mountedLauncher = selector
+          ? document.querySelector<HTMLElement>(selector)
+          : null;
+
+        (mountedLauncher ?? stickySearchLauncherRef.current)?.focus();
+        stickySearchRestoreTargetRef.current = null;
       });
     },
     [
@@ -1333,6 +1533,48 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   );
 
   useEffect(() => {
+    if (!isStickySearchPanelOpen || typeof window === "undefined") {
+      return undefined;
+    }
+
+    let animationFrame = 0;
+    const refreshAnchoredFrame = () => {
+      if (animationFrame) return;
+
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+
+        if (window.innerWidth < 1024) {
+          collapseStickySearch();
+          return;
+        }
+
+        const compactForm = document.querySelector<HTMLElement>(
+          "[data-flight-results-nav-search-form]",
+        );
+        if (!updateDesktopSearchPopoverFrame(compactForm)) {
+          collapseStickySearch();
+        }
+      });
+    };
+
+    window.addEventListener("resize", refreshAnchoredFrame);
+    window.visualViewport?.addEventListener("resize", refreshAnchoredFrame);
+
+    return () => {
+      window.removeEventListener("resize", refreshAnchoredFrame);
+      window.visualViewport?.removeEventListener("resize", refreshAnchoredFrame);
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [
+    collapseStickySearch,
+    isStickySearchPanelOpen,
+    updateDesktopSearchPopoverFrame,
+  ]);
+
+  useEffect(() => {
     if (!isStickySearchPanelOpen) {
       return undefined;
     }
@@ -1341,14 +1583,21 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const pendingTarget = pendingStickySearchTargetRef.current;
       pendingStickySearchTargetRef.current = null;
 
-      if (pendingTarget === "route") {
+      if (pendingTarget === "origin") {
         stickyOriginWrapRef.current
           ?.querySelector<HTMLInputElement>("input")
           ?.focus({ preventScroll: true });
         return;
       }
 
-      if (pendingTarget === "dates") {
+      if (pendingTarget === "destination") {
+        stickyDestinationWrapRef.current
+          ?.querySelector<HTMLInputElement>("input")
+          ?.focus({ preventScroll: true });
+        return;
+      }
+
+      if (pendingTarget === "dates" || pendingTarget === "return") {
         stickyDateButtonRef.current?.focus({ preventScroll: true });
         return;
       }
@@ -1358,13 +1607,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         return;
       }
 
-      stickySearchCloseButtonRef.current?.focus({ preventScroll: true });
+      stickySearchLauncherRef.current?.focus({ preventScroll: true });
     });
 
     const handleStickyPanelPointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
       const panel = stickySearchPopoutRef.current;
-      const compactBar = stickySearchPanelRef.current;
+      const compactBar = document.querySelector<HTMLElement>(
+        "[data-flight-results-nav-search-form]",
+      );
       const datePickerPopover = document.getElementById(
         "flight-date-picker-popover",
       );
@@ -1416,7 +1667,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       }
 
       if (tripTypeMenuOpen) {
-        setTripTypeMenuOpen(false);
+        collapseStickySearch();
         return;
       }
 
@@ -1439,21 +1690,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     travelerPopoverOpen,
     tripTypeMenuOpen,
   ]);
-
-  useEffect(() => {
-    if (!isStickySearchPanelOpen) {
-      stickySearchScrollLockRef.current?.restore();
-      stickySearchScrollLockRef.current = null;
-      return undefined;
-    }
-
-    stickySearchScrollLockRef.current = lockDocumentScrollWithoutLayoutShift();
-
-    return () => {
-      stickySearchScrollLockRef.current?.restore();
-      stickySearchScrollLockRef.current = null;
-    };
-  }, [isStickySearchPanelOpen]);
 
   useEffect(() => {
     if (loading) {
@@ -1545,55 +1781,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       if (animationFrame) {
         window.cancelAnimationFrame(animationFrame);
       }
-    };
-  }, [loading]);
-
-  useEffect(() => {
-    if (loading || typeof window === "undefined") {
-      return undefined;
-    }
-
-    const sentinel = mobileSearchSummarySentinelRef.current;
-
-    const updateFromSentinel = () => {
-      const currentSentinel = mobileSearchSummarySentinelRef.current;
-
-      if (!currentSentinel) {
-        setMobileCompactHeaderVisible(false);
-        return;
-      }
-
-      const rect = currentSentinel.getBoundingClientRect();
-      setMobileCompactHeaderVisible(rect.bottom < 8 && window.scrollY > 96);
-    };
-
-    updateFromSentinel();
-
-    if (typeof IntersectionObserver === "undefined" || !sentinel) {
-      window.addEventListener("scroll", updateFromSentinel, { passive: true });
-      window.addEventListener("resize", updateFromSentinel);
-
-      return () => {
-        window.removeEventListener("scroll", updateFromSentinel);
-        window.removeEventListener("resize", updateFromSentinel);
-      };
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setMobileCompactHeaderVisible(
-          !entry.isIntersecting && window.scrollY > 96,
-        );
-      },
-      { rootMargin: "-8px 0px 0px 0px", threshold: 0 },
-    );
-
-    observer.observe(sentinel);
-    window.addEventListener("scroll", updateFromSentinel, { passive: true });
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", updateFromSentinel);
     };
   }, [loading]);
 
@@ -1721,154 +1908,50 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     };
   }, []);
 
-  const closeMobileShortcutMenus = useCallback(() => {
-    setMobileSortMenuOpen(false);
-    setMobileAirportMenuOpen(false);
-    setMobileStopsMenuOpen(false);
-    setMobileAirlineMenuOpen(false);
-    setMobileShortcutMenuPosition(null);
-  }, [
-    setMobileAirlineMenuOpen,
-    setMobileAirportMenuOpen,
-    setMobileShortcutMenuPosition,
-    setMobileSortMenuOpen,
-    setMobileStopsMenuOpen,
-  ]);
-
-  const getActiveMobileShortcutMenu =
-    useCallback((): MobileShortcutMenu | null => {
-      if (mobileSortMenuOpen) return "sort";
-      if (mobileAirlineMenuOpen) return "airlines";
-      if (mobileStopsMenuOpen) return "stops";
-      if (mobileAirportMenuOpen) return "airports";
-      return null;
-    }, [
-      mobileAirlineMenuOpen,
-      mobileAirportMenuOpen,
-      mobileSortMenuOpen,
-      mobileStopsMenuOpen,
-    ]);
-
-  const positionMobileShortcutMenu = useCallback(
-    (rect: DOMRect, width: number) => {
-      if (typeof window === "undefined") return;
-
-      const gutter = 16;
-      const safeWidth = Math.min(width, window.innerWidth - gutter * 2);
-      const left = Math.min(
-        Math.max(rect.left, gutter),
-        window.innerWidth - safeWidth - gutter,
-      );
-
-      setMobileShortcutMenuPosition({
-        top: Math.min(rect.bottom + 8, window.innerHeight - gutter),
-        left,
-        width: safeWidth,
-      });
-    },
-    [setMobileShortcutMenuPosition],
-  );
-
-  useEffect(() => {
-    const activeMenu = getActiveMobileShortcutMenu();
-    if (!activeMenu) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!(event.target instanceof Node)) return;
-
-      const triggerRef = {
-        sort: mobileSortMenuRef,
-        airlines: mobileAirlineMenuRef,
-        stops: mobileStopsMenuRef,
-        airports: mobileAirportMenuRef,
-      }[activeMenu];
-
-      if (
-        triggerRef.current?.contains(event.target) ||
-        mobileShortcutMenuContentRef.current?.contains(event.target)
-      ) {
-        return;
-      }
-
-      closeMobileShortcutMenus();
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeMobileShortcutMenus();
-    };
-    const handleViewportChange = () => closeMobileShortcutMenus();
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("scroll", handleViewportChange, { passive: true });
-    window.addEventListener("resize", handleViewportChange);
-    window.addEventListener("orientationchange", handleViewportChange);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("scroll", handleViewportChange);
-      window.removeEventListener("resize", handleViewportChange);
-      window.removeEventListener("orientationchange", handleViewportChange);
-    };
-  }, [closeMobileShortcutMenus, getActiveMobileShortcutMenu]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const threshold = 600;
-    const handleScroll = () => {
-      const shouldShow = window.scrollY > threshold;
-      setShowMobileBackToTop((current) =>
-        current === shouldShow ? current : shouldShow,
-      );
-    };
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+  const closeMobileShortcutSheet = useCallback((restoreFocus = true) => {
+    setMobileShortcutSheet(null);
+    if (restoreFocus) window.requestAnimationFrame(() => mobileShortcutLauncherRef.current?.focus({ preventScroll: true }));
   }, []);
 
   useLayoutEffect(() => {
-    const releaseExistingLock = () => {
+    if (!mobileShortcutSheet) return;
+    mobileShortcutScrollLockRef.current ??= acquireMobileResultsScrollLock();
+    const focusFrame = window.requestAnimationFrame(() => mobileShortcutSheetCloseRef.current?.focus({ preventScroll: true }));
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMobileShortcutSheet();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const controls = Array.from(mobileShortcutSheetRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])') ?? []).filter((element) => element.offsetParent !== null);
+      if (!controls.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener("keydown", handleKeyDown);
+      mobileShortcutScrollLockRef.current?.();
+      mobileShortcutScrollLockRef.current = null;
+    };
+  }, [closeMobileShortcutSheet, mobileShortcutSheet]);
+
+
+  useLayoutEffect(() => {
+    if (!mobileSearchOpen) return;
+
+    return () => {
       const launcher = mobileSearchLauncherRef.current;
       const shouldRestoreFocus = shouldRestoreMobileSearchFocusRef.current;
 
-      mobileSearchScrollLockRef.current?.restore();
-      mobileSearchScrollLockRef.current = null;
       shouldRestoreMobileSearchFocusRef.current = true;
 
-      if (shouldRestoreFocus && launcher?.isConnected) {
-        launcher.focus({ preventScroll: true });
-      }
+      if (shouldRestoreFocus) restoreOverlayLauncherFocus(launcher, mobileSearchModalityRef.current);
     };
-
-    if (!mobileSearchOpen || typeof window === "undefined") {
-      releaseExistingLock();
-      return releaseExistingLock;
-    }
-
-    const mobileQuery = window.matchMedia("(max-width: 639px)");
-
-    if (!mobileQuery.matches) {
-      releaseExistingLock();
-      return releaseExistingLock;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        closeMobileSearchDrawer();
-      }
-    };
-
-    mobileSearchScrollLockRef.current ??= lockMobileOverlayScroll();
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      releaseExistingLock();
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- Existing drawer lifecycle intentionally depends on open state only.
   }, [mobileSearchOpen]);
 
   useLayoutEffect(() => {
@@ -1876,13 +1959,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const launcher = mobileFiltersLauncherRef.current;
       const shouldRestoreFocus = shouldRestoreMobileFiltersFocusRef.current;
 
-      mobileFiltersScrollLockRef.current?.restore();
+      mobileFiltersScrollLockRef.current?.();
       mobileFiltersScrollLockRef.current = null;
       shouldRestoreMobileFiltersFocusRef.current = true;
 
-      if (shouldRestoreFocus && launcher?.isConnected && launcher.offsetParent !== null) {
-        launcher.focus({ preventScroll: true });
-      }
+      if (shouldRestoreFocus) restoreOverlayLauncherFocus(launcher, mobileFiltersModalityRef.current);
     };
 
     if (!filtersOpen || typeof window === "undefined") {
@@ -1898,7 +1979,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       return releaseExistingLock;
     }
 
-    mobileFiltersScrollLockRef.current ??= lockMobileOverlayScroll();
+    mobileFiltersScrollLockRef.current ??= acquireMobileResultsScrollLock();
 
     const focusFrame = window.requestAnimationFrame(() => {
       mobileFiltersCloseButtonRef.current?.focus({ preventScroll: true });
@@ -1995,48 +2076,141 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     clearRecentSearches();
   }
 
+  function buildDesktopMultiCityHomeHref() {
+    const nextParams = new URLSearchParams(searchQueryString);
+    nextParams.set("tripType", "multi-city");
+    nextParams.delete("returnDate");
+
+    for (let index = 1; index <= MULTI_CITY_MAX_LEGS; index += 1) {
+      nextParams.delete(`origin${index}`);
+      nextParams.delete(`destination${index}`);
+      nextParams.delete(`departureDate${index}`);
+    }
+    nextParams.delete("legCount");
+
+    const firstLeg = {
+      origin: originCode || originInput.trim().toUpperCase(),
+      destination: destinationCode || destinationInput.trim().toUpperCase(),
+      departureDate: departureDateInput,
+    };
+    const candidateLegs =
+      multiCityLegs.length >= MULTI_CITY_MIN_LEGS
+        ? multiCityLegs
+        : [
+            firstLeg,
+            tripTypeInput === "round-trip" && returnDateInput
+              ? {
+                  origin: firstLeg.destination,
+                  destination: firstLeg.origin,
+                  departureDate: returnDateInput,
+                }
+              : {
+                  origin: firstLeg.destination,
+                  destination: "",
+                  departureDate: departureDateInput,
+                },
+          ];
+    const projection = projectSearchLegs("multi-city", candidateLegs);
+
+    nextParams.set("origin", projection.origin);
+    nextParams.set("destination", projection.destination);
+    nextParams.set("departureDate", projection.departureDate);
+    nextParams.set("adults", String(adultCount));
+    nextParams.set("children", String(childCount));
+    nextParams.set("infants", String(infantCount));
+    nextParams.set(
+      "travelers",
+      String(adultCount + childCount + infantCount),
+    );
+    nextParams.set("cabinClass", cabinClassInput);
+    nextParams.set("currency", selectedCurrency);
+    appendFlightLegParams(nextParams, projection.legs);
+
+    return `/?${nextParams.toString()}`;
+  }
+
+  function navigateDesktopMultiCityToHome() {
+    closeFlightSearchPopovers();
+    stickySearchPanelOpenRef.current = false;
+    setIsSearchExpandedWhileSticky(false);
+    setActiveStickySearchTarget(null);
+    setActiveDesktopSearchSurface(null);
+    router.push(buildDesktopMultiCityHomeHref(), { scroll: true });
+  }
+
+  function openDesktopSearchEditor(
+    launcher: HTMLElement,
+    target:
+      | "trip"
+      | "origin"
+      | "destination"
+      | "dates"
+      | "return"
+      | "travelers",
+  ) {
+    if (tripTypeInput === "multi-city") {
+      navigateDesktopMultiCityToHome();
+      return;
+    }
+
+    openStickySearchEditor(launcher, target);
+  }
+
   function handleTripTypeChange(nextTripType: string) {
     markExpandedSearchInteraction();
 
     if (nextTripType === "multi-city") {
-      const firstLeg = { origin: originCode || originInput.trim().toUpperCase(), destination: destinationCode || destinationInput.trim().toUpperCase(), departureDate: departureDateInput };
-      const secondLeg = tripTypeInput === "round-trip" && returnDateInput
-        ? { origin: firstLeg.destination, destination: firstLeg.origin, departureDate: returnDateInput }
-        : { origin: firstLeg.destination, destination: "", departureDate: departureDateInput };
-      const legs = [firstLeg, secondLeg];
-      const projection = projectSearchLegs("multi-city", legs);
-      const params = new URLSearchParams({
-        tripType: "multi-city",
-        origin: projection.origin,
-        destination: projection.destination,
-        departureDate: projection.departureDate,
-        adults: String(adultCount),
-        children: String(childCount),
-        infants: String(infantCount),
-        travelers: String(adultCount + childCount + infantCount),
-        cabinClass: cabinClassInput,
-        currency: selectedCurrency,
-      });
-      appendFlightLegParams(params, legs);
-      setTripTypeMenuOpen(false);
-      router.push(`/flights?${params.toString()}`);
+      if (multiCityLegs.length === 0) {
+        const firstLeg = {
+          origin: originCode || originInput.trim().toUpperCase(),
+          destination: destinationCode || destinationInput.trim().toUpperCase(),
+          departureDate: departureDateInput,
+        };
+        const projectedLegs = [
+          firstLeg,
+          tripTypeInput === "round-trip" && returnDateInput
+            ? {
+                origin: firstLeg.destination,
+                destination: firstLeg.origin,
+                departureDate: returnDateInput,
+              }
+            : {
+                origin: firstLeg.destination,
+                destination: "",
+                departureDate: departureDateInput,
+              },
+        ];
+        const projection = projectSearchLegs("multi-city", projectedLegs);
+        setMultiCityLegs(projection.legs);
+      }
+      setTripTypeInput("multi-city");
+      closeFlightSearchPopovers();
       return;
     }
 
     const normalizedTripType =
       nextTripType === "one-way" ? "one-way" : "round-trip";
 
+    if (tripTypeInput === "multi-city" && multiCityLegs.length > 0) {
+      const projection = projectSearchLegs(normalizedTripType, multiCityLegs);
+      setOriginInput(projection.origin);
+      setOriginCode(projection.origin);
+      setDestinationInput(projection.destination);
+      setDestinationCode(projection.destination);
+      setDepartureDateInput(projection.departureDate);
+      setReturnDateInput(projection.returnDate ?? "");
+    } else if (normalizedTripType === "one-way") {
+      setReturnDateInput("");
+    }
+
     setTripTypeInput(normalizedTripType);
     setTripTypeMenuOpen(false);
 
     if (normalizedTripType === "one-way") {
-      setReturnDateInput("");
-
       if (activeDatePicker === "return") {
         setActiveDatePicker(null);
         setDatePickerPosition(null);
       }
-
       return;
     }
 
@@ -2050,10 +2224,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
   }
 
-  function rememberMobileSearchScrollPosition() {
-    mobileSearchScrollTopRef.current =
-      mobileSearchScrollRef.current?.scrollTop ?? 0;
-  }
+
 
   function restoreMobileSearchScrollPosition() {
     window.requestAnimationFrame(() => {
@@ -2066,50 +2237,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     });
   }
 
-  function closeMobileDatePicker() {
-    setDraftMobileDepartureDate(departureDateInput);
-    setDraftMobileReturnDate(returnDateInput);
-    setActiveDatePicker(null);
-    setDatePickerPosition(null);
-    restoreMobileSearchScrollPosition();
-  }
 
-  function openMobileDatePicker() {
-    rememberMobileSearchScrollPosition();
-    setDraftMobileDepartureDate(departureDateInput);
-    setDraftMobileReturnDate(returnDateInput);
-    setActiveDatePicker("departure");
-    setDatePickerPosition(null);
-  }
 
-  function commitMobileDatePicker() {
-    const nextDepartureDate = draftMobileDepartureDate.trim();
-    const nextReturnDate = draftMobileReturnDate.trim();
-    const hasValidDepartureDate =
-      isValidFutureOrTodayDateValue(nextDepartureDate);
-    const hasValidReturnDate =
-      tripTypeInput !== "round-trip" ||
-      (isValidFutureOrTodayDateValue(nextReturnDate) &&
-        !isDateValueBefore(nextReturnDate, nextDepartureDate));
-
-    if (!hasValidDepartureDate || !hasValidReturnDate) return;
-
-    setDepartureDateInput(nextDepartureDate);
-    setReturnDateInput(tripTypeInput === "round-trip" ? nextReturnDate : "");
-    setActiveDatePicker(null);
-    setDatePickerPosition(null);
-    restoreMobileSearchScrollPosition();
-  }
-
-  function getMissingMobileDatePicker() {
-    if (!departureDateInput.trim()) return "departure";
-
-    if (tripTypeInput === "round-trip" && !returnDateInput.trim()) {
-      return "return";
-    }
-
-    return null;
-  }
 
   function clearPendingMobileDatePickerTransition() {
     pendingMobileDatePickerRef.current = null;
@@ -2125,80 +2254,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
   }
 
-  function openPendingMobileDatePickerAfterAirportClose() {
-    const nextPicker = pendingMobileDatePickerRef.current;
-    if (!nextPicker) return;
 
-    pendingMobileDatePickerRef.current = null;
 
-    if (mobileDatePickerTransitionFrameRef.current !== null) {
-      window.cancelAnimationFrame(mobileDatePickerTransitionFrameRef.current);
-    }
 
-    if (mobileDatePickerTransitionTimeoutRef.current !== null) {
-      window.clearTimeout(mobileDatePickerTransitionTimeoutRef.current);
-      mobileDatePickerTransitionTimeoutRef.current = null;
-    }
 
-    mobileDatePickerTransitionFrameRef.current = window.requestAnimationFrame(
-      () => {
-        mobileDatePickerTransitionFrameRef.current = null;
-        mobileDatePickerTransitionTimeoutRef.current = window.setTimeout(() => {
-          mobileDatePickerTransitionTimeoutRef.current = null;
-          restoreMobileSearchScrollPosition();
-          setActiveDatePicker(nextPicker);
-          setDatePickerPosition(null);
-        }, 16);
-      },
-    );
-  }
-
-  function closeMobileAirportPicker() {
-    setActiveMobileAirportPicker(null);
-    openPendingMobileDatePickerAfterAirportClose();
-  }
-
-  function closeMobileTravelerPopover() {
-    setDraftAdultCount(adultCount);
-    setDraftChildCount(childCount);
-    setDraftInfantCount(infantCount);
-    setDraftCabinClassInput(cabinClassInput);
-    setTravelerPopoverOpen(false);
-    setTravelerPopoverPosition(null);
-    restoreMobileSearchScrollPosition();
-  }
-
-  function openMobileTravelerPopover() {
-    rememberMobileSearchScrollPosition();
-    setDraftAdultCount(adultCount);
-    setDraftChildCount(childCount);
-    setDraftInfantCount(infantCount);
-    setDraftCabinClassInput(cabinClassInput);
-    setTravelerPopoverOpen(true);
-    setTravelerPopoverPosition(null);
-  }
-
-  function commitMobileTravelerPopover() {
-    const adults = Math.min(9, Math.max(1, draftAdultCount));
-    const children = Math.min(9 - adults, Math.max(0, draftChildCount));
-    const infants = Math.min(
-      adults,
-      9 - adults - children,
-      Math.max(0, draftInfantCount),
-    );
-
-    setAdultCount(adults);
-    setChildCount(children);
-    setInfantCount(infants);
-    setCabinClassInput(draftCabinClassInput);
-    setTravelerPopoverOpen(false);
-    setTravelerPopoverPosition(null);
-    restoreMobileSearchScrollPosition();
-  }
 
   function closeFlightSearchPopovers() {
     clearPendingMobileDatePickerTransition();
-    setActiveMobileAirportPicker(null);
     setActiveSuggest(null);
     setDropdownPosition(null);
     setActiveDatePicker(null);
@@ -2223,36 +2285,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setFiltersOpen(false);
   }
 
-  function openMobileSearchDrawer(launcher?: HTMLElement | null) {
-    if (tripTypeInput === "multi-city") {
-      router.push(`/flights?${searchQueryString}`);
-      return;
-    }
+  function openMobileSearchDrawer(launcher?: HTMLElement | null, modality: OverlayActivationModality = "programmatic") {
     mobileSearchLauncherRef.current = launcher ?? null;
+    mobileSearchModalityRef.current = modality;
     closeMobileFiltersDrawer({ restoreFocus: false });
     closeFlightSearchPopovers();
-    if (
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 639px)").matches
-    ) {
-      mobileSearchScrollLockRef.current ??= lockMobileOverlayScroll();
-    }
     setMobileSearchOpen(true);
   }
 
-  function openMobileFiltersDrawer(launcher?: HTMLElement | null) {
+  function openMobileFiltersDrawer(launcher?: HTMLElement | null, modality: OverlayActivationModality = "programmatic") {
     mobileFiltersLauncherRef.current = launcher ?? null;
-    closeMobileShortcutMenus();
+    mobileFiltersModalityRef.current = modality;
+    closeMobileShortcutSheet(false);
     setFiltersOpen(true);
   }
 
-  function focusOriginInput() {
-    window.requestAnimationFrame(() => originInputRef.current?.focus());
-  }
 
-  function focusDestinationInput() {
-    window.requestAnimationFrame(() => destinationInputRef.current?.focus());
-  }
 
 
 
@@ -2391,6 +2439,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setDestinationCode(nextDestination);
     setDepartureDateInput(nextDepartureDate);
     setReturnDateInput(nextTripType === "round-trip" ? nextReturnDate : "");
+    if (nextTripType === "multi-city") {
+      setMultiCityLegs(parseFlightLegParams(normalizedSearchValues));
+    }
     if (isValidFutureOrTodayDateValue(nextDepartureDate)) {
       setCalendarMonth(
         startOfMonth(parseDateValue(nextDepartureDate) ?? new Date()),
@@ -2545,157 +2596,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     () => (body ? buildFlightResultsSearchKey(body) : ""),
     [body],
   );
-
-  const canonicalPriceAlertQuery = useMemo(() => {
-    if (!body) return null;
-    if (body.tripType !== "round-trip" && body.tripType !== "one-way") return null;
-
-    const query = {
-      tripType: body.tripType,
-      origin: body.origin,
-      destination: body.destination,
-      departureDate: body.departureDate,
-      ...(body.tripType === "round-trip" ? { returnDate: body.returnDate } : {}),
-      adults: body.adults,
-      children: body.children,
-      infants: body.infants,
-      travelers: body.travelers,
-      cabinClass: body.cabinClass,
-      currency: body.currency,
-    };
-    const parsed = buildCanonicalFlightPriceAlertQuery(query);
-    return parsed.success ? parsed.data : null;
-  }, [body]);
-
-
-  const priceAlertRouteSummary = canonicalPriceAlertQuery
-    ? `${canonicalPriceAlertQuery.origin} → ${canonicalPriceAlertQuery.destination}`
-    : "Current flight search";
-  const priceAlertDateSummary = canonicalPriceAlertQuery
-    ? canonicalPriceAlertQuery.tripType === "round-trip" && canonicalPriceAlertQuery.returnDate
-      ? `${formatDateLabel(canonicalPriceAlertQuery.departureDate, calendarLocale)} – ${formatDateLabel(canonicalPriceAlertQuery.returnDate, calendarLocale)}`
-      : formatDateLabel(canonicalPriceAlertQuery.departureDate, calendarLocale)
-    : "";
-  const priceAlertUnavailableReason = !canonicalPriceAlertQuery
-    ? body?.tripType === "multi-city"
-      ? "Price alerts are not available for multi-city searches yet."
-      : "Complete a valid flight search before creating a price alert."
-    : "";
-
-  const openPriceAlertDialog = useCallback(() => {
-    setPriceAlertStatusMessage("");
-    if (!canonicalPriceAlertQuery) {
-      setPriceAlertError(priceAlertUnavailableReason || "Complete a valid flight search before creating a price alert.");
-      return;
-    }
-    if (sessionStatus === "loading") return;
-    if (sessionStatus !== "authenticated") {
-      const returnPath = `${window.location.pathname}${window.location.search}`;
-      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(returnPath)}`);
-      return;
-    }
-    setPriceAlertError("");
-    setPriceAlertTarget("");
-    setPriceAlertDialogOpen(true);
-  }, [canonicalPriceAlertQuery, priceAlertUnavailableReason, router, sessionStatus]);
-
-  const closePriceAlertDialog = useCallback(() => {
-    setPriceAlertDialogOpen(false);
-    setPriceAlertSubmitting(false);
-    setPriceAlertError("");
-    window.setTimeout(() => priceAlertButtonRef.current?.focus(), 0);
-  }, []);
-
-  const validatePriceAlertTarget = useCallback((value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return "Enter a target price.";
-    if (!/^\d+(?:\.\d{1,2})?$/.test(trimmed)) return "Enter a positive number with up to two decimals.";
-    const amount = Number(trimmed);
-    if (!Number.isFinite(amount) || amount <= 0) return "Enter a target price above zero.";
-    if (amount > MAX_PRICE_ALERT_TARGET) return "Enter a target price below 10,000,000,000.";
-    return "";
-  }, []);
-
-  const submitPriceAlert = useCallback(async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!canonicalPriceAlertQuery) {
-      setPriceAlertError("Complete a valid flight search before creating a price alert.");
-      return;
-    }
-    const validationMessage = validatePriceAlertTarget(priceAlertTarget);
-    if (validationMessage) {
-      setPriceAlertError(validationMessage);
-      priceAlertInputRef.current?.focus();
-      return;
-    }
-
-    setPriceAlertSubmitting(true);
-    setPriceAlertError("");
-    try {
-      const targetPrice = Number(priceAlertTarget.trim());
-      const response = await fetch("/api/price-alerts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "FLIGHT",
-          origin: canonicalPriceAlertQuery.origin,
-          destination: canonicalPriceAlertQuery.destination,
-          targetPrice,
-          currency: canonicalPriceAlertQuery.currency,
-          query: canonicalPriceAlertQuery satisfies FlightSearchParams,
-        }),
-      });
-      const payload = await response.json().catch(() => ({})) as { error?: string; duplicate?: boolean };
-
-      if (response.status === 401) {
-        const returnPath = `${window.location.pathname}${window.location.search}`;
-        router.push(`/auth/signin?callbackUrl=${encodeURIComponent(returnPath)}`);
-        return;
-      }
-      if (response.status === 409 || payload.duplicate) {
-        setPriceAlertError("You already have this price alert.");
-        setPriceAlertSubmitting(false);
-        return;
-      }
-      if (!response.ok) {
-        setPriceAlertError(response.status === 400 ? "Please check the alert details and try again." : "We could not create your price alert. Please try again.");
-        setPriceAlertSubmitting(false);
-        return;
-      }
-
-      setPriceAlertDialogOpen(false);
-      setPriceAlertSubmitting(false);
-      setPriceAlertTarget("");
-      setPriceAlertStatusMessage("Price alert created. We’ll email you if the fare reaches your target.");
-      window.setTimeout(() => priceAlertButtonRef.current?.focus(), 0);
-    } catch {
-      setPriceAlertError("Network error. Check your connection and try again.");
-      setPriceAlertSubmitting(false);
-    }
-  }, [canonicalPriceAlertQuery, priceAlertTarget, router, validatePriceAlertTarget]);
+  const mainInventoryReadyRef = useRef(false);
 
   useEffect(() => {
-    if (!priceAlertDialogOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const focusTimer = window.setTimeout(() => priceAlertInputRef.current?.focus(), 0);
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !priceAlertSubmitting) closePriceAlertDialog();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.clearTimeout(focusTimer);
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [closePriceAlertDialog, priceAlertDialogOpen, priceAlertSubmitting]);
-
-  useEffect(() => {
+    // Reset synchronously before the optional-fare effect, not inside the timer.
+    mainInventoryReadyRef.current = false;
     if (!body) {
       activeFlightSearchKeyRef.current = "";
       const resetTimer = window.setTimeout(() => {
         setResults([]);
-        setWarnings([]);
+        setJourneyResponse(null);
+        setBackgroundRefreshing(false);
       }, 0);
       return () => window.clearTimeout(resetTimer);
     }
@@ -2710,7 +2621,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setFiltersReadySearchKey(null);
 
       const shouldBypassSnapshot = userInitiatedRetryRef.current && guidedMode;
-      const snapshot = shouldBypassSnapshot ? null : readFlightResultsSessionSnapshot(searchKey);
+      const snapshotState = shouldBypassSnapshot
+        ? null
+        : readFlightResultsSessionSnapshotForRefresh(searchKey);
+      const snapshot = snapshotState?.snapshot;
+      const refreshingStaleSnapshot = Boolean(snapshot && !snapshotState?.isFresh);
+      setJourneyResponse(snapshot && !refreshingStaleSnapshot ? { searchKey, requestId: journeyRequestId(snapshot.requestId) } : null);
       if (snapshot) {
         if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
         setResults(
@@ -2719,19 +2635,25 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             body.departureDate,
           ),
         );
-        setWarnings(snapshot.warnings);
         setError("");
-        setLoading(false);
-        return;
+        // Fresh snapshots can render immediately. A stale snapshot is retained
+        // as a fallback, but keep the blocking Results loader visible until the
+        // refresh settles so the page cannot expose a changing scroll extent.
+        setLoading(refreshingStaleSnapshot);
+        setBackgroundRefreshing(refreshingStaleSnapshot);
+        if (!refreshingStaleSnapshot) {
+          mainInventoryReadyRef.current = true;
+          return;
+        }
+      } else {
+        setResults([]);
+        setLoading(true);
+        setBackgroundRefreshing(false);
+        if (userInitiatedRetryRef.current) {
+          window.setTimeout(() => loadingFocusRef.current?.focus({ preventScroll: true }), 0);
+        }
+        setError("");
       }
-
-      setResults([]);
-      setLoading(true);
-      if (userInitiatedRetryRef.current) {
-        window.setTimeout(() => loadingFocusRef.current?.focus({ preventScroll: true }), 0);
-      }
-      setError("");
-      setWarnings([]);
 
       controller = new AbortController();
       fetch("/api/flights/search", {
@@ -2752,7 +2674,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             );
           }
 
-          return data as { results: PublicFlightResult[]; warnings?: string[]; resultsCacheValidUntil?: number };
+          return data as { results: PublicFlightResult[]; warnings?: string[]; resultsCacheValidUntil?: number; requestId?: string };
         })
         .then((data) => {
           if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
@@ -2768,25 +2690,32 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               filteredResults,
               warnings,
               data.resultsCacheValidUntil,
+              undefined,
+              undefined,
+              journeyRequestId(data.requestId) ?? undefined,
             );
           }
           setResults(filteredResults);
-          setWarnings(warnings);
+          setJourneyResponse({ searchKey, requestId: journeyRequestId(data.requestId) });
         })
         .catch((searchError) => {
           if (controller?.signal.aborted || !active || activeFlightSearchKeyRef.current !== searchKey) return;
 
-          setError(
-            searchError instanceof Error
-              ? t(searchError.message) || searchError.message
-              : dictionary.unableToSearchFlights ||
-                  enTranslations.unableToSearchFlights ||
-                  "Unable to search flights.",
-          );
+          if (!refreshingStaleSnapshot) {
+            setError(
+              searchError instanceof Error
+                ? t(searchError.message) || searchError.message
+                : dictionary.unableToSearchFlights ||
+                    enTranslations.unableToSearchFlights ||
+                    "Unable to search flights.",
+            );
+          }
         })
         .finally(() => {
           if (active && activeFlightSearchKeyRef.current === searchKey) {
+            mainInventoryReadyRef.current = true;
             setLoading(false);
+            setBackgroundRefreshing(false);
           }
         });
     }, 0);
@@ -2801,11 +2730,24 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const retryMainInventorySearch = useCallback(() => {
     userInitiatedRetryRef.current = true;
     setError("");
-    setWarnings([]);
     setResults([]);
     setLoading(true);
+    setBackgroundRefreshing(false);
     setFiltersReadySearchKey(null);
     setMainInventoryRetryGeneration((generation) => generation + 1);
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const handleChange = (event: MediaQueryListEvent) => {
+      setMobileNearbyFaresEnabled(event.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -2841,6 +2783,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     activeRequests.forEach((request) => request.controller.abort());
     activeRequests.clear();
 
+    if (!mobileNearbyFaresEnabled) {
+      const timer = window.setTimeout(() => {
+        setNearbyFares([]);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+
     if (guidedMode) {
       nearbyFareCacheRef.current.clear();
       const timer = window.setTimeout(() => {
@@ -2849,6 +2798,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       return () => window.clearTimeout(timer);
     }
 
+    // Optional comparisons must not compete with the requested inventory.
+    if (loading || backgroundRefreshing) return;
+    if (!mainInventoryReadyRef.current) return;
     if (!body?.departureDate) {
       const timer = window.setTimeout(() => setNearbyFares([]), 0);
       return () => window.clearTimeout(timer);
@@ -2863,7 +2815,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     let active = true;
     const dates = getNearbyFareDateRange(getNearbyFareWindowStart(centerDate));
     const fetchedAt = Date.now();
-    const currentFare = getLowestProviderFare(results);
+    const currentFare = getLowestComparableFlightFare(
+      providerResults,
+      selectedCurrency,
+      currencyRates.rates,
+    );
     const selectedKey = getNearbyFareCacheKey(body, body.departureDate);
 
     if (currentFare) {
@@ -2900,6 +2856,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       })
       .filter(
         (date) =>
+          date !== body.departureDate &&
           !getFreshNearbyFareCacheEntry(
             nearbyFareCacheRef.current,
             getNearbyFareCacheKey(body, date),
@@ -2930,7 +2887,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           const data = (await response.json()) as {
             results?: PublicFlightResult[];
           };
-          const fare = getLowestProviderFare(data.results ?? []);
+          const fare = getLowestComparableFlightFare(
+            data.results ?? [],
+            selectedCurrency,
+            currencyRates.rates,
+          );
           const state: NearbyFareState = fare
             ? {
                 date,
@@ -3009,7 +2970,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       activeRequests.forEach((request) => request.controller.abort());
       activeRequests.clear();
     };
-  }, [body, guidedMode, results]);
+  }, [
+    body,
+    currencyRates.rates,
+    guidedMode,
+    providerResults,
+    selectedCurrency,
+    loading,
+    backgroundRefreshing,
+    mobileNearbyFaresEnabled,
+  ]);
 
   useEffect(() => {
     if (!tripTypeMenuOpen) return;
@@ -3038,8 +3008,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   useEffect(() => {
     function updateDropdownPosition(target: "origin" | "destination") {
       const viewportPadding = 16;
-      const preferredWidth = 380;
       const useStickyWrap = activeDesktopSearchSurface === "sticky";
+      const preferredWidth = useStickyWrap ? 560 : 380;
       const wrap =
         target === "origin"
           ? useStickyWrap
@@ -3138,12 +3108,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   useEffect(() => {
     function updateDatePickerPosition(target: "departure" | "return") {
       const viewportPadding = 16;
-      const preferredWidth = 620;
+      const useStickyTrigger = activeDesktopSearchSurface === "sticky";
+      const preferredWidth = useStickyTrigger ? 780 : 620;
       const wrap =
         target === "departure"
           ? departureWrapRef.current
           : (returnWrapRef.current ?? departureWrapRef.current);
-      const trigger = wrap?.querySelector("button");
+      const trigger = useStickyTrigger
+        ? stickyDateButtonRef.current
+        : wrap?.querySelector("button");
 
       if (!trigger) return;
 
@@ -3152,9 +3125,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         preferredWidth,
         window.innerWidth - viewportPadding * 2,
       );
+      const preferredLeft = useStickyTrigger
+        ? rect.left + rect.width / 2 - width / 2
+        : rect.left;
       const left = Math.max(
         viewportPadding,
-        Math.min(rect.left, window.innerWidth - width - viewportPadding),
+        Math.min(
+          preferredLeft,
+          window.innerWidth - width - viewportPadding,
+        ),
       );
       const top = rect.bottom + 8;
 
@@ -3204,13 +3183,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("scroll", handleViewportChange, true);
     };
-  }, [activeDatePicker]);
+  }, [activeDatePicker, activeDesktopSearchSurface]);
 
   useEffect(() => {
     function updateTravelerPopoverPosition() {
       const viewportPadding = 16;
-      const preferredWidth = 360;
-      const trigger = travelerCabinWrapRef.current?.querySelector("button");
+      const useStickyTrigger = activeDesktopSearchSurface === "sticky";
+      const preferredWidth = useStickyTrigger ? 480 : 360;
+      const trigger = useStickyTrigger
+        ? stickyTravelerButtonRef.current
+        : travelerCabinWrapRef.current?.querySelector("button");
 
       if (!trigger) return;
 
@@ -3219,9 +3201,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         preferredWidth,
         window.innerWidth - viewportPadding * 2,
       );
+      const preferredLeft = useStickyTrigger ? rect.right - width : rect.left;
       const left = Math.max(
         viewportPadding,
-        Math.min(rect.left, window.innerWidth - width - viewportPadding),
+        Math.min(
+          preferredLeft,
+          window.innerWidth - width - viewportPadding,
+        ),
       );
       const top = rect.bottom + 8;
 
@@ -3270,10 +3256,25 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("scroll", handleViewportChange, true);
     };
-  }, [travelerPopoverOpen]);
+  }, [activeDesktopSearchSurface, travelerPopoverOpen]);
 
   function handleSwapLocations() {
     markExpandedSearchInteraction();
+
+    if (tripTypeInput === "multi-city") {
+      setMultiCityLegs((currentLegs) =>
+        currentLegs.map((leg, index) =>
+          index === 0
+            ? {
+                ...leg,
+                origin: leg.destination,
+                destination: leg.origin,
+              }
+            : leg,
+        ),
+      );
+      return;
+    }
 
     const currentOriginInput = originInput;
     const currentOriginCode = originCode;
@@ -3284,29 +3285,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setDestinationCode(currentOriginCode);
     setActiveSuggest(null);
     setDropdownPosition(null);
-  }
-
-  function applyMobileFlightDateSelection(date: Date) {
-    if (!activeDatePicker) return;
-
-    markExpandedSearchInteraction();
-
-    const nextDateState = getNextFlightDateSelection({
-      activePicker: activeDatePicker,
-      date,
-      departureDate: draftMobileDepartureDate,
-      returnDate: draftMobileReturnDate,
-      tripType: tripTypeInput,
-    });
-
-    if (!nextDateState) return;
-
-    setDraftMobileDepartureDate(nextDateState.departureDate);
-    setDraftMobileReturnDate(nextDateState.returnDate);
-
-    if (nextDateState.activePicker) {
-      setActiveDatePicker(nextDateState.activePicker);
-    }
   }
 
   function applyFlightDateSelection(date: Date) {
@@ -3351,11 +3329,28 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       (isValidFutureOrTodayDateValue(nextReturnDate) &&
         !isDateValueBefore(nextReturnDate, nextDepartureDate));
 
+    const hasValidMultiCitySearch =
+      multiCityLegs.length >= MULTI_CITY_MIN_LEGS &&
+      multiCityLegs.length <= MULTI_CITY_MAX_LEGS &&
+      multiCityAirportsValid &&
+      multiCityLegs.every(
+        (leg, index) =>
+          /^[A-Z0-9]{3}$/.test(leg.origin) &&
+          /^[A-Z0-9]{3}$/.test(leg.destination) &&
+          leg.origin !== leg.destination &&
+          isValidFutureOrTodayDateValue(leg.departureDate) &&
+          (index === 0 ||
+            leg.departureDate >= multiCityLegs[index - 1].departureDate),
+      );
+
+    if (tripTypeInput === "multi-city" && !hasValidMultiCitySearch) return;
+
     if (
-      !nextOrigin ||
-      !nextDestination ||
-      !hasValidDepartureDate ||
-      !hasValidReturnDate
+      tripTypeInput !== "multi-city" &&
+      (!nextOrigin ||
+        !nextDestination ||
+        !hasValidDepartureDate ||
+        !hasValidReturnDate)
     ) {
       return;
     }
@@ -3379,11 +3374,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setInfantCount(infants);
     }
 
+    const projection =
+      tripTypeInput === "multi-city"
+        ? projectSearchLegs("multi-city", multiCityLegs)
+        : null;
     const nextParams = new URLSearchParams({
       tripType: tripTypeInput,
-      origin: nextOrigin,
-      destination: nextDestination,
-      departureDate: nextDepartureDate,
+      origin: projection?.origin ?? nextOrigin,
+      destination: projection?.destination ?? nextDestination,
+      departureDate: projection?.departureDate ?? nextDepartureDate,
       adults: String(adults),
       children: String(children),
       infants: String(infants),
@@ -3391,11 +3390,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       cabinClass: cabinClassInput,
     });
 
+    if (tripTypeInput === "multi-city") {
+      nextParams.set("currency", selectedCurrency);
+      appendFlightLegParams(nextParams, multiCityLegs);
+    }
+
     if (tripTypeInput === "round-trip" && nextReturnDate) {
       nextParams.set("returnDate", nextReturnDate);
     }
 
-    try {
+    if (tripTypeInput !== "multi-city") try {
       const recentSearch = buildFlightRecentSearch({
         tripType: tripTypeInput === "one-way" ? "one-way" : "round-trip",
         origin: nextOrigin,
@@ -3425,16 +3429,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
 
     if (shouldCloseStickyPopout) {
-      collapseStickySearch({ restoreScroll: false });
+      collapseStickySearch();
     }
 
     router.push(`/flights/results?${nextParams.toString()}`, { scroll: true });
   }
 
-  const priceLabelCurrency = useMemo(
-    () => getUniformResultCurrency(results),
-    [results],
-  );
+  const priceLabelCurrency = selectedCurrency;
 
   const mixedProviderCurrenciesLabel =
     dictionary.mixedProviderCurrencies ??
@@ -3449,7 +3450,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               amount,
               sourceCurrency,
               displayCurrency: selectedCurrency,
-              convertUsdEstimate: true,
+              convertSourceEstimate: true,
+              useFlightResultSymbols: true,
               rates: currencyRates.rates,
               isFallbackRate: currencyRates.isFallback,
             }).formatted
@@ -3465,30 +3467,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
 
 
-  useEffect(() => {
-    if (!body?.departureDate) return;
-
-    const departureDate = parseDateValue(body.departureDate);
-    if (!departureDate) return;
-
-    setNearbyFareVisibleStart(0);
-  }, [body?.departureDate]);
-
-  const navigateNearbyFareWindow = useCallback(
-    (direction: "previous" | "next") => {
-      setNearbyFareVisibleStart((current) =>
-        Math.max(
-          0,
-          Math.min(
-            current + (direction === "previous" ? -1 : 1),
-            nearbyFareRangeSize - nearbyFareVisibleCount,
-          ),
-        ),
-      );
-    },
-    [],
-  );
-
   const sortOptions = useMemo(
     () => [
       { value: "best" as SortMode, label: t("best") },
@@ -3500,6 +3478,21 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const selectedSortLabel =
     sortOptions.find((option) => option.value === sortMode)?.label ??
     t("cheapest");
+
+  const cheaperNearbyFare = useMemo(() => {
+    const selectedFare = nearbyFares.find((fare) => fare.date === body?.departureDate && fare.status === "success");
+    if (!selectedFare || selectedFare.status !== "success") return null;
+    const selectedDisplay = formatDisplayPrice({ amount: selectedFare.amount, sourceCurrency: selectedFare.currency, displayCurrency: selectedCurrency, convertSourceEstimate: true, useFlightResultSymbols: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
+    const candidates = nearbyFares.flatMap((fare) => {
+      if (fare.status !== "success" || fare.date === selectedFare.date) return [];
+      const display = formatDisplayPrice({ amount: fare.amount, sourceCurrency: fare.currency, displayCurrency: selectedCurrency, convertSourceEstimate: true, useFlightResultSymbols: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
+      return display.amount < selectedDisplay.amount ? [{ date: fare.date, amount: display.amount }] : [];
+    }).sort((first, second) => first.amount - second.amount);
+    const cheapest = candidates[0];
+    if (!cheapest) return null;
+    const savings = formatDisplayPrice({ amount: selectedDisplay.amount - cheapest.amount, sourceCurrency: selectedCurrency, displayCurrency: selectedCurrency, convertSourceEstimate: false, useFlightResultSymbols: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback }).formatted;
+    return { date: cheapest.date, savings };
+  }, [body?.departureDate, currencyRates.isFallback, currencyRates.rates, nearbyFares, selectedCurrency]);
 
   const handleNearbyFareDateSelect = useCallback(
     (date: string) => {
@@ -3539,29 +3532,23 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const stopOptions = useMemo(() => {
     const buckets = new Map<
       string,
-      { count: number; minPrice: number; currencies: Set<string> }
+      { count: number; minPrice: number }
     >();
 
     results.forEach((flight) => {
-      const bucket = getStopBucket(flight.stops);
+      const bucket = flightStopBucket(flight);
       const current = buckets.get(bucket) ?? {
         count: 0,
         minPrice: Number.POSITIVE_INFINITY,
-        currencies: new Set<string>(),
       };
-      const currencies = new Set(current.currencies);
-
-      if (flight.currency) {
-        currencies.add(flight.currency.toUpperCase());
-      }
+      const comparablePrice = getComparableFlightPrice(flight, selectedCurrency, currencyRates.rates);
 
       buckets.set(bucket, {
         count: current.count + 1,
         minPrice:
-          Number.isFinite(flight.price) && flight.price > 0
-            ? Math.min(current.minPrice, flight.price)
+          comparablePrice && comparablePrice.amount > 0
+            ? Math.min(current.minPrice, comparablePrice.amount)
             : current.minPrice,
-        currencies,
       });
     });
 
@@ -3571,59 +3558,29 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       count: data.count,
       secondaryLabel: formatOptionsFound(data.count, t),
       rightLabel: Number.isFinite(data.minPrice)
-        ? formatResultPriceLabel(
-            data.minPrice,
-            data.currencies.size === 1 ? Array.from(data.currencies)[0] : null,
-          )
+        ? formatResultPriceLabel(data.minPrice, selectedCurrency)
         : undefined,
     })).sort(
       (first, second) =>
         stopBucketSortValue(first.value) - stopBucketSortValue(second.value),
     );
-  }, [formatResultPriceLabel, results, t]);
+  }, [currencyRates.rates, formatResultPriceLabel, results, selectedCurrency, t]);
 
   const airlineOptions = useMemo(() => {
-    const buckets = new Map<
-      string,
-      { count: number; minPrice: number; currencies: Set<string> }
-    >();
+    const counts = new Map<string, number>();
 
     results.forEach((flight) => {
       const airlineName = flight.airlineName.trim();
 
       if (!airlineName) return;
 
-      const current = buckets.get(airlineName) ?? {
-        count: 0,
-        minPrice: Number.POSITIVE_INFINITY,
-        currencies: new Set<string>(),
-      };
-      const currencies = new Set(current.currencies);
-
-      if (flight.currency) {
-        currencies.add(flight.currency.toUpperCase());
-      }
-
-      buckets.set(airlineName, {
-        count: current.count + 1,
-        minPrice:
-          Number.isFinite(flight.price) && flight.price > 0
-            ? Math.min(current.minPrice, flight.price)
-            : current.minPrice,
-        currencies,
-      });
+      counts.set(airlineName, (counts.get(airlineName) ?? 0) + 1);
     });
 
-    return Array.from(buckets, ([value, data]) => ({
+    return Array.from(counts, ([value, count]) => ({
       value,
       label: value,
-      count: data.count,
-      rightLabel: Number.isFinite(data.minPrice)
-        ? formatResultPriceLabel(
-            data.minPrice,
-            data.currencies.size === 1 ? Array.from(data.currencies)[0] : null,
-          )
-        : undefined,
+      count,
     }))
       .sort((first, second) => {
         if (second.count !== first.count) return second.count - first.count;
@@ -3631,7 +3588,26 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         return first.label.localeCompare(second.label);
       })
       .slice(0, 8);
-  }, [formatResultPriceLabel, results]);
+  }, [results]);
+
+  const mobileAirlineOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    results.forEach((flight) => {
+      const name = flight.airlineName.trim();
+      if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+    });
+    return Array.from(counts, ([value, count]) => ({ value, label: value, count }))
+      .sort((first, second) => second.count - first.count || first.label.localeCompare(second.label));
+  }, [results]);
+
+  const mobileFromAirportOptions = useMemo(
+    () => buildCountOptions(results.flatMap((flight) => flightAirportEndpoints(flight).fromAirports)),
+    [results],
+  );
+  const mobileToAirportOptions = useMemo(
+    () => buildCountOptions(results.flatMap((flight) => flightAirportEndpoints(flight).toAirports)),
+    [results],
+  );
 
   useEffect(() => {
     if (guidedMode) {
@@ -3709,19 +3685,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   });
 
   const priceBounds = useMemo(() => {
-    const prices = results
-      .map((flight) => flight.price)
-      .filter((price) => Number.isFinite(price));
-
-    if (!prices.length) {
-      return { min: 0, max: 0 };
-    }
-
-    return {
-      min: Math.floor(Math.min(...prices)),
-      max: Math.ceil(Math.max(...prices)),
-    };
-  }, [results]);
+    return getComparableFlightPriceBounds(results, selectedCurrency, currencyRates.rates);
+  }, [currencyRates.rates, results, selectedCurrency]);
 
   const timeBounds = useMemo(() => {
     const departureMinutes = results
@@ -3750,8 +3715,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   const durationBounds = useMemo(() => {
     const durations = results
-      .map((flight) => flight.durationMinutes)
-      .filter((duration) => Number.isFinite(duration) && duration > 0);
+      .map(flightJourneyDurationMinutes)
+      .filter((duration): duration is number => duration !== null && duration > 0);
 
     if (!durations.length) {
       return null;
@@ -3838,6 +3803,20 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       "fAirport",
       allowedAirports,
     );
+    const allowedFromAirports = new Set(mobileFromAirportOptions.map((option) => option.value));
+    const allowedToAirports = new Set(mobileToAirportOptions.map((option) => option.value));
+    const nextSelectedFromAirports = readFilterList(
+      filterParams,
+      "fFromAirport",
+      allowedFromAirports,
+    );
+    const nextSelectedToAirports = readFilterList(
+      filterParams,
+      "fToAirport",
+      allowedToAirports,
+    );
+    // Keep legacy/desktop fAirport as an undirected endpoint restriction.
+    // Directional mobile filters use only fFromAirport / fToAirport.
     const nextSelectedFlightQuality = readFilterList(
       filterParams,
       "fQuality",
@@ -3873,6 +3852,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         ? current
         : nextSelectedAirports,
     );
+    setSelectedFromAirports((current) =>
+      areStringArraysEqual(current, nextSelectedFromAirports)
+        ? current
+        : nextSelectedFromAirports,
+    );
+    setSelectedToAirports((current) =>
+      areStringArraysEqual(current, nextSelectedToAirports)
+        ? current
+        : nextSelectedToAirports,
+    );
     setSelectedFlightQuality((current) =>
       areStringArraysEqual(current, nextSelectedFlightQuality)
         ? current
@@ -3890,6 +3879,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }, [
     airlineOptions,
     airportOptions,
+    mobileFromAirportOptions,
+    mobileToAirportOptions,
     durationBounds?.max,
     durationBounds?.min,
     flightQualityOptions,
@@ -3911,7 +3902,21 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     error,
     currentSearchKey: currentFlightSearchKey,
     filtersReadySearchKey,
-  });
+  }) || (!guidedMode && kayak?.vertical === "flights" && kayak.status === "loading");
+
+  useEffect(() => {
+    if (!resultsUiPreparing) clearSearchResultsLoadingSession("flight", currentFlightSearchKey);
+  }, [currentFlightSearchKey, resultsUiPreparing]);
+
+  useEffect(() => {
+    if (!resultsUiPreparing || !isStickySearchPanelOpen) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      pendingStickySearchTargetRef.current = null;
+      collapseStickySearch();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [collapseStickySearch, isStickySearchPanelOpen, resultsUiPreparing]);
 
   useEffect(() => {
     if (
@@ -3996,6 +4001,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     appendFilterList(nextParams, "fStop", selectedStops);
     appendFilterList(nextParams, "fAirline", selectedAirlines);
     appendFilterList(nextParams, "fAirport", selectedAirports);
+    appendFilterList(nextParams, "fFromAirport", selectedFromAirports);
+    appendFilterList(nextParams, "fToAirport", selectedToAirports);
     if (renderFlightQualityFilter) {
       appendFilterList(nextParams, "fQuality", selectedFlightQuality);
     }
@@ -4031,60 +4038,29 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     router,
     selectedAirlines,
     selectedAirports,
+    selectedFromAirports,
+    selectedToAirports,
     selectedFlightQuality,
     selectedStops,
     timeBounds.landing,
     timeBounds.takeoff,
   ]);
 
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-
-    if (priceBounds.max > 0 && maxPrice > 0 && maxPrice < priceBounds.max) {
-      count += 1;
-    }
-
-    if (
-      timeBounds.takeoff &&
-      maxTakeoffMinutes !== null &&
-      maxTakeoffMinutes < timeBounds.takeoff.max
-    ) {
-      count += 1;
-    }
-
-    if (
-      timeBounds.landing &&
-      maxLandingMinutes !== null &&
-      maxLandingMinutes < timeBounds.landing.max
-    ) {
-      count += 1;
-    }
-
-    if (
-      durationBounds &&
-      maxDurationMinutes !== null &&
-      maxDurationMinutes < durationBounds.max
-    ) {
-      count += 1;
-    }
-
-    count += selectedStops.length;
-    count += selectedAirlines.length;
-    count += selectedAirports.length;
-    if (renderFlightQualityFilter) {
-      count += selectedFlightQuality.length;
-    }
-
-    if (baggageIncludedOnly) {
-      count += 1;
-    }
-
-    if (flexibleOnly) {
-      count += 1;
-    }
-
-    return count;
-  }, [
+  const authoritativeFilterState = useMemo<FlightFilterState>(() => ({
+    maximumPrice: priceBounds.max > 0 && maxPrice > 0 && maxPrice < priceBounds.max ? maxPrice : null,
+    maximumTakeoff: timeBounds.takeoff && maxTakeoffMinutes !== null && maxTakeoffMinutes < timeBounds.takeoff.max ? maxTakeoffMinutes : null,
+    maximumLanding: timeBounds.landing && maxLandingMinutes !== null && maxLandingMinutes < timeBounds.landing.max ? maxLandingMinutes : null,
+    maximumDuration: durationBounds && maxDurationMinutes !== null && maxDurationMinutes < durationBounds.max ? maxDurationMinutes : null,
+    stops: selectedStops,
+    airlines: selectedAirlines,
+    airports: selectedAirports,
+    fromAirports: selectedFromAirports,
+    toAirports: selectedToAirports,
+    journeyTimeMaximums: mobileJourneyTimeMaximums,
+    baggageIncluded: baggageIncludedOnly,
+    flexible: flexibleOnly,
+    quality: renderFlightQualityFilter ? selectedFlightQuality : [],
+  }), [
     baggageIncludedOnly,
     durationBounds,
     flexibleOnly,
@@ -4092,49 +4068,81 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     maxLandingMinutes,
     maxPrice,
     maxTakeoffMinutes,
+    mobileJourneyTimeMaximums,
     priceBounds.max,
     renderFlightQualityFilter,
-    selectedAirlines.length,
-    selectedAirports.length,
-    selectedFlightQuality.length,
-    selectedStops.length,
+    selectedAirlines,
+    selectedAirports,
+    selectedFromAirports,
+    selectedToAirports,
+    selectedFlightQuality,
+    selectedStops,
     timeBounds.landing,
     timeBounds.takeoff,
   ]);
+  const activeFilterCount = useMemo(
+    () => countAuthoritativeFlightFilters(authoritativeFilterState),
+    [authoritativeFilterState],
+  );
 
   const activeFilterLabel = t("activeFilterCount").replace(
     "{{count}}",
     String(activeFilterCount),
   );
-  const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
-  const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
-  const resultsGridRef = useRef<HTMLDivElement | null>(null);
   const flightResultsTopRef = useRef<HTMLDivElement | null>(null);
-  const desktopCompactFilterRef = useRef<HTMLDivElement | null>(null);
-  const [showDesktopFilterShortcut, setShowDesktopFilterShortcut] =
-    useState(false);
-  const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] =
-    useState<DesktopCompactFilterFrame | null>(null);
-  const [desktopCompactFilterPlacement, setDesktopCompactFilterPlacement] =
-    useState<DesktopCompactFilterPlacementState>("hidden");
-  const desktopFilterShortcutVisibilityRef = useRef(false);
-  const desktopCompactFilterPlacementRef =
-    useRef<DesktopCompactFilterPlacementState>("hidden");
-  const desktopCompactFilterFrameRef = useRef<DesktopCompactFilterFrame | null>(
-    null,
-  );
-  const desktopCompactFilterHeightRef = useRef(1);
-  const scheduleDesktopCompactFilterMeasurementRef = useRef<
-    (() => void) | null
-  >(null);
+  const [desktopFlightPriceAlertTarget, setDesktopFlightPriceAlertTarget] =
+    useState<HTMLDivElement | null>(null);
 
+  const renderDesktopFlightFilters = () => (
+    <DesktopFlightFilters
+      idPrefix="desktop-flight-filter-primary"
+      activeFilterCount={activeFilterCount}
+      maxPrice={maxPrice}
+      setMaxPrice={setMaxPrice}
+      priceBounds={priceBounds}
+      priceLabelCurrency={priceLabelCurrency}
+      selectedCurrency={selectedCurrency}
+      timeFilterMode={timeFilterMode}
+      setTimeFilterMode={setTimeFilterMode}
+      timeBounds={timeBounds}
+      maxTakeoffMinutes={maxTakeoffMinutes}
+      setMaxTakeoffMinutes={setMaxTakeoffMinutes}
+      maxLandingMinutes={maxLandingMinutes}
+      setMaxLandingMinutes={setMaxLandingMinutes}
+      durationBounds={durationBounds}
+      maxDurationMinutes={maxDurationMinutes}
+      setMaxDurationMinutes={setMaxDurationMinutes}
+      stopOptions={stopOptions}
+      selectedStops={selectedStops}
+      setSelectedStops={setSelectedStops}
+      airlineOptions={airlineOptions}
+      selectedAirlines={selectedAirlines}
+      setSelectedAirlines={setSelectedAirlines}
+      airportOptions={airportOptions}
+      selectedAirports={selectedAirports}
+      setSelectedAirports={setSelectedAirports}
+      flightQualityOptions={flightQualityOptions}
+      renderFlightQualityFilter={renderFlightQualityFilter}
+      selectedFlightQuality={selectedFlightQuality}
+      setSelectedFlightQuality={setSelectedFlightQuality}
+      baggageIncludedOnly={baggageIncludedOnly}
+      setBaggageIncludedOnly={setBaggageIncludedOnly}
+      flexibleOnly={flexibleOnly}
+      setFlexibleOnly={setFlexibleOnly}
+      onFilterChange={triggerFilterApplying}
+      onFilterCommit={handleUserFilterCommit}
+      onClear={clearFlightFilters}
+      originCode={originCode}
+      destinationCode={destinationCode}
+    />
+  );
   const scrollToFlightResultsTop = useCallback(() => {
     if (typeof window === "undefined") return;
 
     const target = flightResultsTopRef.current;
     if (!target) return;
 
-    const stickyClearance = desktopCompactFilterTopOffset + 16;
+    const stickyClearance = desktopFlightResultsScrollOffset;
     const top =
       target.getBoundingClientRect().top + window.scrollY - stickyClearance;
     const prefersReducedMotion = window.matchMedia(
@@ -4148,168 +4156,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }, []);
 
   const handleUserFilterCommit = useCallback(() => {
+    if (!guidedMode) {
+      const nextParams = new URLSearchParams(urlParams.toString());
+      nextParams.delete("page");
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `/flights/results?${nextParams.toString()}`,
+      );
+    }
     triggerFilterApplying();
     scrollToFlightResultsTop();
-  }, [scrollToFlightResultsTop, triggerFilterApplying]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-
-    let animationFrameId: number | null = null;
-
-    const applyPlacement = (
-      placement: DesktopCompactFilterPlacementState,
-      frame: DesktopCompactFilterFrame | null,
-    ) => {
-      if (placement !== desktopCompactFilterPlacementRef.current) {
-        desktopCompactFilterPlacementRef.current = placement;
-        setDesktopCompactFilterPlacement(placement);
-      }
-
-      const currentFrame = desktopCompactFilterFrameRef.current;
-      const frameChanged =
-        (frame === null) !== (currentFrame === null) ||
-        (frame !== null &&
-          currentFrame !== null &&
-          (Math.abs(frame.left - currentFrame.left) >= 0.5 ||
-            Math.abs(frame.width - currentFrame.width) >= 0.5));
-
-      if (frameChanged) {
-        desktopCompactFilterFrameRef.current = frame;
-        setDesktopCompactFilterFrame(frame);
-      }
-    };
-
-    const measureDesktopCompactFilter = () => {
-      const sentinel = desktopFilterSentinelRef.current;
-      const sidebar = desktopFilterSidebarRef.current;
-      const compactPanel = desktopCompactFilterRef.current;
-      const resultsBody = resultsGridRef.current;
-      const viewportWidth = window.innerWidth;
-      const scrollY = window.scrollY;
-      const sentinelTop =
-        sentinel?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
-      const nextVisibility = shouldShowDesktopCompactFilter({
-        viewportWidth,
-        sentinelTop,
-        topOffset: desktopCompactFilterTopOffset,
-      });
-
-      if (nextVisibility !== desktopFilterShortcutVisibilityRef.current) {
-        desktopFilterShortcutVisibilityRef.current = nextVisibility;
-        setShowDesktopFilterShortcut(nextVisibility);
-      }
-
-      if (!nextVisibility || !sidebar || !resultsBody) {
-        applyPlacement("hidden", null);
-        return;
-      }
-
-      const sidebarRect = sidebar.getBoundingClientRect();
-      const panelRect = compactPanel?.getBoundingClientRect();
-      const bodyRect = resultsBody.getBoundingClientRect();
-      const panelHeight =
-        panelRect?.height ?? desktopCompactFilterHeightRef.current;
-
-      if (Number.isFinite(panelHeight) && panelHeight > 0) {
-        desktopCompactFilterHeightRef.current = panelHeight;
-      }
-
-      const placement = calculateCompactFilterPlacement({
-        enabled: nextVisibility,
-        scrollY,
-        desiredTop: desktopCompactFilterTopOffset,
-        panelHeight,
-        bodyBottomDocument: bodyRect.bottom + scrollY,
-        currentState: desktopCompactFilterPlacementRef.current,
-      });
-
-      if (placement.state === "hidden") {
-        applyPlacement("hidden", null);
-        return;
-      }
-
-      applyPlacement(placement.state, {
-        left: sidebarRect.left,
-        width: sidebarRect.width,
-      });
-    };
-
-    const scheduleMeasurement = () => {
-      if (animationFrameId !== null) return;
-
-      animationFrameId = window.requestAnimationFrame(() => {
-        animationFrameId = null;
-        measureDesktopCompactFilter();
-      });
-    };
-
-    scheduleDesktopCompactFilterMeasurementRef.current = scheduleMeasurement;
-
-    const resizeObserver =
-      "ResizeObserver" in window
-        ? new ResizeObserver(scheduleMeasurement)
-        : null;
-
-    if (resizeObserver) {
-      if (desktopFilterSidebarRef.current) {
-        resizeObserver.observe(desktopFilterSidebarRef.current);
-      }
-      if (resultsGridRef.current) {
-        resizeObserver.observe(resultsGridRef.current);
-      }
-    }
-
-    measureDesktopCompactFilter();
-    window.addEventListener("scroll", scheduleMeasurement, { passive: true });
-    window.addEventListener("resize", scheduleMeasurement);
-
-    return () => {
-      if (animationFrameId !== null) {
-        window.cancelAnimationFrame(animationFrameId);
-      }
-      scheduleDesktopCompactFilterMeasurementRef.current = null;
-      resizeObserver?.disconnect();
-      window.removeEventListener("scroll", scheduleMeasurement);
-      window.removeEventListener("resize", scheduleMeasurement);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (
-      typeof window === "undefined" ||
-      !("ResizeObserver" in window) ||
-      desktopCompactFilterPlacement === "hidden" ||
-      !desktopCompactFilterRef.current
-    ) {
-      return undefined;
-    }
-
-    const resizeObserver = new ResizeObserver(() => {
-      scheduleDesktopCompactFilterMeasurementRef.current?.();
-    });
-
-    resizeObserver.observe(desktopCompactFilterRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [desktopCompactFilterPlacement]);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !showDesktopFilterShortcut) return;
-
-    const animationFrameId = window.requestAnimationFrame(() => {
-      window.dispatchEvent(new Event("resize"));
-    });
-
-    return () => window.cancelAnimationFrame(animationFrameId);
-  }, [
-    activeFilterCount,
-    results.length,
-    renderFlightQualityFilter,
-    showDesktopFilterShortcut,
-  ]);
+  }, [guidedMode, scrollToFlightResultsTop, triggerFilterApplying, urlParams]);
 
   const clearFlightFilters = () => {
     handleUserFilterCommit();
@@ -4320,77 +4178,25 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setSelectedStops([]);
     setSelectedAirlines([]);
     setSelectedAirports([]);
+    setSelectedFromAirports([]);
+    setSelectedToAirports([]);
     setSelectedFlightQuality([]);
     setBaggageIncludedOnly(false);
     setFlexibleOnly(false);
+    setMobileJourneyTimeMaximums({});
   };
 
+  const flightMatchContext = useMemo(() => ({
+    priceValue: (flight: PublicFlightResult) => getComparableFlightPrice(
+      flight,
+      selectedCurrency,
+      currencyRates.rates,
+    )?.amount ?? null,
+    qualityMatches: flightHasQualityOption,
+  }), [currencyRates.rates, selectedCurrency]);
   const filtered = useMemo(
-    () =>
-      results.filter((flight) => {
-        const matchesPrice = flight.price <= maxPrice;
-        const matchesSelectedStops =
-          selectedStops.length === 0 ||
-          selectedStops.includes(getStopBucket(flight.stops));
-        const matchesAirline =
-          selectedAirlines.length === 0 ||
-          selectedAirlines.includes(flight.airlineName);
-        const matchesAirport =
-          selectedAirports.length === 0 ||
-          selectedAirports.some((airport) =>
-            flightMatchesAirport(flight, airport),
-          );
-        const matchesBaggage =
-          !baggageIncludedOnly || hasBaggageIncluded(flight);
-        const matchesFlexibility = !flexibleOnly || hasFlexibleTerms(flight);
-        const matchesFlightQuality =
-          !renderFlightQualityFilter ||
-          selectedFlightQuality.length === 0 ||
-          selectedFlightQuality.every((option) =>
-            flightHasQualityOption(flight, option),
-          );
-        const departureMinutes = getTimeMinutes(flight.departureTime);
-        const arrivalMinutes = getTimeMinutes(flight.arrivalTime);
-        const matchesTakeoffTime =
-          maxTakeoffMinutes === null ||
-          departureMinutes === null ||
-          departureMinutes <= maxTakeoffMinutes;
-        const matchesLandingTime =
-          maxLandingMinutes === null ||
-          arrivalMinutes === null ||
-          arrivalMinutes <= maxLandingMinutes;
-        const matchesDuration =
-          maxDurationMinutes === null ||
-          !Number.isFinite(flight.durationMinutes) ||
-          flight.durationMinutes <= maxDurationMinutes;
-
-        return (
-          matchesPrice &&
-          matchesSelectedStops &&
-          matchesAirline &&
-          matchesAirport &&
-          matchesBaggage &&
-          matchesFlexibility &&
-          matchesFlightQuality &&
-          matchesTakeoffTime &&
-          matchesLandingTime &&
-          matchesDuration
-        );
-      }),
-    [
-      baggageIncludedOnly,
-      flexibleOnly,
-      maxDurationMinutes,
-      maxLandingMinutes,
-      maxPrice,
-      maxTakeoffMinutes,
-      renderFlightQualityFilter,
-      results,
-      selectedAirlines,
-      selectedAirports,
-      selectedFlightQuality,
-      selectedStops,
-    ],
+    () => results.filter((flight) => flightMatchesFilters(flight, authoritativeFilterState, flightMatchContext)),
+    [authoritativeFilterState, flightMatchContext, results],
   );
 
   const sortedResults = useMemo(() => {
@@ -4398,15 +4204,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     nextResults.sort((first, second) => {
       if (sortMode === "cheapest") {
-        return first.price - second.price;
+        return compareFlightPrices(first, second, selectedCurrency, currencyRates.rates);
       }
 
       if (sortMode === "fastest") {
-        return first.durationMinutes - second.durationMinutes;
+        return (flightJourneyDurationMinutes(first) ?? Number.POSITIVE_INFINITY) -
+          (flightJourneyDurationMinutes(second) ?? Number.POSITIVE_INFINITY);
       }
 
       if (sortMode === "stops") {
-        return first.stops - second.stops || first.price - second.price;
+        return first.stops - second.stops || compareFlightPrices(first, second, selectedCurrency, currencyRates.rates);
       }
 
       const firstBestScore =
@@ -4421,12 +4228,112 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         second.comfortScore -
         second.riskScore;
 
-      return secondBestScore - firstBestScore || first.price - second.price;
+      return secondBestScore - firstBestScore || compareFlightPrices(first, second, selectedCurrency, currencyRates.rates);
     });
 
     return nextResults;
-  }, [filtered, sortMode]);
+  }, [currencyRates.rates, filtered, selectedCurrency, sortMode]);
 
+  const visibleJourneyRequestId = displayedJourneyRequest({ response: journeyResponse, currentSearchKey: currentFlightSearchKey, loading: loading || backgroundRefreshing || filterApplying, error, visibleCount: sortedResults.some(flight => providerResults.includes(flight)) ? 1 : 0 });
+  useEffect(() => { journeyEvents.resultsViewed(visibleJourneyRequestId); }, [journeyEvents, visibleJourneyRequestId]);
+
+  const toggleStickyFlightPopularFilter = useCallback(
+    (
+      group: "stops" | "airlines" | "airports" | "quality",
+      value: string,
+    ) => {
+      const toggle = (
+        setter: Dispatch<SetStateAction<string[]>>,
+      ) =>
+        setter((current) =>
+          current.includes(value)
+            ? current.filter((item) => item !== value)
+            : [...current, value],
+        );
+
+      if (group === "stops") toggle(setSelectedStops);
+      else if (group === "airlines") toggle(setSelectedAirlines);
+      else if (group === "airports") toggle(setSelectedAirports);
+      else toggle(setSelectedFlightQuality);
+
+      handleUserFilterCommit();
+    },
+    [handleUserFilterCommit],
+  );
+
+  const alignSelectedMobileFare = useCallback((forceVisibilityCheck = false) => {
+    if (!body?.departureDate) return false;
+    const alignmentIdentity = `${buildFlightResultsSearchKey(body)}:${body.departureDate}`;
+    if (!forceVisibilityCheck && alignedMobileNearbyFareSearchRef.current === alignmentIdentity) return true;
+
+    const rail = mobileNearbyFareRailRef.current;
+    const selectedCell = mobileSelectedNearbyFareRef.current;
+    if (!rail || !selectedCell?.isConnected || rail.clientWidth <= 0 || rail.scrollWidth <= 0 || selectedCell.offsetWidth <= 0) return false;
+
+    const railRect = rail.getBoundingClientRect();
+    const selectedRect = selectedCell.getBoundingClientRect();
+    if (forceVisibilityCheck && isHorizontallyVisibleWithinContainer(selectedRect, railRect)) {
+      alignedMobileNearbyFareSearchRef.current = alignmentIdentity;
+      return true;
+    }
+    const selectedLeftWithinRail = selectedRect.left - railRect.left + rail.scrollLeft;
+    rail.scrollTo({
+      left: getCenteredRailScrollLeft({
+        selectedLeftWithinRail,
+        selectedWidth: selectedCell.offsetWidth,
+        railWidth: rail.clientWidth,
+        scrollWidth: rail.scrollWidth,
+      }),
+      behavior: "auto",
+    });
+    alignedMobileNearbyFareSearchRef.current = alignmentIdentity;
+    return true;
+  }, [body]);
+
+  useLayoutEffect(() => {
+    if (!body?.departureDate || nearbyFares.length === 0) return;
+    let frame: number | null = null;
+    let attemptsRemaining = 6;
+    const attemptAlignment = () => {
+      if (alignSelectedMobileFare()) return;
+      if (attemptsRemaining <= 0) return;
+      attemptsRemaining -= 1;
+      frame = window.requestAnimationFrame(attemptAlignment);
+    };
+    attemptAlignment();
+    return () => {
+      if (frame !== null) window.cancelAnimationFrame(frame);
+    };
+  }, [alignSelectedMobileFare, body?.departureDate, nearbyFares]);
+
+  useEffect(() => {
+    if (!body?.departureDate || nearbyFares.length === 0) return;
+    let frame: number | null = null;
+    const refreshAlignment = () => {
+      if (document.visibilityState === "hidden") return;
+      if (frame !== null) window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        frame = null;
+        alignSelectedMobileFare(true);
+      });
+    };
+    const handleVisibilityChange = () => refreshAlignment();
+    const rail = mobileNearbyFareRailRef.current;
+    const observer = typeof ResizeObserver === "undefined"
+      ? null
+      : new ResizeObserver(refreshAlignment);
+    if (rail) observer?.observe(rail);
+    window.addEventListener("pageshow", refreshAlignment);
+    window.addEventListener("resize", refreshAlignment);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      if (frame !== null) window.cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener("pageshow", refreshAlignment);
+      window.removeEventListener("resize", refreshAlignment);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [alignSelectedMobileFare, body?.departureDate, nearbyFares.length]);
 
   useEffect(() => {
     if (resultsUiPreparing || !userInitiatedRetryRef.current) return;
@@ -4445,13 +4352,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     return () => window.clearTimeout(focusTimer);
   }, [error, resultsUiPreparing, sortedResults.length]);
 
-  const lowestDisplayedFare = useMemo(() => {
-    if (warnings.length > 0) return null;
-    const fare = getLowestProviderFare(sortedResults);
-    if (!fare || fare.currency.toUpperCase() !== selectedCurrency.toUpperCase()) return null;
-    return fare;
-  }, [selectedCurrency, sortedResults, warnings.length]);
-
   const sortSummaries = useMemo(() => {
     if (!filtered.length) {
       return {
@@ -4461,8 +4361,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       };
     }
 
-    const cheapest = [...filtered].sort((a, b) => a.price - b.price)[0];
-    const fastest = [...filtered].sort(
+    const cheapest = [...filtered].sort((a, b) =>
+      compareFlightPrices(a, b, selectedCurrency, currencyRates.rates)
+    )[0];
+    const fastest = filtered.filter(flight => Number.isFinite(flight.durationMinutes)).sort(
       (a, b) => a.durationMinutes - b.durationMinutes,
     )[0];
     const best = [...filtered].sort((a, b) => {
@@ -4471,7 +4373,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const bScore =
         b.valueScore + b.travelConfidenceScore + b.comfortScore - b.riskScore;
 
-      return bScore - aScore || a.price - b.price;
+      return bScore - aScore || compareFlightPrices(a, b, selectedCurrency, currencyRates.rates);
     })[0];
 
     return {
@@ -4479,7 +4381,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       best,
       fastest,
     };
-  }, [filtered]);
+  }, [currencyRates.rates, filtered, selectedCurrency]);
 
   const resultBadgeByFlightId = useMemo(() => {
     const badges = new Map<string, "best" | "fastest" | "cheapest">();
@@ -4501,7 +4403,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   if (!body) {
     return (
-      <main className="flex-1 bg-[#F3F6FA] pb-8 pt-4 sm:pt-8 lg:pt-8">
+      <main className="flex-1 bg-[#F3F6FA] pb-8 pt-4 sm:pt-8 lg:bg-white lg:pt-8">
         <section className="page-shell">
           <form
             className="mx-auto mt-0 w-full max-w-5xl space-y-3 sm:space-y-2"
@@ -4895,7 +4797,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     </span>
                     <ChevronDown
                       className={cn(
-                        "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                        "h-4 w-4 shrink-0 text-[#071A48] transition-transform",
                         travelerPopoverOpen && "rotate-180",
                       )}
                     />
@@ -4972,7 +4874,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             <section className="mx-auto mt-5 w-full max-w-6xl px-1">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#064CF7]">
                     {t("quickResumeLatestSearches")}
                   </p>
                   <h2 className="mt-0.5 text-base font-bold tracking-tight text-slate-950 sm:text-lg">
@@ -5226,605 +5128,564 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     );
   }
 
-  function renderDesktopMinimizedSearchBar() {
-    const compactSectionClass =
-      "flex h-[56px] min-w-0 items-center gap-2.5 px-3 text-start outline-none transition-colors hover:bg-slate-50/80 focus:outline-none focus-visible:outline-none";
-    const compactValueClass = "min-w-0 truncate text-[0.86rem] font-medium leading-5 text-slate-800";
-    const compactDateSummary = departureDateInput
-      ? tripTypeInput === "round-trip" && returnDateInput
-        ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
-        : formatCompactDateLabel(departureDateInput, calendarLocale)
-      : t("travelDates");
+  function renderDesktopHeaderSearchBar() {
+    const getCompactCityLabel = (
+      code: string,
+      input: string,
+      fallback: string,
+    ) => {
+      const normalizedCode = (code || input).trim().toUpperCase();
+      const matchedAirport = [
+        ...airports,
+        ...originSuggestions,
+        ...destinationSuggestions,
+      ].find((airport) => airport.code.toUpperCase() === normalizedCode);
 
-    return (
-      <div
-        className={cn(
-          "pointer-events-none fixed inset-x-0 top-0 z-[100] hidden px-4 transition-all duration-200 lg:block",
-          isSearchCollapsed && !isStickySearchPanelOpen
-            ? "translate-y-0 opacity-100"
-            : "-translate-y-3 opacity-0",
-        )}
-        aria-hidden={!isSearchCollapsed || isStickySearchPanelOpen}
-      >
-        <div ref={stickySearchPanelRef} className="page-shell">
-          <form
-            onSubmit={handleCompactSearchSubmit}
-            className="pointer-events-auto mx-auto grid h-[58px] w-full max-w-[820px] grid-cols-[minmax(220px,1.5fr)_minmax(150px,0.9fr)_minmax(160px,1fr)_92px] items-center overflow-hidden rounded-lg border border-slate-200/95 bg-white shadow-[0_12px_28px_-22px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.025]"
-          >
-            <button
-              type="button"
-              aria-expanded={isStickySearchPanelOpen}
-              aria-label={`${t("editFlightSearch")}: ${mobileOriginSummary} ${t("to")} ${mobileDestinationSummary}`}
-              onClick={(event) => openStickySearchEditor(event, "route")}
-              className={cn(compactSectionClass, "border-r border-slate-200/85")}
-            >
-              <span className="min-w-0 truncate text-[0.92rem] font-semibold leading-5 text-slate-950">
-                {mobileOriginSummary}
-              </span>
-              <ArrowRightLeft
-                className="h-4 w-4 shrink-0 text-slate-500"
-                aria-hidden="true"
-              />
-              <span className="min-w-0 truncate text-[0.92rem] font-semibold leading-5 text-slate-950">
-                {mobileDestinationSummary}
-              </span>
-            </button>
+      if (matchedAirport) {
+        return getLocalizedCityName(matchedAirport.city, locale);
+      }
 
-            <button
-              type="button"
-              aria-expanded={isStickySearchPanelOpen}
-              aria-label={`${t("editFlightSearch")}: ${compactDateSummary}`}
-              onClick={(event) => openStickySearchEditor(event, "dates")}
-              className={cn(compactSectionClass, "border-r border-slate-200/85")}
-            >
-              <Calendar
-                className="h-4 w-4 shrink-0 text-slate-500"
-                aria-hidden="true"
-              />
-              <span className={compactValueClass}>{compactDateSummary}</span>
-            </button>
-
-            <button
-              type="button"
-              aria-expanded={isStickySearchPanelOpen}
-              aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
-              onClick={(event) => openStickySearchEditor(event, "travelers")}
-              className={cn(compactSectionClass, "border-r border-slate-200/85")}
-            >
-              <Users
-                className="h-4 w-4 shrink-0 text-slate-500"
-                aria-hidden="true"
-              />
-              <span className={compactValueClass}>{travelerCabinSummary}</span>
-            </button>
-
-            <div className="flex h-[56px] items-center justify-center px-2">
-              <Button
-                type="submit"
-                className="h-10 w-[92px] rounded-lg bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-none ring-1 ring-[#004BB8]/10 hover:bg-[#021C2B]"
-                onClick={(event) => event.stopPropagation()}
-              >
-                {t("search")}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  function renderStickySearchPopoutOverlay() {
-    const stickyLabelClass =
-      "text-[0.62rem] font-semibold uppercase leading-3 tracking-[0.12em] text-slate-500";
-    const stickyValueClass =
-      "mt-0.5 block min-w-0 truncate text-sm font-semibold leading-5 text-slate-950";
-    const panelFieldClass =
-      "group relative flex min-h-[58px] min-w-0 flex-col justify-center border-r border-slate-200/80 bg-white/90 px-3 py-1.5 text-start outline-none transition-colors hover:bg-white focus-within:z-10 focus-within:bg-white focus-within:outline-none";
-    const stickyDateSummary = departureDateInput
-      ? tripTypeInput === "round-trip" && returnDateInput
-        ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
-        : formatCompactDateLabel(departureDateInput, calendarLocale)
-      : t("travelDates");
+      return input.trim() || code.trim() || fallback;
+    };
+    const firstMultiCityLeg = multiCityLegs[0];
+    const compactOriginLabel =
+      tripTypeInput === "multi-city" && firstMultiCityLeg
+        ? getCompactCityLabel("", firstMultiCityLeg.origin, mobileOriginSummary)
+        : getCompactCityLabel(originCode, originInput, t("origin"));
+    const compactDestinationLabel =
+      tripTypeInput === "multi-city" && firstMultiCityLeg
+        ? getCompactCityLabel(
+            "",
+            firstMultiCityLeg.destination,
+            mobileDestinationSummary,
+          )
+        : getCompactCityLabel(
+            destinationCode,
+            destinationInput,
+            t("destination"),
+          );
+    const compactDepartureDate =
+      tripTypeInput === "multi-city" && firstMultiCityLeg
+        ? firstMultiCityLeg.departureDate
+        : departureDateInput;
+    const departureSummary = compactDepartureDate
+      ? formatDesktopHeaderDateLabel(compactDepartureDate, calendarLocale)
+      : t("departure");
+    const dateSummary =
+      tripTypeInput === "round-trip"
+        ? compactDepartureDate && returnDateInput
+          ? `${formatDesktopHeaderDateLabel(compactDepartureDate, calendarLocale)} – ${formatDesktopHeaderDateLabel(returnDateInput, calendarLocale)}`
+          : departureSummary
+        : departureSummary;
     const tripTypeOptions = [
-      { label: t("roundTrip"), value: "round-trip", disabled: false },
-      { label: t("oneWay"), value: "one-way", disabled: false },
-      { label: t("multiCity"), value: "multi-city", disabled: false },
+      { label: t("roundTrip"), value: "round-trip" },
+      { label: t("oneWay"), value: "one-way" },
+      { label: t("multiCity"), value: "multi-city" },
     ];
+    const fieldClass =
+      "focus-ring flex h-[40px] min-w-0 items-center rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] px-2.5 text-start text-[#142033] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA]";
+    const selectorClass = cn(fieldClass, "w-full justify-start gap-1 px-2");
+    const valueClass =
+      "min-w-0 truncate text-[12px] font-semibold leading-[17px] text-[#142033]";
+    const headerGridClass =
+      tripTypeInput === "round-trip"
+        ? "max-w-[588px] grid-cols-[96px_minmax(0,1fr)_minmax(138px,150px)_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_270px_150px_56px_40px]"
+        : "max-w-[554px] grid-cols-[96px_minmax(0,1fr)_104px_50px_40px] xl:w-fit xl:max-w-none xl:grid-cols-[104px_270px_104px_56px_40px]";
+    const tripMenuOpen =
+      isStickySearchPanelOpen &&
+      activeStickySearchTarget === "trip" &&
+      tripTypeMenuOpen;
 
     return (
-      <>
-        {isStickySearchPanelOpen ? (
-          <div
-            className="fixed inset-0 z-[110] bg-slate-950/30 backdrop-blur-[2px]"
-            role="presentation"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) {
+      <form
+        onSubmit={handleCompactSearchSubmit}
+        data-flight-results-nav-search-form
+        className={cn(
+          "mx-auto grid h-[40px] w-full max-w-full items-center gap-1 overflow-visible",
+          headerGridClass,
+        )}
+      >
+        <div className="relative min-w-0">
+          <button
+            type="button"
+            data-flight-results-header-trip
+            aria-haspopup="listbox"
+            aria-expanded={tripMenuOpen}
+            aria-label={t("tripType")}
+            onClick={(event) => {
+              if (tripMenuOpen) {
                 collapseStickySearch();
+                return;
               }
+              openDesktopSearchEditor(event.currentTarget, "trip");
+              setTripTypeMenuOpen(true);
             }}
+            className={selectorClass}
           >
+            <span className={valueClass}>{mobileTripTypeSummary}</span>
+            <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
+          </button>
+
+          {tripMenuOpen ? (
             <div
-              className="flex min-h-dvh items-start justify-center px-6 pb-8 pt-12 xl:pt-16"
-              onMouseDown={(event) => event.stopPropagation()}
+              role="listbox"
+              aria-label={t("tripType")}
+              className="pointer-events-auto absolute left-0 top-[calc(100%+0.5rem)] z-[140] min-w-[210px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[16px] border border-[#D8E1EC] bg-white p-2 shadow-[0_20px_48px_-20px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.025]"
             >
-              <form
-                ref={stickySearchPopoutRef}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="sticky-flight-search-title"
-                onSubmit={handleCompactSearchSubmit}
-                onChangeCapture={markExpandedSearchInteraction}
-                onMouseDown={(event) => event.stopPropagation()}
-                onClick={(event) => event.stopPropagation()}
-                className="w-full max-w-4xl rounded-2xl border border-slate-200/90 bg-[#fbfaf7]/95 p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80 backdrop-blur-md"
-              >
-                <div className="mb-4 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
-                      {t("searchFlights")}
-                    </p>
-                    <h2
-                      id="sticky-flight-search-title"
-                      className="mt-1 text-xl font-bold tracking-tight text-slate-950"
-                    >
-                      {mobileRouteSummary}
-                    </h2>
-                    <p className="mt-1 text-sm font-medium text-slate-600">
-                      {stickyDateSummary} · {travelerCabinSummary}
-                    </p>
-                  </div>
+              {tripTypeOptions.map((option) => {
+                const selected = tripTypeInput === option.value;
+                return (
                   <button
-                    ref={stickySearchCloseButtonRef}
+                    key={option.value}
                     type="button"
-                    aria-label={t("close")}
-                    onClick={() => collapseStickySearch()}
-                    className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
-                  >
-                    <X className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                </div>
-
-                <div
-                  role="radiogroup"
-                  aria-label={t("tripType")}
-                  className="mb-3 flex items-center gap-2 px-0.5"
-                >
-                  {tripTypeOptions.map((option) => {
-                    const selected = tripTypeInput === option.value;
-
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        onClick={() => handleTripTypeChange(option.value)}
-                        className={cn(
-                          "focus-ring inline-flex min-h-7 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
-                          selected
-                            ? "bg-[#004BB8]/10 text-[#004BB8]"
-                            : "text-slate-500 hover:bg-white hover:text-slate-800",
-                        )}
-                      >
-                        <span
-                          aria-hidden="true"
-                          className={cn(
-                            "h-2 w-2 rounded-full",
-                            selected ? "bg-[#004BB8]" : "bg-slate-300",
-                          )}
-                        />
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="grid min-h-[58px] grid-cols-[minmax(0,1.05fr)_44px_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1fr)_112px] items-stretch overflow-visible rounded-xl border border-slate-200/85 bg-white/90 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]">
-                  <div ref={stickyOriginWrapRef} className={panelFieldClass}>
-                    <label
-                      className={stickyLabelClass}
-                      htmlFor="sticky-results-origin"
-                    >
-                      {t("origin")}
-                    </label>
-                    <div className="mt-0.5 flex min-w-0 items-center gap-2">
-                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
-                      <input
-                        id="sticky-results-origin"
-                        name="origin"
-                        required
-                        value={originInput}
-                      onFocus={() => {
-                        setActiveDesktopSearchSurface("sticky");
-                        setTripTypeMenuOpen(false);
-                        setActiveDatePicker(null);
-                        setDatePickerPosition(null);
-                        setTravelerPopoverOpen(false);
-                        setTravelerPopoverPosition(null);
-                        if (originInput.trim().length >= 2)
-                          setActiveSuggest("origin");
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === "Escape") {
-                          setActiveSuggest(null);
-                          setDropdownPosition(null);
-                        }
-                      }}
-                      onChange={(event) => {
-                        setOriginInput(event.target.value);
-                        setOriginCode("");
-                        setActiveSuggest(
-                          event.target.value.trim().length >= 2
-                            ? "origin"
-                            : null,
-                        );
-                      }}
-                        placeholder={t("fromPlaceholder")}
-                        autoComplete="off"
-                        className="h-5 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
-                      />
-                    </div>
-                    {activeSuggest === "origin" &&
-                    activeDesktopSearchSurface === "sticky" ? (
-                      <SuggestionList
-                        id="sticky-flight-origin-suggestions"
-                        alignToField
-                        suggestions={resolvedOriginSuggestions}
-                        locale={locale}
-                        onSelect={(value) => {
-                          markExpandedSearchInteraction();
-                          setOriginInput(value);
-                          setOriginCode(value);
-                          setActiveSuggest(null);
-                          setDropdownPosition(null);
-                        }}
-                      />
-                    ) : null}
-                  </div>
-
-                  <button
-                    type="button"
-                    aria-label={t("swapOriginDestination")}
-                    onClick={(event) => {
+                    role="option"
+                    aria-selected={selected}
+                    className={cn(
+                      "pointer-events-auto flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[14px] font-semibold leading-5 transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25",
+                      selected
+                        ? "bg-[#F0F6FF] text-[#004BB8] shadow-[inset_0_0_0_1px_rgba(0,75,184,0.06)]"
+                        : "text-[#172033] hover:bg-[#F7F9FC] hover:text-[#07133B]",
+                    )}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
                       event.stopPropagation();
-                      handleSwapLocations();
                     }}
-                    className="focus-ring flex min-h-[58px] cursor-pointer items-center justify-center border-r border-slate-200/80 bg-white/90 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      if (option.value === "multi-city") {
+                        navigateDesktopMultiCityToHome();
+                        return;
+                      }
+                      handleTripTypeChange(option.value);
+                      setTripTypeMenuOpen(false);
+                      collapseStickySearch();
+                    }}
                   >
-                    <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
+                    <span className={cn(
+                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
+                      selected ? "bg-white text-[#004BB8] shadow-sm" : "text-transparent",
+                    )}>
+                      {selected ? (
+                        <Check
+                          aria-hidden="true"
+                          className="h-4 w-4"
+                          strokeWidth={2.25}
+                        />
+                      ) : null}
+                    </span>
+                    <span>{option.label}</span>
                   </button>
-
-                  <div
-                    ref={stickyDestinationWrapRef}
-                    className={panelFieldClass}
-                  >
-                    <label
-                      className={stickyLabelClass}
-                      htmlFor="sticky-results-destination"
-                    >
-                      {t("destination")}
-                    </label>
-                    <div className="mt-0.5 flex min-w-0 items-center gap-2">
-                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
-                      <input
-                        id="sticky-results-destination"
-                        name="destination"
-                        required
-                        value={destinationInput}
-                      onFocus={() => {
-                        setActiveDesktopSearchSurface("sticky");
-                        setTripTypeMenuOpen(false);
-                        setActiveDatePicker(null);
-                        setDatePickerPosition(null);
-                        setTravelerPopoverOpen(false);
-                        setTravelerPopoverPosition(null);
-                        if (destinationInput.trim().length >= 2)
-                          setActiveSuggest("destination");
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === "Escape") {
-                          setActiveSuggest(null);
-                          setDropdownPosition(null);
-                        }
-                      }}
-                      onChange={(event) => {
-                        setDestinationInput(event.target.value);
-                        setDestinationCode("");
-                        setActiveSuggest(
-                          event.target.value.trim().length >= 2
-                            ? "destination"
-                            : null,
-                        );
-                      }}
-                        placeholder={t("toPlaceholder")}
-                        autoComplete="off"
-                        className="h-5 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
-                      />
-                    </div>
-                    {activeSuggest === "destination" &&
-                    activeDesktopSearchSurface === "sticky" ? (
-                      <SuggestionList
-                        id="sticky-flight-destination-suggestions"
-                        alignToField
-                        suggestions={resolvedDestinationSuggestions}
-                        locale={locale}
-                        onSelect={(value) => {
-                          markExpandedSearchInteraction();
-                          setDestinationInput(value);
-                          setDestinationCode(value);
-                          setActiveSuggest(null);
-                          setDropdownPosition(null);
-                        }}
-                      />
-                    ) : null}
-                  </div>
-
-                  <div className="relative">
-                    <button
-                      ref={stickyDateButtonRef}
-                      type="button"
-                      onClick={() => {
-                        setActiveDesktopSearchSurface("sticky");
-                        setTripTypeMenuOpen(false);
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                        setTravelerPopoverOpen(false);
-                        setTravelerPopoverPosition(null);
-                        setActiveDatePicker("departure");
-                        setDatePickerPosition(null);
-                      }}
-                      className={cn(panelFieldClass, "h-full w-full")}
-                    >
-                      <span className={stickyLabelClass}>
-                        {t("travelDates")}
-                      </span>
-                      <span className={cn(stickyValueClass, "flex items-center gap-2")}>
-                        <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
-                        <span className="min-w-0 truncate">{stickyDateSummary}</span>
-                      </span>
-                    </button>
-                    {activeDatePicker &&
-                    activeDesktopSearchSurface === "sticky" ? (
-                      <DatePickerPopover
-                        alignToField="right"
-                        position={
-                          datePickerPosition ?? { top: 0, left: 0, width: 0 }
-                        }
-                        onClose={() => {
-                          setActiveDatePicker(null);
-                          setDatePickerPosition(null);
-                        }}
-                        month={calendarMonth}
-                        departureValue={departureDateInput}
-                        returnValue={returnDateInput}
-                        activePicker={activeDatePicker}
-                        tripType={tripTypeInput}
-                        onMonthChange={setCalendarMonth}
-                        onSelect={applyFlightDateSelection}
-                        onClear={() => {
-                          markExpandedSearchInteraction();
-                          if (activeDatePicker === "departure") {
-                            setDepartureDateInput("");
-                            setReturnDateInput("");
-                          }
-                          if (activeDatePicker === "return")
-                            setReturnDateInput("");
-                        }}
-                        onToday={() => {
-                          setActiveDatePicker(null);
-                          setDatePickerPosition(null);
-                        }}
-                      />
-                    ) : null}
-                  </div>
-
-                  <div className="relative">
-                    <button
-                      ref={stickyTravelerButtonRef}
-                      type="button"
-                      onClick={() => {
-                        setActiveDesktopSearchSurface("sticky");
-                        setTripTypeMenuOpen(false);
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                        setActiveDatePicker(null);
-                        setDatePickerPosition(null);
-                        setTravelerPopoverOpen(true);
-                        setTravelerPopoverPosition(null);
-                      }}
-                      className={cn(panelFieldClass, "h-full w-full")}
-                    >
-                      <span className={stickyLabelClass}>{t("travelers")}</span>
-                      <span className="mt-0.5 flex min-w-0 items-center justify-between gap-2 text-sm font-medium leading-5 text-slate-950">
-                        <span className="flex min-w-0 items-center gap-2">
-                          <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
-                          <span className="truncate">{travelerCabinSummary}</span>
-                        </span>
-                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" />
-                      </span>
-                    </button>
-                    {travelerPopoverOpen &&
-                    activeDesktopSearchSurface === "sticky" ? (
-                      <TravelerCabinPopover
-                        alignToField="right"
-                        position={
-                          travelerPopoverPosition ?? {
-                            top: 0,
-                            left: 0,
-                            width: 0,
-                          }
-                        }
-                        onClose={() => {
-                          setTravelerPopoverOpen(false);
-                          setTravelerPopoverPosition(null);
-                        }}
-                        adultCount={adultCount}
-                        childCount={childCount}
-                        infantCount={infantCount}
-                        cabinClass={cabinClassInput}
-                        onAdultChange={(nextValue) => {
-                          markExpandedSearchInteraction();
-                          const nextAdultCount = Math.min(
-                            9,
-                            Math.max(1, nextValue),
-                          );
-                          setAdultCount(nextAdultCount);
-                          setChildCount((current) =>
-                            Math.min(current, 9 - nextAdultCount),
-                          );
-                          setInfantCount((current) =>
-                            Math.min(
-                              current,
-                              nextAdultCount,
-                              9 - nextAdultCount,
-                            ),
-                          );
-                        }}
-                        onChildChange={(nextValue) => {
-                          markExpandedSearchInteraction();
-                          const nextChildCount = Math.min(
-                            9 - adultCount,
-                            Math.max(0, nextValue),
-                          );
-                          setChildCount(nextChildCount);
-                          setInfantCount((current) =>
-                            Math.min(current, 9 - adultCount - nextChildCount),
-                          );
-                        }}
-                        onInfantChange={(nextValue) => {
-                          markExpandedSearchInteraction();
-                          setInfantCount(
-                            Math.min(
-                              adultCount,
-                              9 - adultCount - childCount,
-                              Math.max(0, nextValue),
-                            ),
-                          );
-                        }}
-                        onCabinClassChange={(nextValue) => {
-                          markExpandedSearchInteraction();
-                          setCabinClassInput(nextValue);
-                        }}
-                      />
-                    ) : null}
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="h-full min-h-[58px] rounded-none rounded-r-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-none ring-0 hover:bg-[#021C2B]"
-                  >
-                    {t("search")}
-                  </Button>
-                </div>
-              </form>
+                );
+              })}
             </div>
-          </div>
-        ) : null}
-      </>
-    );
-  }
+          ) : null}
+        </div>
 
-  function renderCompactSearchPopovers(
-    placement: "mobile" | "desktop" = "desktop",
-  ) {
-    const useMobileSheet = placement === "mobile";
-    return (
-      <>
-        {activeDatePicker && (useMobileSheet || datePickerPosition) ? (
-          <DatePickerPopover
-            position={datePickerPosition ?? { top: 0, left: 0, width: 0 }}
-            mobileSheet={useMobileSheet}
-            launcherRef={useMobileSheet ? departureWrapRef : undefined}
-            onClose={
-              useMobileSheet
-                ? closeMobileDatePicker
-                : () => {
-                    setActiveDatePicker(null);
-                    setDatePickerPosition(null);
+        <div
+          data-flight-results-compact-route
+          className="relative grid h-[40px] min-w-0 grid-cols-[minmax(56px,1fr)_36px_minmax(56px,1fr)] items-center overflow-visible rounded-[8px] border border-[#D8E1EC] bg-[#F8FAFC] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA]"
+        >
+          <div
+            ref={stickyOriginWrapRef}
+            className="relative flex h-full min-w-0 items-center transition-colors focus-within:bg-[#F3F6FA]"
+          >
+            <input
+              id="sticky-results-origin"
+              data-flight-results-header-origin
+              name="origin"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls="sticky-flight-origin-suggestions"
+              required
+              value={
+                isStickySearchPanelOpen &&
+                activeStickySearchTarget === "origin"
+                  ? originInput
+                  : compactOriginLabel
+              }
+              aria-label={`${t("editFlightSearch")}: ${compactOriginLabel}`}
+              aria-expanded={
+                isStickySearchPanelOpen &&
+                activeStickySearchTarget === "origin" &&
+                activeSuggest === "origin"
+              }
+              onFocus={(event) => {
+                const input = event.currentTarget;
+                const enteringOrigin =
+                  !isStickySearchPanelOpen ||
+                  activeStickySearchTarget !== "origin";
+                if (
+                  originCode &&
+                  originInput.trim().toUpperCase() ===
+                    originCode.trim().toUpperCase()
+                ) {
+                  setOriginInput(compactOriginLabel);
+                }
+                openDesktopSearchEditor(input, "origin");
+                if (enteringOrigin) {
+                  window.requestAnimationFrame(() => {
+                    input.select();
+                  });
+                }
+              }}
+              onClick={(event) => {
+                if (
+                  !isStickySearchPanelOpen ||
+                  activeStickySearchTarget !== "origin"
+                ) {
+                  openDesktopSearchEditor(event.currentTarget, "origin");
+                }
+              }}
+              onBlur={(event) => {
+                const nextFocus = event.relatedTarget;
+                if (
+                  nextFocus instanceof Node &&
+                  event.currentTarget.parentElement?.contains(nextFocus)
+                ) {
+                  return;
+                }
+                if (activeSuggest === "origin") {
+                  setActiveSuggest(null);
+                }
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown" && activeSuggest === "origin") {
+                  const firstSuggestion = document.querySelector<HTMLButtonElement>(
+                    '#sticky-flight-origin-suggestions [role="option"]',
+                  );
+                  if (firstSuggestion) {
+                    event.preventDefault();
+                    firstSuggestion.focus();
                   }
+                  return;
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  event.currentTarget.blur();
+                  collapseStickySearch();
+                }
+              }}
+              onChange={(event) => {
+                setOriginInput(event.target.value);
+                setOriginCode("");
+                setActiveSuggest(
+                  event.target.value.trim().length >= 2 ? "origin" : null,
+                );
+              }}
+              placeholder={t("fromPlaceholder")}
+              autoComplete="off"
+              className={cn("flight-results-nav-route-input box-border h-full w-full min-w-0 border-0 bg-transparent pl-2 text-left outline-none placeholder:text-slate-400", isStickySearchPanelOpen && activeStickySearchTarget === "origin" && originInput.trim() ? "pr-7" : "pr-2")}
+            />
+            {isStickySearchPanelOpen &&
+            activeStickySearchTarget === "origin" &&
+            originInput.trim() ? (
+              <button
+                type="button"
+                data-flight-results-header-origin-clear
+                aria-label={t("clearOrigin")}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setOriginInput("");
+                  setOriginCode("");
+                  setActiveSuggest(null);
+                  setDropdownPosition(null);
+                  window.requestAnimationFrame(() => {
+                    stickyOriginWrapRef.current
+                      ?.querySelector<HTMLInputElement>("input")
+                      ?.focus({ preventScroll: true });
+                  });
+                }}
+                className="focus-ring absolute right-1 top-1/2 z-[2] inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white hover:text-slate-700"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            ) : null}
+            {isStickySearchPanelOpen &&
+            activeStickySearchTarget === "origin" &&
+            activeSuggest === "origin" &&
+            activeDesktopSearchSurface === "sticky" ? (
+              <SuggestionList
+                id="sticky-flight-origin-suggestions"
+                alignToField
+                keyboardNavigation
+                suggestions={resolvedOriginSuggestions}
+                locale={locale}
+                onSelect={(value) => {
+                  markExpandedSearchInteraction();
+                  setOriginInput(getCompactCityLabel(value, value, value));
+                  setOriginCode(value);
+                  setActiveSuggest(null);
+                  setDropdownPosition(null);
+                  window.requestAnimationFrame(() => {
+                    stickyDestinationWrapRef.current
+                      ?.querySelector<HTMLInputElement>("input")
+                      ?.focus({ preventScroll: true });
+                  });
+                }}
+              />
+            ) : null}
+          </div>
+
+          <div data-flight-results-swap-slot className="flex h-full min-h-0 flex-col items-center">
+            <span data-flight-results-swap-divider aria-hidden="true" className="pointer-events-none w-px flex-1 bg-[#D8E1EC]" />
+            <button
+              type="button"
+              data-flight-results-header-swap
+              aria-label={t("swapOriginDestination")}
+              onClick={handleSwapLocations}
+              className="focus-ring relative z-[1] inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D8E1EC] bg-white text-[#142033] shadow-[0_2px_6px_rgba(15,23,42,0.12)] transition hover:bg-[#F3F6FA] hover:text-[#004BB8]"
+            >
+              <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <span data-flight-results-swap-divider aria-hidden="true" className="pointer-events-none w-px flex-1 bg-[#D8E1EC]" />
+          </div>
+
+          <div
+            ref={stickyDestinationWrapRef}
+            className="relative flex h-full min-w-0 items-center transition-colors focus-within:bg-[#F3F6FA]"
+          >
+            <input
+              id="sticky-results-destination"
+              data-flight-results-header-destination
+              name="destination"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls="sticky-flight-destination-suggestions"
+              required
+              value={
+                isStickySearchPanelOpen &&
+                activeStickySearchTarget === "destination"
+                  ? destinationInput
+                  : compactDestinationLabel
+              }
+              aria-label={`${t("editFlightSearch")}: ${compactDestinationLabel}`}
+              aria-expanded={
+                isStickySearchPanelOpen &&
+                activeStickySearchTarget === "destination" &&
+                activeSuggest === "destination"
+              }
+              onFocus={(event) => {
+                const input = event.currentTarget;
+                const enteringDestination =
+                  !isStickySearchPanelOpen ||
+                  activeStickySearchTarget !== "destination";
+                if (
+                  destinationCode &&
+                  destinationInput.trim().toUpperCase() ===
+                    destinationCode.trim().toUpperCase()
+                ) {
+                  setDestinationInput(compactDestinationLabel);
+                }
+                openDesktopSearchEditor(input, "destination");
+                if (enteringDestination) {
+                  window.requestAnimationFrame(() => {
+                    input.select();
+                  });
+                }
+              }}
+              onClick={(event) => {
+                if (
+                  !isStickySearchPanelOpen ||
+                  activeStickySearchTarget !== "destination"
+                ) {
+                  openDesktopSearchEditor(event.currentTarget, "destination");
+                }
+              }}
+              onBlur={(event) => {
+                const nextFocus = event.relatedTarget;
+                if (
+                  nextFocus instanceof Node &&
+                  event.currentTarget.parentElement?.contains(nextFocus)
+                ) {
+                  return;
+                }
+                if (activeSuggest === "destination") {
+                  setActiveSuggest(null);
+                }
+              }}
+              onKeyDown={(event) => {
+                if (
+                  event.key === "ArrowDown" &&
+                  activeSuggest === "destination"
+                ) {
+                  const firstSuggestion = document.querySelector<HTMLButtonElement>(
+                    '#sticky-flight-destination-suggestions [role="option"]',
+                  );
+                  if (firstSuggestion) {
+                    event.preventDefault();
+                    firstSuggestion.focus();
+                  }
+                  return;
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  event.currentTarget.blur();
+                  collapseStickySearch();
+                }
+              }}
+              onChange={(event) => {
+                setDestinationInput(event.target.value);
+                setDestinationCode("");
+                setActiveSuggest(
+                  event.target.value.trim().length >= 2
+                    ? "destination"
+                    : null,
+                );
+              }}
+              placeholder={t("toPlaceholder")}
+              autoComplete="off"
+              className={cn("flight-results-nav-route-input box-border h-full w-full min-w-0 border-0 bg-transparent pl-2 text-left outline-none placeholder:text-slate-400", isStickySearchPanelOpen && activeStickySearchTarget === "destination" && destinationInput.trim() ? "pr-7" : "pr-2")}
+            />
+            {isStickySearchPanelOpen &&
+            activeStickySearchTarget === "destination" &&
+            destinationInput.trim() ? (
+              <button
+                type="button"
+                data-flight-results-header-destination-clear
+                aria-label={t("clearDestination")}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setDestinationInput("");
+                  setDestinationCode("");
+                  setActiveSuggest(null);
+                  setDropdownPosition(null);
+                  window.requestAnimationFrame(() => {
+                    stickyDestinationWrapRef.current
+                      ?.querySelector<HTMLInputElement>("input")
+                      ?.focus({ preventScroll: true });
+                  });
+                }}
+                className="focus-ring absolute right-1 top-1/2 z-[2] inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white hover:text-slate-700"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            ) : null}
+            {isStickySearchPanelOpen &&
+            activeStickySearchTarget === "destination" &&
+            activeSuggest === "destination" &&
+            activeDesktopSearchSurface === "sticky" ? (
+              <SuggestionList
+                id="sticky-flight-destination-suggestions"
+                alignToField
+                keyboardNavigation
+                suggestions={resolvedDestinationSuggestions}
+                locale={locale}
+                onSelect={(value) => {
+                  markExpandedSearchInteraction();
+                  setDestinationInput(getCompactCityLabel(value, value, value));
+                  setDestinationCode(value);
+                  setActiveSuggest(null);
+                  setDropdownPosition(null);
+                  collapseStickySearch();
+                }}
+              />
+            ) : null}
+          </div>
+        </div>
+
+        <div className="relative min-w-0">
+          <button
+            ref={stickyDateButtonRef}
+            type="button"
+            data-flight-results-header-dates
+            aria-haspopup="dialog"
+            aria-expanded={
+              isStickySearchPanelOpen &&
+              activeStickySearchTarget === "dates" &&
+              Boolean(activeDatePicker)
             }
-            month={calendarMonth}
-            departureValue={
-              useMobileSheet ? draftMobileDepartureDate : departureDateInput
-            }
-            returnValue={
-              useMobileSheet ? draftMobileReturnDate : returnDateInput
-            }
-            activePicker={activeDatePicker}
-            tripType={tripTypeInput}
-            doneDisabled={
-              useMobileSheet &&
-              (!isValidFutureOrTodayDateValue(draftMobileDepartureDate) ||
-                (tripTypeInput === "round-trip" &&
-                  (!isValidFutureOrTodayDateValue(draftMobileReturnDate) ||
-                    isDateValueBefore(
-                      draftMobileReturnDate,
-                      draftMobileDepartureDate,
-                    ))))
-            }
-            onMonthChange={setCalendarMonth}
-            onSelect={
-              useMobileSheet
-                ? applyMobileFlightDateSelection
-                : applyFlightDateSelection
-            }
-            onClear={() => {
-              if (activeDatePicker === "departure") {
-                if (useMobileSheet) {
-                  setDraftMobileDepartureDate("");
-                  setDraftMobileReturnDate("");
-                } else {
+            aria-label={`${t("editFlightSearch")}: ${dateSummary}`}
+            onClick={(event) => openDesktopSearchEditor(event.currentTarget, "dates")}
+            className={cn(fieldClass, "w-full justify-center px-1.5")}
+          >
+            <span className={valueClass}>{dateSummary}</span>
+          </button>
+
+          {isStickySearchPanelOpen &&
+          activeStickySearchTarget === "dates" &&
+          activeDatePicker &&
+          activeDesktopSearchSurface === "sticky" ? (
+            <DatePickerPopover
+              prominentDesktop
+              alignToField="left"
+              launcherRef={stickyDateButtonRef}
+              position={{ top: 0, left: 0, width: 0 }}
+              onClose={() => {
+                collapseStickySearch();
+              }}
+              month={calendarMonth}
+              departureValue={departureDateInput}
+              returnValue={returnDateInput}
+              activePicker={activeDatePicker}
+              tripType={tripTypeInput}
+              onMonthChange={setCalendarMonth}
+              onSelect={applyFlightDateSelection}
+              onClear={() => {
+                markExpandedSearchInteraction();
+                if (activeDatePicker === "departure") {
                   setDepartureDateInput("");
                   setReturnDateInput("");
+                } else {
+                  setReturnDateInput("");
                 }
-              }
+              }}
+              onToday={() => {
+                collapseStickySearch();
+              }}
+            />
+          ) : null}
+        </div>
 
-              if (activeDatePicker === "return") {
-                if (useMobileSheet) setDraftMobileReturnDate("");
-                else setReturnDateInput("");
-              }
-            }}
-            onToday={
-              useMobileSheet
-                ? commitMobileDatePicker
-                : () => {
-                    setActiveDatePicker(null);
-                    setDatePickerPosition(null);
-                  }
+        <div className="relative min-w-0">
+          <button
+            ref={stickyTravelerButtonRef}
+            type="button"
+            data-flight-results-header-travelers
+            aria-haspopup="dialog"
+            aria-expanded={
+              isStickySearchPanelOpen &&
+              activeStickySearchTarget === "travelers" &&
+              travelerPopoverOpen
             }
-          />
-        ) : null}
+            aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
+            onClick={(event) => openDesktopSearchEditor(event.currentTarget, "travelers")}
+            className={cn(selectorClass, "gap-0.5 px-1")}
+          >
+            <UserRound className="h-4 w-4 shrink-0 text-[#142033]" aria-hidden="true" />
+            <span className={valueClass}>{mobileTravelerTotal}</span>
+            <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
+          </button>
 
-        {travelerPopoverOpen && (useMobileSheet || travelerPopoverPosition) ? (
-          <TravelerCabinPopover
-            position={travelerPopoverPosition ?? { top: 0, left: 0, width: 0 }}
-            mobileSheet={useMobileSheet}
-            launcherRef={useMobileSheet ? travelerCabinWrapRef : undefined}
-            onClose={
-              useMobileSheet
-                ? closeMobileTravelerPopover
-                : () => {
-                    setTravelerPopoverOpen(false);
-                    setTravelerPopoverPosition(null);
-                  }
-            }
-            onDone={useMobileSheet ? commitMobileTravelerPopover : undefined}
-            adultCount={useMobileSheet ? draftAdultCount : adultCount}
-            childCount={useMobileSheet ? draftChildCount : childCount}
-            infantCount={useMobileSheet ? draftInfantCount : infantCount}
-            cabinClass={useMobileSheet ? draftCabinClassInput : cabinClassInput}
-            onAdultChange={(nextValue) => {
-              const nextAdultCount = Math.min(9, Math.max(1, nextValue));
-
-              if (useMobileSheet) {
-                setDraftAdultCount(nextAdultCount);
-                setDraftChildCount((current) =>
-                  Math.min(current, 9 - nextAdultCount),
-                );
-                setDraftInfantCount((current) =>
-                  Math.min(current, nextAdultCount, 9 - nextAdultCount),
-                );
-              } else {
+          {isStickySearchPanelOpen &&
+          activeStickySearchTarget === "travelers" &&
+          travelerPopoverOpen &&
+          activeDesktopSearchSurface === "sticky" ? (
+            <TravelerCabinPopover
+              prominentDesktop
+              alignToField="right"
+              launcherRef={stickyTravelerButtonRef}
+              position={{ top: 0, left: 0, width: 0 }}
+              onClose={() => {
+                collapseStickySearch();
+              }}
+              adultCount={adultCount}
+              childCount={childCount}
+              infantCount={infantCount}
+              cabinClass={cabinClassInput}
+              onAdultChange={(nextValue) => {
+                markExpandedSearchInteraction();
+                const nextAdultCount = Math.min(9, Math.max(1, nextValue));
                 setAdultCount(nextAdultCount);
                 setChildCount((current) =>
                   Math.min(current, 9 - nextAdultCount),
@@ -5832,264 +5693,115 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 setInfantCount((current) =>
                   Math.min(current, nextAdultCount, 9 - nextAdultCount),
                 );
-              }
-            }}
-            onChildChange={(nextValue) => {
-              const nextChildCount = Math.min(
-                9 - (useMobileSheet ? draftAdultCount : adultCount),
-                Math.max(0, nextValue),
-              );
-
-              if (useMobileSheet) {
-                setDraftChildCount(nextChildCount);
-                setDraftInfantCount((current) =>
-                  Math.min(current, 9 - draftAdultCount - nextChildCount),
+              }}
+              onChildChange={(nextValue) => {
+                markExpandedSearchInteraction();
+                const nextChildCount = Math.min(
+                  9 - adultCount,
+                  Math.max(0, nextValue),
                 );
-              } else {
                 setChildCount(nextChildCount);
                 setInfantCount((current) =>
                   Math.min(current, 9 - adultCount - nextChildCount),
                 );
-              }
-            }}
-            onInfantChange={(nextValue) => {
-              const currentAdults = useMobileSheet
-                ? draftAdultCount
-                : adultCount;
-              const currentChildren = useMobileSheet
-                ? draftChildCount
-                : childCount;
-              const nextInfantCount = Math.min(
-                currentAdults,
-                9 - currentAdults - currentChildren,
-                Math.max(0, nextValue),
-              );
+              }}
+              onInfantChange={(nextValue) => {
+                markExpandedSearchInteraction();
+                setInfantCount(
+                  Math.min(
+                    adultCount,
+                    9 - adultCount - childCount,
+                    Math.max(0, nextValue),
+                  ),
+                );
+              }}
+              onCabinClassChange={(nextValue) => {
+                markExpandedSearchInteraction();
+                setCabinClassInput(nextValue);
+              }}
+            />
+          ) : null}
+        </div>
 
-              if (useMobileSheet) setDraftInfantCount(nextInfantCount);
-              else setInfantCount(nextInfantCount);
-            }}
-            onCabinClassChange={
-              useMobileSheet ? setDraftCabinClassInput : setCabinClassInput
-            }
-          />
-        ) : null}
-      </>
+        <button
+          type="submit"
+          aria-label={t("search")}
+          className="focus-ring inline-flex h-[40px] w-[40px] items-center justify-center rounded-[9px] bg-[#004BB8] text-white transition hover:bg-[#003F9C]"
+        >
+          <Search className="h-[18px] w-[18px]" aria-hidden="true" />
+        </button>
+      </form>
+    );
+  }
+
+  function renderStickySearchPopoutOverlay() {
+    const shouldShowMultiCityAccordion =
+      isStickySearchPanelOpen &&
+      activeStickySearchTarget === "trip" &&
+      tripTypeInput === "multi-city" &&
+      !tripTypeMenuOpen;
+
+    if (!shouldShowMultiCityAccordion) return null;
+
+    return (
+      <div
+        data-flight-search-anchored-backdrop
+        className="fixed inset-x-0 bottom-0 z-[110] bg-transparent"
+        style={{ top: desktopSearchPopoverFrame?.top ?? 88 }}
+        role="presentation"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) {
+            collapseStickySearch();
+          }
+        }}
+      >
+        <div
+          data-flight-search-anchored-popout
+          className="fixed"
+          style={
+            desktopSearchPopoverFrame
+              ? {
+                  top: desktopSearchPopoverFrame.top,
+                  left: desktopSearchPopoverFrame.left,
+                  width: desktopSearchPopoverFrame.width,
+                }
+              : {
+                  top: 88,
+                  left: 16,
+                  width: "calc(100vw - 32px)",
+                }
+          }
+        >
+          <form
+            ref={stickySearchPopoutRef}
+            role="region"
+            aria-label={t("editFlightSearch")}
+            onSubmit={handleCompactSearchSubmit}
+            onChangeCapture={markExpandedSearchInteraction}
+            className="w-full"
+          >
+            <div
+              data-sticky-multicity-editor
+              className="pointer-events-auto mt-1 overflow-y-auto overscroll-contain rounded-[12px] border border-[#D8E1EC] bg-[#F8FAFC] p-3 shadow-[0_12px_26px_-18px_rgba(15,23,42,0.28)]"
+              style={{
+                maxHeight: `calc(100dvh - ${(desktopSearchPopoverFrame?.top ?? 88) + 12}px)`,
+              }}
+            >
+              <MultiCityFlightEditor
+                legs={multiCityLegs}
+                onChange={setMultiCityLegs}
+                minimumDate={formatDateValue(new Date())}
+                presentation="results"
+                onAirportValidityChange={setMultiCityAirportsValid}
+              />
+            </div>
+          </form>
+        </div>
+      </div>
     );
   }
 
   function renderCompactSearchForm(placement: "mobile" | "desktop") {
-    if (placement === "mobile") {
-      const mobileFieldClass =
-        "rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-900/[0.025] transition-colors hover:border-slate-300 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/25";
-      const mobileLabelClass =
-        "mb-1.5 block text-[0.68rem] font-bold uppercase leading-4 tracking-[0.14em] text-slate-500";
-      const mobileTripTypeOptions = [
-        { labelKey: "roundTrip", value: "round-trip" },
-        { labelKey: "oneWay", value: "one-way" },
-        { labelKey: "multiCity", value: "multi-city" },
-      ];
-
-      return (
-        <form
-          onSubmit={handleCompactSearchSubmit}
-          className="flex h-full min-h-0 w-full min-w-0 flex-col bg-slate-50"
-        >
-          <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))]">
-            <div className="flex min-h-10 items-center justify-between gap-3">
-              <h2
-                id="flight-mobile-search-title"
-                className="text-[1.15rem] font-bold leading-6 tracking-[-0.01em] text-slate-950"
-              >
-                {t("editFlightSearch")}
-              </h2>
-
-              <button
-                type="button"
-                aria-label={t("closeEditSearch")}
-                onClick={() => closeMobileSearchDrawer()}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-
-          <div
-            ref={mobileSearchScrollRef}
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
-          >
-            <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
-              <div
-                role="radiogroup"
-                aria-label={t("tripType")}
-                className="flex min-h-11 items-center gap-5 rounded-2xl bg-slate-50/50 px-1 py-1"
-              >
-                {mobileTripTypeOptions.map((option) => {
-                  const selected = tripTypeInput === option.value;
-
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => handleTripTypeChange(option.value)}
-                      className={cn(
-                        "focus-ring inline-flex min-h-10 items-center gap-2 rounded-full px-2.5 py-1 text-sm font-semibold transition-colors",
-                        selected
-                          ? "text-slate-950"
-                          : "text-slate-600 hover:text-slate-900",
-                      )}
-                    >
-                      <span
-                        aria-hidden="true"
-                        className={cn(
-                          "inline-flex h-4 w-4 items-center justify-center rounded-full border transition-colors",
-                          selected
-                            ? "border-[#004BB8] bg-white shadow-[0_0_0_3px_rgba(0,75,184,0.10)]"
-                            : "border-slate-300 bg-white",
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "h-2 w-2 rounded-full transition-colors",
-                            selected ? "bg-[#004BB8]" : "bg-transparent",
-                          )}
-                        />
-                      </span>
-                      {t(option.labelKey)}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div ref={originWrapRef}>
-                <button
-                  ref={mobileOriginLauncherRef}
-                  type="button"
-                  aria-haspopup="dialog"
-                  aria-expanded={activeMobileAirportPicker === "origin"}
-                  onClick={() => {
-                    closeFlightSearchPopovers();
-                    setActiveMobileAirportPicker("origin");
-                  }}
-                  className={cn(
-                    mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-start",
-                  )}
-                >
-                  <span className="min-w-0">
-                    <span className={mobileLabelClass}>{t("origin")}</span>
-                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {originInput.trim() || t("fromPlaceholder")}
-                    </span>
-                  </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
-                </button>
-              </div>
-
-              <div ref={destinationWrapRef}>
-                <button
-                  ref={mobileDestinationLauncherRef}
-                  type="button"
-                  aria-haspopup="dialog"
-                  aria-expanded={activeMobileAirportPicker === "destination"}
-                  onClick={() => {
-                    closeFlightSearchPopovers();
-                    setActiveMobileAirportPicker("destination");
-                  }}
-                  className={cn(
-                    mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-start",
-                  )}
-                >
-                  <span className="min-w-0">
-                    <span className={mobileLabelClass}>{t("destination")}</span>
-                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {destinationInput.trim() || t("toPlaceholder")}
-                    </span>
-                  </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
-                </button>
-              </div>
-
-              <div ref={departureWrapRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveDesktopSearchSurface("sticky");
-                    setTripTypeMenuOpen(false);
-                    setActiveSuggest(null);
-                    setDropdownPosition(null);
-                    setTravelerPopoverOpen(false);
-                    setTravelerPopoverPosition(null);
-                    openMobileDatePicker();
-                  }}
-                  className={cn(
-                    mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center gap-3 text-start",
-                  )}
-                >
-                  <Calendar className="h-5 w-5 shrink-0 text-[#004BB8]" />
-                  <span className="min-w-0">
-                    <span className={mobileLabelClass}>{t("travelDates")}</span>
-                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {departureDateInput
-                        ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
-                          : formatDateLabel(departureDateInput, calendarLocale)
-                        : t("travelDates")}
-                    </span>
-                  </span>
-                </button>
-              </div>
-
-              <div ref={travelerCabinWrapRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveDesktopSearchSurface("sticky");
-                    setTripTypeMenuOpen(false);
-                    setActiveSuggest(null);
-                    setDropdownPosition(null);
-                    setActiveDatePicker(null);
-                    setDatePickerPosition(null);
-                    openMobileTravelerPopover();
-                  }}
-                  className={cn(
-                    mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-start",
-                  )}
-                >
-                  <span className="min-w-0">
-                    <span className={mobileLabelClass}>
-                      {t("travelersAndCabin")}
-                    </span>
-                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {buildTravelerCabinSummary(
-                        adultCount,
-                        childCount,
-                        infantCount,
-                        cabinClassInput,
-                        t,
-                      )}
-                    </span>
-                  </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
-                </button>
-              </div>
-
-              <Button
-                type="submit"
-                className="mt-1 h-[52px] w-full rounded-2xl bg-[#004BB8] text-base font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B]"
-              >
-                {t("search")}
-              </Button>
-            </div>
-          </div>
-        </form>
-      );
-    }
     if (
       placement === "desktop" &&
       shouldShowDesktopCompactSummary &&
@@ -6101,7 +5813,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             <button
               type="button"
               aria-label={t("editFlightSearch")}
-              onClick={expandStickySearch}
+              onClick={() => {
+                if (tripTypeInput === "multi-city") {
+                  navigateDesktopMultiCityToHome();
+                  return;
+                }
+                expandStickySearch();
+              }}
               className="group focus-ring flex min-h-11 w-full min-w-0 items-center justify-between gap-3 bg-white px-4 py-2 text-start transition hover:bg-slate-50"
             >
               <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-sm text-slate-700">
@@ -6158,9 +5876,143 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       return null;
     }
 
+    if (placement === "desktop" && tripTypeInput === "multi-city") {
+      if (isStickySearchPanelOpen) return null;
+
+      return (
+        <div className="mx-auto hidden w-full min-w-0 max-w-5xl sm:block">
+          <div
+            data-desktop-trip-selector
+            role="radiogroup"
+            aria-label={t("tripType")}
+            className="hidden min-h-9 items-center gap-7 px-2 sm:flex lg:gap-10"
+          >
+            {[
+              { label: t("roundTrip"), value: "round-trip" },
+              { label: t("oneWay"), value: "one-way" },
+              { label: t("multiCity"), value: "multi-city" },
+            ].map((option) => {
+              const selected = tripTypeInput === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => {
+                    if (option.value === "multi-city") {
+                      navigateDesktopMultiCityToHome();
+                      return;
+                    }
+                    handleTripTypeChange(option.value);
+                  }}
+                  className="focus-ring inline-flex min-h-9 items-center gap-2 rounded-md px-1 text-sm font-medium text-slate-800 transition-colors hover:text-[#075EE8] focus-visible:ring-2 focus-visible:ring-[#075EE8]/30"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px]",
+                      selected ? "border-[#075EE8]" : "border-slate-300",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "h-2 w-2 rounded-full",
+                        selected ? "bg-[#075EE8]" : "bg-transparent",
+                      )}
+                    />
+                  </span>
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <form
+            ref={searchFormRef}
+            className="mt-3 rounded-[1.15rem] border border-slate-200/90 bg-white p-4 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-950/[0.025]"
+            onSubmit={handleCompactSearchSubmit}
+            onChangeCapture={markExpandedSearchInteraction}
+          >
+            <MultiCityFlightEditor
+              legs={multiCityLegs}
+              onChange={setMultiCityLegs}
+              minimumDate={formatDateValue(new Date())}
+              presentation="results"
+              onAirportValidityChange={setMultiCityAirportsValid}
+            />
+            <div className="mt-4 flex items-end justify-between gap-4 border-t border-slate-200 pt-4">
+              <div
+                ref={travelerCabinWrapRef}
+                className="relative min-w-0 flex-1"
+              >
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                  {t("travelers")}
+                </label>
+                <button
+                  type="button"
+                  aria-label={t("travelersAndCabinClass")}
+                  aria-expanded={travelerPopoverOpen}
+                  onClick={() => {
+                    setTravelerPopoverOpen((current) => {
+                      const next = !current;
+                      if (!next) setTravelerPopoverPosition(null);
+                      return next;
+                    });
+                  }}
+                  className="flight-results-edit-value focus-ring flex min-h-[66px] w-full items-center justify-between gap-2 rounded-[13px] border border-[#E7ECF5] bg-white px-3 text-start transition hover:border-[#E7ECF5]"
+                >
+                  <span className="min-w-0 truncate">{travelerCabinSummary}</span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 shrink-0 text-[#071A48] transition-transform",
+                      travelerPopoverOpen && "rotate-180",
+                    )}
+                    aria-hidden="true"
+                  />
+                </button>
+              </div>
+              <Button
+                type="submit"
+                className="min-h-11 shrink-0 px-6"
+              >
+                {t("search")}
+              </Button>
+            </div>
+          </form>
+
+          {travelerPopoverOpen && travelerPopoverPosition ? (
+            <TravelerCabinPopover
+              position={travelerPopoverPosition}
+              onClose={() => {
+                setTravelerPopoverOpen(false);
+                setTravelerPopoverPosition(null);
+              }}
+              adultCount={adultCount}
+              childCount={childCount}
+              infantCount={infantCount}
+              cabinClass={cabinClassInput}
+              onAdultChange={(nextValue) => {
+                const nextAdultCount = Math.min(9, Math.max(1, nextValue));
+                setAdultCount(nextAdultCount);
+                setInfantCount((current) => Math.min(current, nextAdultCount));
+              }}
+              onChildChange={(nextValue) => {
+                setChildCount(Math.min(9, Math.max(0, nextValue)));
+              }}
+              onInfantChange={(nextValue) => {
+                setInfantCount(Math.min(adultCount, Math.max(0, nextValue)));
+              }}
+              onCabinClassChange={setCabinClassInput}
+            />
+          ) : null}
+        </div>
+      );
+    }
+
     if (tripTypeInput === "multi-city") {
       return (
-        <div className={cn("mx-auto w-full min-w-0 max-w-5xl", placement === "desktop" && "hidden sm:block")}>
+        <div className="mx-auto w-full min-w-0 max-w-5xl">
           <button
             type="button"
             onClick={() => router.push(`/flights?${searchQueryString}`)}
@@ -6179,41 +6031,45 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           placement === "desktop" && "hidden sm:block",
         )}
       >
-        <div className="flex flex-col gap-0">
+        <div className={cn("flex flex-col gap-0", placement === "desktop" && "gap-3")}>
           {placement === "desktop" ? (
             <div
+              data-desktop-trip-selector
               role="radiogroup"
               aria-label={t("tripType")}
-              className="hidden translate-y-2 items-center gap-8 px-1 pb-0 sm:flex"
+              className="hidden min-h-9 items-center gap-7 px-2 sm:flex lg:gap-10"
             >
               {[
-                { label: "Round-trip", value: "round-trip" },
-                { label: "One-way", value: "one-way" },
-                { label: "Multi-city", value: "multi-city" },
+                { label: t("roundTrip"), value: "round-trip" },
+                { label: t("oneWay"), value: "one-way" },
+                { label: t("multiCity"), value: "multi-city" },
               ].map((option) => {
                 const selected = tripTypeInput === option.value;
-
                 return (
                   <button
                     key={option.value}
                     type="button"
                     role="radio"
                     aria-checked={selected}
-                    onClick={() => handleTripTypeChange(option.value)}
-                    className={cn(
-                      "focus-ring inline-flex min-h-9 items-center gap-2 rounded-md px-1 py-1 text-[14px] font-medium text-slate-900 transition-colors hover:text-slate-950",
-                    )}
+                    onClick={() => {
+                    if (option.value === "multi-city") {
+                      navigateDesktopMultiCityToHome();
+                      return;
+                    }
+                    handleTripTypeChange(option.value);
+                  }}
+                    className="focus-ring inline-flex min-h-9 items-center gap-2 rounded-md px-1 text-sm font-medium text-slate-800 transition-colors hover:text-[#075EE8] focus-visible:ring-2 focus-visible:ring-[#075EE8]/30"
                   >
                     <span
                       aria-hidden="true"
                       className={cn(
-                        "inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 bg-white transition-colors",
+                        "inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px]",
                         selected ? "border-[#075EE8]" : "border-slate-300",
                       )}
                     >
                       <span
                         className={cn(
-                          "h-2 w-2 rounded-full transition-colors",
+                          "h-2 w-2 rounded-full",
                           selected ? "bg-[#075EE8]" : "bg-transparent",
                         )}
                       />
@@ -6229,7 +6085,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             ref={placement === "desktop" ? searchFormRef : undefined}
             onSubmit={handleCompactSearchSubmit}
             onChangeCapture={markExpandedSearchInteraction}
-            className="sm:translate-y-4"
           >
             <div className="flex items-center justify-between sm:hidden">
               <span className="text-sm font-semibold text-slate-500">
@@ -6264,7 +6119,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       {t("origin")}
                     </label>
                     <div className="flex min-w-0 items-center gap-2">
-                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
                       <input
                       id="results-origin"
                       ref={originInputRef}
@@ -6305,9 +6160,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       }}
                       placeholder={t("fromPlaceholder")}
                       autoComplete="off"
-                      className="h-6 min-w-0 flex-1 border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
+                      className="flight-results-edit-value h-6 min-w-0 flex-1 border-0 bg-transparent p-0 pe-7 outline-none placeholder:font-medium placeholder:text-slate-400"
                       />
                     </div>
+                    {getLocationFieldDisplay(originInput).secondary ? (
+                      <span className="block truncate ps-6 text-[10px] font-medium leading-3 text-slate-600">
+                        {getLocationFieldDisplay(originInput).secondary}
+                      </span>
+                    ) : null}
 
                     {activeSuggest === "origin" &&
                     activeDesktopSearchSurface !== "sticky" ? (
@@ -6353,7 +6213,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       {t("destination")}
                     </label>
                     <div className="flex min-w-0 items-center gap-2">
-                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-700" />
                       <input
                       id="results-destination"
                       ref={destinationInputRef}
@@ -6395,9 +6255,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       }}
                       placeholder={t("toPlaceholder")}
                       autoComplete="off"
-                      className="h-6 min-w-0 flex-1 border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
+                      className="flight-results-edit-value h-6 min-w-0 flex-1 border-0 bg-transparent p-0 pe-7 outline-none placeholder:font-medium placeholder:text-slate-400"
                       />
                     </div>
+                    {getLocationFieldDisplay(destinationInput).secondary ? (
+                      <span className="block truncate ps-6 text-[10px] font-medium leading-3 text-slate-600">
+                        {getLocationFieldDisplay(destinationInput).secondary}
+                      </span>
+                    ) : null}
 
                     {activeSuggest === "destination" &&
                     activeDesktopSearchSurface !== "sticky" ? (
@@ -6437,7 +6302,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       <span className="mb-1.5 block text-[0.66rem] font-semibold uppercase leading-3 tracking-[0.13em] text-slate-500">
                         {t("travelDates")}
                       </span>
-                      <span className="flex min-w-0 items-center gap-2 text-sm font-semibold leading-6 text-slate-950">
+                      <span className="flight-results-edit-value flex min-w-0 items-center gap-2">
                         <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-600" />
                         <span className="truncate">
                           {departureDateInput
@@ -6509,7 +6374,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       <span className="mb-1.5 block text-[0.66rem] font-semibold uppercase leading-3 tracking-[0.13em] text-slate-500">
                         {t("travelers")}
                       </span>
-                      <span className="flex min-w-0 items-center gap-2 text-sm font-semibold leading-6 text-slate-950">
+                      <span className="flight-results-edit-value flex min-w-0 items-center gap-2">
                         <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-600" />
                         <span className="truncate">
                           {buildTravelerCabinSummary(
@@ -6523,7 +6388,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         </span>
                       </span>
                     </span>
-                    <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
+                    <ChevronDown className="h-4 w-4 shrink-0 text-slate-700" />
                   </button>
 
                   {travelerPopoverOpen &&
@@ -6601,240 +6466,399 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }
 
   function renderMobileSortResultsRow() {
-    const mobileSortOptions: Array<{ label: string; value: SortMode }> = [
-      { label: t("cheapest"), value: "cheapest" },
-      { label: t("best"), value: "best" },
-      { label: t("quickest"), value: "fastest" },
+    const mobileSortOptions: Array<{ label: string; description: string; value: SortMode }> = [
+      { label: "Best", description: "Best balance of price and journey time", value: "best" },
+      { label: "Cheapest", description: "Lowest total price", value: "cheapest" },
+      { label: "Fastest", description: "Shortest journey time", value: "fastest" },
     ];
-    const activeSortOption =
-      mobileSortOptions.find((option) => option.value === sortMode) ??
-      mobileSortOptions[0];
+    const activeSortOption = mobileSortOptions.find((option) => option.value === sortMode) ?? mobileSortOptions[0];
     const shortcutButtonClass =
-      "focus-ring inline-flex h-10 flex-shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-300/80 bg-transparent px-3.5 text-[13px] font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-200/35 hover:text-slate-950 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
-    const menuClass =
-      "z-[90] max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]";
+      "group inline-flex min-h-11 min-w-11 shrink-0 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35";
+    const shortcutChipClass =
+      "inline-flex h-9 items-center gap-1 rounded-[9px] border px-2 text-[13px] font-semibold transition";
     const menuItemClass =
-      "flex min-h-9 w-full items-center justify-between gap-2 rounded-lg px-3 text-left text-[13px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
-    const activeMenu = getActiveMobileShortcutMenu();
+      "flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-transparent bg-transparent px-0 text-left text-[14px] font-normal text-slate-800 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
 
-    const openMobileShortcutMenu = (
-      menu: MobileShortcutMenu,
-      width: number,
-      trigger: HTMLButtonElement,
-    ) => {
-      const isOpen = activeMenu === menu;
-      const rect = trigger.getBoundingClientRect();
-      closeMobileShortcutMenus();
+    const openSheet = (sheet: MobileShortcutSheet, launcher: HTMLButtonElement) => {
+      mobileShortcutLauncherRef.current = launcher;
+      setMobileDraftSort(sortMode);
+      setMobileDraftAirlines(selectedAirlines);
+      setMobileDraftStops(selectedStops);
+      setMobileDraftFromAirports(selectedFromAirports);
+      setMobileDraftToAirports(selectedToAirports);
+      setMobileAirlineSearch("");
+      setMobileShowAllAirlines(false);
+      setMobileShortcutSheet(sheet);
+    };
 
-      if (!isOpen) {
-        if (menu === "sort") setMobileSortMenuOpen(true);
-        if (menu === "airlines") setMobileAirlineMenuOpen(true);
-        if (menu === "stops") setMobileStopsMenuOpen(true);
-        if (menu === "airports") setMobileAirportMenuOpen(true);
-        window.requestAnimationFrame(() =>
-          positionMobileShortcutMenu(rect, width),
-        );
+    const clearShortcutFilter = (sheet: Exclude<MobileShortcutSheet, "sort">) => {
+      triggerFilterApplying();
+      if (sheet === "airlines") setSelectedAirlines([]);
+      if (sheet === "stops") setSelectedStops([]);
+      if (sheet === "airports") {
+        setSelectedFromAirports([]);
+        setSelectedToAirports([]);
       }
+      handleUserFilterCommit();
     };
 
     const renderTrigger = (
-      menu: MobileShortcutMenu,
+      sheet: MobileShortcutSheet,
       label: string,
-      menuOpen: boolean,
-      width: number,
-      ref: RefObject<HTMLDivElement | null>,
-    ) => (
-      <div ref={ref} className="flex-shrink-0">
-        <button
-          type="button"
-          aria-haspopup="menu"
-          aria-expanded={menuOpen}
-          onClick={(event) => {
-            event.stopPropagation();
-            openMobileShortcutMenu(menu, width, event.currentTarget);
-          }}
-          className={shortcutButtonClass}
-        >
-          <span className="whitespace-nowrap">{label}</span>
-          <ChevronDown
+      selectedCount = 0,
+    ) => {
+      const selected = sheet !== "sort" && selectedCount > 0;
+
+      return (
+        <div className="group inline-flex min-h-11 min-w-11 shrink-0 items-center">
+          <span
             className={cn(
-              "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
-              menuOpen && "rotate-180",
+              shortcutChipClass,
+              "relative overflow-hidden p-0",
+              selected
+                ? "border-[#142033] bg-[#142033] text-white"
+                : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
             )}
-            aria-hidden="true"
-          />
-        </button>
-      </div>
-    );
-
-    const renderMenu = () => {
-      if (
-        !activeMenu ||
-        !mobileShortcutMenuPosition ||
-        typeof document === "undefined"
-      ) {
-        return null;
-      }
-
-      return createPortal(
-        <div
-          ref={mobileShortcutMenuContentRef}
-          role="menu"
-          style={{
-            position: "fixed",
-            top: mobileShortcutMenuPosition.top,
-            left: mobileShortcutMenuPosition.left,
-            width: mobileShortcutMenuPosition.width,
-          }}
-          className={menuClass}
-          onClick={(event) => event.stopPropagation()}
-          onPointerDown={(event) => event.stopPropagation()}
-        >
-          {activeMenu === "sort"
-            ? mobileSortOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={sortMode === option.value}
-                  onClick={() => {
-                    triggerFilterApplying();
-                    setSortMode(option.value);
-                    closeMobileShortcutMenus();
-                  }}
+          >
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={mobileShortcutSheet === sheet}
+              aria-pressed={selected}
+              className={cn(
+                "focus-ring inline-flex h-full min-w-0 items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/35",
+                selected ? "pl-2 pr-6" : "px-2",
+              )}
+              onClick={(event) => {
+                event.stopPropagation();
+                openSheet(sheet, event.currentTarget);
+              }}
+            >
+              <span className="max-w-[11rem] truncate">{label}</span>
+              {!selected ? (
+                <ChevronDown
+                  aria-hidden="true"
                   className={cn(
-                    "flex min-h-9 w-full items-center rounded-lg px-3 text-left text-[13px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
-                    sortMode === option.value
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
-                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                    "h-3.5 w-3.5 shrink-0 transition-transform",
+                    mobileShortcutSheet === sheet && "rotate-180",
                   )}
-                >
-                  {option.label}
-                </button>
-              ))
-            : null}
-
-          {activeMenu === "airlines"
-            ? airlineOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="menuitemcheckbox"
-                  aria-checked={selectedAirlines.includes(option.value)}
-                  onClick={() => {
-                    triggerFilterApplying();
-                    toggleFilterValue(option.value, setSelectedAirlines);
-                  }}
-                  className={cn(
-                    menuItemClass,
-                    selectedAirlines.includes(option.value)
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
-                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
-                  )}
-                >
-                  <span className="truncate">{option.label}</span>
-                  <span className="shrink-0 text-[11px] font-semibold text-slate-500">
-                    {option.count}
-                  </span>
-                </button>
-              ))
-            : null}
-
-          {activeMenu === "stops"
-            ? stopOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="menuitemcheckbox"
-                  aria-checked={selectedStops.includes(option.value)}
-                  onClick={() => {
-                    triggerFilterApplying();
-                    toggleFilterValue(option.value, setSelectedStops);
-                  }}
-                  className={cn(
-                    menuItemClass,
-                    selectedStops.includes(option.value)
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
-                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
-                  )}
-                >
-                  <span>{option.label}</span>
-                  <span className="text-[11px] font-semibold text-slate-500">
-                    {option.count}
-                  </span>
-                </button>
-              ))
-            : null}
-
-          {activeMenu === "airports"
-            ? airportOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="menuitemcheckbox"
-                  aria-checked={selectedAirports.includes(option.value)}
-                  onClick={() => {
-                    triggerFilterApplying();
-                    toggleFilterValue(option.value, setSelectedAirports);
-                  }}
-                  className={cn(
-                    menuItemClass,
-                    selectedAirports.includes(option.value)
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
-                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
-                  )}
-                >
-                  <span>{option.label}</span>
-                  <span className="text-[11px] font-semibold text-slate-500">
-                    {option.count}
-                  </span>
-                </button>
-              ))
-            : null}
-        </div>,
-        document.body,
+                />
+              ) : null}
+            </button>
+            {selected ? (
+              <button
+                type="button"
+                aria-label={`Clear ${label} filter`}
+                className="focus-ring absolute right-0.5 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/70"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  clearShortcutFilter(sheet as Exclude<MobileShortcutSheet, "sort">);
+                }}
+              >
+                <X className="h-3 w-3" strokeWidth={2.1} aria-hidden="true" />
+              </button>
+            ) : null}
+          </span>
+        </div>
       );
     };
+
+    const toggleDraft = (value: string, values: string[], setValues: Dispatch<SetStateAction<string[]>>) =>
+      setValues(values.includes(value) ? values.filter((entry) => entry !== value) : [...values, value]);
+
+    const draftFilterState: FlightFilterState = {
+      ...authoritativeFilterState,
+      airlines: mobileShortcutSheet === "airlines" ? mobileDraftAirlines : authoritativeFilterState.airlines,
+      stops: mobileShortcutSheet === "stops" ? mobileDraftStops : authoritativeFilterState.stops,
+      fromAirports: mobileShortcutSheet === "airports" ? mobileDraftFromAirports : authoritativeFilterState.fromAirports,
+      toAirports: mobileShortcutSheet === "airports" ? mobileDraftToAirports : authoritativeFilterState.toAirports,
+    };
+    const draftMatches = matchingFlightCount(results, draftFilterState, flightMatchContext);
+
+    const applySheet = () => {
+      if (mobileShortcutSheet === "sort") setSortMode(mobileDraftSort);
+      if (mobileShortcutSheet === "airlines") setSelectedAirlines(mobileDraftAirlines);
+      if (mobileShortcutSheet === "stops") setSelectedStops(mobileDraftStops);
+      if (mobileShortcutSheet === "airports") {
+        setSelectedFromAirports(mobileDraftFromAirports);
+        setSelectedToAirports(mobileDraftToAirports);
+      }
+      triggerFilterApplying();
+      handleUserFilterCommit();
+      closeMobileShortcutSheet();
+    };
+
+    const resetSheet = () => {
+      if (mobileShortcutSheet === "sort") setMobileDraftSort("best");
+      if (mobileShortcutSheet === "airlines") setMobileDraftAirlines([]);
+      if (mobileShortcutSheet === "stops") setMobileDraftStops([]);
+      if (mobileShortcutSheet === "airports") {
+        setMobileDraftFromAirports([]);
+        setMobileDraftToAirports([]);
+      }
+    };
+
+    const filteredAirlines = airlineOptions.filter((option) => !mobileAirlineSearch.trim() || option.label.toLowerCase().includes(mobileAirlineSearch.trim().toLowerCase()) || mobileDraftAirlines.includes(option.value));
+    const visibleAirlines = mobileAirlineSearch.trim() || mobileShowAllAirlines ? filteredAirlines : filteredAirlines.slice(0, 5);
+    const fromAirportOptions = mobileFromAirportOptions;
+    const toAirportOptions = mobileToAirportOptions;
+    const sheetTitle = mobileShortcutSheet === "sort" ? "Sort" : mobileShortcutSheet === "airlines" ? "Airlines" : mobileShortcutSheet === "stops" ? "Stops" : "Airports";
+
+    const renderSortChoice = (
+      label: string,
+      description: string,
+      selected: boolean,
+      onClick: () => void,
+    ) => (
+      <button
+        type="button"
+        aria-pressed={selected}
+        onClick={onClick}
+        className={cn(menuItemClass, "min-h-12 text-[13px] leading-[18px]")}
+      >
+        <span className="flex min-w-0 flex-col gap-1">
+          <span className="font-semibold">{label}</span>
+          <span className="text-xs text-slate-500">{description}</span>
+        </span>
+        {selected ? <Check className="h-4 w-4 text-[#004BB8]" aria-hidden="true" /> : null}
+      </button>
+    );
+
+    const renderFilterChoice = (
+      label: string,
+      count: number | undefined,
+      selected: boolean,
+      onClick: () => void,
+    ) => (
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={selected}
+        className={menuItemClass}
+        onClick={onClick}
+      >
+        <span className="flex min-w-0 items-center gap-[10px]">
+          <span
+            aria-hidden="true"
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-slate-300"
+          >
+            {selected ? <Check className="h-4 w-4 text-[#004BB8]" aria-hidden="true" /> : null}
+          </span>
+          <span className={cn("min-w-0 truncate", selected && "font-semibold text-[#07133B]")}>{label}</span>
+        </span>
+        {count !== undefined ? (
+          <span className="flex items-center gap-2 text-sm font-medium text-slate-500">
+            <span>{count}</span>
+          </span>
+        ) : null}
+      </button>
+    );
+
+    const sheet = mobileShortcutSheet && typeof document !== "undefined" ? createPortal(
+      <div
+        data-flight-quick-sheet-backdrop
+        className="fixed inset-0 z-[10020] flex items-end sm:hidden"
+        role="presentation"
+        onMouseDown={() => closeMobileShortcutSheet()}
+      >
+        <div
+          aria-hidden="true"
+          data-flight-quick-sheet-scrim
+          className="mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 bg-[rgba(8,18,35,0.52)]"
+        />
+        <section
+          data-flight-quick-sheet
+          ref={mobileShortcutSheetRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mobile-flight-quick-sheet-title"
+          className="max-h-[min(76dvh,620px)] mx-3 mb-3 w-[calc(100%-24px)] overflow-hidden rounded-[24px] bg-[#F2F4F8] shadow-none mobile-results-sheet-surface mobile-results-sheet-surface-smooth"
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          <header className="relative flex min-h-16 items-center justify-center bg-[#F2F4F8] px-16 py-3">
+            <h2
+              id="mobile-flight-quick-sheet-title"
+              className="text-base font-semibold text-slate-950"
+            >
+              {sheetTitle}
+            </h2>
+            <button
+              ref={mobileShortcutSheetCloseRef}
+              type="button"
+              aria-label={`Close ${sheetTitle.toLowerCase()} selector`}
+              onClick={() => closeMobileShortcutSheet()}
+              className="absolute right-3 inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </header>
+
+          <div
+            className={cn(
+              "max-h-[calc(min(76dvh,620px)-9rem)] overflow-y-auto overscroll-contain bg-[#F2F4F8] px-6",
+              mobileShortcutSheet === "sort" ? "space-y-1 px-10 py-6" : "space-y-2 py-4",
+            )}
+          >
+            {mobileShortcutSheet === "sort"
+              ? mobileSortOptions.map((option) => (
+                  <div key={option.value}>
+                    {renderSortChoice(
+                      option.label,
+                      option.description,
+                      mobileDraftSort === option.value,
+                      () => setMobileDraftSort(option.value),
+                    )}
+                  </div>
+                ))
+              : null}
+
+            {mobileShortcutSheet === "airlines" ? (
+              <div>
+                <label className="sr-only" htmlFor="mobile-flight-airline-search">
+                  Search airlines
+                </label>
+                <input
+                  id="mobile-flight-airline-search"
+                  type="search"
+                  value={mobileAirlineSearch}
+                  onChange={(event) => setMobileAirlineSearch(event.target.value)}
+                  placeholder="Search airlines"
+                  className="mb-2 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none placeholder:text-slate-500 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20"
+                />
+                <div className="space-y-0.5">
+                  {visibleAirlines.map((option) => (
+                    <div key={option.value}>
+                      {renderFilterChoice(
+                        option.label,
+                        matchingFlightCount(results, { ...draftFilterState, airlines: [option.value] }, flightMatchContext),
+                        mobileDraftAirlines.includes(option.value),
+                        () =>
+                          toggleDraft(
+                            option.value,
+                            mobileDraftAirlines,
+                            setMobileDraftAirlines,
+                          ),
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {!mobileAirlineSearch.trim() && airlineOptions.length > 5 ? (
+                  <button
+                    type="button"
+                    onClick={() => setMobileShowAllAirlines((current) => !current)}
+                    className="mt-2 text-xs font-semibold text-[#004BB8] transition-colors hover:text-[#021C2B]"
+                  >
+                    {mobileShowAllAirlines ? "Show less" : `Show more (${Math.max(0, airlineOptions.length - 5)})`}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+
+            {mobileShortcutSheet === "stops" ? (
+              <div className="space-y-0.5">
+                {stopOptions.map((option) => (
+                  <div key={option.value}>
+                    {renderFilterChoice(
+                      option.label,
+                      matchingFlightCount(results, { ...draftFilterState, stops: [option.value] }, flightMatchContext),
+                      mobileDraftStops.includes(option.value),
+                      () =>
+                        toggleDraft(
+                          option.value,
+                          mobileDraftStops,
+                          setMobileDraftStops,
+                        ),
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {mobileShortcutSheet === "airports" ? (
+              <div>
+                <h3 className="flex min-h-11 items-center text-lg font-semibold leading-6 text-slate-950">
+                  From
+                </h3>
+                <div className="space-y-0.5">
+                  {fromAirportOptions.map((option) => (
+                    <div key={`from-${option.value}`}>
+                      {renderFilterChoice(
+                        option.label,
+                        matchingFlightCount(results, { ...draftFilterState, fromAirports: [option.value] }, flightMatchContext),
+                        mobileDraftFromAirports.includes(option.value),
+                        () =>
+                          toggleDraft(
+                            option.value,
+                            mobileDraftFromAirports,
+                            setMobileDraftFromAirports,
+                          ),
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <h3 className="mt-3 flex min-h-11 items-center text-lg font-semibold leading-6 text-slate-950">
+                  To
+                </h3>
+                <div className="space-y-0.5">
+                  {toAirportOptions.map((option) => (
+                    <div key={`to-${option.value}`}>
+                      {renderFilterChoice(
+                        option.label,
+                        matchingFlightCount(results, { ...draftFilterState, toAirports: [option.value] }, flightMatchContext),
+                        mobileDraftToAirports.includes(option.value),
+                        () =>
+                          toggleDraft(
+                            option.value,
+                            mobileDraftToAirports,
+                            setMobileDraftToAirports,
+                          ),
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <footer
+            data-flight-quick-sheet-footer
+            className="flex items-center justify-between gap-3 bg-[#F2F4F8] px-6 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3"
+          >
+            <button
+              type="button"
+              onClick={resetSheet}
+              className="h-11 w-[32%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-sm font-semibold text-slate-700"
+            >
+              Reset
+            </button>
+            <button
+              type="button"
+              onClick={applySheet}
+              disabled={mobileShortcutSheet !== "sort" && draftMatches === 0}
+              aria-disabled={mobileShortcutSheet !== "sort" && draftMatches === 0}
+              className="h-11 w-[32%] shrink-0 rounded-lg bg-[#004BB8] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+            >
+              Apply
+            </button>
+          </footer>
+        </section>
+      </div>,
+      document.body,
+    ) : null;
 
     return (
       <>
         <div
-          className="w-full overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
-          onScroll={closeMobileShortcutMenus}
+          data-mobile-flight-shortcuts
+          className="scrollbar-hide flex w-full min-w-0 flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain px-3 [scroll-padding-inline:0.75rem] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
         >
-          <div className="flex w-max flex-nowrap items-center gap-2.5">
-            {renderFloatingFilterButton(shortcutButtonClass)}
-            {renderTrigger(
-              "sort",
-              activeSortOption.label,
-              mobileSortMenuOpen,
-              144,
-              mobileSortMenuRef,
-            )}
-            {renderTrigger(
-              "airlines",
-              "Airlines",
-              mobileAirlineMenuOpen,
-              224,
-              mobileAirlineMenuRef,
-            )}
-            {renderTrigger(
-              "stops",
-              "Stops",
-              mobileStopsMenuOpen,
-              160,
-              mobileStopsMenuRef,
-            )}
-            {renderTrigger(
-              "airports",
-              "Airports",
-              mobileAirportMenuOpen,
-              176,
-              mobileAirportMenuRef,
-            )}
-          </div>
+          {renderFloatingFilterButton(shortcutButtonClass)}
+          {renderTrigger("sort", activeSortOption.label)}
+          {renderTrigger("airlines", "Airlines", selectedAirlines.length)}
+          {renderTrigger("stops", "Stops", selectedStops.length)}
+          {renderTrigger("airports", "Airports", selectedFromAirports.length + selectedToAirports.length)}
         </div>
-        {renderMenu()}
+        {sheet}
       </>
     );
   }
@@ -6846,131 +6870,268 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         : t("openFilters");
 
     const handleClick = (event: ReactMouseEvent<HTMLButtonElement>) => {
-      openMobileFiltersDrawer(event.currentTarget);
+      openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event));
     };
 
     return (
       <button
         type="button"
         aria-label={label}
-        className={cn(
-          "focus-ring relative inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border border-slate-300/80 bg-transparent px-2 text-[13px] font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-200/35 hover:text-slate-950 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
-          className,
-        )}
+        className={className}
         onClick={handleClick}
       >
-        <SlidersHorizontal
-          className="h-4 w-4 text-[#004BB8]"
-          strokeWidth={2.2}
-          aria-hidden="true"
-        />
-        <span>Filter</span>
-        {activeFilterCount > 0 ? (
-          <span className="ms-0.5 inline-flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-semibold leading-none text-[#004BB8]">
-            {activeFilterCount}
-          </span>
-        ) : null}
+        <span
+          className={cn(
+            "inline-flex h-9 items-center gap-1 rounded-[9px] border px-2 text-[13px] font-semibold transition",
+            activeFilterCount > 0
+              ? "border-[#142033] bg-white text-[#142033]"
+              : "border-[#D8E1EC] bg-white text-[#142033] group-hover:bg-slate-50",
+          )}
+        >
+          <SlidersHorizontal className="h-4 w-4 shrink-0" strokeWidth={2.2} aria-hidden="true" />
+          <span>Filter</span>
+          {activeFilterCount > 0 ? (
+            <span className="rounded-full bg-[#F1F5F9] px-1.5 py-0.5 text-[10px] font-semibold text-[#142033]">
+              {activeFilterCount}
+            </span>
+          ) : null}
+        </span>
       </button>
     );
   }
 
-  function renderMobileCompactResultsHeader() {
-    const routeLabel = `${mobileOriginSummary} ⇄ ${mobileDestinationSummary}`;
-    const modifySearchLabel = `Modify flight search from ${mobileOriginSummary} to ${mobileDestinationSummary}`;
-
+  function renderMobileRouteSummaryCard() {
     return (
-      <header
-        className={cn(
-          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_10px_26px_-20px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-all duration-200 ease-out sm:hidden",
-          mobileCompactHeaderVisible && !mobileSearchOpen
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none -translate-y-2 opacity-0",
-        )}
-        aria-hidden={!mobileCompactHeaderVisible || mobileSearchOpen}
+      <button
+        type="button"
+        data-flight-mobile-summary-card
+        inert={mobileSearchOpen ? true : undefined}
+        aria-hidden={mobileSearchOpen ? true : undefined}
+        aria-label={`${t("editFlightSearch")}: ${mobileSearchSummaryLabel}`}
+        title={mobileSearchSummaryLabel}
+        aria-haspopup="dialog"
+        aria-expanded={mobileSearchOpen}
+        onClick={(event) => openMobileSearchDrawer(event.currentTarget, getOverlayActivationModality(event))}
+        className="group flex min-h-11 w-full min-w-0 touch-manipulation items-center gap-1.5 overflow-hidden rounded-xl bg-[#F5F7FB] py-1 pe-2 ps-2.5 text-start transition [-webkit-tap-highlight-color:transparent] hover:bg-[#EDF2FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
       >
-        <div className="mx-auto grid h-12 w-full max-w-3xl grid-cols-[44px_minmax(0,1fr)_82px] items-center gap-2">
-          <button
-            type="button"
-            aria-label="Back to flights"
-            onClick={() => router.push("/flights")}
-            className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-          >
-            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
-          </button>
-
-          <button
-            type="button"
-            aria-label={modifySearchLabel}
-            onClick={(event) => openMobileSearchDrawer(event.currentTarget)}
-            className="focus-ring flex min-w-0 flex-col items-center justify-center rounded-xl px-2 py-1 text-center transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-          >
-            <span
-              className="block max-w-full truncate text-[15px] font-extrabold leading-5 tracking-[-0.015em] text-slate-950"
-              dir="ltr"
-            >
-              {routeLabel}
-            </span>
-            <span className="mt-0.5 block text-[11px] font-semibold leading-4 text-slate-500">
-              Modify search
-            </span>
-          </button>
-
-          <button
-            type="button"
-            aria-label={
-              activeFilterCount > 0
-                ? `Open filters, ${activeFilterCount} active`
-                : "Open filters"
-            }
-            onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}
-            className="focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-[13px] font-bold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-          >
-            <SlidersHorizontal
-              className="h-4 w-4 shrink-0 text-[#004BB8]"
-              strokeWidth={2.2}
-              aria-hidden="true"
-            />
-            <span className="truncate">Filter</span>
-          </button>
-        </div>
-      </header>
+        <span className="flex min-w-0 flex-1 flex-col justify-center">
+          <span className="block truncate text-[14px] font-semibold leading-[18px] text-[#142033]">
+            {mobileRouteSummary}
+          </span>
+          <span className="mt-0.5 block truncate text-[11px] font-medium leading-[15px] text-[#536B92]">
+            {mobileTripTypeSummary} · {mobileDateSummary} ·{" "}
+            {mobileTravelerSummary} · {mobileCabinClassSummary}
+          </span>
+        </span>
+        <span aria-hidden="true" className="inline-flex h-7 w-6 shrink-0 items-center justify-center text-[#142033]">
+          <SquarePen size={15} strokeWidth={2} />
+        </span>
+      </button>
     );
   }
 
-  function renderMobileControlsRow() {
+  function renderMobileEditSearchDrawer() {
     return (
-      <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4">
+      <FlightEditSearchDrawer
+        resultsMode
+        open={mobileSearchOpen}
+        presentation="bottom-sheet"
+        initialValue={{ tripType: tripTypeInput === "multi-city" ? "multi-city" : tripTypeInput === "one-way" ? "one-way" : "round-trip", legs: tripTypeInput === "multi-city" ? multiCityLegs : [{ origin: originCode || originInput.trim(), destination: destinationCode || destinationInput.trim(), departureDate: departureDateInput }], departureDate: departureDateInput, returnDate: returnDateInput || undefined, adults: adultCount, children: childCount, infants: infantCount, cabinClass: cabinClassInput }}
+        onClose={() => closeMobileSearchDrawer()}
+        onSearch={(value: FlightEditSearchValue) => {
+          const projection = projectSearchLegs(value.tripType, value.legs);
+          const nextParams = new URLSearchParams({ tripType: value.tripType, origin: projection.origin, destination: projection.destination, departureDate: projection.departureDate, adults: String(value.adults), children: String(value.children), infants: String(value.infants), travelers: String(value.adults + value.children + value.infants), cabinClass: value.cabinClass });
+          if (value.tripType === "round-trip" && value.returnDate) nextParams.set("returnDate", value.returnDate);
+          if (value.tripType === "multi-city") { nextParams.set("currency", selectedCurrency); appendFlightLegParams(nextParams, value.legs); }
+          closeMobileSearchDrawer({ restoreFocus: false });
+          router.push(`/flights/results?${nextParams.toString()}`, { scroll: true });
+        }}
+      />
+    );
+  }
+
+  function renderMobileFullFiltersSheet() {
+    if (!filtersOpen) return null;
+    const outboundTimes = {
+      takeoff:
+        timeBounds.takeoff &&
+        maxTakeoffMinutes !== null &&
+        maxTakeoffMinutes < timeBounds.takeoff.max
+          ? maxTakeoffMinutes
+          : null,
+      landing:
+        timeBounds.landing &&
+        maxLandingMinutes !== null &&
+        maxLandingMinutes < timeBounds.landing.max
+          ? maxLandingMinutes
+          : null,
+    };
+
+    return (
+      <>
         <button
           type="button"
-          onClick={(event) => openMobileSearchDrawer(event.currentTarget)}
-          className="group relative z-10 flex h-[4.25rem] min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-4 py-0 text-start shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] transition hover:border-slate-300 hover:bg-white hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.62)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          aria-label={t("closeFilters")}
+          onClick={() => closeMobileFiltersDrawer()}
+          className="fixed inset-0 z-[9999] bg-slate-950/35 sm:hidden"
+        />
+        <aside
+          ref={mobileFiltersDialogRef}
+          id="flight-mobile-filters-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="flight-mobile-filters-title"
+          className="fixed inset-x-0 bottom-0 z-[10000] flex h-[95dvh] w-full flex-col overflow-clip rounded-t-[20px] bg-[#F2F4F8] shadow-2xl sm:hidden"
         >
-          <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
-            <span className="block truncate text-[16px] font-extrabold leading-5 tracking-[-0.015em] text-slate-950">
-              {mobileRouteSummary}
-            </span>
-            <span className="mt-1.5 block truncate text-[12.5px] font-semibold leading-4 text-slate-500">
-              {mobileTripTypeSummary} · {mobileDateSummary} ·{" "}
-              {mobileTravelerSummary}
-            </span>
-          </span>
-          <span
-            aria-hidden="true"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200/90 bg-slate-50 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition group-hover:border-slate-300 group-hover:bg-slate-100"
+          <header className="relative flex h-16 shrink-0 items-center justify-start bg-[#F2F4F8] px-5">
+            <div>
+              <h2
+                id="flight-mobile-filters-title"
+                className="text-base font-semibold text-slate-950"
+              >
+                Filters
+              </h2>
+              {activeFilterCount > 0 ? (
+                <p className="text-xs font-medium text-slate-500">
+                  {activeFilterCount} applied
+                </p>
+              ) : null}
+            </div>
+            <button
+              ref={mobileFiltersCloseButtonRef}
+              type="button"
+              className="focus-ring absolute right-3 flex h-11 w-11 items-center justify-center rounded-lg text-slate-700"
+              aria-label={t("closeFilters")}
+              onClick={() => closeMobileFiltersDrawer()}
+            >
+              <X size={22} aria-hidden="true" />
+            </button>
+          </header>
+
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#F2F4F8] px-6 py-4">
+            <MobileFlightFiltersSheet
+              results={results}
+              priceBounds={priceBounds}
+              maxPrice={maxPrice}
+              formatPrice={(value) =>
+                priceLabelCurrency
+                  ? formatResultPriceLabel(value, selectedCurrency)
+                  : "—"
+              }
+              onMaxPrice={(value) => {
+                triggerFilterApplying();
+                setMaxPrice(value);
+              }}
+              durationBounds={durationBounds}
+              maxDurationMinutes={maxDurationMinutes}
+              onMaxDuration={(value) => {
+                triggerFilterApplying();
+                setMaxDurationMinutes(value);
+              }}
+              stopOptions={stopOptions}
+              selectedStops={selectedStops}
+              onToggleStop={(value) => {
+                triggerFilterApplying();
+                toggleFilterValue(value, setSelectedStops);
+              }}
+              airlineOptions={mobileAirlineOptions}
+              selectedAirlines={selectedAirlines}
+              onToggleAirline={(value) => {
+                triggerFilterApplying();
+                toggleFilterValue(value, setSelectedAirlines);
+              }}
+              fromAirportOptions={mobileFromAirportOptions}
+              toAirportOptions={mobileToAirportOptions}
+              selectedFromAirports={selectedFromAirports}
+              selectedToAirports={selectedToAirports}
+              onToggleFromAirport={(value) => {
+                triggerFilterApplying();
+                toggleFilterValue(value, setSelectedFromAirports);
+              }}
+              onToggleToAirport={(value) => {
+                triggerFilterApplying();
+                toggleFilterValue(value, setSelectedToAirports);
+              }}
+              baggageSupported={results.some(hasStructuredBaggage)}
+              refundableSupported={results.some(hasStructuredFlexibility)}
+              baggageIncludedOnly={baggageIncludedOnly}
+              flexibleOnly={flexibleOnly}
+              onBaggage={() => {
+                triggerFilterApplying();
+                setBaggageIncludedOnly(!baggageIncludedOnly);
+              }}
+              onFlexible={() => {
+                triggerFilterApplying();
+                setFlexibleOnly(!flexibleOnly);
+              }}
+              journeyTimeMaximums={{
+                ...mobileJourneyTimeMaximums,
+                outbound: outboundTimes,
+              }}
+              onJourneyTimeChange={(key, mode, value) => {
+                triggerFilterApplying();
+                if (key === "outbound") {
+                  if (mode === "takeoff") {
+                    setMaxTakeoffMinutes(value ?? timeBounds.takeoff?.max ?? null);
+                  } else {
+                    setMaxLandingMinutes(value ?? timeBounds.landing?.max ?? null);
+                  }
+                  return;
+                }
+                setMobileJourneyTimeMaximums((current) => ({
+                  ...current,
+                  [key]: {
+                    takeoff: current[key]?.takeoff ?? null,
+                    landing: current[key]?.landing ?? null,
+                    [mode]: value,
+                  },
+                }));
+              }}
+            />
+          </div>
+
+          <footer
+            data-flight-full-filters-footer
+            className="flex shrink-0 items-center gap-3 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.08)]"
           >
-            <SquarePen size={15} strokeWidth={2.2} />
-          </span>
-        </button>
-      </div>
+            {activeFilterCount > 0 ? (
+              <button
+                type="button"
+                aria-label="Reset flight filters"
+                onClick={clearFlightFilters}
+                className="focus-ring h-11 w-[30%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-5 text-sm font-semibold text-slate-700"
+              >
+                Reset
+              </button>
+            ) : null}
+            <button
+              type="button"
+              disabled={sortedResults.length === 0}
+              onClick={() => {
+                shouldScrollToTopAfterFilterApplyRef.current = true;
+                triggerFilterApplying();
+                closeMobileFiltersDrawer();
+              }}
+              className="h-11 min-w-0 flex-1 rounded-lg bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
+            >
+              {sortedResults.length === 0
+                ? "No matching flights"
+                : activeFilterCount > 0
+                  ? `View ${sortedResults.length} matching ${sortedResults.length === 1 ? "flight" : "flights"}`
+                  : `View all ${sortedResults.length} flights`}
+            </button>
+          </footer>
+        </aside>
+      </>
     );
   }
 
   function renderDesktopSortControl() {
     return (
       <div ref={desktopSortRef} className="relative hidden items-center gap-2 lg:flex">
-        <span className="text-[16px] font-medium text-[#142033]">Sort by:</span>
-        <button ref={desktopSortButtonRef} type="button" aria-label="Sort flight results" aria-haspopup="menu" aria-expanded={desktopSortOpen} className="inline-flex h-9 items-center justify-center gap-3 rounded-md bg-transparent px-2 text-[16px] font-semibold text-[#142033] transition hover:bg-[#004BB8]/5 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25" onClick={() => setDesktopSortOpen((open) => !open)}>
-          {selectedSortLabel}<ChevronDown size={16} aria-hidden="true" />
+        <span className="text-[13px] font-medium leading-5 text-[#64748B]">Sort by:</span>
+        <button ref={desktopSortButtonRef} type="button" aria-label="Sort flight results" aria-haspopup="menu" aria-expanded={desktopSortOpen} className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-transparent px-2 text-[14px] font-semibold leading-5 text-[#142033] transition-colors hover:bg-slate-100/70 hover:text-[#142033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25" onClick={() => setDesktopSortOpen((open) => !open)}>
+          {selectedSortLabel}<ChevronDown size={14} aria-hidden="true" />
         </button>
         <div role="menu" className={cn("absolute right-0 top-11 z-30 w-44 origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_14px_32px_-18px_rgba(15,23,42,0.45)] transition duration-150", desktopSortOpen ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none -translate-y-1 scale-95 opacity-0")}>
           {sortOptions.map((option) => (
@@ -6987,139 +7148,104 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     return <Button type="button" className="mt-4 rounded-xl" onClick={retryMainInventorySearch}>{t("deals.guided.flightResults.retry")}</Button>;
   }
 
+  const mobileResultsFiltersContent = (
+    <section
+      data-flight-mobile-results-shortcuts
+      inert={mobileSearchOpen ? true : undefined}
+      aria-hidden={mobileSearchOpen ? true : undefined}
+      className={cn(
+        "w-full py-2 sm:hidden",
+        mobileSearchOpen && "pointer-events-none",
+      )}
+      aria-label="Flight result filters"
+    >
+      {renderMobileSortResultsRow()}
+    </section>
+  );
+
+  const standaloneResultsHeader =
+    guidedMode || externalResultsHeader ? null : (
+      <AppHeader
+        flushDesktopBottom
+        flushMobileBottom
+        hideDesktopTravelNav
+        hideMobileCategoryTabs
+        hideMobileResultsNavbarDivider
+        hotelDesktopBoundary
+        flightResultsDesktopSticky
+        mobileResultsSearch={renderMobileRouteSummaryCard()}
+        mobileResultsFilters={mobileResultsFiltersContent}
+        mobileResultsTrailingActions
+      />
+    );
+
+  const readyExternalMobileHeader =
+    !guidedMode && externalResultsHeader && !resultsUiPreparing ? (
+      <>
+        {mobileNavSummaryTarget
+          ? createPortal(renderMobileRouteSummaryCard(), mobileNavSummaryTarget)
+          : null}
+        {mobileNavFiltersTarget
+          ? createPortal(mobileResultsFiltersContent, mobileNavFiltersTarget)
+          : null}
+      </>
+    ) : null;
+
+  const readyDesktopNavbarSearch =
+    !guidedMode && !resultsUiPreparing && desktopNavSearchTarget
+      ? createPortal(renderDesktopHeaderSearchBar(), desktopNavSearchTarget)
+      : null;
+
   if (resultsUiPreparing) {
     if (guidedMode) return <section aria-labelledby="deals-guided-flight-results-heading" className="mt-6" data-flight-results-experience="deals-guided"><h2 id="deals-guided-flight-results-heading" tabIndex={-1} className="text-xl font-extrabold text-slate-950">{t("deals.guided.flightResults.loadingTitle")}</h2><div ref={loadingFocusRef} role="status" tabIndex={-1} className="mt-4 space-y-3"><FlightCardSkeleton /><FlightCardSkeleton /></div></section>;
     return (
-      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
-        <BrandedLoading
-          variant="fullscreen"
-          visual="logoPulse"
-          showProgress={false}
-          className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
-          contentClassName="max-w-md text-center"
-          searchType="flight"
-          messages={[
-            t("flightResults.loading.checkingAirlinesAndFares"),
-            t("flightResults.loading.comparingRoutesAndProviders"),
-            t("flightResults.loading.findingBestAvailableOptions"),
-            t("flightResults.loading.preparingResults"),
-          ]}
-        />
-      </main>
+      <>
+      {standaloneResultsHeader}
+      {renderMobileEditSearchDrawer()}
+      {renderMobileFullFiltersSheet()}
+      <SearchResultsLoadingTransition
+        searchType="flight"
+        active={resultsUiPreparing}
+        mobileHeaderProvided={Boolean(standaloneResultsHeader)}
+        searchKey={currentFlightSearchKey}
+        desktopSearch={renderDesktopHeaderSearchBar()}
+        mobileSearch={renderMobileRouteSummaryCard()}
+        mobileFilters={mobileResultsFiltersContent}
+        messages={[
+          t("flightResults.loading.checkingAirlinesAndFares"),
+          t("flightResults.loading.comparingRoutesAndProviders"),
+          t("flightResults.loading.findingBestAvailableOptions"),
+          t("flightResults.loading.preparingResults"),
+        ]}
+        summary={body ? [body.origin, body.destination, body.returnDate ? body.departureDate + " — " + body.returnDate : body.departureDate, body.travelers + " travelers"] : undefined}
+      />
+      </>
     );
   }
 
   if (guidedMode) return (
     <section aria-labelledby="deals-guided-flight-results-heading" className="mt-0 lg:relative lg:left-1/2 lg:w-[min(1180px,calc(100vw-32px))] lg:-translate-x-1/2 xl:w-[min(1240px,calc(100vw-32px))]" data-flight-results-experience="deals-guided">
       <h2 id="deals-guided-flight-results-heading" ref={resultsHeadingRef} tabIndex={-1} className="sr-only">{formatResultsFound(sortedResults.length, t)}</h2>
-      <div ref={resultsGridRef} className="grid gap-x-6 gap-y-4 pb-5 pt-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-x-6 xl:grid-cols-[304px_minmax(0,1fr)]">
-        <aside ref={desktopFilterSidebarRef} className="relative hidden self-stretch lg:block"><DesktopFlightFilters presentationMode="deals-guided" activeFilterCount={activeFilterCount} maxPrice={maxPrice} setMaxPrice={setMaxPrice} priceBounds={priceBounds} priceLabelCurrency={priceLabelCurrency} selectedCurrency={selectedCurrency} timeFilterMode={timeFilterMode} setTimeFilterMode={setTimeFilterMode} timeBounds={timeBounds} maxTakeoffMinutes={maxTakeoffMinutes} setMaxTakeoffMinutes={setMaxTakeoffMinutes} maxLandingMinutes={maxLandingMinutes} setMaxLandingMinutes={setMaxLandingMinutes} durationBounds={durationBounds} maxDurationMinutes={maxDurationMinutes} setMaxDurationMinutes={setMaxDurationMinutes} stopOptions={stopOptions} selectedStops={selectedStops} setSelectedStops={setSelectedStops} airlineOptions={airlineOptions} selectedAirlines={selectedAirlines} setSelectedAirlines={setSelectedAirlines} airportOptions={airportOptions} selectedAirports={selectedAirports} setSelectedAirports={setSelectedAirports} flightQualityOptions={flightQualityOptions} renderFlightQualityFilter={renderFlightQualityFilter} selectedFlightQuality={selectedFlightQuality} setSelectedFlightQuality={setSelectedFlightQuality} baggageIncludedOnly={baggageIncludedOnly} setBaggageIncludedOnly={setBaggageIncludedOnly} flexibleOnly={flexibleOnly} setFlexibleOnly={setFlexibleOnly} onFilterChange={triggerFilterApplying} onFilterCommit={handleUserFilterCommit} onClear={clearFlightFilters} originCode={originCode} destinationCode={destinationCode} /></aside>
+      <div className="grid gap-x-6 gap-y-4 pb-5 pt-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-x-6 xl:grid-cols-[304px_minmax(0,1fr)]">
+        <aside className="relative hidden self-stretch lg:block"><DesktopFlightFilters presentationMode="deals-guided" activeFilterCount={activeFilterCount} maxPrice={maxPrice} setMaxPrice={setMaxPrice} priceBounds={priceBounds} priceLabelCurrency={priceLabelCurrency} selectedCurrency={selectedCurrency} timeFilterMode={timeFilterMode} setTimeFilterMode={setTimeFilterMode} timeBounds={timeBounds} maxTakeoffMinutes={maxTakeoffMinutes} setMaxTakeoffMinutes={setMaxTakeoffMinutes} maxLandingMinutes={maxLandingMinutes} setMaxLandingMinutes={setMaxLandingMinutes} durationBounds={durationBounds} maxDurationMinutes={maxDurationMinutes} setMaxDurationMinutes={setMaxDurationMinutes} stopOptions={stopOptions} selectedStops={selectedStops} setSelectedStops={setSelectedStops} airlineOptions={airlineOptions} selectedAirlines={selectedAirlines} setSelectedAirlines={setSelectedAirlines} airportOptions={airportOptions} selectedAirports={selectedAirports} setSelectedAirports={setSelectedAirports} flightQualityOptions={flightQualityOptions} renderFlightQualityFilter={renderFlightQualityFilter} selectedFlightQuality={selectedFlightQuality} setSelectedFlightQuality={setSelectedFlightQuality} baggageIncludedOnly={baggageIncludedOnly} setBaggageIncludedOnly={setBaggageIncludedOnly} flexibleOnly={flexibleOnly} setFlexibleOnly={setFlexibleOnly} onFilterChange={triggerFilterApplying} onFilterCommit={handleUserFilterCommit} onClear={clearFlightFilters} originCode={originCode} destinationCode={destinationCode} /></aside>
         <section className="min-w-0 space-y-4">
-          <div className="flex w-full flex-col gap-3 py-1"><div className="flex items-center justify-between gap-4"><p className="text-[16px] font-semibold text-[#142033]">{formatResultsFound(sortedResults.length, t)}</p>{renderDesktopSortControl()}<Button variant="secondary" className="h-10 rounded-xl border-slate-300 text-sm font-bold lg:hidden" onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}>{activeFilterCount > 0 ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount)) : t("filters")}</Button></div><div className="lg:hidden">{renderMobileSortResultsRow()}</div></div>
-          {error ? <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger" role="alert"><h2 ref={errorHeadingRef} tabIndex={-1} className="text-lg font-extrabold">{t("deals.guided.flightResults.errorTitle")}</h2><p className="mt-2">{error}</p><p className="mt-2">{t("deals.guided.flightResults.errorBody")}</p>{renderGuidedRetryButton()}</div> : filterApplying ? <div className="space-y-3"><div role="status" className="rounded-xl border border-[#004BB8]/10 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">{t("updatingResults")}</div><FlightCardSkeleton /><FlightCardSkeleton /></div> : sortedResults.length ? sortedResults.map((flight, index) => <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={buildDetailsHref ? buildDetailsHref(flight) : undefined} actionLabel={actionLabel} actionAriaLabel={actionAriaLabel?.(flight)} onAction={onSelectFlight} showProviderHandoffCopy={false} />) : <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"><h2 ref={emptyHeadingRef} tabIndex={-1} className="text-lg font-extrabold text-slate-950">{t("deals.guided.flightResults.emptyTitle")}</h2><p className="mt-2">{t("deals.guided.flightResults.emptyBody")}</p>{renderGuidedRetryButton()}</div>}
+          <div className="flex w-full flex-col gap-3 py-1"><div className="flex items-center justify-between gap-4"><p className="text-[16px] font-semibold text-[#142033]">{formatResultsFound(sortedResults.length, t)}</p>{renderDesktopSortControl()}<Button variant="secondary" className="h-10 rounded-xl border-slate-300 text-sm font-bold lg:hidden" onClick={(event) => openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))}>{activeFilterCount > 0 ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount)) : t("filters")}</Button></div><div className="lg:hidden">{renderMobileSortResultsRow()}</div></div>
+          {error ? <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger" role="alert"><h2 ref={errorHeadingRef} tabIndex={-1} className="text-lg font-extrabold">{t("deals.guided.flightResults.errorTitle")}</h2><p className="mt-2">{error}</p><p className="mt-2">{t("deals.guided.flightResults.errorBody")}</p>{renderGuidedRetryButton()}</div> : filterApplying ? <div className="space-y-3"><div role="status" className="rounded-xl border border-[#004BB8]/10 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">{t("updatingResults")}</div><FlightCardSkeleton /><FlightCardSkeleton /></div> : sortedResults.length ? <><div className="space-y-4">{sortedResults.map((flight, index) => <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={buildDetailsHref ? buildDetailsHref(flight) : undefined} actionLabel={actionLabel} actionAriaLabel={actionAriaLabel?.(flight)} onAction={onSelectFlight} searchRequestId={visibleJourneyRequestId} />)}</div></> : <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"><h2 ref={emptyHeadingRef} tabIndex={-1} className="text-lg font-extrabold text-slate-950">{t("deals.guided.flightResults.emptyTitle")}</h2><p className="mt-2">{t("deals.guided.flightResults.emptyBody")}</p>{renderGuidedRetryButton()}</div>}
         </section>
       </div>
-      {filtersOpen ? (
-        <aside ref={mobileFiltersDialogRef} id="flight-mobile-filters-dialog" role="dialog" aria-modal="true" aria-labelledby="flight-mobile-filters-title" className="fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden overscroll-contain bg-white transition-transform duration-200 ease-out lg:hidden translate-y-0"><div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)]"><div className="flex items-center justify-between gap-3"><h2 id="flight-mobile-filters-title" className="text-lg font-bold leading-6 text-slate-950">{t("filters")}</h2><button ref={mobileFiltersCloseButtonRef} type="button" className="focus-ring inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-0 font-semibold text-navy transition hover:bg-surface-muted" aria-label={t("closeFilters")} onClick={() => closeMobileFiltersDrawer()}><X size={20} /></button></div></div><div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4"><Filters layout="mobile" activeFilterCount={activeFilterCount} maxPrice={maxPrice} setMaxPrice={setMaxPrice} priceBounds={priceBounds} priceLabelCurrency={priceLabelCurrency} selectedCurrency={selectedCurrency} timeFilterMode={timeFilterMode} setTimeFilterMode={setTimeFilterMode} timeBounds={timeBounds} maxTakeoffMinutes={maxTakeoffMinutes} setMaxTakeoffMinutes={setMaxTakeoffMinutes} maxLandingMinutes={maxLandingMinutes} setMaxLandingMinutes={setMaxLandingMinutes} durationBounds={durationBounds} maxDurationMinutes={maxDurationMinutes} setMaxDurationMinutes={setMaxDurationMinutes} stopOptions={stopOptions} selectedStops={selectedStops} setSelectedStops={setSelectedStops} airlineOptions={airlineOptions} selectedAirlines={selectedAirlines} setSelectedAirlines={setSelectedAirlines} airportOptions={airportOptions} selectedAirports={selectedAirports} setSelectedAirports={setSelectedAirports} flightQualityOptions={flightQualityOptions} renderFlightQualityFilter={renderFlightQualityFilter} selectedFlightQuality={selectedFlightQuality} setSelectedFlightQuality={setSelectedFlightQuality} baggageIncludedOnly={baggageIncludedOnly} setBaggageIncludedOnly={setBaggageIncludedOnly} flexibleOnly={flexibleOnly} setFlexibleOnly={setFlexibleOnly} onFilterChange={triggerFilterApplying} onFilterCommit={handleUserFilterCommit} onClear={clearFlightFilters} /></div><div className="flex shrink-0 items-center justify-between gap-4 border-t border-slate-200 bg-white px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"><Button type="button" variant="ghost" disabled={activeFilterCount === 0} onClick={clearFlightFilters}>{t("clearAll")}</Button><Button type="button" onClick={() => { shouldScrollToTopAfterFilterApplyRef.current = true; triggerFilterApplying(); closeMobileFiltersDrawer(); }}>{t("done")}</Button></div></aside>
-      ) : null}
+      {renderMobileFullFiltersSheet()}
     </section>
   );
 
   return (
-    <main className="flex-1 bg-[#F3F6FA] pb-8">
-      {renderMobileCompactResultsHeader()}
-      <section
-        className={cn(
-          "relative z-40 bg-white pb-0 pt-0 sm:hidden",
-          mobileSearchOpen && "hidden",
-        )}
-        aria-label="Flight search controls"
-      >
-        <div className="relative translate-y-1/2">
-          <div
-            className="pointer-events-none absolute inset-x-0 top-1/2 z-0 h-px -translate-y-1/2 bg-slate-300 shadow-[0_1px_0_rgba(100,116,139,0.18)]"
-            aria-hidden="true"
-          />
-          {renderMobileControlsRow()}
-        </div>
-        <div
-          ref={mobileSearchSummarySentinelRef}
-          className="pointer-events-none h-px w-full"
-          aria-hidden="true"
-        />
-      </section>
+    <>
+    {standaloneResultsHeader}
+    {readyExternalMobileHeader}
+    {readyDesktopNavbarSearch}
+    <FlightResultsScrollIndicator />
+    <main data-flight-results-main className="max-sm:overflow-x-clip bg-[#F5F7FB] pb-0 sm:flex-1 sm:bg-[#F3F6FA] sm:pb-8 lg:bg-white">
+      {renderMobileEditSearchDrawer()}
 
-      {!mobileSearchOpen ? (
-        <section
-          className="relative z-30 px-4 pb-0 pt-12 sm:hidden"
-          aria-label={t("filters")}
-        >
-          {renderMobileSortResultsRow()}
-        </section>
-      ) : null}
-
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="flight-mobile-search-title"
-        className={cn(
-          "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden",
-          mobileSearchOpen ? "block" : "hidden",
-        )}
-      >
-        {mobileSearchOpen ? renderCompactSearchForm("mobile") : null}
-      </div>
-
-      {mobileSearchOpen ? renderCompactSearchPopovers("mobile") : null}
-
-      {mobileSearchOpen ? (
-        <>
-          <MobileAirportPicker
-            open={activeMobileAirportPicker === "origin"}
-            field="origin"
-            title={t("chooseOrigin")}
-            inputId="results-mobile-origin-picker-search"
-            value={originInput}
-            selectedCode={originCode}
-            launcherRef={mobileOriginLauncherRef}
-            labels={airportPickerLabels}
-            locale={locale}
-            onCommit={(option) => {
-              setOriginInput(option?.code ?? "");
-              setOriginCode(option?.code ?? "");
-              setOriginSuggestions([]);
-              setOriginSuggestionsLoading(false);
-            }}
-            onClose={closeMobileAirportPicker}
-          />
-          <MobileAirportPicker
-            open={activeMobileAirportPicker === "destination"}
-            field="destination"
-            title={t("chooseDestination")}
-            inputId="results-mobile-destination-picker-search"
-            value={destinationInput}
-            selectedCode={destinationCode}
-            launcherRef={mobileDestinationLauncherRef}
-            labels={airportPickerLabels}
-            locale={locale}
-            onCommit={(option) => {
-              setDestinationInput(option?.code ?? "");
-              setDestinationCode(option?.code ?? "");
-              setDestinationSuggestions([]);
-              setDestinationSuggestionsLoading(false);
-
-              const missingDatePicker = option ? getMissingMobileDatePicker() : null;
-              if (missingDatePicker) {
-                rememberMobileSearchScrollPosition();
-                pendingMobileDatePickerRef.current = missingDatePicker;
-              }
-            }}
-            onClose={closeMobileAirportPicker}
-          />
-        </>
-      ) : null}
-
-      {renderDesktopMinimizedSearchBar()}
       {renderStickySearchPopoutOverlay()}
 
       <div
@@ -7129,10 +7255,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       />
       <section
         className={cn(
-          "relative z-40 hidden border-b border-transparent transition-[padding,background-color] duration-200 sm:block",
+          "relative z-40 hidden border-b border-transparent transition-[padding,background-color] duration-200 sm:block lg:hidden",
           isSearchCollapsed
             ? "border-transparent bg-white/95 py-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur"
-            : "border-transparent bg-white pb-0 pt-7",
+            : "border-transparent bg-white pb-5 pt-7",
         )}
       >
         <div className="page-shell">
@@ -7149,406 +7275,203 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         </div>
       </section>
 
-      <nav
-        aria-label="Breadcrumb"
-        className="page-shell hidden pt-12 sm:block lg:pt-14"
-      >
-        <ol className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
-          <li>
-            <Link
-              href="/"
-              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
-            >
-              Home
-            </Link>
-          </li>
-          <li className="text-slate-300" aria-hidden="true">
-            &gt;
-          </li>
-          <li>
-            <Link
-              href="/flights"
-              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
-            >
-              Flights
-            </Link>
-          </li>
-          <li className="text-slate-300" aria-hidden="true">
-            &gt;
-          </li>
-          <li className="text-slate-700" aria-current="page">
-            Flight results
-          </li>
-        </ol>
-      </nav>
-
       <div
-        ref={resultsGridRef}
-        className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-5 pt-3 sm:pt-5 lg:gap-x-9 lg:pt-6"
+        className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-0 pt-0 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-4"
       >
-        <aside
-          ref={desktopFilterSidebarRef}
-          className="relative hidden self-stretch lg:block"
-        >
-          <div>
-            <DesktopFlightFilters
-              activeFilterCount={activeFilterCount}
-              maxPrice={maxPrice}
-              setMaxPrice={setMaxPrice}
-              priceBounds={priceBounds}
-              priceLabelCurrency={priceLabelCurrency}
-              selectedCurrency={selectedCurrency}
-              timeFilterMode={timeFilterMode}
-              setTimeFilterMode={setTimeFilterMode}
-              timeBounds={timeBounds}
-              maxTakeoffMinutes={maxTakeoffMinutes}
-              setMaxTakeoffMinutes={setMaxTakeoffMinutes}
-              maxLandingMinutes={maxLandingMinutes}
-              setMaxLandingMinutes={setMaxLandingMinutes}
-              durationBounds={durationBounds}
-              maxDurationMinutes={maxDurationMinutes}
-              setMaxDurationMinutes={setMaxDurationMinutes}
-              stopOptions={stopOptions}
-              selectedStops={selectedStops}
-              setSelectedStops={setSelectedStops}
-              airlineOptions={airlineOptions}
-              selectedAirlines={selectedAirlines}
-              setSelectedAirlines={setSelectedAirlines}
-              airportOptions={airportOptions}
-              selectedAirports={selectedAirports}
-              setSelectedAirports={setSelectedAirports}
-              flightQualityOptions={flightQualityOptions}
-              renderFlightQualityFilter={renderFlightQualityFilter}
-              selectedFlightQuality={selectedFlightQuality}
-              setSelectedFlightQuality={setSelectedFlightQuality}
-              baggageIncludedOnly={baggageIncludedOnly}
-              setBaggageIncludedOnly={setBaggageIncludedOnly}
-              flexibleOnly={flexibleOnly}
-              setFlexibleOnly={setFlexibleOnly}
-              onFilterChange={triggerFilterApplying}
-              onFilterCommit={handleUserFilterCommit}
-              onClear={clearFlightFilters}
-              originCode={originCode}
-              destinationCode={destinationCode}
-            />
-            <div
-              ref={desktopFilterSentinelRef}
-              className="h-px w-full"
-              aria-hidden="true"
-            />
-            {showDesktopFilterShortcut &&
-            desktopCompactFilterFrame &&
-            desktopCompactFilterPlacement !== "hidden" ? (
+        <aside className="relative hidden self-stretch lg:block">
+          <div className="space-y-3">
+            {mobileFlightPriceAlertQuery ? (
               <div
-                ref={desktopCompactFilterRef}
-                className={cn(
-                  "z-30 overflow-visible",
-                  desktopCompactFilterPlacement === "fixed" && "fixed",
-                  desktopCompactFilterPlacement === "docked" &&
-                    "absolute inset-x-0 bottom-0",
-                )}
-                style={
-                  desktopCompactFilterPlacement === "fixed"
-                    ? {
-                        top: desktopCompactFilterTopOffset,
-                        left: desktopCompactFilterFrame.left,
-                        width: desktopCompactFilterFrame.width,
-                        height: "auto",
-                        overflow: "visible",
-                      }
-                    : {
-                        width: "100%",
-                        height: "auto",
-                        overflow: "visible",
-                      }
-                }
-              >
-                <Filters
-                  layout="compact"
-                  activeFilterCount={activeFilterCount}
-                  maxPrice={maxPrice}
-                  setMaxPrice={setMaxPrice}
-                  priceBounds={priceBounds}
-                  priceLabelCurrency={priceLabelCurrency}
-                  selectedCurrency={selectedCurrency}
-                  timeFilterMode={timeFilterMode}
-                  setTimeFilterMode={setTimeFilterMode}
-                  timeBounds={timeBounds}
-                  maxTakeoffMinutes={maxTakeoffMinutes}
-                  setMaxTakeoffMinutes={setMaxTakeoffMinutes}
-                  maxLandingMinutes={maxLandingMinutes}
-                  setMaxLandingMinutes={setMaxLandingMinutes}
-                  durationBounds={durationBounds}
-                  maxDurationMinutes={maxDurationMinutes}
-                  setMaxDurationMinutes={setMaxDurationMinutes}
-                  stopOptions={stopOptions}
-                  selectedStops={selectedStops}
-                  setSelectedStops={setSelectedStops}
-                  airlineOptions={airlineOptions}
-                  selectedAirlines={selectedAirlines}
-                  setSelectedAirlines={setSelectedAirlines}
-                  airportOptions={airportOptions}
-                  selectedAirports={selectedAirports}
-                  setSelectedAirports={setSelectedAirports}
-                  flightQualityOptions={flightQualityOptions}
-                  renderFlightQualityFilter={renderFlightQualityFilter}
-                  selectedFlightQuality={selectedFlightQuality}
-                  setSelectedFlightQuality={setSelectedFlightQuality}
-                  baggageIncludedOnly={baggageIncludedOnly}
-                  setBaggageIncludedOnly={setBaggageIncludedOnly}
-                  flexibleOnly={flexibleOnly}
-                  setFlexibleOnly={setFlexibleOnly}
-                  onFilterChange={triggerFilterApplying}
-                  onFilterCommit={handleUserFilterCommit}
-                  onClear={clearFlightFilters}
-                />
-              </div>
+                ref={setDesktopFlightPriceAlertTarget}
+                data-flight-price-alert-sidebar-slot
+                className="min-h-[40px]"
+              />
             ) : null}
+            <div>{renderDesktopFlightFilters()}</div>
           </div>
+          <StickyFlightPopularFilters
+            t={t}
+            stopOptions={stopOptions}
+            airlineOptions={airlineOptions}
+            airportOptions={airportOptions}
+            flightQualityOptions={flightQualityOptions}
+            renderFlightQualityFilter={renderFlightQualityFilter}
+            selectedStops={selectedStops}
+            selectedAirlines={selectedAirlines}
+            selectedAirports={selectedAirports}
+            selectedFlightQuality={selectedFlightQuality}
+            onToggle={toggleStickyFlightPopularFilter}
+          />
         </aside>
 
         <section className="min-w-0 space-y-4 lg:space-y-0">
           <p className="sr-only" aria-live="polite">
             {savedItemError}
           </p>
-          <p className="sr-only" aria-live="polite">
-            {priceAlertStatusMessage || priceAlertError}
+          <p className="sr-only" role="status" aria-live="polite">
+            {backgroundRefreshing ? t("updatingResults") : ""}
           </p>
           <div ref={flightResultsTopRef} aria-hidden="true" />
-          {error ? (
-            <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger">
-              {error}
-            </div>
-          ) : (
-            <div className={cn(resultStackClass, "space-y-4")}>
+          <h2 ref={resultsHeadingRef} tabIndex={-1} className="sr-only">
+            {!guidedMode && kayak && results.length === 0 ? "Search results" : formatResultsFound(sortedResults.length, t)}
+          </h2>
+          {!guidedMode && kayak && results.length === 0 ? <CombinedSearchEmpty otherStatus={loading ? "loading" : error ? "error" : "success"} retry={retryMainInventorySearch} /> : (
+            <div className={cn(resultStackClass, "space-y-1 sm:space-y-4 lg:space-y-3")}>
               {body?.tripType !== "multi-city" ? (
-                <div
-                  className="hidden w-full sm:block"
-                  aria-label="Nearby departure fares"
-                >
-                  <div className="mx-auto grid w-full max-w-[780px] grid-cols-[36px_repeat(7,minmax(72px,1fr))_36px] items-stretch overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                    <button
-                      type="button"
-                      aria-label="Previous nearby fare date"
-                      disabled={nearbyFareVisibleStart === 0}
-                      onClick={() => navigateNearbyFareWindow("previous")}
-                      className="focus-ring inline-flex min-h-[88px] items-center justify-center border-e border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-white"
-                    >
-                      <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-                    </button>
-
-                    {(nearbyFares.length
-                      ? nearbyFares.slice(
-                          nearbyFareVisibleStart,
-                          nearbyFareVisibleStart + nearbyFareVisibleCount,
-                        )
-                      : Array.from(
-                          { length: nearbyFareVisibleCount },
-                          (_, index) => ({
-                            date: `loading-${index}`,
-                            status: "loading" as const,
-                          }),
-                        )
-                    ).map((fare) => {
-                      const selected = fare.date === body?.departureDate;
-                      const displayPrice =
-                        fare.status === "success"
-                          ? formatDisplayPrice({
-                              amount: fare.amount,
-                              sourceCurrency: fare.currency,
-                              displayCurrency: selectedCurrency,
-                              convertUsdEstimate: true,
-                              rates: currencyRates.rates,
-                              isFallbackRate: currencyRates.isFallback,
-                            }).formatted
-                          : null;
-                      const accessibleFare =
-                        displayPrice ??
-                        (fare.status === "loading"
-                          ? "Loading fare"
-                          : "Unavailable");
-                      const accessibleDate = fare.date.startsWith("loading-")
-                        ? "Loading date"
-                        : `${formatFareStripWeekdayLabel(fare.date, calendarLocale)}, ${formatFareStripDateLabel(fare.date, calendarLocale)}`;
-
-                      return (
-                        <button
-                          key={fare.date}
-                          type="button"
-                          data-fare-date-cell
-                          aria-label={`${accessibleDate}: ${accessibleFare}`}
-                          aria-current={selected ? "date" : undefined}
-                          aria-pressed={selected}
-                          disabled={
-                            selected || loading || fare.status === "loading"
-                          }
-                          onClick={() => handleNearbyFareDateSelect(fare.date)}
-                          className={cn(
-                            "focus-ring relative flex min-h-[88px] min-w-0 flex-col items-center justify-center border-e border-slate-100 px-1.5 py-2 text-center transition last:border-e-0 hover:bg-slate-50",
-                            selected && "bg-blue-50/60",
-                          )}
-                        >
-                          {selected ? (
-                            <span
-                              className="absolute inset-x-2 top-0 h-0.5 rounded-b bg-[#075EE8]"
-                              aria-hidden="true"
-                            />
-                          ) : null}
-                          {fare.status === "loading" ? (
-                            <>
-                              <span className="h-3 w-12 animate-pulse rounded bg-slate-200" />
-                              <span className="mt-2 h-3 w-8 animate-pulse rounded bg-slate-200" />
-                              <span className="mt-2 h-3 w-14 animate-pulse rounded bg-slate-200" />
-                            </>
-                          ) : (
-                            <>
-                              <span
-                                className={cn(
-                                  "text-[12px] font-semibold uppercase leading-4",
-                                  selected
-                                    ? "text-[#075EE8]"
-                                    : "text-slate-800",
-                                )}
-                              >
-                                {formatFareStripDateLabel(
-                                  fare.date,
-                                  calendarLocale,
-                                ).toUpperCase()}
-                              </span>
-                              <span
-                                className={cn(
-                                  "text-[11px] font-medium uppercase leading-4",
-                                  selected
-                                    ? "text-[#075EE8]"
-                                    : "text-slate-500",
-                                )}
-                              >
-                                {formatFareStripWeekdayLabel(
-                                  fare.date,
-                                  calendarLocale,
-                                ).toUpperCase()}
-                              </span>
-                              <span
-                                className={cn(
-                                  "flight-fare-strip-price mt-1 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium leading-4",
-                                  selected
-                                    ? "font-semibold text-[#075EE8]"
-                                    : "text-slate-900",
-                                )}
-                                data-price-size={
-                                  ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 13
-                                    ? "extra-long"
-                                    : ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 10
-                                      ? "long"
-                                      : "default"
-                                }
-                                dir="ltr"
-                              >
-                                {displayPrice ?? "Unavailable"}
-                              </span>
-                            </>
-                          )}
-                        </button>
-                      );
-                    })}
-
-                    <button
-                      type="button"
-                      aria-label="Next nearby fare date"
-                      disabled={
-                        nearbyFareVisibleStart >=
-                        nearbyFareRangeSize - nearbyFareVisibleCount
-                      }
-                      onClick={() => navigateNearbyFareWindow("next")}
-                      className="focus-ring inline-flex min-h-[88px] items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-white"
-                    >
-                      <ChevronRight className="h-5 w-5" aria-hidden="true" />
-                    </button>
+                <>
+                  <div className="w-full min-w-0 max-w-full overflow-hidden sm:hidden" aria-label="Nearby departure fares" data-nearby-fare-presentation="mobile">
+                    <div ref={mobileNearbyFareRailRef} className="flex h-[80px] w-full min-w-0 max-w-full items-center gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-3 py-[5px] [scroll-padding-inline:0.75rem] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      {(nearbyFares.length ? nearbyFares : Array.from({ length: nearbyFareRangeSize }, (_, index) => ({ date: `loading-mobile-${index}`, status: "loading" as const }))).map((fare) => {
+                        const selected = fare.date === body?.departureDate;
+                        const displayPrice = fare.status === "success" ? formatDisplayPrice({ amount: fare.amount, sourceCurrency: fare.currency, displayCurrency: selectedCurrency, convertSourceEstimate: true, useFlightResultSymbols: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback }).formatted : null;
+                        const visibleFare = displayPrice ?? (fare.status === "loading" ? "•••" : fare.status === "unavailable" ? "No fare" : fare.status === "error" ? "Try later" : "—");
+                        const accessibleFare = displayPrice ?? (fare.status === "loading" ? "Fare loading" : fare.status === "unavailable" ? "Fare unavailable" : fare.status === "error" ? "Fare could not be checked" : "Fare not checked");
+                        const accessibleDate = fare.date.startsWith("loading-") ? "Loading date" : `${formatFareStripWeekdayLabel(fare.date, calendarLocale)}, ${formatFareStripDateLabel(fare.date, calendarLocale)}`;
+                        return (
+                          <button ref={selected ? mobileSelectedNearbyFareRef : undefined} key={fare.date} type="button" data-fare-date-cell aria-label={`${accessibleDate}: ${accessibleFare}`} aria-current={selected ? "date" : undefined} aria-pressed={selected} disabled={selected || loading || fare.status === "loading"} onClick={() => handleNearbyFareDateSelect(fare.date)} className={cn("focus-ring relative flex h-[70px] w-[clamp(76px,calc(27.4vw_-_11.8px),96px)] shrink-0 flex-col items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white px-1.5 py-2 text-center shadow-sm transition hover:border-[#075EE8]/40 hover:bg-slate-50", selected && "border-[#075EE8] bg-blue-50/60")}>
+                            {selected ? <span className="absolute inset-x-1.5 top-0 h-0.5 rounded-b bg-[#075EE8]" aria-hidden="true" /> : null}
+                            {fare.date.startsWith("loading-mobile-") ? (<>
+                              <span className="h-3 w-12 animate-pulse rounded bg-slate-200" /><span className="mt-1.5 h-3 w-8 animate-pulse rounded bg-slate-200" /><span className="mt-1.5 h-3 w-14 animate-pulse rounded bg-slate-200" />
+                            </>) : (<>
+                              <span className={cn("text-[11px] font-bold uppercase leading-[14px]", selected ? "text-[#075EE8]" : "text-slate-800")}>{formatFareStripDateLabel(fare.date, calendarLocale).toUpperCase()}</span>
+                              <span className={cn("text-[10px] font-semibold uppercase leading-[13px] tracking-[0.05em]", selected ? "text-[#075EE8]" : "text-slate-500")}>{formatFareStripWeekdayLabel(fare.date, calendarLocale).toUpperCase()}</span>
+                              <span className={cn("flight-fare-strip-price mt-[3px] block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-semibold", selected ? "text-[#075EE8]" : "text-slate-900")} data-price-size={visibleFare.replace(/\s/g, "").length >= 13 ? "extra-long" : visibleFare.replace(/\s/g, "").length >= 10 ? "long" : "default"} dir="ltr">{visibleFare}</span>
+                            </>)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {cheaperNearbyFare ? <button type="button" onClick={() => handleNearbyFareDateSelect(cheaperNearbyFare.date)} className="flight-mobile-cheaper-nearby focus-ring flex min-h-[28px] max-w-full items-center px-0 text-left font-medium text-slate-600 hover:text-[#075EE8]">Cheaper nearby: {formatFareStripDateLabel(cheaperNearbyFare.date, calendarLocale)} · Save {cheaperNearbyFare.savings}</button> : null}
                   </div>
-                </div>
+                </>
               ) : null}
 
-              <div className="flex w-full flex-col gap-3 rounded-2xl border border-[#D8E1EC] bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-4 lg:bg-transparent">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-900">Track this route</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-600">Create a one-time email alert when a periodically checked fare is at or below your target.</p>
-                  {priceAlertStatusMessage ? <p className="mt-2 text-xs font-semibold text-emerald-700" role="status">{priceAlertStatusMessage}</p> : null}
-                  {priceAlertUnavailableReason ? <p id="price-alert-unavailable" className="mt-2 text-xs font-semibold text-amber-700">{priceAlertUnavailableReason}</p> : null}
-                </div>
-                <button
-                  ref={priceAlertButtonRef}
-                  type="button"
-                  className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-[#004BB8]/30 bg-white px-4 text-sm font-bold text-[#004BB8] transition hover:border-[#004BB8] hover:bg-[#004BB8]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
-                  disabled={sessionStatus === "loading" || !canonicalPriceAlertQuery}
-                  aria-describedby={priceAlertUnavailableReason ? "price-alert-unavailable" : undefined}
-                  onClick={openPriceAlertDialog}
+              {mobileFlightPriceAlertQuery ? <div className="max-sm:pt-2 max-sm:pb-1 sm:mb-4 lg:hidden"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-[calc(100%+16px)]"><FlightPriceAlertControl query={mobileFlightPriceAlertQuery} results={providerResults} desktopPortalTarget={desktopFlightPriceAlertTarget} /></div></div> : null}
+
+              <div data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden">
+                <div
+                  ref={mobileResultsPageTopRef}
+                  data-mobile-flight-results-summary-row
+                  className="flex w-full items-center justify-between gap-3"
                 >
-                  <Bell size={17} aria-hidden="true" />
-                  Create price alert
-                </button>
+                  <p className="flight-results-count min-w-0 text-[13px] font-bold leading-[17px] tracking-[-0.005em] text-slate-900">
+                    {formatMobileFlightResultsFound(sortedResults.length, t, locale)}
+                  </p>
+                </div>
               </div>
 
-              <div className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex lg:bg-transparent lg:px-0 lg:pb-0.5">
-                <p className="text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
-                  {formatResultsFound(sortedResults.length, t)}
-                </p>
+              
+
+              <ResultsViewport mobile><div className="sm:hidden">
+                <p role="status" aria-live="polite" className="sr-only">{filterApplying ? t("updatingResults") : ""}</p>
+                {error && results.length === 0 ? (
+                  <MobileFlightResultsState kind="error" onPrimary={retryMainInventorySearch} onSecondary={() => openMobileSearchDrawer()} />
+                ) : results.length === 0 ? (
+                  <MobileFlightResultsState kind="empty" onPrimary={() => openMobileSearchDrawer()} />
+                ) : sortedResults.length === 0 ? (
+                  <MobileFlightResultsState kind="filtered" onPrimary={clearFlightFilters} onSecondary={() => openMobileFiltersDrawer()} />
+                ) : (
+                  <div
+                    data-mobile-continuous-flight-results
+                    aria-busy={filterApplying}
+                    className="pt-3 pb-6"
+                  >
+                    <div data-flight-results-card-list className="space-y-3">
+                      <VirtualResultsList items={sortedResults} itemKey={resultIdKey} label="Flight results" preserveViewportOnScrollLock rowClassName="pb-3" estimateHeight={320} renderItem={(flight, index) => {
+                        const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
+                        if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
+                        const detailsQuery = params.toString();
+                        const internalDetailsHref = `/flights/details/${encodeURIComponent(flight.id)}` + (detailsQuery ? `?${detailsQuery}` : "");
+                        return <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={resultActionHref(flight, internalDetailsHref)} searchRequestId={visibleJourneyRequestId} />;
+                      }} />
+                    </div>
+                  </div>
+                )}
+              </div></ResultsViewport>
+
+              <div
+                data-flight-results-desktop-summary
+                className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-0 lg:bg-transparent"
+              >
+                <div>
+                  <p className="text-[12px] font-semibold leading-4 text-[#191E3B]">
+                    {formatResultsFound(sortedResults.length, t)}
+                  </p>
+
+                </div>
 
                 <div
                   ref={desktopSortRef}
-                  className="relative hidden items-center gap-2 lg:flex"
+                  className="relative hidden shrink-0 items-center whitespace-nowrap lg:flex"
                 >
-                  <span className="text-[16px] font-medium text-[#142033]">
-                    Sort by:
-                  </span>
                   <button
                     ref={desktopSortButtonRef}
                     type="button"
-                    aria-label="Sort flight results"
-                    aria-haspopup="menu"
+                    aria-label={`Sort flight results: ${selectedSortLabel}`}
+                    aria-haspopup="listbox"
                     aria-expanded={desktopSortOpen}
-                    className="inline-flex h-9 items-center justify-center gap-3 rounded-md bg-transparent px-2 text-[16px] font-semibold text-[#142033] transition hover:bg-[#004BB8]/5 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                    className="hotel-results-sort-trigger inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-[#9299A9] bg-white px-3 text-[#191E3B] outline-none transition-colors hover:border-[#191E3B] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2"
                     onClick={() => setDesktopSortOpen((open) => !open)}
                   >
-                    {selectedSortLabel}
-                    <ChevronDown size={16} aria-hidden="true" />
+                    <span>Sort by {selectedSortLabel}</span>
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={cn(
+                        "h-3.5 w-3.5 transition-transform",
+                        desktopSortOpen && "rotate-180",
+                      )}
+                      strokeWidth={2}
+                    />
                   </button>
-                  <div
-                    role="menu"
-                    className={cn(
-                      "absolute right-0 top-11 z-30 w-44 origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_14px_32px_-18px_rgba(15,23,42,0.45)] transition duration-150",
-                      desktopSortOpen
-                        ? "translate-y-0 scale-100 opacity-100"
-                        : "pointer-events-none -translate-y-1 scale-95 opacity-0",
-                    )}
-                  >
-                    {sortOptions.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="menuitemradio"
-                        aria-checked={sortMode === option.value}
-                        className={cn("flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25", sortMode === option.value ? "text-[#004BB8]" : "text-slate-700")}
-                        onClick={() => {
-                          triggerFilterApplying();
-                          setSortMode(option.value);
-                          setDesktopSortOpen(false);
-                          handleUserFilterCommit();
-                        }}
-                      >
-                        <span className="w-4 text-[#004BB8]">
-                          {sortMode === option.value ? "✓" : ""}
-                        </span>
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
+                  {desktopSortOpen ? (
+                    <div
+                      role="listbox"
+                      aria-label="Sort flight results"
+                      className="absolute right-0 top-[calc(100%+0.5rem)] z-50 min-w-[190px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]"
+                    >
+                      {sortOptions.map((option) => {
+                        const selected = sortMode === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            role="option"
+                            aria-selected={selected}
+                            className={cn(
+                              "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-base font-medium leading-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
+                              selected
+                                ? "bg-[#004BB8]/[0.08] text-[#004BB8]"
+                                : "text-slate-800 hover:bg-slate-50 hover:text-slate-950",
+                            )}
+                            onClick={() => {
+                              triggerFilterApplying();
+                              setSortMode(option.value);
+                              setDesktopSortOpen(false);
+                              handleUserFilterCommit();
+                            }}
+                          >
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                              {selected ? (
+                                <Check
+                                  aria-hidden="true"
+                                  className="h-4 w-4"
+                                  strokeWidth={2.25}
+                                />
+                              ) : null}
+                            </span>
+                            <span>{option.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
                 </div>
 
                 <Button
                   variant="secondary"
                   className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] lg:hidden"
                   onClick={(event) =>
-                    openMobileFiltersDrawer(event.currentTarget)
+                    openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))
                   }
                 >
                   <SlidersHorizontal size={17} />
@@ -7560,55 +7483,51 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     : t("filters")}
                 </Button>
               </div>
-
-              {warnings.length > 0 ? (
-                <div
-                  className="w-full rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold leading-6 text-amber-900 shadow-sm"
-                  role="status"
-                >
-                  {t("limitedProviderChecks")}
-                </div>
-              ) : null}
-
-              {filterApplying ? (
+              <ResultsViewport mobile={false}><div
+                ref={paginationListRef}
+                aria-busy={filterApplying}
+                className="hidden sm:block"
+              >
+              {error && results.length === 0 ? (
+                <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger">{error}</div>
+              ) : filterApplying ? (
                 <div className="space-y-3">
-                  <div
-                    role="status"
-                    aria-live="polite"
-                    className="rounded-xl border border-[#004BB8]/10 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm"
-                  >
+                  <div role="status" aria-live="polite" className="sr-only">
                     {t("updatingResults")}
                   </div>
-                  <FlightCardSkeleton />
-                  <FlightCardSkeleton />
+                  {Array.from({ length: 2 }, (_, index) => <FlightCardSkeleton key={index} />)}
                 </div>
               ) : sortedResults.length ? (
                 <>
-                  <p className="mb-3 text-[16px] font-semibold leading-6 tracking-[-0.01em] text-slate-900 sm:hidden">
-                    {formatResultsFound(sortedResults.length, t)}
-                  </p>
-                  {sortedResults.map((flight, index) => {
-                    const detailsQuery = params.toString();
-                    const detailsHref =
-                      `/flights/details/${encodeURIComponent(flight.id)}` +
-                      (detailsQuery ? `?${detailsQuery}` : "");
+                  <div data-flight-results-card-list className="space-y-3 sm:space-y-4">
+                    <VirtualResultsList items={sortedResults} itemKey={resultIdKey} label="Flight results" estimateHeight={320} renderItem={(flight, index) => {
+                      const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
+                      if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
+                      const detailsQuery = params.toString();
+                      const internalDetailsHref =
+                        `/flights/details/${encodeURIComponent(flight.id)}` +
+                        (detailsQuery ? `?${detailsQuery}` : "");
+                      const detailsHref = resultActionHref(flight, internalDetailsHref);
 
-                    return (
-                      <FlightCard
-                        key={flight.id}
-                        flight={flight}
-                        isAccented={index % 2 === 0}
-                        resultBadge={resultBadgeByFlightId.get(flight.id)}
-                        detailsHref={detailsHref}
-                      />
-                    );
-                  })}
+                      return (
+                        <FlightCard
+                          key={flight.id}
+                          flight={flight}
+                          isAccented={index % 2 === 0}
+                          resultBadge={resultBadgeByFlightId.get(flight.id)}
+                          detailsHref={detailsHref}
+                          searchRequestId={visibleJourneyRequestId}
+                        />
+                      );
+                    }} />
+                  </div>
                 </>
               ) : (
                 <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-muted shadow-sm">
                   {t("noFlightsMatchFilters")}
                 </div>
               )}
+              </div></ResultsViewport>
             </div>
           )}
         </section>
@@ -7619,159 +7538,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         />
       </div>
 
+      {renderMobileFullFiltersSheet()}
+    </main>
+    {!guidedMode && showBackToTop && !filtersOpen ? (
       <button
         type="button"
         aria-label="Back to top"
-        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className={cn(
-          "fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-[80] inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#004BB8]/20 bg-white text-[#004BB8] shadow-[0_12px_28px_rgba(15,23,42,0.18)] transition sm:hidden",
-          showMobileBackToTop
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none translate-y-3 opacity-0",
-        )}
+        onClick={() => {
+          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        }}
+        className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] end-4 z-40 max-sm:z-[800] inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white lg:bg-[#FEFFFF] text-[#004BB8] shadow-[0_3px_10px_rgba(15,23,42,0.10)] transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:transition sm:hover:bg-slate-50 sm:focus-visible:outline-none sm:focus-visible:ring-2 sm:focus-visible:ring-[#004BB8]/40 sm:focus-visible:ring-offset-2 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
       >
-        <ChevronUp className="h-5 w-5" strokeWidth={2.6} aria-hidden="true" />
+        <ArrowUp className="h-[18px] w-[18px] sm:h-5 sm:w-5" aria-hidden="true" />
       </button>
-
-      {priceAlertDialogOpen && createPortal(
-          <div className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/45 px-4 py-4 sm:items-center" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !priceAlertSubmitting) closePriceAlertDialog(); }}>
-            <div role="dialog" aria-modal="true" aria-labelledby="price-alert-dialog-title" aria-describedby="price-alert-dialog-description" className="max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">Price alert</p>
-                  <h2 id="price-alert-dialog-title" className="mt-2 text-xl font-semibold tracking-tight text-slate-950">Create price alert</h2>
-                </div>
-                <button type="button" className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900" onClick={closePriceAlertDialog} aria-label="Cancel creating price alert" disabled={priceAlertSubmitting}>
-                  <X size={20} aria-hidden="true" />
-                </button>
-              </div>
-              <p id="price-alert-dialog-description" className="mt-3 text-sm leading-6 text-slate-600">Kurioticket checks this route periodically. We’ll email you once if an observed fare is at or below your target. Fares and availability can change before booking.</p>
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                <p className="font-semibold text-slate-950">{priceAlertRouteSummary}</p>
-                <p className="mt-1">{priceAlertDateSummary}</p>
-                <p className="mt-1">Currency: <span className="font-semibold">{canonicalPriceAlertQuery?.currency}</span></p>
-                {lowestDisplayedFare ? <p className="mt-2 text-xs leading-5 text-slate-600">Lowest displayed live fare: {formatCurrency(lowestDisplayedFare.price, lowestDisplayedFare.currency)}. Use this only as context; provider fares can change.</p> : null}
-              </div>
-              <form className="mt-5 space-y-4" onSubmit={submitPriceAlert}>
-                <div>
-                  <label htmlFor="price-alert-target" className="block text-sm font-semibold text-slate-900">Target price ({canonicalPriceAlertQuery?.currency})</label>
-                  <input id="price-alert-target" ref={priceAlertInputRef} inputMode="decimal" autoComplete="off" value={priceAlertTarget} onChange={(event) => { setPriceAlertTarget(event.target.value); if (priceAlertError) setPriceAlertError(""); }} aria-describedby="price-alert-target-help price-alert-error" aria-invalid={Boolean(priceAlertError)} className="mt-2 block min-h-12 w-full rounded-xl border border-slate-300 px-3 text-base font-semibold text-slate-950 shadow-sm focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/20" placeholder="Example: 450.00" />
-                  <p id="price-alert-target-help" className="mt-2 text-xs leading-5 text-slate-500">Use the current search currency. Up to two decimal places.</p>
-                  {priceAlertError ? <p id="price-alert-error" className="mt-2 text-sm font-semibold text-red-700" role="alert">{priceAlertError}</p> : null}
-                </div>
-                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                  <Button type="button" variant="secondary" className="min-h-11 rounded-xl" onClick={closePriceAlertDialog} disabled={priceAlertSubmitting}>Cancel</Button>
-                  <Button type="submit" className="min-h-11 rounded-xl" disabled={priceAlertSubmitting}>{priceAlertSubmitting ? "Creating…" : "Create alert"}</Button>
-                </div>
-              </form>
-            </div>
-          </div>,
-          document.body,
-        )}
-
-      <aside
-        id="flight-mobile-filters-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="flight-mobile-filters-title"
-        className={cn(
-          "fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden overscroll-contain bg-white transition-transform duration-200 ease-out lg:hidden",
-          filtersOpen ? "translate-y-0" : "translate-y-full",
-        )}
-      >
-        <div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)]">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <h2
-                id="flight-mobile-filters-title"
-                className="text-lg font-bold leading-6 text-slate-950"
-              >
-                {t("filters")}
-              </h2>
-              {activeFilterCount > 0 ? (
-                <p className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-bold text-[#004BB8] ring-1 ring-[#004BB8]/10">
-                  {activeFilterLabel}
-                </p>
-              ) : null}
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-white px-0 text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-              aria-label={t("closeFilters")}
-              onClick={() => closeMobileFiltersDrawer()}
-            >
-              <X size={20} />
-            </Button>
-          </div>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
-          <Filters
-            layout="mobile"
-            activeFilterCount={activeFilterCount}
-            maxPrice={maxPrice}
-            setMaxPrice={setMaxPrice}
-            priceBounds={priceBounds}
-            priceLabelCurrency={priceLabelCurrency}
-            selectedCurrency={selectedCurrency}
-            timeFilterMode={timeFilterMode}
-            setTimeFilterMode={setTimeFilterMode}
-            timeBounds={timeBounds}
-            maxTakeoffMinutes={maxTakeoffMinutes}
-            setMaxTakeoffMinutes={setMaxTakeoffMinutes}
-            maxLandingMinutes={maxLandingMinutes}
-            setMaxLandingMinutes={setMaxLandingMinutes}
-            durationBounds={durationBounds}
-            maxDurationMinutes={maxDurationMinutes}
-            setMaxDurationMinutes={setMaxDurationMinutes}
-            stopOptions={stopOptions}
-            selectedStops={selectedStops}
-            setSelectedStops={setSelectedStops}
-            airlineOptions={airlineOptions}
-            selectedAirlines={selectedAirlines}
-            setSelectedAirlines={setSelectedAirlines}
-            airportOptions={airportOptions}
-            selectedAirports={selectedAirports}
-            setSelectedAirports={setSelectedAirports}
-            flightQualityOptions={flightQualityOptions}
-            renderFlightQualityFilter={renderFlightQualityFilter}
-            selectedFlightQuality={selectedFlightQuality}
-            setSelectedFlightQuality={setSelectedFlightQuality}
-            baggageIncludedOnly={baggageIncludedOnly}
-            setBaggageIncludedOnly={setBaggageIncludedOnly}
-            flexibleOnly={flexibleOnly}
-            setFlexibleOnly={setFlexibleOnly}
-            onFilterChange={triggerFilterApplying}
-            onFilterCommit={handleUserFilterCommit}
-            onClear={clearFlightFilters}
-          />
-        </div>
-
-        <div className="flex shrink-0 items-center justify-between gap-4 border-t border-slate-200 bg-white px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-8px_20px_rgba(15,23,42,0.06)]">
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={activeFilterCount === 0}
-            className="h-12 min-w-0 rounded-xl px-0 text-sm font-bold text-[#004BB8] transition hover:bg-transparent hover:text-[#003f9c] disabled:pointer-events-none disabled:text-slate-400"
-            onClick={clearFlightFilters}
-          >
-            {t("clearAll")}
-          </Button>
-          <Button
-            type="button"
-            className="h-12 min-w-[8.75rem] rounded-xl bg-[#004BB8] px-7 text-base font-bold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
-            onClick={() => {
-              shouldScrollToTopAfterFilterApplyRef.current = true;
-              triggerFilterApplying();
-              closeMobileFiltersDrawer({ restoreFocus: false });
-            }}
-          >
-            {t("done")}
-          </Button>
-        </div>
-      </aside>
-    </main>
+    ) : null}
+    <Footer variant="brand-legal-only" />
+    </>
   );
 }
 
@@ -7850,18 +7632,6 @@ function filterResultsByRequestedOutboundDate(
   });
 }
 
-function getUniformResultCurrency(results: PublicFlightResult[]) {
-  const currencies = new Set(
-    results.map((result) => result.currency?.toUpperCase()).filter(Boolean),
-  );
-
-  if (currencies.size === 1) {
-    return Array.from(currencies)[0];
-  }
-
-  return null;
-}
-
 function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
@@ -7906,6 +7676,21 @@ function formatCompactDateLabel(value: string, locale: string): string {
   if (Number.isNaN(date.getTime())) return value;
 
   return formatFlightsDateSummary(date, null, locale);
+}
+
+function formatDesktopHeaderDateLabel(value: string, locale: string): string {
+  if (!value) return "";
+
+  const date = new Date(`${value}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  const weekday = new Intl.DateTimeFormat(
+    normalizeFlightResultsCalendarLocale(locale),
+    { weekday: "short" },
+  ).format(date);
+
+  return `${weekday} ${date.getMonth() + 1}/${date.getDate()}`;
 }
 
 function formatFareStripDateLabel(value: string, locale: string): string {
@@ -8010,21 +7795,6 @@ function preserveRoundTripDuration(
   );
 
   return formatDateValue(addDays(nextDepartureDate, durationDays));
-}
-
-function getLowestProviderFare(results: PublicFlightResult[]) {
-  return results.reduce<{ price: number; currency: string } | null>(
-    (lowest, result) => {
-      if (!Number.isFinite(result.price) || !result.currency) return lowest;
-
-      if (!lowest || result.price < lowest.price) {
-        return { price: result.price, currency: result.currency };
-      }
-
-      return lowest;
-    },
-    null,
-  );
 }
 
 function getNearbyFareCacheKey(
@@ -8344,6 +8114,7 @@ function DatePickerPopover({
   position,
   mobileSheet = false,
   alignToField,
+  prominentDesktop = false,
   month,
   departureValue,
   returnValue,
@@ -8360,6 +8131,7 @@ function DatePickerPopover({
   position: { top: number; left: number; width: number };
   mobileSheet?: boolean;
   alignToField?: "left" | "right";
+  prominentDesktop?: boolean;
   launcherRef?: RefObject<HTMLElement | null>;
   month: Date;
   departureValue: string;
@@ -8403,6 +8175,7 @@ function DatePickerPopover({
           top: "calc(100% + 0.5rem)",
           ...(alignToField === "right" ? { right: 0 } : { left: 0 }),
           width: "min(560px, calc(100vw - 2rem))",
+          maxHeight: "min(520px, calc(100dvh - 8rem))",
           zIndex: 70,
         } as const)
       : ({
@@ -8417,11 +8190,21 @@ function DatePickerPopover({
 
   const renderMonth = (renderedMonth: Date) => (
     <div className="min-w-0">
-      <p className="mb-2 text-center text-sm font-bold text-slate-900">
+      <p
+        className={cn(
+          "text-center font-bold text-slate-900",
+          prominentDesktop ? "mb-1 text-[13px]" : "mb-2 text-sm",
+        )}
+      >
         {formatFlightsMonthHeading(renderedMonth, calendarLocale)}
       </p>
 
-      <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+      <div
+        className={cn(
+          "grid grid-cols-7 gap-1 text-center font-semibold text-slate-500",
+          prominentDesktop ? "mb-1 text-[11px]" : "mb-2 text-xs",
+        )}
+      >
         {weekdays.map((day) => (
           <span key={`${renderedMonth.toISOString()}-${day}`}>{day}</span>
         ))}
@@ -8433,7 +8216,9 @@ function DatePickerPopover({
             return (
               <span
                 key={`${renderedMonth.toISOString()}-blank-${index}`}
-                className={mobileSheet ? "h-9" : "h-8"}
+                className={
+                  mobileSheet ? "h-9" : prominentDesktop ? "h-7" : "h-8"
+                }
               />
             );
           }
@@ -8469,7 +8254,9 @@ function DatePickerPopover({
               className={cn(
                 mobileSheet
                   ? "relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-full text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]"
-                  : "h-8 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]",
+                  : prominentDesktop
+                    ? "h-7 rounded-md text-[11px] font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]"
+                    : "h-8 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]",
                 selectedDeparture || selectedReturn
                   ? "bg-[#004BB8] text-white hover:bg-[#004BB8] focus:bg-[#004BB8]"
                   : disabledDate
@@ -8507,7 +8294,12 @@ function DatePickerPopover({
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
-              className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] sm:text-sm"
+              className={cn(
+            "rounded-lg border border-slate-300 font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]",
+            prominentDesktop
+              ? "min-h-8 px-2.5 py-1 text-xs"
+              : "min-h-9 px-3 py-1.5 text-xs sm:text-sm",
+          )}
               onClick={onClear}
             >
               {t("clear")}
@@ -8558,12 +8350,21 @@ function DatePickerPopover({
           ? t("selectDepartureDate")
           : t("selectReturnDate")
       }
-      style={dialogStyle}
+      style={
+        prominentDesktop && !mobileSheet && !alignToField
+          ? {
+              ...dialogStyle,
+              maxHeight: `min(520px, calc(100dvh - ${position.top + 16}px))`,
+            }
+          : dialogStyle
+      }
       className={cn(
         "w-full border border-slate-200 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.14)]",
         mobileSheet
           ? "flex h-[100dvh] min-h-0 max-w-full flex-col overflow-y-auto overscroll-contain rounded-none p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))]"
-          : "max-w-[min(560px,calc(100vw-2rem))] rounded-2xl p-3",
+          : prominentDesktop
+            ? "max-w-none overflow-y-auto overscroll-contain rounded-xl p-3"
+            : "max-w-[min(560px,calc(100vw-2rem))] rounded-2xl p-3",
       )}
     >
       {mobileSheet ? (
@@ -8589,11 +8390,21 @@ function DatePickerPopover({
         </div>
       ) : null}
 
-      <div className="mb-3 flex shrink-0 items-center justify-between">
+      <div
+        className={cn(
+          "flex shrink-0 items-center justify-between",
+          prominentDesktop ? "mb-2" : "mb-3",
+        )}
+      >
         <button
           type="button"
           aria-label={t("previousMonth")}
-          className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] sm:text-sm"
+          className={cn(
+            "rounded-lg border border-slate-300 font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]",
+            prominentDesktop
+              ? "min-h-8 px-2.5 py-1 text-xs"
+              : "min-h-9 px-3 py-1.5 text-xs sm:text-sm",
+          )}
           onClick={() => onMonthChange(addMonths(leftMonth, -1))}
         >
           {t("previousShort")}
@@ -8602,7 +8413,12 @@ function DatePickerPopover({
         <button
           type="button"
           aria-label={t("nextMonth")}
-          className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] sm:text-sm"
+          className={cn(
+            "rounded-lg border border-slate-300 font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]",
+            prominentDesktop
+              ? "min-h-8 px-2.5 py-1 text-xs"
+              : "min-h-9 px-3 py-1.5 text-xs sm:text-sm",
+          )}
           onClick={() => onMonthChange(addMonths(leftMonth, 1))}
         >
           {t("nextShort")}
@@ -8611,7 +8427,8 @@ function DatePickerPopover({
 
       <div
         className={cn(
-          "min-h-0 flex-1 grid gap-3",
+          "min-h-0 flex-1 grid",
+          prominentDesktop ? "gap-2" : "gap-3",
           mobileSheet ? "overflow-visible md:grid-cols-2" : "md:grid-cols-2",
         )}
       >
@@ -8621,7 +8438,12 @@ function DatePickerPopover({
         </div>
       </div>
 
-      <div className="mt-4 flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white pt-3">
+      <div
+        className={cn(
+          "flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white",
+          prominentDesktop ? "sticky bottom-0 mt-2 pt-2" : "mt-4 pt-3",
+        )}
+      >
         <button
           type="button"
           className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] sm:text-sm"
@@ -8632,7 +8454,12 @@ function DatePickerPopover({
 
         <button
           type="button"
-          className="min-h-11 rounded-xl bg-[#004BB8] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1"
+          className={cn(
+            "rounded-xl bg-[#004BB8] font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1",
+            prominentDesktop
+              ? "min-h-9 px-3 py-1.5 text-xs"
+              : "min-h-11 px-4 py-2 text-sm",
+          )}
           onClick={onToday}
           disabled={doneDisabled}
         >
@@ -8647,6 +8474,7 @@ function TravelerCabinPopover({
   position,
   mobileSheet = false,
   alignToField,
+  prominentDesktop = false,
   adultCount,
   childCount,
   infantCount,
@@ -8662,6 +8490,7 @@ function TravelerCabinPopover({
   position: { top: number; left: number; width: number };
   mobileSheet?: boolean;
   alignToField?: "left" | "right";
+  prominentDesktop?: boolean;
   launcherRef?: RefObject<HTMLElement | null>;
   adultCount: number;
   childCount: number;
@@ -8794,7 +8623,9 @@ function TravelerCabinPopover({
         "w-full border border-slate-200 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.14)]",
         mobileSheet
           ? "flex h-[100dvh] min-h-0 max-w-full flex-col overflow-hidden rounded-none pt-[env(safe-area-inset-top)]"
-          : "max-w-[min(320px,calc(100vw-2rem))] rounded-2xl p-3",
+          : prominentDesktop
+            ? "max-w-none rounded-xl p-4"
+            : "max-w-[min(320px,calc(100vw-2rem))] rounded-2xl p-3",
       )}
     >
       {mobileSheet ? (
@@ -8971,6 +8802,7 @@ function SuggestionList({
   onSelect,
   position,
   alignToField = false,
+  keyboardNavigation = false,
   locale,
 }: {
   id: string;
@@ -8978,6 +8810,7 @@ function SuggestionList({
   onSelect: (value: string) => void;
   position?: { top: number; left: number; width: number };
   alignToField?: boolean;
+  keyboardNavigation?: boolean;
   locale?: string | null;
 }) {
   const visibleSuggestions = suggestions.slice(0, 5);
@@ -9019,6 +8852,28 @@ function SuggestionList({
               event.stopPropagation();
             }}
             onClick={() => onSelect(airportInputValue(item))}
+            onKeyDown={(event) => {
+              if (!keyboardNavigation) return;
+              const options = Array.from(
+                event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
+                  '[role="option"]',
+                ) ?? [],
+              );
+              const currentIndex = options.indexOf(event.currentTarget);
+              const nextIndex =
+                event.key === "ArrowDown"
+                  ? Math.min(options.length - 1, currentIndex + 1)
+                  : event.key === "ArrowUp"
+                    ? Math.max(0, currentIndex - 1)
+                    : event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? options.length - 1
+                        : -1;
+              if (nextIndex < 0) return;
+              event.preventDefault();
+              options[nextIndex]?.focus();
+            }}
             className={cn(
               "block min-h-[58px] w-full px-4 py-2.5 text-start transition-colors hover:bg-slate-50 focus-visible:bg-blue-50/60 focus-visible:outline-none",
               index < visibleSuggestions.length - 1 && "border-b border-slate-200/75",
@@ -9052,12 +8907,7 @@ type FilterOption = {
   rightLabel?: string;
 };
 
-type TimeFilterMode = "takeoff" | "landing";
 
-type TimeBounds = {
-  takeoff: { min: number; max: number } | null;
-  landing: { min: number; max: number } | null;
-};
 
 const flightQualityDefinitions = [
   { value: "wifi", labelKey: "wifi" },
@@ -9088,44 +8938,7 @@ function getTimeMinutes(value: string) {
   return hours * 60 + minutes;
 }
 
-function formatTimeFromMinutes(value: number, locale: string) {
-  const normalized = Math.max(0, Math.min(1439, value));
-  const hours24 = Math.floor(normalized / 60);
-  const minutes = normalized % 60;
-  const date = new Date(2000, 0, 1, hours24, minutes);
 
-  return new Intl.DateTimeFormat(locale, {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
-}
-
-function formatDurationFromMinutes(
-  totalMinutes: number,
-  t: (key: string) => string,
-) {
-  const minutes = Math.max(0, Math.round(totalMinutes));
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-
-  if (hours <= 0) {
-    return t("flightResults.duration.minutesOnly").replace(
-      "{{minutes}}",
-      String(remainingMinutes),
-    );
-  }
-
-  if (remainingMinutes === 0) {
-    return t("flightResults.duration.hoursOnly").replace(
-      "{{hours}}",
-      String(hours),
-    );
-  }
-
-  return t("flightResults.duration.hoursMinutes")
-    .replace("{{hours}}", String(hours))
-    .replace("{{minutes}}", String(remainingMinutes));
-}
 
 function formatOptionsFound(count: number, t: (key: string) => string) {
   const key = count === 1 ? "optionFound" : "optionsFound";
@@ -9137,9 +8950,13 @@ function formatResultsFound(count: number, t: (key: string) => string) {
   return t(key).replace("{{count}}", String(count));
 }
 
-function getStopBucket(stops: number) {
-  return stops >= 2 ? "2+" : String(stops);
+function formatMobileFlightResultsFound(count: number, t: (key: string) => string, locale: string) {
+  if (locale.toLowerCase().startsWith("en")) {
+    return `${count} ${count === 1 ? "Result" : "Results"} found`;
+  }
+  return formatResultsFound(count, t);
 }
+
 
 function stopLabel(bucket: string, t: (key: string) => string) {
   if (bucket === "0") return t("nonstop");
@@ -9151,15 +8968,7 @@ function stopBucketSortValue(bucket: string) {
   return bucket === "2+" ? 2 : Number(bucket);
 }
 
-function hasBaggageIncluded(flight: PublicFlightResult) {
-  return /included|carry-on|checked/i.test(flight.baggageInfo || "");
-}
 
-function hasFlexibleTerms(flight: PublicFlightResult) {
-  return /refundable|changes allowed|change allowed|flexible/i.test(
-    flight.refundInfo || "",
-  );
-}
 
 function getFlightQualityText(flight: PublicFlightResult) {
   return [
@@ -9198,13 +9007,6 @@ function flightHasQualityOption(flight: PublicFlightResult, option: string) {
   return false;
 }
 
-function flightMatchesAirport(flight: PublicFlightResult, airport: string) {
-  return (
-    flight.originAirport === airport ||
-    flight.destinationAirport === airport ||
-    flight.layovers.some((layover) => layover.airport === airport)
-  );
-}
 
 function buildCountOptions(values: string[]): FilterOption[] {
   const counts = new Map<string, number>();
@@ -9236,896 +9038,5 @@ function toggleFilterValue(
     current.includes(value)
       ? current.filter((item) => item !== value)
       : [...current, value],
-  );
-}
-
-function Filters({
-  layout,
-  activeFilterCount,
-  maxPrice,
-  setMaxPrice,
-  priceBounds,
-  priceLabelCurrency,
-  selectedCurrency,
-  timeFilterMode,
-  setTimeFilterMode,
-  timeBounds,
-  maxTakeoffMinutes,
-  setMaxTakeoffMinutes,
-  maxLandingMinutes,
-  setMaxLandingMinutes,
-  durationBounds,
-  maxDurationMinutes,
-  setMaxDurationMinutes,
-  stopOptions,
-  selectedStops,
-  setSelectedStops,
-  airlineOptions,
-  selectedAirlines,
-  setSelectedAirlines,
-  airportOptions,
-  selectedAirports,
-  setSelectedAirports,
-  flightQualityOptions,
-  renderFlightQualityFilter,
-  selectedFlightQuality,
-  setSelectedFlightQuality,
-  baggageIncludedOnly,
-  setBaggageIncludedOnly,
-  flexibleOnly,
-  setFlexibleOnly,
-  onFilterChange,
-  onFilterCommit,
-  onClear,
-}: {
-  layout: "desktop" | "mobile" | "compact";
-  activeFilterCount: number;
-  maxPrice: number;
-  setMaxPrice: (value: number) => void;
-  priceBounds: { min: number; max: number };
-  priceLabelCurrency: string | null;
-  selectedCurrency: string;
-  timeFilterMode: TimeFilterMode;
-  setTimeFilterMode: Dispatch<SetStateAction<TimeFilterMode>>;
-  timeBounds: TimeBounds;
-  maxTakeoffMinutes: number | null;
-  setMaxTakeoffMinutes: (value: number | null) => void;
-  maxLandingMinutes: number | null;
-  setMaxLandingMinutes: (value: number | null) => void;
-  durationBounds: { min: number; max: number } | null;
-  maxDurationMinutes: number | null;
-  setMaxDurationMinutes: (value: number | null) => void;
-  stopOptions: FilterOption[];
-  selectedStops: string[];
-  setSelectedStops: Dispatch<SetStateAction<string[]>>;
-  airlineOptions: FilterOption[];
-  selectedAirlines: string[];
-  setSelectedAirlines: Dispatch<SetStateAction<string[]>>;
-  airportOptions: FilterOption[];
-  selectedAirports: string[];
-  setSelectedAirports: Dispatch<SetStateAction<string[]>>;
-  flightQualityOptions: FilterOption[];
-  renderFlightQualityFilter: boolean;
-  selectedFlightQuality: string[];
-  setSelectedFlightQuality: Dispatch<SetStateAction<string[]>>;
-  baggageIncludedOnly: boolean;
-  setBaggageIncludedOnly: (value: boolean) => void;
-  flexibleOnly: boolean;
-  setFlexibleOnly: (value: boolean) => void;
-  onFilterChange: () => void;
-  onFilterCommit: () => void;
-  onClear: () => void;
-}) {
-  const { t: dictionary, locale } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const calendarLocale = normalizeFlightResultsCalendarLocale(locale);
-  const currencyRates = useCurrencyRates();
-  const filterRangeClass =
-    "h-2 w-full cursor-pointer appearance-none rounded-full bg-border outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[#2F73C8] [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#2F73C8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#2F73C8] [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#2F73C8] [&::-moz-range-thumb]:shadow-md";
-  const formatFilterPrice = (amount: number) =>
-    priceLabelCurrency
-      ? formatDisplayPrice({
-          amount,
-          sourceCurrency: priceLabelCurrency,
-          displayCurrency: selectedCurrency,
-          convertUsdEstimate: true,
-          rates: currencyRates.rates,
-          isFallbackRate: currencyRates.isFallback,
-        }).formatted
-      : t("mixedProviderCurrencies");
-
-  const [compactOpenSection, setCompactOpenSection] =
-    useState<CompactFilterSectionId>(null);
-  const activeFilterLabel = t("activeFilterCount").replace(
-    "{{count}}",
-    String(activeFilterCount),
-  );
-  const renderQualitySection =
-    renderFlightQualityFilter && flightQualityOptions.length > 0;
-
-  const effectiveCompactOpenSection =
-    compactOpenSection === "quality" && !renderQualitySection
-      ? null
-      : compactOpenSection;
-
-  const compactSectionCounts = {
-    price: priceBounds.max && maxPrice < priceBounds.max ? 1 : 0,
-    times:
-      (timeBounds.takeoff && maxTakeoffMinutes !== timeBounds.takeoff.max
-        ? 1
-        : 0) +
-      (timeBounds.landing && maxLandingMinutes !== timeBounds.landing.max
-        ? 1
-        : 0),
-    duration:
-      durationBounds && maxDurationMinutes !== durationBounds.max ? 1 : 0,
-    quality: selectedFlightQuality.length,
-    stops: selectedStops.length,
-    airlines: selectedAirlines.length,
-    airports: selectedAirports.length,
-    amenities: (baggageIncludedOnly ? 1 : 0) + (flexibleOnly ? 1 : 0),
-  };
-
-  if (layout === "compact") {
-    return (
-      <div className="desktop-filter-sidebar flex h-auto flex-col overflow-visible rounded-2xl border border-[#D8E1EC] bg-[#EEF3F8] p-0 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]">
-        <div className="desktop-filter-sidebar__header shrink-0 border-b border-[#D8E1EC]/80 bg-[#EEF3F8] px-3.5 py-2.5">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[15px] font-semibold leading-5 tracking-[-0.01em] text-slate-950">
-              <SlidersHorizontal
-                className="desktop-filter-sidebar__icon shrink-0 text-[#004BB8]"
-                size={15}
-                strokeWidth={2.25}
-                aria-hidden="true"
-              />
-              <span className="truncate">{t("filterBy")}</span>
-            </h2>
-          </div>
-          {activeFilterCount > 0 ? (
-            <div className="mt-2 flex items-center justify-between gap-3">
-              <span className="desktop-filter-sidebar__count rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">
-                {activeFilterLabel}
-              </span>
-              <button
-                type="button"
-                className="rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-                onClick={onClear}
-              >
-                Clear all
-              </button>
-            </div>
-          ) : null}
-        </div>
-        <div className="h-auto overflow-visible bg-[#EEF3F8] px-2 py-1">
-          <CompactFilterSection
-            title={t("price")}
-            count={compactSectionCounts.price}
-            sectionId="price"
-            openSection={effectiveCompactOpenSection}
-            setOpenSection={setCompactOpenSection}
-          >
-            <input
-              aria-label={t("price")}
-              className={filterRangeClass}
-              type="range"
-              min={priceBounds.min || 0}
-              max={priceBounds.max || 0}
-              step={25}
-              value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0}
-              disabled={!priceBounds.max}
-              onPointerUp={onFilterCommit}
-              onMouseUp={onFilterCommit}
-              onTouchEnd={onFilterCommit}
-              onKeyUp={onFilterCommit}
-              onBlur={onFilterCommit}
-              onChange={(event) => {
-                onFilterChange();
-                setMaxPrice(Number(event.target.value));
-              }}
-            />
-            <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-medium tabular-nums text-slate-500">
-              <span className="min-w-0 truncate whitespace-nowrap">
-                {priceBounds.max && priceLabelCurrency
-                  ? formatFilterPrice(priceBounds.min)
-                  : "—"}
-              </span>
-              <span className="min-w-0 truncate whitespace-nowrap">
-                {priceBounds.max && priceLabelCurrency
-                  ? formatFilterPrice(Math.min(maxPrice, priceBounds.max))
-                  : "—"}
-              </span>
-            </div>
-          </CompactFilterSection>
-          <CompactFilterSection
-            title={t("times")}
-            count={compactSectionCounts.times}
-            sectionId="times"
-            openSection={effectiveCompactOpenSection}
-            setOpenSection={setCompactOpenSection}
-          >
-            <div className="space-y-3.5">
-              {[
-                {
-                  key: "takeoff",
-                  eyebrow: t("takeoff"),
-                  label: t("takeoffTimeFromOrigin"),
-                  bounds: timeBounds.takeoff,
-                  value: maxTakeoffMinutes,
-                  setValue: setMaxTakeoffMinutes,
-                },
-                {
-                  key: "landing",
-                  eyebrow: t("landing"),
-                  label: t("landingTimeAtDestination"),
-                  bounds: timeBounds.landing,
-                  value: maxLandingMinutes,
-                  setValue: setMaxLandingMinutes,
-                },
-              ].map((item) => (
-                <label key={item.key} className="block">
-                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    {item.eyebrow}
-                  </span>
-                  <span className="mb-1.5 flex items-center justify-between gap-3 text-xs font-medium text-slate-600">
-                    <span className="min-w-0 truncate">{item.label}</span>
-                    <span className="shrink-0 whitespace-nowrap font-mono tabular-nums text-navy">
-                      {item.bounds && item.value !== null
-                        ? formatTimeFromMinutes(item.value, calendarLocale)
-                        : t("loading")}
-                    </span>
-                  </span>
-                  <input
-                    className={filterRangeClass}
-                    type="range"
-                    min={item.bounds?.min ?? 0}
-                    max={item.bounds?.max ?? 0}
-                    step={15}
-                    value={item.value ?? item.bounds?.max ?? 0}
-                    disabled={!item.bounds}
-                    onPointerUp={onFilterCommit}
-                    onMouseUp={onFilterCommit}
-                    onTouchEnd={onFilterCommit}
-                    onKeyUp={onFilterCommit}
-                    onBlur={onFilterCommit}
-                    onChange={(event) => {
-                      onFilterChange();
-                      item.setValue(Number(event.target.value));
-                    }}
-                  />
-                </label>
-              ))}
-            </div>
-          </CompactFilterSection>
-          <CompactFilterSection
-            title={t("duration")}
-            count={compactSectionCounts.duration}
-            sectionId="duration"
-            openSection={effectiveCompactOpenSection}
-            setOpenSection={setCompactOpenSection}
-          >
-            <div className="mb-1.5 flex items-center justify-between gap-3 text-xs font-medium text-slate-600">
-              <span className="min-w-0 truncate">{t("totalTripTime")}</span>
-              <span className="shrink-0 whitespace-nowrap font-mono tabular-nums text-navy">
-                {durationBounds && maxDurationMinutes !== null
-                  ? formatDurationFromMinutes(maxDurationMinutes, t)
-                  : t("loading")}
-              </span>
-            </div>
-            <input
-              aria-label={t("duration")}
-              className={filterRangeClass}
-              type="range"
-              min={durationBounds?.min ?? 0}
-              max={durationBounds?.max ?? 0}
-              step={15}
-              value={maxDurationMinutes ?? durationBounds?.max ?? 0}
-              disabled={!durationBounds}
-              onPointerUp={onFilterCommit}
-              onMouseUp={onFilterCommit}
-              onTouchEnd={onFilterCommit}
-              onKeyUp={onFilterCommit}
-              onBlur={onFilterCommit}
-              onChange={(event) => {
-                onFilterChange();
-                setMaxDurationMinutes(Number(event.target.value));
-              }}
-            />
-          </CompactFilterSection>
-          {renderQualitySection ? (
-            <CompactFilterSection
-              title={t("flightQuality")}
-              count={compactSectionCounts.quality}
-              sectionId="quality"
-              openSection={effectiveCompactOpenSection}
-              setOpenSection={setCompactOpenSection}
-            >
-              {flightQualityOptions.map((option) => (
-                <FilterOptionRow
-                  compact
-                  key={option.value}
-                  label={option.label}
-                  count={option.count}
-                  checked={selectedFlightQuality.includes(option.value)}
-                  onChange={() => {
-                    toggleFilterValue(option.value, setSelectedFlightQuality);
-                    onFilterCommit();
-                  }}
-                />
-              ))}
-            </CompactFilterSection>
-          ) : null}
-          <CompactFilterSection
-            title={t("stops")}
-            count={compactSectionCounts.stops}
-            sectionId="stops"
-            openSection={effectiveCompactOpenSection}
-            setOpenSection={setCompactOpenSection}
-            emptyText={t("stopsAppearAfterResultsLoad")}
-          >
-            {stopOptions.map((option) => (
-              <FilterOptionRow
-                compact
-                key={option.value}
-                label={option.label}
-                count={option.count}
-                secondaryLabel={option.secondaryLabel}
-                rightLabel={option.rightLabel}
-                checked={selectedStops.includes(option.value)}
-                onChange={() => {
-                  toggleFilterValue(option.value, setSelectedStops);
-                  onFilterCommit();
-                }}
-              />
-            ))}
-          </CompactFilterSection>
-          <CompactFilterSection
-            title={t("airlines")}
-            count={compactSectionCounts.airlines}
-            sectionId="airlines"
-            openSection={effectiveCompactOpenSection}
-            setOpenSection={setCompactOpenSection}
-            emptyText={t("airlinesAppearAfterResultsLoad")}
-          >
-            {airlineOptions.map((option) => (
-              <FilterOptionRow
-                compact
-                key={option.value}
-                label={option.label}
-                count={option.count}
-                checked={selectedAirlines.includes(option.value)}
-                onChange={() => {
-                  toggleFilterValue(option.value, setSelectedAirlines);
-                  onFilterCommit();
-                }}
-              />
-            ))}
-          </CompactFilterSection>
-          <CompactFilterSection
-            title={t("airports")}
-            count={compactSectionCounts.airports}
-            sectionId="airports"
-            openSection={effectiveCompactOpenSection}
-            setOpenSection={setCompactOpenSection}
-            emptyText={t("airportsAppearAfterResultsLoad")}
-          >
-            {airportOptions.map((option) => (
-              <FilterOptionRow
-                compact
-                key={option.value}
-                label={option.label}
-                count={option.count}
-                checked={selectedAirports.includes(option.value)}
-                onChange={() => {
-                  toggleFilterValue(option.value, setSelectedAirports);
-                  onFilterCommit();
-                }}
-              />
-            ))}
-          </CompactFilterSection>
-          <CompactFilterSection
-            title={t("amenities")}
-            count={compactSectionCounts.amenities}
-            sectionId="amenities"
-            openSection={effectiveCompactOpenSection}
-            setOpenSection={setCompactOpenSection}
-          >
-            <FilterOptionRow
-              compact
-              label={t("baggageIncluded")}
-              checked={baggageIncludedOnly}
-              onChange={() => {
-                setBaggageIncludedOnly(!baggageIncludedOnly);
-                onFilterCommit();
-              }}
-            />
-            <FilterOptionRow
-              compact
-              label={t("flexibleRefundable")}
-              checked={flexibleOnly}
-              onChange={() => {
-                setFlexibleOnly(!flexibleOnly);
-                onFilterCommit();
-              }}
-            />
-          </CompactFilterSection>
-        </div>
-      </div>
-    );
-  }
-
-  if (layout === "desktop") {
-    return null;
-  }
-
-  return (
-    <div className="bg-white">
-      <div className={cn("space-y-4 bg-white")}>
-        <section>
-          <div className="mb-1.5 flex items-center justify-between gap-3 text-sm font-semibold leading-5 text-slate-800">
-              <span>{t("price")}</span>
-              <span className="shrink-0 text-xs font-medium text-navy">
-                {priceBounds.max
-                  ? priceLabelCurrency
-                    ? `${formatFilterPrice(priceBounds.min)} - ${formatFilterPrice(
-                        Math.min(maxPrice, priceBounds.max),
-                      )}`
-                    : t("mixedProviderCurrencies")
-                  : t("loadingPrices")}
-              </span>
-          </div>
-          <input
-            className={filterRangeClass}
-            type="range"
-            min={priceBounds.min || 0}
-            max={priceBounds.max || 0}
-            step={25}
-            value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0}
-            disabled={!priceBounds.max}
-            onChange={(event) => {
-              onFilterChange();
-              setMaxPrice(Number(event.target.value));
-            }}
-          />
-          <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
-            <span>
-              {priceBounds.max && priceLabelCurrency
-                ? formatFilterPrice(priceBounds.min)
-                : "—"}
-            </span>
-            <span>
-              {priceBounds.max && priceLabelCurrency
-                ? formatFilterPrice(priceBounds.max)
-                : "—"}
-            </span>
-          </div>
-        </section>
-
-        <FilterSection title={t("times")}>
-          <div className="grid grid-cols-2 rounded-full bg-slate-100 p-1">
-            <button
-              type="button"
-              onClick={() => setTimeFilterMode("takeoff")}
-              className={cn(
-                "rounded-full px-2 py-1.5 text-xs font-bold transition",
-                timeFilterMode === "takeoff"
-                  ? "bg-white text-[#004BB8] shadow-sm ring-1 ring-slate-200/70"
-                  : "text-slate-600 hover:text-slate-900",
-              )}
-            >
-              {t("takeoff")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimeFilterMode("landing")}
-              className={cn(
-                "rounded-full px-2 py-1.5 text-xs font-bold transition",
-                timeFilterMode === "landing"
-                  ? "bg-white text-[#004BB8] shadow-sm ring-1 ring-slate-200/70"
-                  : "text-slate-600 hover:text-slate-900",
-              )}
-            >
-              {t("landing")}
-            </button>
-          </div>
-
-          {timeFilterMode === "takeoff" ? (
-            <div className="mt-2">
-              <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
-                <span>{t("takeoffTimeFromOrigin")}</span>
-                <span className="font-mono text-navy">
-                  {timeBounds.takeoff && maxTakeoffMinutes !== null
-                    ? formatTimeFromMinutes(maxTakeoffMinutes, calendarLocale)
-                    : t("loading")}
-                </span>
-              </div>
-              <input
-                className={filterRangeClass}
-                type="range"
-                min={timeBounds.takeoff?.min ?? 0}
-                max={timeBounds.takeoff?.max ?? 0}
-                step={15}
-                value={maxTakeoffMinutes ?? timeBounds.takeoff?.max ?? 0}
-                disabled={!timeBounds.takeoff}
-                onPointerUp={onFilterCommit}
-                onMouseUp={onFilterCommit}
-                onTouchEnd={onFilterCommit}
-                onKeyUp={onFilterCommit}
-                onBlur={onFilterCommit}
-                onChange={(event) => {
-                  onFilterChange();
-                  setMaxTakeoffMinutes(Number(event.target.value));
-                }}
-              />
-              <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-medium tabular-nums text-slate-500">
-                <span>
-                  {timeBounds.takeoff
-                    ? formatTimeFromMinutes(
-                        timeBounds.takeoff.min,
-                        calendarLocale,
-                      )
-                    : "—"}
-                </span>
-                <span>
-                  {timeBounds.takeoff
-                    ? formatTimeFromMinutes(
-                        timeBounds.takeoff.max,
-                        calendarLocale,
-                      )
-                    : "—"}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-2">
-              <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
-                <span>{t("landingTimeAtDestination")}</span>
-                <span className="font-mono text-navy">
-                  {timeBounds.landing && maxLandingMinutes !== null
-                    ? formatTimeFromMinutes(maxLandingMinutes, calendarLocale)
-                    : t("loading")}
-                </span>
-              </div>
-              <input
-                className={filterRangeClass}
-                type="range"
-                min={timeBounds.landing?.min ?? 0}
-                max={timeBounds.landing?.max ?? 0}
-                step={15}
-                value={maxLandingMinutes ?? timeBounds.landing?.max ?? 0}
-                disabled={!timeBounds.landing}
-                onPointerUp={onFilterCommit}
-                onMouseUp={onFilterCommit}
-                onTouchEnd={onFilterCommit}
-                onKeyUp={onFilterCommit}
-                onBlur={onFilterCommit}
-                onChange={(event) => {
-                  onFilterChange();
-                  setMaxLandingMinutes(Number(event.target.value));
-                }}
-              />
-              <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-medium tabular-nums text-slate-500">
-                <span>
-                  {timeBounds.landing
-                    ? formatTimeFromMinutes(
-                        timeBounds.landing.min,
-                        calendarLocale,
-                      )
-                    : "—"}
-                </span>
-                <span>
-                  {timeBounds.landing
-                    ? formatTimeFromMinutes(
-                        timeBounds.landing.max,
-                        calendarLocale,
-                      )
-                    : "—"}
-                </span>
-              </div>
-            </div>
-          )}
-        </FilterSection>
-
-        <FilterSection title={t("duration")}>
-          <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
-            <span>{t("totalTripTime")}</span>
-            <span className="font-mono text-navy">
-              {durationBounds && maxDurationMinutes !== null
-                ? formatDurationFromMinutes(maxDurationMinutes, t)
-                : t("loading")}
-            </span>
-          </div>
-
-          <input
-            className={filterRangeClass}
-            type="range"
-            min={durationBounds?.min ?? 0}
-            max={durationBounds?.max ?? 0}
-            step={15}
-            value={maxDurationMinutes ?? durationBounds?.max ?? 0}
-            disabled={!durationBounds}
-            onChange={(event) => {
-              onFilterChange();
-              setMaxDurationMinutes(Number(event.target.value));
-            }}
-          />
-
-          <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
-            <span>
-              {durationBounds
-                ? formatDurationFromMinutes(durationBounds.min, t)
-                : "—"}
-            </span>
-            <span>
-              {durationBounds
-                ? formatDurationFromMinutes(durationBounds.max, t)
-                : "—"}
-            </span>
-          </div>
-        </FilterSection>
-
-        {renderQualitySection ? (
-          <FilterSection title={t("flightQuality")}>
-            {flightQualityOptions.map((option) => (
-              <FilterOptionRow
-                key={option.value}
-                label={option.label}
-                count={option.count}
-                checked={selectedFlightQuality.includes(option.value)}
-                onChange={() => {
-                  toggleFilterValue(option.value, setSelectedFlightQuality);
-                  onFilterCommit();
-                }}
-              />
-            ))}
-          </FilterSection>
-        ) : null}
-
-        <FilterSection
-          title={t("stops")}
-          emptyText={t("stopsAppearAfterResultsLoad")}
-        >
-          {stopOptions.map((option) => (
-            <FilterOptionRow
-              key={option.value}
-              label={option.label}
-              count={option.count}
-              secondaryLabel={option.secondaryLabel}
-              rightLabel={option.rightLabel}
-              checked={selectedStops.includes(option.value)}
-              onChange={() => {
-                onFilterChange();
-                toggleFilterValue(option.value, setSelectedStops);
-                onFilterCommit();
-              }}
-            />
-          ))}
-        </FilterSection>
-
-        <FilterSection
-          title={t("airlines")}
-          emptyText={t("airlinesAppearAfterResultsLoad")}
-        >
-          {airlineOptions.map((option) => (
-            <FilterOptionRow
-              key={option.value}
-              label={option.label}
-              count={option.count}
-              checked={selectedAirlines.includes(option.value)}
-              onChange={() => {
-                onFilterChange();
-                toggleFilterValue(option.value, setSelectedAirlines);
-                onFilterCommit();
-              }}
-            />
-          ))}
-        </FilterSection>
-
-        <FilterSection
-          title={t("airports")}
-          emptyText={t("airportsAppearAfterResultsLoad")}
-        >
-          {airportOptions.map((option) => (
-            <FilterOptionRow
-              key={option.value}
-              label={option.label}
-              count={option.count}
-              checked={selectedAirports.includes(option.value)}
-              onChange={() => {
-                onFilterChange();
-                toggleFilterValue(option.value, setSelectedAirports);
-                onFilterCommit();
-              }}
-            />
-          ))}
-        </FilterSection>
-
-        <FilterSection title={t("amenities")}>
-          <FilterOptionRow
-            label={t("baggageIncluded")}
-            checked={baggageIncludedOnly}
-            onChange={() => {
-              setBaggageIncludedOnly(!baggageIncludedOnly);
-              onFilterCommit();
-            }}
-          />
-          <FilterOptionRow
-            label={t("flexibleRefundable")}
-            checked={flexibleOnly}
-            onChange={() => {
-              setFlexibleOnly(!flexibleOnly);
-              onFilterCommit();
-            }}
-          />
-        </FilterSection>
-      </div>
-    </div>
-  );
-}
-
-function CompactFilterSection({
-  title,
-  count,
-  sectionId,
-  openSection,
-  setOpenSection,
-  emptyText,
-  children,
-}: {
-  title: string;
-  count: number;
-  sectionId: Exclude<CompactFilterSectionId, null>;
-  openSection: CompactFilterSectionId;
-  setOpenSection: Dispatch<SetStateAction<CompactFilterSectionId>>;
-  emptyText?: string;
-  children: ReactNode;
-}) {
-  const isOpen = openSection === sectionId;
-  const panelId = `compact-filter-${sectionId}-panel`;
-  const hasOptions =
-    Boolean(children) && (!Array.isArray(children) || children.length > 0);
-
-  return (
-    <section className="border-t border-[#D8E1EC]/75 first:border-t-0">
-      <button
-        type="button"
-        aria-expanded={isOpen}
-        aria-controls={panelId}
-        className={cn(
-          "group flex min-h-9 w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-start text-[13px] font-semibold leading-5 tracking-[-0.005em] text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:bg-[#E5ECF4] hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
-          isOpen && "text-[#004BB8]",
-        )}
-        onClick={() => {
-          setOpenSection((current) =>
-            current === sectionId ? null : sectionId,
-          );
-
-          if (typeof window !== "undefined") {
-            window.requestAnimationFrame(() => {
-              window.dispatchEvent(new Event("resize"));
-            });
-          }
-        }}
-      >
-        <span className="min-w-0 truncate">{title}</span>
-        <span className="flex shrink-0 items-center gap-2">
-          {count > 0 ? (
-            <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[11px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
-              {count}
-            </span>
-          ) : null}
-          <ChevronDown
-            aria-hidden="true"
-            className={cn(
-              "h-3.5 w-3.5 text-slate-500 transition duration-200 motion-reduce:transition-none group-hover:text-[#004BB8]",
-              isOpen && "rotate-180 text-[#004BB8]",
-            )}
-            strokeWidth={2.3}
-          />
-        </span>
-      </button>
-      <div
-        id={panelId}
-        className={cn(
-          "grid h-auto gap-0.5 overflow-visible bg-transparent px-2.5 pb-3 pt-0.5",
-          !isOpen && "hidden",
-        )}
-      >
-        {hasOptions ? (
-          children
-        ) : (
-          <p className="py-1 text-xs font-normal text-slate-500">{emptyText}</p>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function FilterSection({
-  title,
-  emptyText,
-  children,
-}: {
-  title: string;
-  emptyText?: string;
-  children: ReactNode;
-}) {
-  const hasOptions =
-    Boolean(children) && (!Array.isArray(children) || children.length > 0);
-
-  return (
-    <section className="border-t border-slate-200/75 py-4 first:border-t-0">
-      <h3 className="mb-2 text-sm font-extrabold uppercase leading-5 tracking-[0.14em] text-slate-950">
-        {title}
-      </h3>
-      <div className="grid gap-0.5">
-        {hasOptions ? (
-          children
-        ) : (
-          <p className="py-1 text-xs font-normal text-slate-500">{emptyText}</p>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function FilterOptionRow({
-  label,
-  count,
-  secondaryLabel,
-  rightLabel,
-  checked,
-  onChange,
-  compact = false,
-}: {
-  label: string;
-  count?: number;
-  secondaryLabel?: string;
-  rightLabel?: string;
-  checked: boolean;
-  onChange: () => void;
-  compact?: boolean;
-}) {
-  const trailingLabel =
-    rightLabel ?? (typeof count === "number" ? String(count) : null);
-
-  return (
-    <label
-      className={cn(
-        "flex cursor-pointer items-start justify-between rounded-lg font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950",
-        compact
-          ? "min-h-8 gap-2 px-1.5 py-1 text-[13px]"
-          : "min-h-10 gap-3 px-1 py-1.5 text-[13px] leading-5",
-      )}
-    >
-      <span
-        className={cn(
-          "flex min-w-0 items-start",
-          compact ? "gap-1.5" : "gap-2",
-        )}
-      >
-        <input
-          type="checkbox"
-          className={cn(
-            "mt-0.5 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-[#004BB8]/25",
-            compact ? "h-3.5 w-3.5" : "h-[15px] w-[15px]",
-          )}
-          checked={checked}
-          onChange={onChange}
-        />
-        <span className="min-w-0">
-          <span className="block truncate">{label}</span>
-          {secondaryLabel ? (
-            <span className="block text-[12px] font-medium leading-4 text-slate-500">
-              {secondaryLabel}
-            </span>
-          ) : null}
-        </span>
-      </span>
-      {trailingLabel ? (
-        <span className="shrink-0 text-[12px] font-medium leading-5 text-slate-500">
-          {trailingLabel}
-        </span>
-      ) : null}
-    </label>
   );
 }
