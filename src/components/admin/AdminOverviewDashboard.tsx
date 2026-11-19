@@ -236,14 +236,13 @@ export function AdminOverviewDashboard({ data, system, activity }: {
         {/* Customer activity and actual outbound provider handoffs share the snapshot row. */}
         <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
           <AdminOverviewRangeSensitive fill>
-            <Section title="Visitor Activity" href="/admin/journeys" description="Recorded consented events · selected range.">
+            <Section title="Visitor Activity" href="/admin/journeys">
               <div className="grid grid-cols-2 gap-1.5">
                 <MiniMetric label="Search events" value={stages.SEARCH_COMPLETED.events} />
                 <MiniMetric label="Results views" value={stages.RESULTS_VIEWED.events} />
                 <MiniMetric label="Offer selections" value={stages.OFFER_SELECTED.events} />
                 <MiniMetric label="Provider handoffs" value={stages.PROVIDER_HANDOFF_STARTED.events} />
               </div>
-              <p className="mt-2 text-[11px] text-slate-600">Events can repeat. Handoffs are not confirmed bookings.</p>
             </Section>
           </AdminOverviewRangeSensitive>
           <AdminOverviewRangeSensitive fill>
