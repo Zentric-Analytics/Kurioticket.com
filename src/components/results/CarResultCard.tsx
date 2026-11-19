@@ -747,6 +747,7 @@ export function CarResultCard({
             <CarDealPicker
               car={car}
               search={search}
+              requestId={requestId}
               selectedOfferId={offer.id}
               onSelectOffer={selectDealOffer}
               desktopPanelTarget={desktopDealPanelTarget}
