@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { SearchMonitorSelect } from "./SearchMonitorSelect";
+import { ADMIN_REPORTING_RANGE_OPTIONS } from "@/lib/adminReportingRanges";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 
@@ -59,13 +60,7 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
     // Update draft state only. An explicit Apply filters click navigates.
     setValues(current => ({ ...current, ...patch }));
   };
-  const rangeOptions = [
-    { value: "24h", label: "Last 24 hours" },
-    { value: "7d", label: "Last 7 days" },
-    { value: "30d", label: "Last 30 days" },
-    { value: "all", label: "All time" },
-    ...(values.range === "custom" || editingCustom ? [{ value: "custom", label: "Custom range (legacy)" }] : []),
-  ];
+  const rangeOptions = ADMIN_REPORTING_RANGE_OPTIONS;
   const setRange = (range: string) => {
     if (range === "custom") {
       setDraftDates({ from: values.range === "custom" ? values.from : "", to: values.range === "custom" ? values.to : "" });

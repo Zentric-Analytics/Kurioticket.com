@@ -114,7 +114,7 @@ test("Platform Health filter dropdowns use polished accessible Admin selectors w
     assert.match(filtersSource, /lg:grid-cols-/);
     assert.match(filtersSource, /Apply view/);
     const html = render();
-    for (const option of ["All Platforms", "Website", "iOS", "Android", "Unknown", "Last 24 hours", "Last 7 days", "Last 30 days"]) {
+    for (const option of ["All Platforms", "Website", "iOS", "Android", "Unknown", "Last 24 hrs", "Last 7 days", "Last 30 days"]) {
       assert.ok(html.includes(option), option);
     }
 });

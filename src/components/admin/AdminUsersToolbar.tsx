@@ -40,9 +40,10 @@ const statuses = [
 ] as const;
 
 const dateOptions = [
-  { value: "all", label: "All dates" },
+  { value: "24h", label: "Last 24 hrs" },
   { value: "last7", label: "Last 7 days" },
   { value: "last30", label: "Last 30 days" },
+  { value: "all", label: "All time" },
   { value: "custom", label: "Custom range" },
 ] as const;
 
@@ -103,7 +104,7 @@ export function AdminUsersToolbar({
       const params = new URLSearchParams(window.location.search);
       paramsRef.current = params;
       setSearchText(params.get("q") || "");
-      setDraftDate((params.get("date") || "all") as AdminIdentityDate);
+      setDraftDate((params.get("date") || "24h") as AdminIdentityDate);
       setDraftRole(params.get("role") || "ALL");
       setDraftStatus(params.get("status") || "ALL");
       setDraftDates({ from: params.get("from") || "", to: params.get("to") || "" });

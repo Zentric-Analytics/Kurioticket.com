@@ -31,7 +31,7 @@ export function ProviderHealthWindowFilter({ product, hours, custom }: Props) {
     setError("");
   }
   const options = [
-    { value: "24", label: "Last 24 hours" },
+    { value: "24", label: "Last 24 hrs" },
     { value: "72", label: "Last 3 days" },
     { value: "168", label: "Last 7 days" },
     { value: "custom", label: "Custom range" },

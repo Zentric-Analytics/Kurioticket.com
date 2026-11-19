@@ -16,7 +16,7 @@ test("Email Delivery uses a compact title and one page-level date range control"
   assert.doesNotMatch(page, /ArrowLeft size=\{14\}/);
   assert.doesNotMatch(page, /Admin operations|Email Delivery Operations|Monitor transactional email configuration/);
   assert.match(page, /EmailDeliveryRangeFilter/);
-  for (const label of ["Last 24 hours", "Last 7 days", "Last 30 days", "Last 90 days", "Custom range"]) {
+  for (const label of ["Last 24 hrs", "Last 7 days", "Last 30 days", "Last 90 days", "Custom range"]) {
     assert.ok(rangeFilter.includes(label));
   }
   assert.match(rangeFilter, /onValueChange=\{changeRange\}/);
@@ -57,7 +57,7 @@ test("summary metrics use one compact four-column status band with no repeated r
   assert.match(page, /bg-emerald-500/);
   assert.match(page, /bg-amber-500/);
   assert.match(page, /bg-rose-500/);
-  assert.doesNotMatch(page, /\(24h\)|Last 24 hours<\/p>/);
+  assert.doesNotMatch(page, /\(24h\)|Last 24 hrs<\/p>/);
   assert.doesNotMatch(page, /metric\.hint/);
 });
 

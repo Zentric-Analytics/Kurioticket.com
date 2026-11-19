@@ -1,5 +1,5 @@
 /** UI-only range presets. Operational handoff reads still accept strict from/to ISO timestamps. */
-export type HandoffDateRange = "today" | "7d" | "30d" | "all" | "custom";
+export type HandoffDateRange = "24h" | "today" | "7d" | "30d" | "all" | "custom";
 type Raw = Record<string, string | string[] | undefined>;
 
 function one(value: string | string[] | undefined): string {
@@ -20,9 +20,9 @@ export function resolveHandoffDateRange(raw: Raw, now = new Date()): {
   const from = one(raw.from);
   const to = one(raw.to);
   const range: HandoffDateRange =
-    supplied === "today" || supplied === "7d" || supplied === "30d" || supplied === "all"
+    supplied === "24h" || supplied === "today" || supplied === "7d" || supplied === "30d" || supplied === "all"
       ? supplied
-      : from || to ? "custom" : "today";
+      : from || to ? "custom" : "24h";
 
   if (range === "all") return { range, from: null, to: null };
   if (range === "custom") return { range, from: from || null, to: to || null };
@@ -33,7 +33,8 @@ export function resolveHandoffDateRange(raw: Raw, now = new Date()): {
   }
 
   if (from) return { range, from, to: null };
-  const start = new Date(now.getTime() - (range === "7d" ? 7 : 30) * 24 * 60 * 60 * 1000);
+  const days = range === "24h" ? 1 : range === "7d" ? 7 : 30;
+  const start = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
   return { range, from: start.toISOString(), to: null };
 }
 

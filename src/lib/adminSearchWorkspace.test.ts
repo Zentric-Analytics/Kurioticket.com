@@ -61,7 +61,7 @@ test("changing identity clears stale deep-linked customer IDs without dropping t
 });
 
 test("Search Activity filters use one consistent boxed dropdown treatment and explicit Apply", () => {
-  const controls = ["Date range", "Outcome", "Identity", "Provider", "Application"];
+  const controls = ["Outcome", "Identity", "Provider", "Application"];
   for (const label of controls) {
     assert.match(activity, new RegExp(`label="${label}"[^>]*appearance="fare"|label="${label}"[^>]*\\n[^>]*appearance="fare"`));
   }
@@ -74,11 +74,13 @@ test("Search Activity filters use one consistent boxed dropdown treatment and ex
   assert.match(activity, /data-testid="search-records-filter-row"/);
   assert.match(activity, /lg:grid-cols-\[repeat\(5,minmax\(0,1fr\)\)_120px\]/);
   assert.match(activity, /sm:grid-cols-2 md:grid-cols-3/);
-  assert.equal((activity.match(/truncateLabel/g) || []).length, 5);
+  assert.equal((activity.match(/truncateLabel/g) || []).length, 4);
   assert.match(activity, /align="end" truncateLabel/);
   assert.match(activity, /name="applicationSource"/);
-  assert.match(activity, /name="range"/);
-  assert.match(activity, /data-testid="search-records-date-range"/);
+  // The range input is owned by AdminOperationalDateRangeFields, checked below.
+  assert.match(activity, /testId="search-records-date-range"/);
+  assert.match(activity, /<AdminOperationalDateRangeFields/);
+  assert.match(readFileSync("src/components/admin/AdminOperationalDateRangeFields.tsx", "utf8"), /<SearchMonitorSelect label="Date range" name="range"/);
   assert.match(activity, /data-testid="search-records-products-row"/);
   assert.ok(activity.indexOf('data-testid="search-records-filter-row"') < activity.indexOf('data-testid="search-records-products-row"'));
   assert.match(activity, /name="status"/);

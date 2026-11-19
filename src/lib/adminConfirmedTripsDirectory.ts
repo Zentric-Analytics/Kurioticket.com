@@ -33,6 +33,16 @@ function validUtcDay(day: string) {
   const date = new Date(day + "T00:00:00.000Z");
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === day;
 }
+function validUtcInstant(value: string) {
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value) &&
+    Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
+}
+function validUtcBound(value: string) { return validUtcDay(value) || validUtcInstant(value); }
+function boundDate(value: string, upper: boolean) {
+  if (validUtcInstant(value)) return new Date(value);
+  const day = new Date(value + "T00:00:00.000Z");
+  return upper ? new Date(day.getTime() + 86_400_000) : day;
+}
 
 /** Input is untrusted: reject duplicate values, unknown enums and invalid UTC days. */
 export function parseAdminTripFilters(raw: RawQuery): ParseResult {
@@ -55,7 +65,7 @@ export function parseAdminTripFilters(raw: RawQuery): ParseResult {
     || !adminTripIdentities.includes(identity as AdminTripIdentity)) {
     return { ok: false, error: "Unsupported product, trip-status or identity filter." };
   }
-  if ((from && !validUtcDay(from)) || (to && !validUtcDay(to)) || (from && to && from > to)) {
+  if ((from && !validUtcBound(from)) || (to && !validUtcBound(to)) || (from && to && from > to)) {
     return { ok: false, error: "Enter a valid UTC date range." };
   }
   return { ok: true, filters: { q, provider, product: product as AdminTripProduct, status: status as AdminTripStatus, identity: identity as AdminTripIdentity, from, to } };
@@ -63,8 +73,8 @@ export function parseAdminTripFilters(raw: RawQuery): ParseResult {
 
 export function tripConfirmationWindow(filters: AdminTripFilters) {
   return {
-    ...(filters.from ? { gte: new Date(filters.from + "T00:00:00.000Z") } : {}),
-    ...(filters.to ? { lt: new Date(new Date(filters.to + "T00:00:00.000Z").getTime() + 86_400_000) } : {}),
+    ...(filters.from ? { gte: boundDate(filters.from, false) } : {}),
+    ...(filters.to ? { lt: boundDate(filters.to, true) } : {}),
   };
 }
 

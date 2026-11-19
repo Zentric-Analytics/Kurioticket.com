@@ -5,13 +5,13 @@ import { parseAdminTripWorkspace, tripWorkspaceHref } from "./adminTripWorkspace
 
 const now = new Date("2026-11-03T15:42:00.000Z");
 
-test("Today is the default and UTC day-based ranges normalize to the same filters used by the directory", () => {
-  const defaultRange = parseAdminTripWorkspace({}, now);
-  assert.equal(defaultRange.ok, true);
-  if (!defaultRange.ok) return;
-  assert.equal(defaultRange.range, "today");
-  assert.equal(defaultRange.filters.from, "2026-11-03");
-  assert.equal(defaultRange.filters.to, "2026-11-03");
+test("Trips default to a rolling Last 24 hrs while legacy Today keeps UTC calendar-day semantics", () => {
+  const current = parseAdminTripWorkspace({}, now);
+  assert.equal(current.ok, true);
+  if (!current.ok) return;
+  assert.equal(current.range, "24h");
+  assert.equal(current.filters.from, "2026-11-02T15:42:00.000Z");
+  assert.equal(current.filters.to, "2026-11-03T15:42:00.000Z");
 
   const today = parseAdminTripWorkspace({ range: "today", product: "FLIGHT", status: "CANCELLED" }, now);
   assert.equal(today.ok, true);
@@ -23,10 +23,13 @@ test("Today is the default and UTC day-based ranges normalize to the same filter
 
   const week = parseAdminTripWorkspace({ range: "7d" }, now);
   assert.equal(week.ok, true);
-  if (week.ok) assert.deepEqual([week.filters.from, week.filters.to], ["2026-10-28", "2026-11-03"]);
+  if (week.ok) assert.deepEqual([week.filters.from, week.filters.to], ["2026-10-27T15:42:00.000Z", "2026-11-03T15:42:00.000Z"]);
   const month = parseAdminTripWorkspace({ range: "30d" }, now);
   assert.equal(month.ok, true);
-  if (month.ok) assert.deepEqual([month.filters.from, month.filters.to], ["2026-10-05", "2026-11-03"]);
+  if (month.ok) assert.deepEqual([month.filters.from, month.filters.to], ["2026-10-04T15:42:00.000Z", "2026-11-03T15:42:00.000Z"]);
+  const saved = parseAdminTripWorkspace({ range: "24h", from: current.filters.from, to: current.filters.to }, new Date(now.getTime() + 60000));
+  assert.equal(saved.ok, true);
+  if (saved.ok) assert.deepEqual(saved.filters, current.filters);
 });
 
 test("custom dates remain editable and invalid or repeated ranges fail closed", () => {
@@ -74,7 +77,7 @@ test("relative ranges do not persist stale custom dates in subsequent navigation
   if (!parsed.ok) throw Error(parsed.error);
   const href = new URL(tripWorkspaceHref(parsed.filters, parsed.range, { status: "CANCELLED" }), "https://kurioticket.test");
   assert.equal(href.searchParams.get("range"), "7d");
-  assert.equal(href.searchParams.has("from"), false);
-  assert.equal(href.searchParams.has("to"), false);
+  assert.equal(href.searchParams.get("from"), parsed.filters.from);
+  assert.equal(href.searchParams.get("to"), parsed.filters.to);
   assert.equal(href.searchParams.get("status"), "CANCELLED");
 });

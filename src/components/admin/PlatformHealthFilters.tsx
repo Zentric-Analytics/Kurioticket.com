@@ -38,7 +38,7 @@ export function PlatformHealthFilters({ hours, application }: {
           name="hours"
           value={String(hours)}
           options={[
-            { value: "24", label: "Last 24 hours" },
+            { value: "24", label: "Last 24 hrs" },
             { value: "168", label: "Last 7 days" },
             { value: "720", label: "Last 30 days" },
           ]}
