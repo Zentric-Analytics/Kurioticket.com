@@ -8,10 +8,11 @@ import {
 
 const now = new Date("2026-11-19T12:00:00.000Z");
 
-test("both queue pages default to a stable last 24-hour window", () => {
+test("both queue pages default to Today UTC while preserving rolling 24h links", () => {
   const window = resolveAdminQueueWindow({}, now);
-  assert.deepEqual(window, { range: "24h", from: "2026-11-18T12:00:00.000Z", to: "2026-11-19T12:00:00.000Z" });
-  assert.equal(adminQueueRangeOptions[0].label, "Last 24 hrs");
+  assert.deepEqual(window, { range: "today", from: "2026-11-19T00:00:00.000Z", to: "2026-11-19T12:00:00.000Z" });
+  assert.equal(adminQueueRangeOptions[0].label, "Today");
+  assert.equal(resolveAdminQueueWindow({range:"24h"}, now).from, "2026-11-18T12:00:00.000Z");
 });
 test("date ranges include Today UTC, 7 days, 30 days and all time", () => {
   assert.equal(resolveAdminQueueWindow({ range: "today" }, now).from, "2026-11-19T00:00:00.000Z");
