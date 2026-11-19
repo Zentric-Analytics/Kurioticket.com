@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cross-origin tracking is not supported." }, { status: 403 });
   }
   const body = await request.json().catch(() => null) as {
-    resultId?: unknown; offerId?: unknown; sourcePage?: unknown; handoffId?: unknown;
+    resultId?: unknown; offerId?: unknown; sourcePage?: unknown; handoffId?: unknown; requestId?: unknown;
   } | null;
   if (!body || typeof body.resultId !== "string" || typeof body.offerId !== "string"
     || !body.resultId || !body.offerId
@@ -53,6 +53,7 @@ export async function POST(request: Request) {
     destinationUrl: destination.href,
     sourcePage: body.sourcePage === "car-results" ? "car-results" : "car-details",
     resultId: car.id,
+    ...(handoffTrackingId(body.requestId) ? { requestId: handoffTrackingId(body.requestId) } : {}),
     ...(handoffTrackingId(body.handoffId) ? { handoffId: handoffTrackingId(body.handoffId) } : {}),
   });
   return new NextResponse(null, { status: 204, headers: { "Cache-Control": "no-store" } });
