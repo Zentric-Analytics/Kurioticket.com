@@ -73,7 +73,8 @@ test("empty activity remains UNKNOWN with no invented latency; Overview lists al
     assert.match(overview, />48</);
     assert.equal((overview.match(/>12</g) || []).length, 4);
     assert.match(overview, />Platform Search Activity</);
-    assert.match(overview, />View Search Activity →</);
+    assert.match(overview, /View details/);
+    assert.doesNotMatch(overview, /View Search Activity →/);
     assert.doesNotMatch(overview, /Separate from website presence/);
     assert.match(overview, /aria-label="Platform search activity by application"/);
     assert.match(overview, /role="region"/);
