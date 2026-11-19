@@ -78,8 +78,8 @@ test("empty activity remains UNKNOWN with no invented latency; Overview lists al
     assert.match(overview, /aria-label="Platform search activity by application"/);
     assert.match(overview, /role="region"/);
     assert.match(overview, /tabindex="0"/);
-    assert.match(overview, /overflow-x-auto/);
-    assert.match(overview, /min-w-\[700px\] grid-cols-5/);
+    assert.doesNotMatch(overview, /overflow-x-auto/);
+    assert.match(overview, /grid-cols-2 gap-2 sm:grid-cols-3/);
     assert.equal((overview.match(/bg-slate-50 p-3/g) || []).length, 5);
     const links = Array.from(overview.matchAll(/href="([^"]+)"/g), ([, href]) =>
         new URL(href.replaceAll("&amp;", "&"), "https://example.invalid"));
