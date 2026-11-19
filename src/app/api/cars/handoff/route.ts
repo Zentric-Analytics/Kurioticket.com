@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readBoundedJsonBody } from "@/lib/bounded-json-body";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { isSameOriginRequest } from "@/lib/visitor-identity";
 import type { NormalizedCarResult } from "@/lib/cars/types";
 import { getProviderResult } from "@/services/travel/providerResultCache";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
@@ -12,7 +13,7 @@ export const dynamic = "force-dynamic";
 /** Car checkout remains the existing external link. This endpoint records verified clicks only. */
 export async function POST(request: Request) {
   const origin = request.headers.get("origin");
-  if (origin !== new URL(request.url).origin
+  if (!origin || !isSameOriginRequest(request)
     || request.headers.get("sec-fetch-site") !== "same-origin"
     || request.headers.has("authorization")) {
     return NextResponse.json({ error: "Verified same-origin browser request required." }, { status: 403 });
