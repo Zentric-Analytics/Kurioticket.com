@@ -104,13 +104,14 @@ export function AdminOverviewAutoRefresh() {
   return null;
 }
 
-const rangeOptions: OverviewRange[] = ["today", "7d", "30d", "custom", "24h"];
+const standardRangeOptions: OverviewRange[] = ["today", "7d", "30d", "custom"];
 
 export function AdminOverviewRangeSelect({ period, nowDate }: { period: OverviewPeriod; nowDate: string }) {
   const transition = useContext(RangeTransitionContext);
   if (!transition) throw new Error("AdminOverviewRangeSelect must be inside AdminOverviewRangeTransitionProvider");
   const pending = transition.isUpdating;
   const { range } = period;
+  const rangeOptions = range === "24h" ? [...standardRangeOptions, "24h" as const] : standardRangeOptions;
   const requestedRange = transition.requestedPeriod?.range;
   const [open, setOpen] = useState(false);
   const [draftDates, setDraftDates] = useState<OverviewCustomDates | null>(null);
