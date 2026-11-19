@@ -77,7 +77,7 @@ test("Search Activity filters use one consistent boxed dropdown treatment and ex
   assert.equal((activity.match(/truncateLabel/g) || []).length, 4);
   assert.match(activity, /align="end" truncateLabel/);
   assert.match(activity, /name="applicationSource"/);
-  assert.match(activity, /name="range"/);
+  // The range input is owned by AdminOperationalDateRangeFields, checked below.
   assert.match(activity, /testId="search-records-date-range"/);
   assert.match(activity, /<AdminOperationalDateRangeFields/);
   assert.match(readFileSync("src/components/admin/AdminOperationalDateRangeFields.tsx", "utf8"), /<SearchMonitorSelect label="Date range" name="range"/);
