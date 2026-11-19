@@ -194,7 +194,7 @@ export function AdminOverviewSecondary({ system, activity }: { system: SystemSta
       <Section title="System Health" href="/admin/system">
         <PlatformSummary system={system} />
       </Section>
-      <Section title="Recent Admin Activity" href="/admin/logs" description="Latest three actions across all dates.">
+      <Section title="Recent Admin Activity" href="/admin/logs">
         <RecentActivity activity={activity} />
       </Section>
     </div>
@@ -204,14 +204,13 @@ export function AdminOverviewSecondary({ system, activity }: { system: SystemSta
 
 export function SearchPerformanceSummary({ data }: { data: OverviewData }) {
   return (
-    <Section title="Search Performance" href="/admin/searches/activity" description="All recorded search operations · selected range.">
+    <Section title="Search Performance" href="/admin/searches/activity">
               <div className="grid grid-cols-2 gap-1.5">
                 <MiniMetric label="Total" value={data.journeys.operationalSearches.total} />
                 <MiniMetric label="Successful" value={data.journeys.operationalSearches.success} tone="good" />
                 <MiniMetric label="Failed" value={data.journeys.operationalSearches.failed} tone={data.journeys.operationalSearches.failed ? "bad" : "neutral"} />
                 <MiniMetric label="Partial" value={data.journeys.operationalSearches.partial} />
               </div>
-              <p className="mt-2 text-[11px] text-slate-600">Includes unattributed searches; success does not guarantee offers.</p>
             </Section>
   );
 }
