@@ -230,49 +230,13 @@ export function AdminOverviewDashboard({ data, system, activity }: {
 
   return (
     <div className="min-w-0 space-y-3">
-      <section aria-label="Operations Snapshot" className="min-w-0">
-        <h2 className="mb-2 text-[16px] font-semibold tracking-tight text-slate-950">Operations Snapshot</h2>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <SnapshotLink href="/admin/users" label="Total accounts" value={data.users.total} icon={Users} hint="Current account records" />
-          <SnapshotLink href="/admin/users" label="Online Users" value={<OnlineUsersValue initial={data.onlinePresence} />} icon={Activity}
-            info={(
-              <ActivityDataInfo label="How Online Users are counted">
-                Activity in the last {data.onlinePresence.windowSeconds} seconds on the website, Admin panel, Android, and iOS.
-                Counts each verified account once across devices and each recognized guest session once.
-                A person can have multiple guest sessions.
-              </ActivityDataInfo>
-            )}
-          />
-        </div>
-      </section>
+      <section aria-label="Operations Snapshot" className="min-w-0 space-y-3">
+        <h2 className="text-[16px] font-semibold tracking-tight text-slate-950">Operations Snapshot</h2>
 
-      {/* Operational attention and outward handoffs form the same desktop row. */}
-      <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
-        <section aria-label="Attention Required" className="min-w-0 rounded-xl border border-slate-200 p-3 sm:p-4">
-            <h2 className="mb-2 text-[15px] font-semibold text-slate-950">Attention Required</h2>
-            <div className="grid gap-1.5">
-              <AttentionLink href="/admin/providers" label="Provider issues" value={providerAttention} icon={Activity} tone="bad" />
-              <AttentionLink href="/admin/support" label="Support queue" value={supportAttention} icon={Headphones} tone="warn" />
-              <AttentionLink href="/admin/account-deletions" label="Deletion reviews" value={deletionAttention} icon={Trash2} tone="warn" />
-            </div>
-            <p className="mt-2 text-[11px] leading-4 text-slate-600">Provider health: last 24 hours. Support and deletion queues: current.</p>
-          </section>
-        <AdminOverviewRangeSensitive fill>
-          <Section title="Provider Handoffs" href="/admin/redirects" description="Recorded outbound redirects · selected range.">
-              <div className="grid grid-cols-3 gap-1.5">
-                <MiniMetric label="Recorded" value={data.journeys.operationalHandoffs.total} />
-                <MiniMetric label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
-                <MiniMetric label="Unattributed" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
-              </div>
-              <p className="mt-2 text-[11px] text-slate-600">Redirects are not bookings. Missing attribution does not prove declined consent.</p>
-            </Section>
-        </AdminOverviewRangeSensitive>
-      </div>
-
-      {/* Keep remaining detailed summaries compact and accessible. */}
-      <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
-        <AdminOverviewRangeSensitive fill>
-          <Section title="Visitor Activity" href="/admin/journeys" description="Recorded consented events · selected range.">
+        {/* Customer activity and actual outbound provider handoffs share the snapshot row. */}
+        <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
+          <AdminOverviewRangeSensitive fill>
+            <Section title="Visitor Activity" href="/admin/journeys" description="Recorded consented events · selected range.">
               <div className="grid grid-cols-2 gap-1.5">
                 <MiniMetric label="Search events" value={stages.SEARCH_COMPLETED.events} />
                 <MiniMetric label="Results views" value={stages.RESULTS_VIEWED.events} />
@@ -281,8 +245,45 @@ export function AdminOverviewDashboard({ data, system, activity }: {
               </div>
               <p className="mt-2 text-[11px] text-slate-600">Events can repeat. Handoffs are not confirmed bookings.</p>
             </Section>
-        </AdminOverviewRangeSensitive>
-        <div className="flex min-w-0 flex-col gap-3">
+          </AdminOverviewRangeSensitive>
+          <AdminOverviewRangeSensitive fill>
+            <Section title="Provider Handoffs" href="/admin/redirects" description="Recorded outbound redirects · selected range.">
+              <div className="grid grid-cols-3 gap-1.5">
+                <MiniMetric label="Recorded" value={data.journeys.operationalHandoffs.total} />
+                <MiniMetric label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
+                <MiniMetric label="Unattributed" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
+              </div>
+              <p className="mt-2 text-[11px] text-slate-600">Redirects are not bookings. Missing attribution does not prove declined consent.</p>
+            </Section>
+          </AdminOverviewRangeSensitive>
+        </div>
+
+        {/* The two account totals sit beside Attention Required, not above it. */}
+        <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
+          <section aria-label="Attention Required" className="min-w-0 rounded-xl border border-slate-200 p-3 sm:p-4">
+            <h2 className="mb-2 text-[15px] font-semibold text-slate-950">Attention Required</h2>
+            <div className="grid gap-1.5">
+              <AttentionLink href="/admin/providers" label="Provider issues" value={providerAttention} icon={Activity} tone="bad" />
+              <AttentionLink href="/admin/support" label="Support queue" value={supportAttention} icon={Headphones} tone="warn" />
+              <AttentionLink href="/admin/account-deletions" label="Deletion reviews" value={deletionAttention} icon={Trash2} tone="warn" />
+            </div>
+            <p className="mt-2 text-[11px] leading-4 text-slate-600">Provider health: last 24 hours. Support and deletion queues: current.</p>
+          </section>
+          <div aria-label="Account snapshot" className="grid min-w-0 grid-cols-2 items-stretch gap-2">
+            <SnapshotLink href="/admin/users" label="Total accounts" value={data.users.total} icon={Users} hint="Current account records" />
+            <SnapshotLink href="/admin/users" label="Online Users" value={<OnlineUsersValue initial={data.onlinePresence} />} icon={Activity}
+              info={(
+                <ActivityDataInfo label="How Online Users are counted">
+                  Activity in the last {data.onlinePresence.windowSeconds} seconds on the website, Admin panel, Android, and iOS.
+                  Counts each verified account once across devices and each recognized guest session once.
+                  A person can have multiple guest sessions.
+                </ActivityDataInfo>
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
           <Section title="Support Workload" href="/admin/support">
             <div className="grid grid-cols-3 gap-1.5">
               <MiniMetric label="Open" value={data.support.open} />
@@ -298,7 +299,7 @@ export function AdminOverviewDashboard({ data, system, activity }: {
             </div>
           </Section>
         </div>
-      </div>
+      </section>
 
       <AdminOverviewSecondary system={system} activity={activity} />
     </div>
