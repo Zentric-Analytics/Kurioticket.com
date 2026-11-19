@@ -62,6 +62,8 @@ type OperationalHandoffRecord = {
   exactSearchLinks: Count;
   eligibleWithoutExactSearch: Count;
   withRequestId: Count;
+  flights: Count;
+  hotels: Count;
 };
 
 /** Shared SQL scope keeps every view on the same consent, ownership, date and environment rules. */
@@ -219,6 +221,8 @@ function operationalHandoffsSql(scope: AdminJourneyScope) {
     )
     SELECT
       count(*) AS "total",
+      count(*) FILTER (WHERE r."type"::text = 'FLIGHT') AS "flights",
+      count(*) FILTER (WHERE r."type"::text = 'HOTEL') AS "hotels",
       count(*) FILTER (WHERE r."visitorId" IS NOT NULL) AS "withVisitorIdentity",
       count(*) FILTER (WHERE r."visitorId" IS NULL) AS "withoutVisitorIdentity",
       count(*) FILTER (WHERE h."redirectLogId" IS NOT NULL) AS "inConsentedJourneys",
@@ -299,12 +303,15 @@ function summaryDto(
   const exactSearchLinks = count(handoffs.exactSearchLinks);
   const eligibleWithoutExactSearch = count(handoffs.eligibleWithoutExactSearch);
   const withRequestId = count(handoffs.withRequestId);
+  const flights = count(handoffs.flights);
+  const hotels = count(handoffs.hotels);
   // A broken aggregate must not turn missing data into a convincing zero.
   if (
     totalRedirects !== withVisitorIdentity + withoutVisitorIdentity ||
     totalRedirects !== inConsentedJourneys + outsideConsentedJourneys ||
     inConsentedJourneys !== exactSearchLinks + eligibleWithoutExactSearch ||
     withRequestId > totalRedirects ||
+    flights > totalRedirects || hotels > totalRedirects - flights ||
     inConsentedJourneys > withVisitorIdentity
   ) throw new Error("Inconsistent operational handoff coverage.");
   return {
@@ -321,6 +328,8 @@ function summaryDto(
       exactSearchLinks,
       eligibleWithoutExactSearch,
       withRequestId,
+      flights,
+      hotels,
     },
     operationalSearches: { scope: "environment_and_date_only", total: count(operational.total), success: count(operational.success), partial: count(operational.partial), failed: count(operational.failed), partialWithResults: count(operational.partialWithResults ?? 0), partialWithoutResults: count(operational.partialWithoutResults ?? 0) },
   };
