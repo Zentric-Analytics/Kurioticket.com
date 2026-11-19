@@ -13,8 +13,8 @@ export function SettingsHistoryRangeControl({
   const [selected, setSelected] = useState<SettingsHistoryRange>(range);
   const [from, setFrom] = useState(fromDate || "");
   const [to, setTo] = useState(toDate || "");
-  const valid = /^\\d{4}-\\d{2}-\\d{2}$/.test(from) &&
-    /^\\d{4}-\\d{2}-\\d{2}$/.test(to) &&
+  const valid = /^\d{4}-\d{2}-\d{2}$/.test(from) &&
+    /^\d{4}-\d{2}-\d{2}$/.test(to) &&
     from <= to && to <= today &&
     Date.parse(to) - Date.parse(from) < 90 * 86400000;
   return <>
