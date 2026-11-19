@@ -8,8 +8,13 @@ const queue = readFileSync("src/components/admin/AdminQueueLoadingState.tsx", "u
 const deletionPage = readFileSync("src/app/admin/account-deletions/page.tsx", "utf8");
 
 test("Support tabs and controls wrap directly above records, without Clear filters", () => {
-  assert.match(support, /aria-label="Support ticket status" className="flex min-w-0 max-w-full flex-wrap/);
-  assert.match(support, /className="flex min-w-0 max-w-full flex-1 flex-wrap/);
+  assert.match(support, /data-testid="support-status-filter-row"/);
+  assert.match(support, /data-testid="support-filter-controls"/);
+  assert.match(support, /2xl:flex-nowrap/);
+  assert.match(support, /sm:flex-nowrap/);
+  assert.match(support, /max-w-\[420px\]/);
+  assert.ok(support.indexOf('data-testid="support-search-row"') < support.indexOf('aria-label="Support ticket status"'));
+  assert.ok(support.indexOf('aria-label="Support ticket status"') < support.indexOf('data-testid="support-filter-controls"'));
   assert.match(support, /<Search size=\{17\}/);
   assert.match(support, /onSubmit=\{applyFilters\}/);
   assert.doesNotMatch(support, /Clear filters|clearFilters|overflow-x-auto|overflow-x-scroll/);
