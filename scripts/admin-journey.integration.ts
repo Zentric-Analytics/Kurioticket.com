@@ -291,7 +291,7 @@ test("observed stage metrics handle progressive ordering, repeated selections, m
     withVisitorIdentity: 3, withoutVisitorIdentity: 1,
     inConsentedJourneys: 1, outsideConsentedJourneys: 3,
     exactSearchLinks: 1, eligibleWithoutExactSearch: 0, withRequestId: 2,
-    flights: 1, hotels: 3,
+    flights: 1, hotels: 3, cars: 0,
   });
   assert.deepEqual(result.operationalSearches, { scope: "environment_and_date_only", total: 8, success: 4, partial: 2, failed: 2, partialWithResults: 2, partialWithoutResults: 0 });
   const detail = ok(await service.detail(j.id, window(8)));
