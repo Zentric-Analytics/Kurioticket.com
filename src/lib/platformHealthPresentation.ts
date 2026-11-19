@@ -7,10 +7,13 @@ export function parsePlatformHealthView(params: URLSearchParams): {
     period: "today" | "rolling";
     application: PlatformSelection;
 } | null {
-    if ([...params.keys()].some(key => !["hours", "application", "period"].includes(key)) || ["hours", "application", "period"].some(key => params.getAll(key).length > 1))
+    if ([...params.keys()].some(key => !["hours", "application", "period", "window"].includes(key)) || ["hours", "application", "period", "window"].some(key => params.getAll(key).length > 1))
         return null;
-    const hours = params.get("hours") ?? "24", application = params.get("application") ?? "ALL";
-    const period = params.get("period") ?? (params.has("hours") ? "rolling" : "today");
+    const selection = params.get("window");
+    if (selection !== null && (params.has("hours") || params.has("period"))) return null;
+    const hours = selection === "today" ? "24" : selection ?? params.get("hours") ?? "24";
+    const application = params.get("application") ?? "ALL";
+    const period = selection !== null ? (selection === "today" ? "today" : "rolling") : params.get("period") ?? (params.has("hours") ? "rolling" : "today");
     if (!["24", "168", "720"].includes(hours) || !["today", "rolling"].includes(period) ||
         (period === "today" && hours !== "24") || !platformOptions.some(option => option.value === application))
         return null;
