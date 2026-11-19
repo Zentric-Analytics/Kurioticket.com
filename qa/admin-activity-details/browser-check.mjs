@@ -194,7 +194,14 @@ try {
     // The summary has five metrics but no visible heading, info icon, or disclosure.
     await expect(outerCard.locator('section[aria-label="Activity summary"] button[aria-label="About activity data"]')).toHaveCount(0);
     await expect(outerCard.locator('section[aria-label="Activity summary"] [role="tooltip"]')).toHaveCount(0);
-    await expect(page.getByRole("button",{name:/Manage guest/})).toHaveCount(0);
+    const guestManage = page.getByRole("button",{name:/Manage guest/});
+    await expect(guestManage).toBeVisible();
+    await expect(guestManage).toHaveAttribute("aria-expanded","false");
+    await guestManage.click();
+    await expect(page.getByRole("menu",{name:"Guest management"})).toBeVisible();
+    await expect(page.getByRole("menuitem",{name:"Disable tracking"})).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(guestManage).toHaveAttribute("aria-expanded","false");
     await expect(page.getByRole("button",{name:"Apply Filter",exact:true})).toHaveCount(0);
     await expect(page.getByRole("button",{name:"Apply filters",exact:true})).toBeVisible();
     await expect(page.getByRole("button",{name:"Date range: All time"})).toBeVisible();
@@ -230,6 +237,11 @@ try {
     assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography);
     await page.screenshot({caret:"initial",path: output + "/after-desktop-zoom-equivalent-" + Math.round(zoom*100) + ".png",fullPage:true});
   }
+
+  // Operational-only guest sessions are not analytics identities and cannot disable tracking.
+  await page.goto(base + "/admin/users/guest/qa-operational-guest-0001/activity?range=all");
+  await expect(page.getByText("Essential operational activity")).toBeVisible();
+  await expect(page.getByRole("button",{name:/Manage guest/})).toHaveCount(0);
 
   // Registered accounts use the same fact grid, including protected-admin labels.
   await page.setViewportSize({width:1024,height:900});

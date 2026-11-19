@@ -101,7 +101,7 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     role: kind === "guest" ? null : "USER",
     status: kind === "guest" ? "Anonymous" : "ACTIVE",
     firstSeenAt: time(39), lastSeenAt: time(48), environment: "staging",
-    source: kind === "guest" ? "visitor" : "account",
+    source: kind === "guest" ? (id === "qa-operational-guest-0001" ? "operational" : "visitor") : "account",
     events: rows,
     summary,
     nextCursor,
