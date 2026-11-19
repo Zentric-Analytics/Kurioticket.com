@@ -4,6 +4,7 @@ import { ArrowLeft, Plane, Building2, CarFront } from "lucide-react";
 
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
 import { UserStatusActions } from "@/components/admin/UserStatusActions";
+import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
@@ -210,15 +211,17 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             <Fact label={kind === "guest" ? "First seen" : "Joined"} className="lg:border-l-0 lg:pl-2 2xl:pl-6"><HeaderTime at={data.firstSeenAt}/></Fact>
             <Fact label="Last active" className="lg:border-l-0 lg:pl-2 2xl:pl-6">{data.lastSeenAt ? <HeaderTime at={data.lastSeenAt}/> : "—"}</Fact>
             <Fact label="Events" testId="activity-events-fact"
-              className={"lg:border-l-0 lg:pl-6 " + (kind === "user" ? "lg:pr-28" : "")}>
+              className={"lg:border-l-0 lg:pl-6 " + (kind === "user" || data.source === "visitor" ? "lg:pr-28" : "")}>
               {data.events.length}
             </Fact>
           </dl>
 
-          {kind === "user" ? <div
+          {(kind === "user" || (kind === "guest" && data.source === "visitor")) ? <div
             className="flex min-w-0 justify-start lg:absolute lg:right-2 lg:top-1/2 lg:-translate-y-1/2"
             aria-label="Identity management">
-            <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
+            {kind === "guest"
+              ? <GuestTrackingActions visitorId={id} backHref={backHref} />
+              : <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>}
           </div> : null}
         </div>
       </section>
