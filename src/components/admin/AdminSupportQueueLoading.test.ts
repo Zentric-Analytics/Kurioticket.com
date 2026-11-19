@@ -10,11 +10,11 @@ const deletionPage = readFileSync("src/app/admin/account-deletions/page.tsx", "u
 test("Support tabs and controls wrap directly above records, without Clear filters", () => {
   assert.match(support, /data-testid="support-status-filter-row"/);
   assert.match(support, /data-testid="support-filter-controls"/);
-  assert.match(support, /2xl:flex-nowrap/);
-  assert.match(support, /sm:flex-nowrap/);
-  assert.match(support, /max-w-\[420px\]/);
+  assert.match(support, /lg:grid-cols-\[minmax\(0,2fr\)_repeat\(3,minmax\(0,1fr\)\)_120px\]/);
+  assert.match(support, /<AdminQueueDateSelect range=\{draftRange\}/);
+  assert.match(support, /<AdminQueueCustomDates range=\{draftRange\}/);
   assert.ok(support.indexOf('data-testid="support-search-row"') < support.indexOf('aria-label="Support ticket status"'));
-  assert.ok(support.indexOf('aria-label="Support ticket status"') < support.indexOf('data-testid="support-filter-controls"'));
+  assert.ok(support.indexOf('data-testid="support-filter-controls"') < support.indexOf('aria-label="Support ticket status"'));
   assert.match(support, /<Search size=\{17\}/);
   assert.match(support, /onSubmit=\{applyFilters\}/);
   assert.doesNotMatch(support, /Clear filters|clearFilters|overflow-x-auto|overflow-x-scroll/);
