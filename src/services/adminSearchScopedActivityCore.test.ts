@@ -168,6 +168,22 @@ test("unverified or contradictory provider handoffs never appear as selected-sea
   }
 });
 
+test("consented CAR search includes only exactly correlated car handoff", async () => {
+  const instance = reader({
+    search: searchRow({ type: "CAR" }),
+    events: [eventRow({
+      type: "PROVIDER_HANDOFF_STARTED", product: "CAR",
+      redirectLogId: "redirect_car01", redirectLog: { provider: "Kayak" }, provider: "Kayak",
+    })],
+  });
+  const result = await instance.read(searchId, urlParams());
+  assert.equal(result.status, "ok");
+  if (result.status === "ok") assert.deepEqual(result.data.events.map(event => event.stage), ["PROVIDER_HANDOFF_STARTED"]);
+  const where = (instance.inspected().eventQuery as { where: unknown }).where;
+  assert.match(JSON.stringify(where), /"type":"CAR"/);
+  assert.match(JSON.stringify(where), /"requestId"/);
+});
+
 test("pagination stays bound to the same search and environment", async () => {
   const events = Array.from({ length: 26 }, (_, index) => eventRow({
     id: "event_" + String(index).padStart(6, "0"),
