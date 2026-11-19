@@ -70,13 +70,13 @@ export function PreviewTesterRegistry({ testers }: { testers: Tester[] }) {
             ))}
           </div>
         </fieldset>
-        <div className="min-w-0 max-w-[680px] sm:col-span-2 lg:col-span-3">
-          <label htmlFor="team-add-reason" className="sr-only">Approval reason (optional)</label>
-          <input id="team-add-reason" name="reason" maxLength={500} placeholder="Approval reason (optional)"
-            className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] px-3 text-[13px] focus:border-[#004BB8] focus:outline-2 focus:outline-offset-1 focus:outline-[#004BB8]" />
-        </div>
-        <div className="sm:col-span-2 lg:col-span-3">
-          <Button type="submit">Add team member</Button>
+        <div data-testid="team-access-approval-actions" className="grid min-w-0 items-center gap-3 sm:col-span-2 sm:grid-cols-[minmax(0,1fr)_auto] lg:col-span-3">
+          <div className="min-w-0">
+            <label htmlFor="team-add-reason" className="sr-only">Approval reason (optional)</label>
+            <input id="team-add-reason" name="reason" maxLength={500} placeholder="Approval reason (optional)"
+              className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] px-3 text-[13px] focus:border-[#004BB8] focus:outline-2 focus:outline-offset-1 focus:outline-[#004BB8]" />
+          </div>
+          <Button type="submit" size="sm" className="h-10 w-full shrink-0 whitespace-nowrap px-4 sm:w-auto">Add team member</Button>
         </div>
       </form>
 
