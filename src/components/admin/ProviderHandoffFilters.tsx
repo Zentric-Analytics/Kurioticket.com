@@ -86,7 +86,7 @@ export function ProviderHandoffFilters({
         </>
       ) : null}
 
-      <div data-testid="provider-handoffs-filter-row" className="grid min-w-0 grid-cols-1 items-center gap-2 border-b border-[#D8E1EC] py-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[repeat(4,minmax(0,1fr))_132px] xl:gap-2.5">
+      <div data-testid="provider-handoffs-filter-row" className="grid min-w-0 grid-cols-1 items-center gap-2 border-b border-[#D8E1EC] py-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(4,minmax(0,1fr))_120px] lg:gap-2">
         <div className="min-w-0">
           <SearchMonitorSelect label="Provider" name="provider"
             value={initial.provider} options={providerOptions} appearance="fare"
