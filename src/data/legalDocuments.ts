@@ -9,7 +9,7 @@ import {
 
 const lastUpdated = "May 11, 2026";
 const legalNoticeLastUpdated = "June 28, 2026";
-const presencePolicyLastUpdated = "November 18, 2026";
+const presencePolicyLastUpdated = "November 19, 2026";
 
 const legalMonthNames: Record<string, string> = {
   "01": "January",
@@ -142,7 +142,7 @@ export const legalDocuments: LegalDocument[] = [
         paragraphs: [
           "Kurioticket may use cookies for authentication sessions, security, fraud prevention, preference storage, analytics, performance monitoring, and feature experiments.",
           "Some cookies are necessary for login, dashboard access, support tickets, saved travel features, security, and preferences. A short-lived operational search credential may be used for requested search-to-provider continuity independently of optional analytics consent. Necessary search and handoff records may be retained separately from that credential for troubleshooting, support and security in accordance with our retention policy.",
-          "Where permitted, the website uses a short-lived online presence cookie to avoid counting the same browser session twice in operational monitoring. It expires after 30 minutes and may renew while you are active.",
+          "Operational online-presence monitoring uses a short-lived signed credential held in page memory, not a separate online-presence cookie or browser storage entry. The credential is shared between active same-origin tabs where supported and expires when the page session ends; retained operational records expire on a short rolling window.",
         ],
       },
       {
