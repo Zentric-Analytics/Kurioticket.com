@@ -282,13 +282,13 @@ export function AdminOverviewRangeSelect({ period, nowDate }: { period: Overview
           <span className="sr-only" id={datePanelId}>Custom reporting dates</span>
           <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-600">
             From (UTC)
-            <AdminCalendarInput value={draftDates.fromDate} max={draftDates.toDate || nowDate}
+            <AdminCalendarInput ariaLabel="From (UTC)" value={draftDates.fromDate} max={draftDates.toDate || nowDate}
               onChange={(event) => setDraftDates({ ...draftDates, fromDate: event.target.value })}
               className="w-[180px] max-w-full" />
           </label>
           <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-600">
             To (UTC)
-            <AdminCalendarInput value={draftDates.toDate} min={draftDates.fromDate || undefined} max={nowDate}
+            <AdminCalendarInput ariaLabel="To (UTC)" value={draftDates.toDate} min={draftDates.fromDate || undefined} max={nowDate}
               onChange={(event) => setDraftDates({ ...draftDates, toDate: event.target.value })}
               className="w-[180px] max-w-full" />
           </label>
