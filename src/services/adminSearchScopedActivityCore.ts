@@ -121,9 +121,8 @@ export function createAdminSearchScopedActivityReader(deps: Dependencies) {
         : eligibleGuestVisitorWhere(search.visitorId);
 
       const cursor = pagination.cursor;
-      // RedirectLog supports FLIGHT and HOTEL only. CAR and PACKAGE searches
-      // can still show their own search events, but never match a handoff.
-      const handoffProduct = search.type === "FLIGHT" || search.type === "HOTEL" ? search.type : null;
+      // FLIGHT, HOTEL, and CAR can link to verified redirects; PACKAGE has no redirect type.
+      const handoffProduct = search.type === "FLIGHT" || search.type === "HOTEL" || search.type === "CAR" ? search.type : null;
       const where: Prisma.JourneyEventWhereInput = {
         searchHistoryId: search.id,
         metadata: { path: ["environment"], equals: environment },
