@@ -29,6 +29,14 @@ test("source page and unlinked breakdowns open matching scoped handoff records",
   assert.equal(unlinked.searchParams.get("from"), from);
 });
 
+test("Cars are accepted by referral navigation and unlinked handoff filters", () => {
+  const link = new URL(referralHandoffHref({ start: from, end: to, environment: "staging", product: "car" }), "https://example.test");
+  assert.equal(link.searchParams.get("product"), "CAR");
+  const unlinked = referralUnlinkedRecordsParams({ start: from, end: to, environment: "staging", product: "CAR" });
+  assert.equal(unlinked.get("product"), "CAR");
+  assert.equal(unlinked.get("correlation"), "unavailable");
+});
+
 test("detail and back URLs retain only allowed filters, with record environment enforced", () => {
   const raw = { from, to, provider: "Duffel", product: "FLIGHT", correlation: "exact", sourcePage: "/flight_details", cursor: "abc123", environment: "production", danger: "https://evil.test" };
   const detail = new URL(handoffDetailHref("redirect_123", "staging", raw), "https://example.test");
