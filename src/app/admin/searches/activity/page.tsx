@@ -9,6 +9,7 @@ import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegr
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
+import { ADMIN_REPORTING_RANGE_OPTIONS } from "@/lib/adminReportingRanges";
 import { SearchMonitorTable } from "@/components/admin/SearchMonitorTable";
 
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
@@ -79,12 +80,8 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                   <SearchMonitorSelect label="Date range" name="range" value={range}
                     appearance="fare"
                     options={[
-                      { value: "24h", label: "Last 24 hours" },
-                      { value: "7d", label: "Last 7 days" },
-                      { value: "30d", label: "Last 30 days" },
-                      { value: "all", label: "All time" },
+                      ...ADMIN_REPORTING_RANGE_OPTIONS,
                       ...(range === "today" ? [{ value: "today", label: "Today (legacy)" }] : []),
-                      ...(range === "custom" ? [{ value: "custom", label: "Custom" }] : []),
                     ]} truncateLabel />
                 </div>
                 <div className="min-w-0">
