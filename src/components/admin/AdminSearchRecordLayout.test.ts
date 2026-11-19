@@ -66,6 +66,8 @@ test("Provider Handoffs retains all ten fields without a horizontally scrolling 
   assert.match(handoffPage, /data-handoff-compact/);
   assert.match(handoffPage, /adminHandoffRoutePreview\(handoff.route\)/);
   assert.match(handoffPage, /handoffDetailHref\(handoff.id, handoff.environment, scopedRaw\)/);
-  assert.match(css, /@container \(min-width: 801px\) and \(max-width: 1050px\)/);
+  assert.match(css, /\.admin-handoff-records tbody > tr \{/);
+  assert.match(css, /display: table-row;/);
+  assert.doesNotMatch(css.slice(css.indexOf("/* Keep Provider Handoffs as"), css.indexOf("/* Display ten characters")), /grid-template-columns/);
   assert.match(css, /\.admin-handoff-records td \[data-handoff-route-preview\]/);
 });
