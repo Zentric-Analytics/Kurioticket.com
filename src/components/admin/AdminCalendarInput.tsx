@@ -258,3 +258,9 @@ export function AdminCalendarInput({
     </>
   );
 }
+
+/** Uncontrolled adapter for the legacy server-rendered trips records GET form. */
+export function AdminUncontrolledCalendarInput({ defaultValue = "", ...props }: Omit<Props, "value" | "onChange" | "onValueChange"> & { defaultValue?: string }) {
+  const [value, setValue] = useState(defaultValue);
+  return <AdminCalendarInput {...props} value={value} onValueChange={setValue} />;
+}
