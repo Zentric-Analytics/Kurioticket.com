@@ -269,7 +269,7 @@ export function AdminOverviewDashboard({ data, system, activity }: {
             </div>
             <p className="mt-2 text-[11px] leading-4 text-slate-600">Provider health: last 24 hours. Support and deletion queues: current.</p>
           </section>
-          <div aria-label="Account snapshot" className="grid min-w-0 grid-cols-2 items-stretch gap-2">
+          <div aria-label="Account snapshot" className="grid min-w-0 grid-cols-1 grid-rows-2 items-stretch gap-2">
             <SnapshotLink href="/admin/users" label="Total accounts" value={data.users.total} icon={Users} hint="Current account records" />
             <SnapshotLink href="/admin/users" label="Online Users" value={<OnlineUsersValue initial={data.onlinePresence} />} icon={Activity}
               info={(
