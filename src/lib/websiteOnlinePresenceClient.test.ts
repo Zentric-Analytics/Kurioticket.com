@@ -95,6 +95,26 @@ test("a visible tab starts and renews presence without interaction, then pauses 
   assert.equal(browser.requests.length, 4);
 });
 
+test("web presence bootstraps a memory-only credential and sends it back without a cookie", async t => {
+  const browser = browserHarness(t);
+  const token = "v1." + "a".repeat(36) + ".1234567890123.staging.web." + "b".repeat(43);
+  browser.setResponse(async () => {
+    const attempt = browser.requests.at(-1);
+    assert.equal(attempt?.init?.credentials, "same-origin");
+    assert.equal(attempt?.init?.headers && (attempt.init.headers as Record<string, string>)["x-kt-presence-session"],
+      browser.requests.length === 1 ? undefined : token);
+    return new Response(null, browser.requests.length === 1
+      ? { status: 202, headers: { "x-kt-presence-session": token } }
+      : { status: 204 });
+  });
+  const tracker = startWebsiteOnlinePresence(browser.windowFor());
+  t.after(tracker.dispose);
+  tracker.setIdentity("guest");
+  await browser.advance(1000);
+  assert.equal(browser.requests.length, 2, "the guest must return the issued token before being counted");
+  assert.equal(browser.requests[0].init?.headers, undefined);
+});
+
 test("heartbeats respect the cadence and a known identity change sends immediately", async t => {
   const browser = browserHarness(t);
   const tracker = startWebsiteOnlinePresence(browser.windowFor());
