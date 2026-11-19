@@ -1321,7 +1321,7 @@ test("desktop selected deal drives fare information and the Compare deals action
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   assert.match(source, /const activeOffer = selectedDeal\?\.offer \?\? selectedOffer/);
   assert.match(source, /<FarePanel activeTab=\{activeTab\} fare=\{selectedFare\} offer=\{activeOffer\}[\s\S]*?selectedDealOfferId=\{selectedDeal\?\.offerId \?\? null\}[\s\S]*?onSelectDeal=\{selectDeal\}/);
-  assert.match(source, /function selectDeal\(offerId: string, forHandoff = false\)\s*\{\s*setSelectedDealOfferId\(offerId\)/);
+  assert.match(source, /function selectDeal\(offerId: string, _forHandoff = false\)\s*\{\s*setSelectedDealOfferId\(offerId\)/);
   assert.match(source, /<MobileNativeFareInformationDeck[\s\S]*?activeOffer=\{activeOffer\}[\s\S]*?onViewDeal=\{continueToOffer\}/);
   assert.match(source, /onSelectDeal\(deal\.offerId, true\);\s*onViewDeal\(deal\.offerId\)/);
   assert.match(source, /tabIndex=\{selected \? 0 : -1\}/);

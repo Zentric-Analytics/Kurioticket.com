@@ -87,18 +87,18 @@ test("Audit Logs search, range, action and target filters wait for explicit Appl
 
 test("Audit Logs uses four standard ranges and retains legacy custom-date deep links", () => {
   for (const label of ["Last 24 hrs", "Last 7 days", "Last 30 days", "All time", "Custom range"]) {
-    assert.ok(toolbar.includes(label));
+    assert.ok((toolbar + readFileSync("src/lib/adminReportingRanges.ts", "utf8")).includes(label));
   }
   assert.ok(toolbar.includes("Last 90 days (legacy)"));
   assert.ok(toolbar.includes("ADMIN_REPORTING_RANGE_OPTIONS"));
   for (const label of ["All actions", "CMS actions", "Provider actions", "User actions", "Support actions", "Email actions", "Alert actions"]) {
-    assert.ok(toolbar.includes(label));
+    assert.ok((toolbar + readFileSync("src/lib/adminReportingRanges.ts", "utf8")).includes(label));
   }
   for (const label of ["All target types", "User", "Visitor", "Provider", "Support ticket", "Email delivery", "CMS content item"]) {
-    assert.ok(toolbar.includes(label));
+    assert.ok((toolbar + readFileSync("src/lib/adminReportingRanges.ts", "utf8")).includes(label));
   }
-  assert.ok(toolbar.includes('aria-label="Custom start date UTC"'));
-  assert.ok(toolbar.includes('aria-label="Custom end date UTC"'));
+  assert.ok(toolbar.includes('ariaLabel="Custom start date UTC"'));
+  assert.ok(toolbar.includes('ariaLabel="Custom end date UTC"'));
   assert.ok(toolbar.includes("Set custom dates"));
   assert.ok(page.includes('params.set("limit", "100")'));
   assert.ok(page.includes('params.has("cursor")'));

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Fragment, useCallback, useEffect, useId, useState } from "react";
+import { Fragment, useCallback, useEffect, useId, useState, useSyncExternalStore } from "react";
 import { ChevronDown, RefreshCw } from "lucide-react";
 
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
@@ -61,6 +61,15 @@ function validStatus(value: unknown): value is ProductSearchResult<never>["statu
   return value === "ok" || value === "invalid" || value === "forbidden" || value === "not_found" || value === "unavailable";
 }
 
+function subscribeLocationHash(onChange: () => void) {
+  window.addEventListener("hashchange", onChange);
+  window.addEventListener("popstate", onChange);
+  return () => {
+    window.removeEventListener("hashchange", onChange);
+    window.removeEventListener("popstate", onChange);
+  };
+}
+
 /** All product records, filters, pagination and diagnostics stay inside Providers.
  * Only the server-protected minimal record endpoints are used. */
 export function ProductSearchRecordsPanel({ product }: { product: ProviderProduct }) {
@@ -70,7 +79,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
   const [windowValue, setWindowValue] = useState<ProductSearchWindow>("today");
   // Draft selectors must never trigger a records request until Apply filters.
   const [draftFilter, setDraftFilter] = useState<ProductSearchFilter>("EXCEPTIONS");
-  const [draftWindow, setDraftWindow] = useState<ProductSearchWindow>("24h");
+  const [draftWindow, setDraftWindow] = useState<ProductSearchWindow>("today");
   const [pageIndex, setPageIndex] = useState(0);
   const [cursors, setCursors] = useState<Array<string | null>>([null]);
   const [reload, setReload] = useState(0);
@@ -88,19 +97,36 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
     setResult(null);
     setLoading(true);
   }, []);
-  useEffect(() => {
+  const locationHash = useSyncExternalStore(subscribeLocationHash, () => window.location.hash, () => "");
+  const bookmarkScope = JSON.stringify([sectionId, locationHash]);
+  const [previousBookmarkScope, setPreviousBookmarkScope] = useState(JSON.stringify([sectionId, ""]));
+  if (previousBookmarkScope !== bookmarkScope) {
+    setPreviousBookmarkScope(bookmarkScope);
     // Preserve existing bookmarked URLs without reintroducing a redundant header action.
-    if (window.location.hash === "#" + sectionId) {
+    if (locationHash === "#" + sectionId) {
       setFilter("ALL");
       setDraftFilter("ALL");
       resetPage();
     }
-  }, [sectionId, resetPage]);
+  }
+
+  const listScope = JSON.stringify([product, filter, windowValue, cursor, reload]);
+  const [previousListScope, setPreviousListScope] = useState(listScope);
+  if (previousListScope !== listScope) {
+    setPreviousListScope(listScope);
+    setLoading(true);
+  }
+  const detailScope = JSON.stringify([product, selectedId]);
+  const [previousDetailScope, setPreviousDetailScope] = useState(detailScope);
+  if (previousDetailScope !== detailScope) {
+    setPreviousDetailScope(detailScope);
+    setDetail(null);
+    setDetailLoading(Boolean(selectedId));
+  }
 
   useEffect(() => {
     const controller = new AbortController();
     let current = true;
-    setLoading(true);
     const params = new URLSearchParams({ product, filter, window: windowValue });
     if (cursor) params.set("cursor", cursor);
     void (async () => {
@@ -121,15 +147,9 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
   }, [product, filter, windowValue, cursor, reload]);
 
   useEffect(() => {
-    if (!selectedId) {
-      setDetail(null);
-      setDetailLoading(false);
-      return;
-    }
+    if (!selectedId) return;
     const controller = new AbortController();
     let current = true;
-    setDetailLoading(true);
-    setDetail(null);
     void (async () => {
       try {
         const params = new URLSearchParams({ product });

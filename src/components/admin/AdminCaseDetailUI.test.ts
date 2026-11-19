@@ -70,12 +70,12 @@ test("shared layout components render the expected semantic information and stat
   assert.match(milestone, /<dt/);
   assert.match(milestone, /<dd/);
   assert.match(milestone, /Nov 17, 2026/);
-  const section = renderToStaticMarkup(createElement(CaseSectionTitle, {id:"account-details", children:"Account information"}));
+  const section = renderToStaticMarkup(CaseSectionTitle({id:"account-details", children:"Account information"}));
   assert.match(section, /id="account-details"/);
-  const field = renderToStaticMarkup(createElement("dl", null, createElement(CaseInfoField, {label:"Request ID", children:"request_123", wide:true})));
+  const field = renderToStaticMarkup(createElement("dl", null, CaseInfoField({label:"Request ID", wide:true, children:"request_123"})));
   assert.match(field, /Request ID/);
   assert.match(field, /request_123/);
-  const asideField = renderToStaticMarkup(createElement("dl", null, createElement(CaseSidebarField, {label:"Priority", children:"Normal"})));
+  const asideField = renderToStaticMarkup(createElement("dl", null, CaseSidebarField({label:"Priority", children:"Normal"})));
   assert.match(asideField, /Priority/);
   assert.match(asideField, /Normal/);
 });

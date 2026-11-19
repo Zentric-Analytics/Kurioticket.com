@@ -55,15 +55,18 @@ export function AdminSupportToolbar({ query, status, priority, category, range, 
   const lastSubmittedRef = useRef<string | null>(null);
   const paramsRef = useRef(new URLSearchParams(pageHref.split("?")[1] || ""));
 
-  useEffect(() => {
-    paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
+  useEffect(() => { paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || ""); }, [pageHref]);
+  const CommittedSupportScope = JSON.stringify([pageHref, priority, category, range, from, to]);
+  const [previousCommittedSupportScope, setPreviousCommittedSupportScope] = useState(CommittedSupportScope);
+  if (previousCommittedSupportScope !== CommittedSupportScope) {
+    setPreviousCommittedSupportScope(CommittedSupportScope);
     setDraftPriority(priority);
     setDraftCategory(category);
     setDraftRange(range);
     setCustomFrom(localQueueDateTime(from));
     setCustomTo(localQueueDateTime(to));
     setDateError(null);
-  }, [pageHref, priority, category, range, from, to]);
+  }
 
   // Keep the search input synchronized on Back/Forward, as on Users.
   useEffect(() => {

@@ -8,12 +8,13 @@ const handoffPage = readFileSync("src/app/admin/redirects/page.tsx", "utf8");
 
 test("Search Records keeps all six filters together and product tabs below the filter row", () => {
   assert.match(searchPage, /data-testid="search-records-products-row"/);
-  assert.match(searchPage, /data-testid="search-records-date-range"/);
+  assert.match(searchPage, /testId="search-records-date-range"/);
   assert.match(searchPage, /data-testid="search-records-filter-row"/);
   assert.match(searchPage, /lg:grid-cols-\[repeat\(5,minmax\(0,1fr\)\)_120px\]/);
-  assert.equal((searchPage.match(/<SearchMonitorSelect label="Date range"/g) || []).length, 1);
-  assert.ok(searchPage.indexOf('data-testid="search-records-filter-row"') < searchPage.indexOf('data-testid="search-records-date-range"'));
-  assert.ok(searchPage.indexOf('data-testid="search-records-date-range"') < searchPage.indexOf('aria-label="Search products"'));
+  assert.equal((searchPage.match(/<AdminOperationalDateRangeFields/g) || []).length, 1);
+  assert.match(readFileSync("src/components/admin/AdminOperationalDateRangeFields.tsx", "utf8"), /data-testid=\{testId\}/);
+  assert.ok(searchPage.indexOf('data-testid="search-records-filter-row"') < searchPage.indexOf('testId="search-records-date-range"'));
+  assert.ok(searchPage.indexOf('testId="search-records-date-range"') < searchPage.indexOf('aria-label="Search products"'));
   assert.match(searchPage, /href=\{productHref\(raw, item.value, range\)\}/);
   assert.doesNotMatch(searchPage, /Search records only<\/p>/);
   assert.match(searchPage, /Apply filters/);

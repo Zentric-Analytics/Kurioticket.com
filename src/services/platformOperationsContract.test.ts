@@ -41,7 +41,7 @@ test("job observation updates one run, preserves task failure, and stores no pay
 function loadRoute(file: string, modules: Record<string, unknown>) {
   const exports: { GET: (request: Request) => Promise<Response> } = {} as never;
   runInNewContext(ts.transpileModule(readFileSync(file, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {
-    exports, Response, URL, Date, console: { error: () => undefined }, require: (name: string) => { assert.ok(name in modules, name); return modules[name]; },
+    exports, Response, URL, URLSearchParams, Date, console: { error: () => undefined }, require: (name: string) => { assert.ok(name in modules, name); return modules[name]; },
   });
   return exports.GET;
 }

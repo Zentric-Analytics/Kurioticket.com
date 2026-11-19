@@ -46,7 +46,7 @@ test("policies with the operational presence disclosures display their updated r
     const html = renderToStaticMarkup(
       createElement(LocaleProvider, null, createElement(LegalViewer, { document })),
     );
-    assert.match(html, /November 18, 2026/);
+    assert.match(html, /November 19, 2026/);
   }
 });
 

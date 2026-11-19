@@ -53,6 +53,9 @@ test("datetime calendar preserves time controls, clamps to strict UTC bounds and
     const trigger = page.getByRole("button", { name: "To (UTC)" });
     await trigger.click();
     const popup = page.getByRole("dialog", { name: "To (UTC)" });
+    await popup.getByRole("spinbutton", { name: "Hour" }).fill("25");
+    assert.notEqual(await popup.getByRole("gridcell", { name: "Friday, November 20, 2026" }).getAttribute("disabled"), null, "invalid hours cannot select a date");
+    assert.deepEqual(await page.evaluate("window.changes"), [], "invalid time never commits");
     await popup.getByRole("spinbutton", { name: "Hour" }).fill("23");
     await popup.getByRole("spinbutton", { name: "Minute" }).fill("45");
     await popup.getByRole("gridcell", { name: "Friday, November 20, 2026" }).click();

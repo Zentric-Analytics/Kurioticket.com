@@ -2,7 +2,7 @@
 
 import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition, type FormEvent, type ReactNode } from "react";
+import { useState, useTransition, type FormEvent, type ReactNode } from "react";
 
 import { AdminDirectorySelect } from "./AdminDirectorySelect";
 import { AdminQueueCustomDates, AdminQueueDateSelect } from "./AdminQueueDateControls";
@@ -44,14 +44,17 @@ export function AdminDeletionFilters({
   const [dateError, setDateError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
+  const CommittedDeletionScope = JSON.stringify([query, status, range, from, to]);
+  const [previousCommittedDeletionScope, setPreviousCommittedDeletionScope] = useState(CommittedDeletionScope);
+  if (previousCommittedDeletionScope !== CommittedDeletionScope) {
+    setPreviousCommittedDeletionScope(CommittedDeletionScope);
     setSearch(query);
     setDraftStatus(status);
     setDraftRange(range);
     setCustomFrom(localQueueDateTime(from));
     setCustomTo(localQueueDateTime(to));
     setDateError(null);
-  }, [query, status, range, from, to]);
+  }
 
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

@@ -2300,4 +2300,6 @@ export const translations: TranslationDictionary = {
   "deals.guided.handoff.refreshTitle": "One or more options need fresh results",
   "deals.guided.handoff.refreshBody": "Return to trip review and refresh the expired option before opening a handoff step.",
   flightSearchDestinationPlaceholderShort: 'Dokąd?',
+  "legal.privacy.sections.data-we-collect.paragraph3": "Aby zapewnić niezawodność usługi i reagować na incydenty, mierzymy niedawną aktywność w witrynie i aplikacjach. Wykorzystujemy krótkotrwałe dane uwierzytelniające sesji, informacje o platformie, czas ostatniej aktywności oraz — w przypadku zalogowania — odniesienie do sesji konta. Sygnały te służą do zliczania aktywnych sesji i eliminowania wielokrotnego zliczania zalogowanych kont. Pomiar ten jest niezależny od opcjonalnej analityki.",
+  "legal.cookiePolicy.sections.use.paragraph3": "Operacyjne monitorowanie obecności online wykorzystuje krótkotrwałe, podpisane dane uwierzytelniające przechowywane w pamięci strony, a nie osobny plik cookie ani wpis w pamięci przeglądarki. W obsługiwanych przeglądarkach dane te są współdzielone przez aktywne karty tego samego pochodzenia i wygasają po zakończeniu sesji strony; zachowane rekordy operacyjne wygasają w krótkim, ruchomym okresie retencji.",
 };

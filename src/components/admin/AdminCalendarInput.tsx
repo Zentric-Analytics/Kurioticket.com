@@ -73,7 +73,7 @@ function selectedCalendarValue(
   if (mode === "date") {
     return (!min || day >= min.slice(0, 10)) && (!max || day <= max.slice(0, 10)) ? day : null;
   }
-  if (!/^\\d{1,2}$/.test(hour) || !/^\\d{1,2}$/.test(minute)
+  if (!/^\d{1,2}$/.test(hour) || !/^\d{1,2}$/.test(minute)
       || Number(hour) > 23 || Number(minute) > 59) return null;
   const normalizedMin = min?.length === 10 ? min + "T00:00" : min;
   const normalizedMax = max?.length === 10 ? max + "T23:59" : max;
@@ -115,7 +115,7 @@ export function AdminCalendarInput({
     ? [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-")
     : now.toISOString().slice(0, 10);
   const timeValid = mode === "date" || (
-    /^\\d{1,2}$/.test(hour) && /^\\d{1,2}$/.test(minute) &&
+    /^\d{1,2}$/.test(hour) && /^\d{1,2}$/.test(minute) &&
     Number(hour) <= 23 && Number(minute) <= 59
   );
 

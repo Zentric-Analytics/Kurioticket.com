@@ -31,7 +31,8 @@ test("multiple-filter Journeys and Search Activity pages retain Apply-only submi
   assert.match(journeyControls, /ADMIN_REPORTING_RANGE_OPTIONS/);
   assert.match(journeyControls, /ADMIN_REPORTING_RANGE_OPTIONS/);
   assert.match(journeyControls, /ADMIN_REPORTING_RANGE_OPTIONS/);
-  assert.match(searchActivity, /ADMIN_REPORTING_RANGE_OPTIONS/);
+  assert.match(searchActivity, /<AdminOperationalDateRangeFields/);
+  assert.match(readFileSync("src/components/admin/AdminOperationalDateRangeFields.tsx", "utf8"), /ADMIN_REPORTING_RANGE_OPTIONS/);
   assert.match(searchActivity, /return "today"/);
   assert.match(searchActivity, /from\.setTime\(now\.getTime\(\) - 24 \* 60 \* 60 \* 1000\)/);
   assert.match(searchActivity, /<button type="submit"/);

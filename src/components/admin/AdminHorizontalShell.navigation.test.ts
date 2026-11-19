@@ -100,7 +100,7 @@ test("navigation keeps parent workspaces visible while child routes stay nested"
 
 
 test("Settings uses the same full-white workspace surface as other flat admin workspaces", () => {
-  assert.match(shell, /const settingsWorkspace = pathname === "\/admin\/settings" \|\| pathname\.startsWith\("\/admin\/settings\/"\);/);
+  assert.match(shell, /const settingsWorkspace = pathname === "\/admin\/settings" \|\| pathname\.startsWith\("\/admin\/settings\/"\) \|\| pathname === "\/admin\/preview-testers";/);
   assert.match(shell, /auditLogsWorkspace \|\| emailDeliveryWorkspace \|\| settingsWorkspace \|\| usersDirectory/);
   assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
 });
@@ -126,11 +126,11 @@ test("navbar search opens the dedicated global-search workspace", () => {
 test("global More sections dropdown is replaced with per-workspace navigation", () => {
   assert.doesNotMatch(shell, /function MoreAdminSections/);
   assert.doesNotMatch(shell, /getAdminMoreGroups/);
-  assert.match(shell, /function WorkspaceSectionNavigation/);
+  assert.match(shell, /function WorkspaceSidebar/);
   assert.match(shell, /getAdminWorkspaceSections\(pathname, role\)/);
-  assert.match(shell, /<WorkspaceSectionNavigation pathname=\{pathname\} role=\{role\}/);
-  assert.match(shell, /if \(pathname === "\/admin\/providers"/);
-  assert.match(shell, /isAdminWorkspaceSectionActive\(pathname, item\.href\)/);
+  assert.match(shell, /<WorkspaceSidebar pathname=\{pathname\} role=\{role\}/);
+  assert.match(shell, /const providerAttribution = pathname === "\/admin\/providers"/);
+  assert.match(shell, /isAdminWorkspaceSectionActive\(pathname, link\.href\)/);
 });
 
 test("Platform Health uses its independent top-level workspace rather than a System sidebar entry", () => {

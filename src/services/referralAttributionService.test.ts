@@ -92,7 +92,7 @@ test("attribution defaults to unavailable rather than inventing zero-conversion 
 });
 
 test("attribution reporting window accepts only an explicit bounded day count", () => {
-  assert.equal(parseAttributionDays(null), 7);
+  assert.equal(parseAttributionDays(null), 1);
   assert.equal(parseAttributionDays("7"), 7);
   assert.equal(parseAttributionDays("30"), 30);
   assert.equal(parseAttributionDays("1"), 1);

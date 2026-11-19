@@ -91,15 +91,18 @@ export function AdminUsersToolbar({
 
   // Navigations (tabs, Back/Forward, Apply) restore the authoritative URL.
   // Editing the search field or a dropdown never updates paramsRef or reloads data.
-  useEffect(() => {
-    paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
+  useEffect(() => { paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || ""); }, [pageHref]);
+  const CommittedUsersScope = JSON.stringify([pageHref, query, date, role, status, from, to]);
+  const [previousCommittedUsersScope, setPreviousCommittedUsersScope] = useState(CommittedUsersScope);
+  if (previousCommittedUsersScope !== CommittedUsersScope) {
+    setPreviousCommittedUsersScope(CommittedUsersScope);
     setSearchText(query);
     setDraftDate(date);
     setDraftRole(role);
     setDraftStatus(status);
     setDraftDates({ from, to });
     setDateError(null);
-  }, [pageHref, query, date, role, status, from, to]);
+  }
 
   useEffect(() => {
     const onHistoryNavigation = () => {

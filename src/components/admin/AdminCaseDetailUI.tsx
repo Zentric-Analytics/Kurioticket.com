@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import React, { type ReactNode } from "react";
 
 /** Presentation-only primitives shared by Support and Deletion Requests details.
  * Their permission checks, read services, forms and lifecycle actions stay in

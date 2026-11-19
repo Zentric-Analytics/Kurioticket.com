@@ -1215,8 +1215,16 @@ function MarketRouteInspector({
   // This is an in-memory view filter; refresh/readiness polling stays unchanged.
   const [draftScope, setDraftScope] = useState(selectedRouteScope);
   const [draftFilter, setDraftFilter] = useState(filter);
-  useEffect(() => { setDraftScope(selectedRouteScope); }, [selectedRouteScope]);
-  useEffect(() => { setDraftFilter(filter); }, [filter]);
+  const [previousRouteScope, setPreviousRouteScope] = useState(selectedRouteScope);
+  if (previousRouteScope !== selectedRouteScope) {
+    setPreviousRouteScope(selectedRouteScope);
+    setDraftScope(selectedRouteScope);
+  }
+  const [previousRouteFilter, setPreviousRouteFilter] = useState(filter);
+  if (previousRouteFilter !== filter) {
+    setPreviousRouteFilter(filter);
+    setDraftFilter(filter);
+  }
   const marketOptions = [
     { value: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE, label: "All" },
     ...publicGroups.map((group) => ({ value: group.marketCode, label: group.marketLabel })),

@@ -435,7 +435,7 @@ test("homepage fare operations links directly to content and flight providers wi
   assert.match(flights, /redirect\("\/admin\/searches\/activity\?product=FLIGHT"\)/);
   assert.match(navigation, /\{ href: "\/admin\/homepage-fares", label: "Homepage Fares"/);
   assert.doesNotMatch(navigation, /\{ href: "\/admin\/flights", label: "Flights"/);
-  assert.doesNotMatch(navigation, /href: "\/admin\/homepage-fares", parentHref:/);
+  assert.match(navigation, /href: "\/admin\/homepage-fares", parentHref: "\/admin\/providers"/);
 });
 
 test("homepage fare page header follows the compact Providers treatment", () => {
@@ -524,7 +524,7 @@ test("Readiness is a flat metrics strip with neutral status dots and authoritati
   assert.match(component, /aria-label="Fare readiness metrics"/);
   assert.match(component, /aria-label="Readiness metrics \(scroll horizontally on narrow screens\)"/);
   assert.match(component, /max-w-full overflow-x-auto overscroll-x-contain/);
-  assert.match(component, /grid min-w-\[920px\] grid-cols-5 gap-px border-y border-\[#D8E1EC\] bg-\[#E7ECF5\]/);
+  assert.match(component, /grid min-w-0 grid-cols-2 gap-px border-y border-\[#D8E1EC\] bg-\[#E7ECF5\] sm:grid-cols-3 lg:grid-cols-5/);
   assert.match(component, /tabIndex=\{0\}/);
   assert.doesNotMatch(component, /grid-cols-2 gap-px border-y border-\[#D8E1EC\] bg-\[#E7ECF5\] sm:grid-cols-3 xl:grid-cols-5/);
   assert.match(component, /whitespace-nowrap text-\[11px\] font-medium leading-5/);
@@ -655,8 +655,9 @@ test("fare subpages share Providers-style tabs with back navigation above the ta
   assert.match(nav, /aria-current=\{active === tab\.key \? "page" : undefined\}/);
   assert.match(nav, /active === tab\.key \? "border-\[#004BB8\]"/);
   assert.match(nav, /flex min-w-0 flex-wrap items-end gap-x-6 border-b/);
-  assert.match(provider, /aria-label="Provider reporting sections"/);
-  assert.match(provider, /border-b-2 px-1 text-\[13px\]/);
+  assert.match(readFileSync("src/lib/adminNavigation.ts", "utf8"), /href: "\/admin\/providers\?view=attribution"/);
+  assert.match(provider, /<ProviderDirectoryTable rows={directoryRows}/);
+  assert.match(provider, /<ProviderHealthWindowFilter/);
   assert.ok(nav.indexOf("Back to Homepage Fare Operations") < nav.indexOf('aria-label="Homepage fare sections"'));
   for (const page of [routes, diagnostics]) {
     assert.doesNotMatch(page, /<nav aria-label="Homepage fares pages"|<header className="flex flex-wrap items-start justify-between/);
