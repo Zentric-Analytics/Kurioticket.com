@@ -210,15 +210,12 @@ test("provider handoffs remain recorded redirects, never confirmed bookings", ()
   assert.match(prismaSchema, /enum RedirectType \{\s*FLIGHT\s*HOTEL\s*CAR\s*\}/);
 });
 
-test("Overview omits duplicate Provider Health but preserves live provider issue detection", () => {
+test("Overview omits duplicate Provider Health and distinguishes health from setup", () => {
   assert.doesNotMatch(display, /<Section title="Provider Health"/);
   assert.doesNotMatch(dashboard, /function ProviderSummary\(|function StatusBadge\(|function operationalTone\(|function operationalLabel\(/);
-  assert.match(display, /providerAttention = data\.providers\.filter/);
-  for (const state of ["DEGRADED", "FAILING", "NOT_READY"]) {
-    assert.ok(display.includes('p.operationalState === "' + state + '"'), state + " must still contribute to provider issues");
-  }
-  assert.match(display, /<AttentionLink href="\/admin\/providers" label="Provider issues" value=\{providerAttention\}/);
-  assert.match(display, /Provider health: last 24 hours\. Support and deletion queues: current\./);
+  assert.match(display, /summarizeAttentionRequired\(data\)/);
+  assert.match(display, /<AttentionLink href="\/admin\/providers" label="Provider health issues" value=\{attention\.providerHealthIssues\}/);
+  assert.match(display, /attention\.providerSetupIssues/);
   assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours, undefined, monitoringRange \?\? undefined\)/);
   assert.match(providersPage, /provider\.serviceBreakdown\.map/);
   assert.match(providersPage, /formatProviderFailureRatePct\(provider\.failureRatePct, provider\.failedCalls\)/);
