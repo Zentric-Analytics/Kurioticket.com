@@ -362,7 +362,7 @@ test("Task 3: referral attribution uses compact preset auto-apply and white metr
   assert.doesNotMatch(referralPage, /href=\{referralHandoffHref/);
   assert.match(inlineUnlinkedPanel, /referralUnlinkedRecordsParams/);
   assert.match(inlineUnlinkedPanel, /fetch\("\/api\/admin\/provider-handoffs\?" \+ params.toString\(\)/);
-  assert.match(inlineUnlinkedPanel, /aria-expanded=\{expanded\}/);
+  assert.doesNotMatch(inlineUnlinkedPanel, /aria-expanded=\{expanded\}|hidden=\{!expanded\}/);
   assert.match(inlineUnlinkedPanel, /aria-label="Unlinked provider handoff records"/);
   assert.match(inlineUnlinkedPanel, /aria-label="Unlinked handoff pagination"/);
   assert.match(inlineUnlinkedPanel, /setSelectedId\(current => current === handoff.id/);
