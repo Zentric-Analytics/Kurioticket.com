@@ -37,7 +37,7 @@ function coverage(overrides: Record<string, bigint> = {}) {
     total: BigInt(0), withVisitorIdentity: BigInt(0), withoutVisitorIdentity: BigInt(0),
     inConsentedJourneys: BigInt(0), outsideConsentedJourneys: BigInt(0),
     exactSearchLinks: BigInt(0), eligibleWithoutExactSearch: BigInt(0),
-    withRequestId: BigInt(0), flights: BigInt(0), hotels: BigInt(0), ...overrides,
+    withRequestId: BigInt(0), flights: BigInt(0), hotels: BigInt(0), cars: BigInt(0), ...overrides,
   };
 }
 
@@ -169,7 +169,7 @@ test("summary keeps distinct identities, stage observations, search outcomes and
     scope: "environment_and_date_only", total: 9,
     withVisitorIdentity: 5, withoutVisitorIdentity: 4,
     inConsentedJourneys: 5, outsideConsentedJourneys: 4,
-    exactSearchLinks: 5, eligibleWithoutExactSearch: 0, withRequestId: 5, flights: 6, hotels: 3,
+    exactSearchLinks: 5, eligibleWithoutExactSearch: 0, withRequestId: 5, flights: 6, hotels: 3, cars: 0,
   });
   assert.deepEqual(result.data.operationalSearches, { scope: "environment_and_date_only", total: 20, success: 15, partial: 3, failed: 2, partialWithResults: 1, partialWithoutResults: 2 });
   assert.doesNotThrow(() => JSON.stringify(result));
