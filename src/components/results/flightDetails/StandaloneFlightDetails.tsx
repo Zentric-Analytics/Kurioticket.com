@@ -165,15 +165,12 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   function selectFare(index: number) {
     const fare = fareChoices[index];
     if (!fare) return;
-    journeyEvents.offerSelected("flight", id, fare.offer.provider);
     setSelectedDealOfferId(null);
     setSelectedFareKey(fare.key);
   }
 
   function selectDeal(offerId: string, forHandoff = false) {
     setSelectedDealOfferId(offerId);
-    const deal = fareChoices.flatMap(fare => fare.deals).find(candidate => candidate.offerId === offerId);
-    if (!forHandoff && deal) journeyEvents.offerSelected("flight", id, deal.providerName);
   }
 
   function handleFareKeyDown(
