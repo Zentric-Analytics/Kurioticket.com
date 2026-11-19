@@ -61,10 +61,10 @@ try{
   const windowSelect=page.getByRole('combobox',{name:'Activity window',exact:true});
   await windowSelect.click();
   await page.getByRole('listbox',{name:'Activity window'}).getByRole('option',{name:'Last 7 days'}).click();
-  await expect(page.locator('form[aria-label="Platform health filters"] input[name="hours"]')).toHaveValue('168');
+  await expect(page.locator('form[aria-label="Platform health filters"] input[name="window"]')).toHaveValue('168');
   await page.getByRole('button',{name:'Apply view',exact:true}).click();
   await expect(page).toHaveURL(/application=IOS/);
-  await expect(page).toHaveURL(/hours=168/);
+  await expect(page).toHaveURL(/window=168/);
   await expect(page.getByRole('heading',{name:'iOS activity'})).toBeVisible();
   const overflow=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth}));expect(overflow.document).toBeLessThanOrEqual(width+1);
   const runningMotion=await page.locator('[data-platform-health]').evaluate(el=>el.getAnimations({subtree:true}).filter(a=>a.playState==='running').length);expect(runningMotion).toBe(0);
