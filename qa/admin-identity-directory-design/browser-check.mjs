@@ -32,7 +32,7 @@ try {
     await page.goto(url);
     await expect(search()).toHaveAttribute("placeholder", "Search by name, email, user ID, or guest ID");
     await expect(combo("Sort by")).toHaveCount(0);
-    await expect(combo("Date range")).toContainText("Last 24 hrs");
+    await expect(combo("Date range")).toContainText("Today");
     await expect(combo("Account role")).toContainText("All roles");
     await expect(combo("Account status")).toContainText("All statuses");
     await expect(tabs().getByRole("link", {name:"All (30)"})).toHaveAttribute("aria-current","page");
