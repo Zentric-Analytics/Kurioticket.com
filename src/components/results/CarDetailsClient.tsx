@@ -258,7 +258,7 @@ export function CarDetailsExperience({
           kind: "sandbox-handoff",
           label: copy("carDetails.continueDeal"),
           href: selectedSandboxHref,
-          onClick: () => recordCarHandoffClick(car.id, primaryOffer!.id, "car-details"),
+          onClick: () => recordCarHandoffClick(car.id, primaryOffer!.id, "car-details", requestId),
         }
       : {
           kind: "standalone-disabled-provider",
@@ -275,7 +275,7 @@ export function CarDetailsExperience({
           kind: "sandbox-handoff",
           label: copy("carDetails.continueDeal"),
           href,
-          onClick: () => recordCarHandoffClick(car.id, offer.id, "car-details"),
+          onClick: () => recordCarHandoffClick(car.id, offer.id, "car-details", requestId),
         }
       : {
           kind: "standalone-disabled-provider",
@@ -996,10 +996,12 @@ export function CarDetailsClient({
   car,
   search,
   resultsHref,
+  requestId,
 }: {
   car: NormalizedCarResult;
   search: LocationBoundCarSearchParams;
   resultsHref: string;
+  requestId?: string | null;
 }) {
   const { t } = useLocale();
   const { start: startRouteProgress } = useRouteProgress();
@@ -1037,7 +1039,7 @@ export function CarDetailsClient({
         kind: "sandbox-handoff",
         label: copy("carDetails.continueDeal"),
         href: sandboxHref,
-        onClick: () => recordCarHandoffClick(car.id, getPrimaryCarOffer(car)!.id, "car-details"),
+        onClick: () => recordCarHandoffClick(car.id, getPrimaryCarOffer(car)!.id, "car-details", requestId),
       }
     : {
         kind: "standalone-disabled-provider",
