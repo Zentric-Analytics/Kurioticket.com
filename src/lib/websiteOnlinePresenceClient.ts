@@ -1,5 +1,7 @@
 import { onlinePresenceHeartbeatMs as heartbeatMs } from "./onlinePresence";
 
+const presenceTokenHeader = "x-kt-presence-session";
+
 const requestTimeoutMs = 8_000;
 const channelName = "kurioticket:online-presence";
 
@@ -7,7 +9,7 @@ type Browser = Pick<Window, "navigator" | "document" | "addEventListener" | "rem
   BroadcastChannel?: typeof BroadcastChannel;
 };
 
-type TabUpdate = { acceptedAt: number; retryAt: number; pendingUntil?: number };
+type TabUpdate = { acceptedAt: number; retryAt: number; pendingUntil?: number; credential?: string };
 
 function retryAfter(value: string | null, now: number) {
   if (!value) return 0;
@@ -31,7 +33,12 @@ export function startWebsiteOnlinePresence(browser: Browser) {
   let locks: LockManager | undefined = browser.navigator.locks;
   const channel = openChannel(browser);
   const fallbackJitter = Math.floor(80 + Math.random() * 220);
-  let lockAvailableAt = locks ? 0 : Date.now() + fallbackJitter;
+  // Give existing tabs a short BroadcastChannel round-trip to share their credential
+  // before a new tab can create a second anonymous source.
+  const initialSyncDelayMs = channel ? 400 : 0;
+  let lockAvailableAt = Date.now() + Math.max(initialSyncDelayMs, locks ? 0 : fallbackJitter);
+  // Memory-only credential shared among active same-origin tabs. Never persisted.
+  let credential: string | null = null;
   let acceptedAt = 0;
   let serverRetryAt = 0;
   let pendingUntil = 0;
@@ -67,7 +74,13 @@ export function startWebsiteOnlinePresence(browser: Browser) {
   }
 
   function publish(update: TabUpdate) {
-    if (!disposed) channel?.postMessage(update);
+    if (!disposed) channel?.postMessage({ ...update, ...(credential ? { credential } : {}) });
+  }
+
+  function rememberCredential(response: Response) {
+    const supplied = response.headers.get(presenceTokenHeader);
+    if (!supplied || supplied.length > 150 || !/^v1\.[\w.-]+$/.test(supplied)) return;
+    credential = supplied;
   }
 
   async function post() {
@@ -87,18 +100,24 @@ export function startWebsiteOnlinePresence(browser: Browser) {
         cache: "no-store",
         referrerPolicy: "origin",
         signal: controller.signal,
+        ...(credential ? { headers: { [presenceTokenHeader]: credential } } : {}),
       });
       let response = await heartbeat();
+      if (response.status === 202) rememberCredential(response);
       if (response.status === 202) {
-        // Bootstrap only provisions the cookie. Count presence after the browser sends it back.
+        // Bootstrap only issues the in-memory credential. Count presence after the browser returns it.
         if (controller.signal.aborted || !eligible()) return;
         response = await heartbeat();
+        if (response.status === 202) rememberCredential(response);
         if (response.status === 202) {
           serverRetryAt = Math.max(serverRetryAt, Date.now() + 2 * heartbeatMs);
           return;
         }
       }
-      if (response.status === 204) acceptedAt = Math.max(acceptedAt, now);
+      if (response.status === 204) {
+        rememberCredential(response);
+        acceptedAt = Math.max(acceptedAt, now);
+      }
       if (response.status === 429 || response.status === 503) {
         const retryAt = retryAfter(response.headers.get("Retry-After"), Date.now());
         if (retryAt > Date.now()) {
@@ -143,12 +162,15 @@ export function startWebsiteOnlinePresence(browser: Browser) {
     channel.onmessage = (event: MessageEvent<TabUpdate | "sync">) => {
       if (event.data === "sync") {
         const heldUntil = !locks && request ? attemptedAt + requestTimeoutMs : undefined;
-        if (acceptedAt || serverRetryAt || heldUntil) {
+        if (acceptedAt || serverRetryAt || heldUntil || credential) {
           publish({ acceptedAt, retryAt: serverRetryAt, pendingUntil: heldUntil });
         }
         return;
       }
       if (!event.data || typeof event.data !== "object") return;
+      if (typeof event.data.credential === "string" && event.data.credential.length <= 150 && /^v1\.[\w.-]+$/.test(event.data.credential)) {
+        credential = event.data.credential;
+      }
       if (Number.isFinite(event.data.acceptedAt) && event.data.acceptedAt <= Date.now()) {
         acceptedAt = Math.max(acceptedAt, event.data.acceptedAt);
       }

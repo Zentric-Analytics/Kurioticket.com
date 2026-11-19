@@ -95,6 +95,26 @@ test("a visible tab starts and renews presence without interaction, then pauses 
   assert.equal(browser.requests.length, 4);
 });
 
+test("web presence bootstraps a memory-only credential and sends it back without a cookie", async t => {
+  const browser = browserHarness(t);
+  const token = "v1." + "a".repeat(36) + ".1234567890123.staging.web." + "b".repeat(43);
+  browser.setResponse(async () => {
+    const attempt = browser.requests.at(-1);
+    assert.equal(attempt?.init?.credentials, "same-origin");
+    assert.equal(attempt?.init?.headers && (attempt.init.headers as Record<string, string>)["x-kt-presence-session"],
+      browser.requests.length === 1 ? undefined : token);
+    return new Response(null, browser.requests.length === 1
+      ? { status: 202, headers: { "x-kt-presence-session": token } }
+      : { status: 204 });
+  });
+  const tracker = startWebsiteOnlinePresence(browser.windowFor());
+  t.after(tracker.dispose);
+  tracker.setIdentity("guest");
+  await browser.advance(1000);
+  assert.equal(browser.requests.length, 2, "the guest must return the issued token before being counted");
+  assert.equal(browser.requests[0].init?.headers, undefined);
+});
+
 test("heartbeats respect the cadence and a known identity change sends immediately", async t => {
   const browser = browserHarness(t);
   const tracker = startWebsiteOnlinePresence(browser.windowFor());
@@ -150,7 +170,7 @@ test("browser-identified webdriver automation sends no heartbeat", async t => {
   assert.equal(browser.requests.length, 0);
 });
 
-test("concurrent tabs serialize first-cookie issuance and share one send cadence", async t => {
+test("concurrent tabs serialize first credential issuance and share one send cadence", async t => {
   let taken = false;
   const locks = {
     async request(name: string, options: { ifAvailable: boolean }, enter: LockGrantedCallback<unknown>) {
@@ -176,7 +196,7 @@ test("concurrent tabs serialize first-cookie issuance and share one send cadence
   first.setResponse(() => response.promise);
   first.gesture();
   second.gesture();
-  await first.advance(2);
+  await first.advance(500);
   assert.equal(first.requests.length, 1);
   assert.equal(second.requests.length, 0);
   response.resolve(new Response(null, { status: 204 }));
@@ -191,7 +211,35 @@ test("concurrent tabs serialize first-cookie issuance and share one send cadence
   assert.equal(second.requests.length, 1);
 });
 
-test("a tab without Web Locks waits for current cookie issuance and can retry when it fails", async t => {
+test("a new tab reuses the first tab's credential before creating another guest", async t => {
+  const token = "v1." + "a".repeat(36) + ".1234567890123.staging.web." + "b".repeat(43);
+  const transport = { BroadcastChannel: tabBroadcastChannel() };
+  const first = browserHarness(t);
+  first.setResponse(async () => new Response(null, first.requests.length === 1
+    ? { status: 202, headers: { "x-kt-presence-session": token } }
+    : { status: 204 }));
+  const firstTracker = startWebsiteOnlinePresence({ ...first.windowFor(), ...transport });
+  t.after(firstTracker.dispose);
+  firstTracker.setIdentity("guest");
+  await first.advance(1000);
+  assert.equal(first.requests.length, 2);
+
+  const second = browserHarness(t, {}, false);
+  const secondTracker = startWebsiteOnlinePresence({ ...second.windowFor(), ...transport });
+  t.after(secondTracker.dispose);
+  secondTracker.setIdentity("guest");
+  // BroadcastChannel delivery is queued as a microtask. Deliver the shared
+  // credential before advancing the mocked clock past the sync grace.
+  await first.advance(0);
+  await first.advance(1000);
+  assert.equal(second.requests.length, 0, "the existing credential should suppress a new guest bootstrap");
+  firstTracker.dispose();
+  await first.advance(31_000);
+  assert.equal(second.requests.length, 1);
+  assert.equal((second.requests[0].init?.headers as Record<string, string>)["x-kt-presence-session"], token);
+});
+
+test("a tab without Web Locks waits for current credential issuance and can retry when it fails", async t => {
   const transport = { BroadcastChannel: tabBroadcastChannel() };
   const first = browserHarness(t);
   const firstTracker = startWebsiteOnlinePresence({ ...first.windowFor(), ...transport });

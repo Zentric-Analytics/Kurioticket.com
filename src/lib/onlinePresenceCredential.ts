@@ -1,7 +1,6 @@
 import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 
-export const presenceCookieName = "kt_online_presence";
 export const presenceTokenHeader = "x-kt-presence-session";
 export const presenceCredentialTtlSeconds = 30 * 60;
 const renewBeforeMs = 5 * 60_000;
@@ -18,10 +17,6 @@ type CredentialContext = {
 export function presenceSigningSecret() {
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   return secret && secret.length >= 32 ? secret : undefined;
-}
-
-export function isWebsiteOnlinePresenceEnabled() {
-  return process.env.ONLINE_PRESENCE_WEB_ENABLED === "true";
 }
 
 export function hasConsistentWebsitePresenceOrigin(...urls: Array<string | undefined>) {
