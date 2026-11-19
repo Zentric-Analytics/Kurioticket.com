@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
+import { AdminCalendarInput } from "@/components/admin/AdminCalendarInput";
 
 type Props = {
   product: string;
@@ -61,24 +62,25 @@ export function ProviderHealthWindowFilter({ product, hours, custom }: Props) {
     startTransition(() => router.replace("/admin/providers?" + params.toString(), { scroll: false }));
   }
   return (
-    <div className="flex min-w-0 flex-col items-end gap-2">
+    <div className="relative flex min-w-0 flex-col items-end gap-2">
       <SearchMonitorSelect label="Date range" name="hours" value={selection}
         options={options} appearance="plain" align="end" onValueChange={select} />
       {selection === "custom" ? (
-        <div className="flex max-w-full flex-wrap items-end justify-end gap-2 text-[12px]">
-          <label className="flex flex-col gap-1 text-[#475569]">From
-            <input type="date" value={from} onChange={event => setFrom(event.target.value)}
-              className="h-9 border border-[#D8E1EC] bg-white px-2 text-[13px] text-[#020617]" />
+        <div className="absolute right-0 top-full z-30 mt-2 flex w-[min(450px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] flex-wrap items-end justify-end gap-2 rounded-xl border border-[#D8E1EC] bg-white p-3 text-[12px] shadow-[0_12px_36px_-12px_rgba(2,6,23,0.24)]">
+          <label className="flex min-w-0 flex-1 flex-col gap-1 text-[#475569]">From (UTC)
+            <AdminCalendarInput value={from} onChange={setFrom} max={to || new Date().toISOString().slice(0, 10)} ariaLabel="Provider health start date UTC" className="w-full" />
           </label>
-          <label className="flex flex-col gap-1 text-[#475569]">To
-            <input type="date" value={to} min={from || undefined} max={new Date().toISOString().slice(0, 10)}
-              onChange={event => setTo(event.target.value)}
-              className="h-9 border border-[#D8E1EC] bg-white px-2 text-[13px] text-[#020617]" />
+          <label className="flex min-w-0 flex-1 flex-col gap-1 text-[#475569]">To (UTC)
+            <AdminCalendarInput value={to} onChange={setTo} min={from || undefined} max={new Date().toISOString().slice(0, 10)} ariaLabel="Provider health end date UTC" className="w-full" />
           </label>
-          <button type="button" onClick={apply} disabled={pending || !from || !to}
-            className="h-9 bg-[#111827] px-4 text-[13px] font-medium text-white disabled:opacity-50">
-            {pending ? "Applying…" : "Apply range"}
-          </button>
+          <div className="flex w-full justify-end gap-2 pt-1">
+            <button type="button" onClick={() => { setSelection(custom ? "custom" : String(hours)); setError(""); }}
+              className="h-9 rounded-lg border border-[#D8E1EC] px-3 text-[13px] font-medium text-[#475569] hover:bg-[#F8FAFC]">Cancel</button>
+            <button type="button" onClick={apply} disabled={pending || !from || !to}
+              className="h-9 rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-50">
+              {pending ? "Applying…" : "Apply range"}
+            </button>
+          </div>
         </div>
       ) : null}
       {error ? <p role="alert" className="text-[12px] text-rose-700">{error}</p> : null}
