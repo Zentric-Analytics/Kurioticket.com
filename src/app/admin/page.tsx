@@ -50,7 +50,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </div>
           {reporting.invalidCustom ? (
             <p role="alert" className="mb-3 text-xs text-rose-800">
-              Choose valid UTC dates within a 90-day range. Showing the last 24 hours.
+              Choose valid UTC dates within a 90-day range. Showing today (UTC).
             </p>
           ) : null}
           <div className="mb-3 grid min-w-0 items-stretch gap-3 lg:grid-cols-2">

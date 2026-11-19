@@ -7,8 +7,9 @@ import type { PlatformOperations } from "./PlatformHealthDashboard";
 
 type Feedback = "idle" | "success" | "error";
 
-export function PlatformHealthRefresh({ hours, lastRefreshedAt, onRefreshed }: {
+export function PlatformHealthRefresh({ hours, period = "rolling", lastRefreshedAt, onRefreshed }: {
   hours: number;
+  period?: "today" | "rolling";
   lastRefreshedAt: string;
   onRefreshed: (fresh: PlatformOperations) => void;
 }) {
@@ -31,7 +32,7 @@ export function PlatformHealthRefresh({ hours, lastRefreshedAt, onRefreshed }: {
     controllerRef.current = controller;
     const timeout = window.setTimeout(() => controller.abort(), 30_000);
     try {
-      const response = await fetch("/api/admin/platform-operations?hours=" + hours, {
+      const response = await fetch("/api/admin/platform-operations?hours=" + hours + (period === "today" ? "&period=today" : ""), {
         method: "GET",
         headers: { Accept: "application/json" },
         credentials: "same-origin",
@@ -41,7 +42,7 @@ export function PlatformHealthRefresh({ hours, lastRefreshedAt, onRefreshed }: {
       if (response.status === 401) throw new Error("Your session has expired. Sign in again to refresh.");
       if (response.status === 403) throw new Error("Your session cannot access these observations.");
       if (!response.ok) throw new Error("The monitoring service could not refresh. Please try again.");
-      const fresh = parsePlatformRefreshSnapshot(await response.json(), hours);
+      const fresh = parsePlatformRefreshSnapshot(await response.json(), hours, period);
       if (!fresh) throw new Error("The monitoring response was incomplete. Please try again.");
       if (controller.signal.aborted) return;
       onRefreshed(fresh);

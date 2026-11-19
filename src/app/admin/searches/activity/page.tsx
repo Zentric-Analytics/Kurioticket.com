@@ -76,7 +76,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                   initialFrom={one(raw.from)}
                   initialTo={one(raw.to)}
                   now={new Date().toISOString()}
-                  legacyOptions={range === "today" ? [{ value: "today", label: "Today (legacy)" }] : []}
+                  legacyOptions={range === "24h" ? [{ value: "24h", label: "Last 24 hrs (legacy)" }] : []}
                 />
                 <div className="min-w-0">
                   <SearchMonitorSelect label="Outcome" appearance="fare" name="status"
@@ -188,8 +188,8 @@ function resolveRange(raw: Record<string, string | string[] | undefined>): Range
   const requested = one(raw.range);
   if (requested === "24h" || requested === "today" || requested === "7d" || requested === "30d" || requested === "all") return requested;
   if (one(raw.from) || one(raw.to)) return "custom";
-  const hasLegacyScope = Object.entries(raw).some(([key, value]) => key !== "range" && Boolean(Array.isArray(value) ? value.length : value));
-  return hasLegacyScope ? "all" : "24h";
+  // Filter-only URLs remain scoped to Today; explicit legacy ranges and date bounds are preserved above.
+  return "today";
 }
 
 function toBackendParams(raw: Record<string, string | string[] | undefined>, range: RangeKey) {

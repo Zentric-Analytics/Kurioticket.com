@@ -1,6 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 
-export type SettingsHistoryRange = "24h" | "7d" | "30d" | "90d" | "all" | "custom";
+export type SettingsHistoryRange = "today" | "24h" | "7d" | "30d" | "90d" | "all" | "custom";
 export type SettingsHistoryCategory = "all" | "product" | "automation" | "team" | "legacy";
 export type SettingsHistoryDetail = { label: string; value: string };
 export type SettingsHistoryEntry = {
@@ -31,7 +31,7 @@ type Database = Pick<PrismaClient, "adminAuditLog">;
 type Dependencies = { authorize: () => Promise<boolean>; database: () => Database | null; now?: () => Date };
 type Position = { at: string; id: string };
 type Scope = { range: SettingsHistoryRange; category: SettingsHistoryCategory; from: string; to: string };
-const windows: Record<Exclude<SettingsHistoryRange, "all" | "custom">, number> = {
+const windows: Record<Exclude<SettingsHistoryRange, "all" | "custom" | "today">, number> = {
   "24h": 24 * 60 * 60 * 1000,
   "7d": 7 * 24 * 60 * 60 * 1000,
   "30d": 30 * 24 * 60 * 60 * 1000,
@@ -147,7 +147,7 @@ function customScopeDates(query: SettingsQuery, now: Date) {
 }
 
 function scopeFor(query: SettingsQuery, now: Date): { scope: Scope; position: Position | null } | null {
-  if (!(query.range in windows || query.range === "all" || query.range === "custom") ||
+  if (!(query.range in windows || query.range === "today" || query.range === "all" || query.range === "custom") ||
     !categories.includes(query.category) || (query.limit !== undefined && query.limit !== 6 && query.limit !== 25)) return null;
   const custom = query.range === "custom" ? customScopeDates(query, now) : null;
   if (query.range === "custom" && !custom) return null;
@@ -169,6 +169,9 @@ function scopeFor(query: SettingsQuery, now: Date): { scope: Scope; position: Po
         if (payload.from !== "1970-01-01T00:00:00.000Z") return null;
       } else if (query.range === "custom") {
         if (!custom || payload.from !== custom.from || Date.parse(payload.to) > Date.parse(custom.to)) return null;
+      } else if (query.range === "today") {
+        const utcStart = new Date(Date.UTC(new Date(to).getUTCFullYear(), new Date(to).getUTCMonth(), new Date(to).getUTCDate())).toISOString();
+        if (payload.from !== utcStart) return null;
       } else if (to - from !== windows[query.range as keyof typeof windows]) return null;
       scope = payload;
       position = { at: new Date(at).toISOString(), id: decoded.id };
@@ -179,7 +182,11 @@ function scopeFor(query: SettingsQuery, now: Date): { scope: Scope; position: Po
       ? { range: "all", category: query.category, from: "1970-01-01T00:00:00.000Z", to: now.toISOString() }
       : query.range === "custom" && custom
         ? { range: "custom", category: query.category, ...custom }
-        : { range: query.range, category: query.category, from: new Date(to - windows[query.range as keyof typeof windows]).toISOString(), to: now.toISOString() };
+        : { range: query.range, category: query.category,
+            from: (query.range === "today"
+              ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+              : new Date(to - windows[query.range as keyof typeof windows])).toISOString(),
+            to: now.toISOString() };
   }
   return { scope, position };
 }

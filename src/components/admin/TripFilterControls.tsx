@@ -106,7 +106,7 @@ export function TripFilterControls({ filters, range, providerNames }: Props) {
           <div className="mt-1">
             <SearchMonitorSelect label="Date range" name="range" value={selectedRange}
               onValueChange={value => setSelectedRange(value as AdminTripWorkspaceRange)}
-              options={[...rangeOptions, ...(selectedRange === "today" ? [{ value: "today", label: "Today (legacy)" }] : [])]}
+              options={[...rangeOptions, ...(selectedRange === "24h" ? [{ value: "24h", label: "Last 24 hrs (legacy)" }] : [])]}
               appearance="boxed" truncateLabel />
           </div>
         </div>

@@ -32,9 +32,12 @@ export async function readPlatformSearchActivity(from: Date, to: Date) {
 
 /** Aggregate-only operational read. No account IDs, device IDs, raw errors,
  * traveler queries or URLs are returned. Accounts/sessions are not event totals. */
-export async function readPlatformOperations(hours = 24) {
+export async function readPlatformOperations(hours = 24, period: "today" | "rolling" = "rolling") {
   const environment = getPublicEnvironment();
-  const to = new Date(), from = new Date(to.getTime() - hours * 3_600_000);
+  const to = new Date();
+  const from = period === "today"
+    ? new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate()))
+    : new Date(to.getTime() - hours * 3_600_000);
   const db = getOptionalPrisma();
   let activity: ReturnType<typeof partitionOperationalGroups> | null = null;
   let jobs: ScheduledJobRun[] | null = null;
@@ -56,7 +59,7 @@ export async function readPlatformOperations(hours = 24) {
     jobs = runs.map(run => projectScheduledJobRun(run, environment, to));
   } catch { /* Unavailable never becomes an empty/healthy aggregate. */ }
   const [system, providers, email, cms, alerts] = await Promise.all([
-    getSafeSystemStatus().catch(() => null), getProviderOperationalStatuses(hours, environment).catch(() => null),
+    getSafeSystemStatus().catch(() => null), getProviderOperationalStatuses(hours, environment, period === "today" ? { from, to } : undefined).catch(() => null),
     getEmailDeliveryHealthSnapshot().catch(() => null), getCmsHealthOverview().catch(() => null), getAdminAlertSnapshot().catch(() => null),
   ]);
   return {

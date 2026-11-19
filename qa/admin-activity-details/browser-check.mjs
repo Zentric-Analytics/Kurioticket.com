@@ -331,7 +331,7 @@ try {
 
   // The default rolling 24-hour period must not invent October records in November.
   await page.goto(url.split("?")[0]);
-  await expect(page.getByRole("button",{name:"Date range: Last 24 hrs"})).toBeVisible();
+  await expect(page.getByRole("button",{name:"Date range: Today"})).toBeVisible();
   await expect(page.locator("[data-activity-id]")).toHaveCount(0);
   await page.goto(url);
   await page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Searches",exact:true}).click();

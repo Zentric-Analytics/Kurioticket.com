@@ -19,6 +19,12 @@ export function parseProviderHealthRange(
   now: Date = new Date(),
 ): { hours: number; range: ProviderHealthRange | null; error: string | null } {
   const hours = parseProviderHealthHours(raw.hours);
+  const today = raw.period === "today" || (raw.period === undefined && raw.hours === undefined);
+  if (today) {
+    const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const day = from.toISOString().slice(0, 10);
+    return { hours, range: { from, to: now, fromDate: day, toDate: day }, error: null };
+  }
   if (raw.period !== "custom") return { hours, range: null, error: null };
   const start = raw.from;
   const end = raw.to;
@@ -42,7 +48,13 @@ export function providerHealthRangeHref(
   product: string,
   range: ProviderHealthRange | null,
   hours: number,
+  period: "today" | "rolling" | "custom" = "rolling",
 ) {
+  if (period === "today") {
+    const params = new URLSearchParams();
+    if (product !== "all") params.set("product", product);
+    return "/admin/providers" + (params.size ? "?" + params.toString() : "");
+  }
   if (!range) return providerHealthHref(hours, product);
   const params = new URLSearchParams({ period: "custom", from: range.fromDate, to: range.toDate });
   if (product !== "all") params.set("product", product);
@@ -52,7 +64,7 @@ export function providerHealthRangeHref(
 export function providerHealthHref(hours: number, product: string) {
   const params = new URLSearchParams();
   if (product !== "all") params.set("product", product);
-  if (hours !== 24) params.set("hours", String(hours));
+  params.set("hours", String(hours));
   const query = params.toString();
   return "/admin/providers" + (query ? "?" + query : "");
 }

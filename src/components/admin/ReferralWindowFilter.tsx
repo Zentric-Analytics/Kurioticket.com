@@ -6,7 +6,7 @@ import { useTransition } from "react";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 
 const presetWindows = [
-  { value: "1", label: "Last 24 hrs" },
+  { value: "today", label: "Today" },
   { value: "7", label: "Last 7 days" },
   { value: "30", label: "Last 30 days" },
 ];
@@ -16,24 +16,26 @@ const presetWindows = [
  * beside the reporting tabs and never creates an additional toolbar row.
  * The form remains as a progressive, no-JavaScript fallback.
  */
-export function ReferralWindowFilter({ days, embedded }: { days: number; embedded: boolean }) {
+export function ReferralWindowFilter({ days, embedded, period = "rolling" }: { days: number; embedded: boolean; period?: "today" | "rolling" }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const options = presetWindows.some(option => option.value === String(days))
-    ? presetWindows
-    : [...presetWindows, { value: String(days), label: "Last " + days + " days (legacy)" }];
+  const options = [...presetWindows,
+    ...(period === "rolling" && days === 1 ? [{ value: "1", label: "Last 24 hrs (legacy)" }] : []),
+    ...(![1, 7, 30].includes(days) ? [{ value: String(days), label: "Last " + days + " days (legacy)" }] : [])];
 
+  const selectedValue = period === "today" ? "today" : String(days);
   const applyPreset = (value: string) => {
+    const query = value === "today" ? "period=today" : "days=" + encodeURIComponent(value);
     const target = embedded
-      ? "/admin/providers?view=attribution&days=" + encodeURIComponent(value)
-      : "/admin/referral-attribution?days=" + encodeURIComponent(value);
+      ? "/admin/providers?view=attribution&" + query
+      : "/admin/referral-attribution?" + query;
     startTransition(() => router.replace(target, { scroll: false }));
   };
 
   return (
     <div className="inline-flex min-w-0 items-center">
       <div className="referral-window-enhanced">
-        <SearchMonitorSelect label="Date range" name="days" value={String(days)}
+        <SearchMonitorSelect label="Date range" name="days" value={selectedValue}
           options={options} appearance="plain" align="end"
           onValueChange={applyPreset} />
       </div>
@@ -43,7 +45,7 @@ export function ReferralWindowFilter({ days, embedded }: { days: number; embedde
           className="inline-flex items-center gap-2">
           {embedded ? <input type="hidden" name="view" value="attribution" /> : null}
           <label htmlFor="referral-window-fallback" className="sr-only">Date range</label>
-          <select id="referral-window-fallback" name="days" defaultValue={String(days)}
+          <select id="referral-window-fallback" name="days" defaultValue={selectedValue}
             className="h-9 border-0 bg-transparent text-[13px]">
             {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>

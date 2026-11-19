@@ -51,9 +51,9 @@ test("hotel operations keeps search diagnostics within Providers", () => {
 });
 
 test("hotel provider health distinguishes disabled coverage from provider failure", () => {
-  assert.match(hotelsPage, /Disabled \(24h\)/);
-  assert.match(hotelsPage, /Degraded \(24h\)/);
-  assert.match(hotelsPage, /Failed \(24h\)/);
+  assert.match(hotelsPage, /Disabled \(Today\)/);
+  assert.match(hotelsPage, /Degraded \(Today\)/);
+  assert.match(hotelsPage, /Failed \(Today\)/);
   assert.match(service, /attemptedCalls/);
   assert.match(service, /disabledCalls/);
   assert.match(service, /degradedCalls/);

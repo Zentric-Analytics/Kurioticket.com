@@ -16,7 +16,7 @@ test("Email Delivery uses a compact title and one page-level date range control"
   assert.doesNotMatch(page, /ArrowLeft size=\{14\}/);
   assert.doesNotMatch(page, /Admin operations|Email Delivery Operations|Monitor transactional email configuration/);
   assert.match(page, /EmailDeliveryRangeFilter/);
-  for (const label of ["Last 24 hrs", "Last 7 days", "Last 30 days", "Last 90 days", "Custom range"]) {
+  for (const label of ["Today", "Last 7 days", "Last 30 days", "Last 90 days", "Custom range"]) {
     assert.ok(rangeFilter.includes(label));
   }
   assert.match(rangeFilter, /onValueChange=\{changeRange\}/);
@@ -76,9 +76,9 @@ test("current setup hides healthy configuration details and surfaces only missin
   assert.match(page, /Setup required/);
 });
 
-test("range parsing defaults to 24 hours and constrains custom ranges to 90 days", () => {
+test("range parsing defaults to Today UTC and constrains custom ranges to 90 days", () => {
   assert.match(page, /function normalizeRange/);
-  assert.match(page, /: "24h"/);
+  assert.match(page, /: "today"/);
   assert.match(page, /MAX_RANGE_MS = 90 \* 24 \* 60 \* 60 \* 1000/);
   assert.match(page, /Custom ranges can cover up to 90 days/);
   assert.match(page, /Choose both a valid start date and end date/);

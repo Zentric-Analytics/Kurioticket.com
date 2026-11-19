@@ -36,13 +36,16 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
   const raw = await searchParams;
   const filter = normalizeProductFilter(raw.product);
   const attribution = raw.view === "attribution";
-  const attributionDays = parseAttributionDays(typeof raw.days === "string" ? raw.days : null);
+  const attributionPeriod = raw.period === "today" || raw.days === "today" || (raw.days === undefined && raw.period === undefined) ? "today" : "rolling";
+  const attributionDays = parseAttributionDays(raw.days === "today" ? null : typeof raw.days === "string" ? raw.days : null);
   const monitoringNow = new Date();
   const monitoringSelection = parseProviderHealthRange(raw, monitoringNow);
+  const monitoringPeriod = raw.period === "custom" ? "custom"
+    : raw.period === "today" || (raw.hours === undefined && raw.period === undefined) ? "today" : "rolling";
   const monitoringHours = monitoringSelection.hours;
   const monitoringRange = monitoringSelection.range;
-  const monitoringWindow = monitoringRange
-    ? { label: monitoringRange.fromDate + " – " + monitoringRange.toDate }
+  const monitoringWindow = monitoringPeriod === "today" ? { label: "Today (UTC)" }
+    : monitoringPeriod === "custom" && monitoringRange ? { label: monitoringRange.fromDate + " – " + monitoringRange.toDate }
     : { label: monitoringHours === 72 ? "Last 3 days" : monitoringHours === 168 ? "Last 7 days" : "Last 24 hours" };
 
   // Referral reporting has its own read path; avoid unnecessary readiness queries.
@@ -131,7 +134,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           <h1 className="text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[#020617]">
             Referral Attribution
           </h1>
-          <ReferralWindowFilter days={attributionDays ?? DEFAULT_ATTRIBUTION_DAYS} embedded />
+          <ReferralWindowFilter days={attributionDays ?? DEFAULT_ATTRIBUTION_DAYS} period={attributionPeriod} embedded />
         </header>
       ) : null}
 
@@ -269,7 +272,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
               <nav aria-label="Filter providers by product"
                 className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1">
                 {productFilters.map(item => (
-                  <Link key={item.key} href={providerHealthRangeHref(item.key, monitoringRange, monitoringHours)}
+                  <Link key={item.key} href={providerHealthRangeHref(item.key, monitoringRange, monitoringHours, monitoringPeriod)}
                     aria-current={filter === item.key ? "page" : undefined}
                     className={"inline-flex h-10 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
                       (filter === item.key ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
@@ -278,7 +281,8 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                 ))}
               </nav>
               <div className="relative z-10 ml-auto min-w-[152px] max-w-full pb-1">
-                <ProviderHealthWindowFilter product={filter} hours={monitoringHours} custom={monitoringRange} />
+                <ProviderHealthWindowFilter product={filter} hours={monitoringHours} period={monitoringPeriod}
+                  custom={monitoringPeriod === "custom" ? monitoringRange : null} />
               </div>
             </div>
             <ProviderDirectoryTable rows={directoryRows} />

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 import { AdminDirectorySelect, type AdminDirectoryOption } from "./AdminDirectorySelect";
 
-export type EmailDeliveryRange = "24h" | "7d" | "30d" | "90d" | "custom";
+export type EmailDeliveryRange = "today" | "24h" | "7d" | "30d" | "90d" | "custom";
 
 type Props = {
   range: EmailDeliveryRange;
@@ -16,7 +16,7 @@ type Props = {
 };
 
 const rangeOptions: readonly AdminDirectoryOption[] = [
-  { value: "24h", label: "Last 24 hrs" },
+  { value: "today", label: "Today" },
   { value: "7d", label: "Last 7 days" },
   { value: "30d", label: "Last 30 days" },
   { value: "90d", label: "Last 90 days" },
@@ -78,7 +78,7 @@ export function EmailDeliveryRangeFilter({ range, fromDate, toDate }: Props) {
         name="range"
         label="Date range"
         value={range}
-        options={rangeOptions}
+        options={[...rangeOptions, ...(range === "24h" ? [{ value: "24h", label: "Last 24 hrs (legacy)" }] : [])]}
         nativeExcludeValues={["custom"]}
         plain
         onValueChange={changeRange}

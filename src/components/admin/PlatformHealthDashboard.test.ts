@@ -12,14 +12,14 @@ const { OperationalStatus } = jiti("./OperationalStatus") as typeof import("./Op
 const { AppRouterContext } = jiti("next/dist/shared/lib/app-router-context.shared-runtime") as typeof import("next/dist/shared/lib/app-router-context.shared-runtime");
 const filtersSource = readFileSync("src/components/admin/PlatformHealthFilters.tsx", "utf8");
 const router = { push() { }, replace() { }, refresh() { }, back() { }, forward() { }, prefetch() { } };
-function render(unavailable = false, application: "ALL" | "IOS" = "ALL") { return renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: router as never }, createElement(PlatformHealthDashboard, { data: platformFixture(unavailable), hours: 24, application }))); }
+function render(unavailable = false, application: "ALL" | "IOS" = "ALL") { return renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: router as never }, createElement(PlatformHealthDashboard, { data: platformFixture(unavailable), hours: 24, period: "today", application }))); }
 test("health renders separate measures, labels shared scope and retains explicit native UNKNOWN", () => {
     const html = render();
     for (const value of ["Search operations", "Provider calls", "Referral handoffs", "48", "Shared services", "does not filter", "Own last 24 hours", "No reliable installed-app crash evidence", "No Preview release evidence", "Not measured", "Running", "Completed with failure", "Scheduled-job observations table"])
         assert.ok(html.includes(value), value);
     assert.doesNotMatch(html, />0 ms<|crash-free installed applications<\/h|Booking revenue|Active devices/);
     assert.match(html, /name="application"/);
-    assert.match(html, /name="hours"/);
+    assert.match(html, /name="window"/);
     assert.match(html, /action="\/admin\/platform-health"/);
     assert.match(html, /Window:/);
     assert.doesNotMatch(html, /Last observed/);
@@ -46,7 +46,8 @@ test("application selection uses only the activity partition; unavailable cannot
 test("strict view parsing, rates and investigation scope preserve truthful windows", () => {
     for (const q of ["hours=24&hours=168", "application=IOS&application=WEB", "hours=25", "hours=1e2", "environment=production", "application=native"])
         assert.equal(parsePlatformHealthView(new URLSearchParams(q)), null);
-    assert.deepEqual(parsePlatformHealthView(new URLSearchParams()), { hours: 24, application: "ALL" });
+    assert.deepEqual(parsePlatformHealthView(new URLSearchParams()), { hours: 24, period: "today", application: "ALL" });
+    assert.deepEqual(parsePlatformHealthView(new URLSearchParams("hours=24")), {hours:24, period:"rolling", application:"ALL"});
     assert.equal(failureRate({ total: 10, disabled: 2, failed: 2 }), "25.0%");
     assert.equal(failureRate({ total: 0, disabled: 0, failed: 0 }), "Not measured");
     const window = platformFixture().window;
@@ -114,7 +115,7 @@ test("Platform Health filter dropdowns use polished accessible Admin selectors w
     assert.match(filtersSource, /lg:grid-cols-/);
     assert.match(filtersSource, /Apply view/);
     const html = render();
-    for (const option of ["All Platforms", "Website", "iOS", "Android", "Unknown", "Last 24 hrs", "Last 7 days", "Last 30 days"]) {
+    for (const option of ["All Platforms", "Website", "iOS", "Android", "Unknown", "Today", "Last 7 days", "Last 30 days"]) {
       assert.ok(html.includes(option), option);
     }
 });

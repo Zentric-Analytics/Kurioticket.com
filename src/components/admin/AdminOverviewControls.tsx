@@ -7,6 +7,7 @@ import { AdminCalendarInput } from "@/components/admin/AdminCalendarInput";
 import { overviewPeriodHref, validOverviewCustomDates, type OverviewCustomDates, type OverviewPeriod, type OverviewRange } from "@/lib/adminOverviewRange";
 
 const rangeLabels: Record<OverviewRange, string> = {
+  today: "Today",
   "24h": "Last 24 hrs",
   "7d": "Last 7 days",
   "30d": "Last 30 days",
@@ -103,13 +104,14 @@ export function AdminOverviewAutoRefresh() {
   return null;
 }
 
-const rangeOptions: OverviewRange[] = ["24h", "7d", "30d", "custom"];
+const standardRangeOptions: OverviewRange[] = ["today", "7d", "30d", "custom"];
 
 export function AdminOverviewRangeSelect({ period, nowDate }: { period: OverviewPeriod; nowDate: string }) {
   const transition = useContext(RangeTransitionContext);
   if (!transition) throw new Error("AdminOverviewRangeSelect must be inside AdminOverviewRangeTransitionProvider");
   const pending = transition.isUpdating;
   const { range } = period;
+  const rangeOptions = range === "24h" ? [...standardRangeOptions, "24h" as const] : standardRangeOptions;
   const requestedRange = transition.requestedPeriod?.range;
   const [open, setOpen] = useState(false);
   const [draftDates, setDraftDates] = useState<OverviewCustomDates | null>(null);

@@ -24,7 +24,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const sort = parseAdminIdentitySort(params?.sort);
   const requestedDate = parseAdminIdentityDate(params?.date);
   const custom = validAdminIdentityCustomDates(params?.from, params?.to);
-  const date = requestedDate === "custom" && !custom ? "24h" : requestedDate;
+  const date = requestedDate === "custom" && !custom ? "today" : requestedDate;
   const from = date === "custom" ? params?.from : undefined;
   const to = date === "custom" ? params?.to : undefined;
   const now = new Date();

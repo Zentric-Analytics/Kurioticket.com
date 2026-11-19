@@ -187,10 +187,10 @@ test("settings uses a single administrative workspace instead of dashboard cards
   assert.doesNotMatch(settingsPage, /SummaryItem|Recent control updates|Related operations|Change safeguards|Protected changes/);
 });
 
-test("Settings History uses polished accessible shared dropdowns and a 24-hour default", () => {
+test("Settings History uses polished accessible shared dropdowns and a Today UTC default", () => {
   const history = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
   const dropdown = readFileSync("src/components/admin/AdminDirectorySelect.tsx", "utf8");
-  assert.match(history, /requestedRange as SettingsHistoryRange : "24h"/);
+  assert.match(history, /requestedRange as SettingsHistoryRange : "today"/);
   assert.match(history, /limit: 25/);
   assert.match(history, /<form action=\{fullHistoryPath\} method="get" aria-label="Settings history filters"/);
   assert.doesNotMatch(history, /View full history|Show recent records|Latest recorded changes in the last 24 hrs/);

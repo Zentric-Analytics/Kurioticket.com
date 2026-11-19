@@ -9,34 +9,36 @@ type Props = {
   product: string;
   hours: number;
   custom: { fromDate: string; toDate: string } | null;
+  period?: "today" | "rolling" | "custom";
 };
 
 /** Matches the existing User Activity dropdown. Presets navigate immediately,
  * while unfinished custom dates never trigger a telemetry read. */
-export function ProviderHealthWindowFilter({ product, hours, custom }: Props) {
+export function ProviderHealthWindowFilter({ product, hours, custom, period = "rolling" }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [selection, setSelection] = useState(custom ? "custom" : String(hours));
+  const [selection, setSelection] = useState(period === "today" ? "today" : custom ? "custom" : String(hours));
   const [from, setFrom] = useState(custom?.fromDate ?? "");
   const [to, setTo] = useState(custom?.toDate ?? "");
   const [error, setError] = useState("");
   const [customOpen, setCustomOpen] = useState(false);
   // URL history and product navigation can update the server scope while
   // preserving this client component instance. Reconcile its displayed draft.
-  const scope = JSON.stringify([hours, custom?.fromDate, custom?.toDate]);
+  const scope = JSON.stringify([period, hours, custom?.fromDate, custom?.toDate]);
   const [previousScope, setPreviousScope] = useState(scope);
   if (previousScope !== scope) {
     setPreviousScope(scope);
-    setSelection(custom ? "custom" : String(hours));
+    setSelection(period === "today" ? "today" : custom ? "custom" : String(hours));
     setFrom(custom?.fromDate ?? "");
     setTo(custom?.toDate ?? "");
     setError("");
     setCustomOpen(false);
   }
   const options = [
-    { value: "24", label: "Last 24 hrs" },
+    { value: "today", label: "Today" },
     { value: "72", label: "Last 3 days" },
     { value: "168", label: "Last 7 days" },
+    ...(selection === "24" ? [{ value: "24", label: "Last 24 hrs (legacy)" }] : []),
     { value: "custom", label: "Custom range" },
   ];
   const productQuery = product === "all" ? "" : "&product=" + encodeURIComponent(product);
@@ -45,7 +47,9 @@ export function ProviderHealthWindowFilter({ product, hours, custom }: Props) {
     setError("");
     setCustomOpen(value === "custom");
     if (value !== "custom") {
-      startTransition(() => router.replace("/admin/providers?hours=" + value + productQuery, { scroll: false }));
+      startTransition(() => router.replace(value === "today"
+        ? "/admin/providers?period=today" + productQuery
+        : "/admin/providers?hours=" + value + productQuery, { scroll: false }));
     }
   }
   function apply() {
@@ -78,7 +82,7 @@ export function ProviderHealthWindowFilter({ product, hours, custom }: Props) {
             <AdminCalendarInput value={to} onValueChange={setTo} min={from || undefined} max={new Date().toISOString().slice(0, 10)} ariaLabel="Provider health end date UTC" className="w-full" />
           </label>
           <div className="flex w-full justify-end gap-2 pt-1">
-            <button type="button" onClick={() => { setSelection(custom ? "custom" : String(hours)); setCustomOpen(false); setError(""); }}
+            <button type="button" onClick={() => { setSelection(period === "today" ? "today" : custom ? "custom" : String(hours)); setCustomOpen(false); setError(""); }}
               className="h-9 rounded-lg border border-[#D8E1EC] px-3 text-[13px] font-medium text-[#475569] hover:bg-[#F8FAFC]">Cancel</button>
             <button type="button" onClick={apply} disabled={pending || !from || !to}
               className="h-9 rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-50">
