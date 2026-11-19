@@ -49,11 +49,11 @@ import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { getDealsGuidedConfirmationActionId } from "@/lib/deals/dealsConfirmationIds";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
-import { carHandoffHref } from "@/lib/cars/carHandoffHref";
+import { recordCarHandoffClick } from "@/lib/cars/carHandoffTracking";
 
 export type CarDetailsPrimaryAction =
   | { kind: "standalone-disabled-provider"; label: string }
-  | { kind: "sandbox-handoff"; label: string; href: string }
+  | { kind: "sandbox-handoff"; label: string; href: string; onClick?: () => void }
   | {
       kind: "guided-car";
       enabled: boolean;
@@ -257,7 +257,8 @@ export function CarDetailsExperience({
       ? {
           kind: "sandbox-handoff",
           label: copy("carDetails.continueDeal"),
-          href: carHandoffHref(car.id, primaryOffer!.id, "car-details"),
+          href: selectedSandboxHref,
+          onClick: () => recordCarHandoffClick(car.id, primaryOffer!.id, "car-details"),
         }
       : {
           kind: "standalone-disabled-provider",
@@ -273,7 +274,8 @@ export function CarDetailsExperience({
       ? {
           kind: "sandbox-handoff",
           label: copy("carDetails.continueDeal"),
-          href: carHandoffHref(car.id, offer.id, "car-details"),
+          href,
+          onClick: () => recordCarHandoffClick(car.id, offer.id, "car-details"),
         }
       : {
           kind: "standalone-disabled-provider",
@@ -1034,7 +1036,8 @@ export function CarDetailsClient({
     ? {
         kind: "sandbox-handoff",
         label: copy("carDetails.continueDeal"),
-        href: carHandoffHref(car.id, getPrimaryCarOffer(car)!.id, "car-details"),
+        href: sandboxHref,
+        onClick: () => recordCarHandoffClick(car.id, getPrimaryCarOffer(car)!.id, "car-details"),
       }
     : {
         kind: "standalone-disabled-provider",
@@ -1360,7 +1363,7 @@ function CarPriceComparisonSection({
                       target="_blank"
                       rel="noopener noreferrer"
                       referrerPolicy="no-referrer"
-                      onClick={() => onSelectOffer(offer.id)}
+                      onClick={() => { onSelectOffer(offer.id); offerAction.onClick?.(); }}
                       className={actionClassName}
                       data-car-details-desktop-deal-cta
                     >
@@ -1657,6 +1660,7 @@ function BookingSummary({
       {action.kind === "sandbox-handoff" ? (
         <a
           href={action.href}
+          onClick={action.onClick}
           target="_blank"
           rel="noopener noreferrer"
           referrerPolicy="no-referrer"
@@ -1849,6 +1853,7 @@ function MobileBookingDock({
           >
             <a
               href={action.href}
+              onClick={action.onClick}
               target="_blank"
               rel="noopener noreferrer"
               referrerPolicy="no-referrer"
