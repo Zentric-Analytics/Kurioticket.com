@@ -7,7 +7,7 @@ const maximumDays = 90;
 
 type AttributionGroupRow = {
   provider: string;
-  type: "FLIGHT" | "HOTEL";
+  type: "FLIGHT" | "HOTEL" | "CAR";
   sourcePage: string;
   _count: { _all: number };
 };
@@ -32,7 +32,7 @@ export type ReferralAttributionSummary = {
   handoffs: { total: number; linkedToSearch: number; notLinkedToSearch: number };
   providers: Array<{
     provider: string;
-    product: "flight" | "hotel";
+    product: "flight" | "hotel" | "car";
     handoffs: number;
   }>;
   sourcePages: Array<{ sourcePage: string; handoffs: number }>;
@@ -46,11 +46,11 @@ export function parseAttributionDays(value: string | null): number | null {
 }
 
 function summarizeGroups(groups: AttributionGroupRow[]) {
-  const providers = new Map<string, { provider: string; product: "flight" | "hotel"; handoffs: number }>();
+  const providers = new Map<string, { provider: string; product: "flight" | "hotel" | "car"; handoffs: number }>();
   const sourcePages = new Map<string, number>();
 
   for (const group of groups) {
-    const product = group.type === "FLIGHT" ? "flight" : "hotel";
+    const product = group.type === "FLIGHT" ? "flight" : group.type === "HOTEL" ? "hotel" : "car";
     const provider = group.provider.trim().slice(0, 100) || "Unknown provider";
     const providerKey = `${provider}\u0000${product}`;
     const existingProvider = providers.get(providerKey);
