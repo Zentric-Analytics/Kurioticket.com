@@ -22,7 +22,7 @@ export function resolveHandoffDateRange(raw: Raw, now = new Date()): {
   const range: HandoffDateRange =
     supplied === "24h" || supplied === "today" || supplied === "7d" || supplied === "30d" || supplied === "all"
       ? supplied
-      : from || to ? "custom" : "24h";
+      : from || to ? "custom" : "today";
 
   if (range === "all") return { range, from: null, to: null };
   if (range === "custom") return { range, from: from || null, to: to || null };
