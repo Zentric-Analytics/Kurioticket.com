@@ -1,5 +1,7 @@
 "use client";
 
+import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+
 
 import Image from "next/image";
 import styles from "./HotelResultsMobile.module.css";
@@ -146,7 +148,10 @@ export function HotelCard({
   unavailableActionAriaLabel,
   allowExternalAttribution = true,
   allowSave = true,
+  searchRequestId,
 }: HotelCardProps) {
+  const journeyEvents = useJourneyEvents();
+  const rememberDetailsContext = () => journeyEvents.rememberDetailsContext("hotel", hotel.id, searchRequestId ?? null);
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -492,6 +497,7 @@ export function HotelCard({
       {resolvedDetailsHref ? (
         <Link
           href={resolvedDetailsHref}
+          onClick={rememberDetailsContext}
           aria-hidden="true"
           tabIndex={-1}
           className="absolute inset-0 z-10 cursor-pointer"
@@ -772,6 +778,7 @@ export function HotelCard({
                 ) : (
                   <LinkButton
                     href={resolvedDetailsHref}
+                    onClick={rememberDetailsContext}
                     aria-label={actionAriaLabel}
                     variant="accent"
                     size="sm"
