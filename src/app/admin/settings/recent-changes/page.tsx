@@ -25,9 +25,8 @@ function formatAuditDate(value: string) {
     dateStyle: "medium", timeStyle: "short", timeZone: "UTC",
   }).format(new Date(value)) + " UTC";
 }
-function historyHref(range: SettingsHistoryRange, category: SettingsHistoryCategory, cursor?: string, full = true, fromDate = "", toDate = "") {
+function historyHref(range: SettingsHistoryRange, category: SettingsHistoryCategory, cursor?: string, fromDate = "", toDate = "") {
   const params = new URLSearchParams({ range, category });
-  if (full) params.set("view", "full");
   if (cursor) params.set("cursor", cursor);
   if (range === "custom") {
     if (fromDate) params.set("fromDate", fromDate);
@@ -83,7 +82,6 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
   const requestedCategory = single(raw.category);
   const fromDate = single(raw.fromDate) || "";
   const toDate = single(raw.toDate) || "";
-  const full = single(raw.view) === "full";
   const range: SettingsHistoryRange = ranges.includes(requestedRange as SettingsHistoryRange)
     ? requestedRange as SettingsHistoryRange : "24h";
   const category: SettingsHistoryCategory = categories.includes(requestedCategory as SettingsHistoryCategory)
@@ -93,10 +91,9 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
     (requestedRange !== undefined && !ranges.includes(requestedRange as SettingsHistoryRange)) ||
     (requestedCategory !== undefined && !categories.includes(requestedCategory as SettingsHistoryCategory)) ||
     (single(raw.view) !== undefined && single(raw.view) !== "full") ||
-    (single(raw.cursor) !== undefined && !full) ||
     ((fromDate || toDate) && range !== "custom");
   const result = invalid ? { status: "invalid" as const } : await adminSettingsHistory.list({
-    range, category, cursor: full ? single(raw.cursor) : undefined, limit: full ? 25 : 6,
+    range, category, cursor: single(raw.cursor), limit: 25,
     fromDate, toDate,
   });
 
@@ -107,16 +104,11 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
           <h2 id="settings-section-title" className="text-[17px] font-semibold leading-6 tracking-[-0.01em] text-[#020617]">Settings History</h2>
           <p className="mt-1 text-[12px] leading-5 text-[#64748B]">Review recorded Settings and Team Access changes, who made them, and when.</p>
         </div>
-        {full
-          ? <Link href={historyHref("24h", "all", undefined, false)} className="focus-ring text-[13px] font-medium text-[#004BB8] hover:underline">Show recent records</Link>
-          : <Link href={historyHref("24h", "all")} className="focus-ring text-[13px] font-medium text-[#004BB8] hover:underline">View full history</Link>}
       </header>
 
-      {full ? (
-        <form action={fullHistoryPath} method="get" aria-label="Settings history filters"
+      <form action={fullHistoryPath} method="get" aria-label="Settings history filters"
           data-testid="settings-history-filter-row"
           className="grid w-full min-w-0 grid-cols-1 items-center gap-2 border-b border-[#E7ECF5] py-3 sm:grid-cols-2 lg:grid-cols-[190px_220px_136px]">
-          <input type="hidden" name="view" value="full" />
           <SettingsHistoryRangeControl range={range} fromDate={fromDate} toDate={toDate}
             today={new Date().toISOString().slice(0, 10)} />
           <div className="min-w-0" data-testid="settings-history-category-control">
@@ -126,9 +118,6 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
           </div>
           <button type="submit" className="focus-ring h-10 w-full min-w-0 whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white hover:bg-[#003D97]">Apply filters</button>
         </form>
-      ) : (
-        <p className="border-b border-[#E7ECF5] py-3 text-[12px] text-[#64748B]">Latest recorded changes in the last 24 hrs. Open full history to review older records.</p>
-      )}
 
       {result.status !== "ok" ? (
         <p role="status" className="border-b border-[#D8E1EC] py-5 text-[13px] text-[#64748B]">
@@ -147,13 +136,11 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 py-3 text-[12px] text-[#64748B]">
-            <span>Newest first · {result.items.length} recorded changes shown{full ? " · Read only" : ""}</span>
-            {full ? (
-              <div className="flex flex-wrap gap-3">
-                {single(raw.cursor) ? <Link href={historyHref(range, category, undefined, true, fromDate, toDate)} className="font-medium text-[#004BB8] hover:underline">Back to newest</Link> : null}
-                {result.nextCursor ? <Link href={historyHref(range, category, result.nextCursor, true, fromDate, toDate)} className="font-medium text-[#004BB8] hover:underline">Older records →</Link> : null}
-              </div>
-            ) : null}
+            <span>Newest first · {result.items.length} recorded changes shown · Read only</span>
+            <div className="flex flex-wrap gap-3">
+              {single(raw.cursor) ? <Link href={historyHref(range, category, undefined, fromDate, toDate)} className="font-medium text-[#004BB8] hover:underline">Back to newest</Link> : null}
+              {result.nextCursor ? <Link href={historyHref(range, category, result.nextCursor, fromDate, toDate)} className="font-medium text-[#004BB8] hover:underline">Older records →</Link> : null}
+            </div>
           </div>
         </>
       ) : (

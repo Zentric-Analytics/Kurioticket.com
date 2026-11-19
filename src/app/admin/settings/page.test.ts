@@ -191,9 +191,9 @@ test("Settings History uses polished accessible shared dropdowns and a 24-hour d
   const history = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
   const dropdown = readFileSync("src/components/admin/AdminDirectorySelect.tsx", "utf8");
   assert.match(history, /requestedRange as SettingsHistoryRange : "24h"/);
-  assert.match(history, /historyHref\("24h", "all", undefined, false\)/);
-  assert.match(history, /historyHref\("24h", "all"\)/);
-  assert.match(history, /Latest recorded changes in the last 24 hrs/);
+  assert.match(history, /limit: 25/);
+  assert.match(history, /<form action=\{fullHistoryPath\} method="get" aria-label="Settings history filters"/);
+  assert.doesNotMatch(history, /View full history|Show recent records|Latest recorded changes in the last 24 hrs/);
   assert.match(history, /data-testid="settings-history-filter-row"/);
   assert.match(history, /lg:grid-cols-\[190px_220px_136px\]/);
   assert.match(history, /<SettingsHistoryRangeControl range=\{range\}/);
@@ -216,19 +216,19 @@ test("Settings History uses polished accessible shared dropdowns and a 24-hour d
   assert.match(history, /<SettingsHistoryRow key=\{item.id\} item=\{item\}/);
 });
 
-test("Settings History expands on the same route and supports read-only details", () => {
+test("Settings History permanently shows its filters and paginated read-only details", () => {
   const recent = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
   const reader = readFileSync("src/services/adminSettingsHistoryCore.ts", "utf8");
-  assert.match(recent, /View full history/);
-  assert.match(recent, /historyHref\(range, category\)/);
+  assert.match(recent, /cursor: single\(raw.cursor\), limit: 25/);
+  assert.match(recent, /<form action=\{fullHistoryPath\} method="get"/);
+  assert.doesNotMatch(recent, /\{full \?|View full history|Show recent records/);
   assert.match(recent, /<SettingsHistoryRow key=\{item\.id\} item=\{item\}/);
   assert.match(recent, /<details data-settings-history-record=\{item\.id\}/);
   assert.match(recent, /Read-only change record/);
-  assert.match(recent, /name="view" value="full"/);
-  assert.match(recent, /name="range"/);
+  assert.match(readFileSync("src/components/admin/SettingsHistoryRangeControl.tsx", "utf8"), /name="range"/);
   assert.match(recent, /name="category"/);
   assert.match(recent, /Older records/);
-  assert.match(recent, /Show recent records/);
+  assert.match(recent, /Back to newest/);
   assert.match(reader, /require|authorize/);
   assert.match(reader, /FEATURE_CONTROL_UPDATED/);
   assert.match(reader, /TEAM_ACCESS_MEMBER_APPROVED/);

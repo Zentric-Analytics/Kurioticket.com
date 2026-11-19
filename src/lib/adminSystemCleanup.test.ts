@@ -34,7 +34,9 @@ test("System diagnostic subpages use the System sidebar without redundant return
   assert.doesNotMatch(alerts, /actions=\{|Back to System|View audit logs|href="\/admin\/logs"|href="\/admin\/system"/);
   const settings = source("src/app/admin/settings/recent-changes/page.tsx");
   assert.doesNotMatch(settings, /actions=\{|Back to System|href="\/admin\/system"/);
-  assert.match(settings, /View full history/);
+  assert.match(settings, /<form action=\{fullHistoryPath\} method="get" aria-label="Settings history filters"/);
+  assert.match(settings, /<SettingsHistoryRow key=\{item\.id\} item=\{item\}/);
+  assert.doesNotMatch(settings, /View full history|Show recent records/);
   assert.doesNotMatch(settings, /href="\/admin\/logs|\/admin\/logs\?/);
 });
 test("Settings retains feature controls without owning flight fare operations", () => {
