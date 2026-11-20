@@ -42,7 +42,7 @@ function verify(credential: string | null, environment: PublicEnvironment, now: 
   const parts = credential.split(".");
   const version = parts[0];
   if ((version !== "v1" && version !== "v2") || parts.length !== (version === "v1" ? 5 : 6)
-      || !tokenId.test(parts[1]) || !/^\\d{10,13}$/.test(parts[2])
+      || !tokenId.test(parts[1]) || !/^\d{10,13}$/.test(parts[2])
       || !["staging", "production"].includes(parts[3]) || !signature.test(parts[parts.length - 1])) return null;
   const platform = version === "v2" ? parts[4] : null;
   if (version === "v2" && platform !== "ios" && platform !== "android") return null;
