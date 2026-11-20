@@ -2,6 +2,7 @@ import { z } from "zod";
 import { resolveSavedFlightTime } from "@/shared/flights/savedFlightTime";
 import { createHash } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
+import { trackAnalyticsEvent } from "@/services/analyticsService";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 
 export const savedItemTypes = ["flight", "hotel", "car", "search"] as const;
@@ -84,7 +85,28 @@ export function createSavedItemWriter(database: () => Pick<PrismaClient, "$trans
     return createSavedItemInTransaction(tx, userId, input);
   });
 }
-export const createUserSavedItem = createSavedItemWriter(getPrisma);
+const writeUserSavedItem = createSavedItemWriter(getPrisma);
+/** The API confirmed the save operation; the analytics write is independent of
+ * the saved result, and never reassigns it to a guest or another user.
+ */
+export async function createUserSavedItem(userId: string, input: CreateSavedItemInput) {
+  const item = await writeUserSavedItem(userId, input);
+  await trackAnalyticsEvent({
+    userId, type: "SAVE", name: "saved_item_confirmed",
+    metadata: {
+      product: input.type === "search" ? input.searchType.toUpperCase() : input.type.toUpperCase(),
+      savedType: input.type,
+      savedItemId: item.id,
+      ...((input.type === "flight" && typeof input.payload.flightResultId === "string"
+          ? { resultId: input.payload.flightResultId }
+          : input.type === "hotel" && typeof input.payload.hotelResultId === "string"
+            ? { resultId: input.payload.hotelResultId }
+            : input.type === "car" ? { resultId: input.resultId } : {})),
+      outcome: "confirmed",
+    },
+  });
+  return item;
+}
 async function createSavedItemInTransaction(tx: Prisma.TransactionClient, userId: string, input: CreateSavedItemInput) {
   try {
     if (input.type === "flight") return tx.savedFlight.create({ data: { userId, provider: input.provider, airlineName: input.airlineName, flightNumber: input.flightNumber, originAirport: input.originAirport, destinationAirport: input.destinationAirport, departureTime: new Date(input.departureTime), arrivalTime: new Date(input.arrivalTime), price: input.price, currency: input.currency, payload: input.payload as never } });
@@ -105,4 +127,8 @@ export async function deleteUserSavedItem(userId: string, input: DeleteSavedItem
         ? await db().savedCar.deleteMany({ where: { id: input.id, userId } })
         : await db().savedSearch.deleteMany({ where: { id: input.id, userId } });
   if (!result.count) throw new SavedItemNotFoundError("Saved item was not found.");
+  await trackAnalyticsEvent({
+    userId, type: "SAVE", name: "saved_item_removed",
+    metadata: { savedType: input.type, savedItemId: input.id, outcome: "confirmed" },
+  });
 }

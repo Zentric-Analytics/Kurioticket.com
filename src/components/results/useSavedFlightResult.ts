@@ -1,6 +1,7 @@
 "use client";
 
 import { savedFlightTimeFields, SavedFlightTimeError } from "@/shared/flights/savedFlightTime";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -173,6 +174,7 @@ export function useSavedFlightResult(
       const next = toggleSavedItemId(readSavedItemIds(), flight.id);
       writeSavedItemIds(next);
       setLocalSaved(next.includes(flight.id));
+      recordCustomerInteraction({ action: next.includes(flight.id) ? "local_saved" : "local_unsaved", product: "FLIGHT", resultId: flight.id });
       window.dispatchEvent(new Event(LOCAL_SAVED_FLIGHTS_CHANGED_EVENT));
     } catch (error) {
       setSavedFlightError(error instanceof SavedFlightTimeError ? error.message : "Unable to save flight. Please try again.");

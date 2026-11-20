@@ -226,7 +226,7 @@ export async function createPriceAlert(input: {
       userId: input.userId,
       type: "ALERT_CREATED",
       name: "price_alert_created",
-      metadata: { type: input.type },
+      metadata: { product: input.type, mode, alertId: alert.id, outcome: "confirmed" },
     });
 
     return serializePriceAlert(alert);
@@ -258,6 +258,11 @@ export async function updateUserPriceAlertStatus(input: { id: string; userId: st
     }
     const alert = await db.priceAlert.findFirst({ where: { id: input.id, userId: input.userId }, select: alertSelect });
     if (!alert) throw new PriceAlertNotFoundError();
+    await trackAnalyticsEvent({
+      userId: input.userId, type: "ALERT_CREATED",
+      name: input.status === "ACTIVE" ? "price_alert_reactivated" : "price_alert_paused",
+      metadata: { product: alert.type, alertId: alert.id, mode: alert.mode, outcome: "confirmed" },
+    });
     return serializePriceAlert(alert);
   } catch (error) {
     if (error instanceof PriceAlertNotFoundError || error instanceof InvalidPriceAlertTransitionError) throw error;
@@ -268,11 +273,22 @@ export async function updateUserPriceAlertStatus(input: { id: string; userId: st
 
 export async function deleteUserPriceAlert(input: { id: string; userId: string }) {
   try {
-    const result = await getPrisma().priceAlert.updateMany({
+    const db = getPrisma();
+    const existing = await db.priceAlert.findFirst({
+      where: { id: input.id, userId: input.userId, status: { not: "DELETED" } },
+      select: { type: true, mode: true },
+    });
+    const result = await db.priceAlert.updateMany({
       where: { id: input.id, userId: input.userId, status: { not: "DELETED" } },
       data: { status: "DELETED", nextCheckAt: null },
     });
     if (!result.count) throw new PriceAlertNotFoundError();
+    // Only the authenticated owner may delete the alert. A safe product label
+    // comes from the pre-deletion record, not a client-supplied identifier.
+    if (existing) await trackAnalyticsEvent({
+      userId: input.userId, type: "ALERT_CREATED", name: "price_alert_deleted",
+      metadata: { product: existing.type, alertId: input.id, mode: existing.mode, outcome: "confirmed" },
+    });
     return { deleted: true as const, id: input.id };
   } catch (error) {
     if (error instanceof PriceAlertNotFoundError) throw error;

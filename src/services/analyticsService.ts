@@ -12,6 +12,7 @@ export type AnalyticsEventInput = ApplicationAttribution & {
     | "SEARCH"
     | "REDIRECT"
     | "SAVE"
+    | "SHARE"
     | "ALERT_CREATED"
     | "SIGNUP"
     | "SUPPORT_TICKET"
