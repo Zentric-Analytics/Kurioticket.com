@@ -109,7 +109,7 @@ export function createSavedItemWriter(database: () => Pick<PrismaClient, "$trans
       const existing = await tx.savedSearch.findFirst({ where: { userId, type: input.searchType.toUpperCase() as "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE", origin: input.origin ?? null, destination: input.destination ?? null, checkIn: input.checkIn ? new Date(input.checkIn) : null, checkOut: input.checkOut ? new Date(input.checkOut) : null, query: { equals: input.query as Prisma.InputJsonValue } } });
       if (existing) return existing;
     } else {
-      const existing = await tx.savedCar.findUnique({ where: { userId_signature: { userId, signature: carSavedSignature(input) } } });
+      const existing = await tx.savedCar.findFirst({ where: { userId, signature: carSavedSignature(input) } });
       if (existing) return existing;
     }
     const item = await createSavedItemInTransaction(tx, userId, input);
