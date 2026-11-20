@@ -97,6 +97,11 @@ export async function createUserSavedItem(userId: string, input: CreateSavedItem
       product: input.type === "search" ? input.searchType.toUpperCase() : input.type.toUpperCase(),
       savedType: input.type,
       savedItemId: item.id,
+      ...((input.type === "flight" && typeof input.payload.flightResultId === "string"
+          ? { resultId: input.payload.flightResultId }
+          : input.type === "hotel" && typeof input.payload.hotelResultId === "string"
+            ? { resultId: input.payload.hotelResultId }
+            : input.type === "car" ? { resultId: input.resultId } : {})),
       outcome: "confirmed",
     },
   });
