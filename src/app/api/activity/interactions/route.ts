@@ -8,6 +8,7 @@ import { isSameOriginRequest } from "@/lib/visitor-identity";
 import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
+import { matchesInteractionSearch } from "@/lib/verifiedInteractionSearch";
 
 export const runtime = "nodejs";
 
@@ -81,14 +82,7 @@ export async function POST(request: Request) {
           where: { requestId: parsed.data.requestId },
           select: { id: true, visitorId: true, userId: true, type: true, query: true, createdAt: true },
         });
-        const query = search?.query && typeof search.query === "object" && !Array.isArray(search.query)
-          ? search.query as Record<string, unknown> : null;
-        if (search && search.visitorId === identity.visitorId
-          && (search.userId === null || search.userId === identity.userId)
-          && search.type === parsed.data.product
-          && query?.environment === getPublicEnvironment()
-          && search.createdAt.getTime() <= Date.now()
-          && Date.now() - search.createdAt.getTime() <= 30 * 60 * 1000) {
+        if (matchesInteractionSearch(search, identity, parsed.data.product, getPublicEnvironment(), new Date())) {
           const candidates = await tx.journeyEvent.findMany({
             where: { type: "SEARCH_COMPLETED", searchHistoryId: search.id,
               journey: { visitorId: identity.visitorId! },
