@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { activityOverviewRows, completeJourneyDetailHref, journeyHistoryHrefFromActivity } from "./adminActivityOverview";
 import { decodeActivityJourneyReturn } from "./adminActivityJourneyNavigation";
@@ -84,4 +85,10 @@ test("old inclusive UTC date filters become a strict same-day Journey window", (
   assert.equal(p.get("range"),"custom");
   assert.equal(p.get("from"),"2026-10-22T00:00:00.000Z");
   assert.equal(p.get("to"),"2026-10-23T00:00:00.000Z");
+});
+
+test("other activity routes to the selected identity sibling, not an Activity subroute", () => {
+  const page = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx","utf8");
+  assert.match(page, /encodeURIComponent\(id\) \+ "\/other"/);
+  assert.doesNotMatch(page, /basePath \+ "\/other"/);
 });
