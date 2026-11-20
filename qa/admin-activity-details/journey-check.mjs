@@ -31,6 +31,11 @@ try {
   await expect(page.locator('[data-journey-event]')).toHaveCount(4);
   await expect(page.getByRole('region',{name:'Customer identity'})).toHaveCount(0);
   await expect(page.getByRole('heading',{name:'Event History'})).toBeVisible();
+  const otherSection = page.getByRole("heading",{name:"Other recorded activity"});
+  await expect(otherSection).toBeVisible();
+  const otherDetailsLink = page.getByRole("link",{name:"View all other activity"});
+  await expect(otherDetailsLink).toHaveAttribute("href","/admin/users/guest/qa-guest-activity-0001/other?range=all");
+
   await expect(page.getByRole('table')).toContainText('LOS → IST');
   await expect(page.getByRole('table')).toContainText('Handoff → Duffel');
   await expect(page.getByRole('table')).toContainText('exact search link');

@@ -20,7 +20,7 @@ try {
       await page.goto(base+path);
       await expect(page.getByTestId("activity-overview")).toBeVisible();
       await expect(page.getByTestId("activity-journey-row")).toHaveCount(5);
-      await expect(page.getByTestId("activity-other-row")).toHaveCount(1);
+      await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
       await expect(page.locator("[data-activity-id]")).toHaveCount(0);
       const links = page.getByRole("link",{name:/^View journey for /});
       await expect(links).toHaveCount(5);
@@ -34,7 +34,7 @@ try {
       const overflow = await page.evaluate(()=>document.documentElement.scrollWidth > innerWidth+1);
       assert.equal(overflow,false,"Activity summary must fit "+width+"px");
       await page.screenshot({path:output+"/activity-summary-"+kind+"-"+width+".png",fullPage:true});
-      const other = await page.getByRole("link",{name:/View all other activity/}).getAttribute("href");
+      const other = "/admin/users/"+kind+"/"+id+"/other?range=all";
       assert.ok(other.includes("/other?"));
       await page.goto(base+other);
       await expect(page.getByRole("heading",{name:"Other recorded activity"})).toBeVisible();
@@ -49,9 +49,9 @@ try {
   for(const kind of ["guest","user"]) {
     await page.goto(base+"/admin/users/"+kind+"/qa-complete-history-0001/activity?range=all");
     await expect(page.getByTestId("activity-journey-row")).toHaveCount(0);
-    await expect(page.getByTestId("activity-other-row")).toHaveCount(5);
+    await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
     await expect(page.locator("[data-activity-id]")).toHaveCount(0);
-    const other = await page.getByRole("link",{name:/View all other activity/}).getAttribute("href");
+    const other = "/admin/users/"+kind+"/qa-complete-history-0001/other?range=all";
     await page.goto(base+other);
     await expect(page.locator("[data-activity-id]")).toHaveCount(1005);
     const ids=await page.locator("[data-activity-id]").evaluateAll(nodes=>nodes.map(n=>n.dataset.activityId));
