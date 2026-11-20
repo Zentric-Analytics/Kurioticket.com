@@ -1,5 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
+import { blockVerifiedCrawlerSearch } from "@/lib/searchCrawlerGate";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicFlight } from "@/lib/searchCache";
 import { flightSearchSchema } from "@/lib/validation";
@@ -13,6 +14,8 @@ import { logNativeFlightProviderDiagnostics } from "./providerDiagnostics";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 
 export async function handleFlightSearch(request: Request, purpose: "customer" | "nearby-fare") {
+  const blocked = await blockVerifiedCrawlerSearch(request, "FLIGHT");
+  if (blocked) return blocked;
   const nearby = purpose === "nearby-fare";
   const routeStartedAt = performance.now();
   let providerStartedAt = routeStartedAt;
