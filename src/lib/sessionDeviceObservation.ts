@@ -1,5 +1,5 @@
 import type { OnlinePresencePlatform } from "./onlinePresence";
-import { countryCodeToCountryName, normalizeCountryCode } from "./geo/context";
+import { countryCodeToCountryName, normalizeCountryCode, isIsoCountryCode } from "./geo/context";
 
 /** A minimal, non-identifying description. Never persist raw user agents or IPs here. */
 export type SessionDeviceObservation = {
@@ -50,7 +50,7 @@ function estimatedLocation(headers: Headers, trustedEdge: boolean) {
   if (!trustedEdge) return null;
   const code = normalizeCountryCode(headers.get("cf-ipcountry"));
   const country = code ? countryCodeToCountryName(code) : null;
-  if (!country || code === "XX" || code === "T1") return null;
+  if (!country || !isIsoCountryCode(code)) return null;
   const rawCity = headers.get("cf-ipcity")?.trim() ?? "";
   const city = rawCity.length >= 2 && rawCity.length <= 64
     && /^[\p{L}\p{M} .'-]+$/u.test(rawCity) ? rawCity : null;
