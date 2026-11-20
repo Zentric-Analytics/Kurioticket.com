@@ -1,7 +1,7 @@
 import "server-only";
 
 import { Prisma } from "@/generated/prisma/client";
-import { eligibleGuestVisitorWhere, eligibleJourneyLinkedVisitorWhere, eligibleLinkedVisitorWhere, mergeAdminActivity, toAdminJourneyActivity, type ActivityRow, type IdentityKind } from "@/lib/adminIdentityJourney";
+import { eligibleGuestVisitorWhere, eligibleJourneyLinkedVisitorWhere, eligibleJourneyEventCandidateWhere, eligibleLinkedVisitorWhere, mergeAdminActivity, toAdminJourneyActivity, type ActivityRow, type IdentityKind } from "@/lib/adminIdentityJourney";
 import {
   ACTIVITY_FETCH_LIMIT, ACTIVITY_PAGE_SIZE, activityEnvironmentScope, activityWindow, allowedActivityStages,
   decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, latestVisibleActivityAt, legacyStageLabelMatchesQuery, sourceActivitySeek,
@@ -236,6 +236,12 @@ export async function loadAdminIdentityActivity(
     };
     const canReadHandoffs = allowed.has("PROVIDER_HANDOFF_STARTED")
       && (!product || product === "FLIGHT" || product === "HOTEL" || product === "CAR");
+    // Candidate selection is a strict superset of final canonical events:
+    // use the indexed journey relationship and time/type before evaluating
+    // expensive ownership checks for each visitor.
+    const candidateVisitors = kind === "user" && stages.length
+      ? eligibleJourneyEventCandidateWhere(id, stages, window)
+      : null;
 
     // Only count canonical events that the timeline itself can display.
     // Each attached source must belong to the *same* visitor as its journey;
@@ -271,8 +277,8 @@ export async function loadAdminIdentityActivity(
       canReadHandoffs ? db.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
       allowed.has("ACCOUNT_ACTIVITY") && !isOperationalGuest
         ? db.analyticsEvent.count({ where: analyticsWhere }) : Promise.resolve(0),
-      stages.length && kind === "user"
-        ? db.visitor.count({ where: eligibleJourneyLinkedVisitorWhere(id) }) : Promise.resolve(0),
+      candidateVisitors
+        ? db.visitor.count({ where: candidateVisitors }) : Promise.resolve(0),
     ]) : null;
     const transactionTimeout = readVolume
       ? completeActivityReadTimeout(readVolume.slice(0, 4), readVolume[4])
@@ -311,12 +317,14 @@ export async function loadAdminIdentityActivity(
           if (kind === "guest") {
             await countVisitorBatch([id]);
           } else {
-            // Bound the query size without capping the number of linked visitors
-            // or loading full event records into application memory.
+            // Only candidate visitors with matching stage/time events need
+            // reference-ownership checks. The final count still revalidates
+            // every event and its referenced record against this same visitor.
+            // Keep batches bounded; no visitor or event count is capped.
             let lastVisitorId: string | null = null;
             for (;;) {
               const batch: Array<{ id: string }> = await tx.visitor.findMany({
-                where: eligibleJourneyLinkedVisitorWhere(id),
+                where: candidateVisitors!,
                 select: { id: true },
                 orderBy: { id: "asc" },
                 take: 100,
