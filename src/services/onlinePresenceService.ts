@@ -75,21 +75,26 @@ export async function recordOnlinePresence(heartbeat: OnlinePresenceHeartbeat) {
   // session. Never associate anonymous presence credentials with a visitor.
   if (heartbeat.accountSessionId && heartbeat.device) {
     const minuteAgo = new Date(heartbeat.now.getTime() - 60_000);
-    await db.accountSession.updateMany({
-      where: {
-        id: heartbeat.accountSessionId,
-        revokedAt: null,
-        expiresAt: { gt: heartbeat.now },
-        OR: [{ lastSeenAt: { lt: minuteAgo } }, { deviceLabel: null }],
-      },
-      data: {
-        lastSeenAt: heartbeat.now,
-        ...(heartbeat.device.deviceLabel ? { deviceLabel: heartbeat.device.deviceLabel } : {}),
-        ...(heartbeat.device.browser ? { browser: heartbeat.device.browser } : {}),
-        ...(heartbeat.device.os ? { os: heartbeat.device.os } : {}),
-        ...(heartbeat.device.locationLabel ? { locationLabel: heartbeat.device.locationLabel } : {}),
-      },
-    });
+    try {
+      await db.accountSession.updateMany({
+        where: {
+          id: heartbeat.accountSessionId,
+          revokedAt: null,
+          expiresAt: { gt: heartbeat.now },
+          OR: [{ lastSeenAt: { lt: minuteAgo } }, { deviceLabel: null }],
+        },
+        data: {
+          lastSeenAt: heartbeat.now,
+          ...(heartbeat.device.deviceLabel ? { deviceLabel: heartbeat.device.deviceLabel } : {}),
+          ...(heartbeat.device.browser ? { browser: heartbeat.device.browser } : {}),
+          ...(heartbeat.device.os ? { os: heartbeat.device.os } : {}),
+          ...(heartbeat.device.locationLabel ? { locationLabel: heartbeat.device.locationLabel } : {}),
+        },
+      });
+    } catch {
+      // Optional device details must never break operational presence accounting.
+      console.warn("[online-presence] session device observation unavailable");
+    }
   }
   await pruneExpiredPresence(heartbeat.environment, heartbeat.now);
 }
