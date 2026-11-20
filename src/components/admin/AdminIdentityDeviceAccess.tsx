@@ -46,7 +46,7 @@ export function AdminIdentityDeviceAccess({ kind, result }: {
       <div>
         <h2 className="text-[15px] font-semibold text-[#0F172A]">Platforms &amp; Devices</h2>
         <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-          Observed account sessions. Device labels may be generic; locations are approximate network estimates.
+          Recorded account sessions, independent of activity filters. Device labels may be generic; locations are approximate network estimates.
         </p>
       </div>
       <span className="inline-flex items-center gap-1 text-[11px] text-[#64748B]">
@@ -80,8 +80,27 @@ export function AdminIdentityDeviceAccess({ kind, result }: {
           : "Device session data is temporarily unavailable."}
       </p> : sessions.length === 0 ? <p role="status" className="rounded-lg bg-[#F8FAFC] px-3 py-4 text-[13px] text-[#64748B]">
         No recorded account sessions are available.
-      </p> : <div className="admin-responsive-records min-w-0 overflow-x-auto" role="region"
-        aria-label="Device access history table" tabIndex={0}>
+      </p> : <>
+        <div className="space-y-2 md:hidden" aria-label="Device access history">
+          {sessions.map(session => {
+            const Icon = sourceIcon(session);
+            return <article key={session.id} className="min-w-0 rounded-lg border border-[#E2E8F0] p-3">
+              <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#0F172A]">
+                  <Icon size={15} aria-hidden="true" />{platformLabel(session)}
+                </span>
+                <time dateTime={session.lastSeenAt.toISOString()} className="text-[11px] tabular-nums text-[#64748B]">{stamp(session.lastSeenAt)}</time>
+              </div>
+              <p className="mt-2 break-words text-[12px] text-[#334155]">{value(session.deviceLabel)} · {value(session.os)}</p>
+              <p className="mt-1 break-words text-[12px] text-[#64748B]">
+                {session.client === "MOBILE" ? "In-app" : value(session.browser)} · {value(session.locationLabel)}
+                {session.revokedAt ? " · Revoked" : ""}
+              </p>
+            </article>;
+          })}
+        </div>
+        <div className="admin-responsive-records hidden min-w-0 overflow-x-auto md:block" role="region"
+          aria-label="Device access history table" tabIndex={0}>
         <table className="w-full min-w-[730px] table-fixed text-left text-[12px]">
           <thead className="border-b border-[#E2E8F0] bg-[#F8FAFC] text-[11px] font-medium uppercase tracking-wide text-[#64748B]">
             <tr>
@@ -109,7 +128,7 @@ export function AdminIdentityDeviceAccess({ kind, result }: {
             })}
           </tbody>
         </table>
-      </div>}
+      </div></>}
     </section>
   </section>;
 }
