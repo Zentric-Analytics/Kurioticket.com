@@ -84,6 +84,7 @@ for (const platform of ["ios", "android"] as const) {
     const first = new Headers(h.calls[0].init.headers);
     const second = new Headers(h.calls[1].init.headers);
     assert.equal(first.get("authorization"), null);
+    assert.equal(first.get("X-Kt-Search-Protocol"), "v2");
     assert.equal(first.get("X-Kt-Search-Session"), null);
     assert.equal(second.get("authorization"), null);
     assert.equal(second.get("X-Mobile-Platform"), platform);
