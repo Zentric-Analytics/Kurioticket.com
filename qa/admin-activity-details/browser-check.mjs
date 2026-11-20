@@ -171,7 +171,9 @@ try {
     await page.setViewportSize({width,height:900});
     await page.goto(url);
     await expect(page.getByRole("heading",{name:"Visitor",exact:true})).toBeVisible();
-    await expect(page.getByRole("heading",{name:"Activity history"})).toBeVisible();
+    await expect(page.getByRole("heading",{name:"Recent journeys"})).toBeVisible();
+    await expect(page.getByRole("heading",{name:"Other recorded activity"})).toBeVisible();
+    await expect(page.getByRole("heading",{name:"Activity history"})).toHaveCount(0);
     await expect(page.getByRole("heading",{name:"Activity summary"})).toHaveCount(0);
     await expect(page.getByTestId("activity-metric")).toHaveCount(5);
     await expect(page.getByRole("heading",{name:"Related records"})).toHaveCount(0);
@@ -210,8 +212,10 @@ try {
     await expect(page.getByRole("button",{name:/Sort activity/})).toHaveCount(0);
     await expect(page.getByRole("textbox",{name:"Search activity"})).toBeVisible();
     await expect(page.getByRole("link",{name:/Load (older|newer) activity/})).toHaveCount(0);
-    await expect(page.getByText("14 recorded events",{exact:true})).toBeVisible();
-    await expect(page.locator("[data-activity-id]")).toHaveCount(14);
+    await expect(page.getByTestId("activity-overview")).toBeVisible();
+    await expect(page.getByTestId("activity-journey-row")).toHaveCount(5);
+    await expect(page.getByTestId("activity-other-row")).toHaveCount(1);
+    await expect(page.locator("[data-activity-id]")).toHaveCount(0);
     await expect(page.getByRole("button",{name:"Show all"})).toHaveCount(0);
     await expect(page.getByRole("button",{name:"Hide all"})).toHaveCount(0);
     const widths=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:window.innerWidth}));
@@ -275,64 +279,73 @@ try {
     await page.screenshot({caret:"initial",path:output+"/after-long-identity-"+width+".png",fullPage:true});
   }
 
-  // Every fixture event is available upfront, including the formerly separate pages.
+  // Summary metrics use all authorized records, while only the latest five
+  // actual journeys and standalone actions are rendered in the overview.
   await page.goto(url);
   let totals = page.getByRole("region",{name:"Activity summary"});
   await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","5","1","6"]);
-  await expect(page.getByText("Counts reflect loaded events only.")).toHaveCount(0);
-  await expect(page.locator("[data-activity-id]")).toHaveCount(14);
-  await expect(page.locator('[data-activity-id="j-qa-older-search"]')).toBeVisible();
-  await expect(page.locator('[data-activity-id="j-qa-newer-search"]')).toBeVisible();
+  await expect(page.getByTestId("activity-journey-row")).toHaveCount(5);
+  await expect(page.getByTestId("activity-other-row")).toHaveCount(1);
+  await expect(page.locator("[data-activity-id]")).toHaveCount(0);
   await page.goto(url+"&cursor=older-qa-page");
-  await expect(page.getByText("14 recorded events",{exact:true})).toBeVisible();
   totals = page.getByRole("region",{name:"Activity summary"});
   await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","5","1","6"]);
   await page.goto(url+"&tab=searches&stage=SEARCH_COMPLETED&product=FLIGHT&q=LOS");
   totals = page.getByRole("region",{name:"Activity summary"});
   await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["1","0","0","0","1"]);
+  await expect(page.getByTestId("activity-journey-row")).toHaveCount(1);
+  const historyUrl = new URL(await page.getByRole("link",{name:/View Journey History/}).getAttribute("href"),base);
+  assert.equal(historyUrl.searchParams.get("product"),"FLIGHT");
+  assert.equal(historyUrl.searchParams.get("stage"),"SEARCH_COMPLETED");
+  assert.equal(historyUrl.searchParams.get("range"),"all");
+  assert.equal(historyUrl.searchParams.get("q"),null,"Journey filter must not invent a text-search equivalent");
   await page.goto(url+"&tab=handoffs");
   totals = page.getByRole("region",{name:"Activity summary"});
   await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["0","0","0","1","1"]);
   await page.goto(url+"&tab=journeys&q=LOS");
   await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"All activity"})).toHaveAttribute("aria-current","page");
-  await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Journeys"})).toHaveCount(0);
-  await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Searches"})).not.toHaveAttribute("href",/tab=journeys/);
-  console.log("PASS complete timeline, summary and legacy cursor recovery");
+  console.log("PASS filtered summary metrics, journey handoff and legacy cursor recovery");
 
-  // No scrolling, load-more click or additional page request is needed for any row.
   for (const kind of ["guest","user"]) {
     const fullUrl = base+"/admin/users/"+kind+"/qa-complete-history-0001/activity?range=all";
-    const response = await page.goto(fullUrl);
-    assert.ok((await response.text()).includes("s-qa-complete-1004"), "oldest row present in initial server response");
+    await page.goto(fullUrl);
+    await expect(page.getByTestId("activity-other-row")).toHaveCount(5);
+    await expect(page.getByTestId("activity-journey-row")).toHaveCount(0);
+    await expect(page.locator("[data-activity-id]")).toHaveCount(0);
+    await expect(page.getByText("1005 matching events outside tracked journeys")).toBeVisible();
+    const allHref = await page.getByRole("link",{name:/View all other activity/}).getAttribute("href");
+    await page.goto(base+allHref);
     await expect(page.locator("[data-activity-id]")).toHaveCount(1005);
-    await expect(page.getByText("1005 recorded events",{exact:true})).toBeVisible();
-    await expect(page.getByRole("link",{name:/Load (older|newer) activity/})).toHaveCount(0);
-    const ids = await page.locator("[data-activity-id]").evaluateAll(nodes => nodes.map(node => node.dataset.activityId));
-    assert.equal(new Set(ids).size,1005);
+    const ids = await page.locator("[data-activity-id]").evaluateAll(nodes => nodes.map(n => n.dataset.activityId));
     assert.equal(ids[0],"s-qa-complete-0000");
     assert.equal(ids.at(-1),"s-qa-complete-1004");
+    assert.equal(new Set(ids).size,1005);
     await page.goto(fullUrl+"&product=FLIGHT&from=2026-10-22&to=2026-10-22");
-    await expect(page.locator("[data-activity-id]")).toHaveCount(503);
     await expect(page.getByRole("region",{name:"Activity summary"}).locator('[data-testid="activity-metric-value"]').first()).toHaveText("503");
+    await expect(page.getByTestId("activity-other-row")).toHaveCount(5);
+    const filteredHref = await page.getByRole("link",{name:/View all other activity/}).getAttribute("href");
+    await page.goto(base+filteredHref);
+    await expect(page.locator("[data-activity-id]")).toHaveCount(503);
   }
-  console.log("PASS 1005 events upfront for guests and registered users with complete filters");
+  console.log("PASS five-row summary, complete separate other-event history, and product/date filters");
 
   await page.setViewportSize({width:1280,height:900});
   await page.goto(url+"&directory=sort%3Dname_asc%26identity%3DGUEST%26page%3D2");
-  await expect(page.locator("[data-activity-id]")).toHaveCount(14);
-  for(const stamp of ["5:59","5:58","5:57","5:56"]) await expect(page.getByRole("main")).toContainText(stamp);
+  await expect(page.getByTestId("activity-journey-row")).toHaveCount(5);
+  await expect(page.locator("[data-activity-id]")).toHaveCount(0);
   await page.screenshot({caret:"initial",path:output+"/after-all-selections-visible-1280.png",fullPage:true});
   await expect(page.getByRole("button",{name:"Show all"})).toHaveCount(0);
   const back=await page.getByRole("link",{name:"Users",exact:true}).last().getAttribute("href");
   assert.ok(back.includes("sort=name_asc") && back.includes("identity=GUEST") && back.includes("page=2"));
   await page.getByRole("button",{name:/Copy guest ID:/}).click();
   assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),"qa-guest-activity-0001");
-  console.log("PASS every record visible and identity");
+  console.log("PASS concise summary and identity controls");
 
   // The default rolling 24-hour period must not invent October records in November.
   await page.goto(url.split("?")[0]);
   await expect(page.getByRole("button",{name:"Date range: Today"})).toBeVisible();
-  await expect(page.locator("[data-activity-id]")).toHaveCount(0);
+  await expect(page.getByTestId("activity-journey-row")).toHaveCount(0);
+  await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
   await page.goto(url);
   await page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Searches",exact:true}).click();
   await expect(page).toHaveURL(/tab=searches/);
@@ -385,11 +398,11 @@ try {
   console.log("PASS hidden sort normalizes to newest");
 
   await page.goto(base+"/admin/users/guest/qa-no-events-0001/activity");
-  await expect(page.getByText("No activity matches your filters")).toBeVisible();
+  await expect(page.getByText("No tracked journeys match these filters. Other recorded actions may still appear below.")).toBeVisible();
   await page.screenshot({caret:"initial",path:output+"/after-approved-empty-state-1536.png",fullPage:true});
   await page.goto(url+"&cursor=bad");
   await expect(page.getByText("Activity page link expired")).toHaveCount(0);
-  await expect(page.getByText("14 recorded events",{exact:true})).toBeVisible();
+  await expect(page.getByTestId("activity-journey-row")).toHaveCount(5);
   await expect(page.getByRole("link",{name:/Load (older|newer) activity/})).toHaveCount(0);
   console.log("PASS empty and obsolete cursor");
 

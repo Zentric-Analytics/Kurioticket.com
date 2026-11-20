@@ -319,7 +319,11 @@ test("contiguous journey grouping preserves interleaved event chronology", () =>
 test("User Activity removes redundant journey navigation and related records but keeps handoff filters", () => {
   const source = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx","utf8");
   assert.match(source, /value: "handoffs", label: "Provider handoffs"/);
-  assert.match(source, /if \(raw\.tab === "journeys"\) delete raw\.tab/);
+  assert.match(source, /normalizeUserActivityQuery/);
+  const helper = readFileSync("src/lib/adminActivityDateQuery.ts","utf8");
+  assert.match(helper, /if \(raw\.tab === "journeys"\) delete raw\.tab/);
   assert.match(source, /data-testid="activity-body-card"/);
+  assert.match(source, /<AdminActivityOverview/);
+  assert.doesNotMatch(source, /<ActivityTimeline/);
   assert.doesNotMatch(source, /value: "journeys", label: "Journeys"|Related records|const related =|searchesHref|journeysHref/);
 });

@@ -52,6 +52,10 @@ await put("app/api/admin/notifications/route.js",
 
 await put("app/admin/users/[kind]/[id]/activity/page.tsx",
   await readFile(path.join(source, "app/admin/users/[kind]/[id]/activity/page.tsx"), "utf8"));
+await put("app/admin/users/[kind]/[id]/other/page.tsx",
+  await readFile(path.join(source, "app/admin/users/[kind]/[id]/other/page.tsx"), "utf8"));
+await put("app/admin/users/[kind]/[id]/journeys/page.tsx",
+  await readFile(path.join(source, "app/admin/users/[kind]/[id]/journeys/page.tsx"), "utf8"));
 await put("mocks/auth-guards.js", 'export async function requireAdminSession(){return {user:{id:"qa-admin",role:"ADMIN"}};}');
 await put("mocks/stagingSafety.js", 'export function getPublicEnvironment(){return "staging";}');
 await put("mocks/activity.js", await readFile(path.join(qa, "activity-fixture.js"), "utf8"));
