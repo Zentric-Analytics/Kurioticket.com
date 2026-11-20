@@ -113,6 +113,7 @@ export async function POST(request: Request) {
             product: parsed.data.product,
             metadata: withEnvironmentMetadata({
               action: name,
+              resultId: parsed.data.resultId,
               interactionEventId: parsed.data.eventId,
               requestId: verifiedLink.linkedRequestId,
             }) as Prisma.InputJsonValue,
