@@ -9,7 +9,7 @@ function gate(crawler: VerifiedSearchCrawler | null) {
   const deferred: Array<() => Promise<unknown>> = [];
   const writes: Array<Record<string, unknown>> = [];
   const exported: {
-    blockVerifiedCrawlerSearch: (request: Request, product: "FLIGHT" | "HOTEL" | "CAR") => Promise<Response | null>;
+    blockVerifiedCrawlerSearch: (request: Request, product: "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE") => Promise<Response | null>;
   } = {} as never;
   const dependencies: Record<string, unknown> = {
     "next/server": { after: (callback: () => Promise<unknown>) => deferred.push(callback) },
@@ -30,7 +30,7 @@ function gate(crawler: VerifiedSearchCrawler | null) {
 
 test("verified Google/Bing crawler POSTs are blocked with isolated aggregate telemetry", async () => {
   for (const crawler of ["GOOGLEBOT", "BINGBOT"] as const) {
-    for (const product of ["FLIGHT", "HOTEL", "CAR"] as const) {
+    for (const product of ["FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const) {
       const fixture = gate(crawler);
       const request = new Request("https://staging.kurioticket.com/api/flights/search", {
         method: "POST", headers: { "user-agent": crawler },
