@@ -6,6 +6,7 @@ import { JourneyEventHistory } from "@/components/admin/JourneyEventHistory";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { formatDateTime } from "@/lib/admin-data";
 import { decodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
+import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { adminJourneys } from "@/services/adminJourneyService";
 
 export const metadata = { title: "Admin Journey Detail" };
@@ -47,7 +48,9 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
             const owner = result.data.journey.identity;
             const kind = owner.userId ? "user" : "guest";
             const identityId = owner.userId || owner.visitorId;
-            if (!identityId) return null;
+            // The identity activity reader is scoped to the currently deployed environment.
+            // Do not link to a different environment and silently show unrelated records.
+            if (!identityId || result.data.scope.environment !== getPublicEnvironment()) return null;
             const href = "/admin/users/" + kind + "/" + encodeURIComponent(identityId) + "/other?range=all";
             return <section aria-labelledby="journey-other-activity-heading"
               className="min-w-0 space-y-2 border-t border-[#D8E1EC] pt-5">
