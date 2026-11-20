@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Monitor, Smartphone, MapPin, Globe2, Laptop, Clock3, ChevronRight } from "lucide-react";
+import { Monitor, Smartphone, MapPin, Globe2, Laptop, ChevronRight } from "lucide-react";
 import type { DeviceSessionResult, AdminDeviceSession } from "@/services/adminDeviceSessionsService";
 
 const stamp = (value: Date) => new Intl.DateTimeFormat("en-GB", {
