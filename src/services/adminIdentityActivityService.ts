@@ -249,7 +249,7 @@ export async function loadAdminIdentityActivity(
           // Do not change SHARE/ALERT product semantics or infer saved searches.
           ...(product !== "PACKAGE" ? [{ AND: [
             { type: "SAVE" as const },
-            { metadata: { path: ["product"], equals: Prisma.DbNull } },
+            { name: "saved_item_removed" },
             { metadata: { path: ["savedType"], equals: product.toLowerCase() } },
           ] }] : []),
         ] }] : []),
