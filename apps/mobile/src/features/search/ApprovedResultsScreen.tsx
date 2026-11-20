@@ -95,6 +95,7 @@ import { FlightResultsQuickControls } from "./FlightResultsQuickControls";
 import { DetailGlassSurface } from "./DetailGlassSurface";
 import { FlightSortSheet } from "./FlightSortSheet";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
+import { subscribeSession } from "../../storage/sessionStorage";
 import {
   convertAmount,
   currencyMarketSymbol,
@@ -310,6 +311,9 @@ function ResultsScreen({ product }: { product: Product }) {
   const nearbyFareRequests = useRef(new Map<string, AbortController>());
   const nearbyFareGeneration = useRef(0);
   const nearbyFareAppState = useRef(AppState.currentState);
+  const nearbyFareFocused = useRef(false);
+  const nearbyFareSessionRevision = useRef(0);
+  const mainFlightFareFreshness = useRef<{ fetchedAt: number; validUntil?: number; sessionRevision?: number }>({ fetchedAt: 0 });
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   const previousComparisonCurrency = useRef<string | null>(null);
   const previousFlightSearchKey = useRef<string | undefined>(undefined);
@@ -391,6 +395,7 @@ function ResultsScreen({ product }: { product: Product }) {
       return;
     }
     const searchKey = plan.plan.key;
+    const sessionRevision = nearbyFareSessionRevision.current;
     if (product === "flight" && flightResultsOwnerKey.current !== searchKey) {
       setResults([]);
       setResultsRequestId(undefined);
@@ -507,6 +512,11 @@ function ResultsScreen({ product }: { product: Product }) {
       if (product === "flight") {
         flightResultsOwnerKey.current = searchKey;
         setFlightResultsOwner(searchKey);
+        mainFlightFareFreshness.current = {
+          fetchedAt: Date.now(),
+          sessionRevision,
+          validUntil: "resultsCacheValidUntil" in response ? response.resultsCacheValidUntil : undefined,
+        };
       }
       setStatus(valid.length ? "ready" : "empty");
       setMessage(response.warnings?.[0] || "");
@@ -611,8 +621,10 @@ function ResultsScreen({ product }: { product: Product }) {
     };
   }, [load, plan.plan?.key, product, retry, visualTest]);
   useFocusEffect(useCallback(() => {
+    nearbyFareFocused.current = true;
     setNearbyFareResume((value) => value + 1);
     return () => {
+      nearbyFareFocused.current = false;
       nearbyFareGeneration.current += 1;
       nearbyFareRequests.current.forEach((controller) => controller.abort("screen-blur"));
       nearbyFareRequests.current.clear();
@@ -634,6 +646,16 @@ function ResultsScreen({ product }: { product: Product }) {
       }
     });
     return () => subscription.remove();
+  }, [flightResults]);
+  useEffect(() => {
+    if (!flightResults) return;
+    return subscribeSession(() => {
+      nearbyFareSessionRevision.current += 1;
+      nearbyFareGeneration.current += 1;
+      nearbyFareCache.current.clear();
+      setVerifiedDateFareMemory(undefined);
+      setNearbyFareResume((value) => value + 1);
+    });
   }, [flightResults]);
   const submitFlightEditSearch = useCallback((nextParams: Record<string, string | undefined>) => {
     const nextPlan = buildSearchPlan("flight", nextParams);
@@ -689,7 +711,7 @@ function ResultsScreen({ product }: { product: Product }) {
     setHotelEditPresentation((presentation) => presentation + 1);
     setHotelEditSearchOpen(true);
   };
-  const normalizeFlightPrice = useCallback((result: FlightResult) => currencyState
+  const normalizeFlightPrice = useCallback((result: Pick<FlightResult, "price" | "currency">) => currencyState
     ? convertAmount(result.price, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates)
     : result.price, [currencyState]);
   const ownedFlightResults = useMemo(() => product === "flight" && plan.plan?.key
@@ -934,8 +956,9 @@ function ResultsScreen({ product }: { product: Product }) {
     return verifiedDateFareContextKey(plan.plan.payload, currencyState.resolution.resolvedCurrency);
   }, [currencyState, plan.plan, product]);
   const currentVerifiedDateFares = useMemo<DateStripPriceCandidate[]>(() => {
-    if (product !== "flight" || status !== "ready" || !results.length || !currencyState) return [];
-    return (results as FlightResult[]).flatMap((result) => {
+    if (status !== "ready" || !currencyState
+      || mainFlightFareFreshness.current.sessionRevision !== nearbyFareSessionRevision.current) return [];
+    return ownedFlightResults.flatMap((result) => {
       const departureDate = calendarIsoFromTimestamp(result.departureTime);
       const displayed = flightDisplayPrices.get(result.id);
       return departureDate === flightDate && displayed && Number.isFinite(displayed.amount) ? [{
@@ -945,7 +968,7 @@ function ResultsScreen({ product }: { product: Product }) {
         accessibilityLabel: displayed.formatted,
       }] : [];
     });
-  }, [currencyState, flightDate, flightDisplayPrices, product, results, status]);
+  }, [currencyState, flightDate, flightDisplayPrices, nearbyFareResume, ownedFlightResults, status]);
   useEffect(() => {
     if (!verifiedFareContextKey) {
       setVerifiedDateFareMemory(undefined);
@@ -960,16 +983,18 @@ function ResultsScreen({ product }: { product: Product }) {
   const flightDateStripPriceByDate = useMemo<Record<string, DateStripPrice>>(() => (
     (nearbyFareIdentity === plan.plan?.key ? nearbyFares : []).reduce<Record<string, DateStripPrice>>((fares, state) => {
       if (state.status !== "success" || !currencyState) return fares;
-      const displayed = displayPrice(state.amount, state.currency, currencyState.resolution.resolvedCurrency, currencyState.rates);
+      const lowest = selectNearbyFareResult(state.fares, normalizeFlightPrice);
+      const displayed = lowest && displayPrice(lowest.price, lowest.currency, currencyState.resolution.resolvedCurrency, currencyState.rates);
       if (displayed) fares[state.date] = displayed;
       return fares;
     }, verifiedFareContextKey && verifiedDateFareMemory?.contextKey === verifiedFareContextKey
       ? { ...verifiedDateFareMemory.priceByDate } : {})
-  ), [currencyState, nearbyFareIdentity, nearbyFares, plan.plan?.key, verifiedDateFareMemory, verifiedFareContextKey]);
+  ), [currencyState, nearbyFareIdentity, nearbyFares, normalizeFlightPrice, plan.plan?.key, verifiedDateFareMemory, verifiedFareContextKey]);
   const nearbyFareStateByDate = useMemo(() => Object.fromEntries(
     (nearbyFareIdentity === plan.plan?.key ? nearbyFares : []).map((fare) => [fare.date, fare]),
   ), [nearbyFareIdentity, nearbyFares, plan.plan?.key]);
 
+  const nearbyFareCurrency = currencyState?.resolution.resolvedCurrency;
   useEffect(() => {
     const generation = ++nearbyFareGeneration.current;
     nearbyFareRequests.current.forEach((controller) => controller.abort("search-context-changed"));
@@ -977,50 +1002,47 @@ function ResultsScreen({ product }: { product: Product }) {
     const supported = product === "flight"
       && (payload.tripType === "one-way" || payload.tripType === "round-trip")
       && typeof payload.departureDate === "string";
-    if (!supported || visualTest || !currencyState || (status !== "ready" && status !== "empty")) {
+    if (!supported || visualTest || !nearbyFareCurrency || flightResultsOwner !== plan.plan?.key
+      || (status !== "ready" && status !== "empty")) {
       setNearbyFares([]);
       setNearbyFareIdentity(undefined);
       return;
     }
 
+    if (!nearbyFareFocused.current || nearbyFareAppState.current === "background" || nearbyFareAppState.current === "inactive") return;
+
     let active = true;
-    const dates = getNearbyFareDates(String(payload.departureDate));
-    const displayCurrency = currencyState.resolution.resolvedCurrency;
-    const selectedResult = selectNearbyFareResult(results as FlightResult[], normalizeFlightPrice);
-    if (selectedResult) {
-      nearbyFareCache.current.set(nearbyFareCacheKey(payload, flightDate, displayCurrency), {
-        date: flightDate, status: "success", amount: selectedResult.price,
-        currency: selectedResult.currency, fetchedAt: Date.now(),
-      });
-    } else {
-      nearbyFareCache.current.set(nearbyFareCacheKey(payload, flightDate, displayCurrency), {
-        date: flightDate, status: "unavailable", fetchedAt: Date.now(),
-      });
+    const dates = getNearbyFareDates(flightDate);
+    const { fetchedAt, validUntil, sessionRevision } = mainFlightFareFreshness.current;
+    const selected: NearbyFareState = ownedFlightResults.length
+      ? { date: flightDate, status: "success", fares: ownedFlightResults.map(({ price, currency }) => ({ price, currency })), fetchedAt, validUntil }
+      : { date: flightDate, status: "unavailable", fetchedAt };
+    const selectedKey = nearbyFareCacheKey(payload, flightDate, nearbyFareCurrency);
+    const cachedSelected = freshNearbyFare(nearbyFareCache.current, selectedKey);
+    if (sessionRevision === nearbyFareSessionRevision.current && (!cachedSelected || cachedSelected.fetchedAt <= fetchedAt)) {
+      nearbyFareCache.current.set(selectedKey, selected);
     }
-    const initial = dates.map((date) => freshNearbyFare(
-      nearbyFareCache.current, nearbyFareCacheKey(payload, date, displayCurrency),
+    const initial = dates.map((date) => date === flightDate ? selected : freshNearbyFare(
+      nearbyFareCache.current, nearbyFareCacheKey(payload, date, nearbyFareCurrency),
     ) ?? { date, status: "loading" as const });
     setNearbyFareIdentity(plan.plan?.key);
     setNearbyFares(initial);
     const pending = prioritizeNearbyDates(dates, flightDate).filter((date) =>
-      !freshNearbyFare(nearbyFareCache.current, nearbyFareCacheKey(payload, date, displayCurrency)));
+      date !== flightDate && !freshNearbyFare(nearbyFareCache.current, nearbyFareCacheKey(payload, date, nearbyFareCurrency)));
     const isCurrent = () => active && nearbyFareGeneration.current === generation;
 
     void runNearbyFareQueue(pending, async (date) => {
       if (!isCurrent()) return;
-      const key = nearbyFareCacheKey(payload, date, displayCurrency);
+      const key = nearbyFareCacheKey(payload, date, nearbyFareCurrency);
       const controller = new AbortController();
       nearbyFareRequests.current.set(key, controller);
       try {
-        const response = await travelApi.searchFlights(buildNearbyFarePayload(payload, date), {
-          signal: controller.signal,
-          requestId: `mobile-nearby-${generation}-${date}`,
-        });
+        const response = await travelApi.lookupNearbyFlightFare(buildNearbyFarePayload(payload, date), { signal: controller.signal });
         if (!isCurrent()) return;
-        const lowest = selectNearbyFareResult(response.results as FlightResult[], normalizeFlightPrice);
-        const next: NearbyFareState = lowest
-          ? { date, status: "success", amount: lowest.price, currency: lowest.currency, fetchedAt: Date.now() }
-          : { date, status: "unavailable", fetchedAt: Date.now() };
+        const fetchedAt = Date.now();
+        const next: NearbyFareState = response.fares.length
+          ? { date, status: "success", fares: response.fares, fetchedAt, validUntil: response.resultsCacheValidUntil }
+          : { date, status: "unavailable", fetchedAt };
         nearbyFareCache.current.set(key, next);
         setNearbyFares((current) => current.map((fare) => fare.date === date ? next : fare));
       } catch {
@@ -1038,7 +1060,7 @@ function ResultsScreen({ product }: { product: Product }) {
       nearbyFareRequests.current.forEach((controller) => controller.abort("search-context-changed"));
       nearbyFareRequests.current.clear();
     };
-  }, [currencyState, flightDate, nearbyFareResume, normalizeFlightPrice, plan.plan?.key, product, results, status, visualTest]);
+  }, [flightDate, nearbyFareCurrency, nearbyFareResume, flightResultsOwner, ownedFlightResults, plan.plan?.key, product, status, visualTest]);
 
   const selectNearbyDate = useCallback((nextDepartureDate: string) => {
     if (nextDepartureDate === flightDate) return;

@@ -16,6 +16,7 @@ import type {
 import {
   useCallback,
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -326,6 +327,16 @@ type NearbyFareState =
     }
   | { date: string; status: "unavailable"; fetchedAt: number }
   | { date: string; status: "error"; message?: string; fetchedAt?: number };
+
+type NearbyFareQuote =
+  | Exclude<NearbyFareState, { status: "success" }>
+  | {
+      date: string;
+      status: "success";
+      fares: Array<Pick<PublicFlightResult, "price" | "currency">>;
+      fetchedAt: number;
+      validUntil?: number;
+    };
 
 type NearbyFareRequest = {
   controller: AbortController;
@@ -1068,13 +1079,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [departureDateInput, setDepartureDateInput] = useState(
     initialDateSafeParams.get("departureDate") || "",
   );
-  const nearbyFareCacheRef = useRef(new Map<string, NearbyFareState>());
+  const nearbyFareCacheRef = useRef(new Map<string, NearbyFareQuote>());
   const nearbyFareRequestsRef = useRef(new Map<string, NearbyFareRequest>());
   const nearbyFareGenerationRef = useRef(0);
   const mobileNearbyFareRailRef = useRef<HTMLDivElement>(null);
   const mobileSelectedNearbyFareRef = useRef<HTMLButtonElement>(null);
   const alignedMobileNearbyFareSearchRef = useRef<string | null>(null);
-  const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
+  const [nearbyFareQuotes, setNearbyFares] = useState<NearbyFareQuote[]>([]);
   const [mobileNearbyFaresEnabled, setMobileNearbyFaresEnabled] = useState(
     () =>
       typeof window !== "undefined" &&
@@ -1174,7 +1185,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [, setDestinationSuggestionsLoading] =
     useState(false);
   const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
-  const { status: sessionStatus } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
+  const nearbyFareScope = session?.user?.id ?? "guest";
   const [savedItemIds, setSavedItemIds] = useState<string[]>([]);
   const [backendSavedItemIds, setBackendSavedItemIds] = useState<
     Record<string, string>
@@ -2597,6 +2609,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     [body],
   );
   const mainInventoryReadyRef = useRef(false);
+  const mainInventoryFreshness = useRef<{ fetchedAt: number; validUntil?: number; fareScope?: string }>({ fetchedAt: 0 });
+  const currentNearbyFareScope = useEffectEvent(() => nearbyFareScope);
+  const mainInventoryErrorMessage = useEffectEvent((message?: string) =>
+    message ? t(message) || message
+      : dictionary.unableToSearchFlights || enTranslations.unableToSearchFlights || "Unable to search flights.",
+  );
 
   useEffect(() => {
     // Reset synchronously before the optional-fare effect, not inside the timer.
@@ -2629,6 +2647,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setJourneyResponse(snapshot && !refreshingStaleSnapshot ? { searchKey, requestId: journeyRequestId(snapshot.requestId) } : null);
       if (snapshot) {
         if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
+        mainInventoryFreshness.current = { fetchedAt: snapshot.savedAt, validUntil: snapshot.validUntil };
         setResults(
           filterResultsByRequestedOutboundDate(
             snapshot.results,
@@ -2646,6 +2665,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           return;
         }
       } else {
+        mainInventoryFreshness.current = { fetchedAt: 0 };
         setResults([]);
         setLoading(true);
         setBackgroundRefreshing(false);
@@ -2656,6 +2676,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       }
 
       controller = new AbortController();
+      const fareScope = currentNearbyFareScope();
       fetch("/api/flights/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2666,12 +2687,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           const data = await response.json();
 
           if (!response.ok) {
-            throw new Error(
-              data.error ||
-                dictionary.unableToSearchFlights ||
-                enTranslations.unableToSearchFlights ||
-                "Unable to search flights.",
-            );
+            throw new Error(data.error || mainInventoryErrorMessage());
           }
 
           return data as { results: PublicFlightResult[]; warnings?: string[]; resultsCacheValidUntil?: number; requestId?: string };
@@ -2695,6 +2711,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               journeyRequestId(data.requestId) ?? undefined,
             );
           }
+          mainInventoryFreshness.current = { fetchedAt: Date.now(), validUntil: data.resultsCacheValidUntil, fareScope };
           setResults(filteredResults);
           setJourneyResponse({ searchKey, requestId: journeyRequestId(data.requestId) });
         })
@@ -2702,13 +2719,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           if (controller?.signal.aborted || !active || activeFlightSearchKeyRef.current !== searchKey) return;
 
           if (!refreshingStaleSnapshot) {
-            setError(
-              searchError instanceof Error
-                ? t(searchError.message) || searchError.message
-                : dictionary.unableToSearchFlights ||
-                    enTranslations.unableToSearchFlights ||
-                    "Unable to search flights.",
-            );
+            setError(mainInventoryErrorMessage(searchError instanceof Error ? searchError.message : undefined));
           }
         })
         .finally(() => {
@@ -2725,7 +2736,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       window.clearTimeout(timer);
       controller?.abort();
     };
-  }, [body, dictionary.unableToSearchFlights, guidedMode, mainInventoryRetryGeneration, t]);
+  }, [body, guidedMode, mainInventoryRetryGeneration]);
 
   const retryMainInventorySearch = useCallback(() => {
     userInitiatedRetryRef.current = true;
@@ -2801,7 +2812,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     // Optional comparisons must not compete with the requested inventory.
     if (loading || backgroundRefreshing) return;
     if (!mainInventoryReadyRef.current) return;
-    if (!body?.departureDate) {
+    if (!body?.departureDate || body.tripType === "multi-city") {
       const timer = window.setTimeout(() => setNearbyFares([]), 0);
       return () => window.clearTimeout(timer);
     }
@@ -2814,36 +2825,30 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     let active = true;
     const dates = getNearbyFareDateRange(getNearbyFareWindowStart(centerDate));
-    const fetchedAt = Date.now();
-    const currentFare = getLowestComparableFlightFare(
-      providerResults,
-      selectedCurrency,
-      currencyRates.rates,
-    );
-    const selectedKey = getNearbyFareCacheKey(body, body.departureDate);
-
-    if (currentFare) {
-      nearbyFareCacheRef.current.set(selectedKey, {
-        date: body.departureDate,
-        status: "success",
-        amount: currentFare.price,
-        currency: currentFare.currency,
-        fetchedAt,
-      });
+    const { fetchedAt, validUntil, fareScope } = mainInventoryFreshness.current;
+    const selectedDate = body.departureDate;
+    const selected: NearbyFareQuote = providerResults.length
+      ? { date: selectedDate, status: "success", fares: providerResults.map(({ price, currency }) => ({ price, currency })), fetchedAt, validUntil }
+      : { date: selectedDate, status: "unavailable", fetchedAt };
+    const selectedKey = getNearbyFareCacheKey(body, selectedDate, nearbyFareScope);
+    const cachedSelected = getFreshNearbyFareCacheEntry(nearbyFareCacheRef.current, selectedKey);
+    if (fareScope === nearbyFareScope && isFreshNearbyFareState(selected)
+      && (!cachedSelected || cachedSelected.fetchedAt <= fetchedAt)) {
+      nearbyFareCacheRef.current.set(selectedKey, selected);
     }
 
     const nextFares = dates.map((date) => {
-      const cached = getFreshNearbyFareCacheEntry(
+      if (date === selectedDate) return selected;
+      return getFreshNearbyFareCacheEntry(
         nearbyFareCacheRef.current,
-        getNearbyFareCacheKey(body, date),
-      );
-
-      return cached ?? { date, status: "loading" as const };
+        getNearbyFareCacheKey(body, date, nearbyFareScope),
+      ) ?? { date, status: "loading" as const };
     });
 
     const syncTimer = window.setTimeout(() => {
       if (active && nearbyFareGenerationRef.current === generation) {
         setNearbyFares(nextFares);
+        void runQueue();
       }
     }, 0);
 
@@ -2859,7 +2864,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           date !== body.departureDate &&
           !getFreshNearbyFareCacheEntry(
             nearbyFareCacheRef.current,
-            getNearbyFareCacheKey(body, date),
+            getNearbyFareCacheKey(body, date, nearbyFareScope),
           ),
       );
 
@@ -2867,7 +2872,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       if (!body || !active || nearbyFareGenerationRef.current !== generation)
         return;
 
-      const key = getNearbyFareCacheKey(body, date);
+      const key = getNearbyFareCacheKey(body, date, nearbyFareScope);
       const existing = nearbyFareRequestsRef.current.get(key);
       if (existing) {
         await existing.promise;
@@ -2876,7 +2881,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
       const controller = new AbortController();
       const fareBody = buildNearbyFareSearchBody(body, date);
-      const promise = fetch("/api/flights/search", {
+      const promise = fetch("/api/flights/nearby-fare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(fareBody),
@@ -2884,23 +2889,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       })
         .then(async (response) => {
           if (!response.ok) throw new Error("nearby-fare-search-failed");
-          const data = (await response.json()) as {
-            results?: PublicFlightResult[];
+          const { fares, resultsCacheValidUntil } = (await response.json()) as {
+            fares: Array<Pick<PublicFlightResult, "price" | "currency">>;
+            resultsCacheValidUntil?: number;
           };
-          const fare = getLowestComparableFlightFare(
-            data.results ?? [],
-            selectedCurrency,
-            currencyRates.rates,
-          );
-          const state: NearbyFareState = fare
-            ? {
-                date,
-                status: "success",
-                amount: fare.price,
-                currency: fare.currency,
-                fetchedAt: Date.now(),
-              }
-            : { date, status: "unavailable", fetchedAt: Date.now() };
+          const fetchedAt = Date.now();
+          const state: NearbyFareQuote = fares.length
+            ? { date, status: "success", fares, fetchedAt, validUntil: resultsCacheValidUntil }
+            : { date, status: "unavailable", fetchedAt };
 
           if (!active || nearbyFareGenerationRef.current !== generation) return;
 
@@ -2917,7 +2913,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           )
             return;
 
-          const state: NearbyFareState = {
+          const state: NearbyFareQuote = {
             date,
             status: "error",
             message: error instanceof Error ? error.message : undefined,
@@ -2962,8 +2958,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       await Promise.all(workers);
     }
 
-    void runQueue();
-
     return () => {
       active = false;
       window.clearTimeout(syncTimer);
@@ -2972,14 +2966,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     };
   }, [
     body,
-    currencyRates.rates,
     guidedMode,
     providerResults,
-    selectedCurrency,
+    nearbyFareScope,
     loading,
     backgroundRefreshing,
     mobileNearbyFaresEnabled,
   ]);
+
+  const nearbyFares = useMemo<NearbyFareState[]>(() => nearbyFareQuotes.map((quote) => {
+    if (quote.status !== "success") return quote;
+    const { date, fetchedAt } = quote;
+    const fare = getLowestComparableFlightFare(quote.fares, selectedCurrency, currencyRates.rates);
+    return fare
+      ? { date, status: "success", amount: fare.price, currency: fare.currency, fetchedAt }
+      : { date, status: "unavailable", fetchedAt };
+  }), [nearbyFareQuotes, selectedCurrency, currencyRates.rates]);
 
   useEffect(() => {
     if (!tripTypeMenuOpen) return;
@@ -7733,26 +7735,18 @@ function getNearbyFareDateRange(windowStart: Date): string[] {
   );
 }
 
-function isFreshNearbyFareState(
-  state: NearbyFareState | undefined,
-): state is NearbyFareState {
-  if (!state || state.status === "idle" || state.status === "loading") return false;
-  if (!("fetchedAt" in state) || typeof state.fetchedAt !== "number") return false;
-
-  return Date.now() - state.fetchedAt <= nearbyFareCacheTtlMs;
+function isFreshNearbyFareState(state: NearbyFareQuote | undefined): state is NearbyFareQuote & { fetchedAt: number } {
+  if (!state || !("fetchedAt" in state) || typeof state.fetchedAt !== "number") return false;
+  const now = Date.now();
+  return now - state.fetchedAt <= nearbyFareCacheTtlMs
+    && (state.status !== "success" || state.validUntil === undefined || state.validUntil > now);
 }
 
-function getFreshNearbyFareCacheEntry(
-  cache: Map<string, NearbyFareState>,
-  key: string,
-): NearbyFareState | null {
+function getFreshNearbyFareCacheEntry(cache: Map<string, NearbyFareQuote>, key: string) {
   const state = cache.get(key);
-  if (!isFreshNearbyFareState(state)) {
-    if (state) cache.delete(key);
-    return null;
-  }
-
-  return state;
+  if (isFreshNearbyFareState(state)) return state;
+  if (state) cache.delete(key);
+  return null;
 }
 
 function buildNearbyFareSearchBody<
@@ -7798,31 +7792,11 @@ function preserveRoundTripDuration(
 }
 
 function getNearbyFareCacheKey(
-  search: {
-    tripType: string;
-    origin: string;
-    destination: string;
-    returnDate?: string;
-    adults: number;
-    children: number;
-    infants: number;
-    cabinClass: string;
-    currency?: string;
-  },
+  search: Parameters<typeof buildFlightResultsSearchKey>[0],
   date: string,
+  sessionScope: string,
 ) {
-  return [
-    search.tripType,
-    search.origin,
-    search.destination,
-    date,
-    search.tripType === "round-trip" ? search.returnDate ?? "" : "",
-    search.adults,
-    search.children,
-    search.infants,
-    search.cabinClass,
-    search.currency ?? "",
-  ].join("|");
+  return JSON.stringify([sessionScope, buildFlightResultsSearchKey(buildNearbyFareSearchBody(search, date))]);
 }
 
 function parseDateValue(value: string): Date | null {
