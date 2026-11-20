@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { createAdminOperationalReadService, __adminOperationalReadCoreTest } from "./adminOperationalReadCore";
+import { handoffEvidenceDetailSql, handoffEvidenceListSql, handoffOperationalSessionId } from "./adminHandoffEvidence";
+import type { AdminHandoffScope } from "./adminOperationalReadContract";
 
 test("authorization happens before query validation or storage", async () => {
   let databaseTouched = false;
@@ -555,4 +557,145 @@ test("search detail identifies the searcher without guessing from guest IDs", ()
   assert.match(page, /Unidentified visitor/);
   assert.match(page, /<Field label="User ID"/);
   assert.match(page, /<Field label="Visitor ID"/);
+});
+
+const operationalSession = "38d77b62-f43d-40d5-9597-a6ff76f02c28";
+const originalSearchRequest = "6dd45e11-7e92-4381-a4ac-a681541808da";
+
+test("operational guest evidence is a valid server-issued session ID, not arbitrary metadata", () => {
+  assert.equal(handoffOperationalSessionId({ operationalSessionId: operationalSession }), operationalSession);
+  for (const value of [null, {}, [], { operationalSessionId: "" }, { operationalSessionId: "guest" },
+    { operationalSessionId: "aaaaaaaa-aaaa-1aaa-8aaa-aaaaaaaaaaaa" }, { operationalSessionId: 123 },
+    { operationalSessionId: operationalSession.toUpperCase() }]) {
+    assert.equal(handoffOperationalSessionId(value as never), null);
+  }
+});
+
+test("handoff SQL uses identical source, identity and verified search evidence before keyset pagination", () => {
+  const scope: AdminHandoffScope = {
+    environment: "staging", identity: "guest", userId: null, visitorId: null,
+    product: "FLIGHT", provider: "KAYAK sandbox", correlation: "exact",
+    sourcePage: "/flight_details", from: "2026-11-16T00:00:00.000Z", to: "2026-11-18T00:00:00.000Z",
+  };
+  const page = handoffEvidenceListSql(scope, { at: "2026-11-17T00:00:00.000Z", id: "redirect_00001" }, 50);
+  assert.match(page.sql, /FROM "RedirectLog" r/);
+  assert.match(page.sql, /"SearchHistory" s/);
+  assert.match(page.sql, /"JourneyEvent" e/);
+  assert.match(page.sql, /s\."requestId" = r\."metadata"->>'requestId'/);
+  assert.match(page.sql, /s\."query"->>'environment' = r\."metadata"->>'environment'/);
+  assert.match(page.sql, /s\."type"::text = r\."type"::text/);
+  assert.match(page.sql, /s\."userId" IS NOT DISTINCT FROM r\."userId"/);
+  assert.match(page.sql, /s\."visitorId" IS NOT DISTINCT FROM r\."visitorId"/);
+  assert.match(page.sql, /s\."query"->>'operationalSessionId' = r\."metadata"->>'operationalSessionId'/);
+  assert.match(page.sql, /"consentStatus"::text = 'GRANTED'/);
+  assert.match(page.sql, /correlation\."searchHistoryId" IS NOT NULL/);
+  assert.match(page.sql, /ORDER BY r\."createdAt" DESC, r\."id" DESC/);
+  assert.match(page.sql, /LIMIT/);
+  for (const value of ["staging", "FLIGHT", "KAYAK sandbox", "/flight_details", "redirect_00001", 51]) {
+    assert.ok(page.values.includes(value), "scope value is always parameterized");
+  }
+  assert.match(handoffEvidenceDetailSql("redirect_00001", "staging").sql, /correlation\."searchHistoryId"/);
+
+  const guest = handoffEvidenceListSql({ ...scope, correlation: null, product: null }, null, 50);
+  assert.match(guest.sql, /r\."userId" IS NULL AND/);
+  assert.match(guest.sql, /r\."metadata"->>'operationalSessionId' ~/);
+  const unknown = handoffEvidenceListSql({ ...scope, identity: "unattributed", correlation: "unavailable" }, null, 50);
+  assert.match(unknown.sql, /AND NOT/);
+  assert.match(unknown.sql, /COALESCE\(/, "missing operational IDs count as Unattributed, not SQL NULL");
+  assert.match(unknown.sql, /correlation\."searchHistoryId" IS NULL/);
+  const registered = handoffEvidenceListSql({ ...scope, identity: "registered", userId: "user_123", correlation: null }, null, 50);
+  assert.match(registered.sql, /"VisitorIdentityLink"/);
+  assert.ok(registered.values.includes("user_123"));
+  const explicitVisitor = handoffEvidenceListSql({ ...scope, identity: "guest", visitorId: "visitor_123" }, null, 50);
+  assert.ok(explicitVisitor.values.includes("visitor_123"));
+});
+
+test("Provider Handoffs list and details agree on consent-independent guest identity and exact search", async () => {
+  const redirectId = "redirect_00001";
+  const searchId = "search_000001";
+  const createdAt = new Date("2026-11-17T19:40:00.000Z");
+  const handoff = {
+    id: redirectId, userId: null, visitorId: null, visitor: null,
+    type: "FLIGHT", provider: "KAYAK sandbox", route: "ABV-JNB",
+    price: null, currency: "USD", sourcePage: "/flight_details",
+    destinationUrl: "https://affiliates.kayak.com/private?token=secret",
+    metadata: { environment: "staging", operationalSessionId: operationalSession, requestId: originalSearchRequest },
+    createdAt, journeyEvents: [],
+  };
+  let listQuery: { sql: string; values: unknown[] } | undefined;
+  let detailQuery: { sql: string; values: unknown[] } | undefined;
+  const service = createAdminOperationalReadService({
+    authorize: async () => true,
+    environment: () => "staging",
+    database: () => ({
+      $queryRaw: async (query: { sql: string; values: unknown[] }) => {
+        if (query.sql.includes('SELECT r."id"')) {
+          listQuery = query;
+          return [
+            { id: redirectId, createdAt, searchHistoryId: searchId },
+            { id: "redirect_00000", createdAt: new Date(+createdAt - 1000), searchHistoryId: null },
+          ];
+        }
+        detailQuery = query;
+        return [{ searchHistoryId: searchId }];
+      },
+      redirectLog: {
+        findMany: async (options: { where: { id: { in: string[] }; metadata: unknown } }) => {
+          assert.deepEqual(options.where.id.in, [redirectId], "only the current page is materialized");
+          return [handoff];
+        },
+        findFirst: async () => handoff,
+      },
+    }) as never,
+  });
+  const list = await service.handoffs.list(new URLSearchParams("limit=1&identity=guest&correlation=exact"));
+  assert.equal(list.status, "ok");
+  if (list.status !== "ok") return;
+  assert.equal(list.data.items.length, 1);
+  assert.ok(list.data.nextCursor, "keyset pagination retains more eligible rows");
+  const item = list.data.items[0];
+  assert.equal(item.identity.kind, "guest");
+  assert.equal(item.identity.userId, null);
+  assert.equal(item.identity.visitorId, null);
+  assert.deepEqual(item.searchCorrelation, { kind: "exact", searchHistoryId: searchId });
+  assert.equal(item.destinationDomain, "affiliates.kayak.com");
+  assert.equal(item.sourcePage, "/flight_details");
+  assert.ok(!JSON.stringify(item).includes(operationalSession), "internal session ID is not displayed");
+  assert.ok(!JSON.stringify(item).includes("token=secret"), "the referral URL is redacted");
+  assert.ok(listQuery?.sql.includes('correlation."searchHistoryId" IS NOT NULL'));
+
+  const detail = await service.handoffs.detail(redirectId, new URLSearchParams("environment=staging"));
+  assert.equal(detail.status, "ok");
+  if (detail.status !== "ok") return;
+  assert.deepEqual(detail.data.identity, item.identity);
+  assert.deepEqual(detail.data.searchCorrelation, item.searchCorrelation);
+  assert.ok(detailQuery?.values.includes(redirectId));
+  assert.ok(detailQuery?.values.includes("staging"));
+});
+
+test("unverified and withdrawn handoff visitors never gain fabricated identities or search links", () => {
+  const row = {
+    id: "redirect_00002", userId: null, visitorId: null, visitor: null,
+    type: "HOTEL", provider: "KAYAK sandbox", route: "10 Canal",
+    price: null, currency: "USD", sourcePage: "/hotel_details",
+    destinationUrl: "https://affiliates.kayak.com/book?secret=1",
+    metadata: { environment: "staging", operationalSessionId: "not-a-verified-session" },
+    createdAt: new Date("2026-11-17T19:40:00.000Z"), journeyEvents: [],
+  };
+  const { handoffDto } = __adminOperationalReadCoreTest;
+  const unknown = handoffDto(row as never, "staging");
+  assert.equal(unknown.identity.kind, "unattributed");
+  assert.equal(unknown.searchCorrelation.kind, "unavailable");
+  const realGuest = handoffDto({
+    ...row, metadata: { environment: "staging", operationalSessionId: operationalSession },
+  } as never, "staging");
+  assert.equal(realGuest.identity.kind, "guest");
+  assert.equal(realGuest.searchCorrelation.kind, "unavailable", "identity alone cannot prove a search link");
+  const withdrawn = handoffDto({
+    ...row, visitorId: "former-visitor", visitor: { consentStatus: "WITHDRAWN", trackingDisabledAt: new Date() },
+  } as never, "staging");
+  assert.equal(withdrawn.identity.kind, "unattributed");
+  assert.equal(withdrawn.identity.visitorId, null);
+  const registered = handoffDto({ ...row, userId: "registered-account" } as never, "staging");
+  assert.equal(registered.identity.kind, "registered");
 });
