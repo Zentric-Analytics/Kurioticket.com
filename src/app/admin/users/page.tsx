@@ -96,32 +96,30 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     // reads are limited to the IDs already authorized by the directory query.
     // Search, handoff and analytics observations must belong to this
     // deployment environment; account sessions do not carry an environment.
-    const [sessionsSeen, searchesSeen, handoffsSeen, analyticsSeen] = userIds.length
-      ? await Promise.all([
-          db.accountSession.groupBy({
-            by: ["userId"], where: { userId: { in: userIds } },
-            _max: { lastSeenAt: true },
-          }),
-          db.searchHistory.groupBy({
-            by: ["userId"], where: {
-              userId: { in: userIds },
-              query: { path: ["environment"], equals: environment },
-            }, _max: { createdAt: true },
-          }),
-          db.redirectLog.groupBy({
-            by: ["userId"], where: {
-              userId: { in: userIds },
-              metadata: { path: ["environment"], equals: environment },
-            }, _max: { createdAt: true },
-          }),
-          db.analyticsEvent.groupBy({
-            by: ["userId"], where: {
-              userId: { in: userIds },
-              metadata: { path: ["environment"], equals: environment },
-            }, _max: { createdAt: true },
-          }),
-        ])
-      : [[], [], [], []];
+    const [sessionsSeen, searchesSeen, handoffsSeen, analyticsSeen] = await Promise.all([
+      userIds.length ? db.accountSession.groupBy({
+        by: ["userId"], where: { userId: { in: userIds } },
+        _max: { lastSeenAt: true },
+      }) : Promise.resolve([]),
+      userIds.length ? db.searchHistory.groupBy({
+        by: ["userId"], where: {
+          userId: { in: userIds },
+          query: { path: ["environment"], equals: environment },
+        }, _max: { createdAt: true },
+      }) : Promise.resolve([]),
+      userIds.length ? db.redirectLog.groupBy({
+        by: ["userId"], where: {
+          userId: { in: userIds },
+          metadata: { path: ["environment"], equals: environment },
+        }, _max: { createdAt: true },
+      }) : Promise.resolve([]),
+      userIds.length ? db.analyticsEvent.groupBy({
+        by: ["userId"], where: {
+          userId: { in: userIds },
+          metadata: { path: ["environment"], equals: environment },
+        }, _max: { createdAt: true },
+      }) : Promise.resolve([]),
+    ]);
     const userLastSeen = combineRegisteredLastSeen(
       sessionsSeen.map(entry => ({ userId: entry.userId, lastSeenAt: entry._max.lastSeenAt })),
       searchesSeen.map(entry => ({ userId: entry.userId, lastSeenAt: entry._max.createdAt })),
