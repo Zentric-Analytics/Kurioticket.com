@@ -13,7 +13,7 @@ const query = {
   dropoffDate: "2099-05-02", dropoffTime: "10:00", driverAge: "30",
 };
 
-function fixture(t: TestContext, options: { status?: "available" | "unavailable"; consent?: boolean; failingLog?: boolean; failingProviderLog?: boolean; session?: boolean } = {}) {
+function fixture(t: TestContext, options: { status?: "available" | "unavailable"; consent?: boolean; failingLog?: boolean; failingProviderLog?: boolean; session?: boolean; crawlerBlocked?: boolean } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: Array<Record<string, unknown>> = [];
   const analytics: Array<Record<string, unknown>> = [];
@@ -46,6 +46,8 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
   };
   const dependencies: Record<string, unknown> = {
     "@/lib/application-source": { applicationMetadata },
+    "@/lib/searchCrawlerGate": { blockVerifiedCrawlerSearch: async () => options.crawlerBlocked
+      ? Response.json({ code: "CRAWLER_SEARCH_BLOCKED" }, { status: 403 }) : null },
     "next/server": { after: (callback: () => Promise<unknown>) => { deferred.push(callback); } },
     "@/lib/operationalSearchSession": {
       prepareOperationalSearchSession: (value: Request) => {
@@ -201,4 +203,15 @@ test("optional provider diagnostics failures do not interrupt search history or 
   assert.equal(f.histories.length, 1);
   assert.equal(f.histories[0].status, "SUCCESS");
   assert.equal(f.providerLogs.length, 0);
+});
+
+test("verified crawler is stopped before car search feature access, provider calls and analytics", async (t) => {
+  const f = fixture(t, { crawlerBlocked: true });
+  const response = await f.post();
+  assert.equal(response.status, 403);
+  assert.equal(f.calls(), 0);
+  assert.deepEqual(f.histories, []);
+  assert.deepEqual(f.analytics, []);
+  assert.deepEqual(f.providerLogs, []);
+  assert.equal(f.deferred.length, 0);
 });
