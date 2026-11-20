@@ -20,7 +20,7 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
 
   return (
     <>
-      <SearchWorkspaceBackLink href={returnHref(raw)} label={decodeActivityJourneyReturn(raw.activityReturn) ? "Back to Activity" : "Journeys"} />
+      <SearchWorkspaceBackLink href={returnHref(raw)} label={decodeActivityJourneyReturn(raw.activityReturn)?.split("?")[0].endsWith("/journeys") ? "Back to Journey History" : decodeActivityJourneyReturn(raw.activityReturn) ? "Back to Activity" : "Journeys"} />
       <AdminPageShell title="Journey detail" hideHeader>
       {result.status === "ok" ? (
         <div className="min-w-0 space-y-6 bg-white py-3 text-[#020617]">
