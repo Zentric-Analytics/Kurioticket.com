@@ -600,6 +600,7 @@ test("handoff SQL uses identical source, identity and verified search evidence b
   assert.match(guest.sql, /r\."metadata"->>'operationalSessionId' ~/);
   const unknown = handoffEvidenceListSql({ ...scope, identity: "unattributed", correlation: "unavailable" } as never, null, 50);
   assert.match(unknown.sql, /AND NOT/);
+  assert.match(unknown.sql, /COALESCE\(/, "missing operational IDs count as Unattributed, not SQL NULL");
   assert.match(unknown.sql, /correlation\."searchHistoryId" IS NULL/);
   const registered = handoffEvidenceListSql({ ...scope, identity: "registered", userId: "user_123", correlation: null } as never, null, 50);
   assert.match(registered.sql, /"VisitorIdentityLink"/);
