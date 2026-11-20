@@ -27,6 +27,7 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOverlay";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSavedCar } from "@/components/results/useSavedCar";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 import {
   getCarSpecificationIcon,
   getMobileCarPrimarySpecs,
@@ -247,6 +248,7 @@ export function CarResultCard({
     try {
       if (navigator.share) {
         await navigator.share({ title: car.modelName, url });
+        recordCustomerInteraction({ action: "share_sheet_completed", product: "CAR", resultId: car.id });
         return;
       }
       await navigator.clipboard.writeText(url);
