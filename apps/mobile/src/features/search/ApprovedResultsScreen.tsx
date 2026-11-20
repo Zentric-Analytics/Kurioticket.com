@@ -1232,7 +1232,7 @@ function ResultsScreen({ product }: { product: Product }) {
           renderItem={({ item, index }) => item === null ? (
             <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}>
               {flightDateStrip}
-              {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><FlightPriceAlert plan={plan.plan} flightResults={results as FlightResult[]} available={availability.priceAlerts} displayCurrency={currencyState?.resolution.resolvedCurrency ?? String(plan.plan.payload.currency ?? "USD")} rates={currencyState?.rates ?? {}} onFeedback={setFlightPriceAlertFeedback} /></View> : null}
+              {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><FlightPriceAlert plan={plan.plan} journeyRequestId={resultsRequestId} flightResults={results as FlightResult[]} available={availability.priceAlerts} displayCurrency={currencyState?.resolution.resolvedCurrency ?? String(plan.plan.payload.currency ?? "USD")} rates={currencyState?.rates ?? {}} onFeedback={setFlightPriceAlertFeedback} /></View> : null}
               <FlightResultsSummaryRow count={sorted.length} />
             </View>
           ) : (
