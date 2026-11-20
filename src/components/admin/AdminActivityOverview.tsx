@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, Route } from "lucide-react";
-import { activityOverviewRows, completeJourneyDetailHref } from "@/lib/adminActivityOverview";
-import type { ActivityRow, IdentityKind } from "@/lib/adminIdentityJourney";
+import { activityOverviewRows } from "@/lib/adminActivityOverview";
+import type { ActivityRow } from "@/lib/adminIdentityJourney";
 
 const stamp = (date: Date) => new Intl.DateTimeFormat("en-GB", {
   day: "numeric", month: "short", year: "numeric", hour: "2-digit",
@@ -13,20 +13,14 @@ const name = (product: string) => ({
 const action = "focus-ring inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1.5 text-[13px] font-medium text-[#004BB8] hover:bg-[#F1F6FF]";
 
 export function AdminActivityOverview({
-  events, kind, identityId, environment, returnHref, journeyHistoryHref,
-  operational, otherHref,
+  events, journeyHistoryHref, operational, otherHref,
 }: {
   events: ActivityRow[];
-  kind: IdentityKind;
-  identityId: string;
-  environment: "staging" | "production";
-  returnHref: string;
   journeyHistoryHref: string;
   operational: boolean;
   otherHref: string;
 }) {
   const overview = activityOverviewRows(events);
-  const now = new Date();
   return <section data-testid="activity-overview" aria-label="Activity overview" className="min-w-0 space-y-6">
     {!operational ? <section aria-labelledby="recent-journeys-title" className="min-w-0">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
@@ -48,7 +42,7 @@ export function AdminActivityOverview({
             journey.offersSelected ? journey.offersSelected + " selections" : null,
             journey.handoffs ? journey.handoffs + " handoffs" : null,
           ].filter(Boolean);
-          return <div key={journey.id} data-testid="activity-journey-row" className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
+          return <div key={journey.id} data-testid="activity-journey-row" className="flex min-w-0 items-start gap-3 py-3">
             <div className="flex min-w-0 flex-1 items-start gap-3">
               <Route size={17} className="mt-0.5 shrink-0 text-[#64748B]" aria-hidden="true" />
               <div className="min-w-0">
@@ -57,10 +51,6 @@ export function AdminActivityOverview({
                 {parts.length ? <p className="mt-1 text-[12px] text-[#64748B]">{parts.join(" · ")}</p> : null}
               </div>
             </div>
-            <Link href={completeJourneyDetailHref(journey.id,kind,identityId,environment,now,returnHref)}
-              className={action} aria-label={"View journey for " + detail}>
-              View journey <ChevronRight size={15} aria-hidden="true"/>
-            </Link>
           </div>;
         })}
       </div> : <p className="rounded-lg border border-[#E2E8F0] p-4 text-[13px] text-[#64748B]">No tracked journeys match these filters. Open Journey History to review full records.</p>}
