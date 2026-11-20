@@ -75,3 +75,13 @@ test("journey detail opens all eligible recorded stages for one identity; filter
   assert.equal(url.searchParams.get("stage"),null);
   assert.equal(decodeActivityJourneyReturn(url.searchParams.get("activityReturn")),activityPath);
 });
+
+test("old inclusive UTC date filters become a strict same-day Journey window", () => {
+  const href=journeyHistoryHrefFromActivity("user","qa-account-0001",{
+    ...filters,from:"2026-10-22",to:"2026-10-22",
+  },"custom",activityPath);
+  const p=new URL(href,"https://kurioticket.test").searchParams;
+  assert.equal(p.get("range"),"custom");
+  assert.equal(p.get("from"),"2026-10-22T00:00:00.000Z");
+  assert.equal(p.get("to"),"2026-10-23T00:00:00.000Z");
+});
