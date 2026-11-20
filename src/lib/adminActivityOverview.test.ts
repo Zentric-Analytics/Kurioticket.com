@@ -51,6 +51,21 @@ test("overview shows five newest groups without changing totals or discarding so
   assert.equal(items.length+actions.length,40);
 });
 
+test("Recent journeys are informational, while View Journey History remains the detail entry point", () => {
+  const component = readFileSync("src/components/admin/AdminActivityOverview.tsx", "utf8");
+  const page = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx", "utf8");
+  const history = readFileSync("src/app/admin/users/[kind]/[id]/journeys/page.tsx", "utf8");
+  assert.match(component, /data-testid="activity-journey-row"/);
+  assert.match(component, /View Journey History/);
+  assert.match(component, /journeyHistoryHref/);
+  assert.doesNotMatch(component, /View journey for |completeJourneyDetailHref/);
+  assert.match(component, /journey\.eventCount/);
+  assert.match(component, /journey\.resultsViewed/);
+  assert.match(component, /journey\.route/);
+  assert.match(page, /<AdminActivityOverview/);
+  assert.match(history, /View journey <ChevronRight/);
+});
+
 test("journey navigation carries only applicable product/date/stage filters and safe Activity return", () => {
   const href = journeyHistoryHrefFromActivity("user","qa-account-0001",filters,"today",activityPath);
   const url = new URL(href,"https://kurioticket.test");

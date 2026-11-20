@@ -22,15 +22,8 @@ try {
       await expect(page.getByTestId("activity-journey-row")).toHaveCount(5);
       await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
       await expect(page.locator("[data-activity-id]")).toHaveCount(0);
-      const links = page.getByRole("link",{name:/^View journey for /});
-      await expect(links).toHaveCount(5);
-      const journeys = await links.evaluateAll(nodes=>nodes.map(link=>link.getAttribute("href")));
-      assert.equal(new Set(journeys.map(link=>new URL(link,base).pathname)).size,5,"One journey navigation per true record");
-      assert.ok(journeys.every(link=>{
-        const target=new URL(link,base);
-        return target.searchParams.get("from")==="1970-01-01T00:00:00.000Z"
-          && target.searchParams.get("environment")==="staging";
-      }),"Every journey shows its full chronology, not a summarized date slice");
+      await expect(page.getByRole("link",{name:/^View journey for /})).toHaveCount(0);
+      await expect(page.getByRole("link",{name:/View Journey History/})).toBeVisible();
       const overflow = await page.evaluate(()=>document.documentElement.scrollWidth > innerWidth+1);
       assert.equal(overflow,false,"Activity summary must fit "+width+"px");
       await page.screenshot({path:output+"/activity-summary-"+kind+"-"+width+".png",fullPage:true});
