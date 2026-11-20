@@ -3,7 +3,7 @@
 import { analyticsConsentStorageKey } from "@/lib/analyticsConsentClient";
 import { journeyRequestId } from "@/lib/journeyEventClient";
 
-type Action = "local_saved" | "local_unsaved" | "share_link_copied" | "share_sheet_completed";
+type Action = "local_saved" | "local_unsaved" | "saved_item_confirmed" | "saved_item_removed" | "share_link_copied" | "share_sheet_completed";
 type Product = "FLIGHT" | "HOTEL" | "CAR";
 
 /** Optional observed interactions. No raw travel query, share URL, account ID,
