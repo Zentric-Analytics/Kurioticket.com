@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const aggregatorPath = new URL("./flightAggregator.ts", import.meta.url);
-const searchRoutePath = new URL("../../app/api/flights/search/route.ts", import.meta.url);
+const searchRoutePath = new URL("../../app/api/flights/search/handler.ts", import.meta.url);
 const resultsClientPath = new URL("../../components/results/FlightResultsClient.tsx", import.meta.url);
 
 test("Flight Search propagates its response request ID into cache persistence", async () => {
@@ -21,8 +21,8 @@ test("Flight Search propagates its response request ID into cache persistence", 
 test("Flight Search fails closed when provider results are not cache-confirmed", async () => {
   const aggregator = await readFile(aggregatorPath, "utf8");
 
-  assert.match(aggregator, /const actionableResults = cacheResult\.persisted \? results : \[\]/);
-  assert.match(aggregator, /results\.length > 0 && !cacheResult\.persisted/);
+  assert.match(aggregator, /const availableResults = cacheUnavailable \? \[\] : results/);
+  assert.match(aggregator, /const cacheUnavailable = cacheResult\?\.persisted === false/);
   assert.match(aggregator, /provider\.status === "failed" \|\| kayak\.status === "failed" \|\| cacheUnavailable/);
 });
 

@@ -17,6 +17,62 @@ test.beforeEach(async ({ page, request }) => {
     const response = await request.post("http://127.0.0.1:3011/api/flights/search");
     await route.fulfill({ response });
   });
+  await page.route("**/api/flights/nearby-fare", route => route.fulfill({ json: { fares: [] } }));
+});
+
+test("mobile nearby fares reuse a shifted round-trip window and date selection starts one primary search", async ({ page, request }) => {
+  await page.addInitScript(() => localStorage.setItem("kurioticket:analytics-consent:v1", "declined"));
+  await page.route("**/api/auth/session", route => route.fulfill({ json: {} }));
+  const primaryFixture = await (await request.post("http://127.0.0.1:3011/api/flights/search")).text();
+  const searches: Array<{ departureDate: string; returnDate: string }> = [];
+  const nearby: Array<{ departureDate: string; returnDate: string }> = [];
+  await page.route("**/api/flights/search", async (route, request) => {
+    const search = request.postDataJSON();
+    searches.push(search);
+    const body = primaryFixture
+      .replaceAll(dates.returnDate, search.returnDate)
+      .replaceAll(dates.departureDate, search.departureDate);
+    await route.fulfill({ contentType: "application/json", body });
+  });
+  await page.route("**/api/flights/nearby-fare", async (route, request) => {
+    nearby.push(request.postDataJSON());
+    await route.fulfill({ json: { fares: [{ price: 113, currency: "USD" }] } });
+  });
+
+  await page.goto(flightResults, { waitUntil: "domcontentloaded" });
+  const rail = page.getByLabel("Nearby departure fares");
+  await expect(rail.locator("[data-fare-date-cell]")).toHaveCount(10);
+  await expect(rail.locator("[data-fare-date-cell]:enabled")).toHaveCount(9);
+  expect(searches.map(search => search.departureDate)).toEqual([dates.departureDate]);
+  expect(nearby).toHaveLength(9);
+
+  const nextDate = new Date(Date.parse(dates.departureDate) + 86_400_000).toISOString().slice(0, 10);
+  const nextReturn = new Date(Date.parse(dates.returnDate) + 86_400_000).toISOString().slice(0, 10);
+  const nextCell = rail.locator('[aria-current="date"] + [data-fare-date-cell]');
+  await nextCell.evaluate(cell => cell.scrollIntoView({ block: "center", inline: "center" }));
+  await nextCell.tap();
+  await expect.poll(() => searches.map(search => [search.departureDate, search.returnDate]))
+    .toEqual([[dates.departureDate, dates.returnDate], [nextDate, nextReturn]]);
+  await expect.poll(() => nearby.length).toBe(10);
+  await expect(rail.locator("[data-fare-date-cell]:enabled")).toHaveCount(9);
+  await expect(page.getByRole("heading", { name: "12 results found" })).toBeVisible();
+  expect(new Set(nearby.map(search => search.departureDate)).size).toBe(10);
+  for (const search of nearby) {
+    expect(Date.parse(search.returnDate) - Date.parse(search.departureDate)).toBe(2 * 86_400_000);
+  }
+});
+
+test("desktop flight results use the primary API without fetching nearby fares", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const flightRequests: string[] = [];
+  page.on("request", request => {
+    const path = new URL(request.url()).pathname;
+    if (path === "/api/flights/search" || path === "/api/flights/nearby-fare") flightRequests.push(path);
+  });
+  await page.goto(flightResults, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("[data-flight-results-desktop-header]")).toBeVisible();
+  await expect(page.locator('[data-nearby-fare-presentation="mobile"]')).toBeHidden();
+  await expect.poll(() => flightRequests).toEqual(["/api/flights/search"]);
 });
 
 test("Flight mobile loading keeps one header and reveals real controls only when ready", async ({ page, request }) => {

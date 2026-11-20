@@ -7,7 +7,7 @@ import type {
 } from "@/lib/types";
 import { getItineraryDateKey } from "@/lib/utils";
 import { getSearchLegs } from "@/lib/flights/flightSearchJourney";
-import { rememberFlights } from "@/lib/searchCache";
+import { FLIGHT_CACHE_TTL_MS, rememberFlights } from "@/lib/searchCache";
 import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
 import {
   deduplicateFlightOffers,
@@ -19,7 +19,7 @@ import { providerSearchWarnings } from "./providerSearchOutcome";
 /** The sole production flight pipeline. Provider policy is deliberately not configurable. */
 export async function searchFlights(
   search: FlightSearchParams,
-  options: { signal?: AbortSignal; deadlineMs?: number; onProviderStart?: () => void; requestId?: string; kayak?: KayakRequestContext } = {},
+  options: { signal?: AbortSignal; deadlineMs?: number; onProviderStart?: () => void; requestId?: string; kayak?: KayakRequestContext; fareOnly?: boolean } = {},
 ): Promise<AggregatedResult<NormalizedFlightResult> & {
   performance: {
     supplierMs: number;
@@ -60,18 +60,26 @@ export async function searchFlights(
     ),
   );
   const aggregationMs = performance.now() - aggregationStartedAt;
-  const cacheResult = results.length
+  const cacheResult = results.length && !options.fareOnly
     ? await rememberFlights(results, now, search, options.requestId)
-    : { persisted: true, validForMs: 0 };
-  const actionableResults = cacheResult.persisted ? results : [];
-  const cacheUnavailable = results.length > 0 && !cacheResult.persisted;
+    : null;
+  const cacheUnavailable = cacheResult?.persisted === false;
+  const availableResults = cacheUnavailable ? [] : results;
+  // Fare comparisons never expose booking actions or populate their cache.
+  // Their quote validity still ends at the earliest provider expiration.
+  const validForMs = cacheResult?.validForMs ?? (results.length
+    ? results.reduce((remaining, result) => Math.min(
+      remaining,
+      (result.providerExpiresAt ?? Infinity) - now,
+    ), FLIGHT_CACHE_TTL_MS)
+    : 0);
   return {
-    results: actionableResults,
+    results: availableResults,
     providerStatuses: [provider, kayak],
     warnings:
       provider.status === "failed" || kayak.status === "failed" || cacheUnavailable
         ? ["Flight results are temporarily unavailable. Please try again."]
-        : providerSearchWarnings([provider, kayak], actionableResults.length),
+        : providerSearchWarnings([provider, kayak], availableResults.length),
     latencyMs: Date.now() - startedAt,
     performance: {
       supplierMs: providerPerformance?.supplierMs ?? provider.latencyMs,
@@ -82,9 +90,9 @@ export async function searchFlights(
       deduplicationMs,
       aggregationMs,
     },
-    resultsCacheValidForMs: cacheResult.validForMs,
-    resultsCacheValidUntil: now + cacheResult.validForMs,
-    ...((!actionableResults.length && (provider.status === "failed" || kayak.status === "failed")) || cacheUnavailable
+    resultsCacheValidForMs: validForMs,
+    resultsCacheValidUntil: now + validForMs,
+    ...((!availableResults.length && (provider.status === "failed" || kayak.status === "failed")) || cacheUnavailable
       ? {
           unavailableMessage:
             "Flight results are temporarily unavailable. Please try again.",

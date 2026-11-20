@@ -80,12 +80,12 @@ test("nearby fare provider requests run only on mobile viewports and react to br
     nearbyEffectStart,
   );
   const nearbyEffect = source.slice(nearbyEffectStart, nearbyEffectEnd);
-  assert.match(nearbyEffect, /fetch\("\/api\/flights\/search"/);
+  assert.match(nearbyEffect, /fetch\("\/api\/flights\/nearby-fare"/);
   assert.match(nearbyEffect, /mobileNearbyFaresEnabled/);
 });
 
 test("mobile nearby fares keep one truthful fare state and selection handler", () => {
-  assert.equal(source.match(/const \[nearbyFares, setNearbyFares\]/g)?.length, 1);
+  assert.equal(source.match(/const \[nearbyFareQuotes, setNearbyFares\]/g)?.length, 1);
   assert.equal(source.match(/nearbyFareCacheRef = useRef/g)?.length, 1);
   assert.match(source, /data-nearby-fare-presentation="mobile"/);
   assert.match(source, /nearbyFares\.length[\s\S]*\? nearbyFares/);

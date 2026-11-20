@@ -45,11 +45,13 @@ test("round trips preserve calendar duration for background requests and selecti
 
 test("cache is fresh only within ten minutes", () => {
   const cache = new Map<string, NearbyFareState>();
-  cache.set("fresh", { date: "2026-10-23", status: "success", amount: 10, currency: "USD", fetchedAt: 1_000 });
+  cache.set("fresh", { date: "2026-10-23", status: "success", fares: [{ price: 10, currency: "USD" }], fetchedAt: 1_000 });
   cache.set("stale", { date: "2026-10-24", status: "unavailable", fetchedAt: 1_000 });
   assert.equal(freshNearbyFare(cache, "fresh", 1_000 + NEARBY_FARE_CACHE_TTL_MS)?.status, "success");
   assert.equal(freshNearbyFare(cache, "stale", 1_001 + NEARBY_FARE_CACHE_TTL_MS), undefined);
   assert.equal(cache.has("stale"), false);
+  cache.set("expired-offer", { date: "2026-10-25", status: "success", fares: [{ price: 10, currency: "USD" }], fetchedAt: 1_000, validUntil: 2_000 });
+  assert.equal(freshNearbyFare(cache, "expired-offer", 2_000), undefined);
 });
 
 test("cache identity isolates route, travelers, cabin, currency, and round-trip context", () => {
@@ -60,7 +62,8 @@ test("cache identity isolates route, travelers, cabin, currency, and round-trip 
     { ...base, returnDate: "2026-11-02" }, { ...base, tripType: "one-way" },
   ]) assert.notEqual(nearbyFareCacheKey(changed, "2026-10-25", "NGN"), key);
   assert.notEqual(nearbyFareCacheKey(base, "2026-10-25", "USD"), key);
-  assert.equal(nearbyFareCacheKey(base, "2026-10-25", "NGN"), key);
+  const nextSearch = { ...base, departureDate: "2026-10-24", returnDate: "2026-10-31" };
+  assert.equal(nearbyFareCacheKey(nextSearch, "2026-10-25", "NGN"), key, "overlapping windows reuse the same trip");
 });
 
 test("nearby fare selection keeps real provider inventory when FX conversion is unavailable", () => {

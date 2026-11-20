@@ -22,6 +22,8 @@ export class TravelApiError extends Error {
 }
 
 export type FlightResult = ContractResult<PublicFlightResult>;
+export type NearbyFlightFare = Pick<PublicFlightResult, "price" | "currency">;
+type FlightSearchResponse = TravelSearchResponse<PublicFlightResult> & { resultsCacheValidUntil?: number };
 export type MobileFlightDetailsResponse = FlightDetailsResponse;
 export type FlightRedirectResponse = { url: string };
 export type HotelResult = ContractResult<PublicHotelResult>;
@@ -248,7 +250,8 @@ export const travelApi = {
   homepageContent: (market: string, locale: string) => request<unknown>(`/api/content/homepage?market=${encodeURIComponent(market)}&locale=${encodeURIComponent(locale)}`),
   faqContent: (locale: string) => request<unknown>(`/api/content/faqs?locale=${encodeURIComponent(locale)}`),
   journeyEvent: (body: JourneyEvent, options: { signal: AbortSignal; visitorContext: number }) => request<JourneyEventResponse>("/api/journey/events", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: 4000 }),
-  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<FlightSearchResponse>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  lookupNearbyFlightFare: (body: Record<string, unknown>, options?: { signal?: AbortSignal }) => request<{ fares: NearbyFlightFare[]; requestId: string; resultsCacheValidUntil?: number }>("/api/flights/nearby-fare", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   flightDetails: (id: string, options: { signal?: AbortSignal } = {}) => request<FlightDetailsResponse>(`/api/flights/details?id=${encodeURIComponent(id)}`, {}, options),
   flightRedirect: (id: string, options: RedirectOptions = {}) => providerRedirect(id, "flight", options),
   searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<HotelSearchResponse>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
