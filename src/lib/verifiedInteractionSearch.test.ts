@@ -3,12 +3,14 @@ import test from "node:test";
 import { matchesInteractionSearch } from "./verifiedInteractionSearch";
 
 const now = new Date("2026-11-20T12:15:00.000Z");
-const actor = { visitorId: "visitor-a", userId: "account-a" };
-const search = {
+type SearchRecord = NonNullable<Parameters<typeof matchesInteractionSearch>[0]>;
+type Actor = Parameters<typeof matchesInteractionSearch>[1];
+const actor: Actor = { visitorId: "visitor-a", userId: "account-a" };
+const search: SearchRecord = {
   visitorId: "visitor-a", userId: "account-a", type: "FLIGHT",
   query: { environment: "staging" }, createdAt: new Date("2026-11-20T12:10:00.000Z"),
 };
-const valid = (record: typeof search | null, identity = actor, product = "FLIGHT", environment: "staging" | "production" = "staging") =>
+const valid = (record: SearchRecord | null, identity: Actor = actor, product = "FLIGHT", environment: "staging" | "production" = "staging") =>
   matchesInteractionSearch(record, identity, product, environment, now);
 
 test("exact, recent, same-environment search for the same consenting visitor is eligible", () => {
