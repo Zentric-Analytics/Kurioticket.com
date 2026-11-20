@@ -92,7 +92,7 @@ const writeUserSavedItem = createSavedItemWriter(getPrisma);
 export async function createUserSavedItem(userId: string, input: CreateSavedItemInput) {
   const item = await writeUserSavedItem(userId, input);
   await trackAnalyticsEvent({
-    userId, type: "SAVE", name: "saved_item_added",
+    userId, type: "SAVE", name: "saved_item_confirmed",
     metadata: {
       product: input.type === "search" ? input.searchType.toUpperCase() : input.type.toUpperCase(),
       savedType: input.type,
