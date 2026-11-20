@@ -12,7 +12,7 @@ import { resolveRequestActivityIdentity } from "@/services/requestActivityIdenti
 export const runtime = "nodejs";
 
 const payloadSchema = z.object({
-  action: z.enum(["local_saved", "local_unsaved", "share_link_copied", "share_sheet_completed"]),
+  action: z.enum(["local_saved", "local_unsaved", "saved_item_confirmed", "saved_item_removed", "share_link_copied", "share_sheet_completed"]),
   product: z.enum(["FLIGHT", "HOTEL", "CAR"]),
   resultId: z.string().min(1).max(128).regex(/^[a-zA-Z0-9._:-]+$/),
   requestId: z.string().uuid().optional(),
@@ -100,8 +100,8 @@ export async function POST(request: Request) {
       if (verifiedLink) {
         // Exactly the same verified canonical search powers the journey event.
         // Never create a journey stage for an uncorrelated result or other owner.
-        const stage = name === "local_saved" ? "RESULT_SAVED"
-          : name === "local_unsaved" ? "RESULT_UNSAVED" : "RESULT_SHARED";
+        const stage = name === "local_saved" || name === "saved_item_confirmed" ? "RESULT_SAVED"
+          : name === "local_unsaved" || name === "saved_item_removed" ? "RESULT_UNSAVED" : "RESULT_SHARED";
         await tx.journeyEvent.create({
           data: {
             journeyId: verifiedLink.linkedJourneyId,
