@@ -25,7 +25,7 @@ try {
   assert.ok((await historyLink.getAttribute('href')).length < 8192);
   await historyLink.click();
   await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/journeys\?/);
-  await page.getByRole('link',{name:'Back to Activity'}).last().click();
+  await page.getByRole('navigation',{name:'Breadcrumb'}).getByRole('link',{name:'Activity',exact:true}).click();
   await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/activity\?/);
   assert.equal(new URL(page.url()).searchParams.get("directory"),longDirectory);
   assert.equal(new URL(page.url()).searchParams.get("q"),"LOS");
@@ -45,6 +45,16 @@ try {
   assert.equal(historyUrl.searchParams.get("product"),"FLIGHT");
   assert.equal(historyUrl.searchParams.get("q"),null);
   await expect(page.getByRole("heading",{name:"Journey history"})).toBeVisible();
+  await expect(page.getByRole("navigation",{name:"Breadcrumb"}).getByRole("link",{name:"Activity",exact:true})).toBeVisible();
+  await expect(page.getByRole("link",{name:"Back to Activity"})).toHaveCount(0);
+  await expect(page.getByRole("link",{name:/Other recorded activity/})).toHaveCount(0);
+  const positions = await page.evaluate(() => {
+    const summary = document.querySelector('[aria-label="Selected visitor journey summary"]');
+    const identity = document.querySelector('[aria-label="Selected visitor"]');
+    return { summary: summary?.getBoundingClientRect().top, identity: identity?.getBoundingClientRect().top };
+  });
+  assert.ok(typeof positions.summary === "number" && typeof positions.identity === "number" && positions.summary < positions.identity,
+    "Journey metrics must be before the Journey history identity card");
   await expect(page.getByRole("heading",{name:"Recorded journeys"})).toBeVisible();
   await page.getByRole("link",{name:"View journey",exact:true}).first().click();
   await expect(page).toHaveURL(/\/admin\/journeys\/qa-journey-flight\?/);
