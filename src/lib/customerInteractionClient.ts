@@ -1,6 +1,7 @@
 "use client";
 
 import { analyticsConsentStorageKey } from "@/lib/analyticsConsentClient";
+import { journeyRequestId } from "@/lib/journeyEventClient";
 
 type Action = "local_saved" | "local_unsaved" | "share_link_copied" | "share_sheet_completed";
 type Product = "FLIGHT" | "HOTEL" | "CAR";
@@ -10,7 +11,7 @@ type Product = "FLIGHT" | "HOTEL" | "CAR";
  * consent and ownership before writing a record.
  */
 export function recordCustomerInteraction(input: {
-  action: Action; product: Product; resultId: string;
+  action: Action; product: Product; resultId: string; requestId?: string | null;
 }): void {
   if (typeof window === "undefined") return;
   try {
@@ -27,7 +28,8 @@ export function recordCustomerInteraction(input: {
       await fetch("/api/activity/interactions", {
         method: "POST", cache: "no-store", credentials: "same-origin", keepalive: true,
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ ...input, resultId, eventId }),
+        body: JSON.stringify({ action: input.action, product: input.product, resultId, eventId,
+          ...(journeyRequestId(input.requestId) ? { requestId: journeyRequestId(input.requestId) } : {}) }),
       });
     })().catch(() => undefined);
   } catch {
