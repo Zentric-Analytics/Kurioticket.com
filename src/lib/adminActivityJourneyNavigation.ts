@@ -10,10 +10,10 @@ export function activityJourneyReturnHref(input: unknown): string | null {
   const safe = new URLSearchParams();
   const keys = target[1].toLowerCase() === "activity"
     ? ["tab", "range", "stage", "product", "from", "to", "q", "directory"]
-    : ["range", "stage", "product", "provider", "from", "to", "cursor"];
+    : ["range", "stage", "product", "provider", "from", "to", "cursor", "activityReturn"];
   for (const key of keys) {
     const value = candidates.get(key);
-    const max = key === "directory" ? 1000 : key === "cursor" ? 2048
+    const max = key === "directory" || key === "activityReturn" ? 1000 : key === "cursor" ? 2048
       : key === "provider" || key === "q" ? 120 : 40;
     if (value && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value)) safe.set(key, value);
   }
