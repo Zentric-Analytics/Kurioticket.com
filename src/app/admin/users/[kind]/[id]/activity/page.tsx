@@ -8,6 +8,7 @@ import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { AdminActivityOverview } from "@/components/admin/AdminActivityOverview";
 import { journeyHistoryHrefFromActivity } from "@/lib/adminActivityOverview";
+import { normalizeUserActivityQuery, safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
 import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
@@ -58,14 +59,6 @@ function safeDirectoryHref(raw: RawQuery) {
   }
   return "/admin/users" + (safe.size ? "?" + safe.toString() : "");
 }
-function activityParams(raw: RawQuery) {
-  const result: Record<string, string> = {};
-  for (const key of ["tab", "range", "stage", "product", "from", "to", "q", "order", "directory"]) {
-    const value = raw[key];
-    if (typeof value === "string" && value.length <= 1100) result[key] = value;
-  }
-  return result;
-}
 function HeaderTime({ at }: { at: Date }) {
   const label = format(at);
   return <time dateTime={at.toISOString()} title={label + " UTC"}>{label}</time>;
@@ -115,31 +108,11 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const { kind, id } = await params;
   if (!validActivityIdentity(kind, id)) notFound();
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
-  const raw = { ...(await searchParams) };
-  // The customer activity reader now supports exact UTC instants for rolling
-  // presets; legacy bookmarked UTC calendar dates remain unchanged.
-  const selectedRange = typeof raw.range === "string" ? raw.range : "";
-  const reportingRange = selectedRange || "today";
-  if (!raw.from && !raw.to && ["today", "24h", "7d", "30d"].includes(reportingRange)) {
-    const to = new Date();
-    const days = reportingRange === "30d" ? 30 : reportingRange === "7d" ? 7 : 1;
-    raw.from = reportingRange === "today"
-      ? new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate())).toISOString()
-      : new Date(to.getTime() - days * 86_400_000).toISOString();
-    raw.to = to.toISOString();
-    raw.range = reportingRange;
-  }
-  // Existing Journeys bookmarks now display the unfiltered activity tab.
-  // Preserve their other filters without leaving an invisible selected tab.
-  if (raw.tab === "journeys") delete raw.tab;
-  // Old paginated bookmarks now open the complete newest-first history.
-  delete raw.cursor;
-  delete raw.order;
-  delete raw.sort;
+  const raw = normalizeUserActivityQuery(await searchParams, new Date());
   const filtersResult = parseActivityFilters(raw);
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
   const backHref = safeDirectoryHref(raw);
-  const queryParams = activityParams(raw);
+  const queryParams = safeActivityQueryParams(raw);
   if (!filtersResult.ok) return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <Link href={backHref} className={buttonClass}><ArrowLeft size={16} /> Back to Users</Link>
