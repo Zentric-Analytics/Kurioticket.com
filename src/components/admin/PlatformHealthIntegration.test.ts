@@ -46,7 +46,7 @@ test("source-filtered search investigation keeps filters and excludes source fro
     }
     assert.ok(searchWorkspaceHref("searches", raw).includes("applicationSource=UNKNOWN"));
     assert.ok(!searchWorkspaceHref("handoffs", raw).includes("applicationSource"));
-    assert.equal(applicationLabel(undefined), "Unverified source");
+    assert.equal(applicationLabel(undefined), "Unknown");
 });
 test("health navigation is ADMIN-only, discoverable and overview has a separate live presence metric", () => {
     assert.ok(getAdminNavForRole("ADMIN").some(item => item.href === "/admin/platform-health"));
