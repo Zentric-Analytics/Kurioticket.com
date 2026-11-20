@@ -29,6 +29,7 @@ test("Overview is admin-only and never returns raw session credentials", () => {
   assert.match(page, /requireAdminSession\("\/admin\/users\/platforms-devices"\)/);
   assert.match(service, /getOptionalPrisma/);
   assert.match(service, /db\.accountSession\.groupBy/);
+  assert.match(service, /groupBy\(\{ by: \["client", "platform"\], where: \{ \.\.\.base, \.\.\.selection \}/);
   assert.match(service, /take: PLATFORM_ACCESS_PAGE_SIZE/);
   assert.match(service, /lastSeenAt: dateFilter/);
   assert.match(service, /const observedAt = new Date\(\)/);
