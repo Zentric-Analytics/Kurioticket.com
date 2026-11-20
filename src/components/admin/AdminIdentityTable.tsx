@@ -78,7 +78,7 @@ export function AdminIdentityTable({
       >
         <table className="w-full min-w-[1080px] table-fixed text-left text-[13px]">
           <caption className="sr-only">
-            Registered accounts and consent-eligible guest identities, sorted by {sort.replaceAll("_", " ")}
+            Registered accounts and consent-eligible guest identities, sorted by {sort === "newest" ? "latest recorded activity" : sort.replaceAll("_", " ")}
           </caption>
           <colgroup>
             <col className="w-[30%]" />
