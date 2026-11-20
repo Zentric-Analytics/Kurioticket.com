@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Monitor, Smartphone, TabletSmartphone, Clock3, Users } from "lucide-react";
+import { Monitor, Smartphone, TabletSmartphone, Clock3, Users } from "lucide-react";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { platformLabel, deviceValue } from "@/components/admin/AdminIdentityDeviceAccess";
@@ -46,47 +46,52 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
     { label: "Unclassified native sessions", value: result.counts.other, icon: Users },
   ] : [];
   return <div className="min-w-0 space-y-5 bg-white pb-6 text-[#0F172A]">
-    <header className="flex min-w-0 flex-wrap items-start justify-between gap-3 border-b border-[#E2E8F0] pb-4">
-      <div className="min-w-0">
-        <h1 className="text-xl font-semibold tracking-tight">Platforms &amp; Devices</h1>
-        <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-          Recorded account sign-in sessions across web and native apps. This is historical account-session evidence, not live device presence.
-        </p>
-      </div>
-      <Link href="/admin/users" className={navigationLink}>
-        <ArrowLeft size={14} aria-hidden="true"/> Users directory
-      </Link>
+    <header className="min-w-0 border-b border-[#E2E8F0] pb-3">
+      <h1 className="text-xl font-semibold tracking-tight">Platforms &amp; Devices</h1>
+      <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
+        Recorded account sessions across web and native apps, not live device presence.
+      </p>
     </header>
+
+    {result.status === "ok" ? <section data-testid="platform-session-metrics"
+      aria-label="Recorded platform summary matching applied filters"
+      className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#E2E8F0] min-[900px]:grid-cols-4">
+      {summaries.map(({ label, value, icon: Icon }) =>
+        <div key={label} data-testid="platform-session-metric"
+          className="min-w-0 bg-white px-3.5 py-3.5 sm:px-4">
+          <div className="flex min-h-9 min-w-0 items-start gap-2 text-[12px] leading-[17px] text-[#64748B]">
+            <Icon size={15} aria-hidden="true" className="mt-0.5 shrink-0"/>
+            <span className="min-w-0">{label}</span>
+          </div>
+          <p className="mt-1 text-[22px] font-semibold leading-7 tabular-nums tracking-tight text-[#0F172A]">
+            {value.toLocaleString()}
+          </p>
+        </div>)}
+    </section> : null}
 
     <form action="/admin/users/platforms-devices" method="get" aria-label="Platforms and devices filters"
       className="flex min-w-0 flex-wrap items-end gap-3 border-b border-[#E2E8F0] pb-4">
-      <label className="flex min-w-[145px] max-w-[220px] flex-1 flex-col gap-1 text-[12px] font-medium text-[#475569]">
+      <label className="flex w-full min-w-0 flex-col gap-1 text-[12px] font-medium text-[#475569] sm:w-[200px]">
         Activity window
         <select name="range" defaultValue={query.range}
           className="focus-ring h-10 w-full rounded-lg border border-[#CBD5E1] bg-white px-3 text-[13px] font-normal text-[#0F172A]">
           {rangeOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
       </label>
-      <label className="flex min-w-[145px] max-w-[220px] flex-1 flex-col gap-1 text-[12px] font-medium text-[#475569]">
+      <label className="flex w-full min-w-0 flex-col gap-1 text-[12px] font-medium text-[#475569] sm:w-[200px]">
         Platform
         <select name="platform" defaultValue={query.platform}
           className="focus-ring h-10 w-full rounded-lg border border-[#CBD5E1] bg-white px-3 text-[13px] font-normal text-[#0F172A]">
           {platformOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
       </label>
-      <button type="submit" className="focus-ring h-10 rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97]">Apply filters</button>
+      <button type="submit" className="focus-ring h-10 w-full rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] sm:w-auto sm:min-w-[124px]">Apply filters</button>
     </form>
 
     {result.status === "unavailable" ? <AdminEmptyState title="Platform access unavailable"
       message="Stored account sessions could not be read. This does not mean that no devices have accessed Kurioticket."
       action={<Link className={navigationLink} href={platformAccessHref(query, 1)}>Retry</Link>} /> : <>
-      <section aria-label="Recorded platform summary matching applied filters" className="grid min-w-0 grid-cols-2 gap-3 xl:grid-cols-4">
-        {summaries.map(({ label, value, icon: Icon }) =>
-          <div key={label} className="min-w-0 rounded-xl border border-[#E2E8F0] bg-white p-3.5 sm:p-4">
-            <div className="flex items-center gap-2 text-[12px] text-[#64748B]"><Icon size={15} aria-hidden="true"/>{label}</div>
-            <p className="mt-3 text-[24px] font-semibold tabular-nums tracking-tight">{value.toLocaleString()}</p>
-          </div>)}
-      </section>
+
       <section aria-labelledby="access-history-heading" className="min-w-0 rounded-xl border border-[#E2E8F0] bg-white">
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 px-3 py-4 sm:px-4">
           <div>
