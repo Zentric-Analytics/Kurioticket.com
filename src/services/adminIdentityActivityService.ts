@@ -424,7 +424,11 @@ export async function loadAdminIdentityActivity(
     };
 
     const canonical = journey.flatMap(event => {
-      const row = toAdminJourneyActivity(event, kind, id);
+      // These legacy Activity summaries intentionally show the original four
+      // journey stages. Verified save/share steps belong in Journey Details.
+      if (event.type !== "SEARCH_COMPLETED" && event.type !== "RESULTS_VIEWED"
+        && event.type !== "OFFER_SELECTED" && event.type !== "PROVIDER_HANDOFF_STARTED") return [];
+      const row = toAdminJourneyActivity({ ...event, type: event.type }, kind, id);
       return row ? [row] : [];
     });
     const legacy: ActivityRow[] = [
