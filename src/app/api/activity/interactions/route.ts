@@ -5,7 +5,7 @@ import { getOptionalPrisma } from "@/lib/prisma";
 import { readBoundedJsonBody } from "@/lib/bounded-json-body";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { isSameOriginRequest } from "@/lib/visitor-identity";
-import { withEnvironmentMetadata } from "@/lib/stagingSafety";
+import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 
@@ -15,6 +15,7 @@ const payloadSchema = z.object({
   action: z.enum(["local_saved", "local_unsaved", "share_link_copied", "share_sheet_completed"]),
   product: z.enum(["FLIGHT", "HOTEL", "CAR"]),
   resultId: z.string().min(1).max(128).regex(/^[a-zA-Z0-9._:-]+$/),
+  requestId: z.string().uuid().optional(),
   eventId: z.string().uuid(),
 }).strict();
 const json = (body: unknown, status = 202) => NextResponse.json(body, {
@@ -52,6 +53,38 @@ export async function POST(request: Request) {
         select: { id: true },
       });
       if (existing) return true;
+      // Search provenance must be established on the server. A client-supplied
+      // request UUID alone does not establish journey ownership or a save/share
+      // for another user's search. Missing/invalid links stay in account history.
+      let verifiedLink: { linkedJourneyId: string; linkedSearchHistoryId: string; linkedRequestId: string } | null = null;
+      if (parsed.data.requestId) {
+        const search = await tx.searchHistory.findUnique({
+          where: { requestId: parsed.data.requestId },
+          select: { id: true, visitorId: true, userId: true, type: true, query: true, createdAt: true },
+        });
+        const query = search?.query && typeof search.query === "object" && !Array.isArray(search.query)
+          ? search.query as Record<string, unknown> : null;
+        if (search && search.visitorId === identity.visitorId
+          && (search.userId === null || search.userId === identity.userId)
+          && search.type === parsed.data.product
+          && query?.environment === getPublicEnvironment()
+          && search.createdAt.getTime() <= Date.now()
+          && Date.now() - search.createdAt.getTime() <= 30 * 60 * 1000) {
+          const recorded = await tx.journeyEvent.findFirst({
+            where: { type: "SEARCH_COMPLETED", searchHistoryId: search.id,
+              journey: { visitorId: identity.visitorId! },
+              metadata: { path: ["environment"], equals: getPublicEnvironment() },
+            },
+            select: { journeyId: true },
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          });
+          if (recorded) verifiedLink = {
+            linkedJourneyId: recorded.journeyId,
+            linkedSearchHistoryId: search.id,
+            linkedRequestId: parsed.data.requestId,
+          };
+        }
+      }
       await tx.analyticsEvent.create({ data: {
         userId: identity.userId, visitorId: identity.visitorId,
         type, name,
@@ -59,6 +92,7 @@ export async function POST(request: Request) {
           product: parsed.data.product,
           resultId: parsed.data.resultId,
           eventId: parsed.data.eventId,
+          ...(verifiedLink ?? {}),
           outcome: "client_confirmed",
           applicationSource: identity.applicationSource,
         }) as Prisma.InputJsonValue,
