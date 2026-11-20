@@ -33,12 +33,14 @@ export function priceAlertMatchesRecordedSearch(search: Search, alert: Alert): b
     return sameDate(search.checkIn, alertDetails.checkIn) && sameDate(search.checkOut, alertDetails.checkOut);
   }
   if (search.type === "FLIGHT") {
-    return Boolean(comparable(details.departureDate) && comparable(details.departureDate) === comparable(alertDetails.departureDate)
-      && comparable(details.tripType) && comparable(details.tripType) === comparable(alertDetails.tripType)
-      && comparable(details.returnDate) === comparable(alertDetails.returnDate));
+    // An opaque request ID anchors the source search, but alert settings must
+    // still identify the same itinerary: no time-only or route-only joins.
+    if (!comparable(details.departureDate) || !comparable(details.tripType)) return false;
+    return ["departureDate", "returnDate", "tripType", "cabinClass", "adults", "children", "infants"].every(key =>
+      comparable(details[key]) === comparable(alertDetails[key]));
   }
   if (search.type === "CAR") {
-    return ["pickupDate", "dropoffDate", "pickupTime", "dropoffTime"].every(key =>
+    return ["pickupDate", "dropoffDate", "pickupTime", "dropoffTime", "driverAge"].every(key =>
       Boolean(comparable(details[key]) && comparable(details[key]) === comparable(alertDetails[key])));
   }
   return false;
