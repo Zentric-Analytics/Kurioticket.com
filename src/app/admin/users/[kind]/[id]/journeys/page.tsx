@@ -7,7 +7,8 @@ import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeFields";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { formatDateTime } from "@/lib/admin-data";
-import { encodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
+import { decodeActivityJourneyReturn, encodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
+import { JOURNEY_ALL_TIME_FROM } from "@/lib/adminJourneyDateRange";
 import { identityJourneyHistoryHref, identityJourneyHistoryQuery } from "@/lib/adminIdentityJourneyHistory";
 import { validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
@@ -55,9 +56,15 @@ function detailHref(
   returnPath: string,
 ) {
   const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(scope)) {
-    if (value) query.set(key, value);
-  }
+  // Journey Details shows the complete recorded chronology of this
+  // selected journey, not only events matching the history-list filters.
+  // Keep environment/identity authorization scoped to the selected owner.
+  query.set("from", JOURNEY_ALL_TIME_FROM);
+  query.set("to", new Date().toISOString());
+  query.set("environment", scope.environment);
+  query.set("identity", scope.identity);
+  if (scope.userId) query.set("userId", scope.userId);
+  if (scope.visitorId) query.set("visitorId", scope.visitorId);
   const back = encodeActivityJourneyReturn(returnPath);
   if (back) query.set("activityReturn", back);
   return "/admin/journeys/" + encodeURIComponent(item.id) + "?" + query.toString();
@@ -72,7 +79,12 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
   const now = new Date();
   const environment = getPublicEnvironment();
   const requested = identityJourneyHistoryQuery(kind, id, raw, now, environment);
-  const backHref = route + "/activity";
+  const incomingReturn = decodeActivityJourneyReturn(raw.activityReturn);
+  // Navigation context can never switch the selected identity.
+  const backHref = incomingReturn && (
+    incomingReturn === route + "/activity"
+    || incomingReturn.startsWith(route + "/activity?")
+  ) ? incomingReturn : route + "/activity";
   const returnLink = <Link href={backHref} className={linkStyle}><ArrowLeft size={15} aria-hidden="true" /> Back to Activity</Link>;
 
   if (!requested.ok) return <div className="min-w-0 space-y-4 bg-white">
@@ -119,7 +131,9 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
     ? await adminJourneys.summary(list.data.scope)
     : null;
   const filterContext = { ...raw, range: requested.range };
-  const returnPath = identityJourneyHistoryHref(kind, id, filterContext);
+  const preserved = identityJourneyHistoryHref(kind, id, filterContext);
+  const returnToken = encodeActivityJourneyReturn(backHref);
+  const returnPath = preserved + (returnToken ? (preserved.includes("?") ? "&" : "?") + "activityReturn=" + encodeURIComponent(returnToken) : "");
 
   const nextOperationalHref = operational && identity.data.nextCursor
     ? (() => {
@@ -172,6 +186,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
 
     <form action={route + "/journeys"} method="get" aria-label="Filter this visitor's journeys"
       className="grid min-w-0 grid-cols-1 items-center gap-2 border-y border-[#D8E1EC] py-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_repeat(2,minmax(0,1fr))_125px]">
+      {returnToken ? <input type="hidden" name="activityReturn" value={returnToken}/> : null}
       <JourneyDateRangeFields initialRange={requested.range}
         initialFrom={one(raw.from) || (requested.range === "custom" ? scope.from : "")}
         initialTo={one(raw.to) || (requested.range === "custom" ? scope.to : "")}
