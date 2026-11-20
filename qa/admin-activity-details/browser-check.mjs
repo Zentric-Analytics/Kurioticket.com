@@ -251,10 +251,15 @@ try {
     await expectAlignedColumns(page);
     await expectHeaderTimePresentation(page, "Registered zoom " + zoom);
     await expectBalancedDesktopHeader(page, "Registered zoom " + zoom);
-    const fullDeviceHistory = page.getByRole("link", {name:/View account device & access history/});
+    const inlineDevices = page.getByTestId("identity-device-access");
+    await expect(inlineDevices).toBeVisible();
+    await expect(inlineDevices.getByText("Today (UTC)")).toBeVisible();
+    await expect(inlineDevices.getByRole("heading",{name:"Device & Access History"})).toHaveCount(0);
+    await expect(inlineDevices.getByTestId("device-session-row")).toHaveCount(3);
+    await expect(inlineDevices.getByTestId("device-today-list")).toBeVisible();
+    const fullDeviceHistory = inlineDevices.getByRole("link", {name:"View full history"});
     await expect(fullDeviceHistory).toBeVisible();
-    assert.ok((await fullDeviceHistory.getAttribute("href"))?.includes("/admin/users/user/qa-registered-0001/devices?range=today"));
-    await expect(page.getByTestId("identity-device-access")).toHaveCount(0);
+    assert.ok((await fullDeviceHistory.getAttribute("href"))?.includes("/admin/users/user/qa-registered-0001/devices?range=all"));
 
     assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography);
     await page.screenshot({caret:"initial",path: output + "/after-desktop-zoom-equivalent-" + Math.round(zoom*100) + ".png",fullPage:true});
@@ -263,13 +268,9 @@ try {
   // Full device history uses its own date filters and returns records older than Today.
   await page.setViewportSize({width:1280,height:900});
   await page.goto(base + "/admin/users/user/qa-registered-0001/activity?range=all");
-  await page.getByRole("link",{name:/View account device & access history/}).click();
-  await expect(page).toHaveURL(url => url.pathname === "/admin/users/user/qa-registered-0001/devices" && url.searchParams.get("range") === "today");
+  await page.getByTestId("identity-device-access").getByRole("link",{name:"View full history"}).click();
+  await expect(page).toHaveURL(url => url.pathname === "/admin/users/user/qa-registered-0001/devices" && url.searchParams.get("range") === "all");
   await expect(page.getByRole("heading",{name:"Device & Access History"})).toBeVisible();
-  await expect(page.locator('[data-testid="device-history-row"]:visible')).toHaveCount(4);
-  await page.getByRole("button",{name:"Device history range: Today"}).click();
-  await page.getByRole("listbox",{name:"Device history range"}).getByRole("option",{name:"All time",exact:true}).click();
-  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page.locator('[data-testid="device-history-row"]:visible')).toHaveCount(5);
   await page.getByRole("button",{name:"Device history range: All time"}).click();
   await page.getByRole("listbox",{name:"Device history range"}).getByRole("option",{name:"Today",exact:true}).click();
