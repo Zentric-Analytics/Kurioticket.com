@@ -21,9 +21,9 @@ test("Flight price alerts require exact product route and travel dates, not just
 
 test("Hotel price alerts require actual check-in and check-out dates", () => {
   const hotel = { type: "HOTEL", origin: null, destination: "Paris",
-    checkIn: new Date("2026-12-12T00:00:00.000Z"), checkOut: new Date("2026-12-14T00:00:00.000Z"), query: { rooms: 1 } };
+    checkIn: new Date("2026-12-12T00:00:00.000Z"), checkOut: new Date("2026-12-14T00:00:00.000Z"), query: { rooms: 1, guests: 2 } };
   const target = { type: "HOTEL", origin: null, destination: "Paris",
-    query: { checkIn: "2026-12-12", checkOut: "2026-12-14" } };
+    query: { checkIn: "2026-12-12", checkOut: "2026-12-14", rooms: 1, guests: 2 } };
   assert.equal(priceAlertMatchesRecordedSearch(hotel, target), true);
   assert.equal(priceAlertMatchesRecordedSearch(hotel, { ...target, query: { ...target.query, checkOut: "2026-12-16" } }), false);
 });
