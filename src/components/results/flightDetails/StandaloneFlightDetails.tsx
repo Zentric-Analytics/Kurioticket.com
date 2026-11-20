@@ -317,12 +317,10 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         return;
       }
 
-      setLocalSavedFlightIds((current) => {
-        const next = toggleSavedItemId(current, savedFlightKey);
-        writeSavedItemIds(next);
-        recordCustomerInteraction({ action: next.includes(savedFlightKey) ? "local_saved" : "local_unsaved", product: "FLIGHT", resultId: savedFlightKey });
-        return next;
-      });
+      const next = toggleSavedItemId(readSavedItemIds(), savedFlightKey);
+      writeSavedItemIds(next);
+      setLocalSavedFlightIds(next);
+      recordCustomerInteraction({ action: next.includes(savedFlightKey) ? "local_saved" : "local_unsaved", product: "FLIGHT", resultId: savedFlightKey });
     } catch (error) {
       setSavedFlightError(error instanceof SavedFlightTimeError ? error.message : "Unable to save flight. Please try again.");
     } finally {
