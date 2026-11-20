@@ -2,8 +2,8 @@
 const day = 86_400_000;
 const pivot = Date.parse("2026-10-22T15:00:00.000Z");
 const users = [
-  { id: "qa-admin-001", name: "Alana Example", email: "alana@example.invalid", role: "ADMIN", status: "ACTIVE", createdAt: new Date(pivot - 2 * day) },
-  { id: "qa-support-001", name: "Zara Example", email: "zara@example.invalid", role: "SUPPORT", status: "ACTIVE", createdAt: new Date(pivot - 15 * day) },
+  { id: "qa-admin-001", name: "Alana Example", email: "alana@example.invalid", role: "ADMIN", status: "ACTIVE", createdAt: new Date(pivot - 2 * day), lastSeenAt: new Date(pivot + 2000) },
+  { id: "qa-support-001", name: "Zara Example", email: "zara@example.invalid", role: "SUPPORT", status: "ACTIVE", createdAt: new Date(pivot - 15 * day), lastSeenAt: new Date(pivot + 1000) },
 ];
 const guests = Array.from({ length: 28 }, (_, index) => ({
   id: "qa-guest-" + String(index + 1).padStart(3, "0"),
@@ -88,6 +88,11 @@ const db = {
         return name(b).localeCompare(name(a)) || created(b) - created(a) || a.record.id.localeCompare(b.record.id);
       }
       if (statement.includes('ORDER BY "joinedAt" ASC')) return created(a) - created(b) || a.record.id.localeCompare(b.record.id);
+      if (statement.includes('ORDER BY "lastSeenAt" DESC NULLS LAST')) {
+        const latest = item => item.record.lastSeenAt ? +item.record.lastSeenAt : Number.NEGATIVE_INFINITY;
+        return latest(b) - latest(a) || created(b) - created(a) ||
+          a.kind.localeCompare(b.kind) || b.record.id.localeCompare(a.record.id);
+      }
       return created(b) - created(a) || a.record.id.localeCompare(b.record.id);
     });
     const hasPage = statement.includes("LIMIT");
@@ -95,7 +100,8 @@ const db = {
     const offset = hasPage ? sql.values.at(-1) : 0;
     return all.slice(offset, offset + limit).map(item => ({
       id: item.record.id, kind: item.kind,
-      firstSeenAt: null, lastSeenAt: null, operationalGuestCount: 0n,
+      firstSeenAt: item.kind === "guest" ? item.record.firstSeenAt : null,
+      lastSeenAt: item.record.lastSeenAt ?? null, operationalGuestCount: 0n,
     }));
   },
 };
