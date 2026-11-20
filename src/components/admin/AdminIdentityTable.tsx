@@ -111,6 +111,7 @@ export function AdminIdentityTable({
           <tbody className="divide-y divide-[#E7ECF5]">
             {rows.map((row) => {
               const record = row.record;
+              const lastSeen = row.lastSeenAt ?? (row.kind === "guest" ? row.record.lastSeenAt : null);
               const user = row.kind === "user" ? row.record : null;
               const name = user ? user.name || "Unnamed user" : "Guest visitor";
               const secondary = user
@@ -182,8 +183,8 @@ export function AdminIdentityTable({
                     />
                   </td>
                   <td data-label="Last Seen" className="px-3 py-1.5">
-                    {row.lastSeenAt ?? (row.kind === "guest" ? row.record.lastSeenAt : null)
-                      ? <IdentityDate at={(row.lastSeenAt ?? (row.kind === "guest" ? row.record.lastSeenAt : null))!} />
+                    {lastSeen
+                      ? <IdentityDate at={lastSeen} />
                       : <span aria-label="No recorded last seen" className="text-[13px] text-[#64748B]">—</span>}
                   </td>
                   <td data-label="Activity" className="px-3 py-1.5">
