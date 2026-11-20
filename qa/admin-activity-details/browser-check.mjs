@@ -266,6 +266,25 @@ try {
     await page.screenshot({caret:"initial",path: output + "/after-desktop-zoom-equivalent-" + Math.round(zoom*100) + ".png",fullPage:true});
   }
 
+  // Full device history uses its own date filters and returns records older than Today.
+  await page.setViewportSize({width:1280,height:900});
+  await page.goto(base + "/admin/users/user/qa-registered-0001/activity?range=all");
+  await page.getByRole("link",{name:/View full device & access history/}).click();
+  await expect(page).toHaveURL(/\\/admin\\/users\\/user\\/qa-registered-0001\\/devices\\?range=all/);
+  await expect(page.getByRole("heading",{name:"Device & Access History"})).toBeVisible();
+  await expect(page.locator('[data-testid="device-history-row"]:visible')).toHaveCount(5);
+  await page.getByRole("button",{name:"Device history range: All time"}).click();
+  await page.getByRole("listbox",{name:"Device history range"}).getByRole("option",{name:"Today",exact:true}).click();
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
+  await expect(page).toHaveURL(/range=today/);
+  await expect(page.locator('[data-testid="device-history-row"]:visible')).toHaveCount(4);
+  await page.setViewportSize({width:320,height:800});
+  await expect(page.locator('[data-testid="device-history-row"]:visible')).toHaveCount(4);
+  const deviceOverflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
+  assert.equal(deviceOverflow,false,"Full device history must fit mobile viewport without page overflow");
+  await page.screenshot({caret:"initial",path:output+"/device-history-today-mobile-320.png",fullPage:true});
+  console.log("PASS full device history drill-down, date filters, and mobile layout");
+
   // Operational-only guest sessions are not analytics identities and cannot disable tracking.
   await page.goto(base + "/admin/users/guest/qa-operational-guest-0001/activity?range=all");
   await expect(page.getByText("Essential operational activity")).toBeVisible();
