@@ -188,6 +188,10 @@ try {
       node.firstElementChild?.tagName === "DT" && node.lastElementChild?.tagName === "DD"
     )), "Each identity fact keeps a direct term-description grouping");
 
+    await expect(outerCard.getByTestId("identity-device-access")).toBeVisible();
+    await expect(outerCard.getByRole("heading",{name:"Platforms & Devices"})).toBeVisible();
+    await expect(outerCard.getByRole("heading",{name:"Device & Access History"})).toBeVisible();
+    await expect(outerCard.getByText("Device and access details are not linked to guest activity. No device or location is inferred.")).toBeVisible();
     await expect(outerCard.getByTestId("activity-body-card")).toBeVisible();
     await expect(outerCard.getByRole("navigation",{name:"Breadcrumb"})).toHaveCount(0);
     await expect(page.getByRole("navigation",{name:"Breadcrumb"})).toBeVisible();
