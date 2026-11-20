@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       (term, vertical = "hotels") => client.places(vertical, term, trackId, request.signal));
     if (!resolved.supported || resolved.search.vertical !== "hotels") {
       after(async () => {
-        const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
+        const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request, undefined, operationalSession);
         await Promise.all([
           logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
             checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
@@ -126,7 +126,7 @@ export async function POST(request: Request) {
       startedAt, issuedAt: now, expiresAt: now + TTL_MS,
     }, key) : null;
     after(async () => {
-      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
+      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request, undefined, operationalSession);
       // Persist each displayed batch under the signed cursor's stable request ID.
       // Early result/offer events can then resolve ownership before the last page.
       await logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true,
@@ -149,7 +149,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const unavailable = error instanceof KayakError ? error.code : "unavailable";
     after(async () => {
-      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
+      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request, undefined, operationalSession);
       await Promise.all([
         logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
           checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),

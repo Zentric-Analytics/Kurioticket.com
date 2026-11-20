@@ -85,7 +85,7 @@ export async function POST(request: Request) {
   if (aggregate.unavailableMessage) {
     after(async () => {
       try {
-        const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
+        const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request, undefined, operationalSession);
         await Promise.all([
           logSearchHistory({ ...application,
             userId, visitorId, requestId, type: "HOTEL", destination: search.destination,
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
   const status = hotelSearchRecordedStatus(aggregate.providerStatuses, publicResults.length);
 
   after(async () => {
-    const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
+    const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request, undefined, operationalSession);
     await Promise.all([
     logSearchHistory({ ...application,
       userId,

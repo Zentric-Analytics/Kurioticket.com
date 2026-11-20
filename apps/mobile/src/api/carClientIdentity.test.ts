@@ -5,7 +5,7 @@ import { URL as NodeURL } from "node:url";
 import test from "node:test";
 import ts from "typescript";
 
-function fixture(platform = "android", version = "0.3.0", registered = true) {
+function fixture(platform = "android", version = "0.3.0", registered = true, signedSearchCredential?: string) {
   const journeyResponses: unknown[] = [];
   const calls: Array<{ url: string; init: RequestInit }> = [];
   const dependencies: Record<string, unknown> = {
@@ -23,7 +23,7 @@ function fixture(platform = "android", version = "0.3.0", registered = true) {
   const compiled = ts.transpileModule(readFileSync(new NodeURL("./travelApi.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const exported: any = {};
   runInNewContext(compiled, { exports: exported, require: (name: string) => { assert.ok(name in dependencies, name); return dependencies[name]; }, __DEV__: false, AbortController, setTimeout, clearTimeout, Date, performance, URLSearchParams, console,
-    fetch: async (url: string, init: RequestInit) => { calls.push({ url, init }); return Response.json({ results: [], status: "empty" }); },
+    fetch: async (url: string, init: RequestInit) => { calls.push({ url, init }); return Response.json({ results: [], status: "empty" }, { headers: signedSearchCredential ? { "X-Kt-Search-Session": signedSearchCredential } : {} }); },
   });
   return { api: exported.travelApi, headers: exported.carSearchClientHeaders as (platform: string, version?: string) => Record<string,string>, calls, journeyResponses };
 }
@@ -74,3 +74,27 @@ for (const platform of ["android", "ios"]) {
     });
   }
 }
+
+for (const platform of ["ios", "android"] as const) {
+  test(`${platform} guest carries platform-bound operational credential between searches without login`, async () => {
+    const credential = `v2.00000000-0000-4000-8000-000000000001.1800000000000.staging.${platform}.${"A".repeat(43)}`;
+    const h = fixture(platform, "0.3.0", false, credential);
+    await h.api.searchFlights({ tripType: "one-way", origin: "LOS", destination: "JFK", departureDate: "2099-05-01" });
+    await h.api.searchHotels({ destination: "London", checkIn: "2099-05-01", checkOut: "2099-05-02" });
+    const first = new Headers(h.calls[0].init.headers);
+    const second = new Headers(h.calls[1].init.headers);
+    assert.equal(first.get("authorization"), null);
+    assert.equal(first.get("X-Kt-Search-Protocol"), "v2");
+    assert.equal(first.get("X-Kt-Search-Session"), null);
+    assert.equal(second.get("authorization"), null);
+    assert.equal(second.get("X-Mobile-Platform"), platform);
+    assert.equal(second.get("X-Kt-Search-Session"), credential);
+  });
+}
+
+test("native guest client never stores invalid server continuity credentials", async () => {
+  const h = fixture("android", "0.3.0", false, "v2.malformed");
+  await h.api.searchFlights({});
+  await h.api.searchHotels({});
+  assert.equal(new Headers(h.calls[1].init.headers).get("X-Kt-Search-Session"), null);
+});

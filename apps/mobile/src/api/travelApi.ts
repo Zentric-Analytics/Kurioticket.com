@@ -110,7 +110,7 @@ export function carSearchClientHeaders(platform: string, version?: string): Reco
   if (platform !== "android" || !version || !/^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(version)) return {};
   return { "User-Agent": `KurioticketMobile/${version} (Android; Native) OkHttp` };
 }
-const operationalCredentialPattern = /^v1\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)\.[A-Za-z0-9_-]{43}$/;
+const operationalCredentialPattern = /^v(?:1\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)|2\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)\.(?:ios|android))\.[A-Za-z0-9_-]{43}$/;
 let accountEpoch = 0;
 let observedSessionToken: string | null | undefined;
 subscribeSession?.(session => {
@@ -153,6 +153,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
         "Content-Type": "application/json",
         ...(path === "/api/cars/search" ? carSearchClientHeaders(Platform.OS, Constants.expoConfig?.version) : {}),
         "X-Mobile-Platform": Platform.OS,
+        ...(operationalPaths.has(path) && (Platform.OS === "android" || Platform.OS === "ios") ? { "X-Kt-Search-Protocol": "v2" } : {}),
         ...(Constants.expoConfig?.version ? { "X-Mobile-App-Version": Constants.expoConfig.version } : {}),
         ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
         ...visitorHeaders,

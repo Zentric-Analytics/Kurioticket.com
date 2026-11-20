@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   const recordedSearch = { ...search, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) };
   const started = performance.now();
   let activityIdentity: ReturnType<typeof resolveRequestActivityIdentity> | undefined;
-  const requestActivityIdentity = () => activityIdentity ??= resolveRequestActivityIdentity(request);
+  const requestActivityIdentity = () => activityIdentity ??= resolveRequestActivityIdentity(request, undefined, operationalSession);
   const recordSearch = (resultCount: number, status: "SUCCESS" | "PARTIAL" | "FAILED") => {
     after(async () => {
       try {
