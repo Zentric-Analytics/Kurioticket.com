@@ -57,7 +57,8 @@ export type AdminJourneyEvent = {
   id: string;
   type: AdminJourneyEventType;
   createdAt: string;
-  action?: "share_link_copied" | "share_sheet_completed" | null;
+  action?: "local_saved" | "local_unsaved" | "saved_item_confirmed" | "saved_item_removed" | "share_link_copied" | "share_sheet_completed" | null;
+  resultReference?: string | null;
   product: AdminJourneyProduct | null;
   provider: string | null;
   sourcePage: string | null;
