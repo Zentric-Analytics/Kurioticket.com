@@ -63,3 +63,47 @@ test("native continuity sends signed credentials without storing browser cookies
     if (priorSecret === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = priorSecret;
   }
 });
+
+test("native guest search continuity is platform-bound, short-lived and not a browser credential", () => {
+  const prior = process.env.AUTH_SECRET;
+  process.env.AUTH_SECRET = "test-native-guest-attribution-secret-at-least-32-characters";
+  try {
+    const now = Date.UTC(2026, 10, 20, 12);
+    for (const platform of ["ios", "android"] as const) {
+      const url = "https://kurioticket.com/api/flights/search";
+      const firstRequest = new Request(url, { method: "POST", headers: { "x-mobile-platform": platform } });
+      const prepared = prepareOperationalSearchSession(firstRequest, now, "staging");
+      assert.ok(prepared);
+      assert.equal(prepared.transport, "native");
+      assert.equal(prepared.guestNativeAttribution, true);
+      assert.equal(prepared.reference.nativePlatform, platform);
+      assert.match(prepared.credential, /^v2\./);
+      const response = attachOperationalSearchSession(Response.json({ ok: true }), prepared);
+      assert.equal(response.headers.get("set-cookie"), null);
+      assert.equal(response.headers.get("x-kt-search-session"), prepared.credential);
+
+      const headers = { "x-mobile-platform": platform, "x-kt-search-session": prepared.credential };
+      const continued = new Request(url, { method: "POST", headers });
+      assert.equal(readOperationalSearchSession(continued, now + 1000, "staging")?.nativePlatform, platform);
+      assert.equal(prepareOperationalSearchSession(continued, now + 1000, "staging")?.newCredential, false);
+      assert.equal(readOperationalSearchSession(continued, now + 1000, "production"), null);
+      assert.equal(readOperationalSearchSession(continued, now + 30 * 60_000 + 1, "staging"), null);
+
+      const other = platform === "ios" ? "android" : "ios";
+      const switchRequest = new Request(url, { method: "POST", headers: { ...headers, "x-mobile-platform": other } });
+      assert.equal(readOperationalSearchSession(switchRequest, now + 1000, "staging"), null);
+      assert.equal(prepareOperationalSearchSession(switchRequest, now + 1000, "staging"), null);
+      const forgedRequest = new Request(url, { method: "POST", headers: { ...headers,
+        "x-kt-search-session": prepared.credential.slice(0, -1) + (prepared.credential.endsWith("Z") ? "Y" : "Z") } });
+      assert.equal(readOperationalSearchSession(forgedRequest, now + 1000, "staging"), null);
+      assert.equal(prepareOperationalSearchSession(forgedRequest, now + 1000, "staging")?.guestNativeAttribution, false);
+      for (const browser of [{ origin: "https://kurioticket.com" }, { "sec-fetch-site": "same-origin" }]) {
+        const spoofed = new Request(url, { method: "POST", headers: { ...headers, ...browser } });
+        assert.equal(readOperationalSearchSession(spoofed, now + 1000, "staging"), null);
+        assert.equal(prepareOperationalSearchSession(spoofed, now + 1000, "staging"), null);
+      }
+    }
+  } finally {
+    if (prior === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = prior;
+  }
+});
