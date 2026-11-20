@@ -153,6 +153,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
         "Content-Type": "application/json",
         ...(path === "/api/cars/search" ? carSearchClientHeaders(Platform.OS, Constants.expoConfig?.version) : {}),
         "X-Mobile-Platform": Platform.OS,
+        ...(operationalPaths.has(path) && (Platform.OS === "android" || Platform.OS === "ios") ? { "X-Kt-Search-Protocol": "v2" } : {}),
         ...(Constants.expoConfig?.version ? { "X-Mobile-App-Version": Constants.expoConfig.version } : {}),
         ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
         ...visitorHeaders,
