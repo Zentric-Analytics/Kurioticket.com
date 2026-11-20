@@ -83,7 +83,7 @@ export function journeyHistoryHrefFromActivity(
   returnHref: string,
 ) {
   const params = new URLSearchParams();
-  const dateOnly = /^\\d{4}-\\d{2}-\\d{2}$/;
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/;
   // The older Activity bookmarks treat UTC date-only 'to' as inclusive,
   // whereas Journeys requires strict UTC instants with an exclusive end.
   const legacyDates = dateOnly.test(filters.from) || dateOnly.test(filters.to);
