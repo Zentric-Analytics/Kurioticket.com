@@ -3,6 +3,7 @@ import { z } from "zod";
 export const adminJourneyStages = ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED"] as const;
 export const adminJourneyProducts = ["FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const;
 export type AdminJourneyStage = (typeof adminJourneyStages)[number];
+export type AdminJourneyEventType = AdminJourneyStage | "RESULT_SAVED" | "RESULT_UNSAVED" | "RESULT_SHARED";
 export type AdminJourneyProduct = (typeof adminJourneyProducts)[number];
 export type AdminJourneyEnvironment = "staging" | "production";
 export type AdminJourneyIdentity = { kind: "guest" | "registered"; visitorId: string; userId: string | null };
@@ -54,8 +55,9 @@ export type AdminJourneySearch = {
 
 export type AdminJourneyEvent = {
   id: string;
-  type: AdminJourneyStage;
+  type: AdminJourneyEventType;
   createdAt: string;
+  action?: "share_link_copied" | "share_sheet_completed" | null;
   product: AdminJourneyProduct | null;
   provider: string | null;
   sourcePage: string | null;
