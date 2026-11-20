@@ -5,7 +5,7 @@ import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminId
 import { AdminUsersToolbar } from "@/components/admin/AdminUsersToolbar";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
-import { adminIdentityPageSql, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityDirectoryRow } from "@/lib/adminIdentityDirectory";
+import { adminIdentityPageSql, adminRegisteredActivityDateWhere, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityDirectoryRow } from "@/lib/adminIdentityDirectory";
 
 export const metadata = { title: "Admin Users" };
 type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; tab?: string; identity?: string; activity?: string; page?: string; sort?: string; date?: string; from?: string; to?: string }> };
@@ -30,6 +30,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const now = new Date();
   const bounds = adminIdentityDateBounds(date, now, from, to);
   const dateWhere = bounds ? { gte: bounds.from, ...(bounds.to ? { lt: bounds.to } : {}) } : undefined;
+  const environment = getPublicEnvironment();
   // Existing bookmarked drawer URLs remain functional; only the presentation changes.
   const legacy = /^(user|guest):([a-z0-9_-]{6,80})$/i.exec(params?.activity || "");
   if (legacy) {
@@ -41,8 +42,12 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       + "/activity?directory=" + encodeURIComponent(directory));
   }
   const where = {
-    ...(dateWhere ? { createdAt: dateWhere } : {}),
-    ...(q ? { OR: [{ email: { contains: prismaQuery, mode: "insensitive" as const } }, { name: { contains: prismaQuery, mode: "insensitive" as const } }, { id: { contains: prismaQuery, mode: "insensitive" as const } }] } : {}),
+    // Date means a recorded account/session/search/handoff in this window,
+    // not only the date the account was originally registered.
+    AND: [
+      adminRegisteredActivityDateWhere(bounds, environment),
+      ...(q ? [{ OR: [{ email: { contains: prismaQuery, mode: "insensitive" as const } }, { name: { contains: prismaQuery, mode: "insensitive" as const } }, { id: { contains: prismaQuery, mode: "insensitive" as const } }] }] : []),
+    ],
     ...(role !== "ALL" ? { role: role as never } : {}),
     ...(status !== "ALL" ? { status: status as never } : {}),
   };
@@ -53,7 +58,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   // Role/status are account-only filters. Guest identities never have either.
   const guestsEligibleForFilters = role === "ALL" && status === "ALL";
   const showGuests = tab !== "REGISTERED" && guestsEligibleForFilters;
-  const environment = getPublicEnvironment();
+
   // Operational sessions are not accounts or analytics visitor identities.
   // A single identity query supplies the operational guest cohort, timestamps,
   // and total. Account and consented visitor counts remain independent of tab.
