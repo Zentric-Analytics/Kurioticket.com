@@ -71,6 +71,26 @@ export async function recordOnlinePresence(heartbeat: OnlinePresenceHeartbeat) {
   const db = getOptionalPrisma();
   if (!db) throw new Error("Online presence storage unavailable");
   await writeOnlinePresence(db, heartbeat);
+  // Device context is an optional enhancement to an authenticated canonical
+  // session. Never associate anonymous presence credentials with a visitor.
+  if (heartbeat.accountSessionId && heartbeat.device) {
+    const minuteAgo = new Date(heartbeat.now.getTime() - 60_000);
+    await db.accountSession.updateMany({
+      where: {
+        id: heartbeat.accountSessionId,
+        revokedAt: null,
+        expiresAt: { gt: heartbeat.now },
+        OR: [{ lastSeenAt: { lt: minuteAgo } }, { deviceLabel: null }],
+      },
+      data: {
+        lastSeenAt: heartbeat.now,
+        ...(heartbeat.device.deviceLabel ? { deviceLabel: heartbeat.device.deviceLabel } : {}),
+        ...(heartbeat.device.browser ? { browser: heartbeat.device.browser } : {}),
+        ...(heartbeat.device.os ? { os: heartbeat.device.os } : {}),
+        ...(heartbeat.device.locationLabel ? { locationLabel: heartbeat.device.locationLabel } : {}),
+      },
+    });
+  }
   await pruneExpiredPresence(heartbeat.environment, heartbeat.now);
 }
 
