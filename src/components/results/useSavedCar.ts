@@ -5,6 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { deleteBackendCar, fetchBackendSavedCars, saveBackendCar, type SavedCarApiItem } from "@/lib/saved-items-api";
 import { SAVED_CARS_INVALIDATED_EVENT } from "@/lib/saved-car-events";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 
 const SAVED_CARS_CHANGED_EVENT = "kurioticket:saved-cars-changed";
 let savedCarsOwner = "";
@@ -64,7 +65,7 @@ function savedCarIdentity(item: SavedCarApiItem) {
   return id ? carIdentity(id, item.provider, item.modelName, params) : null;
 }
 
-export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams) {
+export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams, requestId?: string | null) {
   const { data: session, status } = useSession();
   const owner = session?.user?.email ?? "authenticated-user";
   const offer = car.offers[0];
@@ -91,7 +92,10 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams) {
     try {
       if (previous) {
         const response = await deleteBackendCar(previous.id);
-        if (response.ok) publishSavedCars((savedCarsCache ?? []).filter((item) => item.id !== previous.id));
+        if (response.ok) {
+          publishSavedCars((savedCarsCache ?? []).filter((item) => item.id !== previous.id));
+          recordCustomerInteraction({ action: "saved_item_removed", product: "CAR", resultId: car.id, requestId });
+        }
         else setSavedItem(previous);
         return;
       }
@@ -115,6 +119,7 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams) {
       if (response.ok && response.item) {
         const item = { ...response.item, type: "car" as const, resultId: car.id };
         publishSavedCars([...(savedCarsCache ?? []), item]);
+        recordCustomerInteraction({ action: "saved_item_confirmed", product: "CAR", resultId: car.id, requestId });
       }
       else if (response.duplicate) {
         clearSavedCarsCache(owner);

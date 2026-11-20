@@ -105,6 +105,7 @@ export function FlightCard({
   const { isSaved, pending: savedFlightPending, toggleSavedFlight, savedFlightError } = useSavedFlightResult(
     flight,
     resolvedDetailsHref,
+    searchRequestId,
   );
   const [shareConfirmation, setShareConfirmation] = useState("");
 
@@ -115,11 +116,11 @@ export function FlightCard({
     try {
       if (navigator.share) {
         await navigator.share({ title: route, text: flight.airlineName, url });
-        recordCustomerInteraction({ action: "share_sheet_completed", product: "FLIGHT", resultId: flight.id });
+        recordCustomerInteraction({ action: "share_sheet_completed", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId });
         return;
       }
       await navigator.clipboard.writeText(url);
-      recordCustomerInteraction({ action: "share_link_copied", product: "FLIGHT", resultId: flight.id });
+      recordCustomerInteraction({ action: "share_link_copied", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId });
       setShareConfirmation(t("linkCopied") || "Flight link copied");
       window.setTimeout(() => setShareConfirmation(""), 2200);
     } catch (error) {
