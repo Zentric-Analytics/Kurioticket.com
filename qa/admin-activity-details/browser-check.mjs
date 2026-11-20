@@ -192,6 +192,18 @@ try {
     await expect(outerCard.getByRole("heading",{name:"Platforms & Devices"})).toBeVisible();
     await expect(outerCard.getByRole("heading",{name:"Device & Access History"})).toBeVisible();
     await expect(outerCard.getByText("Device and access details are not linked to guest activity. No device or location is inferred.")).toBeVisible();
+    const filterRow = outerCard.getByTestId("activity-filters-row");
+    const tabsAfterFilters = outerCard.getByTestId("activity-tabs-after-filters");
+    await expect(filterRow).toBeVisible();
+    await expect(tabsAfterFilters).toBeVisible();
+    assert.ok(await filterRow.evaluate((el, tabs) =>
+      el.getBoundingClientRect().bottom <= document.querySelector('[data-testid="activity-tabs-after-filters"]')?.getBoundingClientRect().top,
+      true), "Activity navigation must follow the filter controls");
+    if (width >= 1280) {
+      const y = await filterRow.locator("button").first().evaluate(el => el.getBoundingClientRect().top);
+      const buttons = await filterRow.locator("button").evaluateAll(items => items.map(el => el.getBoundingClientRect().top));
+      assert.ok(buttons.every(top => Math.abs(top - y) <= 15), "Desktop filters must share a balanced horizontal row");
+    }
     await expect(outerCard.getByTestId("activity-body-card")).toBeVisible();
     await expect(outerCard.getByRole("navigation",{name:"Breadcrumb"})).toHaveCount(0);
     await expect(page.getByRole("navigation",{name:"Breadcrumb"})).toBeVisible();
