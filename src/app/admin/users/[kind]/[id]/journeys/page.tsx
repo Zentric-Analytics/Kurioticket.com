@@ -172,8 +172,11 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
       <p className="mt-3 text-[12px] leading-5 text-[#64748B]">
         {operational
           ? "This essential-only guest session contains recorded operational activity. It does not establish a consented tracked journey."
-          : "Journey records belong to this selected identity only. A recorded handoff is not a confirmed booking. Unlinked activity remains in View Activity."}
+          : "Journey records belong to this selected identity only. A recorded handoff is not a confirmed booking. Unlinked activity is separate from tracked journeys."}
       </p>
+      <Link href={route + "/other?range=all"} className={linkStyle}>
+        Other recorded activity <ChevronRight size={15} aria-hidden="true" />
+      </Link>
     </section>
 
     {!operational && summary?.status === "ok" ? (
@@ -220,8 +223,8 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
         message="The journey reader could not return the selected visitor's records. No missing records have been treated as zero." />
     ) : list.data.items.length === 0 ? (
       <AdminEmptyState title="No tracked journeys in this range"
-        message="No eligible consented journeys match these filters. Other recorded searches and handoffs may still appear in View Activity."
-        action={<Link href={backHref} className={linkStyle}>View other activity</Link>} />
+        message="No eligible consented journeys match these filters. Separate recorded actions and operational history may still be available below."
+        action={<Link href={route + "/other?range=all"} className={linkStyle}>View other recorded activity</Link>} />
     ) : (
       <section aria-label="Selected visitor journey records" className="min-w-0">
         <h2 className="pb-3 text-[16px] font-semibold">Recorded journeys</h2>
