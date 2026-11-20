@@ -141,7 +141,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const journeyHistoryHref = journeyHistoryHrefFromActivity(kind, id, filters,
     typeof raw.range === "string" ? raw.range : undefined, activityReturn);
   const query = new URLSearchParams(queryParams);
-  const otherHref = basePath + "/other" + (query.size ? "?" + query.toString() : "");
+  const otherHref = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/other"
+    + (query.size ? "?" + query.toString() : "");
 
   return <div className="min-w-0 space-y-6 bg-white pb-2 text-[#0F172A]">
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[13px] text-[#475569]">
