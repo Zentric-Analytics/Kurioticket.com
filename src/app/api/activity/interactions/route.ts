@@ -97,6 +97,26 @@ export async function POST(request: Request) {
           applicationSource: identity.applicationSource,
         }) as Prisma.InputJsonValue,
       } });
+      if (verifiedLink) {
+        // Exactly the same verified canonical search powers the journey event.
+        // Never create a journey stage for an uncorrelated result or other owner.
+        const stage = name === "local_saved" ? "RESULT_SAVED"
+          : name === "local_unsaved" ? "RESULT_UNSAVED" : "RESULT_SHARED";
+        await tx.journeyEvent.create({
+          data: {
+            journeyId: verifiedLink.linkedJourneyId,
+            searchHistoryId: verifiedLink.linkedSearchHistoryId,
+            eventKey: "interaction:" + parsed.data.eventId,
+            type: stage,
+            product: parsed.data.product,
+            metadata: withEnvironmentMetadata({
+              action: name,
+              interactionEventId: parsed.data.eventId,
+              requestId: verifiedLink.linkedRequestId,
+            }) as Prisma.InputJsonValue,
+          },
+        });
+      }
       return true;
     });
     return json({ accepted: recorded });
