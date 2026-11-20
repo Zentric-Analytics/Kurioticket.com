@@ -355,7 +355,7 @@ export async function loadAdminIdentityActivity(
             orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take,
             select: { id: true, type: true, provider: true, route: true, createdAt: true },
           })) : Promise.resolve([]),
-          allowed.has("ACCOUNT_ACTIVITY") && !product && !isOperationalGuest ? readSource("e", (after, take) => tx.analyticsEvent.findMany({
+          allowed.has("ACCOUNT_ACTIVITY") && !isOperationalGuest ? readSource("e", (after, take) => tx.analyticsEvent.findMany({
             where: { AND: [analyticsWhere, sourceActivitySeek(after, "e", order)] },
             orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take,
             select: { id: true, type: true, name: true, metadata: true, createdAt: true },
