@@ -51,7 +51,7 @@ function matches(value: any, condition: any): boolean {
   });
 }
 
-function setup(kind: "guest" | "user" | "operational", count = 1105, products = ["FLIGHT", "HOTEL"], includeOfferJourneys = false, handoffProduct: "FLIGHT" | "HOTEL" | "CAR" = "HOTEL") {
+function setup(kind: "guest" | "user" | "operational", count = 1105, products = ["FLIGHT", "HOTEL"], includeOfferJourneys = false, handoffProduct: "FLIGHT" | "HOTEL" | "CAR" = "HOTEL", registeredLinkedVisitors = 1, eventBearingVisitors = 1) {
   const userId = "qa-complete-account";
   const visitorId = "qa-complete-visitor";
   const id = kind === "user" ? userId : kind === "operational" ? "qa-operational-session" : visitorId;
@@ -147,12 +147,31 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
   });
   let transactions = 0;
   const transactionOptions: Row[] = [];
+  const candidateQueries: Row[] = [];
+  const activeVisitorIds = [visitorId, ...Array.from({ length: Math.max(0, eventBearingVisitors - 1) },
+    (_, n) => "qa-extra-visitor-" + String(n).padStart(3, "0"))].sort();
   const db: Row = {
     user: { async findUnique() { return { id: userId, name: "Test account", role: "USER", status: "ACTIVE", createdAt: baseTime }; } },
     visitor: {
       async findFirst() { return kind === "operational" ? null : visitor; },
-      async findMany() { return kind === "user" ? [{ id: visitorId }] : []; },
-      async count() { return kind === "user" ? 1 : 0; },
+      async findMany(args: Row) {
+        if (kind !== "user") return [];
+        candidateQueries.push(args.where);
+        assert.equal(args.take, 100);
+        assert.ok(registeredLinkedVisitors >= eventBearingVisitors);
+        // Simulate a database with 150 eligible links but only 6 visitor
+        // identities carrying stage/time-matching journey events. The
+        // candidate DB predicate must be used; returning all 150 would
+        // expand the per-visitor ownership OR clauses unnecessarily.
+        assert.ok(args.where.AND.some((part: Row) => part.journeys?.some?.events?.some));
+        const from = args.cursor ? activeVisitorIds.indexOf(args.cursor.id) + 1 : 0;
+        return activeVisitorIds.slice(from, from + args.take).map(id => ({ id }));
+      },
+      async count(args: Row) {
+        if (kind !== "user") return 0;
+        assert.ok(args.where.AND.some((part: Row) => part.journeys?.some?.events?.some));
+        return eventBearingVisitors;
+      },
     },
     journeyEvent: delegate("journey", journeyRows), searchHistory: delegate("search", allSearchRows),
     redirectLog: delegate("handoff", handoffRows), analyticsEvent: delegate("analytics", analyticsRows),
@@ -177,7 +196,8 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
   return {
     load: (filters = allFilters, cursor?: string, mode: "page" | "all" = "all") =>
       service.loadAdminIdentityActivity(kind === "user" ? "user" : "guest", id, filters, cursor, mode),
-    transactionOptions, calls, failNextBatch: () => { failAfterFirstBatch = true; }, transactions: () => transactions,
+    transactionOptions, calls, candidateQueries,
+    failNextBatch: () => { failAfterFirstBatch = true; }, transactions: () => transactions,
     expected: count + handoffRows.length + analyticsRows.length,
   };
 }
@@ -344,3 +364,23 @@ for (const kind of ["guest", "user", "operational"] as const) {
     assert.equal(Object.values(result.data.summary.searchProducts).reduce((sum: number, n) => sum + Number(n), 0), result.data.summary.searches);
   });
 }
+
+test("registered account with 150 eligible links checks only 6 event-bearing visitors without hiding history", async () => {
+  const scenario = setup("user", 113, ["FLIGHT", "HOTEL"], true, "HOTEL", 150, 6);
+  const result = await scenario.load();
+  assert.equal(result.status, "ok");
+  assert.equal(result.data.events.length, scenario.expected + 2);
+  assert.equal(result.data.summary.searches, 113);
+  assert.equal(result.data.summary.offersSelected, 2);
+  assert.equal(result.data.summary.journeysTracked, 2);
+  assert.equal(scenario.candidateQueries.length, 1);
+  assert.equal(scenario.transactionOptions.length, 1);
+  assert.equal(scenario.transactionOptions[0].isolationLevel, "RepeatableRead");
+  assert.deepEqual(scenario.candidateQueries[0].AND[0].identityLinks, {
+    some: { userId: "qa-complete-account" },
+    none: { userId: { not: "qa-complete-account" } },
+  });
+  assert.deepEqual(scenario.candidateQueries[0].AND[1].journeys.some.events.some.type.in, [
+    "SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED",
+  ]);
+});

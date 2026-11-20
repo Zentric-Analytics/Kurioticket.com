@@ -1,3 +1,5 @@
+import type { Prisma } from "@/generated/prisma/client";
+
 /** Safe, read-only presentation of server-recorded journey events in Admin.
  * Never expose raw event metadata, search query JSON, or destination URLs.
  */
@@ -75,6 +77,31 @@ export function eligibleJourneyLinkedVisitorWhere(userId: string) {
     currentUser: { is: { status: "ACTIVE" as const, emailVerified: { not: null } } },
   };
 }
+/**
+ * A safe superset of visitors who can contribute canonical events to the
+ * selected window. The final event count still enforces the full consent,
+ * ownership, environment, stage, product and query predicates.
+ *
+ * Preselecting by event existence prevents large registered accounts with
+ * many inactive/empty visitor links from building hundreds of complex,
+ * per-visitor OR branches. It does not cap or discard historical events.
+ */
+export function eligibleJourneyEventCandidateWhere(
+  userId: string,
+  stages: ReadonlyArray<JourneyEventRecord["type"]>,
+  createdAt: Prisma.DateTimeFilter,
+): Prisma.VisitorWhereInput {
+  return {
+    AND: [
+      eligibleJourneyLinkedVisitorWhere(userId),
+      { journeys: { some: { events: { some: {
+        type: { in: [...stages] },
+        createdAt,
+      } } } } },
+    ],
+  };
+}
+
 
 function relatedRecordAllowed(
   record: { visitorId: string | null; userId: string | null } | null,

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { eligibleGuestVisitorWhere, eligibleLinkedVisitorWhere, mergeAdminActivity, toAdminJourneyActivity, type JourneyEventRecord } from "./adminIdentityJourney";
+import { eligibleGuestVisitorWhere, eligibleLinkedVisitorWhere, eligibleJourneyEventCandidateWhere, mergeAdminActivity, toAdminJourneyActivity, type JourneyEventRecord } from "./adminIdentityJourney";
 
 const at = new Date("2026-10-22T11:00:00Z");
 const sample: JourneyEventRecord = {
@@ -48,4 +48,45 @@ test("canonical journey stage replaces duplicate older search but retains unrepr
     { id: "old-2", label: "Provider handoff", detail: "Duffel", dedupeKey: "handoff:redirect-2", at: new Date(at.getTime()-1000) },
   ]);
   assert.deepEqual(events.map(e => e.id), ["j-event-1", "old-2"]);
+});
+
+test("candidate pruning requires actual stage/time events without relaxing registered consent and ownership", () => {
+  const from = new Date("2026-11-20T00:00:00.000Z");
+  const to = new Date("2026-11-21T00:00:00.000Z");
+  const where = eligibleJourneyEventCandidateWhere("account-1", ["SEARCH_COMPLETED", "OFFER_SELECTED"], { gte: from, lt: to });
+  const and = where.AND;
+  assert.ok(Array.isArray(and));
+  assert.deepEqual(and[0], {
+    currentUserId: "account-1",
+    consentStatus: "GRANTED",
+    trackingDisabledAt: null,
+    identityLinks: {
+      some: { userId: "account-1" },
+      none: { userId: { not: "account-1" } },
+    },
+    currentUser: { is: { status: "ACTIVE", emailVerified: { not: null } } },
+  });
+  assert.deepEqual(and[1], {
+    journeys: { some: { events: { some: {
+      type: { in: ["SEARCH_COMPLETED", "OFFER_SELECTED"] },
+      createdAt: { gte: from, lt: to },
+    } } } },
+  });
+  // No fixed take, magic IDs, or account-specific shortcuts here. Unlinked
+  // and nonconsenting visitors are always excluded by the first predicate.
+});
+
+test("candidate selection does not exclude valid results-viewed and handoff stages", () => {
+  const window = { gte: new Date("2026-10-01T00:00:00.000Z") };
+  const where = eligibleJourneyEventCandidateWhere("account-2", [
+    "RESULTS_VIEWED", "PROVIDER_HANDOFF_STARTED",
+  ], window);
+  const and = where.AND;
+  assert.ok(Array.isArray(and));
+  assert.deepEqual(and[1], {
+    journeys: { some: { events: { some: {
+      type: { in: ["RESULTS_VIEWED", "PROVIDER_HANDOFF_STARTED"] },
+      createdAt: window,
+    } } } },
+  });
 });

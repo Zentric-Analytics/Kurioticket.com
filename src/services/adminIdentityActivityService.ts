@@ -1,7 +1,7 @@
 import "server-only";
 
 import { Prisma } from "@/generated/prisma/client";
-import { eligibleGuestVisitorWhere, eligibleJourneyLinkedVisitorWhere, eligibleLinkedVisitorWhere, mergeAdminActivity, toAdminJourneyActivity, type ActivityRow, type IdentityKind } from "@/lib/adminIdentityJourney";
+import { eligibleGuestVisitorWhere, eligibleJourneyLinkedVisitorWhere, eligibleJourneyEventCandidateWhere, eligibleLinkedVisitorWhere, mergeAdminActivity, toAdminJourneyActivity, type ActivityRow, type IdentityKind } from "@/lib/adminIdentityJourney";
 import {
   ACTIVITY_FETCH_LIMIT, ACTIVITY_PAGE_SIZE, activityEnvironmentScope, activityWindow, allowedActivityStages,
   decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, latestVisibleActivityAt, legacyStageLabelMatchesQuery, sourceActivitySeek,
@@ -90,6 +90,12 @@ export async function loadAdminIdentityActivity(
 ): Promise<ActivityReadResult> {
   const environment = getPublicEnvironment();
   const complete = readMode === "all";
+  const startedAt = Date.now();
+  let phase = "identity_lookup";
+  let preflightMilliseconds = 0;
+  let candidateMilliseconds = 0;
+  let snapshotMilliseconds = 0;
+  let candidateBatches = 0;
   const cursor = complete ? undefined : decodeActivityCursor(cursorInput, kind, id, filters, environment);
   if (cursor === null) return { status: "invalid_cursor" };
   try {
@@ -236,6 +242,12 @@ export async function loadAdminIdentityActivity(
     };
     const canReadHandoffs = allowed.has("PROVIDER_HANDOFF_STARTED")
       && (!product || product === "FLIGHT" || product === "HOTEL" || product === "CAR");
+    // Candidate selection is a strict superset of final canonical events:
+    // use the indexed journey relationship and time/type before evaluating
+    // expensive ownership checks for each visitor.
+    const candidateVisitors = kind === "user" && stages.length
+      ? eligibleJourneyEventCandidateWhere(id, stages, window)
+      : null;
 
     // Only count canonical events that the timeline itself can display.
     // Each attached source must belong to the *same* visitor as its journey;
@@ -265,18 +277,23 @@ export async function loadAdminIdentityActivity(
     // Estimate complete-read work before opening the snapshot so its transaction
     // budget grows with the full filtered history. These counts are never used to
     // stop fetching; new matching rows are still included by the snapshot reads.
+    phase = "complete_preflight";
+    const preflightAt = Date.now();
     const readVolume = complete ? await Promise.all([
       stages.length && !isOperationalGuest ? db.journeyEvent.count({ where: journeyWhere }) : Promise.resolve(0),
       allowed.has("SEARCH_COMPLETED") ? db.searchHistory.count({ where: searchWhere }) : Promise.resolve(0),
       canReadHandoffs ? db.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
       allowed.has("ACCOUNT_ACTIVITY") && !isOperationalGuest
         ? db.analyticsEvent.count({ where: analyticsWhere }) : Promise.resolve(0),
-      stages.length && kind === "user"
-        ? db.visitor.count({ where: eligibleJourneyLinkedVisitorWhere(id) }) : Promise.resolve(0),
+      candidateVisitors
+        ? db.visitor.count({ where: candidateVisitors }) : Promise.resolve(0),
     ]) : null;
+    preflightMilliseconds = Date.now() - preflightAt;
     const transactionTimeout = readVolume
       ? completeActivityReadTimeout(readVolume.slice(0, 4), readVolume[4])
       : 30_000;
+    phase = "activity_snapshot";
+    const snapshotAt = Date.now();
 
     // A repeatable-read snapshot keeps canonical + legacy de-duplication stable
     // when a source record and its JourneyEvent are inserted concurrently.
@@ -307,29 +324,36 @@ export async function loadAdminIdentityActivity(
             where: { visitorId: { in: visitorIds }, events: { some: validEvents } },
           });
         };
+        phase = "journey_ownership_counts";
         if (stages.length && !isOperationalGuest) {
           if (kind === "guest") {
             await countVisitorBatch([id]);
           } else {
-            // Bound the query size without capping the number of linked visitors
-            // or loading full event records into application memory.
+            // Only candidate visitors with matching stage/time events need
+            // reference-ownership checks. The final count still revalidates
+            // every event and its referenced record against this same visitor.
+            // Keep batches bounded; no visitor or event count is capped.
             let lastVisitorId: string | null = null;
+            const candidateAt = Date.now();
             for (;;) {
               const batch: Array<{ id: string }> = await tx.visitor.findMany({
-                where: eligibleJourneyLinkedVisitorWhere(id),
+                where: candidateVisitors!,
                 select: { id: true },
                 orderBy: { id: "asc" },
                 take: 100,
                 ...(lastVisitorId ? { cursor: { id: lastVisitorId }, skip: 1 } : {}),
               });
               if (!batch.length) break;
+              candidateBatches++;
               await countVisitorBatch(batch.map(visitor => visitor.id));
               if (batch.length < 100) break;
               lastVisitorId = batch[batch.length - 1].id;
             }
+            candidateMilliseconds = Date.now() - candidateAt;
           }
         }
 
+        phase = "activity_source_reads";
         // Complete mode drains every source in bounded internal batches within
         // this same snapshot. The browser receives all matching records upfront.
         const readSource = <T extends ActivitySourceRow>(
@@ -365,6 +389,7 @@ export async function loadAdminIdentityActivity(
         ]);
         return [pageJourney, pageSearches, pageHandoffs, pageAnalytics, counts, searchTotal, handoffTotal, distinctJourneyCount] as const;
       }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead, timeout: transactionTimeout });
+    snapshotMilliseconds = Date.now() - snapshotAt;
 
     const summary: IdentityActivitySummary = {
       searches: (canonicalCounts.get("SEARCH_COMPLETED") ?? 0) + legacySearchTotal,
@@ -420,6 +445,17 @@ export async function loadAdminIdentityActivity(
       || [journey.length, searches.length, handoffs.length, analytics.length]
         .some(count => count === ACTIVITY_FETCH_LIMIT));
 
+    const totalMilliseconds = Date.now() - startedAt;
+    if (totalMilliseconds > 2_000) {
+      // Aggregate-only timings. No IDs, names, emails, raw filters or
+      // customer records in logs; log only unusually slow activity reads.
+      console.warn("[admin-identity-activity] slow read", {
+        kind, mode: readMode, phase: "complete", totalMilliseconds,
+        preflightMilliseconds, snapshotMilliseconds, candidateMilliseconds,
+        candidateBatches, canonicalEvents: journey.length,
+        recordedEvents: sorted.length,
+      });
+    }
     return {
       status: "ok",
       data: {
@@ -437,8 +473,13 @@ export async function loadAdminIdentityActivity(
       },
     };
   } catch (error) {
-    // Admin must distinguish an unavailable database from genuinely empty activity.
-    console.error("[admin-identity-activity] query unavailable", error);
+    // Log a stage and safe error category, never raw SQL, identifiers or
+    // customer attributes. Database infrastructure logs capture the detail.
+    const category = error instanceof Error ? error.name : "UnknownError";
+    console.error("[admin-identity-activity] query unavailable", {
+      kind, mode: readMode, phase, category, elapsedMilliseconds: Date.now() - startedAt,
+      preflightMilliseconds, candidateMilliseconds, candidateBatches,
+    });
     return { status: "unavailable" };
   }
 }
