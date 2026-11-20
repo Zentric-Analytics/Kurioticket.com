@@ -22,6 +22,9 @@ test("history keeps every repeated event in supplied order in one four-column ta
   assert.ok(html.indexOf('data-journey-event="event-1"') < html.indexOf('data-journey-event="event-2"'));
   assert.ok(html.indexOf('data-journey-event="event-2"') < html.indexOf('data-journey-event="event-3"'));
   assert.match(html, /Event History/);
+  assert.match(html, /Step 1/);
+  assert.match(html, /Step 2/);
+  assert.match(html, /Step 3/);
   assert.doesNotMatch(html, /<details|aria-expanded|<summary/);
 });
 test("destination-only searches, zero results and complete source paths remain readable", () => {
