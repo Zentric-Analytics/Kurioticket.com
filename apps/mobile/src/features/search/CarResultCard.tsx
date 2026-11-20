@@ -19,10 +19,10 @@ import type { CarResultBadge } from "../../../../../src/lib/cars/carResults";
 
 const carBadgeIcons = { "Best value": Award, Cheapest: Tag, "Top rated": Star } as const;
 
-export function CarResultCard({ result, rank, badge, imageUri, searchParams, resultBackgroundColor, plan, priceAlertsAvailable }: {
+export function CarResultCard({ result, rank, badge, imageUri, searchParams, resultBackgroundColor, plan, priceAlertsAvailable, journeyRequestId }: {
   result: CarResult; rank: number; badge?: CarResultBadge; imageUri?: string;
   searchParams: Record<string, unknown>; resultBackgroundColor: string;
-  plan?: SearchPlan; priceAlertsAvailable: boolean;
+  plan?: SearchPlan; priceAlertsAvailable: boolean; journeyRequestId?: string | null;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => setImageFailed(false), [imageUri]);
@@ -85,7 +85,7 @@ export function CarResultCard({ result, rank, badge, imageUri, searchParams, res
     </View>
     <View style={[c.lowerBand,{backgroundColor:carInformationSurface,borderTopColor:carDividerColor}]}>
       <View style={c.detailsColumn}>
-        <NativeCarResultOfferPicker result={result} displayCurrency={displayCurrency} rates={rates} plan={plan} priceAlertsAvailable={priceAlertsAvailable}/>
+        <NativeCarResultOfferPicker result={result} displayCurrency={displayCurrency} rates={rates} plan={plan} priceAlertsAvailable={priceAlertsAvailable} journeyRequestId={journeyRequestId}/>
       </View>
     </View>
   </View>;
