@@ -56,6 +56,18 @@ test("ordinary browser and native requests incur no DNS lookups and retain custo
   assert.equal(touched, false, "No DNS, no network cost for ordinary customers");
 });
 
+test("equivalent compressed expanded and IPv4-mapped IPv6 representations verify the same crawler", async () => {
+  assert.equal(await verifySearchCrawler(flight(googleAgent),
+    reverseForward("2001:4860:4801:0012:0000:0000:0000:000a",
+      "crawl-2001-4860-4801-12--a.googlebot.com", "2001:4860:4801:12::a")), "GOOGLEBOT");
+  assert.equal(await verifySearchCrawler(flight(bingAgent),
+    reverseForward("::ffff:192.0.2.1",
+      "msnbot-192-0-2-1.search.msn.com", "::ffff:c000:201")), "BINGBOT");
+  assert.equal(await verifySearchCrawler(flight(googleAgent),
+    reverseForward("2001:4860:4801:12::a",
+      "crawl-2001-4860-4801-12--a.googlebot.com", "2001:4860:4801:12::b")), null);
+});
+
 test("invalid origin IP, DNS outage and unverified hostname cannot block people", async () => {
   for (const ip of ["", "not-an-ip", "private", "127.0.0.1.bad"]) {
     assert.equal(await verifySearchCrawler(flight(googleAgent), reverseForward(ip, "crawl-66-249-66-1.googlebot.com")), null);
