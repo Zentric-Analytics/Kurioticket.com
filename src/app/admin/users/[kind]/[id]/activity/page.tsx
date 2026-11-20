@@ -7,6 +7,8 @@ import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { AdminActivityOverview } from "@/components/admin/AdminActivityOverview";
+import { AdminIdentityDeviceAccess } from "@/components/admin/AdminIdentityDeviceAccess";
+import { loadAdminDeviceSessions } from "@/services/adminDeviceSessionsService";
 import { journeyHistoryHrefFromActivity } from "@/lib/adminActivityOverview";
 import { normalizeUserActivityQuery, safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
 import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
@@ -134,6 +136,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       action={<Link className={buttonClass} href={activityHref(basePath, queryParams, { cursor: null, order: null })}>Return to newest activity</Link>} />
   </div>;
   const data = result.data;
+  const deviceSessions = kind === "user" ? await loadAdminDeviceSessions(id) : null;
   const environment = data.environment;
   const operational = data.source === "operational";
   const order = filters.order === "oldest" ? "oldest" : "newest";
@@ -239,6 +242,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         </div>
       </section>
       </div>
+
+      <AdminIdentityDeviceAccess kind={kind} result={deviceSessions} />
 
       <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
         <section aria-label="Activity filters" className="min-w-0">
