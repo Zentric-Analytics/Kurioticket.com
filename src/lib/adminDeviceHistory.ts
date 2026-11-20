@@ -40,7 +40,8 @@ export function parseDeviceHistoryQuery(raw: RawQuery): DeviceHistoryParsed {
       return { ok: false, error: "Choose valid inclusive From and To dates (UTC)." };
     return { ok: true, query: { range, page, from, to } };
   }
-  if (from || to) return { ok: false, error: "Custom dates require the Custom range." };
+  // Date inputs may retain values when switching from Custom to a preset.
+  // They are ignored unless Custom was explicitly selected.
   return { ok: true, query: { range: range as DeviceHistoryRange, page } };
 }
 
