@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, ChevronRight, Route, ClipboardList } from "lucide-react";
+import { ChevronRight, Route } from "lucide-react";
 import { activityOverviewRows, completeJourneyDetailHref } from "@/lib/adminActivityOverview";
 import type { ActivityRow, IdentityKind } from "@/lib/adminIdentityJourney";
 
@@ -14,7 +14,7 @@ const action = "focus-ring inline-flex shrink-0 items-center gap-1 rounded-md px
 
 export function AdminActivityOverview({
   events, kind, identityId, environment, returnHref, journeyHistoryHref,
-  otherHref, operational,
+  operational, otherHref,
 }: {
   events: ActivityRow[];
   kind: IdentityKind;
@@ -22,8 +22,8 @@ export function AdminActivityOverview({
   environment: "staging" | "production";
   returnHref: string;
   journeyHistoryHref: string;
-  otherHref: string;
   operational: boolean;
+  otherHref: string;
 }) {
   const overview = activityOverviewRows(events);
   const now = new Date();
@@ -63,35 +63,12 @@ export function AdminActivityOverview({
             </Link>
           </div>;
         })}
-      </div> : <p className="rounded-lg border border-[#E2E8F0] p-4 text-[13px] text-[#64748B]">No tracked journeys match these filters. Other recorded actions may still appear below.</p>}
-    </section> : null}
-    <section aria-labelledby="other-activity-title" className="min-w-0">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 id="other-activity-title" className="text-[16px] font-semibold text-[#0F172A]">
-            {operational ? "Recent operational activity" : "Other recorded activity"}
-          </h2>
-          <p className="mt-1 text-[12px] text-[#64748B]">
-            {overview.otherCount} matching {overview.otherCount === 1 ? "event" : "events"} outside tracked journeys · Latest five shown
-          </p>
-        </div>
-        <Link href={otherHref} className={action}>View all other activity <ArrowUpRight size={15} aria-hidden="true"/></Link>
+      </div> : <p className="rounded-lg border border-[#E2E8F0] p-4 text-[13px] text-[#64748B]">No tracked journeys match these filters. Open Journey History to review full records.</p>}
+    </section> : <section aria-label="Operational guest session" className="min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[13px] text-[#475569]">This guest session has operational records, not a consented journey.</p>
+        <Link href={otherHref} className={action}>View recorded session activity <ChevronRight size={15} aria-hidden="true" /></Link>
       </div>
-      {overview.other.length ? <div className="divide-y divide-[#E2E8F0] border-y border-[#E2E8F0]">
-        {overview.other.map(row => <div key={row.id} data-testid="activity-other-row"
-          className="flex min-w-0 items-start gap-3 py-3">
-          <ClipboardList size={16} className="mt-0.5 shrink-0 text-[#64748B]" aria-hidden="true"/>
-          <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-              <p className="text-[13px] font-medium text-[#0F172A]">{row.label}</p>
-              <time dateTime={row.at.toISOString()} className="text-[12px] tabular-nums text-[#64748B]">{stamp(row.at)}</time>
-            </div>
-            <p className="mt-1 truncate text-[12px] text-[#64748B]" title={row.detail}>
-              {row.detail || "No additional details recorded"}
-            </p>
-          </div>
-        </div>)}
-      </div> : <p className="rounded-lg border border-[#E2E8F0] p-4 text-[13px] text-[#64748B]">No other recorded activity matches these filters.</p>}
-    </section>
+    </section>}
   </section>;
 }
