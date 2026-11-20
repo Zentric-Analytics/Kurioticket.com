@@ -21,7 +21,7 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
           </tr>
         </thead>
         <tbody className="divide-y divide-[#E7ECF5]">
-          {events.map(event => {
+          {events.map((event, index) => {
             const at = new Date(event.createdAt);
             const searchTitle = event.search ? [event.search.origin, event.search.destination].filter(Boolean).join(" → ") : "";
             return <tr key={event.id} data-journey-event={event.id} className="align-top transition-colors hover:bg-[#F8FAFC]">
@@ -32,7 +32,14 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
                 </time>
               </td>
               <td className="px-3 py-3 [overflow-wrap:anywhere]">
-                <span className="inline-flex rounded-md border border-[#D8E1EC] bg-white px-2 py-1 text-[11px] font-medium text-[#475569]">{readable(event.type)}</span>
+                <span className="block text-[11px] font-semibold tabular-nums text-[#64748B]">Step {index + 1}</span>
+                <span className="mt-1 inline-flex rounded-md border border-[#D8E1EC] bg-white px-2 py-1 text-[11px] font-medium text-[#475569]">{event.type === "RESULT_SHARED"
+                  ? event.action === "share_link_copied" ? "Result link copied" : event.action === "share_sheet_completed" ? "Share sheet completed" : "Result shared"
+                  : event.type === "RESULT_SAVED"
+                    ? event.action === "local_saved" ? "Saved locally" : event.action === "saved_item_confirmed" ? "Saved to account" : "Result saved"
+                    : event.type === "RESULT_UNSAVED"
+                      ? event.action === "local_unsaved" ? "Removed local save" : event.action === "saved_item_removed" ? "Removed saved item" : "Result unsaved"
+                      : readable(event.type)}</span>
                 {event.product ? <p className="mt-1 text-xs text-[#64748B]">{readable(event.product)}</p> : null}
               </td>
               <td className="px-3 py-3 [overflow-wrap:anywhere]">
@@ -40,6 +47,9 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
                   {searchTitle ? <p className="font-medium text-[#020617]">{searchTitle}</p> : null}
                   <p className={searchTitle ? "mt-1 text-xs text-[#64748B]" : "text-xs text-[#64748B]"}>{readable(event.search.status)} · {event.search.resultCount} results</p>
                 </> : <p className="text-xs text-[#64748B]">Search details not recorded</p>}
+                {event.resultReference ? <p className="mt-1.5 break-all text-[11px] leading-4 text-[#64748B]">
+                  Recorded result reference: {event.resultReference}
+                </p> : null}
                 {event.sourcePage ? <p className="mt-1.5 break-all text-[11px] leading-4 text-[#64748B]"><span className="mr-1">Source:</span>{event.sourcePage}</p> : null}
               </td>
               <td className="px-3 py-3 [overflow-wrap:anywhere]">

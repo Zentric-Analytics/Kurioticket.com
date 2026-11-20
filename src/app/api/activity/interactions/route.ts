@@ -5,16 +5,18 @@ import { getOptionalPrisma } from "@/lib/prisma";
 import { readBoundedJsonBody } from "@/lib/bounded-json-body";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { isSameOriginRequest } from "@/lib/visitor-identity";
-import { withEnvironmentMetadata } from "@/lib/stagingSafety";
+import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
+import { matchesInteractionSearch } from "@/lib/verifiedInteractionSearch";
 
 export const runtime = "nodejs";
 
 const payloadSchema = z.object({
-  action: z.enum(["local_saved", "local_unsaved", "share_link_copied", "share_sheet_completed"]),
+  action: z.enum(["local_saved", "local_unsaved", "saved_item_confirmed", "saved_item_removed", "share_link_copied", "share_sheet_completed"]),
   product: z.enum(["FLIGHT", "HOTEL", "CAR"]),
   resultId: z.string().min(1).max(128).regex(/^[a-zA-Z0-9._:-]+$/),
+  requestId: z.string().uuid().optional(),
   eventId: z.string().uuid(),
 }).strict();
 const json = (body: unknown, status = 202) => NextResponse.json(body, {
@@ -52,17 +54,107 @@ export async function POST(request: Request) {
         select: { id: true },
       });
       if (existing) return true;
-      await tx.analyticsEvent.create({ data: {
-        userId: identity.userId, visitorId: identity.visitorId,
-        type, name,
-        metadata: withEnvironmentMetadata({
-          product: parsed.data.product,
-          resultId: parsed.data.resultId,
-          eventId: parsed.data.eventId,
-          outcome: "client_confirmed",
-          applicationSource: identity.applicationSource,
-        }) as Prisma.InputJsonValue,
-      } });
+      const isConfirmedAccountAction = name === "saved_item_confirmed" || name === "saved_item_removed";
+      // Account-save confirmations come from the saved-item mutation service.
+      // Do not accept a client's assertion of success without its matching
+      // server-written, recent and owner-scoped save audit evidence.
+      const confirmedAudit = isConfirmedAccountAction && identity.userId
+        ? await tx.analyticsEvent.findFirst({
+          where: {
+            userId: identity.userId, type: "SAVE", name,
+            createdAt: { gte: new Date(Date.now() - 60_000) },
+            AND: [
+              { metadata: { path: ["resultId"], equals: parsed.data.resultId } },
+              { metadata: { path: ["product"], equals: parsed.data.product } },
+              { metadata: { path: ["environment"], equals: getPublicEnvironment() } },
+            ],
+          },
+          select: { id: true, metadata: true },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        }) : null;
+      if (isConfirmedAccountAction && !confirmedAudit) return false;
+      if (confirmedAudit) {
+        // A confirmed mutation is a single observed save/remove. Replayed
+        // browser reports must not create a second journey step.
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('journey-saved-audit'), hashtext(${confirmedAudit.id}))`;
+        const alreadyLinked = await tx.journeyEvent.findUnique({
+          where: { eventKey: "saved-audit:" + confirmedAudit.id },
+          select: { id: true },
+        });
+        if (alreadyLinked) return true;
+      }
+      // Search provenance must be established on the server. A client-supplied
+      // request UUID alone does not establish journey ownership or a save/share
+      // for another user's search. Missing/invalid links stay in account history.
+      let verifiedLink: { linkedJourneyId: string; linkedSearchHistoryId: string; linkedRequestId: string } | null = null;
+      if (parsed.data.requestId) {
+        const search = await tx.searchHistory.findUnique({
+          where: { requestId: parsed.data.requestId },
+          select: { id: true, visitorId: true, userId: true, type: true, query: true, createdAt: true },
+        });
+        if (search && matchesInteractionSearch(search, identity, parsed.data.product, getPublicEnvironment(), new Date())) {
+          const candidates = await tx.journeyEvent.findMany({
+            where: { type: "SEARCH_COMPLETED", searchHistoryId: search.id,
+              journey: { visitorId: identity.visitorId! },
+              metadata: { path: ["environment"], equals: getPublicEnvironment() },
+            },
+            select: { journeyId: true },
+            distinct: ["journeyId"],
+            take: 2,
+          });
+          // A search linked to more than one journey is ambiguous; fail closed.
+          if (candidates.length === 1) verifiedLink = {
+            linkedJourneyId: candidates[0].journeyId,
+            linkedSearchHistoryId: search.id,
+            linkedRequestId: parsed.data.requestId,
+          };
+        }
+      }
+      if (!isConfirmedAccountAction) {
+        await tx.analyticsEvent.create({ data: {
+          userId: identity.userId, visitorId: identity.visitorId,
+          type, name,
+          metadata: withEnvironmentMetadata({
+            product: parsed.data.product,
+            resultId: parsed.data.resultId,
+            eventId: parsed.data.eventId,
+            ...(verifiedLink ?? {}),
+            outcome: "client_confirmed",
+            applicationSource: identity.applicationSource,
+          }) as Prisma.InputJsonValue,
+        } });
+      } else if (verifiedLink && confirmedAudit) {
+        // Link the original mutation evidence instead of writing a duplicate
+        // SAVE analytic event that would inflate account activity counts.
+        const metadata = confirmedAudit.metadata && typeof confirmedAudit.metadata === "object"
+          && !Array.isArray(confirmedAudit.metadata)
+          ? confirmedAudit.metadata as Record<string, unknown> : {};
+        await tx.analyticsEvent.update({
+          where: { id: confirmedAudit.id },
+          data: { metadata: { ...metadata, ...verifiedLink, eventId: parsed.data.eventId } as Prisma.InputJsonValue },
+        });
+      }
+      if (verifiedLink) {
+        // Exactly the same verified canonical search powers the journey event.
+        // Never create a journey stage for an uncorrelated result or other owner.
+        const stage = name === "local_saved" || name === "saved_item_confirmed" ? "RESULT_SAVED"
+          : name === "local_unsaved" || name === "saved_item_removed" ? "RESULT_UNSAVED" : "RESULT_SHARED";
+        await tx.journeyEvent.create({
+          data: {
+            journeyId: verifiedLink.linkedJourneyId,
+            searchHistoryId: verifiedLink.linkedSearchHistoryId,
+            eventKey: confirmedAudit ? "saved-audit:" + confirmedAudit.id : "interaction:" + parsed.data.eventId,
+            type: stage,
+            product: parsed.data.product,
+            metadata: withEnvironmentMetadata({
+              action: name,
+              resultId: parsed.data.resultId,
+              interactionEventId: parsed.data.eventId,
+              requestId: verifiedLink.linkedRequestId,
+            }) as Prisma.InputJsonValue,
+          },
+        });
+      }
       return true;
     });
     return json({ accepted: recorded });

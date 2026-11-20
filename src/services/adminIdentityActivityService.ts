@@ -424,7 +424,11 @@ export async function loadAdminIdentityActivity(
     };
 
     const canonical = journey.flatMap(event => {
-      const row = toAdminJourneyActivity(event, kind, id);
+      // These legacy Activity summaries intentionally show the original four
+      // journey stages. Verified save/share steps belong in Journey Details.
+      if (event.type !== "SEARCH_COMPLETED" && event.type !== "RESULTS_VIEWED"
+        && event.type !== "OFFER_SELECTED" && event.type !== "PROVIDER_HANDOFF_STARTED") return [];
+      const row = toAdminJourneyActivity({ ...event, type: event.type }, kind, id);
       return row ? [row] : [];
     });
     const legacy: ActivityRow[] = [
@@ -441,6 +445,11 @@ export async function loadAdminIdentityActivity(
         at: r.createdAt,
       })),
       ...analytics.flatMap(a => {
+        // Once the same interaction has a verified canonical JourneyEvent, it
+        // belongs to that journey's Event History, not Unlinked Other Activity.
+        const meta = a.metadata && typeof a.metadata === "object" && !Array.isArray(a.metadata)
+          ? a.metadata as Record<string, unknown> : null;
+        if (typeof meta?.linkedJourneyId === "string" && typeof meta?.linkedSearchHistoryId === "string") return [];
         const baseLabel = safeAnalyticsLabels[a.type as SafeAnalyticsType];
         if (!baseLabel) return [];
         const safe = safeActivityMetadata(a.metadata);

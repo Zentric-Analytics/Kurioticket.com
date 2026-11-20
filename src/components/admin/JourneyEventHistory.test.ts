@@ -22,6 +22,9 @@ test("history keeps every repeated event in supplied order in one four-column ta
   assert.ok(html.indexOf('data-journey-event="event-1"') < html.indexOf('data-journey-event="event-2"'));
   assert.ok(html.indexOf('data-journey-event="event-2"') < html.indexOf('data-journey-event="event-3"'));
   assert.match(html, /Event History/);
+  assert.match(html, /Step 1/);
+  assert.match(html, /Step 2/);
+  assert.match(html, /Step 3/);
   assert.doesNotMatch(html, /<details|aria-expanded|<summary/);
 });
 test("destination-only searches, zero results and complete source paths remain readable", () => {
@@ -45,4 +48,24 @@ test("missing details avoid dash-heavy cells and never invent search correlation
   assert.match(html, /search link unavailable/);
   assert.doesNotMatch(html, /exact search link|—|undefined|null/);
   assert.match(render([]), /No events recorded in this window/);
+});
+
+test("verified result actions appear as individual chronological steps without invented shares", () => {
+  const linked = [
+    { ...event, id: "search-1", type: "SEARCH_COMPLETED" as const },
+    { ...event, id: "save-1", type: "RESULT_SAVED" as const },
+    { ...event, id: "share-1", type: "RESULT_SHARED" as const, action: "share_link_copied" as const },
+    { ...event, id: "share-2", type: "RESULT_SHARED" as const, action: "share_sheet_completed" as const },
+    { ...event, id: "unsave-1", type: "RESULT_UNSAVED" as const },
+    { ...event, id: "handoff-1", type: "PROVIDER_HANDOFF_STARTED" as const },
+  ];
+  const html = render(linked);
+  assert.equal((html.match(/data-journey-event=/g) || []).length, linked.length);
+  assert.match(html, /Result saved/);
+  assert.match(html, /Result unsaved/);
+  assert.match(html, /Result link copied/);
+  assert.match(html, /Share sheet completed/);
+  assert.match(html, /Step 6/);
+  assert.ok(html.indexOf('data-journey-event="search-1"') < html.indexOf('data-journey-event="save-1"'));
+  assert.ok(html.indexOf('data-journey-event="share-1"') < html.indexOf('data-journey-event="unsave-1"'));
 });

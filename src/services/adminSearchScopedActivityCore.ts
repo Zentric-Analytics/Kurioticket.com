@@ -161,6 +161,11 @@ export function createAdminSearchScopedActivityReader(deps: Dependencies) {
       });
       const page = rows.slice(0, MAX_EVENTS);
       const events: SearchScopedEvent[] = page
+        // Search Activity intentionally exposes its original four search and
+        // handoff stages; save/share detail steps belong to Journey Details.
+        .filter((event): event is typeof event & { type: SearchScopedEvent["stage"] } =>
+          event.type === "SEARCH_COMPLETED" || event.type === "RESULTS_VIEWED"
+          || event.type === "OFFER_SELECTED" || event.type === "PROVIDER_HANDOFF_STARTED")
         .filter(event => event.product === null || event.product === search.type)
         .filter(event => event.type !== "PROVIDER_HANDOFF_STARTED" ||
           Boolean(event.redirectLogId && event.redirectLog &&

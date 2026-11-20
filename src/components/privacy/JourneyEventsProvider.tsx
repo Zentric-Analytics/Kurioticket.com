@@ -16,9 +16,10 @@ type Recorder = {
   offerSelected: (product: "flight" | "hotel", resultId: string, provider?: string, requestId?: string | null) => void;
   rememberDetailsContext: (product: "flight" | "hotel", resultId: string, requestId: string | null) => void;
   prepareHandoff: (product: "flight" | "hotel", resultId: string) => ProviderHandoffMetadataReader;
+  interactionRequestId: (product: "flight" | "hotel", resultId: string, explicit?: string | null) => string | null;
 };
 const browserActionId = () => crypto.randomUUID();
-const quiet: Recorder = { resultsViewed: () => undefined, offerSelected: () => undefined, rememberDetailsContext: () => undefined, prepareHandoff: () => createProviderHandoffMetadata(() => null, browserActionId) };
+const quiet: Recorder = { resultsViewed: () => undefined, offerSelected: () => undefined, rememberDetailsContext: () => undefined, prepareHandoff: () => createProviderHandoffMetadata(() => null, browserActionId), interactionRequestId: () => null };
 const JourneyEventsContext = createContext<Recorder>(quiet);
 
 /** Keep valid user-action delivery alive across internal navigation, but never across an account/consent change. */
@@ -73,6 +74,11 @@ export function JourneyEventsProvider({ children }: { children: ReactNode }) {
   // Refresh observers after a consent change. The sender owns impression
   // deduplication and holds explicitly consented actions until confirmation.
   const recorder: Recorder = !actor ? quiet : {
+    interactionRequestId(product, resultId, explicit) {
+      if (!browserAllowsAnalytics()) return null;
+      try { return journeyRequestId(explicit) ?? readJourneySelection(product, resultId, actor, window.sessionStorage); }
+      catch { return null; }
+    },
     prepareHandoff(product, resultId) {
       const context = sender.captureContext();
       return createProviderHandoffMetadata(() => context !== null && sender.captureContext() === context
