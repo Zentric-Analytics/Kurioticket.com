@@ -65,6 +65,17 @@ try {
   await page.goto(url);
   await expect(page.getByRole("navigation",{name:"Identity pagination"})).toHaveCount(0);
   await expect(page.locator("tbody tr")).toHaveCount(30);
+  // A returning registered account must outrank a more recently created guest
+  // when its recorded last observation is newer. Sorting is never based on
+  // account type alone; the mock SQL returns mixed identities in one order.
+  await expect(page.locator("tbody tr").nth(0)).toContainText("Alana Example");
+  await expect(page.locator("tbody tr").nth(1)).toContainText("Zara Example");
+  await expect(page.locator("tbody tr").nth(2)).toContainText("Guest visitor");
+  const observedTimes = await page.locator('td[data-label="Last Seen"] time').evaluateAll(
+    nodes => nodes.map(node => Date.parse(node.getAttribute("dateTime"))),
+  );
+  assert.ok(observedTimes.every((at, index) => index === 0 || observedTimes[index - 1] >= at),
+    "Last Seen must be descending across registered and guest records");
   // Registered accounts can be older than their latest recorded session.
   // Confirm the new column preserves actual evidence for both registered
   // and consented guest rows without becoming an online-status indicator.
