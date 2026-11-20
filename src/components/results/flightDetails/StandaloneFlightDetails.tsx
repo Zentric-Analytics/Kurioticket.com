@@ -338,8 +338,10 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     };
 
     try {
-      if (navigator.share) await navigator.share(shareData);
-      else {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        recordCustomerInteraction({ action: "share_sheet_completed", product: "FLIGHT", resultId: savedFlightKey });
+      } else {
         await navigator.clipboard.writeText(url);
         setShareFeedback("Flight link copied");
         window.setTimeout(() => setShareFeedback(""), 1800);
