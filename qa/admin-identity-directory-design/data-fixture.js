@@ -2,8 +2,8 @@
 const day = 86_400_000;
 const pivot = Date.parse("2026-10-22T15:00:00.000Z");
 const users = [
-  { id: "qa-admin-001", name: "Alana Example", email: "alana@example.invalid", role: "ADMIN", status: "ACTIVE", createdAt: new Date(pivot - 2 * day), lastSeenAt: new Date(pivot + 2000) },
-  { id: "qa-support-001", name: "Zara Example", email: "zara@example.invalid", role: "SUPPORT", status: "ACTIVE", createdAt: new Date(pivot - 15 * day), lastSeenAt: new Date(pivot + 1000) },
+  { id: "qa-admin-001", name: "Alana Example", email: "alana@example.invalid", role: "ADMIN", status: "ACTIVE", createdAt: new Date(pivot - 2 * day), lastSeenAt: new Date(pivot + 2 * 3_600_000) },
+  { id: "qa-support-001", name: "Zara Example", email: "zara@example.invalid", role: "SUPPORT", status: "ACTIVE", createdAt: new Date(pivot - 15 * day), lastSeenAt: new Date(pivot + 3_600_000) },
 ];
 const guests = Array.from({ length: 28 }, (_, index) => ({
   id: "qa-guest-" + String(index + 1).padStart(3, "0"),
