@@ -256,7 +256,7 @@ try {
     await expectBalancedDesktopHeader(page, "Registered zoom " + zoom);
     const fullDeviceHistory = page.getByRole("link", {name:/View full device & access history/});
     await expect(fullDeviceHistory).toBeVisible();
-    assert.match(await fullDeviceHistory.getAttribute("href"), /\\/admin\\/users\\/user\\/qa-registered-0001\\/devices\\?range=all/);
+    assert.ok((await fullDeviceHistory.getAttribute("href"))?.includes("/admin/users/user/qa-registered-0001/devices?range=all"), "Full device link must include the correct registered identity");
     await expect(page.getByTestId("device-today-list")).toBeVisible();
     await expect(page.getByTestId("device-session-row")).toHaveCount(3);
     await expect(page.getByText("Today (UTC)")).toBeVisible();
@@ -270,7 +270,7 @@ try {
   await page.setViewportSize({width:1280,height:900});
   await page.goto(base + "/admin/users/user/qa-registered-0001/activity?range=all");
   await page.getByRole("link",{name:/View full device & access history/}).click();
-  await expect(page).toHaveURL(/\\/admin\\/users\\/user\\/qa-registered-0001\\/devices\\?range=all/);
+  await expect(page).toHaveURL(url => url.pathname === "/admin/users/user/qa-registered-0001/devices" && url.searchParams.get("range") === "all");
   await expect(page.getByRole("heading",{name:"Device & Access History"})).toBeVisible();
   await expect(page.locator('[data-testid="device-history-row"]:visible')).toHaveCount(5);
   await page.getByRole("button",{name:"Device history range: All time"}).click();
