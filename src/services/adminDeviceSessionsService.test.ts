@@ -15,16 +15,20 @@ test("device history is account-scoped and excludes credentials and network iden
   assert.doesNotMatch(source, /select:\s*\{[^}]*userAgent/);
 });
 
-test("device details live in dedicated Users pages instead of Activity", () => {
+test("registered Activity embeds a heading-free Today preview with a separate full history", () => {
   const activity = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx", "utf8");
+  const preview = readFileSync("src/components/admin/AdminIdentityDeviceAccess.tsx", "utf8");
   const dedicated = readFileSync("src/app/admin/users/platforms-devices/page.tsx", "utf8");
   const history = readFileSync("src/app/admin/users/[kind]/[id]/devices/page.tsx", "utf8");
-  assert.doesNotMatch(activity, /<AdminIdentityDeviceAccess/);
-  assert.doesNotMatch(activity, /loadAdminDeviceSessions/);
-  assert.match(activity, /View account device &amp; access history/);
-  assert.match(dedicated, /Platforms &amp; Devices/);
+  assert.match(activity, /kind === "user" \? await loadAdminDeviceSessions\(id\) : null/);
+  assert.match(activity, /<AdminIdentityDeviceAccess/);
+  assert.doesNotMatch(activity, /View account device &amp; access history/);
+  assert.doesNotMatch(preview, /<h[123][^>]*>Device &amp; Access History/);
+  assert.match(preview, /Today \(UTC\)/);
+  assert.match(preview, /data-testid="device-today-list"/);
+  assert.match(preview, /View full history/);
+  assert.match(preview, /kind !== "user"\) return null/);
   assert.match(dedicated, /loadPlatformAccess/);
-  assert.match(dedicated, /Device &amp; Access History/);
   assert.match(history, /kind !== "user"/);
 });
 
