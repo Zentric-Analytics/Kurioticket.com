@@ -179,3 +179,30 @@ test("untrusted, browser, invalid-bearer and unverifiable native requests remain
     if (original === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = original;
   }
 });
+
+test("server-prepared same-origin website session attributes an unconsented browser guest without Fetch Metadata", async () => {
+  const previous = process.env.AUTH_SECRET;
+  process.env.AUTH_SECRET = "test-same-origin-guest-verification-secret-at-least-32-chars";
+  try {
+    for (const path of ["/api/flights/search", "/api/hotels/search", "/api/cars/search"]) {
+      const request = new Request("https://kurioticket.com" + path, {
+        method: "POST", headers: { origin: "https://kurioticket.com" },
+      });
+      const prepared = prepareOperationalSearchSession(request, Date.now(), getPublicEnvironment());
+      assert.equal(prepared?.transport, "web");
+      const result = await resolveRequestActivityIdentity(request, {
+        web: async () => null,
+        mobile: async () => { throw new Error("web cannot borrow a mobile account"); },
+        visitor: async () => null,
+      }, prepared);
+      assert.deepEqual(result, { userId: null, visitorId: null, applicationSource: "WEB" });
+    }
+    // An arbitrary or absent operational session never becomes WEB by guesswork.
+    const unproven = new Request("https://kurioticket.com/api/flights/search");
+    assert.equal((await resolveRequestActivityIdentity(unproven, {
+      web: async () => null, mobile: async () => null, visitor: async () => null,
+    })).applicationSource, "UNKNOWN");
+  } finally {
+    if (previous === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = previous;
+  }
+});
