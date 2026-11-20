@@ -180,7 +180,7 @@ test("untrusted, browser, invalid-bearer and unverifiable native requests remain
   }
 });
 
-test("server-prepared same-origin website session attributes an unconsented browser guest without Fetch Metadata", async () => {
+test("previously signed same-origin web continuity attributes a guest without Fetch Metadata, never a fresh Origin claim", async () => {
   const previous = process.env.AUTH_SECRET;
   const previousPublicUrl = process.env.NEXT_PUBLIC_APP_URL;
   process.env.NEXT_PUBLIC_APP_URL = "https://kurioticket.com";
@@ -190,14 +190,26 @@ test("server-prepared same-origin website session attributes an unconsented brow
       const request = new Request("https://kurioticket.com" + path, {
         method: "POST", headers: { origin: "https://kurioticket.com" },
       });
-      const prepared = prepareOperationalSearchSession(request, Date.now(), getPublicEnvironment());
-      assert.equal(prepared?.transport, "web");
-      const result = await resolveRequestActivityIdentity(request, {
+      const dependencies = {
         web: async () => null,
         mobile: async () => { throw new Error("web cannot borrow a mobile account"); },
         visitor: async () => null,
-      }, prepared);
-      assert.deepEqual(result, { userId: null, visitorId: null, applicationSource: "WEB" });
+      };
+      const first = prepareOperationalSearchSession(request, Date.now(), getPublicEnvironment());
+      assert.equal(first?.transport, "web");
+      assert.equal(first?.newCredential, true);
+      assert.deepEqual(await resolveRequestActivityIdentity(request, dependencies, first),
+        { userId: null, visitorId: null, applicationSource: "UNKNOWN" },
+        "a forged Origin header cannot create web attribution on the first request");
+      const continued = new Request(request.url, {
+        method: "POST",
+        headers: { origin: "https://kurioticket.com", cookie: `kt_search_session=${first!.credential}` },
+      });
+      const verified = prepareOperationalSearchSession(continued, Date.now(), getPublicEnvironment());
+      assert.equal(verified?.transport, "web");
+      assert.equal(verified?.newCredential, false, "continuity is verified by the server's signature");
+      assert.deepEqual(await resolveRequestActivityIdentity(continued, dependencies, verified),
+        { userId: null, visitorId: null, applicationSource: "WEB" });
     }
     // An arbitrary or absent operational session never becomes WEB by guesswork.
     const unproven = new Request("https://kurioticket.com/api/flights/search");
