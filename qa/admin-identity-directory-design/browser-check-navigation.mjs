@@ -28,6 +28,7 @@ try {
     await expect(page.getByRole("complementary", { name: "Users navigation" }).getByRole("heading", { name: "Users", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Visitor Journeys", exact: true })).toBeVisible();
+    await expect(workspace.getByRole("link", { name: "Platforms & Devices", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
     for (const unrelated of ["Trips", "Support", "Settings", "System"]) {
       await expect(workspace.getByRole("link", { name: unrelated, exact: true })).toHaveCount(0);
