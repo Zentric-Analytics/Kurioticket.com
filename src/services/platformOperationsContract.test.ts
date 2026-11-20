@@ -72,8 +72,14 @@ test("operational service scopes aggregate SQL to its environment and outages re
     "@/lib/prisma": { getOptionalPrisma: () => ({ $transaction: async (task: (tx: unknown) => Promise<unknown>) => {
       if (offline) throw new Error("private database error");
       return task({ $queryRaw: async (_strings: TemplateStringsArray, ...values: unknown[]) => {
-        assert.equal(values.filter(value => value === "staging").length, 3);
-        assert.ok(!values.includes("production")); return [];
+        assert.equal(values.filter(value => value === "staging").length, 4);
+        assert.ok(!values.includes("production"));
+        assert.match(sql.join("?"), /service NOT IN \('scheduled-job','crawler-blocked-search'\)/);
+        assert.match(sql.join("?"), /service = 'crawler-blocked-search'/);
+        return [
+          { kind: "searches", source: "WEB", status: "SUCCESS", count: 2, latency: 0 },
+          { kind: "crawlerBlocks", source: "CRAWLER", status: "DISABLED", count: 17, latency: 0 },
+        ];
       }, apiProviderLog: { findMany: async (query: { where: { metadata: { equals: string } } }) => { assert.equal(query.where.metadata.equals, "staging"); return []; } } });
     } }) },
     "@/lib/stagingSafety": { getPublicEnvironment: () => "staging", getStagingReleaseReadiness: () => null },
@@ -88,6 +94,9 @@ test("operational service scopes aggregate SQL to its environment and outages re
   runInNewContext(ts.transpileModule(readFileSync("src/services/platformOperationsService.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, Date, require: (name: string) => { assert.ok(name in modules, name); return modules[name]; } });
   const observed = await exports.readPlatformOperations();
   assert.equal(observed.activity.state, "AVAILABLE"); assert.equal(observed.nativeApplicationHealth.state, "UNKNOWN");
+  assert.equal((observed as { crawlerBlocks: number }).crawlerBlocks, 17);
+  assert.equal((observed.activity.data as { searches: { combined: { total: number } } }).searches.combined.total, 2,
+    "blocked crawler attempts must not inflate customer search totals");
   offline = true;
   const unavailable = await exports.readPlatformOperations();
   assert.equal(unavailable.activity.state, "MONITORING_UNAVAILABLE"); assert.equal(unavailable.activity.data, null);
