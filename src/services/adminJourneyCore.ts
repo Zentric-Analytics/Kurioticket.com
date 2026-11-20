@@ -8,6 +8,7 @@ import {
   type AdminJourneyDetail,
   type AdminJourneyEnvironment,
   type AdminJourneyEvent,
+  type AdminJourneyEventType,
   type AdminJourneyList,
   type AdminJourneyProduct,
   type AdminJourneyQuery,
@@ -36,7 +37,8 @@ type JourneyRecord = {
   searchCompleted: Count; resultsViewed: Count; offerSelected: Count; handoffStarted: Count;
 };
 type EventRecord = {
-  id: string; type: AdminJourneyStage; createdAt: Date; product: AdminJourneyProduct | null;
+  id: string; type: AdminJourneyEventType; createdAt: Date; product: AdminJourneyProduct | null;
+  action: string | null;
   provider: string | null; sourcePage: string | null;
   searchHistoryId: string | null; requestId: string | null; searchProduct: AdminJourneyProduct | null;
   origin: string | null; destination: string | null; checkIn: Date | null; checkOut: Date | null;
@@ -74,7 +76,7 @@ function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
   return Prisma.sql`
     WITH eligible_events AS (
       SELECT e."id", e."journeyId", e."type"::text AS "type", e."product"::text AS "product", e."provider", e."createdAt",
-        e."metadata"->>'sourcePage' AS "sourcePage", j."visitorId", v."currentUserId" AS "userId", j."startedAt",
+        e."metadata"->>'sourcePage' AS "sourcePage", e."metadata"->>'action' AS "action", j."visitorId", v."currentUserId" AS "userId", j."startedAt",
         s."id" AS "searchHistoryId", s."requestId", s."type"::text AS "searchProduct", s."origin", s."destination",
         s."checkIn", s."checkOut", s."status"::text AS "searchStatus", s."resultCount", s."latencyMs",
         r."id" AS "redirectLogId", r."provider" AS "redirectProvider", r."route", r."destinationUrl"
@@ -110,7 +112,7 @@ function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
           AND (e."searchHistoryId" IS NULL OR (s."requestId" IS NOT NULL AND r."metadata"->>'requestId' = s."requestId"))
         ))
         AND (
-          (e."type" IN ('SEARCH_COMPLETED', 'RESULTS_VIEWED', 'OFFER_SELECTED') AND s."id" IS NOT NULL AND e."redirectLogId" IS NULL)
+          (e."type" IN ('SEARCH_COMPLETED', 'RESULTS_VIEWED', 'OFFER_SELECTED', 'RESULT_SAVED', 'RESULT_UNSAVED', 'RESULT_SHARED') AND s."id" IS NOT NULL AND e."redirectLogId" IS NULL)
           OR (e."type" = 'PROVIDER_HANDOFF_STARTED' AND r."id" IS NOT NULL)
         )
         ${identity}
@@ -273,6 +275,7 @@ function journeyDto(row: JourneyRecord): AdminJourneyRow {
 function eventDto(row: EventRecord): AdminJourneyEvent {
   return {
     id: row.id, type: row.type, createdAt: row.createdAt.toISOString(), product: row.product,
+    ...(row.type === "RESULT_SHARED" ? { action: row.action === "share_link_copied" || row.action === "share_sheet_completed" ? row.action : null } : {}),
     provider: text(row.provider, 100), sourcePage: safePath(row.sourcePage),
     search: row.searchHistoryId && row.searchProduct && row.searchStatus ? {
       id: row.searchHistoryId, requestId: row.requestId, product: row.searchProduct,
