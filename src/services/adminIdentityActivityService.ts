@@ -52,8 +52,11 @@ function safeActivityMetadata(value: unknown): { product: string | null; detail:
   const product = inferred && ["FLIGHT", "HOTEL", "CAR", "PACKAGE"].includes(inferred) ? inferred : null;
   const ref = [item.resultId, item.savedItemId, item.alertId].find(id => typeof id === "string"
     && id.length <= 128 && /^[a-zA-Z0-9._:-]+$/.test(id)) as string | undefined;
+  const source = item.applicationSource === "WEB" ? "Web"
+    : item.applicationSource === "IOS" ? "iOS"
+      : item.applicationSource === "ANDROID" ? "Android" : null;
   return { product, detail: [product ? product.charAt(0) + product.slice(1).toLowerCase() : null,
-    ref ? "Reference: " + ref : null].filter(Boolean).join(" · ") || "Recorded account activity" };
+    source, ref ? "Reference: " + ref : null].filter(Boolean).join(" · ") || "Recorded account activity" };
 }
 type SafeAnalyticsType = keyof typeof safeAnalyticsLabels;
 
