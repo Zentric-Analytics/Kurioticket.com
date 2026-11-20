@@ -23,7 +23,7 @@ test("Custom history uses inclusive UTC days with exclusive upper bound", () => 
   assert.equal(parsed.ok, true);
   if (!parsed.ok) return;
   const window = deviceHistoryWindow(parsed.query, now);
-  assert.equal(window.gte.toISOString(), "2026-10-01T00:00:00.000Z");
+  assert.equal("gte" in window && window.gte?.toISOString(), "2026-10-01T00:00:00.000Z");
   assert.equal("lt" in window && window.lt?.toISOString(), "2026-10-24T00:00:00.000Z");
   assert.equal(deviceHistoryHref("/admin/users/user/id/devices", parsed.query),
     "/admin/users/user/id/devices?range=custom&page=2&from=2026-10-01&to=2026-10-23");
