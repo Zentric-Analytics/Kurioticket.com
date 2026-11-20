@@ -1,6 +1,7 @@
 import { applicationMetadata } from "@/lib/application-source";
 import { after } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
+import { blockVerifiedCrawlerSearch } from "@/lib/searchCrawlerGate";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
@@ -38,6 +39,8 @@ function canonicalSearch(value: unknown): LocationBoundCarSearchParams | null {
 }
 
 export async function POST(request: Request) {
+  const blocked = await blockVerifiedCrawlerSearch(request, "CAR");
+  if (blocked) return blocked;
   const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("CAR_SEARCH_ENABLED"))) return Response.json({ error: "Car search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503, headers: noStore });
   let body: unknown;
