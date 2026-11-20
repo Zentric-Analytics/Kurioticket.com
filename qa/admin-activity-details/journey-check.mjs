@@ -79,7 +79,9 @@ try {
   historyUrl = new URL(page.url());
   assert.equal(historyUrl.searchParams.get("range"),"all");
   assert.equal(historyUrl.searchParams.get("product"),"FLIGHT");
-  await page.getByRole("link",{name:"Back to Activity"}).last().click();
+  // The normal Journey History page returns through its sole Activity breadcrumb.
+  await expect(page.getByRole("link",{name:"Back to Activity"})).toHaveCount(0);
+  await page.getByRole("navigation",{name:"Breadcrumb"}).getByRole("link",{name:"Activity",exact:true}).click();
   await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/activity\?/);
   const parentReturn = new URL(page.url());
   assert.equal(parentReturn.searchParams.get("product"),"FLIGHT");
