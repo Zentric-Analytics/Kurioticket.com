@@ -82,6 +82,7 @@ function matchingSavedFlight(items: SavedFlightItem[] | null, flightId: string) 
 export function useSavedFlightResult(
   flight: PublicFlightResult,
   detailsHref: string | null,
+  searchRequestId?: string | null,
 ) {
   const { data: session, status } = useSession();
   const owner = session?.user?.email ?? "authenticated-user";
@@ -174,7 +175,7 @@ export function useSavedFlightResult(
       const next = toggleSavedItemId(readSavedItemIds(), flight.id);
       writeSavedItemIds(next);
       setLocalSaved(next.includes(flight.id));
-      recordCustomerInteraction({ action: next.includes(flight.id) ? "local_saved" : "local_unsaved", product: "FLIGHT", resultId: flight.id });
+      recordCustomerInteraction({ action: next.includes(flight.id) ? "local_saved" : "local_unsaved", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId });
       window.dispatchEvent(new Event(LOCAL_SAVED_FLIGHTS_CHANGED_EVENT));
     } catch (error) {
       setSavedFlightError(error instanceof SavedFlightTimeError ? error.message : "Unable to save flight. Please try again.");
