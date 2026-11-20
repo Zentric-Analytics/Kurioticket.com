@@ -62,7 +62,11 @@ export async function POST(request: Request) {
           where: {
             userId: identity.userId, type: "SAVE", name,
             createdAt: { gte: new Date(Date.now() - 60_000) },
-            metadata: { path: ["resultId"], equals: parsed.data.resultId },
+            AND: [
+              { metadata: { path: ["resultId"], equals: parsed.data.resultId } },
+              { metadata: { path: ["product"], equals: parsed.data.product } },
+              { metadata: { path: ["environment"], equals: getPublicEnvironment() } },
+            ],
           },
           select: { id: true, metadata: true },
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
