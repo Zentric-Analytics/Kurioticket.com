@@ -2,7 +2,9 @@ import { z } from "zod";
 import { resolveSavedFlightTime } from "@/shared/flights/savedFlightTime";
 import { createHash } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
-import { trackAnalyticsEvent } from "@/services/analyticsService";
+import { withEnvironmentMetadata } from "@/lib/stagingSafety";
+import { confirmedSavedActivityMetadata } from "@/lib/savedActivityMetadata";
+import type { ApplicationAttribution } from "@/lib/application-source";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 
 export const savedItemTypes = ["flight", "hotel", "car", "search"] as const;
@@ -69,9 +71,34 @@ function stableSavedValue(value: unknown): string {
 export function savedRetryKey(userId: string, input: CreateSavedItemInput) {
   return createHash("sha256").update(stableSavedValue([userId, input])).digest("hex");
 }
-export function createSavedItemWriter(database: () => Pick<PrismaClient, "$transaction">) {
-  return async (userId: string, input: CreateSavedItemInput) => database().$transaction(async tx => {
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('saved-item-retry'), hashtext(${savedRetryKey(userId, input)}))`;
+function carSavedSignature(input: Extract<CreateSavedItemInput, { type: "car" }>) {
+  return createHash("sha256").update(JSON.stringify([
+    input.resultId, input.provider.toLowerCase(), input.modelName.toLowerCase(),
+    input.pickupLocation.toLowerCase(), input.dropoffLocation.toLowerCase(),
+    input.pickupDate, input.pickupTime, input.dropoffDate, input.dropoffTime, input.driverAge,
+  ])).digest("hex");
+}
+function savedActivityProduct(input: CreateSavedItemInput) {
+  return (input.type === "search" ? input.searchType : input.type).toUpperCase() as "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE";
+}
+function savedActivityEventMetadata(input: CreateSavedItemInput, itemId: string, attribution: ApplicationAttribution) {
+  return withEnvironmentMetadata(confirmedSavedActivityMetadata({
+    product: savedActivityProduct(input),
+    savedType: input.type,
+    savedItemId: itemId,
+    payload: input.type !== "search" ? input.payload : undefined,
+    resultId: input.type === "car" ? input.resultId : undefined,
+  }, attribution)) as Prisma.InputJsonValue;
+}
+/** Transactional save + audit. The public writer accepts the same inputs as the
+ * existing sync contract; an explicit opt-in creates the account event in the
+ * *same transaction* only for a newly created saved item.
+ */
+export function createSavedItemWriter(database: () => Pick<PrismaClient, "$transaction">, audit = false) {
+  return async (userId: string, input: CreateSavedItemInput, attribution: ApplicationAttribution = {}) => database().$transaction(async tx => {
+    const retryIdentity = input.type === "car"
+      ? "car:" + userId + ":" + carSavedSignature(input) : savedRetryKey(userId, input);
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('saved-item-retry'), hashtext(${retryIdentity}))`;
     if (input.type === "flight") {
       const existing = await tx.savedFlight.findFirst({ where: { userId, provider: input.provider, airlineName: input.airlineName, flightNumber: input.flightNumber ?? null, originAirport: input.originAirport, destinationAirport: input.destinationAirport, departureTime: new Date(input.departureTime), arrivalTime: new Date(input.arrivalTime), payload: { equals: input.payload as Prisma.InputJsonValue } } });
       if (existing) return existing;
@@ -81,54 +108,64 @@ export function createSavedItemWriter(database: () => Pick<PrismaClient, "$trans
     } else if (input.type === "search") {
       const existing = await tx.savedSearch.findFirst({ where: { userId, type: input.searchType.toUpperCase() as "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE", origin: input.origin ?? null, destination: input.destination ?? null, checkIn: input.checkIn ? new Date(input.checkIn) : null, checkOut: input.checkOut ? new Date(input.checkOut) : null, query: { equals: input.query as Prisma.InputJsonValue } } });
       if (existing) return existing;
+    } else {
+      const existing = await tx.savedCar.findUnique({ where: { userId_signature: { userId, signature: carSavedSignature(input) } } });
+      if (existing) return existing;
     }
-    return createSavedItemInTransaction(tx, userId, input);
+    const item = await createSavedItemInTransaction(tx, userId, input);
+    if (audit) await tx.analyticsEvent.create({ data: {
+      userId, type: "SAVE", name: "saved_item_confirmed",
+      metadata: savedActivityEventMetadata(input, item.id, attribution),
+    } });
+    return item;
   });
 }
-const writeUserSavedItem = createSavedItemWriter(getPrisma);
-/** The API confirmed the save operation; the analytics write is independent of
- * the saved result, and never reassigns it to a guest or another user.
- */
-export async function createUserSavedItem(userId: string, input: CreateSavedItemInput) {
-  const item = await writeUserSavedItem(userId, input);
-  await trackAnalyticsEvent({
-    userId, type: "SAVE", name: "saved_item_confirmed",
-    metadata: {
-      product: input.type === "search" ? input.searchType.toUpperCase() : input.type.toUpperCase(),
-      savedType: input.type,
-      savedItemId: item.id,
-      ...((input.type === "flight" && typeof input.payload.flightResultId === "string"
-          ? { resultId: input.payload.flightResultId }
-          : input.type === "hotel" && typeof input.payload.hotelResultId === "string"
-            ? { resultId: input.payload.hotelResultId }
-            : input.type === "car" ? { resultId: input.resultId } : {})),
-      outcome: "confirmed",
-    },
-  });
-  return item;
+const writeUserSavedItem = createSavedItemWriter(getPrisma, true);
+export async function createUserSavedItem(
+  userId: string, input: CreateSavedItemInput, attribution: ApplicationAttribution = {},
+) {
+  return writeUserSavedItem(userId, input, attribution);
 }
 async function createSavedItemInTransaction(tx: Prisma.TransactionClient, userId: string, input: CreateSavedItemInput) {
   try {
     if (input.type === "flight") return tx.savedFlight.create({ data: { userId, provider: input.provider, airlineName: input.airlineName, flightNumber: input.flightNumber, originAirport: input.originAirport, destinationAirport: input.destinationAirport, departureTime: new Date(input.departureTime), arrivalTime: new Date(input.arrivalTime), price: input.price, currency: input.currency, payload: input.payload as never } });
     if (input.type === "hotel") return tx.savedHotel.create({ data: { userId, provider: input.provider, hotelName: input.hotelName, destination: input.destination, checkIn: new Date(input.checkIn), checkOut: new Date(input.checkOut), totalPrice: input.totalPrice, currency: input.currency, payload: input.payload as never } });
     if (input.type === "car") {
-      const signature = createHash("sha256").update(JSON.stringify([input.resultId, input.provider.toLowerCase(), input.modelName.toLowerCase(), input.pickupLocation.toLowerCase(), input.dropoffLocation.toLowerCase(), input.pickupDate, input.pickupTime, input.dropoffDate, input.dropoffTime, input.driverAge])).digest("hex");
+      const signature = carSavedSignature(input);
       return tx.savedCar.upsert({ where: { userId_signature: { userId, signature } }, update: {}, create: { userId, signature, provider: input.provider, modelName: input.modelName, categoryLabel: input.categoryLabel, pickupLocation: input.pickupLocation, dropoffLocation: input.dropoffLocation, pickupDate: input.pickupDate, pickupTime: input.pickupTime, dropoffDate: input.dropoffDate, dropoffTime: input.dropoffTime, driverAge: input.driverAge, totalPrice: input.totalPrice, currency: input.currency, payload: input.payload as never } });
     }
     return tx.savedSearch.create({ data: { userId, type: input.searchType.toUpperCase() as "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE", label: input.label, origin: input.origin, destination: input.destination, checkIn: input.checkIn ? new Date(input.checkIn) : null, checkOut: input.checkOut ? new Date(input.checkOut) : null, query: input.query as never } });
   } catch (error) { if ((error as { code?: string }).code === "P2002") throw new DuplicateSavedItemError("Saved item already exists."); throw error; }
 }
-export async function deleteUserSavedItem(userId: string, input: DeleteSavedItemInput) {
-  const result = input.type === "flight"
-    ? await db().savedFlight.deleteMany({ where: { id: input.id, userId } })
-    : input.type === "hotel"
-      ? await db().savedHotel.deleteMany({ where: { id: input.id, userId } })
-      : input.type === "car"
-        ? await db().savedCar.deleteMany({ where: { id: input.id, userId } })
-        : await db().savedSearch.deleteMany({ where: { id: input.id, userId } });
-  if (!result.count) throw new SavedItemNotFoundError("Saved item was not found.");
-  await trackAnalyticsEvent({
-    userId, type: "SAVE", name: "saved_item_removed",
-    metadata: { savedType: input.type, savedItemId: input.id, outcome: "confirmed" },
-  });
+export function createSavedItemRemover(database: () => Pick<PrismaClient, "$transaction">) {
+  return async (userId: string, input: DeleteSavedItemInput, attribution: ApplicationAttribution = {}) =>
+    database().$transaction(async tx => {
+      // Lock the item before the mutation so the deleted record supplies
+      // trustworthy product and result references. No client-supplied product
+      // override, no cross-account delete, and no audit for missing items.
+      const model = input.type === "flight" ? tx.savedFlight
+        : input.type === "hotel" ? tx.savedHotel
+          : input.type === "car" ? tx.savedCar : tx.savedSearch;
+      const existing = await model.findFirst({ where: { id: input.id, userId } });
+      if (!existing) throw new SavedItemNotFoundError("Saved item was not found.");
+      const deleted = await model.deleteMany({ where: { id: input.id, userId } });
+      if (deleted.count !== 1) throw new SavedItemNotFoundError("Saved item was not found.");
+      const product = input.type === "search" ? (existing as { type: string }).type as "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE"
+        : input.type.toUpperCase() as "FLIGHT" | "HOTEL" | "CAR";
+      await tx.analyticsEvent.create({ data: {
+        userId, type: "SAVE", name: "saved_item_removed",
+        metadata: withEnvironmentMetadata(confirmedSavedActivityMetadata({
+          savedType: input.type,
+          savedItemId: input.id,
+          product,
+          payload: input.type === "search" ? undefined : (existing as { payload: unknown }).payload,
+        }, attribution)) as Prisma.InputJsonValue,
+      } });
+    });
+}
+const removeUserSavedItem = createSavedItemRemover(getPrisma);
+export async function deleteUserSavedItem(
+  userId: string, input: DeleteSavedItemInput, attribution: ApplicationAttribution = {},
+) {
+  await removeUserSavedItem(userId, input, attribution);
 }
