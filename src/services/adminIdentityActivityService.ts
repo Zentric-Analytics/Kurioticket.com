@@ -29,7 +29,7 @@ const safeAnalyticsLabels = {
   PROVIDER_FAILURE: "Provider issue",
 } as const;
 const safeInteractionNames: Record<string, string> = {
-  saved_item_added: "Saved item",
+  saved_item_confirmed: "Save confirmed",
   saved_item_removed: "Unsaved item",
   local_saved: "Saved locally",
   local_unsaved: "Removed local save",
