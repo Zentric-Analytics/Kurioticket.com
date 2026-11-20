@@ -252,6 +252,7 @@ export function CarResultCard({
         return;
       }
       await navigator.clipboard.writeText(url);
+      recordCustomerInteraction({ action: "share_link_copied", product: "CAR", resultId: car.id });
       setShareConfirmation(`${car.modelName} link copied`);
       window.setTimeout(() => setShareConfirmation(""), 2200);
     } catch (error) {
