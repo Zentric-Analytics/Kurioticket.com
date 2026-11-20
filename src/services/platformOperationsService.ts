@@ -40,6 +40,7 @@ export async function readPlatformOperations(hours = 24, period: "today" | "roll
     : new Date(to.getTime() - hours * 3_600_000);
   const db = getOptionalPrisma();
   let activity: ReturnType<typeof partitionOperationalGroups> | null = null;
+  let crawlerBlocks: number | null = null;
   let jobs: ScheduledJobRun[] | null = null;
   if (db) try {
     const [rows, runs] = await db.$transaction(async tx => Promise.all([
@@ -51,11 +52,20 @@ export async function readPlatformOperations(hours = 24, period: "today" | "roll
         FROM "RedirectLog" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND metadata->>'environment' = ${environment} GROUP BY 1,2,3
         UNION ALL
         SELECT 'providerCalls', metadata->>'applicationSource', status::text, COUNT(*), COALESCE(SUM(CASE WHEN status::text <> 'DISABLED' THEN "latencyMs" ELSE 0 END),0), COUNT(CASE WHEN status::text <> 'DISABLED' THEN "latencyMs" END)
-        FROM "ApiProviderLog" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND metadata->>'environment' = ${environment} AND service <> 'scheduled-job' GROUP BY 1,2,3
+        FROM "ApiProviderLog" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND metadata->>'environment' = ${environment} AND service NOT IN ('scheduled-job','crawler-blocked-search') GROUP BY 1,2,3
+        UNION ALL
+        SELECT 'crawlerBlocks', 'CRAWLER', 'DISABLED', COUNT(*), 0, 0
+        FROM "ApiProviderLog" WHERE "createdAt" >= ${from} AND "createdAt" < ${to}
+          AND metadata->>'environment' = ${environment}
+          AND service = 'crawler-blocked-search' AND metadata->>'applicationSource' = 'CRAWLER'
       `,
       tx.apiProviderLog.findMany({ where: { service: "scheduled-job", metadata: { path: ["environment"], equals: environment }, createdAt: { gte: from, lt: to } }, select: { provider: true, status: true, createdAt: true, metadata: true, latencyMs: true }, orderBy: { createdAt: "desc" }, take: 100 }),
     ]), { isolationLevel: "RepeatableRead" });
     activity = partitionOperationalGroups(rows);
+    // Verified crawler API blocks are not customer searches or provider calls.
+    // Keep them observable as a separate count with the same window.
+    const count = rows.filter(row => row.kind === "crawlerBlocks").reduce((sum, row) => sum + Number(row.count), 0);
+    crawlerBlocks = Number.isSafeInteger(count) && count >= 0 ? count : null;
     jobs = runs.map(run => projectScheduledJobRun(run, environment, to));
   } catch { /* Unavailable never becomes an empty/healthy aggregate. */ }
   const [system, providers, email, cms, alerts] = await Promise.all([
@@ -65,6 +75,7 @@ export async function readPlatformOperations(hours = 24, period: "today" | "roll
   return {
     environment, window: { from: from.toISOString(), to: to.toISOString() },
     activity: { state: activity ? "AVAILABLE" : "MONITORING_UNAVAILABLE", data: activity },
+    crawlerBlocks,
     database: { state: !system ? "MONITORING_UNAVAILABLE" : system.databaseConnected ? "HEALTHY" : system.databaseConfigured ? "FAILING" : "UNKNOWN" },
     providerHealth: providers,
     email: email?.dataAvailable ? { state: !email.last24Hours ? "UNKNOWN" : email.failures || email.delayed ? "DEGRADED" : "HEALTHY", windowHours: 24, deliveries: email.last24Hours, failures: email.failures, delayed: email.delayed } : { state: "MONITORING_UNAVAILABLE" },
