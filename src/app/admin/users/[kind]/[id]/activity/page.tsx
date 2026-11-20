@@ -7,6 +7,8 @@ import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { AdminActivityOverview } from "@/components/admin/AdminActivityOverview";
+import { AdminIdentityDeviceAccess } from "@/components/admin/AdminIdentityDeviceAccess";
+import { loadAdminDeviceSessions } from "@/services/adminDeviceSessionsService";
 import { journeyHistoryHrefFromActivity } from "@/lib/adminActivityOverview";
 import { normalizeUserActivityQuery, safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
 import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
@@ -134,6 +136,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       action={<Link className={buttonClass} href={activityHref(basePath, queryParams, { cursor: null, order: null })}>Return to newest activity</Link>} />
   </div>;
   const data = result.data;
+  const deviceSessions = kind === "user" ? await loadAdminDeviceSessions(id) : null;
   const environment = data.environment;
   const operational = data.source === "operational";
   const order = filters.order === "oldest" ? "oldest" : "newest";
@@ -240,12 +243,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       </section>
       </div>
 
-      {kind === "user" ? <div className="flex min-w-0 justify-end">
-        <Link href={"/admin/users/user/" + encodeURIComponent(id) + "/devices?range=today&activityReturn=" + encodeURIComponent(activityReturn)}
-          className="focus-ring inline-flex min-h-9 items-center rounded-md border border-[#E2E8F0] px-3 text-[12px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]">
-          View account device &amp; access history
-        </Link>
-      </div> : null}
+      {kind === "user" ? <AdminIdentityDeviceAccess kind={kind} result={deviceSessions}
+        historyHref={"/admin/users/user/" + encodeURIComponent(id) + "/devices?range=all&activityReturn=" + encodeURIComponent(activityReturn)} /> : null}
 
       <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
         <section aria-label="Activity filters" className="min-w-0">
