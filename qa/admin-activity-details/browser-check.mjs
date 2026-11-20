@@ -257,7 +257,10 @@ try {
     const fullDeviceHistory = page.getByRole("link", {name:/View full device & access history/});
     await expect(fullDeviceHistory).toBeVisible();
     assert.match(await fullDeviceHistory.getAttribute("href"), /\\/admin\\/users\\/user\\/qa-registered-0001\\/devices\\?range=all/);
-    await expect(page.getByTestId("device-today-list")).toHaveCount(0);
+    await expect(page.getByTestId("device-today-list")).toBeVisible();
+    await expect(page.getByTestId("device-session-row")).toHaveCount(3);
+    await expect(page.getByText("Today (UTC)")).toBeVisible();
+    await expect(page.getByText("qa-device-yesterday")).toHaveCount(0);
 
     assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography);
     await page.screenshot({caret:"initial",path: output + "/after-desktop-zoom-equivalent-" + Math.round(zoom*100) + ".png",fullPage:true});
