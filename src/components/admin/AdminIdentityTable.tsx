@@ -6,6 +6,7 @@ import type { AdminIdentitySort as IdentitySort } from "@/lib/adminIdentityDirec
 export type IdentityRow =
   | {
       kind: "user";
+      lastSeenAt?: Date | null;
       record: {
         id: string;
         name: string | null;
@@ -17,6 +18,7 @@ export type IdentityRow =
     }
   | {
       kind: "guest";
+      lastSeenAt?: Date | null;
       record: { id: string; firstSeenAt: Date; lastSeenAt: Date };
     };
 
@@ -74,16 +76,17 @@ export function AdminIdentityTable({
         aria-labelledby="identity-directory-title"
         tabIndex={0}
       >
-        <table className="w-full min-w-[960px] table-fixed text-left text-[13px]">
+        <table className="w-full min-w-[1080px] table-fixed text-left text-[13px]">
           <caption className="sr-only">
             Registered accounts and consent-eligible guest identities, sorted by {sort.replaceAll("_", " ")}
           </caption>
           <colgroup>
-            <col className="w-[38%]" />
+            <col className="w-[30%]" />
+            <col className="w-[15%]" />
+            <col className="w-[10%]" />
+            <col className="w-[17%]" />
             <col className="w-[16%]" />
             <col className="w-[12%]" />
-            <col className="w-[19%]" />
-            <col className="w-[15%]" />
           </colgroup>
           <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
             <tr>
@@ -92,6 +95,7 @@ export function AdminIdentityTable({
                 "Type",
                 "Status",
                 "Joined / First Seen",
+                "Last Seen",
                 "Activity",
               ].map((heading) => (
                 <th
@@ -177,6 +181,11 @@ export function AdminIdentityTable({
                       }
                     />
                   </td>
+                  <td data-label="Last Seen" className="px-3 py-1.5">
+                    {row.lastSeenAt ?? (row.kind === "guest" ? row.record.lastSeenAt : null)
+                      ? <IdentityDate at={(row.lastSeenAt ?? (row.kind === "guest" ? row.record.lastSeenAt : null))!} />
+                      : <span aria-label="No recorded last seen" className="text-[13px] text-[#64748B]">—</span>}
+                  </td>
                   <td data-label="Activity" className="px-3 py-1.5">
                     <Link
                       className={activityClass}
@@ -194,7 +203,7 @@ export function AdminIdentityTable({
             {!rows.length ? (
               <tr>
                 <td data-empty-row data-label="Identity"
-                  colSpan={5}
+                  colSpan={6}
                   className="px-4 py-12 text-center text-[13px] text-[#475569]"
                 >
                   <p className="font-medium text-foreground">No users match your filters</p>
