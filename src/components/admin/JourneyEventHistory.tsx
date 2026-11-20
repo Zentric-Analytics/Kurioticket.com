@@ -35,6 +35,7 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
                 <span className="block text-[11px] font-semibold tabular-nums text-[#64748B]">Step {index + 1}</span>
                 <span className="mt-1 inline-flex rounded-md border border-[#D8E1EC] bg-white px-2 py-1 text-[11px] font-medium text-[#475569]">{event.type === "RESULT_SHARED"
                   ? event.action === "share_link_copied" ? "Result link copied" : event.action === "share_sheet_completed" ? "Share sheet completed" : "Result shared"
+                   : event.type === "PRICE_ALERT_CREATED" ? "Price alert created"
                   : event.type === "RESULT_SAVED"
                     ? event.action === "local_saved" ? "Saved locally" : event.action === "saved_item_confirmed" ? "Saved to account" : "Result saved"
                     : event.type === "RESULT_UNSAVED"
