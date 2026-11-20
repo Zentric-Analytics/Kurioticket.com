@@ -17,6 +17,7 @@ export type PlatformAccessRow = {
   deviceLabel: string | null;
   os: string | null;
   browser: string | null;
+  appVersion: string | null;
   locationLabel: string | null;
   lastSeenAt: Date;
   createdAt: Date;
@@ -26,6 +27,7 @@ export type PlatformAccessRow = {
 export type PlatformAccessResult = {
   status: "ok";
   total: number;
+  observedAt: Date;
   counts: Record<Exclude<PlatformAccessFilter, "all">, number>;
   sessions: PlatformAccessRow[];
 } | { status: "unavailable" };
@@ -35,7 +37,9 @@ export async function loadPlatformAccess(query: PlatformAccessQuery): Promise<Pl
   try {
     const db = getOptionalPrisma();
     if (!db) return { status: "unavailable" };
-    const dateFilter = deviceHistoryWindow({ range: query.range, page: 1 });
+    // One UTC observation instant must govern the totals and all record queries.
+    const observedAt = new Date();
+    const dateFilter = deviceHistoryWindow({ range: query.range, page: 1 }, observedAt);
     const base = { lastSeenAt: dateFilter };
     const selection = query.platform === "web" ? { client: "WEB" as const }
       : query.platform === "ios" ? { client: "MOBILE" as const, platform: "ios" }
@@ -54,14 +58,20 @@ export async function loadPlatformAccess(query: PlatformAccessQuery): Promise<Pl
         take: PLATFORM_ACCESS_PAGE_SIZE,
         select: {
           id: true, userId: true, client: true, platform: true, deviceLabel: true,
-          os: true, browser: true, locationLabel: true, lastSeenAt: true, createdAt: true, revokedAt: true,
+          os: true, browser: true, appVersion: true, locationLabel: true, lastSeenAt: true, createdAt: true, revokedAt: true,
           user: { select: { id: true, name: true, email: true } },
         },
       }),
     ]);
     const counts = { web: 0, ios: 0, android: 0, other: 0 };
     for (const group of groups) counts[category(group.client, group.platform)] += group._count._all;
-    return { status: "ok", total, counts, sessions };
+    // Database aggregates are the authority, but never render rounded or
+    // irreconcilable session counts as genuine monitoring observations.
+    const breakdownTotal = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    if (!Number.isSafeInteger(total) || total < 0
+      || Object.values(counts).some(count => !Number.isSafeInteger(count) || count < 0)
+      || (query.platform === "all" && total !== breakdownTotal)) return { status: "unavailable" };
+    return { status: "ok", observedAt, total, counts, sessions };
   } catch {
     return { status: "unavailable" };
   }
