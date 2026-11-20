@@ -160,13 +160,14 @@ test("untrusted, browser, invalid-bearer and unverifiable native requests remain
     assert.equal((await resolveRequestActivityIdentity(req, dependencies)).applicationSource, "UNKNOWN");
     const prepared = prepareOperationalSearchSession(req, Date.now(), getPublicEnvironment());
     assert.ok(prepared);
-    for (const headers of [
+    const adversarialHeaders: Array<Record<string, string>> = [
       { "x-mobile-platform": "android", origin: "https://kurioticket.com" },
       { "x-mobile-platform": "android", "sec-fetch-mode": "cors" },
       { "x-mobile-platform": "ios", "x-kt-search-session": prepared.credential },
       { "x-mobile-platform": "android", "x-kt-search-session": "invalid" },
       { "x-mobile-platform": "android", "x-kt-search-session": prepared.credential, authorization: "Bearer revoked" },
-    ]) {
+    ];
+    for (const headers of adversarialHeaders) {
       const request = new Request(url, { method: "POST", headers });
       assert.equal((await resolveRequestActivityIdentity(request, dependencies)).applicationSource, "UNKNOWN");
     }
