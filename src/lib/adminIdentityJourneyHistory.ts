@@ -15,9 +15,9 @@ export function identityJourneyHistoryQuery(
   environment: AdminJourneyEnvironment,
 ): { ok: true; range: JourneyDateRange; input: Record<string, unknown> } | { ok: false } {
   if (Object.values(raw).some(Array.isArray)) return { ok: false };
-  const range = raw.range === undefined && !raw.from && !raw.to && !raw.cursor
-    ? "all"
-    : selectedJourneyRange(raw);
+  // A direct journey-history visit uses the same Today default as Activity.
+  // All time remains an explicit selectable range with no data loss.
+  const range = selectedJourneyRange(raw);
   if (raw.range !== undefined && !["today", "24h", "7d", "30d", "90d", "all", "custom"].includes(raw.range as string)) {
     return { ok: false };
   }
