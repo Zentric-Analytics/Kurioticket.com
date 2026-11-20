@@ -38,6 +38,7 @@ export type PlatformAccessRow = {
   browser: string | null;
   locationLabel: string | null;
   lastSeenAt: Date;
+  createdAt: Date;
   revokedAt: Date | null;
   user: { id: string; name: string | null; email: string | null };
 };
@@ -72,7 +73,7 @@ export async function loadPlatformAccess(query: PlatformAccessQuery): Promise<Pl
         take: PLATFORM_ACCESS_PAGE_SIZE,
         select: {
           id: true, userId: true, client: true, platform: true, deviceLabel: true,
-          os: true, browser: true, locationLabel: true, lastSeenAt: true, revokedAt: true,
+          os: true, browser: true, locationLabel: true, lastSeenAt: true, createdAt: true, revokedAt: true,
           user: { select: { id: true, name: true, email: true } },
         },
       }),
