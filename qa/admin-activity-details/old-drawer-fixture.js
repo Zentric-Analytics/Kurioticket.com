@@ -62,4 +62,5 @@ const db = {
 export async function withOptionalDb(work, fallback) {
   try { return await work(db); } catch { return fallback; }
 }
-\nexport function getOptionalPrisma(){ return db; }\n
+
+export function getOptionalPrisma(){ return db; }
