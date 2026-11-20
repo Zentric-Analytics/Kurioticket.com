@@ -81,7 +81,9 @@ test("candidate selection does not exclude valid results-viewed and handoff stag
   const where = eligibleJourneyEventCandidateWhere("account-2", [
     "RESULTS_VIEWED", "PROVIDER_HANDOFF_STARTED",
   ], window);
-  assert.deepEqual(where.AND?.[1], {
+  const and = where.AND;
+  assert.ok(Array.isArray(and));
+  assert.deepEqual(and[1], {
     journeys: { some: { events: { some: {
       type: { in: ["RESULTS_VIEWED", "PROVIDER_HANDOFF_STARTED"] },
       createdAt: window,
