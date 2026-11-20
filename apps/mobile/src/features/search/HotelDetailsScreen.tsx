@@ -685,6 +685,7 @@ function HotelDetail({
             <View style={s.hotelPriceAlert}>
               <HotelPriceAlert
                 plan={hotelAlertPlan}
+                journeyRequestId={journeyRequestId}
                 hotel={result}
                 hotelResults={[result]}
                 available={availability.priceAlerts}
