@@ -132,6 +132,7 @@ export function useSavedFlightResult(
           });
           if (response.ok) {
             publishSavedFlights((savedFlightsCache ?? []).filter((item) => item.id !== previous.id));
+            recordCustomerInteraction({ action: "saved_item_removed", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId });
           } else {
             setSavedItem(previous);
           }
@@ -163,7 +164,10 @@ export function useSavedFlightResult(
 
         if (response.ok) {
           const data = await response.json() as { item?: SavedFlightItem };
-          if (data.item) publishSavedFlights([...(savedFlightsCache ?? []), data.item]);
+          if (data.item) {
+            publishSavedFlights([...(savedFlightsCache ?? []), data.item]);
+            recordCustomerInteraction({ action: "saved_item_confirmed", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId });
+          }
         } else if (response.status === 409) {
           clearSavedFlightsCache(owner);
           const refreshed = await loadSavedFlights(owner);
