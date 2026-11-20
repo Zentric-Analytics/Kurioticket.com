@@ -133,7 +133,11 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
   const filterContext = { ...raw, range: requested.range };
   const preserved = identityJourneyHistoryHref(kind, id, filterContext);
   const returnToken = encodeActivityJourneyReturn(backHref);
-  const returnPath = preserved + (returnToken ? (preserved.includes("?") ? "&" : "?") + "activityReturn=" + encodeURIComponent(returnToken) : "");
+  const returnQuery = new URL(preserved, "https://admin.kurioticket.invalid");
+  if (returnToken && !returnQuery.searchParams.has("activityReturn")) {
+    returnQuery.searchParams.set("activityReturn", returnToken);
+  }
+  const returnPath = returnQuery.pathname + returnQuery.search;
 
   const nextOperationalHref = operational && identity.data.nextCursor
     ? (() => {
