@@ -38,6 +38,7 @@ export function AdminIdentityDeviceAccess({ kind, result }: {
   const sessions = result?.status === "ok" ? result.sessions : [];
   const available = kind === "user" && result?.status === "ok";
   const latest = sessions[0];
+  const lastLocated = sessions.find(session => session.locationLabel);
   const platforms = Array.from(new Set(sessions.map(platformLabel)));
   return <section data-testid="identity-device-access" aria-label="Platforms and devices"
     className="min-w-0 space-y-4 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
@@ -45,7 +46,7 @@ export function AdminIdentityDeviceAccess({ kind, result }: {
       <div>
         <h2 className="text-[15px] font-semibold text-[#0F172A]">Platforms &amp; Devices</h2>
         <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-          Observed account sessions. Access location is an approximate network estimate when available.
+          Observed account sessions. Device labels may be generic; locations are approximate network estimates.
         </p>
       </div>
       <span className="inline-flex items-center gap-1 text-[11px] text-[#64748B]">
@@ -56,8 +57,8 @@ export function AdminIdentityDeviceAccess({ kind, result }: {
       <Detail label="Platforms used" Icon={Globe2}>
         {platforms.length ? platforms.join(" · ") : "Unavailable"}
       </Detail>
-      <Detail label="Last known location" Icon={MapPin}>
-        {value(latest?.locationLabel)}
+      <Detail label="Last recorded location" Icon={MapPin}>
+        {value(lastLocated?.locationLabel)}
       </Detail>
       <Detail label="Most recent device" Icon={Laptop}>
         {value(latest?.deviceLabel)}
