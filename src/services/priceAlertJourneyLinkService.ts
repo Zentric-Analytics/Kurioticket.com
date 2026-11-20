@@ -54,7 +54,7 @@ export async function linkCreatedPriceAlertToJourney(input: {
             { metadata: { path: ["product"], equals: alert.type } },
             { metadata: { path: ["environment"], equals: getPublicEnvironment() } },
           ] },
-        select: { id: true, metadata: true },
+        select: { id: true, metadata: true, createdAt: true },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       });
       if (!audit) return;
@@ -66,6 +66,7 @@ export async function linkCreatedPriceAlertToJourney(input: {
         ? audit.metadata as Record<string, unknown> : {};
       await tx.journeyEvent.create({ data: {
         eventKey, journeyId: journeys[0].journeyId, searchHistoryId: search.id,
+        createdAt: audit.createdAt,
         type: "PRICE_ALERT_CREATED", product: alert.type,
         metadata: { environment: getPublicEnvironment(), alertId: alert.id, action: "price_alert_created",
           requestId, auditEventId: audit.id } as Prisma.InputJsonValue,
