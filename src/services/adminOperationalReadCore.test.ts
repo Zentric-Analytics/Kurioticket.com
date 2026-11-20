@@ -246,10 +246,10 @@ test("exact failed searches distinguish provider failure from internal processin
 
 
 test("flight, hotel, and car provider logs carry exact request correlation for future diagnostics", () => {
-  const flightRoute = readFileSync("src/app/api/flights/search/route.ts", "utf8");
+  const flightRoute = readFileSync("src/app/api/flights/search/handler.ts", "utf8");
   const hotelRoute = readFileSync("src/app/api/hotels/search/route.ts", "utf8");
   const carRoute = readFileSync("src/app/api/cars/search/route.ts", "utf8");
-  assert.match(flightRoute, /service: "flight-search"[\s\S]*?metadata: \{ \.\.\.application, requestId \}/);
+  assert.match(flightRoute, /service: "flight-search"[\s\S]*?metadata: \{ \.\.\.application, requestId,/);
   assert.match(hotelRoute, /service: "hotel-search"[\s\S]*?metadata: \{ \.\.\.application, requestId \}/);
   assert.match(carRoute, /service: "car-search"[\s\S]*?metadata: \{ \.\.\.application, requestId \}/);
 });
