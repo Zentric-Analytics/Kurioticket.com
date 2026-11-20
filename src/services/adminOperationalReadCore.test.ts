@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { createAdminOperationalReadService, __adminOperationalReadCoreTest } from "./adminOperationalReadCore";
 import { handoffEvidenceDetailSql, handoffEvidenceListSql, handoffOperationalSessionId } from "./adminHandoffEvidence";
+import type { AdminHandoffScope } from "./adminOperationalReadContract";
 
 test("authorization happens before query validation or storage", async () => {
   let databaseTouched = false;
@@ -571,11 +572,11 @@ test("operational guest evidence is a valid server-issued session ID, not arbitr
 });
 
 test("handoff SQL uses identical source, identity and verified search evidence before keyset pagination", () => {
-  const scope = {
+  const scope: AdminHandoffScope = {
     environment: "staging", identity: "guest", userId: null, visitorId: null,
     product: "FLIGHT", provider: "KAYAK sandbox", correlation: "exact",
     sourcePage: "/flight_details", from: "2026-11-16T00:00:00.000Z", to: "2026-11-18T00:00:00.000Z",
-  } as never;
+  };
   const page = handoffEvidenceListSql(scope, { at: "2026-11-17T00:00:00.000Z", id: "redirect_00001" }, 50);
   assert.match(page.sql, /FROM "RedirectLog" r/);
   assert.match(page.sql, /"SearchHistory" s/);
@@ -595,17 +596,17 @@ test("handoff SQL uses identical source, identity and verified search evidence b
   }
   assert.match(handoffEvidenceDetailSql("redirect_00001", "staging").sql, /correlation\."searchHistoryId"/);
 
-  const guest = handoffEvidenceListSql({ ...scope, correlation: null, product: null } as never, null, 50);
+  const guest = handoffEvidenceListSql({ ...scope, correlation: null, product: null }, null, 50);
   assert.match(guest.sql, /r\."userId" IS NULL AND/);
   assert.match(guest.sql, /r\."metadata"->>'operationalSessionId' ~/);
-  const unknown = handoffEvidenceListSql({ ...scope, identity: "unattributed", correlation: "unavailable" } as never, null, 50);
+  const unknown = handoffEvidenceListSql({ ...scope, identity: "unattributed", correlation: "unavailable" }, null, 50);
   assert.match(unknown.sql, /AND NOT/);
   assert.match(unknown.sql, /COALESCE\(/, "missing operational IDs count as Unattributed, not SQL NULL");
   assert.match(unknown.sql, /correlation\."searchHistoryId" IS NULL/);
-  const registered = handoffEvidenceListSql({ ...scope, identity: "registered", userId: "user_123", correlation: null } as never, null, 50);
+  const registered = handoffEvidenceListSql({ ...scope, identity: "registered", userId: "user_123", correlation: null }, null, 50);
   assert.match(registered.sql, /"VisitorIdentityLink"/);
   assert.ok(registered.values.includes("user_123"));
-  const explicitVisitor = handoffEvidenceListSql({ ...scope, identity: "guest", visitorId: "visitor_123" } as never, null, 50);
+  const explicitVisitor = handoffEvidenceListSql({ ...scope, identity: "guest", visitorId: "visitor_123" }, null, 50);
   assert.ok(explicitVisitor.values.includes("visitor_123"));
 });
 
