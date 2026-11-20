@@ -196,9 +196,9 @@ try {
     const tabsAfterFilters = outerCard.getByTestId("activity-tabs-after-filters");
     await expect(filterRow).toBeVisible();
     await expect(tabsAfterFilters).toBeVisible();
-    assert.ok(await filterRow.evaluate((el, tabs) =>
-      el.getBoundingClientRect().bottom <= document.querySelector('[data-testid="activity-tabs-after-filters"]')?.getBoundingClientRect().top,
-      true), "Activity navigation must follow the filter controls");
+    assert.ok(await filterRow.evaluate(el =>
+      el.getBoundingClientRect().bottom <= (document.querySelector('[data-testid="activity-tabs-after-filters"]')?.getBoundingClientRect().top ?? 0)
+    ), "Activity navigation must follow the filter controls");
     if (width >= 1280) {
       const y = await filterRow.locator("button").first().evaluate(el => el.getBoundingClientRect().top);
       const buttons = await filterRow.locator("button").evaluateAll(items => items.map(el => el.getBoundingClientRect().top));
@@ -254,6 +254,11 @@ try {
     await expectAlignedColumns(page);
     await expectHeaderTimePresentation(page, "Registered zoom " + zoom);
     await expectBalancedDesktopHeader(page, "Registered zoom " + zoom);
+    const fullDeviceHistory = page.getByRole("link", {name:/View full device & access history/});
+    await expect(fullDeviceHistory).toBeVisible();
+    assert.match(await fullDeviceHistory.getAttribute("href"), /\\/admin\\/users\\/user\\/qa-registered-0001\\/devices\\?range=all/);
+    await expect(page.getByTestId("device-today-list")).toHaveCount(0);
+
     assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography);
     await page.screenshot({caret:"initial",path: output + "/after-desktop-zoom-equivalent-" + Math.round(zoom*100) + ".png",fullPage:true});
   }
