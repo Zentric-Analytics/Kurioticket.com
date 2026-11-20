@@ -7,6 +7,7 @@ import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
+import { ActivityRetryButton } from "@/components/admin/ActivityRetryButton";
 import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
@@ -150,15 +151,26 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const filters: ActivityFilters = filtersResult.filters;
   const result = await loadAdminIdentityActivity(kind, id, filters, undefined, "all");
   if (result.status === "not_found") notFound();
-  if (result.status !== "ok") return <div className="space-y-4">
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <Link href={backHref} className={buttonClass}><ArrowLeft size={16} /> Back to Users</Link>
-      <div aria-label="Identity management">{await fallbackManage(kind, id, session.user.id)}</div>
-    </div>
-    <AdminEmptyState title={result.status === "invalid_cursor" ? "Activity page link expired" : "Activity data unavailable"}
-      message={result.status === "invalid_cursor" ? "The pagination link does not match this customer or the selected filters." : "The activity reader is temporarily unavailable. This does not mean there is no customer history."}
-      action={<Link className={buttonClass} href={activityHref(basePath, queryParams, { cursor: null, order: null })}>Return to newest activity</Link>} />
-  </div>;
+  if (result.status !== "ok") {
+    const serviceUnavailable = result.status === "unavailable";
+    return <div className="min-w-0 space-y-4 bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link href={backHref} className={buttonClass}><ArrowLeft size={16} aria-hidden="true" /> Back to Users</Link>
+        {/* Do not issue another database query for management controls
+            immediately after the Activity reader reported an outage. */}
+        {!serviceUnavailable && <div aria-label="Identity management">{await fallbackManage(kind, id, session.user.id)}</div>}
+      </div>
+      <AdminEmptyState
+        title={serviceUnavailable ? "Activity temporarily unavailable" : "Activity page link expired"}
+        message={serviceUnavailable
+          ? "The Activity service could not retrieve this visitor's history. The records have not been confirmed missing. Retry when the connection is restored."
+          : "The activity link does not match this visitor or the selected filters."}
+        action={serviceUnavailable
+          ? <ActivityRetryButton />
+          : <Link className={buttonClass} href={activityHref(basePath, queryParams, { cursor: null, order: null })}>Reset activity filters</Link>}
+      />
+    </div>;
+  }
   const data = result.data;
   const environment = data.environment;
   const operational = data.source === "operational";
