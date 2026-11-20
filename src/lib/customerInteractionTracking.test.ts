@@ -18,7 +18,9 @@ test("interactions always validate origin, identity and consent on the server", 
   assert.match(route, /candidates\.length === 1/);
   assert.match(route, /linkedSearchHistoryId/);
   assert.match(route, /tx\.journeyEvent\.create/);
-  assert.match(route, /eventKey: "interaction:" \+ parsed\.data\.eventId/);
+  assert.match(route, /eventKey: confirmedAudit \? "saved-audit:" \+ confirmedAudit\.id : "interaction:" \+ parsed\.data\.eventId/);
+  assert.match(route, /if \(isConfirmedAccountAction && !confirmedAudit\) return false/);
+  assert.match(route, /metadata: \{ path: \["environment"\], equals: getPublicEnvironment\(\) \}/);
 });
 
 test("clients send bounded references and only after observed result actions", () => {
