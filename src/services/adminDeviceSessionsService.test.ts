@@ -15,18 +15,17 @@ test("device history is account-scoped and excludes credentials and network iden
   assert.doesNotMatch(source, /select:\s*\{[^}]*userAgent/);
 });
 
-test("guest activity never pretends operational presence is a device identity", () => {
-  const page = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx", "utf8");
-  const ui = readFileSync("src/components/admin/AdminIdentityDeviceAccess.tsx", "utf8");
-  assert.match(page, /kind === "user" \? await loadAdminDeviceSessions\(id\) : null/);
-  assert.match(ui, /Device and access details are not linked to guest activity/);
-  assert.match(ui, /data-testid="device-session-row"/);
-  assert.match(ui, /data-testid="device-today-list"/);
-  assert.match(ui, /View full device/);
-  assert.match(ui, /Today \(UTC\)/);
-  assert.match(page, /<AdminIdentityDeviceAccess/);
-  assert.match(page, /<ActivityFiltersBar/);
-  assert.match(page, /<AdminActivityOverview/);
+test("device details live in dedicated Users pages instead of Activity", () => {
+  const activity = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx", "utf8");
+  const dedicated = readFileSync("src/app/admin/users/platforms-devices/page.tsx", "utf8");
+  const history = readFileSync("src/app/admin/users/[kind]/[id]/devices/page.tsx", "utf8");
+  assert.doesNotMatch(activity, /<AdminIdentityDeviceAccess/);
+  assert.doesNotMatch(activity, /loadAdminDeviceSessions/);
+  assert.match(activity, /View account device &amp; access history/);
+  assert.match(dedicated, /Platforms &amp; Devices/);
+  assert.match(dedicated, /loadPlatformAccess/);
+  assert.match(dedicated, /Device &amp; Access History/);
+  assert.match(history, /kind !== "user"/);
 });
 
 test("presence captures only verified canonical sessions and no raw user agents or IP storage", () => {
