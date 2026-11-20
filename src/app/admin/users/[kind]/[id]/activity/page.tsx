@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plane, Building2, CarFront } from "lucide-react";
+import { ArrowLeft, Plane, Building2, CarFront, Route } from "lucide-react";
 
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
 import { UserStatusActions } from "@/components/admin/UserStatusActions";
@@ -261,6 +261,16 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       </div>
 
       <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <Link
+            href={"/admin/users/" + kind + "/" + encodeURIComponent(id) + "/journeys"}
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#004BB8] bg-white px-4 text-[13px] font-semibold text-[#004BB8] transition-colors hover:bg-[#F1F6FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
+            aria-label={"View Journey History for " + data.title}
+          >
+            <Route size={16} aria-hidden="true" />
+            View Journey History
+          </Link>
+        </div>
         <section aria-label="Activity filters" className="min-w-0">
           <ActivityFiltersBar path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
             initial={{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order,
