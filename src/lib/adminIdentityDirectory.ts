@@ -41,6 +41,30 @@ export function adminIdentityDateBounds(date: AdminIdentityDate, now = new Date(
   return { from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1)), to: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)) };
 }
 
+/** An existing registered account is discoverable when it was created OR
+ * when an authenticated session, search or handoff was observed in the range.
+ * Keep this predicate identical to the SQL directory read below so counts,
+ * identifiers and account revalidation cannot disagree.
+ *
+ * A session has no environment label; search/handoff records must match the
+ * deployment environment before they can qualify the account.
+ */
+export function adminRegisteredActivityDateWhere(
+  bounds: { from: Date; to?: Date } | null,
+  environment: "staging" | "production",
+): Prisma.UserWhereInput {
+  if (!bounds) return {};
+  const at = { gte: bounds.from, ...(bounds.to ? { lt: bounds.to } : {}) };
+  return {
+    OR: [
+      { createdAt: at },
+      { accountSessions: { some: { lastSeenAt: at } } },
+      { searchHistory: { some: { createdAt: at, query: { path: ["environment"], equals: environment } } } },
+      { redirectLogs: { some: { createdAt: at, metadata: { path: ["environment"], equals: environment } } } },
+    ],
+  };
+}
+
 export type AdminIdentityReference = { kind: "user" | "guest"; id: string };
 /** One directory read carries operational guest totals and recorded timestamps. */
 export type AdminIdentityDirectoryRow = {
@@ -143,8 +167,27 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
         NULL::timestamp AS "firstSeenAt", NULL::timestamp AS "lastSeenAt"
       FROM "User" u
       WHERE TRUE
-        ${bounds ? Prisma.sql`AND u."createdAt" >= ${bounds.from}` : Prisma.empty}
-        ${bounds?.to ? Prisma.sql`AND u."createdAt" < ${bounds.to}` : Prisma.empty}
+        ${bounds ? Prisma.sql`AND (
+          (u."createdAt" >= ${bounds.from}
+            ${bounds.to ? Prisma.sql`AND u."createdAt" < ${bounds.to}` : Prisma.empty})
+          OR EXISTS (
+            SELECT 1 FROM "AccountSession" a
+            WHERE a."userId" = u."id" AND a."lastSeenAt" >= ${bounds.from}
+              ${bounds.to ? Prisma.sql`AND a."lastSeenAt" < ${bounds.to}` : Prisma.empty}
+          )
+          OR EXISTS (
+            SELECT 1 FROM "SearchHistory" s
+            WHERE s."userId" = u."id" AND s."createdAt" >= ${bounds.from}
+              ${bounds.to ? Prisma.sql`AND s."createdAt" < ${bounds.to}` : Prisma.empty}
+              AND s."query"->>'environment' = ${environment}
+          )
+          OR EXISTS (
+            SELECT 1 FROM "RedirectLog" r
+            WHERE r."userId" = u."id" AND r."createdAt" >= ${bounds.from}
+              ${bounds.to ? Prisma.sql`AND r."createdAt" < ${bounds.to}` : Prisma.empty}
+              AND r."metadata"->>'environment' = ${environment}
+          )
+        )` : Prisma.empty}
         ${query ? Prisma.sql`AND (
           strpos(lower(COALESCE(u."name", '')), lower(${query})) > 0
           OR strpos(lower(COALESCE(u."email", '')), lower(${query})) > 0
