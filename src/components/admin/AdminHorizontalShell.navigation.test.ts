@@ -92,7 +92,7 @@ test("navigation keeps parent workspaces visible while child routes stay nested"
   const searches = entries.find(({ item }) => item.href === "/admin/searches/activity");
   const providers = entries.find(({ item }) => item.href === "/admin/providers");
   assert.deepEqual(searches?.children.map((item) => item.label), ["Provider Handoffs"]);
-  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.label), ["Visitor Journeys"]);
+  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.label), ["Visitor Journeys", "Platforms & Devices"]);
   assert.deepEqual(providers?.children.map((item) => item.label), ["Homepage Fares", "Hotels", "Cars", "Referral Attribution"]);
   // Current dev intentionally hides Admin navigation from support roles.
   assert.deepEqual(getAdminHeaderGroups("SUPPORT"), []);

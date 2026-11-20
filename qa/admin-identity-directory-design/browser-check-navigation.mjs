@@ -28,6 +28,7 @@ try {
     await expect(page.getByRole("complementary", { name: "Users navigation" }).getByRole("heading", { name: "Users", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Visitor Journeys", exact: true })).toBeVisible();
+    await expect(workspace.getByRole("link", { name: "Platforms & Devices", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
     for (const unrelated of ["Trips", "Support", "Settings", "System"]) {
       await expect(workspace.getByRole("link", { name: unrelated, exact: true })).toHaveCount(0);
@@ -77,7 +78,7 @@ try {
     await page.goto(root + "/admin/journeys", { waitUntil: "networkidle" });
     const journeyFilters = page.getByRole("form", { name: "Filter visitor journeys" });
     await expect(journeyFilters).toBeVisible();
-    await expect(journeyFilters.getByRole("button", { name: "Date range: Last 24 hours" })).toBeVisible();
+    await expect(journeyFilters.getByRole("button", { name: "Date range: Today" })).toBeVisible();
     await expect(journeyFilters.getByRole("button", { name: "Provider: All providers" })).toBeVisible();
     await expect(journeyFilters.getByRole("button", { name: "Apply filters" })).toBeVisible();
     await expect(journeyFilters.getByRole("button", { name: /Environment/ })).toHaveCount(0);
@@ -134,8 +135,8 @@ try {
       ), "Dropdowns and Apply filters must not overlap: " + JSON.stringify(filterLayout));
       assert.ok(filterLayout.controls[4].width <= 140,
         "Apply filters must remain compact at " + width + "px");
-      assert.ok(Math.abs(filterLayout.headingTop - filterLayout.dateTop) < 36,
-        "Date range stays in the header at " + width + "px");
+      assert.ok(Math.abs(filterLayout.dateTop - filterLayout.filterTops[0]) < 2,
+        "Date range stays on the same horizontal filter row at " + width + "px");
     }
     const journeys = page.getByRole("region", { name: "Journey records" });
     await expect(journeys).toBeVisible();
