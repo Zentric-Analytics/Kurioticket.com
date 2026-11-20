@@ -80,7 +80,7 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
     {result.status === "unavailable" ? <AdminEmptyState title="Platform access unavailable"
       message="Stored account sessions could not be read. This does not mean that no devices have accessed Kurioticket."
       action={<Link className={navigationLink} href={platformAccessHref(query, 1)}>Retry</Link>} /> : <>
-      <section aria-label="Recorded platform summary" className="grid min-w-0 grid-cols-2 gap-3 xl:grid-cols-4">
+      <section aria-label="Recorded platform summary matching applied filters" className="grid min-w-0 grid-cols-2 gap-3 xl:grid-cols-4">
         {summaries.map(({ label, value, icon: Icon }) =>
           <div key={label} className="min-w-0 rounded-xl border border-[#E2E8F0] bg-white p-3.5 sm:p-4">
             <div className="flex items-center gap-2 text-[12px] text-[#64748B]"><Icon size={15} aria-hidden="true"/>{label}</div>
