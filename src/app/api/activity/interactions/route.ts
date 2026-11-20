@@ -73,6 +73,16 @@ export async function POST(request: Request) {
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         }) : null;
       if (isConfirmedAccountAction && !confirmedAudit) return false;
+      if (confirmedAudit) {
+        // A confirmed mutation is a single observed save/remove. Replayed
+        // browser reports must not create a second journey step.
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('journey-saved-audit'), hashtext(${confirmedAudit.id}))`;
+        const alreadyLinked = await tx.journeyEvent.findUnique({
+          where: { eventKey: "saved-audit:" + confirmedAudit.id },
+          select: { id: true },
+        });
+        if (alreadyLinked) return true;
+      }
       // Search provenance must be established on the server. A client-supplied
       // request UUID alone does not establish journey ownership or a save/share
       // for another user's search. Missing/invalid links stay in account history.
