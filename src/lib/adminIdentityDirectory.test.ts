@@ -21,14 +21,14 @@ test("both identity tables are combined before one chronological sort and 100-ro
   assert.match(result.text, /FROM "User"/);
   assert.match(result.text, /UNION ALL/);
   assert.match(result.text, /FROM "Visitor"/);
-  assert.match(result.text, /ORDER BY "joinedAt" DESC, "kind" ASC, "id" DESC/);
+  assert.match(result.text, /ORDER BY "lastSeenAt" DESC NULLS LAST, "joinedAt" DESC, "kind" ASC, "id" DESC/);
   assert.match(result.text, /LIMIT .* OFFSET/);
   assert.deepEqual(result.values.slice(-2), [100, 0]);
 });
 
 test("all sort modes order the entire result set before slicing a page", () => {
   const expected: Array<[NonNullable<AdminIdentityPageRequest["sort"]>, RegExp]> = [
-    ["newest", /ORDER BY "joinedAt" DESC, "kind" ASC, "id" DESC/],
+    ["newest", /ORDER BY "lastSeenAt" DESC NULLS LAST, "joinedAt" DESC, "kind" ASC, "id" DESC/],
     ["oldest", /ORDER BY "joinedAt" ASC, "kind" ASC, "id" ASC/],
     ["name_asc", /ORDER BY lower\("displayName"\) ASC, "joinedAt" DESC, "kind" ASC, "id" DESC/],
     ["name_desc", /ORDER BY lower\("displayName"\) DESC, "joinedAt" DESC, "kind" ASC, "id" DESC/],
@@ -117,7 +117,7 @@ test("operational session lookup and date limits remain parameterized", () => {
   assert.ok(result.values.includes("session-id"));
   assert.ok(result.values.includes("production"));
   assert.equal(result.text.includes("session-id"), false);
-  assert.match(result.text, /HAVING MIN\(a\."createdAt"\)/);
+  assert.match(result.text, /HAVING MAX\(a\."createdAt"\)/);
 });
 
 
@@ -126,16 +126,18 @@ test("Today includes returning account sessions and environment-scoped searches/
   const start = new Date("2026-11-20T00:00:00.000Z");
   const where = adminRegisteredActivityDateWhere({ from: start, to: now }, "staging");
   assert.ok(where.OR);
-  assert.equal(where.OR.length, 4);
+  assert.equal(where.OR.length, 5);
   assert.deepEqual(where.OR[0], { createdAt: { gte: start, lt: now } });
   assert.deepEqual(where.OR[1], { accountSessions: { some: { lastSeenAt: { gte: start, lt: now } } } });
   assert.deepEqual(where.OR[2], { searchHistory: { some: { createdAt: { gte: start, lt: now }, query: { path: ["environment"], equals: "staging" } } } });
   assert.deepEqual(where.OR[3], { redirectLogs: { some: { createdAt: { gte: start, lt: now }, metadata: { path: ["environment"], equals: "staging" } } } });
+  assert.deepEqual(where.OR[4], { apiEvents: { some: { createdAt: { gte: start, lt: now }, metadata: { path: ["environment"], equals: "staging" } } } });
   assert.deepEqual(adminRegisteredActivityDateWhere(null, "staging"), {});
   const result = sql({ ...base, date: "today", now, environment: "staging" });
   assert.match(result.text, /OR EXISTS \([\s\S]*?"AccountSession"/);
   assert.match(result.text, /OR EXISTS \([\s\S]*?"SearchHistory"/);
   assert.match(result.text, /OR EXISTS \([\s\S]*?"RedirectLog"/);
+  assert.match(result.text, /OR EXISTS \([\s\S]*?"AnalyticsEvent"/);
   assert.equal(result.values.includes("staging"), true);
   assert.ok(result.values.some(value => value instanceof Date && value.getTime() === start.getTime()));
   assert.ok(result.values.some(value => value instanceof Date && value.getTime() === now.getTime()));
@@ -150,5 +152,35 @@ test("registered activity filtering preserves correct role, status and identity 
   assert.ok(result.values.includes("production"));
   assert.doesNotMatch(result.text, /customer@example.invalid/);
   const all = sql({ ...base, date: "all" });
-  assert.doesNotMatch(all.text, /FROM "AccountSession"/);
+  // All time still computes the latest observed session for sorting; it must
+  // not impose a date-window predicate on membership.
+  assert.match(all.text, /FROM "AccountSession"/);
+  assert.doesNotMatch(all.text, /AND a\."lastSeenAt" >= /);
+});
+
+test("latest observation drives the same value used for display and ordering", () => {
+  const result = sql({ ...base, date: "today", now: new Date("2026-11-20T10:00:00.000Z"), environment: "staging" });
+  assert.match(result.text, /GREATEST\(/);
+  for (const source of ['"AccountSession"', '"SearchHistory"', '"RedirectLog"', '"AnalyticsEvent"']) {
+    assert.ok(result.text.includes(source), source);
+  }
+  assert.match(result.text, /v\."lastSeenAt" AS "lastSeenAt"/);
+  assert.match(result.text, /ORDER BY "lastSeenAt" DESC NULLS LAST, "joinedAt" DESC, "kind" ASC, "id" DESC/);
+});
+
+test("returning consented and operational guests qualify by last observed activity", () => {
+  const result = sql({ ...base, date: "today", now: new Date("2026-11-20T10:00:00.000Z"),
+    environment: "staging", showOperationalGuests: true });
+  assert.match(result.text, /v\."firstSeenAt" >= /);
+  assert.match(result.text, /OR \(v\."lastSeenAt" >= /);
+  assert.match(result.text, /HAVING MAX\(a\."createdAt"\)/);
+  assert.match(result.text, /"consentStatus" = 'GRANTED'/);
+  assert.match(result.text, /"trackingDisabledAt" IS NULL/);
+  assert.match(result.text, /NOT EXISTS/);
+});
+
+test("oldest and alphabetic explicit sorts remain available", () => {
+  assert.match(sql({ ...base, sort: "oldest" }).text, /ORDER BY "joinedAt" ASC, "kind" ASC, "id" ASC/);
+  assert.match(sql({ ...base, sort: "name_asc" }).text, /ORDER BY lower\("displayName"\) ASC, "joinedAt" DESC/);
+  assert.match(sql({ ...base, sort: "name_desc" }).text, /ORDER BY lower\("displayName"\) DESC, "joinedAt" DESC/);
 });

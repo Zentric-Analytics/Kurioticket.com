@@ -61,6 +61,7 @@ export function adminRegisteredActivityDateWhere(
       { accountSessions: { some: { lastSeenAt: at } } },
       { searchHistory: { some: { createdAt: at, query: { path: ["environment"], equals: environment } } } },
       { redirectLogs: { some: { createdAt: at, metadata: { path: ["environment"], equals: environment } } } },
+      { apiEvents: { some: { createdAt: at, metadata: { path: ["environment"], equals: environment } } } },
     ],
   };
 }
@@ -123,7 +124,7 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
       ? Prisma.sql`lower("displayName") ASC, "joinedAt" DESC, "kind" ASC, "id" DESC`
       : sort === "name_desc"
         ? Prisma.sql`lower("displayName") DESC, "joinedAt" DESC, "kind" ASC, "id" DESC`
-        : Prisma.sql`"joinedAt" DESC, "kind" ASC, "id" DESC`;
+        : Prisma.sql`"lastSeenAt" DESC NULLS LAST, "joinedAt" DESC, "kind" ASC, "id" DESC`;
   if (!showUsers && !showGuests && !showOperationalGuests) return null;
   if (!Number.isSafeInteger(limit) || limit < 1 || (!input.allIdentities && limit > 100)
     || !Number.isSafeInteger(offset) || offset < 0) {
@@ -154,8 +155,8 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
       WHERE a."sessionId" ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
         ${query ? Prisma.sql`AND strpos(lower(a."sessionId"), lower(${query})) > 0` : Prisma.empty}
       GROUP BY a."sessionId"
-      ${bounds ? Prisma.sql`HAVING MIN(a."createdAt") >= ${bounds.from}
-        ${bounds.to ? Prisma.sql`AND MIN(a."createdAt") < ${bounds.to}` : Prisma.empty}` : Prisma.empty}
+      ${bounds ? Prisma.sql`HAVING MAX(a."createdAt") >= ${bounds.from}
+        ${bounds.to ? Prisma.sql`AND MAX(a."createdAt") < ${bounds.to}` : Prisma.empty}` : Prisma.empty}
     )
   ` : Prisma.empty;
 
@@ -164,7 +165,16 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
     sources.push(Prisma.sql`
       SELECT 'user'::text AS "kind", u."id" AS "id", u."createdAt" AS "joinedAt",
         COALESCE(NULLIF(BTRIM(u."name"), ''), 'Unnamed user') AS "displayName",
-        NULL::timestamp AS "firstSeenAt", NULL::timestamp AS "lastSeenAt"
+        NULL::timestamp AS "firstSeenAt",
+        GREATEST(
+          (SELECT MAX(a."lastSeenAt") FROM "AccountSession" a WHERE a."userId" = u."id"),
+          (SELECT MAX(s."createdAt") FROM "SearchHistory" s
+            WHERE s."userId" = u."id" AND s."query"->>'environment' = ${environment}),
+          (SELECT MAX(r."createdAt") FROM "RedirectLog" r
+            WHERE r."userId" = u."id" AND r."metadata"->>'environment' = ${environment}),
+          (SELECT MAX(e."createdAt") FROM "AnalyticsEvent" e
+            WHERE e."userId" = u."id" AND e."metadata"->>'environment' = ${environment})
+        ) AS "lastSeenAt"
       FROM "User" u
       WHERE TRUE
         ${bounds ? Prisma.sql`AND (
@@ -187,6 +197,12 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
               ${bounds.to ? Prisma.sql`AND r."createdAt" < ${bounds.to}` : Prisma.empty}
               AND r."metadata"->>'environment' = ${environment}
           )
+          OR EXISTS (
+            SELECT 1 FROM "AnalyticsEvent" e
+            WHERE e."userId" = u."id" AND e."createdAt" >= ${bounds.from}
+              ${bounds.to ? Prisma.sql`AND e."createdAt" < ${bounds.to}` : Prisma.empty}
+              AND e."metadata"->>'environment' = ${environment}
+          )
         )` : Prisma.empty}
         ${query ? Prisma.sql`AND (
           strpos(lower(COALESCE(u."name", '')), lower(${query})) > 0
@@ -202,11 +218,15 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
     sources.push(Prisma.sql`
       SELECT 'guest'::text AS "kind", v."id" AS "id", v."firstSeenAt" AS "joinedAt",
         'Guest visitor'::text AS "displayName",
-        NULL::timestamp AS "firstSeenAt", NULL::timestamp AS "lastSeenAt"
+        v."firstSeenAt" AS "firstSeenAt", v."lastSeenAt" AS "lastSeenAt"
       FROM "Visitor" v
       WHERE v."consentStatus" = 'GRANTED'
-        ${bounds ? Prisma.sql`AND v."firstSeenAt" >= ${bounds.from}` : Prisma.empty}
-        ${bounds?.to ? Prisma.sql`AND v."firstSeenAt" < ${bounds.to}` : Prisma.empty}
+        ${bounds ? Prisma.sql`AND (
+          (v."firstSeenAt" >= ${bounds.from}
+            ${bounds.to ? Prisma.sql`AND v."firstSeenAt" < ${bounds.to}` : Prisma.empty})
+          OR (v."lastSeenAt" >= ${bounds.from}
+            ${bounds.to ? Prisma.sql`AND v."lastSeenAt" < ${bounds.to}` : Prisma.empty})
+        )` : Prisma.empty}
         AND v."trackingDisabledAt" IS NULL
         AND v."currentUserId" IS NULL
         AND NOT EXISTS (
@@ -225,9 +245,9 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
     `);
   }
 
-  // Sort the combined identity set in PostgreSQL *before* pagination.
-  // Name sorting follows the displayed name (including the guest label);
-  // timestamps, kind and ID break ties predictably across pages.
+  // Sort all eligible identities together in PostgreSQL before pagination.
+  // Latest observed activity, not registration, sets the default order.
+  // Null timestamps are last; Joined, kind and ID provide stable ties.
   return Prisma.sql`
     ${operationalCte}
     SELECT identities."kind", identities."id", identities."firstSeenAt",
