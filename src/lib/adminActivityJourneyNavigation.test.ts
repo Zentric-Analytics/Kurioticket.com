@@ -53,3 +53,15 @@ test("history detail links may return only to a scoped identity journey page", (
   const filtered = activityJourneyReturnHref("/admin/users/user/qa-account-0001/journeys?userId=other&environment=production&range=7d");
   assert.equal(filtered, "/admin/users/user/qa-account-0001/journeys?range=7d");
 });
+
+test("filtered Activity origin survives Journey History -> detail -> History navigation", () => {
+  const activity = "/admin/users/user/qa-account-0001/activity?range=today&product=CAR&q=CDG";
+  const origin = encodeActivityJourneyReturn(activity);
+  assert.ok(origin);
+  const history = "/admin/users/user/qa-account-0001/journeys?range=today&product=CAR&activityReturn=" + origin;
+  assert.equal(activityJourneyReturnHref(history), history);
+  const detailToken = encodeActivityJourneyReturn(history);
+  assert.ok(detailToken);
+  assert.equal(decodeActivityJourneyReturn(detailToken), history);
+  assert.equal(decodeActivityJourneyReturn(new URL(decodeActivityJourneyReturn(detailToken)!, "https://example.test").searchParams.get("activityReturn")),activity);
+});
