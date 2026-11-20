@@ -30,7 +30,8 @@ export function priceAlertMatchesRecordedSearch(search: Search, alert: Alert): b
   const details = object(search.query);
   const alertDetails = object(alert.query);
   if (search.type === "HOTEL") {
-    return sameDate(search.checkIn, alertDetails.checkIn) && sameDate(search.checkOut, alertDetails.checkOut);
+    return sameDate(search.checkIn, alertDetails.checkIn) && sameDate(search.checkOut, alertDetails.checkOut)
+      && ["guests", "rooms"].every(key => Boolean(comparable(details[key])) && comparable(details[key]) === comparable(alertDetails[key]));
   }
   if (search.type === "FLIGHT") {
     // An opaque request ID anchors the source search, but alert settings must
