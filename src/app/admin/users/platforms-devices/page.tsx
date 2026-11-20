@@ -55,7 +55,7 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
 
     {result.status === "ok" ? <section data-testid="platform-session-metrics"
       aria-label="Recorded platform summary matching applied filters"
-      className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#E2E8F0] lg:grid-cols-4">
+      className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#E2E8F0] min-[900px]:grid-cols-4">
       {summaries.map(({ label, value, icon: Icon }) =>
         <div key={label} data-testid="platform-session-metric"
           className="min-w-0 bg-white px-3.5 py-3.5 sm:px-4">
