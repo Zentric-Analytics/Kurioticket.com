@@ -24,9 +24,9 @@ try {
   const historyLink = page.getByRole('link',{name:/View Journey History/});
   assert.ok((await historyLink.getAttribute('href')).length < 8192);
   await historyLink.click();
-  await expect(page).toHaveURL(/\\/admin\\/users\\/guest\\/qa-guest-activity-0001\\/journeys\\?/);
+  await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/journeys\?/);
   await page.getByRole('link',{name:'Back to Activity'}).last().click();
-  await expect(page).toHaveURL(/\\/admin\\/users\\/guest\\/qa-guest-activity-0001\\/activity\\?/);
+  await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/activity\?/);
   assert.equal(new URL(page.url()).searchParams.get("directory"),longDirectory);
   assert.equal(new URL(page.url()).searchParams.get("q"),"LOS");
   assert.equal(new URL(page.url()).searchParams.get("range"),"all");
