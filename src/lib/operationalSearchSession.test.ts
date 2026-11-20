@@ -71,7 +71,7 @@ test("native guest search continuity is platform-bound, short-lived and not a br
     const now = Date.UTC(2026, 10, 20, 12);
     for (const platform of ["ios", "android"] as const) {
       const url = "https://kurioticket.com/api/flights/search";
-      const firstRequest = new Request(url, { method: "POST", headers: { "x-mobile-platform": platform } });
+      const firstRequest = new Request(url, { method: "POST", headers: { "x-mobile-platform": platform, "x-kt-search-protocol": "v2" } });
       const prepared = prepareOperationalSearchSession(firstRequest, now, "staging");
       assert.ok(prepared);
       assert.equal(prepared.transport, "native");
@@ -82,7 +82,7 @@ test("native guest search continuity is platform-bound, short-lived and not a br
       assert.equal(response.headers.get("set-cookie"), null);
       assert.equal(response.headers.get("x-kt-search-session"), prepared.credential);
 
-      const headers = { "x-mobile-platform": platform, "x-kt-search-session": prepared.credential };
+      const headers = { "x-mobile-platform": platform, "x-kt-search-protocol": "v2", "x-kt-search-session": prepared.credential };
       const continued = new Request(url, { method: "POST", headers });
       assert.equal(readOperationalSearchSession(continued, now + 1000, "staging")?.nativePlatform, platform);
       assert.equal(prepareOperationalSearchSession(continued, now + 1000, "staging")?.newCredential, false);
@@ -105,5 +105,42 @@ test("native guest search continuity is platform-bound, short-lived and not a br
     }
   } finally {
     if (prior === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = prior;
+  }
+});
+
+test("installed native v1 clients retain signed guest session continuity without a capability header", () => {
+  const old = process.env.AUTH_SECRET;
+  process.env.AUTH_SECRET = "test-native-legacy-compatibility-secret-at-least-32-characters";
+  try {
+    const now = Date.UTC(2026, 10, 20, 12);
+    for (const platform of ["android", "ios"] as const) {
+      const url = "https://kurioticket.com/api/flights/search";
+      const oldClient = new Request(url, { method: "POST", headers: { "x-mobile-platform": platform } });
+      const first = prepareOperationalSearchSession(oldClient, now, "staging");
+      assert.ok(first);
+      assert.match(first.credential, /^v1\./);
+      assert.equal(first.guestNativeAttribution, false);
+      assert.equal(first.reference.nativePlatform, undefined);
+      const secondRequest = new Request(url, { method: "POST", headers: {
+        "x-mobile-platform": platform, "x-kt-search-session": first.credential,
+      } });
+      assert.equal(readOperationalSearchSession(secondRequest, now + 1000, "staging")?.id, first.reference.id);
+      const again = prepareOperationalSearchSession(secondRequest, now + 1000, "staging");
+      assert.equal(again?.newCredential, false);
+      assert.equal(again?.reference.id, first.reference.id);
+      assert.equal(again?.guestNativeAttribution, false);
+      assert.equal(attachOperationalSearchSession(Response.json({ ok: true }), again).headers.get("x-kt-search-session"), null);
+      const upgradeRequest = new Request(url, { method: "POST", headers: {
+        "x-mobile-platform": platform, "x-kt-search-protocol": "v2", "x-kt-search-session": first.credential,
+      } });
+      const upgraded = prepareOperationalSearchSession(upgradeRequest, now + 1000, "staging");
+      assert.ok(upgraded);
+      assert.match(upgraded.credential, /^v2\./);
+      assert.equal(upgraded.reference.id, first.reference.id, "upgrade retains operational guest correlation");
+      assert.equal(upgraded.reference.nativePlatform, platform);
+      assert.equal(upgraded.guestNativeAttribution, true);
+    }
+  } finally {
+    if (old === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = old;
   }
 });
