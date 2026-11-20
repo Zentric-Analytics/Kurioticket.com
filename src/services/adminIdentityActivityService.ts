@@ -324,6 +324,7 @@ export async function loadAdminIdentityActivity(
             where: { visitorId: { in: visitorIds }, events: { some: validEvents } },
           });
         };
+        phase = "journey_ownership_counts";
         if (stages.length && !isOperationalGuest) {
           if (kind === "guest") {
             await countVisitorBatch([id]);
@@ -352,6 +353,7 @@ export async function loadAdminIdentityActivity(
           }
         }
 
+        phase = "activity_source_reads";
         // Complete mode drains every source in bounded internal batches within
         // this same snapshot. The browser receives all matching records upfront.
         const readSource = <T extends ActivitySourceRow>(
