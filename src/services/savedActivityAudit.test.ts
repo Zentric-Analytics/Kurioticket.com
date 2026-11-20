@@ -17,13 +17,13 @@ function makeDatabase(failAudit = false) {
           return JSON.stringify(item[k] ?? null) === JSON.stringify(value ?? null);
         })) ?? null,
       create: async ({ data }: { data: Record<string, unknown> }) => {
-        const item = { ...data, id: "saved-" + (draft.items.length + 1), _model: type } as Item;
+        const item: Item = { ...data, id: "saved-" + (draft.items.length + 1), userId: String(data.userId), _model: type };
         draft.items.push(item); return item;
       },
       upsert: async ({ where, create }: { where: { userId_signature: { userId: string; signature: string } }; create: Record<string, unknown> }) => {
         const old = draft.items.find(item => item._model === type && item.userId === where.userId_signature.userId && item.signature === where.userId_signature.signature);
         if (old) return old;
-        const item = { ...create, id: "saved-" + (draft.items.length + 1), _model: type } as Item;
+        const item: Item = { ...create, id: "saved-" + (draft.items.length + 1), userId: String(create.userId), _model: type };
         draft.items.push(item); return item;
       },
       deleteMany: async ({ where }: { where: { id: string; userId: string } }) => {
