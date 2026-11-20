@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { parsePlatformAccessQuery, platformAccessHref, PLATFORM_ACCESS_PAGE_SIZE } from "./adminPlatformAccessService";
+import { parsePlatformAccessQuery, platformAccessHref, PLATFORM_ACCESS_PAGE_SIZE } from "@/lib/adminPlatformAccessQuery";
 
 test("Platform access defaults to Today without a rolling 24-hour window", () => {
   assert.deepEqual(parsePlatformAccessQuery({}), { range: "today", platform: "all", page: 1 });
