@@ -135,8 +135,8 @@ try {
       ), "Dropdowns and Apply filters must not overlap: " + JSON.stringify(filterLayout));
       assert.ok(filterLayout.controls[4].width <= 140,
         "Apply filters must remain compact at " + width + "px");
-      assert.ok(Math.abs(filterLayout.headingTop - filterLayout.dateTop) < 36,
-        "Date range stays in the header at " + width + "px");
+      assert.ok(Math.abs(filterLayout.dateTop - filterLayout.filterTops[0]) < 2,
+        "Date range stays on the same horizontal filter row at " + width + "px");
     }
     const journeys = page.getByRole("region", { name: "Journey records" });
     await expect(journeys).toBeVisible();
