@@ -20,7 +20,7 @@ const platformOptions = [
   { value: "web", label: "Web sessions" },
   { value: "ios", label: "iOS app" },
   { value: "android", label: "Android app" },
-  { value: "other", label: "Other mobile app" },
+  { value: "other", label: "Unclassified native app" },
 ];
 const format = (date: Date) => new Intl.DateTimeFormat("en-GB", {
   day: "numeric", month: "short", year: "numeric", hour: "2-digit",
@@ -40,17 +40,17 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
   const result = await loadPlatformAccess(query);
   const totalPages = result.status === "ok" ? Math.max(1, Math.ceil(result.total / PLATFORM_ACCESS_PAGE_SIZE)) : 1;
   const summaries = result.status === "ok" ? [
-    { label: "Web sessions", value: result.counts.web, icon: Monitor },
+    { label: "Web browser sessions", value: result.counts.web, icon: Monitor },
     { label: "iOS app sessions", value: result.counts.ios, icon: Smartphone },
     { label: "Android app sessions", value: result.counts.android, icon: TabletSmartphone },
-    { label: "Other app sessions", value: result.counts.other, icon: Users },
+    { label: "Unclassified native sessions", value: result.counts.other, icon: Users },
   ] : [];
   return <div className="min-w-0 space-y-5 bg-white pb-6 text-[#0F172A]">
     <header className="flex min-w-0 flex-wrap items-start justify-between gap-3 border-b border-[#E2E8F0] pb-4">
       <div className="min-w-0">
         <h1 className="text-xl font-semibold tracking-tight">Platforms &amp; Devices</h1>
         <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-          Recorded signed-in account sessions across Kurioticket platforms. Guest activity is managed separately.
+          Recorded account sign-in sessions across web and native apps. This is historical account-session evidence, not live device presence.
         </p>
       </div>
       <Link href="/admin/users" className={navigationLink}>
@@ -94,7 +94,10 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
               <Clock3 size={16} aria-hidden="true" className="text-[#64748B]"/>Device &amp; Access History
             </h2>
             <p className="mt-1 text-[12px] text-[#64748B]">
-              {result.total.toLocaleString()} matching account sessions · All times UTC
+              {result.total.toLocaleString()} matching recorded sessions · Last seen times in UTC
+            </p>
+            <p className="mt-1 text-[11px] text-[#64748B]">
+              Read at <time dateTime={result.observedAt.toISOString()}>{format(result.observedAt)}</time>
             </p>
           </div>
           <span className="text-[11px] text-[#64748B]">
@@ -111,7 +114,7 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
                 {row.user.name || row.user.email || "Registered account"}
               </Link>
               <p className="break-words text-[#334155]">{platformLabel(row)} · {deviceValue(row.deviceLabel)} · {deviceValue(row.os)}</p>
-              <p className="break-words text-[#64748B]">{row.client === "MOBILE" ? "In-app" : deviceValue(row.browser)} · {deviceValue(row.locationLabel)}</p>
+              <p className="break-words text-[#64748B]">{row.client === "MOBILE" ? row.appVersion ? "App version " + row.appVersion : "App version not recorded" : deviceValue(row.browser)} · {deviceValue(row.locationLabel)}</p>
               <time className="block tabular-nums text-[#64748B]" dateTime={row.lastSeenAt.toISOString()}>
                 {format(row.lastSeenAt)}{row.revokedAt ? " · Revoked" : ""}
               </time>
@@ -125,7 +128,7 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
                   <th scope="col" className="w-[21%] px-3 py-3 font-medium">Account</th>
                   <th scope="col" className="w-[15%] px-3 py-3 font-medium">Platform</th>
                   <th scope="col" className="w-[17%] px-3 py-3 font-medium">Device / OS</th>
-                  <th scope="col" className="w-[13%] px-3 py-3 font-medium">Browser</th>
+                  <th scope="col" className="w-[13%] px-3 py-3 font-medium">Browser / App</th>
                   <th scope="col" className="w-[16%] px-3 py-3 font-medium">Location</th>
                   <th scope="col" className="w-[18%] px-3 py-3 font-medium">Last seen</th>
                 </tr>
@@ -138,7 +141,7 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
                   </td>
                   <td className="px-3 py-3">{platformLabel(row)}</td>
                   <td className="break-words px-3 py-3">{deviceValue(row.deviceLabel)} · {deviceValue(row.os)}</td>
-                  <td className="break-words px-3 py-3">{row.client === "MOBILE" ? "In-app" : deviceValue(row.browser)}</td>
+                  <td className="break-words px-3 py-3">{row.client === "MOBILE" ? row.appVersion ? "App " + row.appVersion : "App version not recorded" : deviceValue(row.browser)}</td>
                   <td className="break-words px-3 py-3">{deviceValue(row.locationLabel)}</td>
                   <td className="px-3 py-3 tabular-nums">
                     <time dateTime={row.lastSeenAt.toISOString()}>{format(row.lastSeenAt)}</time>
@@ -158,8 +161,10 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
         </nav>
       </section>
       <p className="text-[12px] leading-5 text-[#64748B]">
-        Counts represent recorded account sessions, not distinct people or installed devices. Web includes desktop and mobile browsers;
-        unrecognized native platforms appear under Other. Location is an approximate network estimate when recorded.
+        Source: stored AccountSession records. Each row represents a recorded account session, not a distinct user, installed device or live visitor.
+        Web covers desktop and mobile browsers; unknown native platforms remain unclassified rather than being counted as iOS or Android.
+        Guest device details are not linked to accounts here. Location is a network estimate when recorded; missing fields are not inferred.
+        Historical sessions can be expired or revoked. Records are not separated by deployment environment because AccountSession has no environment field.
       </p>
     </>}
   </div>;
