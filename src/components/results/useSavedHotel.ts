@@ -152,7 +152,10 @@ export function useSavedHotel({ hotelId, getSnapshot, searchRequestId }: UseSave
 
       if (savedHotel) {
         const deleteResult = await deleteBackendHotel(savedHotel.id);
-        if (deleteResult.ok) setIsSaved(false);
+        if (deleteResult.ok) {
+          setIsSaved(false);
+          recordCustomerInteraction({ action: "saved_item_removed", product: "HOTEL", resultId: hotelId, requestId: searchRequestId });
+        }
         return;
       }
 
@@ -168,6 +171,9 @@ export function useSavedHotel({ hotelId, getSnapshot, searchRequestId }: UseSave
         payload: { ...snapshot, hotelResultId: hotelId },
       });
       if (saveResult.ok || saveResult.duplicate) setIsSaved(true);
+      if (saveResult.ok && !saveResult.duplicate) recordCustomerInteraction({
+        action: "saved_item_confirmed", product: "HOTEL", resultId: hotelId, requestId: searchRequestId,
+      });
       return;
     }
 
