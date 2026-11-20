@@ -19,6 +19,7 @@ The server checks verified crawler identities before paid provider execution, Se
 - `POST /api/flights/nearby-fare`
 - `POST /api/hotels/search`
 - `POST /api/cars/search`
+- `POST /api/packages/search` (before flight, hotel and car fan-out)
 
 These endpoints return HTTP 403 with `CRAWLER_SEARCH_BLOCKED` only after successful DNS verification. Public website GET pages, `robots.txt`, public images and indexing remain unaffected.
 
