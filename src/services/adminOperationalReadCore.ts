@@ -898,6 +898,7 @@ export const __adminOperationalReadCoreTest = {
   identity,
   attributableVisitorId,
   identityWhere,
+  handoffDto,
   fallbackSearchDiagnostic,
   providerDiagnostic,
   exactSearchDiagnostic,
