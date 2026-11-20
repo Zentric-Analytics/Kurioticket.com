@@ -1,4 +1,5 @@
 import { getMobileSession } from "@/lib/mobile-auth";
+import { readOperationalSearchSession, type PreparedOperationalSession } from "@/lib/operationalSearchSession";
 import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { isNativeVisitorRequest, readVisitorToken, visitorTrackingDenied } from "@/lib/visitor-identity";
 import { resolveApplicationSource, type ApplicationAttribution } from "@/lib/application-source";
@@ -22,6 +23,7 @@ const dependencies: IdentityDependencies = {
 export async function resolveRequestActivityIdentity(
   request: Request,
   resolve: IdentityDependencies = dependencies,
+  operationalSession?: PreparedOperationalSession | null,
 ): Promise<{ userId: string | null; visitorId: string | null } & ApplicationAttribution> {
   let userId: string | null = null;
   let application = resolveApplicationSource(request);
@@ -29,6 +31,19 @@ export async function resolveRequestActivityIdentity(
     if (isNativeVisitorRequest(request)) {
       const session = await resolve.mobile(request);
       if (session?.user.status === "ACTIVE") { userId = session.user.id; application = resolveApplicationSource(request, { client: "MOBILE", platform: session.platform, appVersion: session.appVersion }); }
+      else if (!request.headers.has("authorization")) {
+        // Guest operational attribution is not visitor analytics or mobile authentication.
+        // Only accept server-signed, platform-bound continuity (or the credential
+        // prepared by this very search). Never trust the platform header alone.
+        const reference = operationalSession === undefined
+          ? readOperationalSearchSession(request)
+          : operationalSession?.transport === "native" && operationalSession.guestNativeAttribution
+            ? operationalSession.reference : null;
+        const declared = request.headers.get("x-mobile-platform");
+        if (reference?.nativePlatform && reference.nativePlatform === declared) {
+          application = { applicationSource: reference.nativePlatform === "ios" ? "IOS" : "ANDROID" };
+        }
+      }
     } else {
       userId = (await resolve.web())?.userId ?? null;
       if (userId) application = resolveApplicationSource(request, { client: "WEB" });

@@ -13,7 +13,7 @@ test("Flight Search propagates its response request ID into cache persistence", 
   ]);
 
   assert.match(route, /searchFlights\(parsed\.data,[\s\S]*requestId,/);
-  assert.match(route, /resolveRequestActivityIdentity\(request\)/);
+  assert.match(route, /resolveRequestActivityIdentity\(request, undefined, operationalSession\)/);
   assert.doesNotMatch(route, /getServerSession\(/);
   assert.match(aggregator, /rememberFlights\(results, now, search, options\.requestId\)/);
 });

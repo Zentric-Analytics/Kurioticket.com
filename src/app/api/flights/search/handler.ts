@@ -90,7 +90,7 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
 
   after(async () => {
     try {
-      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
+      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request, undefined, operationalSession);
       const providerLogs = aggregate.providerStatuses.map((provider) =>
         logProviderCall({
           provider: provider.provider,
