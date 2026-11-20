@@ -92,7 +92,8 @@ test("User Activity renders exactly two nested white workspace cards with a flat
   assert.doesNotMatch(page, /<ActivityTimeline/);
   const mainCardMarkup = page.slice(mainCard, identity);
   assert.match(mainCardMarkup, /rounded-2xl border border-\[#E2E8F0\] bg-white/);
-  // Inspect only the summary section, not unrelated sibling links between it and the body card.\n  const summaryMarkup = page.slice(summary, page.indexOf("</section>", summary));
+  // Inspect only the summary section, not unrelated sibling links between it and the body card.
+  const summaryMarkup = page.slice(summary, page.indexOf("</section>", summary));
   assert.doesNotMatch(summaryMarkup, /bg-(?:blue|sky|emerald|amber|\[#)/,
     "Activity summary uses no colored background or metric dots");
   assert.match(summaryMarkup, /data\.summary\.searches/);
