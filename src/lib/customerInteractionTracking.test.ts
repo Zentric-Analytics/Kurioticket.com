@@ -58,8 +58,9 @@ test("unified registered history includes only exclusively linked consented gues
   const reader = read("src/services/adminIdentityActivityService.ts");
   assert.match(reader, /userId: null, visitor: \{ is: linked \}/);
   assert.match(reader, /eligibleLinkedVisitorWhere\(id\)/);
-  assert.match(reader, /consentStatus: "GRANTED"/);
-  assert.match(reader, /identityLinks:/);
+  const eligibility = read("src/lib/adminIdentityJourney.ts");
+  assert.match(eligibility, /consentStatus: "GRANTED"/);
+  assert.match(eligibility, /identityLinks:/);
   assert.match(reader, /savedType/);
   assert.match(reader, /saved_item_removed/);
 });
