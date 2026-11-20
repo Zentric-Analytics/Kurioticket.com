@@ -1,6 +1,7 @@
 "use client";
 
 import { savedFlightTimeFields, SavedFlightTimeError } from "@/shared/flights/savedFlightTime";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 
@@ -316,11 +317,10 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         return;
       }
 
-      setLocalSavedFlightIds((current) => {
-        const next = toggleSavedItemId(current, savedFlightKey);
-        writeSavedItemIds(next);
-        return next;
-      });
+      const next = toggleSavedItemId(readSavedItemIds(), savedFlightKey);
+      writeSavedItemIds(next);
+      setLocalSavedFlightIds(next);
+      recordCustomerInteraction({ action: next.includes(savedFlightKey) ? "local_saved" : "local_unsaved", product: "FLIGHT", resultId: savedFlightKey });
     } catch (error) {
       setSavedFlightError(error instanceof SavedFlightTimeError ? error.message : "Unable to save flight. Please try again.");
     } finally {
@@ -337,9 +337,12 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     };
 
     try {
-      if (navigator.share) await navigator.share(shareData);
-      else {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        recordCustomerInteraction({ action: "share_sheet_completed", product: "FLIGHT", resultId: savedFlightKey });
+      } else {
         await navigator.clipboard.writeText(url);
+        recordCustomerInteraction({ action: "share_link_copied", product: "FLIGHT", resultId: savedFlightKey });
         setShareFeedback("Flight link copied");
         window.setTimeout(() => setShareFeedback(""), 1800);
       }

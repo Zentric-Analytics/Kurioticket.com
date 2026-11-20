@@ -46,6 +46,7 @@ import {
 } from "@/components/results/hotelGalleryPresentation";
 import type { SavedHotelSnapshot } from "@/components/results/hotelSavedStorage";
 import { useSavedHotel } from "@/components/results/useSavedHotel";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 import { HotelAmenityList } from "@/components/results/HotelAmenityList";
 import { buildHotelAmenityPresentation } from "@/components/results/hotelAmenityPresentation";
 
@@ -397,8 +398,10 @@ export function HotelCard({
     try {
       if (navigator.share) {
         await navigator.share({ title: hotel.name, url });
+        recordCustomerInteraction({ action: "share_sheet_completed", product: "HOTEL", resultId: hotel.id });
       } else {
         await navigator.clipboard.writeText(url);
+        recordCustomerInteraction({ action: "share_link_copied", product: "HOTEL", resultId: hotel.id });
       }
       setShareStatus("shared");
       window.setTimeout(() => setShareStatus("idle"), 2400);
