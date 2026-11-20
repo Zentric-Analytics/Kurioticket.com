@@ -22,11 +22,33 @@ const journeySelect = {
 
 const safeAnalyticsLabels = {
   SAVE: "Saved item",
-  ALERT_CREATED: "Price alert created",
+  SHARE: "Shared result",
+  ALERT_CREATED: "Price alert activity",
   SIGNUP: "Account signup",
   SUPPORT_TICKET: "Support ticket",
   PROVIDER_FAILURE: "Provider issue",
 } as const;
+const safeInteractionNames: Record<string, string> = {
+  saved_item_added: "Saved item",
+  saved_item_removed: "Unsaved item",
+  local_saved: "Saved locally",
+  local_unsaved: "Removed local save",
+  share_link_copied: "Result link copied",
+  share_sheet_completed: "Share sheet completed",
+  price_alert_created: "Price alert enabled",
+  price_alert_paused: "Price alert paused",
+  price_alert_reactivated: "Price alert resumed",
+  price_alert_deleted: "Price alert deleted",
+};
+function safeActivityMetadata(value: unknown): { product: string | null; detail: string } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return { product: null, detail: "Recorded account activity" };
+  const item = value as Record<string, unknown>;
+  const product = typeof item.product === "string" && ["FLIGHT", "HOTEL", "CAR", "PACKAGE"].includes(item.product) ? item.product : null;
+  const ref = [item.resultId, item.savedItemId, item.alertId].find(id => typeof id === "string"
+    && id.length <= 128 && /^[a-zA-Z0-9._:-]+$/.test(id)) as string | undefined;
+  return { product, detail: [product ? product.charAt(0) + product.slice(1).toLowerCase() : null,
+    ref ? "Reference: " + ref : null].filter(Boolean).join(" · ") || "Recorded account activity" };
+}
 type SafeAnalyticsType = keyof typeof safeAnalyticsLabels;
 
 export type IdentityActivitySummary = {
@@ -203,8 +225,13 @@ export async function loadAdminIdentityActivity(
       AND: [
         analyticsOwner, environmentScope.analytics, { createdAt: window },
         { type: { in: Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[] } },
-        ...(q ? [{ type: { in: (Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[])
-          .filter(type => safeAnalyticsLabels[type].toLowerCase().includes(q.toLowerCase())) } }] : []),
+        ...(product ? [{ metadata: { path: ["product"], equals: product } }] : []),
+        ...(q ? [{ OR: [
+          { type: { in: (Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[])
+            .filter(type => safeAnalyticsLabels[type].toLowerCase().includes(q.toLowerCase())) } },
+          { name: { in: Object.keys(safeInteractionNames)
+            .filter(name => safeInteractionNames[name].toLowerCase().includes(q.toLowerCase())) } },
+        ] }] : []),
       ],
     };
     const canReadHandoffs = allowed.has("PROVIDER_HANDOFF_STARTED")
@@ -242,7 +269,7 @@ export async function loadAdminIdentityActivity(
       stages.length && !isOperationalGuest ? db.journeyEvent.count({ where: journeyWhere }) : Promise.resolve(0),
       allowed.has("SEARCH_COMPLETED") ? db.searchHistory.count({ where: searchWhere }) : Promise.resolve(0),
       canReadHandoffs ? db.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
-      allowed.has("ACCOUNT_ACTIVITY") && !product && !isOperationalGuest
+      allowed.has("ACCOUNT_ACTIVITY") && !isOperationalGuest
         ? db.analyticsEvent.count({ where: analyticsWhere }) : Promise.resolve(0),
       stages.length && kind === "user"
         ? db.visitor.count({ where: eligibleJourneyLinkedVisitorWhere(id) }) : Promise.resolve(0),
@@ -331,7 +358,7 @@ export async function loadAdminIdentityActivity(
           allowed.has("ACCOUNT_ACTIVITY") && !product && !isOperationalGuest ? readSource("e", (after, take) => tx.analyticsEvent.findMany({
             where: { AND: [analyticsWhere, sourceActivitySeek(after, "e", order)] },
             orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take,
-            select: { id: true, type: true, createdAt: true },
+            select: { id: true, type: true, name: true, metadata: true, createdAt: true },
           })) : Promise.resolve([]),
           allowed.has("SEARCH_COMPLETED") ? tx.searchHistory.count({ where: searchWhere }) : Promise.resolve(0),
           canReadHandoffs ? tx.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
@@ -365,11 +392,14 @@ export async function loadAdminIdentityActivity(
         at: r.createdAt,
       })),
       ...analytics.flatMap(a => {
-        const label = safeAnalyticsLabels[a.type as SafeAnalyticsType];
-        return label ? [{
+        const baseLabel = safeAnalyticsLabels[a.type as SafeAnalyticsType];
+        if (!baseLabel) return [];
+        const safe = safeActivityMetadata(a.metadata);
+        return [{
           id: "e-" + a.id, stage: "ACCOUNT_ACTIVITY" as const,
-          label, detail: "Recorded account activity", at: a.createdAt,
-        }] : [];
+          label: safeInteractionNames[a.name] ?? baseLabel,
+          detail: safe.detail, product: safe.product, at: a.createdAt,
+        }];
       }),
     ];
     const sorted = mergeAdminActivity(canonical, legacy, complete ? canonical.length + legacy.length : ACTIVITY_FETCH_LIMIT * 4, order);
