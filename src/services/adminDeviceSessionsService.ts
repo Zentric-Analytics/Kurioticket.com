@@ -23,6 +23,7 @@ export type DeviceSessionResult =
 
 export type FullDeviceHistoryResult =
   | { status: "ok"; sessions: AdminDeviceSession[]; total: number; hasNext: boolean }
+  | { status: "not_found" }
   | { status: "unavailable" };
 
 export async function loadAdminDeviceSessions(userId: string): Promise<DeviceSessionResult> {
@@ -53,6 +54,8 @@ export async function loadAdminFullDeviceHistory(
   try {
     const db = getOptionalPrisma();
     if (!db) return { status: "unavailable" };
+    const owner = await db.user.findUnique({ where: { id: userId }, select: { id: true } });
+    if (!owner) return { status: "not_found" };
     const where = { userId, lastSeenAt: deviceHistoryWindow(query) };
     const [total, sessions] = await Promise.all([
       db.accountSession.count({ where }),
