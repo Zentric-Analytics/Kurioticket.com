@@ -329,6 +329,7 @@ export function HotelCard({
   const { isSaved, toggleSavedHotel } = useSavedHotel({
     hotelId: hotel.id,
     getSnapshot: getHotelSnapshot,
+    searchRequestId,
   });
 
   const savedHotelLabel = (
@@ -398,10 +399,10 @@ export function HotelCard({
     try {
       if (navigator.share) {
         await navigator.share({ title: hotel.name, url });
-        recordCustomerInteraction({ action: "share_sheet_completed", product: "HOTEL", resultId: hotel.id });
+        recordCustomerInteraction({ action: "share_sheet_completed", product: "HOTEL", resultId: hotel.id, requestId: searchRequestId });
       } else {
         await navigator.clipboard.writeText(url);
-        recordCustomerInteraction({ action: "share_link_copied", product: "HOTEL", resultId: hotel.id });
+        recordCustomerInteraction({ action: "share_link_copied", product: "HOTEL", resultId: hotel.id, requestId: searchRequestId });
       }
       setShareStatus("shared");
       window.setTimeout(() => setShareStatus("idle"), 2400);
