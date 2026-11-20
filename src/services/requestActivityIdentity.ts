@@ -47,6 +47,13 @@ export async function resolveRequestActivityIdentity(
     } else {
       userId = (await resolve.web())?.userId ?? null;
       if (userId) application = resolveApplicationSource(request, { client: "WEB" });
+      else if (operationalSession?.transport === "web"
+        && !request.headers.has("authorization") && !request.headers.has("x-mobile-platform")) {
+        // A prepared server-side same-origin operational session proves the
+        // website transport even when a browser omits Sec-Fetch-Site.
+        // It neither creates a consented Visitor nor authenticates an account.
+        application = { applicationSource: "WEB" };
+      }
     }
   } catch {
     // A failed session lookup cannot establish ownership of this activity.
