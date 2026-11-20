@@ -110,7 +110,7 @@ export function carSearchClientHeaders(platform: string, version?: string): Reco
   if (platform !== "android" || !version || !/^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(version)) return {};
   return { "User-Agent": `KurioticketMobile/${version} (Android; Native) OkHttp` };
 }
-const operationalCredentialPattern = /^v1\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)\.[A-Za-z0-9_-]{43}$/;
+const operationalCredentialPattern = /^v(?:1\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)|2\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)\.(?:ios|android))\.[A-Za-z0-9_-]{43}$/;
 let accountEpoch = 0;
 let observedSessionToken: string | null | undefined;
 subscribeSession?.(session => {
