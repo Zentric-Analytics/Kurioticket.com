@@ -168,7 +168,11 @@ services:
     buildCommand: npm ci && npm run build
     startCommand: npm run start
     preDeployCommand: npm run db:deploy:render
-    healthCheckPath: /api/health
+    # /api/health remains database readiness (503 on DB outages).
+    # A database interruption must not restart the sole staging web process.
+    # Confirm the live service's Render Health Check Path matches this
+    # after deployment; this Blueprint file alone may not update the service.
+    healthCheckPath: /api/health/live
     envVars:
       - key: NODE_VERSION
         value: 24.14.0
