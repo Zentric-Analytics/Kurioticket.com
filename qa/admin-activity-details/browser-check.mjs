@@ -393,6 +393,20 @@ try {
   await expect(page.getByRole("link",{name:/Load (older|newer) activity/})).toHaveCount(0);
   console.log("PASS empty and obsolete cursor");
 
+  // A database outage must be represented as unavailable rather than a
+  // missing account or an empty activity timeline. Retry preserves scope.
+  const outageUrl = base+"/admin/users/user/qa-registered-unavailable-0001/activity?range=all&product=FLIGHT";
+  await page.goto(outageUrl);
+  await expect(page.getByText("Activity temporarily unavailable")).toBeVisible();
+  await expect(page.getByRole("button",{name:"Retry Activity"})).toBeVisible();
+  await expect(page.getByRole("button",{name:/Manage account/})).toHaveCount(0);
+  await expect(page.getByRole("link",{name:"Back to Users"})).toBeVisible();
+  await page.getByRole("button",{name:"Retry Activity"}).click();
+  await expect(page.getByText("Activity temporarily unavailable")).toBeVisible();
+  await expect(page).toHaveURL(/qa-registered-unavailable-0001\/activity\?range=all&product=FLIGHT/);
+  await page.screenshot({caret:"initial",path:output+"/after-activity-retry-unavailable-1280.png",fullPage:true});
+  console.log("PASS authorized unavailable state and same-filter Activity retry");
+
   await page.goto(base+"/admin/users/user/qa-registered-0001/activity?range=all");
   await expect(page.getByRole("heading",{name:"QA registered customer"})).toBeVisible();
   await expect(page.getByText("customer.qa@example.invalid",{exact:true})).toBeVisible();
