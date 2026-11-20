@@ -76,10 +76,12 @@ try {
   await expect(page).toHaveURL(/\/admin\/journeys\/qa-journey-flight\?/);
   await expect(page.locator("[data-journey-event]")).toHaveCount(4);
   await page.getByRole("link",{name:"Back to Journey History"}).click();
+  await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/journeys\?/);
   historyUrl = new URL(page.url());
   assert.equal(historyUrl.searchParams.get("range"),"all");
   assert.equal(historyUrl.searchParams.get("product"),"FLIGHT");
   await page.getByRole("link",{name:"Back to Activity"}).last().click();
+  await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/activity\?/);
   const parentReturn = new URL(page.url());
   assert.equal(parentReturn.searchParams.get("product"),"FLIGHT");
   assert.equal(parentReturn.searchParams.get("q"),"LOS");
