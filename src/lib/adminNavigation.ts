@@ -13,6 +13,7 @@ import {
   Mail,
   Search,
   Settings,
+  MonitorSmartphone,
   Users,
   UserCheck,
 } from "lucide-react";
@@ -61,6 +62,7 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/email-delivery", parentHref: "/admin/system", label: "Email Delivery", icon: Mail, roles: ["ADMIN"], section: "controls", description: "Monitor transactional email delivery health and test sending readiness." },
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls", description: "Manage authoritative persisted platform controls." },
   { href: "/admin/journeys", parentHref: "/admin/users", label: "Visitor Journeys", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Inspect recorded consented journey events." },
+  { href: "/admin/users/platforms-devices", parentHref: "/admin/users", label: "Platforms & Devices", icon: MonitorSmartphone, roles: ["ADMIN"], section: "operations", description: "Inspect recorded account platforms, devices and access history." },
   { href: "/admin/redirects", parentHref: "/admin/searches/activity", label: "Provider Handoffs", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Investigate verified outbound provider handoffs." },
   { href: "/admin/referral-attribution", parentHref: "/admin/providers", label: "Referral Attribution", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Review provider referral-attribution reporting." },
 ];
@@ -119,6 +121,7 @@ const workspaceSections: ReadonlyArray<{
     links: [
       { href: "/admin/users", label: "Users Directory" },
       { href: "/admin/journeys", label: "Visitor Journeys" },
+      { href: "/admin/users/platforms-devices", label: "Platforms & Devices" },
     ],
   },
   {
@@ -188,6 +191,14 @@ export function isAdminWorkspaceSectionActive(pathname: string, href: string): b
   if (href.includes("?")) return pathname === "/admin/referral-attribution";
   if (destination === "/admin/searches/activity"
     && /^\/admin\/searches\/(?!activity(?:\/|$))[^/]+\/?$/.test(pathname)) return true;
+  // Activity and profile pages still belong to Directory. The account-session
+  // detail route belongs to Platforms & Devices instead of selecting both tabs.
+  if (destination === "/admin/users") return pathname === destination
+    || (/^\/admin\/users\/(?:user|guest)\/[^/]+(?:\/.*)?$/.test(pathname)
+      && !/^\/admin\/users\/user\/[^/]+\/devices(?:\/|$)/.test(pathname));
+  if (destination === "/admin/users/platforms-devices") return pathname === destination
+    || pathname.startsWith(destination + "/")
+    || /^\/admin\/users\/user\/[^/]+\/devices\/?$/.test(pathname);
   if (destination === "/admin/providers" || destination === "/admin/content"
     || destination === "/admin/system") return pathname === destination;
   if (destination === "/admin/confirmed-trips") {
