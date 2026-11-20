@@ -124,7 +124,7 @@ export function CarResultCard({
     orSimilar: string;
   };
 }) {
-  const { isSaved, toggleSavedCar } = useSavedCar(car, search);
+  const { isSaved, toggleSavedCar } = useSavedCar(car, search, requestId);
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? key;
   const { start: startRouteProgress } = useRouteProgress();
