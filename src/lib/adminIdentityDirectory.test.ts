@@ -152,7 +152,10 @@ test("registered activity filtering preserves correct role, status and identity 
   assert.ok(result.values.includes("production"));
   assert.doesNotMatch(result.text, /customer@example.invalid/);
   const all = sql({ ...base, date: "all" });
-  assert.doesNotMatch(all.text, /FROM "AccountSession"/);
+  // All time still computes the latest observed session for sorting; it must
+  // not impose a date-window predicate on membership.
+  assert.match(all.text, /FROM "AccountSession"/);
+  assert.doesNotMatch(all.text, /AND a\."lastSeenAt" >= /);
 });
 
 test("latest observation drives the same value used for display and ordering", () => {
