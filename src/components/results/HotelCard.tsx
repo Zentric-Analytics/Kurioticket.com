@@ -401,6 +401,7 @@ export function HotelCard({
         recordCustomerInteraction({ action: "share_sheet_completed", product: "HOTEL", resultId: hotel.id });
       } else {
         await navigator.clipboard.writeText(url);
+        recordCustomerInteraction({ action: "share_link_copied", product: "HOTEL", resultId: hotel.id });
       }
       setShareStatus("shared");
       window.setTimeout(() => setShareStatus("idle"), 2400);
