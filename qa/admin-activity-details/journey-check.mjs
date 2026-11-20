@@ -9,7 +9,8 @@ try {
   // Scope this historical navigation fixture explicitly without changing the UI default.
   const path = "/admin/users/guest/qa-guest-activity-0001/activity?tab=searches&q=LOS&range=all&directory=tab%3Dguests";
   await page.goto(base + path);
-  await expect(page.locator('[data-activity-id]')).toHaveCount(2);
+  await expect(page.getByTestId('activity-journey-row')).toHaveCount(1);
+  await expect(page.locator('[data-activity-id]')).toHaveCount(0);
   const link = page.getByRole('link',{name:'View journey for Flight · LOS → IST'});
   await expect(link).toBeVisible();
   await expect(link).toContainText('View journey');
@@ -18,6 +19,10 @@ try {
   const back = page.getByRole('link',{name:'Back to Activity'});
   await expect(back).toBeVisible();
   await expect(page.getByText('qa-journey-flight',{exact:true})).toBeVisible();
+  const detailUrl = new URL(page.url());
+  assert.equal(detailUrl.searchParams.get("from"),"1970-01-01T00:00:00.000Z");
+  assert.equal(detailUrl.searchParams.get("identity"),"guest");
+  assert.equal(detailUrl.searchParams.get("visitorId"),"qa-guest-activity-0001");
   await expect(page.getByRole('table')).toContainText('Search completed');
   await expect(page.getByRole('table')).toContainText('Results viewed');
   await expect(page.getByRole('table')).toContainText('Offer selected');
@@ -38,7 +43,8 @@ try {
   assert.equal(returned.searchParams.get('q'),'LOS');
   assert.equal(returned.searchParams.get('range'),'all');
   assert.equal(returned.searchParams.get('directory'),'tab=guests');
-  await expect(page.locator('[data-activity-id]')).toHaveCount(2);
+  await expect(page.getByTestId('activity-journey-row')).toHaveCount(1);
+  await expect(page.locator('[data-activity-id]')).toHaveCount(0);
   // Exercise an actual long-context request through Next/Node, not only URL helpers.
   const longDirectory = "客".repeat(1000);
   await page.goto(base + "/admin/users/guest/qa-guest-activity-0001/activity?" + new URLSearchParams({q:"LOS",range:"all",directory:longDirectory}));
