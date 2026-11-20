@@ -129,7 +129,7 @@ test("native guest searches use server-bound platform for operational telemetry 
   try {
     for (const platform of ["android", "ios"] as const) {
       for (const path of ["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive", "/api/redirect"]) {
-        const request = new Request("https://kurioticket.com" + path, { method: "POST", headers: { "x-mobile-platform": platform } });
+        const request = new Request("https://kurioticket.com" + path, { method: "POST", headers: { "x-mobile-platform": platform, "x-kt-search-protocol": "v2" } });
         const prepared = prepareOperationalSearchSession(request, Date.now(), getPublicEnvironment());
         assert.ok(prepared, "guest operational session should be available");
         const attributed = await resolveRequestActivityIdentity(request, dependencies, prepared);
@@ -156,7 +156,7 @@ test("untrusted, browser, invalid-bearer and unverifiable native requests remain
   };
   try {
     const url = "https://kurioticket.com/api/flights/search";
-    const req = new Request(url, { method: "POST", headers: { "x-mobile-platform": "android" } });
+    const req = new Request(url, { method: "POST", headers: { "x-mobile-platform": "android", "x-kt-search-protocol": "v2" } });
     assert.equal((await resolveRequestActivityIdentity(req, dependencies)).applicationSource, "UNKNOWN");
     const prepared = prepareOperationalSearchSession(req, Date.now(), getPublicEnvironment());
     assert.ok(prepared);
