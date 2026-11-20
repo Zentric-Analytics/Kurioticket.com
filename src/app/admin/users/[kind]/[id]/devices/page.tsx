@@ -7,6 +7,7 @@ import { deviceHistoryHref, parseDeviceHistoryQuery, DEVICE_HISTORY_PAGE_SIZE } 
 import { loadAdminFullDeviceHistory } from "@/services/adminDeviceSessionsService";
 import { platformLabel, sourceIcon, deviceValue } from "@/components/admin/AdminIdentityDeviceAccess";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
+import { AdminDeviceHistoryFilters } from "@/components/admin/AdminDeviceHistoryFilters";
 
 export const metadata = { title: "Admin Device & Access History" };
 type RawQuery = Record<string, string | string[] | undefined>;
@@ -64,32 +65,8 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
           <Clock3 size={14} aria-hidden="true"/>{result.total.toLocaleString()} matching sessions
         </span>
       </header>
-      <form action={pagePath} method="get" aria-label="Device history filters"
-        className="grid min-w-0 grid-cols-1 items-end gap-2 border-y border-[#E2E8F0] py-3 sm:grid-cols-2 lg:grid-cols-[minmax(150px,1fr)_minmax(130px,1fr)_minmax(130px,1fr)_auto]">
-        <input type="hidden" name="activityReturn" value={backHref}/>
-        <label className="min-w-0 space-y-1 text-[12px] font-medium text-[#475569]">
-          <span>Time range</span>
-          <select aria-label="Device history range" name="range" defaultValue={query.range}
-            className="focus-ring h-10 w-full rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#0F172A]">
-            <option value="all">All time</option>
-            <option value="today">Today</option>
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="custom">Custom dates</option>
-          </select>
-        </label>
-        <label className="min-w-0 space-y-1 text-[12px] font-medium text-[#475569]">
-          <span>From (UTC, custom)</span>
-          <input type="date" aria-label="Device history From UTC" name="from" defaultValue={query.from ?? ""}
-            className="focus-ring h-10 w-full rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#0F172A]"/>
-        </label>
-        <label className="min-w-0 space-y-1 text-[12px] font-medium text-[#475569]">
-          <span>To (UTC, custom)</span>
-          <input type="date" aria-label="Device history To UTC" name="to" defaultValue={query.to ?? ""}
-            className="focus-ring h-10 w-full rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#0F172A]"/>
-        </label>
-        <button type="submit" className="focus-ring inline-flex h-10 items-center justify-center rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97]">Apply filters</button>
-      </form>
+      <AdminDeviceHistoryFilters key={query.range + ":" + (query.from ?? "") + ":" + (query.to ?? "")}
+        path={pagePath} query={query} returnHref={backHref}/>
       {result.sessions.length === 0 ? <p role="status" className="rounded-lg bg-[#F8FAFC] px-4 py-7 text-center text-[13px] text-[#64748B]">
         {result.total === 0 ? "No device history matches this date range." : "No records on this page. Go to a previous page."}
       </p> : <>
