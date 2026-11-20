@@ -6,7 +6,6 @@ import { AdminUsersToolbar } from "@/components/admin/AdminUsersToolbar";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { adminIdentityPageSql, adminRegisteredActivityDateWhere, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityDirectoryRow } from "@/lib/adminIdentityDirectory";
-import { combineRegisteredLastSeen } from "@/lib/adminDirectoryLastSeen";
 
 export const metadata = { title: "Admin Users" };
 type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; tab?: string; identity?: string; activity?: string; page?: string; sort?: string; date?: string; from?: string; to?: string }> };
@@ -54,7 +53,14 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   };
   // The existing User model remains the authority for registered accounts.
   // Guests remain distinct records and only consent-eligible, unlinked guests are listed.
-  const guestWhere = { ...(dateWhere ? { firstSeenAt: dateWhere } : {}), consentStatus: "GRANTED" as const, trackingDisabledAt: null, currentUserId: null, identityLinks: { none: {} }, ...(q ? { id: { contains: prismaQuery, mode: "insensitive" as const } } : {}) };
+  // Returning consented visitors qualify by either their original visit or
+  // their latest valid observation. Mirror the ordered SQL cohort exactly.
+  const guestWhere = {
+    ...(dateWhere ? { OR: [{ firstSeenAt: dateWhere }, { lastSeenAt: dateWhere }] } : {}),
+    consentStatus: "GRANTED" as const, trackingDisabledAt: null,
+    currentUserId: null, identityLinks: { none: {} },
+    ...(q ? { id: { contains: prismaQuery, mode: "insensitive" as const } } : {}),
+  };
   const showUsers = tab !== "GUEST";
   // Role/status are account-only filters. Guest identities never have either.
   const guestsEligibleForFilters = role === "ALL" && status === "ALL";
@@ -91,41 +97,9 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         select: { id: true, firstSeenAt: true, lastSeenAt: true },
       }) : Promise.resolve([]),
     ]);
-    // Last Seen is the newest independently observed timestamp, not a guess
-    // based on registration date or a live-online indicator. These grouped
-    // reads are limited to the IDs already authorized by the directory query.
-    // Search, handoff and analytics observations must belong to this
-    // deployment environment; account sessions do not carry an environment.
-    const [sessionsSeen, searchesSeen, handoffsSeen, analyticsSeen] = await Promise.all([
-      userIds.length ? db.accountSession.groupBy({
-        by: ["userId"], where: { userId: { in: userIds } },
-        _max: { lastSeenAt: true },
-      }) : Promise.resolve([]),
-      userIds.length ? db.searchHistory.groupBy({
-        by: ["userId"], where: {
-          userId: { in: userIds },
-          query: { path: ["environment"], equals: environment },
-        }, _max: { createdAt: true },
-      }) : Promise.resolve([]),
-      userIds.length ? db.redirectLog.groupBy({
-        by: ["userId"], where: {
-          userId: { in: userIds },
-          metadata: { path: ["environment"], equals: environment },
-        }, _max: { createdAt: true },
-      }) : Promise.resolve([]),
-      userIds.length ? db.analyticsEvent.groupBy({
-        by: ["userId"], where: {
-          userId: { in: userIds },
-          metadata: { path: ["environment"], equals: environment },
-        }, _max: { createdAt: true },
-      }) : Promise.resolve([]),
-    ]);
-    const userLastSeen = combineRegisteredLastSeen(
-      sessionsSeen.map(entry => ({ userId: entry.userId, lastSeenAt: entry._max.lastSeenAt })),
-      searchesSeen.map(entry => ({ userId: entry.userId, lastSeenAt: entry._max.createdAt })),
-      handoffsSeen.map(entry => ({ userId: entry.userId, lastSeenAt: entry._max.createdAt })),
-      analyticsSeen.map(entry => ({ userId: entry.userId, lastSeenAt: entry._max.createdAt })),
-    );
+    // Use the same computed Last Seen value for sorting and rendering.
+    // Never recompute it after ordering or infer a timestamp from registration.
+    const observed = new Map(identities.map(item => [item.kind + ":" + item.id, item.lastSeenAt]));
     const userMap = new Map(users.map(user => [user.id, user]));
     const guestMap = new Map([
       ...identities.filter(item => item.kind === "guest" && item.firstSeenAt && item.lastSeenAt)
@@ -135,10 +109,10 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     const rows = identities.flatMap<IdentityRow>(identity => {
       if (identity.kind === "user") {
         const record = userMap.get(identity.id);
-        return record ? [{ kind: "user" as const, record, lastSeenAt: userLastSeen.get(identity.id) ?? null }] : [];
+        return record ? [{ kind: "user" as const, record, lastSeenAt: observed.get("user:" + identity.id) ?? null }] : [];
       }
       const record = guestMap.get(identity.id);
-      return record ? [{ kind: "guest" as const, record, lastSeenAt: record.lastSeenAt }] : [];
+      return record ? [{ kind: "guest" as const, record, lastSeenAt: observed.get("guest:" + identity.id) ?? record.lastSeenAt }] : [];
     });
     return { rows, registeredCount, guestCount: consentedGuestCount + operationalGuestCount };
   }, null);
