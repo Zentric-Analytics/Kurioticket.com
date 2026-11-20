@@ -48,9 +48,9 @@ export function identityJourneyHistoryHref(
   cursor?: string,
 ): string {
   const params = new URLSearchParams();
-  for (const key of ["range", "product", "provider", "stage", "from", "to"] as const) {
+  for (const key of ["range", "product", "provider", "stage", "from", "to", "activityReturn"] as const) {
     const value = raw[key];
-    if (typeof value === "string" && value) params.set(key, value);
+    if (typeof value === "string" && value && (key !== "activityReturn" || value.length <= 1000)) params.set(key, value);
   }
   if (cursor) params.set("cursor", cursor);
   return "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/journeys"
