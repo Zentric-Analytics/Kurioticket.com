@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  adminIdentityPageSql, escapePrismaContainsQuery, parseAdminIdentitySort,
+  adminIdentityPageSql, adminRegisteredActivityDateWhere, escapePrismaContainsQuery, parseAdminIdentitySort,
   type AdminIdentityPageRequest,
 } from "./adminIdentityDirectory";
 
@@ -118,4 +118,37 @@ test("operational session lookup and date limits remain parameterized", () => {
   assert.ok(result.values.includes("production"));
   assert.equal(result.text.includes("session-id"), false);
   assert.match(result.text, /HAVING MIN\(a\."createdAt"\)/);
+});
+
+
+test("Today includes returning account sessions and environment-scoped searches/handoffs", () => {
+  const now = new Date("2026-11-20T08:00:00.000Z");
+  const start = new Date("2026-11-20T00:00:00.000Z");
+  const where = adminRegisteredActivityDateWhere({ from: start, to: now }, "staging");
+  assert.ok(where.OR);
+  assert.equal(where.OR.length, 4);
+  assert.deepEqual(where.OR[0], { createdAt: { gte: start, lt: now } });
+  assert.deepEqual(where.OR[1], { accountSessions: { some: { lastSeenAt: { gte: start, lt: now } } } });
+  assert.deepEqual(where.OR[2], { searchHistory: { some: { createdAt: { gte: start, lt: now }, query: { path: ["environment"], equals: "staging" } } } });
+  assert.deepEqual(where.OR[3], { redirectLogs: { some: { createdAt: { gte: start, lt: now }, metadata: { path: ["environment"], equals: "staging" } } } });
+  assert.deepEqual(adminRegisteredActivityDateWhere(null, "staging"), {});
+  const result = sql({ ...base, date: "today", now, environment: "staging" });
+  assert.match(result.text, /OR EXISTS \([\s\S]*?"AccountSession"/);
+  assert.match(result.text, /OR EXISTS \([\s\S]*?"SearchHistory"/);
+  assert.match(result.text, /OR EXISTS \([\s\S]*?"RedirectLog"/);
+  assert.equal(result.values.includes("staging"), true);
+  assert.ok(result.values.some(value => value instanceof Date && value.getTime() === start.getTime()));
+  assert.ok(result.values.some(value => value instanceof Date && value.getTime() === now.getTime()));
+});
+
+test("registered activity filtering preserves correct role, status and identity search", () => {
+  const result = sql({ ...base, date: "today", now: new Date("2026-11-20T08:00:00.000Z"),
+    environment: "production", query: "customer@example.invalid", role: "USER", status: "ACTIVE" });
+  assert.ok(result.values.includes("customer@example.invalid"));
+  assert.ok(result.values.includes("USER"));
+  assert.ok(result.values.includes("ACTIVE"));
+  assert.ok(result.values.includes("production"));
+  assert.doesNotMatch(result.text, /customer@example.invalid/);
+  const all = sql({ ...base, date: "all" });
+  assert.doesNotMatch(all.text, /FROM "AccountSession"/);
 });

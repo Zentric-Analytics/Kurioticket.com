@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 import { useSession } from "next-auth/react";
 import {
   isHotelIdSaved,
@@ -71,6 +72,7 @@ export function useSavedHotel({ hotelId, getSnapshot }: UseSavedHotelOptions) {
     );
 
     setIsSaved(nextSaved);
+    recordCustomerInteraction({ action: nextSaved ? "local_saved" : "local_unsaved", product: "HOTEL", resultId: hotelId });
 
     window.dispatchEvent(
       new CustomEvent(SAVED_HOTEL_IDS_CHANGED_EVENT, {

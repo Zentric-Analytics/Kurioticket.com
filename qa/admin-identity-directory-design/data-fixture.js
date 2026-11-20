@@ -14,8 +14,20 @@ let filteredUsers = users;
 let filteredGuests = guests;
 
 function matchSearch(where, record) {
-  const term = where?.OR?.[0]?.email?.contains || where?.OR?.[0]?.id?.contains || where?.id?.contains;
-  return !term || [record.name, record.email, record.id].some(value => (value || "").toLowerCase().includes(String(term).toLowerCase()));
+  // The live Users query groups creation/session/search activity eligibility
+  // and name/email/ID search in separate AND conditions. This synthetic
+  // fixture does not emulate temporal database activity, but it must honor
+  // the actual search predicate so browser QA still checks Apply correctly.
+  const searchGroup = [where, ...(Array.isArray(where?.AND) ? where.AND : [])]
+    .find(group => Array.isArray(group?.OR) && group.OR.some(condition =>
+      condition.email?.contains || condition.name?.contains || condition.id?.contains));
+  const search = searchGroup?.OR ?? [];
+  const term = search.find(condition => condition.email?.contains)?.email?.contains
+    ?? search.find(condition => condition.name?.contains)?.name?.contains
+    ?? search.find(condition => condition.id?.contains)?.id?.contains
+    ?? where?.id?.contains;
+  return !term || [record.name, record.email, record.id].some(value =>
+    (value || "").toLowerCase().includes(String(term).toLowerCase()));
 }
 const db = {
   user: {
