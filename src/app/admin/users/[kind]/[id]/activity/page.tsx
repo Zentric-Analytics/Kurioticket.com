@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plane, Building2, CarFront, Route } from "lucide-react";
+import { ArrowLeft, Plane, Building2, CarFront } from "lucide-react";
 
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
 import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
-import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
+import { AdminActivityOverview } from "@/components/admin/AdminActivityOverview";
+import { journeyHistoryHrefFromActivity } from "@/lib/adminActivityOverview";
 import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
@@ -163,6 +164,11 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const environment = data.environment;
   const operational = data.source === "operational";
   const order = filters.order === "oldest" ? "oldest" : "newest";
+  const activityReturn = activityHref(basePath, queryParams, {});
+  const journeyHistoryHref = journeyHistoryHrefFromActivity(kind, id, filters,
+    typeof raw.range === "string" ? raw.range : undefined, activityReturn);
+  const query = new URLSearchParams(queryParams);
+  const otherHref = basePath + "/other" + (query.size ? "?" + query.toString() : "");
 
   return <div className="min-w-0 space-y-6 bg-white pb-2 text-[#0F172A]">
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[13px] text-[#475569]">
@@ -261,16 +267,6 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       </div>
 
       <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
-        <div className="flex flex-wrap items-center justify-end gap-3">
-          <Link
-            href={"/admin/users/" + kind + "/" + encodeURIComponent(id) + "/journeys"}
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#004BB8] bg-white px-4 text-[13px] font-semibold text-[#004BB8] transition-colors hover:bg-[#F1F6FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
-            aria-label={"View Journey History for " + data.title}
-          >
-            <Route size={16} aria-hidden="true" />
-            View Journey History
-          </Link>
-        </div>
         <section aria-label="Activity filters" className="min-w-0">
           <ActivityFiltersBar path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
             initial={{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order,
@@ -286,9 +282,9 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             </nav>} />
         </section>
 
-        <ActivityTimeline events={data.events} nextHref={null} environment={environment} order={order}
-          returnHref={activityHref(basePath, queryParams, {})}
-          clearHref={activityHref(basePath, queryParams, {q:null,from:null,to:null,range:null,product:null,stage:null,order:null,cursor:null})}/>
+        <AdminActivityOverview events={data.events} kind={kind} identityId={id} environment={environment}
+          returnHref={activityReturn} journeyHistoryHref={journeyHistoryHref}
+          otherHref={otherHref} operational={operational}/>
       </div>
     </section>
   </div>;
