@@ -28,7 +28,7 @@ The original `/api/health` returns HTTP 503 when PostgreSQL is unavailable. Rend
 2. Deploy the verified staging build using the existing approved release workflow.
 3. Check `GET https://staging.kurioticket.com/api/health/live`: HTTP 200 with `check=liveness`, even if DB readiness is temporarily unavailable. No credentials required.
 4. Check `GET https://staging.kurioticket.com/api/health`: HTTP 200 and connected=true while the database is healthy. During a confirmed DB outage, it must still return HTTP 503.
-5. In Render Dashboard → Kurioticket-web-staging → Settings, set the **Health Check Path** to `/api/health/live` and save. Verify it with `get_service`; leave production unchanged.
+5. In Render Dashboard → Kurioticket-web-staging → Settings, set **only the Health Check Path** to `/api/health/live` and save. Verify it with `get_service`; leave production unchanged. **Do not approve a wholesale Render Blueprint sync for this purpose.** The live staging service is on a different service plan from the checked-in Blueprint, so a full sync could introduce unrelated plan/configuration changes.
 6. Independently monitor `/api/health` (for DB readiness), application error logs and Render events. Do not treat HTTP 200 liveness as proof that customers can sign in, search or load history.
 7. Test Users Directory → registered user → View Activity → Retry, then one guest and an intentionally unavailable-history scenario. Verify exact identity/filters and no unauthorized records.
 
