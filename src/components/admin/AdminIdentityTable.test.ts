@@ -47,7 +47,7 @@ test("table remains a scrollable, accessible region with six columns and no pagi
   const html = render();
   assert.match(html, /<h2 id="identity-directory-title" class="sr-only">Users directory<\/h2>/);
   assert.equal((html.match(/aria-labelledby="identity-directory-title"/g) || []).length, 1);
-  assert.match(html, /min-w-\[960px\]/);
+  assert.match(html, /min-w-\[1080px\]/);
   assert.doesNotMatch(html, /Pg\\d|Identity pagination|Previous page|Next page/);
   assert.match(html, /colSpan="6"/i);
   assert.doesNotMatch(html, /Rows per page|15 rows|matching identities/);
