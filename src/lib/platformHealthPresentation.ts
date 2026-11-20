@@ -1,7 +1,7 @@
 import type { ApplicationSource } from "@/lib/application-source";
 export type PlatformSelection = "ALL" | ApplicationSource;
-export const platformOptions = [{ value: "ALL", label: "All Platforms" }, { value: "WEB", label: "Website" }, { value: "IOS", label: "iOS" }, { value: "ANDROID", label: "Android" }, { value: "UNKNOWN", label: "Unverified source" }] as const;
-export function applicationLabel(source?: string | null) { return platformOptions.find(option => option.value === source)?.label ?? "Unverified source"; }
+export const platformOptions = [{ value: "ALL", label: "All Platforms" }, { value: "WEB", label: "Website" }, { value: "IOS", label: "iOS" }, { value: "ANDROID", label: "Android" }, { value: "UNKNOWN", label: "Unknown" }] as const;
+export function applicationLabel(source?: string | null) { return platformOptions.find(option => option.value === source)?.label ?? "Unknown"; }
 export function parsePlatformHealthView(params: URLSearchParams): {
     hours: number;
     period: "today" | "rolling";
