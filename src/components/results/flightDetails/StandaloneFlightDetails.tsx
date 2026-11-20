@@ -273,7 +273,12 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify({ type: "flight", id: savedFlightBackendId }),
           });
-          if (response.ok) { setSavedFlightBackendId(null); invalidateSavedFlightsClientCache(); }
+          if (response.ok) {
+            setSavedFlightBackendId(null);
+            invalidateSavedFlightsClientCache();
+            recordCustomerInteraction({ action: "saved_item_removed", product: "FLIGHT", resultId: savedFlightKey,
+              requestId: journeyEvents.interactionRequestId("flight", id) });
+          }
           return;
         }
 
@@ -304,6 +309,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
           const data = await response.json() as { item?: { id?: string } };
           setSavedFlightBackendId(data.item?.id ?? selectedOffer.id);
           invalidateSavedFlightsClientCache();
+          if (data.item?.id) recordCustomerInteraction({ action: "saved_item_confirmed", product: "FLIGHT", resultId: savedFlightKey,
+            requestId: journeyEvents.interactionRequestId("flight", id) });
         } else if (response.status === 409) {
           const existing = await fetch("/api/dashboard/saved?type=flight", {
             headers: { Accept: "application/json" },
