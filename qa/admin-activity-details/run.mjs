@@ -52,6 +52,8 @@ await put("app/api/admin/notifications/route.js",
 
 await put("app/admin/users/[kind]/[id]/activity/page.tsx",
   await readFile(path.join(source, "app/admin/users/[kind]/[id]/activity/page.tsx"), "utf8"));
+await put("app/admin/users/[kind]/[id]/devices/page.tsx",
+  await readFile(path.join(source, "app/admin/users/[kind]/[id]/devices/page.tsx"), "utf8"));
 await put("app/admin/users/[kind]/[id]/other/page.tsx",
   await readFile(path.join(source, "app/admin/users/[kind]/[id]/other/page.tsx"), "utf8"));
 await put("app/admin/users/[kind]/[id]/journeys/page.tsx",
