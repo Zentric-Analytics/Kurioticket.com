@@ -13,7 +13,6 @@ const options = {
   stage: [["all","All activity types"],["SEARCH_COMPLETED","Search completed"],["RESULTS_VIEWED","Results viewed"],["OFFER_SELECTED","Offer selected"],["PROVIDER_HANDOFF_STARTED","Provider handoff"],["ACCOUNT_ACTIVITY","Account activity"]],
   order: [["newest","Newest first"],["oldest","Oldest first"]],
 };
-const control = "focus-ring h-11 w-full min-w-0 rounded-lg border border-[#E2E8F0] bg-white px-3 text-[13px] text-[#0F172A]";
 function utcWindow(days: number) {
   const to = new Date();
   return { from: new Date(to.getTime() - days * 86_400_000).toISOString(), to: to.toISOString() };
