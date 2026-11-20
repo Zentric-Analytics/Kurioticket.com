@@ -17,12 +17,43 @@ const journeyEvents = [
     searchHistoryId: "qa-s-1", redirectLogId: null, journey: { id: "qa-journey-flight", visitorId: id, startedAt: since },
     searchHistory: events[0], redirectLog: null },
 ];
+// Synthetic same-day sessions validate the compact preview without live data.
+const currentDayUtc = new Date().toISOString().slice(0, 10) + "T00:00:00.000Z";
+const dayStart = new Date(currentDayUtc).getTime();
+const syntheticSessions = [
+  ...Array.from({ length: 4 }, (_, index) => ({
+    id: "qa-device-" + index, client: index % 2 ? "MOBILE" : "WEB",
+    platform: index % 2 ? "ios" : null,
+    deviceLabel: index % 2 ? "iOS device" : "Windows computer",
+    browser: index % 2 ? null : "Firefox 160", os: index % 2 ? "iOS" : "Windows",
+    locationLabel: null, createdAt: new Date(dayStart + index * 1000),
+    lastSeenAt: new Date(dayStart + (index + 1) * 1000), revokedAt: null,
+  })),
+  {
+    id: "qa-device-yesterday", client: "WEB", platform: null,
+    deviceLabel: "Mac", browser: "Safari 18", os: "macOS",
+    locationLabel: null, createdAt: new Date(dayStart - 86_400_000),
+    lastSeenAt: new Date(dayStart - 86_400_000), revokedAt: null,
+  },
+];
+function selectSyntheticSessions(where = {}) {
+  const dates = where.lastSeenAt ?? {};
+  return syntheticSessions.filter(item =>
+    (!dates.gte || item.lastSeenAt >= dates.gte)
+    && (!dates.lte || item.lastSeenAt <= dates.lte)
+    && (!dates.lt || item.lastSeenAt < dates.lt));
+}
 const db = {
   visitor: { findFirst: async () => ({ id, firstSeenAt: since, lastSeenAt: new Date("2026-10-22T17:48:00.000Z") }) },
   user: { findUnique: async ({ where }) =>
     ["qa-registered-0001", "qa-registered-unavailable-0001", "qa-admin"].includes(where.id)
       ? { id: where.id, email: "customer.qa@example.invalid", role: "USER", status: "ACTIVE" }
       : null },
+  accountSession: {
+    findMany: async ({ where, take = 20, skip = 0 }) =>
+      selectSyntheticSessions(where).sort((a, b) => b.lastSeenAt.getTime() - a.lastSeenAt.getTime()).slice(skip, skip + take),
+    count: async ({ where }) => selectSyntheticSessions(where).length,
+  },
   searchHistory: { findMany: async () => events },
   redirectLog: { findMany: async () => handoffs },
   analyticsEvent: { findMany: async () => [] },
@@ -31,3 +62,4 @@ const db = {
 export async function withOptionalDb(work, fallback) {
   try { return await work(db); } catch { return fallback; }
 }
+\nexport function getOptionalPrisma(){ return db; }\n
