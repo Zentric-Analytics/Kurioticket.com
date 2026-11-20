@@ -10,7 +10,7 @@ import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
 const requestId = "78e1de9e-6dfe-494f-9fdb-83726d83bf64";
 type History = { requestId: string; type: string; status: string; userId: string | null; visitorId: string | null; resultCount: number; query: unknown; latencyMs: number };
 
-function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string; withOffers?: boolean; rateLimited?: boolean; applicationSource?: "WEB" | "IOS" | "ANDROID" | "UNKNOWN" } = {}) {
+function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string; withOffers?: boolean; rateLimited?: boolean; crawlerBlocked?: boolean; applicationSource?: "WEB" | "IOS" | "ANDROID" | "UNKNOWN" } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: History[] = [];
   const providerCalls: Array<{ metadata: Record<string, unknown>; status: string }> = [];
@@ -50,6 +50,8 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
         ? { userId: null, visitorId: null, ...attribution }
         : { userId: "verified-account", visitorId: "consented-visitor", ...attribution };
     } },
+    "@/lib/searchCrawlerGate": { blockVerifiedCrawlerSearch: async () => options.crawlerBlocked
+      ? Response.json({ code: "CRAWLER_SEARCH_BLOCKED" }, { status: 403 }) : null },
     "@/lib/kayak-client-ip": { getKayakClientIp: () => "192.0.2.1" },
     "./providerDiagnostics": { logNativeFlightProviderDiagnostics: () => undefined },
     "@/services/travel/kayakSandbox": { isKayakSandboxEnabled: () => false },
@@ -231,3 +233,20 @@ test("nearby and primary flight requests share the rate limit and schedule no wo
   assert.deepEqual(fixture.deferred, []);
   assert.deepEqual(fixture.rates, Array.from({ length: 2 }, () => ["flight-search:192.0.2.1", 35, 60_000]));
 });
+
+for (const product of ["flight", "hotel"] as const) {
+  test(`${product} rejects a verified crawler before provider calls and customer analytics`, async () => {
+    const fixture = routeFixture(product, { crawlerBlocked: true });
+    const response = await fixture.post({ "user-agent": "Googlebot/2.1" });
+    assert.equal(response.status, 403);
+    assert.equal(fixture.providerCriteria.length, 0);
+    assert.equal(fixture.lookups(), 0);
+    assert.deepEqual(fixture.histories, []);
+    assert.deepEqual(fixture.providerCalls, []);
+    assert.deepEqual(fixture.analyticsEvents, []);
+    assert.deepEqual(fixture.deferred, []);
+    if (product === "flight") {
+      assert.equal((await fixture.postNearby(2)).status, 403, "automatic fare lookups also reject verified crawlers");
+    }
+  });
+}
