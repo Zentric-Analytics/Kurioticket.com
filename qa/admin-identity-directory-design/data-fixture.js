@@ -41,6 +41,24 @@ const db = {
       return users.filter(user => where.id.in.includes(user.id) && matchSearch(where, user));
     },
   },
+  // Synthetic observations cover newer account sessions and a distinct
+  // account search. No guest identity is merged into these records.
+  accountSession: {
+    async groupBy({ where }) {
+      return where.userId.in.includes("qa-admin-001")
+        ? [{ userId: "qa-admin-001", _max: { lastSeenAt: new Date(pivot + 1000) } }]
+        : [];
+    },
+  },
+  searchHistory: {
+    async groupBy({ where }) {
+      return where.userId.in.includes("qa-support-001")
+        ? [{ userId: "qa-support-001", _max: { createdAt: new Date(pivot + 2000) } }]
+        : [];
+    },
+  },
+  redirectLog: { async groupBy() { return []; } },
+  analyticsEvent: { async groupBy() { return []; } },
   visitor: {
     async count({ where }) {
       filteredGuests = guests.filter(guest => matchSearch(where, guest));

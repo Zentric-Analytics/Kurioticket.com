@@ -37,7 +37,7 @@ try {
     await expect(combo("Account status")).toContainText("All statuses");
     await expect(tabs().getByRole("link", {name:"All (30)"})).toHaveAttribute("aria-current","page");
     assert.deepEqual((await page.locator("thead th").allTextContents()).map(x=>x.trim()),
-      ["IDENTITY","TYPE","STATUS","JOINED / FIRST SEEN","ACTIVITY"]);
+      ["IDENTITY","TYPE","STATUS","JOINED / FIRST SEEN","LAST SEEN","ACTIVITY"]);
     const geometry = await page.evaluate(() => {
       const search = document.getElementById("admin-user-search").getBoundingClientRect();
       const filter = document.querySelector('form[aria-label="Filter users"]').getBoundingClientRect();
@@ -65,6 +65,12 @@ try {
   await page.goto(url);
   await expect(page.getByRole("navigation",{name:"Identity pagination"})).toHaveCount(0);
   await expect(page.locator("tbody tr")).toHaveCount(30);
+  // Registered accounts can be older than their latest recorded session.
+  // Confirm the new column preserves actual evidence for both registered
+  // and consented guest rows without becoming an online-status indicator.
+  await expect(page.locator('td[data-label="Last Seen"]')).toHaveCount(30);
+  await expect(page.locator('td[data-label="Last Seen"] time')).toHaveCount(30);
+  await expect(page.locator('td[data-label="Last Seen"] time').first()).toHaveAttribute("dateTime", /2026-/);
   await search().fill("Zara");
   await expect(page).not.toHaveURL(/q=Zara/);
   await expect(page.locator("tbody tr")).toHaveCount(30);
