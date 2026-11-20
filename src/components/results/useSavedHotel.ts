@@ -26,6 +26,7 @@ import {
 type UseSavedHotelOptions = {
   hotelId: string;
   getSnapshot: () => SavedHotelSnapshot;
+  searchRequestId?: string | null;
 };
 
 function getSavedHotelResultId(item: SavedHotelApiItem): string | null {
@@ -41,7 +42,7 @@ function getSavedHotelResultId(item: SavedHotelApiItem): string | null {
   return null;
 }
 
-export function useSavedHotel({ hotelId, getSnapshot }: UseSavedHotelOptions) {
+export function useSavedHotel({ hotelId, getSnapshot, searchRequestId }: UseSavedHotelOptions) {
   const { status: sessionStatus } = useSession();
   const [isSaved, setIsSaved] = useState(false);
 
@@ -72,7 +73,7 @@ export function useSavedHotel({ hotelId, getSnapshot }: UseSavedHotelOptions) {
     );
 
     setIsSaved(nextSaved);
-    recordCustomerInteraction({ action: nextSaved ? "local_saved" : "local_unsaved", product: "HOTEL", resultId: hotelId });
+    recordCustomerInteraction({ action: nextSaved ? "local_saved" : "local_unsaved", product: "HOTEL", resultId: hotelId, requestId: searchRequestId });
 
     window.dispatchEvent(
       new CustomEvent(SAVED_HOTEL_IDS_CHANGED_EVENT, {
