@@ -139,6 +139,27 @@ test("detail redacts URLs and metadata while keeping exact versus legacy handoff
   assert.doesNotMatch(JSON.stringify(result), /tokenHash|destinationUrl|metadata|query|secret|private|attacker/);
 });
 
+test("verified save and share details retain exact event order and redact unsafe result references", async () => {
+  const linked = [
+    { ...event("save-step"), type: "RESULT_SAVED", action: "local_saved",
+      resultReference: "flight-ref", redirectLogId: null, destinationUrl: null },
+    { ...event("share-step"), type: "RESULT_SHARED", action: "share_link_copied",
+      resultReference: "private@provider.example/sensitive", redirectLogId: null, destinationUrl: null },
+    { ...event("unsave-step"), type: "RESULT_UNSAVED", action: "local_unsaved",
+      resultReference: "flight-ref", redirectLogId: null, destinationUrl: null },
+  ];
+  const f = fixture([[journey()], linked]);
+  const result = await f.service.detail("journey-002");
+  assert.equal(result.status, "ok");
+  if (result.status !== "ok") return;
+  assert.deepEqual(result.data.events.map(row => row.type), ["RESULT_SAVED", "RESULT_SHARED", "RESULT_UNSAVED"]);
+  assert.equal(result.data.events[0].action, "local_saved");
+  assert.equal(result.data.events[0].resultReference, "flight-ref");
+  assert.equal(result.data.events[1].action, "share_link_copied");
+  assert.equal(result.data.events[1].resultReference, null);
+  assert.doesNotMatch(JSON.stringify(result), /private@provider|sensitive|tokenHash/);
+});
+
 test("detail continuation uses event timestamp and ID and is bound to the requested journey", async () => {
   const f = fixture([[journey()], [event(), event("event-002")]]);
   const result = await f.service.detail("journey-002", { limit: "1" });
