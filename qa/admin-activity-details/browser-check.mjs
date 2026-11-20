@@ -312,7 +312,7 @@ try {
     await expect(page.getByTestId("activity-other-row")).toHaveCount(5);
     await expect(page.getByTestId("activity-journey-row")).toHaveCount(0);
     await expect(page.locator("[data-activity-id]")).toHaveCount(0);
-    await expect(page.getByText("1005 matching events outside tracked journeys")).toHaveCount(0);
+    await expect(page.getByText("1005 matching events outside tracked journeys")).toBeVisible();
     const allHref = await page.getByRole("link",{name:/View all other activity/}).getAttribute("href");
     await page.goto(base+allHref);
     await expect(page.locator("[data-activity-id]")).toHaveCount(1005);
