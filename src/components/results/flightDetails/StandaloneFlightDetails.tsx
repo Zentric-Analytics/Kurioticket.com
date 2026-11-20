@@ -1,6 +1,7 @@
 "use client";
 
 import { savedFlightTimeFields, SavedFlightTimeError } from "@/shared/flights/savedFlightTime";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 
