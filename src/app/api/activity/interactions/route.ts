@@ -82,7 +82,7 @@ export async function POST(request: Request) {
           where: { requestId: parsed.data.requestId },
           select: { id: true, visitorId: true, userId: true, type: true, query: true, createdAt: true },
         });
-        if (matchesInteractionSearch(search, identity, parsed.data.product, getPublicEnvironment(), new Date())) {
+        if (search && matchesInteractionSearch(search, identity, parsed.data.product, getPublicEnvironment(), new Date())) {
           const candidates = await tx.journeyEvent.findMany({
             where: { type: "SEARCH_COMPLETED", searchHistoryId: search.id,
               journey: { visitorId: identity.visitorId! },
