@@ -119,6 +119,7 @@ export function FlightCard({
         return;
       }
       await navigator.clipboard.writeText(url);
+      recordCustomerInteraction({ action: "share_link_copied", product: "FLIGHT", resultId: flight.id });
       setShareConfirmation(t("linkCopied") || "Flight link copied");
       window.setTimeout(() => setShareConfirmation(""), 2200);
     } catch (error) {
