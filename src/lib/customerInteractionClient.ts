@@ -15,13 +15,21 @@ export function recordCustomerInteraction(input: {
   if (typeof window === "undefined") return;
   try {
     if (window.localStorage.getItem(analyticsConsentStorageKey) !== "granted") return;
-    if (!/^[a-zA-Z0-9._:-]{1,128}$/.test(input.resultId)) return;
+    if (!input.resultId || input.resultId.length > 4096) return;
     const eventId = window.crypto.randomUUID();
-    void fetch("/api/activity/interactions", {
-      method: "POST", cache: "no-store", credentials: "same-origin", keepalive: true,
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ ...input, eventId }),
-    }).catch(() => undefined);
+    // Provider result IDs may contain opaque punctuation or exceed the API's
+    // public reference limit. Hash those rather than transmitting raw payloads.
+    const safe = /^[a-zA-Z0-9._:-]{1,128}$/.test(input.resultId);
+    void (async () => {
+      const resultId = safe ? input.resultId : Array.from(new Uint8Array(
+        await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(input.resultId)),
+      ), byte => byte.toString(16).padStart(2, "0")).join("");
+      await fetch("/api/activity/interactions", {
+        method: "POST", cache: "no-store", credentials: "same-origin", keepalive: true,
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ ...input, resultId, eventId }),
+      });
+    })().catch(() => undefined);
   } catch {
     // Local saves and sharing must continue without optional analytics.
   }
