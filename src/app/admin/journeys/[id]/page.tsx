@@ -42,6 +42,24 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
             </dl>
           </section>
           <JourneyEventHistory events={result.data.events} />
+          {(() => {
+            // Identity-level records are not part of the selected journey.
+            const owner = result.data.journey.identity;
+            const kind = owner.userId ? "user" : "guest";
+            const identityId = owner.userId || owner.visitorId;
+            if (!identityId) return null;
+            const href = "/admin/users/" + kind + "/" + encodeURIComponent(identityId) + "/other?range=all";
+            return <section aria-labelledby="journey-other-activity-heading"
+              className="min-w-0 space-y-2 border-t border-[#D8E1EC] pt-5">
+              <h2 id="journey-other-activity-heading" className="text-[15px] font-semibold">Other recorded activity</h2>
+              <p className="text-[12px] leading-5 text-[#64748B]">
+                Separate account actions and operational records belong to this identity, not to the selected journey.
+              </p>
+              <Link href={href} className="inline-flex min-h-9 items-center rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]">
+                View all other activity
+              </Link>
+            </section>;
+          })()}
           {result.data.nextCursor ? <div className="flex justify-end"><Link href={cursorHref(id, raw, result.data.nextCursor)} className="inline-flex h-9 items-center rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]">Next events</Link></div> : null}
         </div>
       ) : (
