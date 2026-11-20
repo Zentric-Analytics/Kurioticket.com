@@ -1,6 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
+import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, X } from "lucide-react";
@@ -47,6 +48,7 @@ export function HotelPriceAlertControl({
   compactDesktop?: boolean;
 }) {
   const router = useRouter();
+  const journeyEvents = useJourneyEvents();
   const { t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -331,12 +333,12 @@ export function HotelPriceAlertControl({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
-          buildHotelPriceAlertPayload(
+          { ...buildHotelPriceAlertPayload(
             search,
             alertTarget,
             providerCurrency,
             { id: hotel.id, name: hotel.name },
-          ),
+          ), ...(journeyEvents.interactionRequestId("hotel", hotel.id) ? { journeyRequestId: journeyEvents.interactionRequestId("hotel", hotel.id) } : {}) },
         ),
       });
       if (response.status === 401) {
