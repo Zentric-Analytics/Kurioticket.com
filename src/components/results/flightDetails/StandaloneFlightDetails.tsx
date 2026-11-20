@@ -343,6 +343,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         recordCustomerInteraction({ action: "share_sheet_completed", product: "FLIGHT", resultId: savedFlightKey });
       } else {
         await navigator.clipboard.writeText(url);
+        recordCustomerInteraction({ action: "share_link_copied", product: "FLIGHT", resultId: savedFlightKey });
         setShareFeedback("Flight link copied");
         window.setTimeout(() => setShareFeedback(""), 1800);
       }
