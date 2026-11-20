@@ -4,7 +4,7 @@
 
 Search Activity and Platform Health must distinguish **application origin** from **crawler identity**.
 
-- `WEB`: validated web account session, same-origin Fetch Metadata, or a prepared, server-issued same-origin operational web search session. Includes desktop and mobile browsers.
+- `WEB`: validated web account session, same-origin Fetch Metadata, or a previously issued, server-signed same-origin operational web search session. A freshly prepared session from an Origin header alone does not qualify. Includes desktop and mobile browsers.
 - `IOS` and `ANDROID`: authenticated mobile session provenance or a server-signed, platform-bound v2 operational search session for guests. No analytics consent is required for essential operational attribution.
 - `UNKNOWN` (displayed to administrators as **Unverified source**): no trustworthy platform proof. It **must not** be labeled a crawler, WEB, Android or iOS merely because of user-agent or IP shape.
 - **Verified crawler:** independent request-origin classification. Only an identifying Googlebot/Bingbot user-agent **and** forward-confirmed reverse DNS for its connecting IP qualify. Claimed crawler headers are not enough. Unverified or unavailable DNS fails open for human search behavior.
