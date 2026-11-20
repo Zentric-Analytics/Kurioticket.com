@@ -17,14 +17,14 @@ const at = new Date("2026-10-20T12:34:00Z");
 const render = (changes: Partial<Props> = {}) =>
   renderToStaticMarkup(createElement(AdminIdentityTable, { ...props, ...changes }));
 
-test("five existing data columns and user/guest activity links retain all recorded identity details", () => {
+test("six data columns and user/guest activity links retain all recorded identity details", () => {
   const html = render({ rows: [
     { kind: "user", record: { id: "qa-user-internal-id", name: "QA fixture", email: "qa@example.invalid",
-      role: "SUPPORT", status: "ACTIVE", createdAt: at } },
+      role: "SUPPORT", status: "ACTIVE", createdAt: at }, lastSeenAt: new Date("2026-10-21T08:05:00Z") },
     { kind: "guest", record: { id: "qa-guest-long-id", firstSeenAt: at, lastSeenAt: at } },
   ]});
-  assert.equal((html.match(/<th /g) || []).length, 5);
-  for (const column of ["IDENTITY", "TYPE", "STATUS", "JOINED / FIRST SEEN", "ACTIVITY"]) {
+  assert.equal((html.match(/<th /g) || []).length, 6);
+  for (const column of ["IDENTITY", "TYPE", "STATUS", "JOINED / FIRST SEEN", "LAST SEEN", "ACTIVITY"]) {
     assert.match(html, new RegExp(column.replace("/", "\\/")));
   }
   assert.match(html, /QA fixture/);
@@ -43,13 +43,13 @@ test("five existing data columns and user/guest activity links retain all record
   assert.doesNotMatch(html, /aria-label="User types"|aria-label="Sort by"|Apply Filter/);
 });
 
-test("table remains a scrollable, accessible region with five columns and no pagination", () => {
+test("table remains a scrollable, accessible region with six columns and no pagination", () => {
   const html = render();
   assert.match(html, /<h2 id="identity-directory-title" class="sr-only">Users directory<\/h2>/);
   assert.equal((html.match(/aria-labelledby="identity-directory-title"/g) || []).length, 1);
   assert.match(html, /min-w-\[960px\]/);
   assert.doesNotMatch(html, /Pg\\d|Identity pagination|Previous page|Next page/);
-  assert.match(html, /colSpan="5"/i);
+  assert.match(html, /colSpan="6"/i);
   assert.doesNotMatch(html, /Rows per page|15 rows|matching identities/);
 });
 
@@ -73,4 +73,22 @@ test("empty Guest tab with no search or account filters offers to return to all 
   const html = render({ pageHref: "/admin/users?role=ALL&status=ALL&tab=GUEST&sort=newest&page=1" });
   assert.match(html, /View all users/);
   assert.match(html, /tab=ALL&amp;sort=newest&amp;page=1/);
+});
+
+test("Last Seen distinguishes actual observations from registration and absent data", () => {
+  const html = render({ rows: [
+    { kind: "user", record: { id: "qa-user-111111", name: "Observed", email: null,
+      role: "USER", status: "ACTIVE", createdAt: new Date("2026-08-08T12:00:00Z") },
+      lastSeenAt: new Date("2026-11-20T09:20:00Z") },
+    { kind: "user", record: { id: "qa-user-222222", name: "Unobserved", email: null,
+      role: "USER", status: "ACTIVE", createdAt: new Date("2026-08-08T12:00:00Z") },
+      lastSeenAt: null },
+    { kind: "guest", record: { id: "qa-guest-333333", firstSeenAt: new Date("2026-11-19T12:00:00Z"),
+      lastSeenAt: new Date("2026-11-20T10:00:00Z") } },
+  ] });
+  assert.equal((html.match(/data-label="Last Seen"/g) || []).length, 3);
+  assert.match(html, /dateTime="2026-11-20T09:20:00\.000Z"/);
+  assert.match(html, /dateTime="2026-11-20T10:00:00\.000Z"/);
+  assert.match(html, /aria-label="No recorded last seen"/);
+  assert.doesNotMatch(html, /Online now|Currently online/);
 });
