@@ -1,4 +1,5 @@
-import { Monitor, Smartphone, MapPin, Globe2, Laptop, Clock3, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { Monitor, Smartphone, MapPin, Globe2, Laptop, ChevronRight } from "lucide-react";
 import type { DeviceSessionResult, AdminDeviceSession } from "@/services/adminDeviceSessionsService";
 
 const stamp = (value: Date) => new Intl.DateTimeFormat("en-GB", {
@@ -6,7 +7,7 @@ const stamp = (value: Date) => new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC",
 }).format(value) + " UTC";
 
-function platformLabel(item: AdminDeviceSession) {
+export function platformLabel(item: AdminDeviceSession) {
   if (item.client === "MOBILE") {
     if (item.platform === "ios") return "iOS app";
     if (item.platform === "android") return "Android app";
@@ -16,10 +17,10 @@ function platformLabel(item: AdminDeviceSession) {
   if (item.deviceLabel === "Desktop device" || /computer|Mac$/.test(item.deviceLabel ?? "")) return "Desktop web";
   return "Web";
 }
-function sourceIcon(item: AdminDeviceSession) {
+export function sourceIcon(item: AdminDeviceSession) {
   return item.client === "MOBILE" || platformLabel(item) === "Mobile web" ? Smartphone : Monitor;
 }
-function value(input: string | null | undefined) {
+export function deviceValue(input: string | null | undefined) {
   return input?.trim() || "Unavailable";
 }
 function Detail({ label, children, Icon }: {
@@ -32,8 +33,8 @@ function Detail({ label, children, Icon }: {
 }
 
 /** Identity-only account sessions. Guest presence is deliberately not promoted to a tracked device. */
-export function AdminIdentityDeviceAccess({ kind, result }: {
-  kind: string; result: DeviceSessionResult | null;
+export function AdminIdentityDeviceAccess({ kind, result, historyHref }: {
+  kind: string; result: DeviceSessionResult | null; historyHref?: string;
 }) {
   const sessions = result?.status === "ok" ? result.sessions : [];
   const available = kind === "user" && result?.status === "ok";
@@ -41,94 +42,47 @@ export function AdminIdentityDeviceAccess({ kind, result }: {
   const lastLocated = sessions.find(session => session.locationLabel);
   const platforms = Array.from(new Set(sessions.map(platformLabel)));
   return <section data-testid="identity-device-access" aria-label="Platforms and devices"
-    className="min-w-0 space-y-4 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
-    <div className="flex flex-wrap items-start justify-between gap-2">
-      <div>
-        <h2 className="text-[15px] font-semibold text-[#0F172A]">Platforms &amp; Devices</h2>
-        <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-          Recorded account sessions, independent of activity filters. Device labels may be generic; locations are approximate network estimates.
-        </p>
-      </div>
-      <span className="inline-flex items-center gap-1 text-[11px] text-[#64748B]">
-        <ShieldCheck size={14} aria-hidden="true" /> Account-scoped
-      </span>
-    </div>
-    <div data-testid="device-overview" className="grid min-w-0 grid-cols-1 gap-x-4 sm:grid-cols-2 xl:grid-cols-4 xl:divide-x xl:divide-[#E2E8F0]">
-      <Detail label="Platforms used" Icon={Globe2}>
-        {platforms.length ? platforms.join(" · ") : "Unavailable"}
-      </Detail>
-      <Detail label="Last recorded location" Icon={MapPin}>
-        {value(lastLocated?.locationLabel)}
-      </Detail>
-      <Detail label="Most recent device" Icon={Laptop}>
-        {value(latest?.deviceLabel)}
-      </Detail>
-      <Detail label="Browser" Icon={Globe2}>
-        {latest?.client === "MOBILE" ? "Not applicable (native app)" : value(latest?.browser)}
-      </Detail>
+    className="min-w-0 space-y-3 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
+    <h2 className="text-[15px] font-semibold text-[#0F172A]">Platforms &amp; Devices</h2>
+    <div data-testid="device-overview" className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-2 lg:grid-cols-4 lg:divide-x lg:divide-[#E2E8F0]">
+      <Detail label="Platforms today" Icon={Globe2}>{platforms.length ? platforms.join(" · ") : "Unavailable"}</Detail>
+      <Detail label="Recent device" Icon={Laptop}>{deviceValue(latest?.deviceLabel)}</Detail>
+      <Detail label="Browser" Icon={Globe2}>{latest?.client === "MOBILE" ? "In-app" : deviceValue(latest?.browser)}</Detail>
+      <Detail label="Access location" Icon={MapPin}>{deviceValue(lastLocated?.locationLabel)}</Detail>
     </div>
     <section aria-labelledby="device-history-heading" className="min-w-0 border-t border-[#E2E8F0] pt-3">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <h3 id="device-history-heading" className="flex items-center gap-2 text-[14px] font-semibold text-[#0F172A]">
-          <Clock3 size={16} aria-hidden="true" className="text-[#64748B]"/>Device &amp; Access History
-        </h3>
-        {available && sessions.length ? <span className="text-[11px] text-[#64748B]">Latest {sessions.length} sessions</span> : null}
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+        <h3 id="device-history-heading" className="text-[14px] font-semibold text-[#0F172A]">Device &amp; Access History</h3>
+        <span className="rounded-md border border-[#E2E8F0] px-2 py-1 text-[11px] font-medium text-[#64748B]">Today (UTC)</span>
       </div>
-      {!available ? <p role="status" className="rounded-lg bg-[#F8FAFC] px-3 py-4 text-[13px] text-[#64748B]">
-        {kind === "guest"
-          ? "Device and access details are not linked to guest activity. No device or location is inferred."
-          : "Device session data is temporarily unavailable."}
-      </p> : sessions.length === 0 ? <p role="status" className="rounded-lg bg-[#F8FAFC] px-3 py-4 text-[13px] text-[#64748B]">
-        No recorded account sessions are available.
-      </p> : <>
-        <div className="space-y-2 md:hidden" aria-label="Device access history">
-          {sessions.map(session => {
-            const Icon = sourceIcon(session);
-            return <article key={session.id} className="min-w-0 rounded-lg border border-[#E2E8F0] p-3">
-              <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#0F172A]">
-                  <Icon size={15} aria-hidden="true" />{platformLabel(session)}
-                </span>
-                <time dateTime={session.lastSeenAt.toISOString()} className="text-[11px] tabular-nums text-[#64748B]">{stamp(session.lastSeenAt)}</time>
+      {!available ? <p role="status" className="rounded-lg bg-[#F8FAFC] px-3 py-3 text-[12px] text-[#64748B]">
+        {kind === "guest" ? "Device and access details are not linked to guest activity. No device or location is inferred." : "Device session data is temporarily unavailable."}
+      </p> : sessions.length === 0 ? <p role="status" className="rounded-lg bg-[#F8FAFC] px-3 py-3 text-[12px] text-[#64748B]">
+        No recorded device activity today.
+      </p> : <div className="divide-y divide-[#E2E8F0]" data-testid="device-today-list">
+        {sessions.map(session => {
+          const Icon = sourceIcon(session);
+          return <div data-testid="device-session-row" key={session.id}
+            className="grid min-w-0 grid-cols-1 gap-x-4 gap-y-1 py-2.5 text-[12px] text-[#334155] sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] sm:items-center">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 font-medium text-[#0F172A]">
+                <Icon size={15} aria-hidden="true" />{platformLabel(session)}
               </div>
-              <p className="mt-2 break-words text-[12px] text-[#334155]">{value(session.deviceLabel)} · {value(session.os)}</p>
-              <p className="mt-1 break-words text-[12px] text-[#64748B]">
-                {session.client === "MOBILE" ? "In-app" : value(session.browser)} · {value(session.locationLabel)}
-                {session.revokedAt ? " · Revoked" : ""}
+              <p className="mt-0.5 truncate pl-[23px] text-[11px] text-[#64748B]" title={[session.deviceLabel, session.os, session.browser].filter(Boolean).join(" · ")}>
+                {deviceValue(session.deviceLabel)} · {deviceValue(session.os)}
+                {session.client === "WEB" && session.browser ? " · " + session.browser : ""}
               </p>
-            </article>;
-          })}
-        </div>
-        <div className="admin-responsive-records hidden min-w-0 overflow-x-auto md:block" role="region"
-          aria-label="Device access history table" tabIndex={0}>
-        <table className="w-full min-w-[730px] table-fixed text-left text-[12px]">
-          <thead className="border-b border-[#E2E8F0] bg-[#F8FAFC] text-[11px] font-medium uppercase tracking-wide text-[#64748B]">
-            <tr>
-              <th className="w-[16%] px-3 py-2.5 font-medium" scope="col">Platform</th>
-              <th className="w-[20%] px-3 py-2.5 font-medium" scope="col">Device</th>
-              <th className="w-[12%] px-3 py-2.5 font-medium" scope="col">OS</th>
-              <th className="w-[15%] px-3 py-2.5 font-medium" scope="col">Browser</th>
-              <th className="w-[17%] px-3 py-2.5 font-medium" scope="col">Location</th>
-              <th className="w-[20%] px-3 py-2.5 font-medium" scope="col">Last seen</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#E2E8F0]">
-            {sessions.map(session => {
-              const Icon = sourceIcon(session);
-              return <tr data-testid="device-session-row" key={session.id} className="align-top text-[#334155]">
-                <td className="px-3 py-3"><span className="inline-flex items-center gap-1.5 font-medium text-[#0F172A]">
-                  <Icon size={15} aria-hidden="true" />{platformLabel(session)}</span></td>
-                <td className="break-words px-3 py-3">{value(session.deviceLabel)}</td>
-                <td className="break-words px-3 py-3">{value(session.os)}</td>
-                <td className="break-words px-3 py-3">{session.client === "MOBILE" ? "In-app" : value(session.browser)}</td>
-                <td className="break-words px-3 py-3">{value(session.locationLabel)}</td>
-                <td className="px-3 py-3 tabular-nums"><time dateTime={session.lastSeenAt.toISOString()}>{stamp(session.lastSeenAt)}</time>
-                  {session.revokedAt ? <span className="mt-1 block text-[11px] text-[#64748B]">Revoked</span> : null}</td>
-              </tr>;
-            })}
-          </tbody>
-        </table>
-      </div></>}
+            </div>
+            <span className="min-w-0 truncate text-[#64748B]" title={session.locationLabel ?? "Unavailable"}>{deviceValue(session.locationLabel)}</span>
+            <time dateTime={session.lastSeenAt.toISOString()} className="whitespace-nowrap tabular-nums text-[#64748B] sm:text-right">{stamp(session.lastSeenAt)}</time>
+          </div>;
+        })}
+      </div>}
+      {kind === "user" && historyHref ? <div className="mt-2 flex justify-end border-t border-[#E2E8F0] pt-2">
+        <Link href={historyHref} className="focus-ring inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-[12px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]">
+          View full device &amp; access history <ChevronRight size={14} aria-hidden="true" />
+        </Link>
+      </div> : null}
     </section>
   </section>;
 }

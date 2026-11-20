@@ -4,8 +4,12 @@ import test from "node:test";
 
 test("device history is account-scoped and excludes credentials and network identifiers", () => {
   const source = readFileSync("src/services/adminDeviceSessionsService.ts", "utf8");
-  assert.match(source, /where:\s*\{ userId \}/);
-  assert.match(source, /take:\s*12/);
+  assert.match(source, /where:\s*\{ userId, lastSeenAt: deviceTodayWindow\(\) \}/);
+  assert.match(source, /const where = \{ userId, lastSeenAt: deviceHistoryWindow\(query\) \}/);
+  assert.match(source, /take:\s*3/);
+  assert.match(source, /deviceTodayWindow\(\)/);
+  assert.match(source, /loadAdminFullDeviceHistory/);
+  assert.match(source, /skip: \(query\.page - 1\) \* DEVICE_HISTORY_PAGE_SIZE/);
   assert.doesNotMatch(source, /select:\s*\{[^}]*tokenHash/);
   assert.doesNotMatch(source, /select:\s*\{[^}]*maskedIp/);
   assert.doesNotMatch(source, /select:\s*\{[^}]*userAgent/);
@@ -17,7 +21,9 @@ test("guest activity never pretends operational presence is a device identity", 
   assert.match(page, /kind === "user" \? await loadAdminDeviceSessions\(id\) : null/);
   assert.match(ui, /Device and access details are not linked to guest activity/);
   assert.match(ui, /data-testid="device-session-row"/);
-  assert.match(ui, /min-w-\[730px\]/);
+  assert.match(ui, /data-testid="device-today-list"/);
+  assert.match(ui, /View full device/);
+  assert.match(ui, /Today \(UTC\)/);
   assert.match(page, /<AdminIdentityDeviceAccess/);
   assert.match(page, /<ActivityFiltersBar/);
   assert.match(page, /<AdminActivityOverview/);

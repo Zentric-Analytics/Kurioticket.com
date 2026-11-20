@@ -243,7 +243,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       </section>
       </div>
 
-      <AdminIdentityDeviceAccess kind={kind} result={deviceSessions} />
+      <AdminIdentityDeviceAccess kind={kind} result={deviceSessions}
+        historyHref={kind === "user" ? "/admin/users/user/" + encodeURIComponent(id) + "/devices?range=all&activityReturn=" + encodeURIComponent(activityReturn) : undefined} />
 
       <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
         <section aria-label="Activity filters" className="min-w-0">

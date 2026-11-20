@@ -192,6 +192,18 @@ try {
     await expect(outerCard.getByRole("heading",{name:"Platforms & Devices"})).toBeVisible();
     await expect(outerCard.getByRole("heading",{name:"Device & Access History"})).toBeVisible();
     await expect(outerCard.getByText("Device and access details are not linked to guest activity. No device or location is inferred.")).toBeVisible();
+    const filterRow = outerCard.getByTestId("activity-filters-row");
+    const tabsAfterFilters = outerCard.getByTestId("activity-tabs-after-filters");
+    await expect(filterRow).toBeVisible();
+    await expect(tabsAfterFilters).toBeVisible();
+    assert.ok(await filterRow.evaluate(el =>
+      el.getBoundingClientRect().bottom <= (document.querySelector('[data-testid="activity-tabs-after-filters"]')?.getBoundingClientRect().top ?? 0)
+    ), "Activity navigation must follow the filter controls");
+    if (width >= 1280) {
+      const y = await filterRow.locator("button").first().evaluate(el => el.getBoundingClientRect().top);
+      const buttons = await filterRow.locator("button").evaluateAll(items => items.map(el => el.getBoundingClientRect().top));
+      assert.ok(buttons.every(top => Math.abs(top - y) <= 15), "Desktop filters must share a balanced horizontal row");
+    }
     await expect(outerCard.getByTestId("activity-body-card")).toBeVisible();
     await expect(outerCard.getByRole("navigation",{name:"Breadcrumb"})).toHaveCount(0);
     await expect(page.getByRole("navigation",{name:"Breadcrumb"})).toBeVisible();
@@ -242,9 +254,36 @@ try {
     await expectAlignedColumns(page);
     await expectHeaderTimePresentation(page, "Registered zoom " + zoom);
     await expectBalancedDesktopHeader(page, "Registered zoom " + zoom);
+    const fullDeviceHistory = page.getByRole("link", {name:/View full device & access history/});
+    await expect(fullDeviceHistory).toBeVisible();
+    assert.ok((await fullDeviceHistory.getAttribute("href"))?.includes("/admin/users/user/qa-registered-0001/devices?range=all"), "Full device link must include the correct registered identity");
+    await expect(page.getByTestId("device-today-list")).toBeVisible();
+    await expect(page.getByTestId("device-session-row")).toHaveCount(3);
+    await expect(page.getByText("Today (UTC)")).toBeVisible();
+    await expect(page.getByText("qa-device-yesterday")).toHaveCount(0);
+
     assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography);
     await page.screenshot({caret:"initial",path: output + "/after-desktop-zoom-equivalent-" + Math.round(zoom*100) + ".png",fullPage:true});
   }
+
+  // Full device history uses its own date filters and returns records older than Today.
+  await page.setViewportSize({width:1280,height:900});
+  await page.goto(base + "/admin/users/user/qa-registered-0001/activity?range=all");
+  await page.getByRole("link",{name:/View full device & access history/}).click();
+  await expect(page).toHaveURL(url => url.pathname === "/admin/users/user/qa-registered-0001/devices" && url.searchParams.get("range") === "all");
+  await expect(page.getByRole("heading",{name:"Device & Access History"})).toBeVisible();
+  await expect(page.locator('[data-testid="device-history-row"]:visible')).toHaveCount(5);
+  await page.getByRole("button",{name:"Device history range: All time"}).click();
+  await page.getByRole("listbox",{name:"Device history range"}).getByRole("option",{name:"Today",exact:true}).click();
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
+  await expect(page).toHaveURL(/range=today/);
+  await expect(page.locator('[data-testid="device-history-row"]:visible')).toHaveCount(4);
+  await page.setViewportSize({width:320,height:800});
+  await expect(page.locator('[data-testid="device-history-row"]:visible')).toHaveCount(4);
+  const deviceOverflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
+  assert.equal(deviceOverflow,false,"Full device history must fit mobile viewport without page overflow");
+  await page.screenshot({caret:"initial",path:output+"/device-history-today-mobile-320.png",fullPage:true});
+  console.log("PASS full device history drill-down, date filters, and mobile layout");
 
   // Operational-only guest sessions are not analytics identities and cannot disable tracking.
   await page.goto(base + "/admin/users/guest/qa-operational-guest-0001/activity?range=all");
