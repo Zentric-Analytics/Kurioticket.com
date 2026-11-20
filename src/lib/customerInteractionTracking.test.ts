@@ -13,6 +13,12 @@ test("interactions always validate origin, identity and consent on the server", 
   assert.match(route, /lockConsentedVisitor\(tx, identity\.visitorId!, identity\.userId\)/);
   assert.doesNotMatch(route, /request\.headers\.get\(["']x-user-id/);
   assert.match(route, /name\.startsWith\("share_"\) \? "SHARE"/);
+  assert.match(route, /search\.visitorId === identity\.visitorId/);
+  assert.match(route, /search\.type === parsed\.data\.product/);
+  assert.match(route, /candidates\.length === 1/);
+  assert.match(route, /linkedSearchHistoryId/);
+  assert.match(route, /tx\.journeyEvent\.create/);
+  assert.match(route, /eventKey: "interaction:" \+ parsed\.data\.eventId/);
 });
 
 test("clients send bounded references and only after observed result actions", () => {
