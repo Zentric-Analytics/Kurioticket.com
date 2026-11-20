@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createHmac } from "node:crypto";
 import { isWebsiteOnlinePresenceRoute } from "./onlinePresence";
-import { createOnlinePresenceHandler } from "./onlinePresenceRoute";
+import { createOnlinePresenceHandler, type OnlinePresenceHeartbeat } from "./onlinePresenceRoute";
 import { hasConsistentWebsitePresenceOrigin, renewPresenceCredential } from "./onlinePresenceCredential";
 
 const now = new Date("2026-11-18T12:00:00Z");
@@ -14,7 +14,7 @@ const nativePath = "/api/mobile/v1/presence";
 const origin = "https://kurioticket.example";
 
 function fixture() {
-  const records: Array<{ sourceId: string; platform: string; accountSessionId: string | null }> = [];
+  const records: OnlinePresenceHeartbeat[] = [];
   const handler = (transport: "web" | "native", environment: "staging" | "production" = "production") =>
     createOnlinePresenceHandler(transport, {
       environment: () => environment,
@@ -55,6 +55,10 @@ test("a guest uses a memory-only signed web credential independently of optional
   assert.equal(records[0].platform, "mobile_web");
   assert.equal(records[0].sourceId, records[1].sourceId);
   assert.deepEqual(records.map(record => record.accountSessionId), [null, "canonical-session"]);
+  assert.equal(records[0].device, undefined, "anonymous activity never acquires a device identity");
+  assert.equal(records[1].device?.deviceLabel, "Desktop device");
+  assert.equal(records[1].device?.locationLabel, null);
+
 });
 
 test("native guest credentials are transport and environment bound and transition to verified account sessions", async () => {
