@@ -71,7 +71,7 @@ function transport(request: Request): "web" | "native" | null {
   if (platform) {
     // Browser scripts can spoof the mobile platform header. Never expose the
     // operational credential in a readable header to browser requests.
-    if (request.headers.has("cookie") || request.headers.has("origin") || request.headers.has("sec-fetch-site")
+    if (request.headers.has("origin") || request.headers.has("sec-fetch-site")
         || request.headers.has("sec-fetch-mode") || request.headers.has("sec-fetch-dest")) return null;
     return "native";
   }
@@ -112,7 +112,7 @@ export function prepareOperationalSearchSession(
   const payload = [version, reference.id, String(reference.expiresAt.getTime()), environment,
     ...(version === "v2" && platform ? [platform] : [])].join(".");
   return { reference, credential: payload + "." + mac(payload, key, version), transport: kind,
-    newCredential: true, guestNativeAttribution: version === "v2" && !supplied || version === "v2" && Boolean(existing) };
+    newCredential: true, guestNativeAttribution: version === "v2" && (!supplied || Boolean(existing)) };
 }
 export function readOperationalSearchSession(request: Request, now = Date.now(), environment = getPublicEnvironment()): OperationalSessionReference | null {
   const key = secret();
