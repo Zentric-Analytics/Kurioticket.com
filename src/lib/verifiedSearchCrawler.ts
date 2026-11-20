@@ -32,13 +32,24 @@ function validCrawlerHostname(name: string, crawler: VerifiedSearchCrawler) {
   if (crawler === "GOOGLEBOT") return /^(?:crawl-[a-z0-9-]+\.googlebot\.com|geo-crawl-[a-z0-9-]+\.geo\.googlebot\.com)$/.test(host);
   return /^[a-z0-9-]+\.search\.msn\.com$/.test(host);
 }
+function canonicalIp(value: string): string | null {
+  const version = isIP(value);
+  if (!version) return null;
+  if (version === 4) return value;
+  try {
+    // WHATWG IPv6 host parsing normalizes expanded, compressed and IPv4-
+    // mapped forms into the same canonical address; no DNS or extra module.
+    return new URL("http://[" + value + "]/").hostname;
+  } catch { return null; }
+}
 async function confirmReverseAndForward(ip: string, crawler: VerifiedSearchCrawler, resolver: CrawlerLookup) {
   try {
     const names = await resolver.reverseIp(ip);
     for (const hostname of names.slice(0, 5)) {
       if (!validCrawlerHostname(hostname, crawler)) continue;
       const addresses = await resolver.forwardHost(hostname.replace(/\.$/, ""));
-      if (addresses.some(entry => entry.address === ip)) return crawler;
+      const client = canonicalIp(ip);
+      if (client && addresses.some(entry => canonicalIp(entry.address) === client)) return crawler;
     }
   } catch { /* DNS errors do not establish verified identity. */ }
   return null;
