@@ -31,6 +31,7 @@ import { formatFlightCardPrice } from "@/components/results/flightCardPrice";
 import { MobileFlightCard } from "@/components/results/MobileFlightCard";
 import { formatDesktopBaggageValue } from "@/components/results/flightCardBaggage";
 import { useSavedFlightResult } from "@/components/results/useSavedFlightResult";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 
 type DetailItem = {
   label: string;
@@ -114,6 +115,7 @@ export function FlightCard({
     try {
       if (navigator.share) {
         await navigator.share({ title: route, text: flight.airlineName, url });
+        recordCustomerInteraction({ action: "share_sheet_completed", product: "FLIGHT", resultId: flight.id });
         return;
       }
       await navigator.clipboard.writeText(url);
