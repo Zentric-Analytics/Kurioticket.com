@@ -47,6 +47,14 @@ export async function resolveRequestActivityIdentity(
     } else {
       userId = (await resolve.web())?.userId ?? null;
       if (userId) application = resolveApplicationSource(request, { client: "WEB" });
+      else if (operationalSession?.transport === "web" && !operationalSession.newCredential
+        && !request.headers.has("authorization") && !request.headers.has("x-mobile-platform")) {
+        // Only previously signed, server-verified web continuity proves website
+        // origin when a browser omits Sec-Fetch-Site. A caller can forge Origin
+        // on its FIRST request; newly minted sessions confer no attribution.
+        // This does not create visitor consent or authenticate an account.
+        application = { applicationSource: "WEB" };
+      }
     }
   } catch {
     // A failed session lookup cannot establish ownership of this activity.
