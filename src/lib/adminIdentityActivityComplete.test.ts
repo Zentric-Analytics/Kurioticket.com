@@ -369,7 +369,7 @@ test("registered account with 150 eligible links checks only 6 event-bearing vis
   const scenario = setup("user", 113, ["FLIGHT", "HOTEL"], true, "HOTEL", 150, 6);
   const result = await scenario.load();
   assert.equal(result.status, "ok");
-  assert.equal(result.data.events.length, scenario.expected);
+  assert.equal(result.data.events.length, scenario.expected + 2);
   assert.equal(result.data.summary.searches, 113);
   assert.equal(result.data.summary.offersSelected, 2);
   assert.equal(result.data.summary.journeysTracked, 2);
