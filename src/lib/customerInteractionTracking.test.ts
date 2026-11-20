@@ -43,11 +43,34 @@ test("confirmed account mutation events are separate from guest-only local save 
   const webHotel = read("src/components/results/useSavedHotel.ts");
   assert.match(saves, /name: "saved_item_confirmed"/);
   assert.match(saves, /name: "saved_item_removed"/);
+  assert.match(saves, /createSavedItemWriter\(getPrisma, true\)/);
+  assert.match(saves, /tx\.analyticsEvent\.create/);
+  assert.match(saves, /confirmedSavedActivityMetadata/);
+  assert.doesNotMatch(saves, /trackAnalyticsEvent\(/);
   for (const name of ["price_alert_created", "price_alert_paused", "price_alert_reactivated", "price_alert_deleted"]) {
     assert.ok(alerts.includes(name), name);
   }
   assert.match(webFlight, /action: next\.includes\(flight\.id\) \? "local_saved" : "local_unsaved"/);
   assert.match(webHotel, /action: nextSaved \? "local_saved" : "local_unsaved"/);
+});
+
+test("unified registered history includes only exclusively linked consented guest events", () => {
+  const reader = read("src/services/adminIdentityActivityService.ts");
+  assert.match(reader, /userId: null, visitor: \{ is: linked \}/);
+  assert.match(reader, /eligibleLinkedVisitorWhere\(id\)/);
+  const eligibility = read("src/lib/adminIdentityJourney.ts");
+  assert.match(eligibility, /consentStatus: "GRANTED"/);
+  assert.match(eligibility, /identityLinks:/);
+  assert.match(reader, /savedType/);
+  assert.match(reader, /saved_item_removed/);
+});
+
+test("saved action source is derived from verified web or native sessions, not body fields", () => {
+  const web = read("src/app/api/dashboard/saved/route.ts");
+  const native = read("src/app/api/mobile/v1/saved/route.ts");
+  assert.match(web, /resolveApplicationSource\(request, \{ client: "WEB" \}\)/);
+  assert.match(native, /resolveApplicationSource\(r,\{client:"MOBILE",platform:session\?\.platform,appVersion:session\?\.appVersion\}\)/);
+  assert.doesNotMatch(native, /p\.data\.applicationSource/);
 });
 
 test("admin activity uses sanitized action labels rather than arbitrary analytics metadata", () => {

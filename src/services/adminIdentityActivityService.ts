@@ -43,11 +43,20 @@ const safeInteractionNames: Record<string, string> = {
 function safeActivityMetadata(value: unknown): { product: string | null; detail: string } {
   if (!value || typeof value !== "object" || Array.isArray(value)) return { product: null, detail: "Recorded account activity" };
   const item = value as Record<string, unknown>;
-  const product = typeof item.product === "string" && ["FLIGHT", "HOTEL", "CAR", "PACKAGE"].includes(item.product) ? item.product : null;
+  // Legacy Save/Unsave rows may contain savedType without product.
+  // Display that verified stored product without altering historical records.
+  // Search-only saves need their original searchType; never guess it.
+  const stored = typeof item.product === "string" ? item.product : null;
+  const inferred = stored ?? (typeof item.savedType === "string" && ["flight", "hotel", "car"].includes(item.savedType)
+    ? item.savedType.toUpperCase() : null);
+  const product = inferred && ["FLIGHT", "HOTEL", "CAR", "PACKAGE"].includes(inferred) ? inferred : null;
   const ref = [item.resultId, item.savedItemId, item.alertId].find(id => typeof id === "string"
     && id.length <= 128 && /^[a-zA-Z0-9._:-]+$/.test(id)) as string | undefined;
+  const source = item.applicationSource === "WEB" ? "Web"
+    : item.applicationSource === "IOS" ? "iOS"
+      : item.applicationSource === "ANDROID" ? "Android" : null;
   return { product, detail: [product ? product.charAt(0) + product.slice(1).toLowerCase() : null,
-    ref ? "Reference: " + ref : null].filter(Boolean).join(" · ") || "Recorded account activity" };
+    source, ref ? "Reference: " + ref : null].filter(Boolean).join(" · ") || "Recorded account activity" };
 }
 type SafeAnalyticsType = keyof typeof safeAnalyticsLabels;
 
@@ -166,9 +175,15 @@ export async function loadAdminIdentityActivity(
     const redirectOwner: Prisma.RedirectLogWhereInput = isOperationalGuest ? operationalRedirectOwner : kind === "guest"
       ? { userId: null, visitorId: id, visitor: { is: eligibleGuestVisitorWhere(id) } }
       : { OR: [{ userId: id }, { userId: null, visitor: { is: linked } }] };
+    // The registered timeline includes consented pre-login events belonging
+    // to exclusively linked visitors. Never take other accounts' events,
+    // withdrawn identities, or anonymous operational records as account history.
     const analyticsOwner: Prisma.AnalyticsEventWhereInput = kind === "guest"
       ? { userId: null, visitorId: id, visitor: { is: eligibleGuestVisitorWhere(id) } }
-      : { userId: id };
+      : { OR: [
+          { userId: id },
+          { userId: null, visitor: { is: linked } },
+        ] };
     const journeyOwner: Prisma.JourneyEventWhereInput = {
       journey: { visitor: kind === "guest" ? eligibleGuestVisitorWhere(id) : eligibleJourneyLinkedVisitorWhere(id) },
     };
@@ -231,7 +246,16 @@ export async function loadAdminIdentityActivity(
       AND: [
         analyticsOwner, environmentScope.analytics, { createdAt: window },
         { type: { in: Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[] } },
-        ...(product ? [{ metadata: { path: ["product"], equals: product } }] : []),
+        ...(product ? [{ OR: [
+          { metadata: { path: ["product"], equals: product } },
+          // Only legacy SAVEs missing a product may match their saved type.
+          // Do not change SHARE/ALERT product semantics or infer saved searches.
+          ...(product !== "PACKAGE" ? [{ AND: [
+            { type: "SAVE" as const },
+            { name: "saved_item_removed" },
+            { metadata: { path: ["savedType"], equals: product.toLowerCase() } },
+          ] }] : []),
+        ] }] : []),
         ...(q ? [{ OR: [
           { type: { in: (Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[])
             .filter(type => safeAnalyticsLabels[type].toLowerCase().includes(q.toLowerCase())) } },
