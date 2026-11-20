@@ -90,9 +90,8 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
         onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }}
         className="h-11 w-full min-w-0 rounded-lg border border-[#E2E8F0] bg-white pl-9 pr-3 text-[13px] text-[#0F172A] outline-none placeholder:text-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
     </label>
-    <div className="min-w-0 border-b border-[#E2E8F0] pb-3">
-      {tabs}
-      <div className="mt-3 grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,180px)_minmax(0,180px)_minmax(0,180px)_auto]">
+    <div className="min-w-0 border-b border-[#E2E8F0] pb-2">
+      <div data-testid="activity-filters-row" className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_minmax(120px,0.7fr)]">
         <SearchMonitorSelect label="Date range" name="range" value={editingCustom ? "custom" : values.range} options={rangeOptions}
           appearance="fare" onValueChange={setRange} />
         <SearchMonitorSelect label="Activity product" name="product" value={values.product}
@@ -105,12 +104,11 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
           ? { ...values, range: "custom", from: draftDates.from,
               to: draftDates.to } : values)}
           disabled={pending || ((editingCustom || values.range === "custom") && !validCustom)}
-          className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60 lg:w-auto">
+          className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60">
           Apply filters
         </button>
       </div>
-    </div>
-    {(editingCustom || values.range === "custom") ? <div className="flex flex-wrap items-end gap-3">
+      {(editingCustom || values.range === "custom") ? <div className="mt-3 flex flex-wrap items-end gap-3">
       <label className="text-xs text-[#64748B]">From (UTC)
         <AdminCalendarInput ariaLabel="Custom start date UTC" value={draftDates.from}
           max={draftDates.to || undefined} onChange={e => { setDraftDates(current => ({...current, from:e.target.value}));
@@ -122,7 +120,9 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
           setValues(current => ({...current, range:"custom", to:e.target.value})); }} className="w-[210px] max-w-full" />
       </label>
       <button type="button" onClick={cancelDates} className="h-11 px-2 text-[13px] font-medium text-[#475569] hover:underline">Cancel</button>
-    </div> : null}
+      </div> : null}
+      <div data-testid="activity-tabs-after-filters" className="mt-3 min-w-0 border-t border-[#E2E8F0] pt-1">{tabs}</div>
+    </div>
     <span aria-live="polite" className="sr-only">{pending ? "Loading activity…" : ""}</span>
   </div>;
 }
