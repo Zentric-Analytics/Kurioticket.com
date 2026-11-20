@@ -263,8 +263,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             </nav>} />
         </section>
 
-        <AdminActivityOverview events={data.events} kind={kind} identityId={id} environment={environment}
-          returnHref={activityReturn} journeyHistoryHref={journeyHistoryHref}
+        <AdminActivityOverview events={data.events} journeyHistoryHref={journeyHistoryHref}
           otherHref={otherHref} operational={operational}/>
       </div>
     </section>
