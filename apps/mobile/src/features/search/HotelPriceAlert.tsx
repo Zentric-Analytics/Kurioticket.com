@@ -50,6 +50,7 @@ const ui = sharedUi;
 
 type Props = {
   plan: SearchPlan;
+  journeyRequestId?: string | null;
   hotelResults: HotelResult[];
   hotel?: HotelAlertProperty;
   available?: boolean;
@@ -73,6 +74,7 @@ function formatDropPercent(value: number) {
 
 export function HotelPriceAlert({
   plan,
+  journeyRequestId,
   hotelResults,
   hotel,
   available = true,
@@ -322,7 +324,7 @@ export function HotelPriceAlert({
         ? await travelApi.updatePriceAlertStatus(samePausedTarget.id, "ACTIVE")
         : await travelApi.createPriceAlert(flight
           ? buildFlightPriceAlertPayload(plan, alertTarget, alertCurrency)
-          : buildHotelPriceAlertPayload(plan, alertTarget, alertCurrency, hotel));
+          : buildHotelPriceAlertPayload(plan, alertTarget, alertCurrency, hotel), journeyRequestId);
       if (planRef.current.key !== planKey) return;
       setCurrentMatchingAlert(saved.alert);
       closeSheet();

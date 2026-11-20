@@ -50,6 +50,20 @@ test("missing details avoid dash-heavy cells and never invent search correlation
   assert.match(render([]), /No events recorded in this window/);
 });
 
+test("a verified alert creation is one recorded step in its exact journey history", () => {
+  const events = [
+    { ...event, id: "search-1", type: "SEARCH_COMPLETED" as const },
+    { ...event, id: "alert-1", type: "PRICE_ALERT_CREATED" as const },
+    { ...event, id: "handoff-1", type: "PROVIDER_HANDOFF_STARTED" as const },
+  ];
+  const html = render(events);
+  assert.equal((html.match(/data-journey-event=/g) || []).length, 3);
+  assert.match(html, /Price alert created/);
+  assert.match(html, /Step 2/);
+  assert.ok(html.indexOf('data-journey-event="search-1"') < html.indexOf('data-journey-event="alert-1"'));
+  assert.ok(html.indexOf('data-journey-event="alert-1"') < html.indexOf('data-journey-event="handoff-1"'));
+});
+
 test("verified result actions appear as individual chronological steps without invented shares", () => {
   const linked = [
     { ...event, id: "search-1", type: "SEARCH_COMPLETED" as const },

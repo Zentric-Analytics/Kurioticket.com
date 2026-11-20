@@ -164,6 +164,7 @@ enum JourneyEventType {
   RESULT_SAVED
   RESULT_UNSAVED
   RESULT_SHARED
+  PRICE_ALERT_CREATED
 }
 
 enum LegalDocumentStatus {

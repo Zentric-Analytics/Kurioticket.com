@@ -112,7 +112,7 @@ function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
           AND (e."searchHistoryId" IS NULL OR (s."requestId" IS NOT NULL AND r."metadata"->>'requestId' = s."requestId"))
         ))
         AND (
-          (e."type" IN ('SEARCH_COMPLETED', 'RESULTS_VIEWED', 'OFFER_SELECTED', 'RESULT_SAVED', 'RESULT_UNSAVED', 'RESULT_SHARED') AND s."id" IS NOT NULL AND e."redirectLogId" IS NULL)
+          (e."type" IN ('SEARCH_COMPLETED', 'RESULTS_VIEWED', 'OFFER_SELECTED', 'RESULT_SAVED', 'RESULT_UNSAVED', 'RESULT_SHARED', 'PRICE_ALERT_CREATED') AND s."id" IS NOT NULL AND e."redirectLogId" IS NULL)
           OR (e."type" = 'PROVIDER_HANDOFF_STARTED' AND r."id" IS NOT NULL)
         )
         ${identity}

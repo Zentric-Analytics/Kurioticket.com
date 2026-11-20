@@ -313,7 +313,7 @@ export const travelApi = {
   deleteRecentSearch: (id: string) => request<{ success: true }>("/api/mobile/v1/recent-searches", { method: "DELETE", body: JSON.stringify({ id }) }),
   clearRecentSearches: () => request<{ success: true }>("/api/mobile/v1/recent-searches?clear=all", { method: "DELETE" }),
   priceAlerts: () => request<{ alerts: MobilePriceAlert[] }>("/api/mobile/v1/price-alerts"),
-  createPriceAlert: (body: CreateFlightPriceAlert | CreateHotelPriceAlert | CreateCarPriceAlert) => request<{ alert: MobilePriceAlert }>("/api/mobile/v1/price-alerts", { method: "POST", body: JSON.stringify(body) }),
+  createPriceAlert: (body: CreateFlightPriceAlert | CreateHotelPriceAlert | CreateCarPriceAlert, journeyRequestId?: string | null) => request<{ alert: MobilePriceAlert }>("/api/mobile/v1/price-alerts", { method: "POST", body: JSON.stringify({ ...body, ...(journeyRequestId ? { journeyRequestId } : {}) }) }),
   updatePriceAlertStatus: (id: string, status: "ACTIVE" | "PAUSED") => request<{ alert: MobilePriceAlert }>(`/api/mobile/v1/price-alerts/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ status }) }),
   deletePriceAlert: (id: string) => request<{ deleted: true; id: string }>(`/api/mobile/v1/price-alerts/${encodeURIComponent(id)}`, { method: "DELETE" }),
   notifications: (cursor?: string) => request<MobileNotificationPage>(`/api/mobile/v1/notifications${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`),

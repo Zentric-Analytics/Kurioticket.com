@@ -23,10 +23,11 @@ type WebCarPriceAlert = MatchableCarPriceAlert & { id: string };
 type SuccessFeedback = "active" | "inactive" | null;
 type PriceTrackingError = "start" | "stop" | null;
 
-export function CarPriceAlertControl({ search, car, offer }: {
+export function CarPriceAlertControl({ search, car, offer, requestId = null }: {
   search: CarSearchParams;
   car: NormalizedCarResult;
   offer: CarOffer;
+  requestId?: string | null;
 }) {
   const router = useRouter();
   const { t: dictionary } = useLocale();
@@ -107,7 +108,7 @@ export function CarPriceAlertControl({ search, car, offer }: {
       if (!next) saved = matchingAlert ? await patchStatus(matchingAlert, "PAUSED") : undefined;
       else if (matchingAlert?.status === "PAUSED") saved = await patchStatus(matchingAlert, "ACTIVE");
       else {
-        const response = await fetch("/api/price-alerts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(buildAutomaticCarPriceAlertPayload(search, baseline.totalPrice, baseline.currency, scope)) });
+        const response = await fetch("/api/price-alerts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...buildAutomaticCarPriceAlertPayload(search, baseline.totalPrice, baseline.currency, scope), ...(requestId ? { journeyRequestId: requestId } : {}) }) });
         if (response.status === 401) { signIn(); return; }
         if (response.status === 409) {
           const duplicate = ((await response.json()) as { alert?: WebCarPriceAlert }).alert;

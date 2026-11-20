@@ -61,13 +61,14 @@ function RateSectionHeading({
 const MIN_VIEW_DEAL_ACTION_WIDTH = 88;
 const INITIAL_VISIBLE_OFFER_COUNT = 3;
 export function NativeCarResultOfferPicker({
-  result, displayCurrency, rates, plan, priceAlertsAvailable,
+  result, displayCurrency, rates, plan, priceAlertsAvailable, journeyRequestId,
 }: {
   result: CarResult;
   displayCurrency: string;
   rates: ExchangeRates;
   plan?: SearchPlan;
   priceAlertsAvailable: boolean;
+  journeyRequestId?: string | null;
 }) {
   const { theme } = useAppTheme();
   const [rowWidth, setRowWidth] = useState(0);
@@ -197,7 +198,7 @@ export function NativeCarResultOfferPicker({
             <View style={styles.sellerRow}>
               <Text numberOfLines={2} style={[styles.seller, { color: theme.textSecondary }]}>Booking provider · {selectedChoice?.providerName ?? ""}</Text>
               {selectedChoice && plan ? (
-                <NativeCarPriceAlert key={result.id + ":" + selectedChoice.key} plan={plan} resultId={result.id} offer={selectedChoice.offer} available={priceAlertsAvailable} onFeedback={setPriceAlertFeedback} />
+                <NativeCarPriceAlert key={result.id + ":" + selectedChoice.key} plan={plan} resultId={result.id} offer={selectedChoice.offer} available={priceAlertsAvailable} journeyRequestId={journeyRequestId} onFeedback={setPriceAlertFeedback} />
               ) : null}
             </View>
           </View>

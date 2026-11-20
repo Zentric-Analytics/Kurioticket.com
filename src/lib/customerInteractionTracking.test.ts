@@ -90,3 +90,26 @@ test("admin activity uses sanitized action labels rather than arbitrary analytic
   assert.match(source, /resultId/);
   assert.doesNotMatch(source, /detail: JSON\.stringify\(a\.metadata\)/);
 });
+
+test("confirmed price alerts have exact journey attribution without doubling existing analytics events", () => {
+  const link = read("src/services/priceAlertJourneyLinkService.ts");
+  const api = read("src/app/api/price-alerts/route.ts");
+  const native = read("src/app/api/mobile/v1/price-alerts/route.ts");
+  const history = read("src/services/adminJourneyCore.ts");
+  const dashboard = read("src/app/admin/users/[kind]/[id]/journeys/page.tsx");
+  assert.match(link, /lockConsentedVisitor/);
+  assert.match(link, /matchesInteractionSearch/);
+  assert.match(link, /priceAlertMatchesRecordedSearch/);
+  assert.match(link, /search\.userId !== input\.userId/);
+  assert.match(link, /journeys\.length !== 1/);
+  assert.match(link, /eventKey = "price-alert:" \+ audit\.id/);
+  assert.match(link, /tx\.journeyEvent\.findUnique/);
+  assert.match(link, /tx\.analyticsEvent\.update/);
+  assert.doesNotMatch(link, /tx\.analyticsEvent\.create/);
+  assert.match(api, /linkCreatedPriceAlertToJourney/);
+  assert.match(native, /linkCreatedPriceAlertToJourney/);
+  assert.match(history, /'PRICE_ALERT_CREATED'/);
+  assert.match(dashboard, /Selected visitor journey summary/);
+  assert.ok(dashboard.indexOf('aria-label="Selected visitor journey summary"') < dashboard.indexOf('aria-label="Selected visitor"'));
+  assert.doesNotMatch(dashboard.slice(dashboard.indexOf('aria-label="Selected visitor"'), dashboard.indexOf('<form action=')), /\{returnLink\}|Other recorded activity/);
+});

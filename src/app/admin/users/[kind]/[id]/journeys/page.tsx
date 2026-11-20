@@ -157,28 +157,6 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
       <span aria-hidden="true">/</span>
       <span className="font-medium text-[#020617]">Journey history</span>
     </nav>
-    <section aria-label="Selected visitor" className="min-w-0 rounded-xl border border-[#D8E1EC] bg-white p-4 sm:p-5">
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[#334155]"><Route size={18} aria-hidden="true" /></span>
-          <div className="min-w-0">
-            <h1 className="text-[19px] font-semibold leading-7">Journey history</h1>
-            <p className="mt-1 break-words text-[13px] text-[#475569]">{identity.data.title}</p>
-            <p className="mt-1 break-all text-[11px] text-[#64748B]">{id}</p>
-          </div>
-        </div>
-        {returnLink}
-      </div>
-      <p className="mt-3 text-[12px] leading-5 text-[#64748B]">
-        {operational
-          ? "This essential-only guest session contains recorded operational activity. It does not establish a consented tracked journey."
-          : "Journey records belong to this selected identity only. A recorded handoff is not a confirmed booking. Unlinked activity is separate from tracked journeys."}
-      </p>
-      <Link href={route + "/other?range=all"} className={linkStyle}>
-        Other recorded activity <ChevronRight size={15} aria-hidden="true" />
-      </Link>
-    </section>
-
     {!operational && summary?.status === "ok" ? (
       <section aria-label="Selected visitor journey summary" className="grid min-w-0 grid-cols-2 border-y border-[#D8E1EC] sm:grid-cols-3 lg:grid-cols-5">
         {[
@@ -190,6 +168,24 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
         ].map(([label, value]) => metric(String(label), Number(value)))}
       </section>
     ) : null}
+
+    <section aria-label="Selected visitor" className="min-w-0 rounded-xl border border-[#D8E1EC] bg-white p-4 sm:p-5">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[#334155]"><Route size={18} aria-hidden="true" /></span>
+          <div className="min-w-0">
+            <h1 className="text-[19px] font-semibold leading-7">Journey history</h1>
+            <p className="mt-1 break-words text-[13px] text-[#475569]">{identity.data.title}</p>
+            <p className="mt-1 break-all text-[11px] text-[#64748B]">{id}</p>
+          </div>
+        </div>
+      </div>
+      <p className="mt-3 text-[12px] leading-5 text-[#64748B]">
+        {operational
+          ? "This essential-only guest session contains recorded operational activity. It does not establish a consented tracked journey."
+          : "Journey records belong to this selected identity only. A recorded handoff is not a confirmed booking. Unlinked activity is separate from tracked journeys."}
+      </p>
+    </section>
 
     <form action={route + "/journeys"} method="get" aria-label="Filter this visitor's journeys"
       className="grid min-w-0 grid-cols-1 items-center gap-2 border-y border-[#D8E1EC] py-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_repeat(2,minmax(0,1fr))_125px]">
@@ -223,8 +219,8 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
         message="The journey reader could not return the selected visitor's records. No missing records have been treated as zero." />
     ) : list.data.items.length === 0 ? (
       <AdminEmptyState title="No tracked journeys in this range"
-        message="No eligible consented journeys match these filters. Separate recorded actions and operational history may still be available below."
-        action={<Link href={route + "/other?range=all"} className={linkStyle}>View other recorded activity</Link>} />
+        message="No eligible consented journeys match these filters. Unlinked account activity remains available from the Activity page."
+      />
     ) : (
       <section aria-label="Selected visitor journey records" className="min-w-0">
         <h2 className="pb-3 text-[16px] font-semibold">Recorded journeys</h2>

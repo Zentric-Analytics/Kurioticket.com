@@ -41,7 +41,7 @@ const replaceAlert = (alerts: WebFlightAlert[], alert: WebFlightAlert) => [
 ];
 export const FLIGHT_PRICE_ALERT_SNACKBAR_DURATION_MS = 3_600;
 
-export function FlightPriceAlertControl({ query: queryInput, results, desktopPortalTarget = null }: { query: unknown; results: PublicFlightResult[]; desktopPortalTarget?: HTMLElement | null }) {
+export function FlightPriceAlertControl({ query: queryInput, results, desktopPortalTarget = null, searchRequestId = null }: { query: unknown; results: PublicFlightResult[]; desktopPortalTarget?: HTMLElement | null; searchRequestId?: string | null }) {
   const router = useRouter();
   const { status: sessionStatus } = useSession();
   const parsedQuery = useMemo(() => buildCanonicalFlightPriceAlertQuery(queryInput), [queryInput]);
@@ -236,7 +236,7 @@ export function FlightPriceAlertControl({ query: queryInput, results, desktopPor
         const response = await fetch("/api/price-alerts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ ...payload, ...(searchRequestId ? { journeyRequestId: searchRequestId } : {}) }),
         });
         if (response.status === 401) { signIn(); return; }
         const body = await response.json().catch(() => ({})) as { alert?: WebFlightAlert };
