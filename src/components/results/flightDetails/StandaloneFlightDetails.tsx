@@ -320,6 +320,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
       setLocalSavedFlightIds((current) => {
         const next = toggleSavedItemId(current, savedFlightKey);
         writeSavedItemIds(next);
+        recordCustomerInteraction({ action: next.includes(savedFlightKey) ? "local_saved" : "local_unsaved", product: "FLIGHT", resultId: savedFlightKey });
         return next;
       });
     } catch (error) {
