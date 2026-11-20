@@ -2,7 +2,7 @@ import { after } from "next/server";
 import { verifySearchCrawler } from "@/lib/verifiedSearchCrawler";
 import { logProviderCall } from "@/services/analyticsService";
 
-export type SearchProduct = "FLIGHT" | "HOTEL" | "CAR";
+export type SearchProduct = "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE";
 
 /**
  * Search POST endpoints only. Public pages, robots.txt and their GET APIs
