@@ -248,11 +248,11 @@ export function CarResultCard({
     try {
       if (navigator.share) {
         await navigator.share({ title: car.modelName, url });
-        recordCustomerInteraction({ action: "share_sheet_completed", product: "CAR", resultId: car.id });
+        recordCustomerInteraction({ action: "share_sheet_completed", product: "CAR", resultId: car.id, requestId });
         return;
       }
       await navigator.clipboard.writeText(url);
-      recordCustomerInteraction({ action: "share_link_copied", product: "CAR", resultId: car.id });
+      recordCustomerInteraction({ action: "share_link_copied", product: "CAR", resultId: car.id, requestId });
       setShareConfirmation(`${car.modelName} link copied`);
       window.setTimeout(() => setShareConfirmation(""), 2200);
     } catch (error) {
