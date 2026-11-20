@@ -182,6 +182,8 @@ test("untrusted, browser, invalid-bearer and unverifiable native requests remain
 
 test("server-prepared same-origin website session attributes an unconsented browser guest without Fetch Metadata", async () => {
   const previous = process.env.AUTH_SECRET;
+  const previousPublicUrl = process.env.NEXT_PUBLIC_APP_URL;
+  process.env.NEXT_PUBLIC_APP_URL = "https://kurioticket.com";
   process.env.AUTH_SECRET = "test-same-origin-guest-verification-secret-at-least-32-chars";
   try {
     for (const path of ["/api/flights/search", "/api/hotels/search", "/api/cars/search"]) {
@@ -204,5 +206,6 @@ test("server-prepared same-origin website session attributes an unconsented brow
     })).applicationSource, "UNKNOWN");
   } finally {
     if (previous === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = previous;
+    if (previousPublicUrl === undefined) delete process.env.NEXT_PUBLIC_APP_URL; else process.env.NEXT_PUBLIC_APP_URL = previousPublicUrl;
   }
 });
