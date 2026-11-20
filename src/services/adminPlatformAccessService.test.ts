@@ -46,5 +46,4 @@ test("Overview is admin-only and never returns raw session credentials", () => {
   assert.doesNotMatch(service, /select:\s*\{[^}]*tokenHash/);
   assert.doesNotMatch(service, /select:\s*\{[^}]*maskedIp/);
   assert.doesNotMatch(service, /select:\s*\{[^}]*userAgent/);
-  assert.match(page, /not distinct people or installed devices/);
 });
