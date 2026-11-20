@@ -36,3 +36,20 @@ test("compact context round-trips international filters and rejects invalid dest
     assert.equal(decodeActivityJourneyReturn(value),null);
   }
 });
+
+test("history detail links may return only to a scoped identity journey page", () => {
+  const href = "/admin/users/guest/qa-visitor-0001/journeys?range=all&product=FLIGHT&provider=Duffel";
+  assert.equal(activityJourneyReturnHref(href), href);
+  const token = encodeActivityJourneyReturn(href);
+  assert.ok(token);
+  assert.equal(decodeActivityJourneyReturn(token), href);
+  for (const unsafe of [
+    "/admin/journeys?userId=other-account",
+    "/admin/users/guest/qa-visitor-0001/journeys/../../other",
+    "https://other.test/admin/users/guest/qa-visitor-0001/journeys",
+  ]) {
+    assert.equal(activityJourneyReturnHref(unsafe), null);
+  }
+  const filtered = activityJourneyReturnHref("/admin/users/user/qa-account-0001/journeys?userId=other&environment=production&range=7d");
+  assert.equal(filtered, "/admin/users/user/qa-account-0001/journeys?range=7d");
+});
