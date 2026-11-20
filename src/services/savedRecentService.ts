@@ -143,12 +143,18 @@ export function createSavedItemRemover(database: () => Pick<PrismaClient, "$tran
       // Lock the item before the mutation so the deleted record supplies
       // trustworthy product and result references. No client-supplied product
       // override, no cross-account delete, and no audit for missing items.
-      const model = input.type === "flight" ? tx.savedFlight
-        : input.type === "hotel" ? tx.savedHotel
-          : input.type === "car" ? tx.savedCar : tx.savedSearch;
-      const existing = await model.findFirst({ where: { id: input.id, userId } });
+      const where = { id: input.id, userId };
+      // Avoid unioning distinct Prisma delegates: each query retains its
+      // model-specific generated types, while the public input remains scoped.
+      const existing = input.type === "flight" ? await tx.savedFlight.findFirst({ where })
+        : input.type === "hotel" ? await tx.savedHotel.findFirst({ where })
+          : input.type === "car" ? await tx.savedCar.findFirst({ where })
+            : await tx.savedSearch.findFirst({ where });
       if (!existing) throw new SavedItemNotFoundError("Saved item was not found.");
-      const deleted = await model.deleteMany({ where: { id: input.id, userId } });
+      const deleted = input.type === "flight" ? await tx.savedFlight.deleteMany({ where })
+        : input.type === "hotel" ? await tx.savedHotel.deleteMany({ where })
+          : input.type === "car" ? await tx.savedCar.deleteMany({ where })
+            : await tx.savedSearch.deleteMany({ where });
       if (deleted.count !== 1) throw new SavedItemNotFoundError("Saved item was not found.");
       const product = input.type === "search" ? (existing as { type: string }).type as "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE"
         : input.type.toUpperCase() as "FLIGHT" | "HOTEL" | "CAR";
