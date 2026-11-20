@@ -70,16 +70,18 @@ export async function POST(request: Request) {
           && query?.environment === getPublicEnvironment()
           && search.createdAt.getTime() <= Date.now()
           && Date.now() - search.createdAt.getTime() <= 30 * 60 * 1000) {
-          const recorded = await tx.journeyEvent.findFirst({
+          const candidates = await tx.journeyEvent.findMany({
             where: { type: "SEARCH_COMPLETED", searchHistoryId: search.id,
               journey: { visitorId: identity.visitorId! },
               metadata: { path: ["environment"], equals: getPublicEnvironment() },
             },
             select: { journeyId: true },
-            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            distinct: ["journeyId"],
+            take: 2,
           });
-          if (recorded) verifiedLink = {
-            linkedJourneyId: recorded.journeyId,
+          // A search linked to more than one journey is ambiguous; fail closed.
+          if (candidates.length === 1) verifiedLink = {
+            linkedJourneyId: candidates[0].journeyId,
             linkedSearchHistoryId: search.id,
             linkedRequestId: parsed.data.requestId,
           };
