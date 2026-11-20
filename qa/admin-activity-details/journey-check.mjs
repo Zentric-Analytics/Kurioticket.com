@@ -62,7 +62,7 @@ try {
   await expect(page.getByRole('table')).toContainText('LOS → IST');
   await expect(page.getByRole('table')).toContainText('Handoff → Duffel');
   await expect(page.getByRole('columnheader')).toHaveCount(4);
-  await expect(page.getByRole('heading',{name:'Other recorded activity'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Other recorded activity'})).toHaveCount(0);
   await page.screenshot({caret:"initial",path:output+'/journey-detail-navigation-1280.png',fullPage:true});
   await page.getByRole("link",{name:"Back to Journey History"}).click();
   await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/journeys\?/);
