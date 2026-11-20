@@ -47,11 +47,12 @@ export async function resolveRequestActivityIdentity(
     } else {
       userId = (await resolve.web())?.userId ?? null;
       if (userId) application = resolveApplicationSource(request, { client: "WEB" });
-      else if (operationalSession?.transport === "web"
+      else if (operationalSession?.transport === "web" && !operationalSession.newCredential
         && !request.headers.has("authorization") && !request.headers.has("x-mobile-platform")) {
-        // A prepared server-side same-origin operational session proves the
-        // website transport even when a browser omits Sec-Fetch-Site.
-        // It neither creates a consented Visitor nor authenticates an account.
+        // Only previously signed, server-verified web continuity proves website
+        // origin when a browser omits Sec-Fetch-Site. A caller can forge Origin
+        // on its FIRST request; newly minted sessions confer no attribution.
+        // This does not create visitor consent or authenticate an account.
         application = { applicationSource: "WEB" };
       }
     }
