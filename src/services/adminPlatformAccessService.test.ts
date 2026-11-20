@@ -31,6 +31,18 @@ test("Overview is admin-only and never returns raw session credentials", () => {
   assert.match(service, /db\.accountSession\.groupBy/);
   assert.match(service, /take: PLATFORM_ACCESS_PAGE_SIZE/);
   assert.match(service, /lastSeenAt: dateFilter/);
+  assert.match(service, /const observedAt = new Date\(\)/);
+  assert.match(service, /deviceHistoryWindow\(\{ range: query.range, page: 1 \}, observedAt\)/);
+  assert.match(service, /db\.accountSession\.count/);
+  assert.match(service, /user: \{ select: \{ id: true, name: true, email: true \} \}/);
+  assert.match(service, /appVersion: true/);
+  assert.match(service, /total !== breakdownTotal/);
+  assert.match(service, /Number\.isSafeInteger\(total\)/);
+  assert.match(page, /result\.observedAt\.toISOString\(\)/);
+  assert.match(page, /AccountSession records/);
+  assert.match(page, /not a distinct user, installed device or live visitor/);
+  assert.match(page, /AccountSession has no environment field/);
+  assert.match(page, /App version not recorded/);
   assert.doesNotMatch(service, /select:\s*\{[^}]*tokenHash/);
   assert.doesNotMatch(service, /select:\s*\{[^}]*maskedIp/);
   assert.doesNotMatch(service, /select:\s*\{[^}]*userAgent/);
