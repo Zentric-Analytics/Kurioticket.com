@@ -4,7 +4,8 @@ import test from "node:test";
 
 test("device history is account-scoped and excludes credentials and network identifiers", () => {
   const source = readFileSync("src/services/adminDeviceSessionsService.ts", "utf8");
-  assert.match(source, /where:\s*\{ userId \}/);
+  assert.match(source, /where:\s*\{ userId, lastSeenAt: deviceTodayWindow\(\) \}/);
+  assert.match(source, /const where = \{ userId, lastSeenAt: deviceHistoryWindow\(query\) \}/);
   assert.match(source, /take:\s*3/);
   assert.match(source, /deviceTodayWindow\(\)/);
   assert.match(source, /loadAdminFullDeviceHistory/);
