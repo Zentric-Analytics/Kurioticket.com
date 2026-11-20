@@ -43,14 +43,12 @@ export function AdminActivityOverview({
             journey.handoffs ? journey.handoffs + " handoffs" : null,
           ].filter(Boolean);
           return <div key={journey.id} data-testid="activity-journey-row" className="flex min-w-0 items-start gap-3 py-3">
-            <div className="flex min-w-0 flex-1 items-start gap-3">
               <Route size={17} className="mt-0.5 shrink-0 text-[#64748B]" aria-hidden="true" />
               <div className="min-w-0">
                 <p className="break-words text-[13px] font-medium text-[#0F172A]">{detail}</p>
                 <p className="mt-1 text-[12px] text-[#64748B]">{stamp(journey.at)} · {journey.eventCount} matching {journey.eventCount === 1 ? "event" : "events"}</p>
                 {parts.length ? <p className="mt-1 text-[12px] text-[#64748B]">{parts.join(" · ")}</p> : null}
               </div>
-            </div>
           </div>;
         })}
       </div> : <p className="rounded-lg border border-[#E2E8F0] p-4 text-[13px] text-[#64748B]">No tracked journeys match these filters. Open Journey History to review full records.</p>}
