@@ -49,7 +49,7 @@ export async function loadPlatformAccess(query: PlatformAccessQuery): Promise<Pl
         OR: [{ platform: { notIn: ["ios", "android"] } }, { platform: null }],
       } : {};
     const [groups, total, sessions] = await Promise.all([
-      db.accountSession.groupBy({ by: ["client", "platform"], where: base, _count: { _all: true } }),
+      db.accountSession.groupBy({ by: ["client", "platform"], where: { ...base, ...selection }, _count: { _all: true } }),
       db.accountSession.count({ where: { ...base, ...selection } }),
       db.accountSession.findMany({
         where: { ...base, ...selection },
@@ -70,7 +70,7 @@ export async function loadPlatformAccess(query: PlatformAccessQuery): Promise<Pl
     const breakdownTotal = Object.values(counts).reduce((sum, count) => sum + count, 0);
     if (!Number.isSafeInteger(total) || total < 0
       || Object.values(counts).some(count => !Number.isSafeInteger(count) || count < 0)
-      || (query.platform === "all" && total !== breakdownTotal)) return { status: "unavailable" };
+      || total !== breakdownTotal) return { status: "unavailable" };
     return { status: "ok", observedAt, total, counts, sessions };
   } catch {
     return { status: "unavailable" };
