@@ -1,5 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
+import { blockVerifiedCrawlerSearch } from "@/lib/searchCrawlerGate";
 import { createHash } from "node:crypto";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicHotel } from "@/lib/searchCache";
@@ -19,6 +20,8 @@ import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 
 export async function POST(request: Request) {
+  const blocked = await blockVerifiedCrawlerSearch(request, "HOTEL");
+  if (blocked) return blocked;
   const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("HOTEL_SEARCH_ENABLED"))) return NextResponse.json({ error: "Hotel search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
   const ip = getClientIp(request);

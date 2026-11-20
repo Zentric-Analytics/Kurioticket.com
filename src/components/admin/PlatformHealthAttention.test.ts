@@ -15,6 +15,8 @@ test("triage distinguishes degraded operations from missing evidence without inv
   const { issues, gaps } = summarizePlatformHealthAttention(platformFixture(), "ALL");
   assert.deepEqual(issues.map(issue => issue.key), ["scheduled-jobs"], "fixture contains one recorded failed job");
   assert.ok(gaps.some(gap => gap.key === "installed-apps" && gap.state === "UNKNOWN"));
+  assert.ok(gaps.some(gap => gap.key === "unverified-search-source" && gap.href.includes("applicationSource=UNKNOWN")),
+    "unverified human-looking traffic must be investigated, not called a verified crawler");
   assert.ok(gaps.some(gap => gap.key === "providers-unavailable"));
   assert.ok(!gaps.some(gap => gap.key === "activity-unavailable"));
 });
@@ -58,7 +60,7 @@ test("health summary is accessible, has investigation links, and preserves cauti
   assert.match(html, /\/admin\/providers/);
   // The compact summary shows the first three gaps; verify remaining evidence is retained.
   assert.ok(summarizePlatformHealthAttention(platformFixture(), "ALL").gaps.some(gap => gap.key === "installed-apps"));
-  assert.match(html, /1 more signal/);
+  assert.match(html, /2 more signal/);
   assert.doesNotMatch(html, /Overall healthy|100% uptime|Crash-free/);
   assert.doesNotMatch(html, /href="#/, "Do not navigate to a duplicate panel on the same page");
 });
