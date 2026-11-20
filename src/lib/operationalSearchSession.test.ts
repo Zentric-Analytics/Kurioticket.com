@@ -97,7 +97,8 @@ test("native guest search continuity is platform-bound, short-lived and not a br
         "x-kt-search-session": prepared.credential.slice(0, -1) + (prepared.credential.endsWith("Z") ? "Y" : "Z") } });
       assert.equal(readOperationalSearchSession(forgedRequest, now + 1000, "staging"), null);
       assert.equal(prepareOperationalSearchSession(forgedRequest, now + 1000, "staging")?.guestNativeAttribution, false);
-      for (const browser of [{ origin: "https://kurioticket.com" }, { "sec-fetch-site": "same-origin" }]) {
+      const browserVariants: Array<Record<string, string>> = [{ origin: "https://kurioticket.com" }, { "sec-fetch-site": "same-origin" }];
+      for (const browser of browserVariants) {
         const spoofed = new Request(url, { method: "POST", headers: { ...headers, ...browser } });
         assert.equal(readOperationalSearchSession(spoofed, now + 1000, "staging"), null);
         assert.equal(prepareOperationalSearchSession(spoofed, now + 1000, "staging"), null);
