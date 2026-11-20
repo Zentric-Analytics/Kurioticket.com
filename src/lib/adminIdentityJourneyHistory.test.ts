@@ -7,12 +7,12 @@ const now = new Date("2026-11-20T10:00:00.000Z");
 const guest = "qa-visitor-0001";
 const user = "qa-account-0001";
 
-test("Users journey history is identity-bound and defaults to retained history", () => {
+test("Users journey history is identity-bound and defaults to Today, with All time selectable", () => {
   const request = identityJourneyHistoryQuery("guest", guest, {}, now, "staging");
   assert.equal(request.ok, true);
   if (!request.ok) return;
-  assert.equal(request.range, "all");
-  assert.equal(request.input.from, "1970-01-01T00:00:00.000Z");
+  assert.equal(request.range, "today");
+  assert.equal(request.input.from, "2026-11-20T00:00:00.000Z");
   assert.equal(request.input.visitorId, guest);
   assert.equal(request.input.userId, undefined);
   const parsed = parseAdminJourneyQuery(request.input, "list", now, "staging");
@@ -21,6 +21,14 @@ test("Users journey history is identity-bound and defaults to retained history",
     assert.equal(parsed.data.scope.identity, "guest");
     assert.equal(parsed.data.scope.visitorId, guest);
   }
+});
+
+test("explicit All time still shows the complete retained window", () => {
+  const request = identityJourneyHistoryQuery("guest", guest, {range:"all"}, now, "staging");
+  assert.equal(request.ok,true);
+  if (!request.ok) return;
+  assert.equal(request.range,"all");
+  assert.equal(request.input.from,"1970-01-01T00:00:00.000Z");
 });
 
 test("supplied identity and environment cannot override the Users route", () => {
