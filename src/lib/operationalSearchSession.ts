@@ -81,7 +81,9 @@ function transport(request: Request): "web" | "native" | null {
   return "web";
 }
 
-/** Only invoked after a real user-facing search starts; never on page load. */
+/** Only invoked after a real user-facing search starts; never on page load.
+ * Existing installed bundles only understand v1. They retain exact v1 continuity;
+ * v2 is negotiated only by clients that can read and return the new credential. */
 export function prepareOperationalSearchSession(
   request: Request, now = Date.now(), environment = getPublicEnvironment(),
 ): PreparedOperationalSession | null {
@@ -89,25 +91,28 @@ export function prepareOperationalSearchSession(
   const kind = transport(request);
   if (!key || !kind) return null;
   const platform = kind === "native" ? nativePlatform(request) : null;
+  const supportsV2 = kind === "native" && request.headers.get("x-kt-search-protocol") === "v2";
   const supplied = kind === "web" ? readCookie(request) : request.headers.get(operationalSessionHeaderName);
   const existing = verify(supplied, environment, now, key);
   // A previously signed platform cannot silently be reassigned to another OS.
   if (kind === "native" && existing?.nativePlatform && existing.nativePlatform !== platform) return null;
-  if (existing && (kind === "web" ? !existing.nativePlatform : existing.nativePlatform === platform)) {
+  if (existing && (kind === "web" ? !existing.nativePlatform : existing.nativePlatform === platform || !supportsV2)) {
     return { reference: existing, credential: supplied!, transport: kind, newCredential: false,
-      guestNativeAttribution: kind === "native" };
+      guestNativeAttribution: kind === "native" && Boolean(existing.nativePlatform) };
   }
-  // Upgrade legacy unbound native v1 credentials. Do not trust an invalid or
-  // legacy token to classify the current request; the next request uses v2.
-  const guestNativeAttribution = kind === "native" && !supplied;
+  // A native v1 credential is still valid continuity for legacy clients, but
+  // does not establish an OS. Only v2-capable clients receive OS-bound v2.
+  // An invalid supplied credential may be replaced to recover client state,
+  // but it never earns guest source attribution on that request.
+  const version = supportsV2 ? "v2" : "v1";
   const reference: OperationalSessionReference = {
-    id: randomUUID(), expiresAt: new Date(now + operationalSessionTtlSeconds * 1000), environment,
-    ...(platform ? { nativePlatform: platform } : {}),
+    id: existing?.id ?? randomUUID(), expiresAt: new Date(now + operationalSessionTtlSeconds * 1000), environment,
+    ...(version === "v2" && platform ? { nativePlatform: platform } : {}),
   };
-  const version = kind === "native" ? "v2" : "v1";
-  const payload = [version, reference.id, String(reference.expiresAt.getTime()), environment, ...(platform ? [platform] : [])].join(".");
+  const payload = [version, reference.id, String(reference.expiresAt.getTime()), environment,
+    ...(version === "v2" && platform ? [platform] : [])].join(".");
   return { reference, credential: payload + "." + mac(payload, key, version), transport: kind,
-    newCredential: true, guestNativeAttribution };
+    newCredential: true, guestNativeAttribution: version === "v2" && !supplied || version === "v2" && Boolean(existing) };
 }
 export function readOperationalSearchSession(request: Request, now = Date.now(), environment = getPublicEnvironment()): OperationalSessionReference | null {
   const key = secret();
@@ -115,7 +120,9 @@ export function readOperationalSearchSession(request: Request, now = Date.now(),
   if (!key || !kind) return null;
   const reference = verify(kind === "web" ? readCookie(request) : request.headers.get(operationalSessionHeaderName), environment, now, key);
   if (kind === "web") return reference && !reference.nativePlatform ? reference : null;
-  return reference?.nativePlatform === nativePlatform(request) ? reference : null;
+  // Native v1 is valid *session continuity* for older installed app bundles,
+  // not a verified iOS/Android source. A v2 platform must match the request.
+  return reference && (!reference.nativePlatform || reference.nativePlatform === nativePlatform(request)) ? reference : null;
 }
 
 /** Add only a search-scoped credential to a search response; do not alter provider requests. */
