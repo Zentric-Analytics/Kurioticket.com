@@ -30,9 +30,9 @@ test("Hotel price alerts require actual check-in and check-out dates", () => {
 
 test("Car alerts require the same pickup/dropoff schedule, not only matching locations", () => {
   const car = { type: "CAR", origin: "CDG", destination: "CDG", checkIn: null, checkOut: null,
-    query: { pickupDate: "2026-12-12", dropoffDate: "2026-12-14", pickupTime: "12:00", dropoffTime: "14:00" } };
+    query: { pickupDate: "2026-12-12", dropoffDate: "2026-12-14", pickupTime: "12:00", dropoffTime: "14:00", driverAge: "30" } };
   const target = { type: "CAR", origin: "CDG", destination: "CDG",
-    query: { pickupDate: "2026-12-12", dropoffDate: "2026-12-14", pickupTime: "12:00", dropoffTime: "14:00" } };
+    query: { pickupDate: "2026-12-12", dropoffDate: "2026-12-14", pickupTime: "12:00", dropoffTime: "14:00", driverAge: "30" } };
   assert.equal(priceAlertMatchesRecordedSearch(car, target), true);
   assert.equal(priceAlertMatchesRecordedSearch(car, { ...target, query: { ...target.query, pickupTime: "09:00" } }), false);
   assert.equal(priceAlertMatchesRecordedSearch(car, { ...target, query: {} }), false);
