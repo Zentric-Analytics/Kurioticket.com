@@ -19,7 +19,7 @@ export type PreparedOperationalSession = {
   transport: "web" | "native";
   newCredential: boolean;
   /** Only server-admitted, non-browser native searches may use this for guest operational attribution. */
-  guestNativeAttribution: boolean;
+  guestNativeAttribution?: boolean;
 };
 
 const tokenId = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
