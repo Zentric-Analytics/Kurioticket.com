@@ -57,5 +57,38 @@ try {
   assert.equal(new URL(page.url()).searchParams.get("directory"),longDirectory);
   assert.equal(new URL(page.url()).searchParams.get("q"),"LOS");
   assert.equal(new URL(page.url()).searchParams.get("range"),"all");
+  // Exercise the entire Activity -> Journey History -> single Journey -> History
+  // -> Activity route, retaining only applicable journey filters.
+  const parent = "/admin/users/guest/qa-guest-activity-0001/activity?"
+    + new URLSearchParams({range:"all",product:"FLIGHT",q:"LOS",directory:"tab=guests"});
+  await page.goto(base+parent);
+  const toHistory = page.getByRole("link",{name:/View Journey History/});
+  await expect(toHistory).toBeVisible();
+  await toHistory.click();
+  await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/journeys\?/);
+  let historyUrl = new URL(page.url());
+  assert.equal(historyUrl.searchParams.get("range"),"all");
+  assert.equal(historyUrl.searchParams.get("product"),"FLIGHT");
+  assert.equal(historyUrl.searchParams.get("q"),null);
+  await expect(page.getByRole("heading",{name:"Journey history"})).toBeVisible();
+  await expect(page.getByRole("heading",{name:"Recorded journeys"})).toBeVisible();
+  await page.getByRole("link",{name:"View journey",exact:true}).first().click();
+  await expect(page).toHaveURL(/\/admin\/journeys\/qa-journey-flight\?/);
+  await expect(page.locator("[data-journey-event]")).toHaveCount(4);
+  await page.getByRole("link",{name:"Back to Journey History"}).click();
+  historyUrl = new URL(page.url());
+  assert.equal(historyUrl.searchParams.get("range"),"all");
+  assert.equal(historyUrl.searchParams.get("product"),"FLIGHT");
+  await page.getByRole("link",{name:"Back to Activity"}).last().click();
+  const parentReturn = new URL(page.url());
+  assert.equal(parentReturn.searchParams.get("product"),"FLIGHT");
+  assert.equal(parentReturn.searchParams.get("q"),"LOS");
+  assert.equal(parentReturn.searchParams.get("directory"),"tab=guests");
+
+  // Direct visits use Today, not a surprising All-time view.
+  await page.goto(base + "/admin/users/guest/qa-guest-activity-0001/journeys");
+  await expect(page.getByRole("button",{name:"Date range: Today"})).toBeVisible();
+  await expect(page.getByText("No tracked journeys in this range")).toBeVisible();
+  console.log("PASS scoped Journey History filters, nested return and Today default");
   console.log('PASS journey association, recorded sequence, filtered return and long international context');
 } finally { await browser.close(); }
