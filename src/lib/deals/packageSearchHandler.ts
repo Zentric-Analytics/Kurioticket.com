@@ -2,11 +2,14 @@ import { getIncludedProducts, parseDealsSearchParams, validateDealsSearch } from
 import { searchPackage } from "@/services/travel/packageOrchestrator";
 import { isFeatureEnabled as resolveFeatureEnabled } from "@/lib/feature-controls/service";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { blockVerifiedCrawlerSearch } from "@/lib/searchCrawlerGate";
 
 const noStore = { "Cache-Control": "no-store" };
 
 export function createPackageSearchHandler(isFeatureEnabled = resolveFeatureEnabled) {
 return async function POST(request: Request) {
+  const blocked = await blockVerifiedCrawlerSearch(request, "PACKAGE");
+  if (blocked) return blocked;
   const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
   if (!(await isFeatureEnabled("DEALS_ENABLED"))) return Response.json({ error: "Package search is temporarily unavailable.", status: "unavailable", requestId }, { status: 503, headers: noStore });
   const rate = checkRateLimit(`package-search:${getClientIp(request)}`, 25, 60_000);
