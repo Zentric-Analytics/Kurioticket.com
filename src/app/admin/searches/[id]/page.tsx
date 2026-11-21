@@ -1,6 +1,8 @@
 import { SearchDetailActivityPanel } from "@/components/admin/SearchDetailActivityPanel";
 import { applicationLabel } from "@/lib/platformHealthPresentation";
+import Link from "next/link";
 import { ChevronDown } from "lucide-react";
+import { validActivityIdentity } from "@/lib/adminIdentityActivity";
 import { notFound } from "next/navigation";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
@@ -118,6 +120,18 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
               <p className="mt-0.5 break-words text-[12px] text-[#6B7280]">{search.searcher.email}</p>
             ) : null}
             <p className="mt-0.5 text-[12px] text-[#6B7280]">{search.operationalSessionId && search.identity.kind === "guest" && !search.identity.visitorId ? "Operational session (no account linked)" : searchDetailIdentityLabel(search.identity.kind)}</p>
+            {search.identity.kind === "guest" && !search.identity.userId && !search.identity.visitorId
+              && search.environment === getPublicEnvironment()
+              && validActivityIdentity("guest", search.operationalSessionId ?? "") ? (
+              <Link href={"/admin/users/guest/" + encodeURIComponent(search.operationalSessionId!) + "/activity"}
+                className="focus-ring mt-2 inline-flex min-h-9 items-center rounded-md text-[12px] font-medium text-[#004BB8] hover:underline">
+                View recorded guest session
+              </Link>
+            ) : search.identity.kind === "unattributed" && !search.operationalSessionId ? (
+              <p className="mt-2 text-[12px] leading-5 text-[#64748B]">
+                No verified guest session was attached to this search. It remains a search record, not a recorded guest identity.
+              </p>
+            ) : null}
           </div>
         </div>
       </section>
