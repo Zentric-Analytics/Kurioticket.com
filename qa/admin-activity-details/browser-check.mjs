@@ -273,10 +273,14 @@ try {
   await expect(page.getByRole("heading",{name:"Device & Access History"})).toBeVisible();
   await expect(page.locator('[data-testid="device-history-row"]:visible')).toHaveCount(5);
   await expect(page.getByRole("columnheader", { name: "Status" })).toBeVisible();
-  await expect(page.locator('[data-testid="device-history-row"]:visible').filter({ hasText: "Signed out" })).toHaveCount(2);
-  await expect(page.locator('[data-testid="device-history-row"]:visible').filter({ hasText: "Expired" })).toHaveCount(1);
-  await expect(page.locator('[data-testid="device-history-row"]:visible').filter({ hasText: "Not expired" })).toHaveCount(2);
-  await expect(page.locator('[data-testid="device-history-row"]:visible').filter({ hasText: "Password reset" })).toHaveCount(1);
+  // Match individual status text exactly: "Expired" must never match "Not expired".
+  // Restrict each assertion to visible history rows so the hidden mobile copy
+  // does not inflate desktop counts.
+  const visibleDeviceRows = page.locator('[data-testid="device-history-row"]:visible');
+  await expect(visibleDeviceRows.filter({ has: page.getByText("Signed out", { exact: true }) })).toHaveCount(2);
+  await expect(visibleDeviceRows.filter({ has: page.getByText("Expired", { exact: true }) })).toHaveCount(1);
+  await expect(visibleDeviceRows.filter({ has: page.getByText("Not expired", { exact: true }) })).toHaveCount(2);
+  await expect(visibleDeviceRows.filter({ hasText: "Password reset" })).toHaveCount(1);
   await page.getByRole("button",{name:"Device history range: All time"}).click();
   await page.getByRole("listbox",{name:"Device history range"}).getByRole("option",{name:"Today",exact:true}).click();
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
