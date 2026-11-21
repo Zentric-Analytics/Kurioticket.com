@@ -74,12 +74,7 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
     </header>
 
     <section aria-labelledby="platform-health-heading" className="min-w-0 space-y-3 border-b border-[#E2E8F0] pb-4">
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-        <h2 id="platform-health-heading" className="text-[15px] font-semibold">Platform Health</h2>
-        <Link href="/admin/platform-health" className="focus-ring text-[12px] font-medium text-[#004BB8] hover:underline">
-          Full monitoring details
-        </Link>
-      </div>
+      <h2 id="platform-health-heading" className="text-[15px] font-semibold">Platform Health</h2>
       <div className="grid min-w-0 grid-cols-2 gap-3 min-[1050px]:grid-cols-4">
         {healthTiles.map(tile => <div key={tile.label} data-testid="platform-health-metric" className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/75 px-3.5 py-3">
           <h3 className="min-h-9 text-[12px] font-medium leading-4 text-[#334155]">{tile.label}</h3>
@@ -92,8 +87,8 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
         Installed-app crash and device health: <span className="font-medium">
           {health?.nativeApplicationHealth.state === "UNKNOWN" ? "Unknown"
             : health?.nativeApplicationHealth.state === "MONITORING_UNAVAILABLE" || !health
-              ? "Monitoring unavailable" : "See full monitoring details"}.
-        </span> Detailed diagnostics and refresh controls remain available through Full monitoring details.
+              ? "Monitoring unavailable" : "Not verified by these observations"}.
+        </span> Account sessions and presence do not establish installed-app crash health.
       </p>
     </section>
 
