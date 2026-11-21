@@ -12,11 +12,12 @@ import { PlatformHealthAttention } from "./PlatformHealthAttention";
 import { applicationLabel, searchInvestigationHref, type PlatformSelection } from "@/lib/platformHealthPresentation";
 import type { readPlatformOperations } from "@/services/platformOperationsService";
 export type PlatformOperations = Awaited<ReturnType<typeof readPlatformOperations>>;
-function ServiceSignal({ title, state, children, href }: {
+function ServiceSignal({ title, state, children, href, linkLabel }: {
     title: string;
     state: string;
     children: React.ReactNode;
     href?: string;
+    linkLabel?: string;
 }) {
     return <section className="min-w-0 border-b border-[#E7ECF5] bg-white px-2 py-4 sm:px-3">
       <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
@@ -24,7 +25,7 @@ function ServiceSignal({ title, state, children, href }: {
         <OperationalStatus state={state}/>
       </div>
       <div className="mt-2 min-w-0 break-words text-[12px] leading-5 text-[#64748B]">{children}</div>
-      {href ? <Link href={href} className="focus-ring mt-3 inline-block rounded-sm text-[12px] font-semibold text-[#004BB8] hover:underline">Investigate {title.toLowerCase()} →</Link> : null}
+      {href ? <Link href={href} className="focus-ring mt-3 inline-block rounded-sm text-[12px] font-semibold text-[#004BB8] hover:underline">{linkLabel ?? `Investigate ${title.toLowerCase()}`} →</Link> : null}
     </section>;
 }
 export function PlatformHealthDashboard({ data: initialData, hours, period, application }: {
@@ -71,7 +72,10 @@ export function PlatformHealthDashboard({ data: initialData, hours, period, appl
    <ServiceSignal title="CMS" state={data.cms.state} href="/admin/system/cms-health">Publication scope checks.{data.cms.totals ? <p className="mt-2">{data.cms.totals.scopes} scopes · {data.cms.totals.unhealthy} unhealthy</p> : <p>CMS observations are unavailable.</p>}<span className="sr-only">No installed-client content-consumption acknowledgment is collected.</span></ServiceSignal>
    <ServiceSignal title="Operational alerts" state={data.alerts ? "UNKNOWN" : "MONITORING_UNAVAILABLE"} href="/admin/notifications">Recorded alert occurrences.{data.alerts ? <p className="mt-2">{data.alerts.critical} critical · {data.alerts.warning} warning</p> : <p>Alert counts are unavailable.</p>}<span className="sr-only">Alert counts alone do not establish overall platform health.</span></ServiceSignal>
    <ServiceSignal title="Preview release" state="UNKNOWN" href="/admin/system">{data.release ? <><p>Service version {data.release.applicationVersion ?? "not recorded"}</p><p className="mt-1 break-all">Commit {data.release.commitSha ?? "not recorded"}</p><p>Process started {data.release.releaseTimestamp}</p><p>Sandbox: {data.release.sandboxTravelSafe ? "ready" : "not ready"} · Email: restricted</p></> : <p>No Preview release evidence in this environment.</p>}<span className="sr-only">Release data does not verify installed-app versions.</span></ServiceSignal>
-   <ServiceSignal title="Installed native applications" state={data.nativeApplicationHealth.state}>No reliable installed-app crash evidence is configured.</ServiceSignal>
+   <ServiceSignal title="Installed native applications" state={data.nativeApplicationHealth.state}
+     href="/admin/users/platforms-devices" linkLabel="View Platforms & Devices">
+     No reliable installed-app crash evidence is configured.
+   </ServiceSignal>
   </div></OperationsSection>
   <OperationsSection className="py-5"><div className="flex flex-wrap justify-between gap-2"><h2 className="text-[14px] font-semibold text-[#020617]">Provider operational status</h2><Link href="/admin/providers" className="focus-ring text-xs font-semibold text-[#004BB8]">Open Providers →</Link></div><p className="mt-1 text-[12px] text-[#64748B]">Shared providers · last {hours} hours · {data.environment}</p>
    {data.providerHealth?.length ? <div className="mt-3 divide-y divide-[#E7ECF5]">{data.providerHealth.map(provider => <div key={provider.id} className="flex flex-col justify-between gap-3 py-3 sm:flex-row"><div><h3 className="text-sm font-semibold text-slate-900">{provider.provider}</h3><p className="mt-1 text-xs text-slate-500">{provider.totalCalls} calls · {provider.failedCalls} failed · failure rate {provider.failureRatePct === null ? "not measured" : provider.failureRatePct.toFixed(1) + "%"} · average {provider.averageLatencyMs === null ? "not measured" : provider.averageLatencyMs + " ms"}</p><p className="mt-1 text-xs text-slate-500">Readiness: {provider.readinessState.replaceAll("_", " ").toLowerCase()}</p></div><div><OperationalStatus state={provider.readinessState === "DISABLED" ? "DISABLED" : provider.operationalState}/></div></div>)}</div> : <p role="status" className="mt-4 text-sm text-slate-600">Provider monitoring is {data.providerHealth ? "unknown: no observations returned" : "unavailable"}.</p>}
