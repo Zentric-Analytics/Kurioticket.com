@@ -34,8 +34,10 @@ try {
     await expect(population).toContainText("Consented guest");
     await expect(population).toContainText("Non consented guest");
     await expect(population).not.toContainText("Consented guest identities");
-    await expect(population.getByRole("note")).toHaveCount(2);
-    await expect(population.getByRole("note").first()).toHaveAttribute("title", /not verified individual people or explicit consent refusals/);
+    await expect(population).toContainText("Total recorded accounts & guest sessions");
+    await expect(population.getByRole("note")).toHaveCount(3);
+    await expect(population.getByRole("note").first()).toHaveAttribute("title", /not unique people/);
+    await expect(population.getByRole("note").nth(1)).toHaveAttribute("title", /not verified individual people or explicit consent refusals/);
     await expect(population.locator('[data-testid="user-population-metric"]').nth(3)).toContainText("Recorded sessions · All time");
     await expect(population.locator('[data-testid="user-population-metric"]').nth(6)).toContainText("New recorded sessions · Today (UTC)");
     await expect(population).not.toContainText("Registered counts include all account roles");
