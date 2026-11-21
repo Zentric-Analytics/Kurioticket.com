@@ -28,7 +28,7 @@ try {
     await expect(page.getByRole("complementary", { name: "Users navigation" }).getByRole("heading", { name: "Users", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Visitor Journeys", exact: true })).toHaveCount(0);
-    await expect(workspace.getByRole("link", { name: "Platforms & Devices", exact: true })).toBeVisible();
+    await expect(workspace.getByRole("link", { name: "Platforms & Devices", exact: true })).toHaveCount(0);
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
     for (const unrelated of ["Trips", "Support", "Settings", "System"]) {
       await expect(workspace.getByRole("link", { name: unrelated, exact: true })).toHaveCount(0);
@@ -70,6 +70,41 @@ try {
     await page.screenshot({ path: output + "/users-navbar-" + width + ".png", fullPage: false });
     checks.push("Admin navbar responsive at " + width + "px");
   }
+
+  // Platforms reuses the old health navbar entry while owning two subsection
+  // routes. Account-specific device history must remain with the Users workspace.
+  for (const width of [1440, 1280, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const [path, selected] of [
+      ["/admin/platform-health", "Platform Health"],
+      ["/admin/platforms/devices", "Platforms & Devices"],
+    ]) {
+      await page.goto(root + path, { waitUntil: "networkidle" });
+      const platforms = page.getByRole("navigation", { name: "Platforms subsections" });
+      await expect(page.getByRole("complementary", { name: "Platforms navigation" })).toBeVisible();
+      await expect(platforms.getByRole("link", { name: "Platform Health", exact: true })).toBeVisible();
+      await expect(platforms.getByRole("link", { name: "Platforms & Devices", exact: true })).toBeVisible();
+      await expect(platforms.getByRole("link", { name: selected, exact: true }))
+        .toHaveAttribute("aria-current", "page");
+      await expect(platforms.getByRole("link", { name: "Users Directory", exact: true })).toHaveCount(0);
+      assert.equal(await platforms.locator('[aria-current="page"]').count(), 1,
+        "Exactly one Platforms subpage active on " + path);
+      const documentWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+      assert.ok(documentWidth <= width + 1, "Platforms navigation must not overflow at " + width + "px");
+    }
+    await page.goto(root + "/admin/users/user/example123/devices", { waitUntil: "networkidle" });
+    await expect(page.getByRole("complementary", { name: "Users navigation" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Users subsections" })
+      .getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("navigation", { name: "Platforms subsections" })).toHaveCount(0);
+    checks.push("Platforms workspace and account device history navigation at " + width + "px");
+  }
+
+  await page.goto(root + "/admin/users/platforms-devices?range=7d&platform=ios&page=3", { waitUntil: "networkidle" });
+  await expect(page).toHaveURL(/\/admin\/platforms\/devices\?range=7d&platform=ios&page=3$/);
+  await expect(page.getByRole("navigation", { name: "Platforms subsections" })
+    .getByRole("link", { name: "Platforms & Devices", exact: true })).toHaveAttribute("aria-current", "page");
+  checks.push("Legacy device URL preserves range, platform and page during redirect");
 
   // The real Visitor Journeys page uses synthetic QA-only rows; preserve
   // all eight data fields and keep each Action visible at 100% zoom.
@@ -185,7 +220,7 @@ try {
   assert.equal(overviewBg, "rgb(241, 245, 251)", "Overview retains its original background");
   await page.screenshot({ path: output + "/overview-navbar-1280.png", fullPage: false });
   checks.push("Overview retains its original canvas");
-  const expectedLabels = ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Platform Health", "Settings"];
+  const expectedLabels = ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Platforms", "Settings"];
   for (const width of [1280, 1366, 1440, 1920, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(root + "/admin", { waitUntil: "networkidle" });

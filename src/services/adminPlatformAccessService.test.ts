@@ -20,13 +20,13 @@ test("Platform filters reject malformed or repeated inputs", () => {
 
 test("Paging keeps selected platform and date filters", () => {
   assert.equal(platformAccessHref({range:"7d",platform:"ios",page:2}, 3),
-    "/admin/users/platforms-devices?range=7d&platform=ios&page=3");
+    "/admin/platforms/devices?range=7d&platform=ios&page=3");
 });
 
 test("Platform metrics render before filters on a single standard-desktop strip", () => {
-  const page = readFileSync("src/app/admin/users/platforms-devices/page.tsx", "utf8");
+  const page = readFileSync("src/app/admin/platforms/devices/page.tsx", "utf8");
   const metrics = page.indexOf('data-testid="platform-session-metrics"');
-  const filters = page.indexOf('<form action="/admin/users/platforms-devices"');
+  const filters = page.indexOf('<form action="/admin/platforms/devices"');
   const history = page.indexOf('aria-labelledby="access-history-heading"');
   assert.ok(metrics > 0 && metrics < filters && filters < history,
     "Page order must be heading, metrics, filters, then session history");
@@ -37,14 +37,14 @@ test("Platform metrics render before filters on a single standard-desktop strip"
   assert.match(page, /result\.counts\.android/);
   assert.match(page, /result\.counts\.other/);
   assert.doesNotMatch(page, /<Link href="\/admin\/users" className=\{navigationLink\}>/);
-  assert.match(page, /<form action="\/admin\/users\/platforms-devices" method="get"/);
+  assert.match(page, /<form action="\/admin\/platforms\/devices" method="get"/);
   assert.match(page, /Device &amp; Access History/);
 });
 
 test("Overview is admin-only and never returns raw session credentials", () => {
   const service = readFileSync("src/services/adminPlatformAccessService.ts", "utf8");
-  const page = readFileSync("src/app/admin/users/platforms-devices/page.tsx", "utf8");
-  assert.match(page, /requireAdminSession\("\/admin\/users\/platforms-devices"\)/);
+  const page = readFileSync("src/app/admin/platforms/devices/page.tsx", "utf8");
+  assert.match(page, /requireAdminSession\("\/admin\/platforms\/devices"\)/);
   assert.match(service, /getOptionalPrisma/);
   assert.match(service, /db\.accountSession\.groupBy/);
   assert.match(service, /groupBy\(\{ by: \["client", "platform"\], where: \{ \.\.\.base, \.\.\.selection \}/);

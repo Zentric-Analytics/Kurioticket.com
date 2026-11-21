@@ -61,6 +61,17 @@ await put("mocks/provider-status.js",
   'export function getProviderIntegrationStatuses(){return [{provider:"Duffel"},{provider:"KAYAK sandbox"}];}');
 // Render a real Overview route for the Admin shell's background exception QA.
 await put("app/admin/page.jsx", 'export default function Overview(){return <div><h1>Admin Overview QA</h1></div>;}');
+// Exercise the current Platform and Users workspace navigation with synthetic
+// route bodies. The production data services are covered separately by CI.
+await put("app/admin/platform-health/page.jsx",
+  'export default function Health(){return <main><h1>Platform Health QA</h1></main>;}');
+await put("app/admin/platforms/devices/page.jsx",
+  'export default function PlatformsDevices(){return <main><h1>Platforms & Devices QA</h1></main>;}');
+await put("app/admin/users/user/[id]/devices/page.jsx",
+  'export default function UserDeviceHistory(){return <main><h1>User Device History QA</h1></main>;}');
+// The real legacy route should redirect without losing validated query inputs.
+await put("app/admin/users/platforms-devices/page.tsx",
+  await readFile(path.join(source, "app/admin/users/platforms-devices/page.tsx"), "utf8"));
 await put("mocks/auth-guards.js", 'export async function requireAdminSession(){return {user:{id:"qa-admin-001",role:"ADMIN"}};}');
 await put("mocks/env.js", 'export function getAdminEmails(){return ["alana@example.invalid"];}');
 await put("mocks/prisma.js", await readFile(path.join(qa, "data-fixture.js"), "utf8"));

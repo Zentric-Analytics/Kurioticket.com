@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 const users = readFileSync("src/app/admin/users/page.tsx", "utf8");
 const population = readFileSync("src/services/adminUserPopulationMetrics.ts", "utf8");
 const populationCards = readFileSync("src/components/admin/AdminUserPopulationCards.tsx", "utf8");
-const platformPage = readFileSync("src/app/admin/users/platforms-devices/page.tsx", "utf8");
+const platformPage = readFileSync("src/app/admin/platforms/devices/page.tsx", "utf8");
 const liveCards = readFileSync("src/components/admin/AdminPlatformOnlinePresence.tsx", "utf8");
 const presenceService = readFileSync("src/services/onlinePresenceService.ts", "utf8");
 const searchDetails = readFileSync("src/app/admin/searches/[id]/page.tsx", "utf8");
@@ -73,7 +73,7 @@ test("Platform Health leads the dedicated page and uses measured narrow signals"
   const online = platformPage.indexOf("<AdminPlatformOnlinePresence");
   const downloads = platformPage.indexOf('aria-label="Mobile app distribution"');
   const sessions = platformPage.indexOf('data-testid="platform-session-metrics"');
-  const filters = platformPage.indexOf('<form action="/admin/users/platforms-devices"');
+  const filters = platformPage.indexOf('<form action="/admin/platforms/devices"');
   const history = platformPage.indexOf('aria-labelledby="access-history-heading"');
   assert.ok(health > 0 && health < online && online < downloads
     && downloads < sessions && sessions < filters && filters < history);

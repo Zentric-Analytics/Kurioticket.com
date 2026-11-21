@@ -88,11 +88,12 @@ test("navigation keeps parent workspaces visible while child routes stay nested"
   assert.match(shell, /Official Kurioticket mark stays in the top-left header beside the title at every width/);
   const groups = getAdminHeaderGroups("ADMIN", true);
   const entries = groups.flatMap(group => group.links);
-  assert.deepEqual(entries.map(({ item }) => item.label), ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Platform Health", "Settings"]);
+  assert.deepEqual(entries.map(({ item }) => item.label), ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Platforms", "Settings"]);
   const searches = entries.find(({ item }) => item.href === "/admin/searches/activity");
   const providers = entries.find(({ item }) => item.href === "/admin/providers");
   assert.deepEqual(searches?.children.map((item) => item.label), ["Provider Handoffs"]);
-  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.label), ["Platforms & Devices"]);
+  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.label), []);
+  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/platform-health")?.children.map(item => item.label), ["Platforms & Devices"]);
   assert.deepEqual(providers?.children.map((item) => item.label), ["Homepage Fares", "Hotels", "Cars", "Referral Attribution"]);
   // Current dev intentionally hides Admin navigation from support roles.
   assert.deepEqual(getAdminHeaderGroups("SUPPORT"), []);
@@ -133,9 +134,10 @@ test("global More sections dropdown is replaced with per-workspace navigation", 
   assert.match(shell, /isAdminWorkspaceSectionActive\(pathname, item\.href\)/);
 });
 
-test("Platform Health uses its independent top-level workspace rather than a System sidebar entry", () => {
-  assert.match(shell, /const isStandalonePlatformHealth = pathname === "\/admin\/platform-health"/);
-  assert.match(shell, /!isOverview && !isSettings && !isStandalonePlatformHealth && role === "ADMIN"/);
+test("Platforms uses the standard sidebar layout for Platform Health and Platforms & Devices", () => {
+  assert.doesNotMatch(shell, /isStandalonePlatformHealth/);
+  assert.match(shell, /!isOverview && !isSettings && role === "ADMIN"/);
+  assert.match(shell, /<WorkspaceSidebar pathname=\{pathname\}/);
 });
 
 test("new section navigation remains responsive and Team Access uses the Settings surface", () => {

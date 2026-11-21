@@ -15,7 +15,7 @@ export function parsePlatformAccessQuery(raw: Record<string, string | string[] |
 }
 
 export function platformAccessHref(query: PlatformAccessQuery, page: number) {
-  return "/admin/users/platforms-devices?" + new URLSearchParams({
+  return "/admin/platforms/devices?" + new URLSearchParams({
     range: query.range, platform: query.platform, page: String(page),
   });
 }
