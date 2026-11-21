@@ -69,6 +69,11 @@ test("Platform Health leads the dedicated page and uses measured narrow signals"
   assert.match(platformPage, /Account sessions and live presence cannot be used as download counts/);
   assert.match(platformPage, /Device &amp; Access History/);
   assert.match(platformPage, /data-testid="platform-health-metric"/);
+  assert.doesNotMatch(platformPage, /href="\/admin\/platform-health"/);
+  assert.doesNotMatch(platformPage, /Full monitoring details|See full monitoring details/);
+  assert.match(platformPage, /Not verified by these observations/);
+  assert.match(platformPage, /Account sessions and presence do not establish installed-app crash health/);
+
   assert.match(platformPage, /data-testid="ios-download-metric"/);
   assert.match(platformPage, /data-testid="android-download-metric"/);
   assert.match(platformPage, /data-testid="platform-session-metric"/);
