@@ -48,6 +48,15 @@ export function parseStoredVisitorIdentity(value: unknown): StoredVisitorIdentit
   };
 }
 
+// A short, bounded bridge covers a previously granted identity still being
+// restored or linked when the user's first native search starts. This is never
+// used for visitors who have not expressly opted in.
+export const nativeJourneySearchPaths = new Set([
+  "/api/flights/search", "/api/hotels/search", "/api/cars/search",
+  "/api/mobile/v1/hotels/progressive",
+]);
+export const nativeSearchIdentityWaitMs = 750;
+
 /** Only these first-party producers receive the optional visitor reference. */
 export function isVisitorTrackedPath(path: string) {
   return ["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive", "/api/redirect", "/api/journey/events"].includes(path);
@@ -172,9 +181,30 @@ export class VisitorIdentityCoordinator {
     if (!isVisitorTrackedPath(path)) return {};
     await this.load();
     const changed = this.adoptSession(session);
-    // Network analytics work never delays search results or opening a deal.
-    void this.refresh(changed);
-    return this.snapshot().tracking ? { "x-kt-visitor": this.state.visitorToken! } : {};
+    const pendingSearchIdentity = nativeJourneySearchPaths.has(path)
+      && this.state.choice === "granted" && !this.snapshot().tracking;
+    // Retry when an already-consented search starts, even if an earlier
+    // background identity connection failed. Unknown/declined consent never
+    // starts a visitor request.
+    const sync = this.refresh(changed || pendingSearchIdentity);
+    if (pendingSearchIdentity) {
+      // Give an in-flight grant/account merge a small opportunity to finish
+      // before the search. On slow/offline networks the search still proceeds
+      // without optional visitor analytics, and no past search is relinked.
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          sync,
+          new Promise<void>(resolve => { timer = setTimeout(resolve, nativeSearchIdentityWaitMs); }),
+        ]);
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    }
+    // A different account may have signed in while this request waited.
+    // Never attach its visitor credential to the previous account's request.
+    return this.snapshot().tracking && this.session?.token === session?.token
+      ? { "x-kt-visitor": this.state.visitorToken! } : {};
   }
 
   refresh(force = true): Promise<void> {
