@@ -137,6 +137,15 @@ jobs:
       - name: Validate admin CMS contracts and interactions
         run: npm run test:cms
 
+      - name: Validate Homepage Fare snapshot coverage and operations
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/services/homepageFareSnapshotCoverage.test.ts");
+          await import("./src/app/admin/homepage-fares/operations.test.ts");'
+
       - name: Validate Render web build
         run: npm run build
       - name: Install native dependencies
