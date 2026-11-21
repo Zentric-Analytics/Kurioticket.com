@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   adminIdentityPageSql, adminRegisteredActivityDateWhere, escapePrismaContainsQuery, parseAdminIdentitySort,
@@ -227,4 +228,16 @@ test("oldest and alphabetic explicit sorts remain available", () => {
   assert.match(sql({ ...base, sort: "oldest" }).text, /ORDER BY "joinedAt" ASC, "kind" ASC, "id" ASC/);
   assert.match(sql({ ...base, sort: "name_asc" }).text, /ORDER BY lower\("displayName"\) ASC, "joinedAt" DESC/);
   assert.match(sql({ ...base, sort: "name_desc" }).text, /ORDER BY lower\("displayName"\) DESC, "joinedAt" DESC/);
+});
+
+test("Directory and Activity share a parameterized recorded account last-seen expression", () => {
+  const directory = readFileSync("src/lib/adminIdentityDirectory.ts", "utf8");
+  const activity = readFileSync("src/services/adminIdentityActivityService.ts", "utf8");
+  const activityPage = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx", "utf8");
+  assert.match(directory, /export function adminRegisteredLastSeenSql\(/);
+  assert.match(directory, /\$\{adminRegisteredLastSeenSql\(environment\)\}/);
+  assert.match(activity, /\$\{adminRegisteredLastSeenSql\(environment\)\}/);
+  assert.match(activity, /account \? accountLastSeen : visitor\?\.lastSeenAt/);
+  assert.match(activityPage, /<Fact label="Last seen"/);
+  assert.doesNotMatch(activityPage, /<Fact label="Last active"/);
 });
