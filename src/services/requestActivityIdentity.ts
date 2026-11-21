@@ -19,6 +19,11 @@ const dependencies: IdentityDependencies = {
   },
 };
 
+function declaresSearchCrawler(request: Request): boolean {
+  const agent = request.headers.get("user-agent") ?? "";
+  return /\b(?:[a-z0-9_-]*(?:bot|crawler|spider)|GoogleOther|Google-InspectionTool|Mediapartners-Google|facebookexternalhit|Slurp|ia_archiver|ChatGPT-User|Perplexity-User|Claude-User)\b/i.test(agent);
+}
+
 /** Optional attribution only. Call after the response; never trust client user IDs. */
 export async function resolveRequestActivityIdentity(
   request: Request,
@@ -59,6 +64,13 @@ export async function resolveRequestActivityIdentity(
   } catch {
     // A failed session lookup cannot establish ownership of this activity.
     return { userId: null, visitorId: null, applicationSource: "UNKNOWN" };
+  }
+
+  // Search clients can send browser headers or carry a valid guest session.
+  // A crawler declaration excludes platform credit but never grants authorization
+  // or counts as a verified crawler block.
+  if (operationalSession !== undefined && declaresSearchCrawler(request)) {
+    application = { applicationSource: "UNKNOWN" };
   }
 
   let visitorId: string | null = null;

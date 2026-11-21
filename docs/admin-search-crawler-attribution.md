@@ -42,3 +42,5 @@ Never edit raw SearchHistory rows or collapse ten old searches in place solely t
 - A verified crawler never triggers customer-search history, optional customer analytics or provider execution.
 - Blocked-crawler totals are reported separately; Platform Health and Search Activity customer counts remain consistent.
 - No changes to native builds, providers, feature controls, application routes, consent or permissions.
+
+A search that runs with a declared crawler user agent receives `UNKNOWN` application attribution, including PerplexityBot and GoogleOther. This affects reporting only. A crawler declaration alone does not establish verified identity or trigger the search block.
