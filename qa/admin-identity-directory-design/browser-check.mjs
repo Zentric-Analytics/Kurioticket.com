@@ -148,7 +148,7 @@ try {
     "All filters must remain inside content width");
   assert.ok(filterRects.items[0].width > filterRects.items[1].width,
     "Online user search should be wider than dropdowns");
-  await page.screenshot({path:output+"/online-users-desktop-1280.png",fullPage:true);
+  await page.screenshot({path:output+"/online-users-desktop-1280.png",fullPage:true});
   await expect(page.getByText("Guest session")).toHaveCount(1);
   await expect(page.getByTestId("online-user-row").filter({hasText:"Guest session"})
     .getByRole("link",{name:"View Activity"})).toHaveCount(0);
