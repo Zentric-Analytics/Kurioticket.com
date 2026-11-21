@@ -1,5 +1,9 @@
 import "server-only";
 
+import { Prisma } from "@/generated/prisma/client";
+import { onlinePresenceWindowSeconds } from "@/lib/onlinePresence";
+import { getPublicEnvironment } from "@/lib/stagingSafety";
+import { getOnlinePresenceSnapshot } from "@/services/onlinePresenceService";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { deviceTodayWindow, deviceHistoryWindow, DEVICE_HISTORY_PAGE_SIZE, type DeviceHistoryQuery } from "@/lib/adminDeviceHistory";
 
@@ -24,7 +28,7 @@ export type DeviceSessionResult =
   | { status: "unavailable" };
 
 export type FullDeviceHistoryResult =
-  | { status: "ok"; sessions: AdminDeviceSession[]; total: number; hasNext: boolean }
+  | { status: "ok"; sessions: AdminDeviceSession[]; total: number; hasNext: boolean; onlineSessionIds: string[] | null; validSessionIds: string[] | null }
   | { status: "not_found" }
   | { status: "unavailable" };
 
@@ -73,7 +77,54 @@ export async function loadAdminFullDeviceHistory(
         },
       }),
     ]);
-    return { status: "ok", sessions, total,
+    // An authenticated session can remain valid for hours without being online.
+    // First check the same measured presence backend used by the Online Users cards.
+    // If monitoring is unavailable, never reinterpret missing evidence as inactivity.
+    let onlineSessionIds: string[] | null = null;
+    let validSessionIds: string[] | null = null;
+    if (sessions.length) {
+      const now = new Date();
+      try {
+        const environment = getPublicEnvironment();
+        const snapshot = await getOnlinePresenceSnapshot(environment, now);
+        if (snapshot.status === "ok") {
+          const cutoff = new Date(now.getTime() - onlinePresenceWindowSeconds * 1000);
+          const ids = sessions.map(session => session.id);
+          // Return IDs only. The account/session joins enforce the exact validity
+          // checks of the aggregate live-presence reader, but at device granularity.
+          // A missing heartbeat is Inactive only for an authenticated valid session.
+          const verified = await db.$queryRaw<Array<{ id: string; online: boolean }>>(Prisma.sql`
+            SELECT s."id",
+              COALESCE(BOOL_OR(p."accountSessionId" IS NOT NULL), FALSE) AS "online"
+            FROM "AccountSession" s
+            JOIN "User" u ON u."id" = s."userId"
+            LEFT JOIN "UserSecuritySettings" security ON security."userId" = u."id"
+            LEFT JOIN "OnlinePresenceSession" p ON p."accountSessionId" = s."id"
+              AND p."environment" = ${environment}
+              AND p."lastSeenAt" > ${cutoff} AND p."lastSeenAt" <= ${now}
+            WHERE s."userId" = ${userId}
+              AND s."id" IN (${Prisma.join(ids)})
+              AND s."revokedAt" IS NULL AND s."expiresAt" > ${now}
+              AND s."sessionVersion" = u."sessionVersion"
+              AND u."status" = 'ACTIVE' AND u."role" IN ('USER', 'SUPPORT', 'ADMIN')
+              AND u."emailVerified" IS NOT NULL
+              AND (NOT COALESCE(security."twoFactorEnabled", false) OR s."assuranceLevel" <> 'PRIMARY')
+            GROUP BY s."id"
+          `);
+          if (!verified.every(row => typeof row.id === "string" && ids.includes(row.id)
+              && typeof row.online === "boolean")) {
+            throw new Error("Invalid account session presence observations");
+          }
+          validSessionIds = verified.map(row => row.id);
+          onlineSessionIds = verified.filter(row => row.online).map(row => row.id);
+        }
+      } catch {
+        // Preserve historical sessions while failing closed on online claims.
+        onlineSessionIds = null;
+        validSessionIds = null;
+      }
+    }
+    return { status: "ok", sessions, total, onlineSessionIds, validSessionIds,
       hasNext: query.page * DEVICE_HISTORY_PAGE_SIZE < total };
   } catch {
     return { status: "unavailable" };

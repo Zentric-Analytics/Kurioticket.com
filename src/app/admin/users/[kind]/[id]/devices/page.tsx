@@ -4,7 +4,8 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { validActivityIdentity } from "@/lib/adminIdentityActivity";
 import { deviceHistoryHref, parseDeviceHistoryQuery, DEVICE_HISTORY_PAGE_SIZE } from "@/lib/adminDeviceHistory";
-import { loadAdminFullDeviceHistory } from "@/services/adminDeviceSessionsService";
+import { loadAdminFullDeviceHistory, type AdminDeviceSession } from "@/services/adminDeviceSessionsService";
+import { AdminDeviceHistoryAutoRefresh } from "@/components/admin/AdminDeviceHistoryAutoRefresh";
 import { platformLabel, sourceIcon, deviceValue } from "@/components/admin/AdminIdentityDeviceAccess";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { AdminDeviceHistoryFilters } from "@/components/admin/AdminDeviceHistoryFilters";
@@ -18,6 +19,26 @@ const format = (date: Date) => new Intl.DateTimeFormat("en-GB", {
   day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
   hour12: false, timeZone: "UTC",
 }).format(date) + " UTC";
+
+/** Render the same verified session status on desktop and mobile. */
+function VerifiedDeviceStatus({ session, observedAt, onlineSessionIds, validSessionIds }: {
+  session: AdminDeviceSession; observedAt: Date;
+  onlineSessionIds: ReadonlySet<string> | null; validSessionIds: ReadonlySet<string> | null;
+}) {
+  const presence = onlineSessionIds === null || validSessionIds === null || !validSessionIds.has(session.id)
+    ? "unavailable" : onlineSessionIds.has(session.id) ? "online" : "offline";
+  const status = recordedDeviceSessionStatus(session, observedAt, presence);
+  const explanation = status === "Active" ? "Verified online in the last 90 seconds"
+    : status === "Inactive" ? "No verified online presence in the last 90 seconds"
+    : status === "Unknown" ? "Live device presence could not be verified"
+    : status === "Expired" ? "Session expired" : "Session signed out or ended by a security action";
+  return <span title={explanation}
+    className={"inline-flex items-center gap-1.5 font-medium " +
+      (status === "Active" ? "text-[#15803D]" : "text-[#334155]")}>
+    {status === "Active" ? <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-[#16A34A]" /> : null}
+    {status}
+  </span>;
+}
 
 export default async function AdminDeviceHistoryPage({ params, searchParams }: Props) {
   const { kind, id } = await params;
@@ -50,7 +71,10 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
   const totalPages = Math.max(1, Math.ceil(result.total / DEVICE_HISTORY_PAGE_SIZE));
   const pagePath = path + "/devices";
   const observedAt = new Date();
+  const onlineSessionIds = result.onlineSessionIds === null ? null : new Set(result.onlineSessionIds);
+  const validSessionIds = result.validSessionIds === null ? null : new Set(result.validSessionIds);
   return <div className="min-w-0 space-y-5 bg-white pb-6 text-[#0F172A]">
+    <AdminDeviceHistoryAutoRefresh />
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[13px]">
       <Link href={backHref} className="focus-ring inline-flex items-center gap-1.5 text-[#004BB8] hover:underline">
         <ArrowLeft size={15} aria-hidden="true"/> Back to Activity
@@ -61,7 +85,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
       <header className="flex min-w-0 flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-[19px] font-semibold">Device &amp; Access History</h1>
-          <p className="mt-1 text-[12px] text-[#64748B]">Recorded sessions · Times in UTC · Locations are estimates · Signed out includes security-initiated endings</p>
+          <p className="mt-1 text-[12px] text-[#64748B]">Recorded sessions · UTC · Approximate locations · Online status updates automatically</p>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-md bg-[#F8FAFC] px-2.5 py-1.5 text-[12px] text-[#475569]">
           <Clock3 size={14} aria-hidden="true"/>{result.total.toLocaleString()} matching sessions
@@ -81,7 +105,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
               <p className="break-words text-[#475569]">{deviceValue(session.deviceLabel)} · {deviceValue(session.os)}</p>
               <p className="break-words text-[#64748B]">{session.client === "MOBILE" ? "In-app" : deviceValue(session.browser)} · {deviceValue(session.locationLabel)}</p>
               <p className="tabular-nums text-[#64748B]">Last seen <time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt)}</time></p>
-              <p className="text-[#475569]">Status: <span className="font-medium">{recordedDeviceSessionStatus(session, observedAt)}</span></p>
+              <p className="text-[#475569]">Status: <VerifiedDeviceStatus session={session} observedAt={observedAt} onlineSessionIds={onlineSessionIds} validSessionIds={validSessionIds} /></p>
               {session.revokedAt && recordedDeviceSignOutReason(session.revokeReason) ? <p className="text-[#64748B]">
                 Reason: {recordedDeviceSignOutReason(session.revokeReason)}
               </p> : null}
@@ -113,7 +137,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
                   <td className="break-words px-3 py-3">{deviceValue(session.locationLabel)}</td>
                   <td className="px-3 py-3 tabular-nums"><time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt)}</time></td>
                   <td className="px-3 py-3">
-                    <span className="font-medium text-[#334155]">{recordedDeviceSessionStatus(session, observedAt)}</span>
+                    <VerifiedDeviceStatus session={session} observedAt={observedAt} onlineSessionIds={onlineSessionIds} validSessionIds={validSessionIds} />
                     {session.revokedAt && recordedDeviceSignOutReason(session.revokeReason) ? <span className="mt-1 block break-words text-[11px] leading-4 text-[#64748B]">
                       {recordedDeviceSignOutReason(session.revokeReason)}
                     </span> : null}

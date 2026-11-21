@@ -32,6 +32,7 @@ await put("next.config.mjs",
   'config.resolve.alias["@/services/adminJourneyService"]=path.resolve("mocks/journeys.js");\n' +
   'config.resolve.alias["@/lib/prisma"]=path.resolve("mocks/prisma.js");\n' +
   'config.resolve.alias["@/services/adminIdentityActivityService"]=path.resolve("mocks/activity.js");\n' +
+  'config.resolve.alias["@/services/onlinePresenceService"]=path.resolve("mocks/presence.js");\n' +
   'config.resolve.alias["@"]=' + JSON.stringify(source) + ';return config;}};');
 await put("postcss.config.mjs", 'export default {plugins:{"@tailwindcss/postcss":{}}};');
 await put("app/globals.css",
@@ -61,6 +62,7 @@ await put("app/admin/users/[kind]/[id]/journeys/page.tsx",
 await put("mocks/auth-guards.js", 'export async function requireAdminSession(){return {user:{id:"qa-admin",role:"ADMIN"}};}');
 await put("mocks/stagingSafety.js", 'export function getPublicEnvironment(){return "staging";}');
 await put("mocks/activity.js", await readFile(path.join(qa, "activity-fixture.js"), "utf8"));
+await put("mocks/presence.js", 'export async function getOnlinePresenceSnapshot(){return {status:"ok",windowSeconds:90,observedAt:new Date().toISOString(),total:1,registeredAccounts:1,guestSessions:0};}');
 await put("mocks/prisma.js", await readFile(path.join(qa, "old-drawer-fixture.js"), "utf8"));
 await put("app/admin/journeys/[id]/page.tsx", await readFile(path.join(source, "app/admin/journeys/[id]/page.tsx"), "utf8"));
 await put("mocks/journeys.js", await readFile(path.join(qa, "journey-fixture.js"), "utf8"));

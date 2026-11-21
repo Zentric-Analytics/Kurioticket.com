@@ -37,7 +37,7 @@ const format = (at: Date) => new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC",
 }).format(at);
 // One common desktop grid: guest/customer identity spans two fifths, while
-// First seen/Joined, Last active and Events each occupy one fifth.
+// First seen/Joined, Last seen and Events each occupy one fifth.
 const activityColumns = "grid min-w-0 w-full gap-y-4 lg:grid-cols-5 lg:gap-y-0";
 const buttonClass = "focus-ring inline-flex items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
 
@@ -194,7 +194,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
 
           <dl className="grid min-w-0 grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:contents">
             <Fact label={kind === "guest" ? "First seen" : "Joined"} className="lg:border-l-0 lg:pl-2 2xl:pl-6"><HeaderTime at={data.firstSeenAt}/></Fact>
-            <Fact label="Last active" className="lg:border-l-0 lg:pl-2 2xl:pl-6">{data.lastSeenAt ? <HeaderTime at={data.lastSeenAt}/> : "—"}</Fact>
+            <Fact label="Last seen" className="lg:border-l-0 lg:pl-2 2xl:pl-6">{data.lastSeenAvailable === false ? "Unavailable" : data.lastSeenAt ? <HeaderTime at={data.lastSeenAt}/> : "—"}</Fact>
             <Fact label="Events" testId="activity-events-fact"
               className={"lg:border-l-0 lg:pl-6 " + (kind === "user" || data.source === "visitor" ? "lg:pr-28" : "")}>
               {data.events.length}
