@@ -59,6 +59,40 @@ test("population totals use one consistent and bounded DB read, not journey acti
   assert.doesNotMatch(populationCards, /gap-px overflow-hidden rounded-xl/);
 });
 
+test("Users Directory shows four live customer presence cards above seven recorded-user metrics", () => {
+  const online = users.indexOf('<AdminPlatformOnlinePresence initial={onlinePresence} variant="users" />');
+  const population = users.indexOf("<AdminUserPopulationCards");
+  const directory = users.indexOf("<AdminUsersToolbar");
+  assert.ok(online > 0 && online < population && population < directory);
+  assert.match(users, /getOnlinePresenceSnapshot\(environment, now\)/);
+  assert.match(users, /readUserPopulationMetrics\(date, now, from, to\)/);
+  assert.match(users, /Promise\.all\(\[/);
+  assert.match(liveCards, /label: "Total online users"/);
+  assert.match(liveCards, /label: "iOS online"/);
+  assert.match(liveCards, /label: "Android online"/);
+  assert.match(liveCards, /label: "Website online", key: "website"/);
+  assert.match(liveCards, /onUsersPage \? usersCards : platformCards/);
+  assert.match(liveCards, /"users-online-metrics"/);
+  assert.match(liveCards, /grid-cols-2 gap-3 min-\[1024px\]:grid-cols-4/);
+  assert.match(liveCards, /Live presence is independent of directory date filters/);
+  assert.match(liveCards, /hasVerifiedPlatformCounts\(next\)/);
+  assert.match(liveCards, /fetch\("\/api\/admin\/overview\/online-presence"/);
+  assert.doesNotMatch(users, /loadPlatformAccess|accountSession\.count\(/);
+});
+
+test("Online data validates a deduplicated web union and excludes staff accounts", () => {
+  const rules = readFileSync("src/lib/onlinePresence.ts", "utf8");
+  const route = readFileSync("src/lib/onlinePresenceRoute.test.ts", "utf8");
+  assert.match(presenceService, /u\."role" = 'USER'/);
+  assert.match(presenceService, /COUNT\(DISTINCT "registeredUserId"\) FILTER \(WHERE "platform" IN \('desktop_web', 'mobile_web'\)\)/);
+  assert.match(presenceService, /AS "website"/);
+  assert.match(presenceService, /website: Number\(row\.website\)/);
+  assert.match(presenceService, /platforms\.website > platforms\.desktop_web \+ platforms\.mobile_web/);
+  assert.match(rules, /counts\.website >= Math\.max\(counts\.desktop_web, counts\.mobile_web\)/);
+  assert.match(rules, /section !== "admin"/);
+  assert.match(route, /customer-facing online presence excludes internal Admin pages/);
+});
+
 test("Search Activity links only verified operational guest sessions to Users Directory", () => {
   assert.match(searchDetails, /validActivityIdentity\("guest", search\.operationalSessionId \?\? ""\)/);
   assert.match(searchDetails, /search\.environment === getPublicEnvironment\(\)/);

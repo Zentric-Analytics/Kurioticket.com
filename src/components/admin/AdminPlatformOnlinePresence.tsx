@@ -10,12 +10,18 @@ import {
 const number = new Intl.NumberFormat("en-US");
 type PresenceKey = keyof OnlinePresencePlatformCounts;
 type PresenceCard = { label: string; key: PresenceKey | "total"; icon: typeof Monitor };
-const cards: PresenceCard[] = [
+const platformCards: PresenceCard[] = [
   { label: "Online total", key: "total", icon: UsersRound },
   { label: "iOS online", key: "ios", icon: Smartphone },
   { label: "Android online", key: "android", icon: TabletSmartphone },
   { label: "Mobile web online", key: "mobile_web", icon: Wifi },
   { label: "Desktop web online", key: "desktop_web", icon: Monitor },
+];
+const usersCards: PresenceCard[] = [
+  { label: "Total online users", key: "total", icon: UsersRound },
+  { label: "iOS online", key: "ios", icon: Smartphone },
+  { label: "Android online", key: "android", icon: TabletSmartphone },
+  { label: "Website online", key: "website", icon: Monitor },
 ];
 
 function visibleValue(snapshot: OnlinePresenceSnapshot, key: PresenceCard["key"]) {
@@ -25,7 +31,10 @@ function visibleValue(snapshot: OnlinePresenceSnapshot, key: PresenceCard["key"]
   return number.format(key === "total" ? snapshot.total : snapshot.platforms[key]);
 }
 
-export function AdminPlatformOnlinePresence({ initial }: { initial: OnlinePresenceSnapshot }) {
+export function AdminPlatformOnlinePresence({ initial, variant = "platforms" }: {
+  initial: OnlinePresenceSnapshot;
+  variant?: "platforms" | "users";
+}) {
   const [snapshot, setSnapshot] = useState<OnlinePresenceSnapshot>(initial);
 
   useEffect(() => setSnapshot(initial), [initial]);
@@ -78,14 +87,20 @@ export function AdminPlatformOnlinePresence({ initial }: { initial: OnlinePresen
     return () => { clearTimeout(timer); inFlight?.abort(); document.removeEventListener("visibilitychange", visibilityChanged); };
   }, []);
 
-  return <section aria-label="Online presence by platform" className="min-w-0 space-y-2">
+  const onUsersPage = variant === "users";
+  const cards = onUsersPage ? usersCards : platformCards;
+  return <section aria-label={onUsersPage ? "Online Users" : "Online presence by platform"}
+    className="min-w-0 space-y-2">
     <div className="flex flex-wrap items-end justify-between gap-2">
-      <h2 className="text-[15px] font-semibold text-[#0F172A]">Online Users by Platform</h2>
+      <h2 className="text-[15px] font-semibold text-[#0F172A]">{onUsersPage ? "Online Users" : "Online Users by Platform"}</h2>
       <span className="text-[11px] tabular-nums text-[#64748B]">
         Live · last {snapshot.windowSeconds} seconds
       </span>
     </div>
-    <div data-testid="online-platform-metrics" className="grid min-w-0 grid-cols-2 gap-3 min-[640px]:grid-cols-3 min-[1024px]:grid-cols-5">
+    <div data-testid={onUsersPage ? "users-online-metrics" : "online-platform-metrics"}
+      className={onUsersPage
+        ? "grid min-w-0 grid-cols-2 gap-3 min-[1024px]:grid-cols-4"
+        : "grid min-w-0 grid-cols-2 gap-3 min-[640px]:grid-cols-3 min-[1024px]:grid-cols-5"}>
       {cards.map(({ label, key, icon: Icon }) => <div key={key} data-testid="online-platform-metric" className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/75 px-3.5 py-3">
         <div className="flex min-h-8 items-start gap-2 text-[12px] leading-4 text-[#64748B]">
           <Icon size={15} aria-hidden="true" className="mt-0.5 shrink-0" />{label}
@@ -96,8 +111,9 @@ export function AdminPlatformOnlinePresence({ initial }: { initial: OnlinePresen
       </div>)}
     </div>
     <p className="text-[11px] leading-[17px] text-[#64748B]">
-      Online counts estimate recent activity, not logins or downloads. Accounts may appear on multiple platforms;
-      anonymous sessions are counted separately. Unclassified activity appears in the total only.
+      {onUsersPage
+        ? "Live presence is independent of directory date filters. Signed-in customer accounts are deduplicated; anonymous visitors count as sessions. Website includes desktop and mobile web without double-counting the same account."
+        : "Online counts estimate recent activity, not logins or downloads. Accounts may appear on multiple platforms; anonymous sessions are counted separately. Unclassified activity appears in the total only."}
     </p>
   </section>;
 }
