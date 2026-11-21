@@ -106,6 +106,17 @@ test("homepage fare readiness keeps only core customer-facing summary metrics", 
   assert.match(component, /formatCronStatus\(statusPayload\)/);
 });
 
+test("market attention matches public rows while fallback pools stay in diagnostics", () => {
+  const operations = component.slice(component.indexOf('view === "operations"'), component.indexOf('view === "diagnostics"'));
+  assert.match(component, /const publicMarketsNeedingAttention = publicMarkets\.filter\(/);
+  assert.match(component, /market\.status !== "ready"/);
+  assert.match(operations, /label="Markets needing attention" value=\{statusPayload\.dataAvailable \? publicMarketsNeedingAttention/);
+  assert.doesNotMatch(operations, /marketsNeedingAnotherRun\.filter\(\(market\) => market\.needed\)\.length/);
+  assert.match(component, /market\.lastKnownGoodCount \?\? 0/);
+  assert.match(component, /\+ " last-known-good"/);
+  assert.match(component, /\+ " coverage gaps"/);
+});
+
 test("fare diagnostics uses four standalone sections rather than redundant wrapper headings", () => {
   const page = readFileSync("src/app/admin/homepage-fares/diagnostics/page.tsx", "utf8");
   const diagnostics = component.slice(component.indexOf("function FareDiagnosticsSections("), component.indexOf("function MarketRouteInspector("));
