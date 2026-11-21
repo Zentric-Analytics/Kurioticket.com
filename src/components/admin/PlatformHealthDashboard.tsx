@@ -73,7 +73,7 @@ export function PlatformHealthDashboard({ data: initialData, hours, period, appl
    <ServiceSignal title="Operational alerts" state={data.alerts ? "UNKNOWN" : "MONITORING_UNAVAILABLE"} href="/admin/notifications">Recorded alert occurrences.{data.alerts ? <p className="mt-2">{data.alerts.critical} critical · {data.alerts.warning} warning</p> : <p>Alert counts are unavailable.</p>}<span className="sr-only">Alert counts alone do not establish overall platform health.</span></ServiceSignal>
    <ServiceSignal title="Preview release" state="UNKNOWN" href="/admin/system">{data.release ? <><p>Service version {data.release.applicationVersion ?? "not recorded"}</p><p className="mt-1 break-all">Commit {data.release.commitSha ?? "not recorded"}</p><p>Process started {data.release.releaseTimestamp}</p><p>Sandbox: {data.release.sandboxTravelSafe ? "ready" : "not ready"} · Email: restricted</p></> : <p>No Preview release evidence in this environment.</p>}<span className="sr-only">Release data does not verify installed-app versions.</span></ServiceSignal>
    <ServiceSignal title="Installed native applications" state={data.nativeApplicationHealth.state}
-     href="/admin/platforms/devices" linkLabel="View Platforms & Devices">
+     href="/admin/platforms/devices" linkLabel="View Platform Metrics">
      No reliable installed-app crash evidence is configured.
    </ServiceSignal>
   </div></OperationsSection>
