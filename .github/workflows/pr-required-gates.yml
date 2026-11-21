@@ -102,6 +102,8 @@ jobs:
           await import("./src/lib/website-presence.test.ts");
           await import("./src/lib/onlinePresenceRoute.test.ts");
           await import("./src/lib/websiteOnlinePresenceClient.test.ts");
+          await import("./src/lib/onlinePresencePlatformMetrics.test.ts");
+          await import("./src/services/adminUserPopulationMetrics.test.ts");
           await import("./src/app/admin/page.test.ts");'
       - name: Validate admin handoff hardening contracts
         env:
