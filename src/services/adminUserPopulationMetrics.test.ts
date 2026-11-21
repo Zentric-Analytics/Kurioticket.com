@@ -80,17 +80,27 @@ test("Users Directory shows four live customer presence cards above seven record
   assert.doesNotMatch(users, /loadPlatformAccess|accountSession\.count\(/);
 });
 
-test("Online data validates a deduplicated web union and excludes staff accounts", () => {
+test("Online data validates deduplicated web counts for admin, support and customer accounts", () => {
   const rules = readFileSync("src/lib/onlinePresence.ts", "utf8");
   const route = readFileSync("src/lib/onlinePresenceRoute.test.ts", "utf8");
-  assert.match(presenceService, /u\."role" = 'USER'/);
+  assert.match(presenceService, /u\."role" IN \('USER', 'SUPPORT', 'ADMIN'\)/);
+  assert.doesNotMatch(presenceService, /u\."role" = 'USER'/);
   assert.match(presenceService, /COUNT\(DISTINCT "registeredUserId"\) FILTER \(WHERE "platform" IN \('desktop_web', 'mobile_web'\)\)/);
   assert.match(presenceService, /AS "website"/);
   assert.match(presenceService, /website: Number\(row\.website\)/);
   assert.match(presenceService, /platforms\.website > platforms\.desktop_web \+ platforms\.mobile_web/);
   assert.match(rules, /counts\.website >= Math\.max\(counts\.desktop_web, counts\.mobile_web\)/);
-  assert.match(rules, /section !== "admin"/);
-  assert.match(route, /customer-facing online presence excludes internal Admin pages/);
+  assert.match(rules, /return section !== "admin" \|\| authenticated/);
+  assert.match(route, /signed-in administrators contribute web presence/);
+  assert.match(liveCards, /Online counts ignore date filters/);
+  assert.match(liveCards, /Each signed-in account counts once overall, even across devices/);
+  assert.doesNotMatch(liveCards, /Signed-in customer accounts are deduplicated/);
+  const rootLayout = readFileSync("src/components/auth/AuthProvider.tsx", "utf8");
+  const client = readFileSync("src/components/auth/WebsiteOnlinePresence.tsx", "utf8");
+  const ingress = readFileSync("src/app/api/identity/online-presence/route.ts", "utf8");
+  assert.match(rootLayout, /<WebsiteOnlinePresence \/>/);
+  assert.match(client, /isWebsiteOnlinePresenceRoute\(pathname, status === "authenticated" && identity !== null\)/);
+  assert.match(ingress, /resolveOptionalWebApiSession\(\)/);
 });
 
 test("Search Activity links only verified operational guest sessions to Users Directory", () => {
