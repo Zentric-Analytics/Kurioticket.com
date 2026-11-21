@@ -21,11 +21,12 @@ const format = (date: Date) => new Intl.DateTimeFormat("en-GB", {
 }).format(date) + " UTC";
 
 /** Render the same verified session status on desktop and mobile. */
-function VerifiedDeviceStatus({ session, observedAt, onlineSessionIds }: {
-  session: AdminDeviceSession; observedAt: Date; onlineSessionIds: ReadonlySet<string> | null;
+function VerifiedDeviceStatus({ session, observedAt, onlineSessionIds, validSessionIds }: {
+  session: AdminDeviceSession; observedAt: Date;
+  onlineSessionIds: ReadonlySet<string> | null; validSessionIds: ReadonlySet<string> | null;
 }) {
-  const presence = onlineSessionIds === null ? "unavailable"
-    : onlineSessionIds.has(session.id) ? "online" : "offline";
+  const presence = onlineSessionIds === null || validSessionIds === null || !validSessionIds.has(session.id)
+    ? "unavailable" : onlineSessionIds.has(session.id) ? "online" : "offline";
   const status = recordedDeviceSessionStatus(session, observedAt, presence);
   const explanation = status === "Active" ? "Verified online in the last 90 seconds"
     : status === "Inactive" ? "No verified online presence in the last 90 seconds"
@@ -71,6 +72,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
   const pagePath = path + "/devices";
   const observedAt = new Date();
   const onlineSessionIds = result.onlineSessionIds === null ? null : new Set(result.onlineSessionIds);
+  const validSessionIds = result.validSessionIds === null ? null : new Set(result.validSessionIds);
   return <div className="min-w-0 space-y-5 bg-white pb-6 text-[#0F172A]">
     <AdminDeviceHistoryAutoRefresh />
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[13px]">
@@ -103,7 +105,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
               <p className="break-words text-[#475569]">{deviceValue(session.deviceLabel)} · {deviceValue(session.os)}</p>
               <p className="break-words text-[#64748B]">{session.client === "MOBILE" ? "In-app" : deviceValue(session.browser)} · {deviceValue(session.locationLabel)}</p>
               <p className="tabular-nums text-[#64748B]">Last seen <time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt)}</time></p>
-              <p className="text-[#475569]">Status: <VerifiedDeviceStatus session={session} observedAt={observedAt} onlineSessionIds={onlineSessionIds} /></p>
+              <p className="text-[#475569]">Status: <VerifiedDeviceStatus session={session} observedAt={observedAt} onlineSessionIds={onlineSessionIds} validSessionIds={validSessionIds} /></p>
               {session.revokedAt && recordedDeviceSignOutReason(session.revokeReason) ? <p className="text-[#64748B]">
                 Reason: {recordedDeviceSignOutReason(session.revokeReason)}
               </p> : null}
@@ -135,7 +137,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
                   <td className="break-words px-3 py-3">{deviceValue(session.locationLabel)}</td>
                   <td className="px-3 py-3 tabular-nums"><time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt)}</time></td>
                   <td className="px-3 py-3">
-                    <VerifiedDeviceStatus session={session} observedAt={observedAt} onlineSessionIds={onlineSessionIds} />
+                    <VerifiedDeviceStatus session={session} observedAt={observedAt} onlineSessionIds={onlineSessionIds} validSessionIds={validSessionIds} />
                     {session.revokedAt && recordedDeviceSignOutReason(session.revokeReason) ? <span className="mt-1 block break-words text-[11px] leading-4 text-[#64748B]">
                       {recordedDeviceSignOutReason(session.revokeReason)}
                     </span> : null}
