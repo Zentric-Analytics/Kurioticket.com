@@ -68,7 +68,8 @@ function isSnapshot(value: unknown): value is AdminOnlineUsersSnapshot {
     || !Number.isSafeInteger(result.guestSessions)) return false;
   return result.rows.every(row => row && (row.kind === "guest" || row.kind === "registered")
     && typeof row.name === "string" && Array.isArray(row.platforms)
-    && row.platforms.length > 0 && Number.isFinite(Date.parse(row.lastSeenAt)));
+    && row.platforms.length > 0 && Number.isFinite(Date.parse(row.lastSeenAt))
+    && (row.locationLabel === null || (typeof row.locationLabel === "string" && row.locationLabel.length <= 160)));
 }
 
 export function AdminOnlineUsersDirectory({ initial }: { initial: AdminOnlineUsersSnapshot }) {
@@ -155,15 +156,15 @@ export function AdminOnlineUsersDirectory({ initial }: { initial: AdminOnlineUse
           </div>)}
       </div>
       <p className="text-[11px] leading-4 text-[#64748B]">
-        Accounts count once overall, even across platforms. Guests count as separate sessions.
-        Website includes desktop and mobile web.
+        Accounts count once across platforms. Guests count by session. Website includes desktop and mobile web.
       </p>
     </section>
 
     <section aria-label="Online user records" className="min-w-0 space-y-4">
       <form aria-label="Filter online users" onSubmit={event => {
         event.preventDefault(); setApplied(draft); setPage(1);
-      }} className="grid min-w-0 grid-cols-1 items-end gap-2 border-b border-[#E2E8F0] pb-4 sm:grid-cols-2 min-[1250px]:grid-cols-[minmax(175px,1.5fr)_repeat(3,minmax(130px,1fr))_auto]">
+      }} data-testid="online-users-filter-row"
+        className="grid min-w-0 grid-cols-1 items-center gap-2 border-b border-[#E2E8F0] pb-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_112px]">
         <label className="min-w-0">
           <span className="sr-only">Search online users</span>
           <input type="search" aria-label="Search online users" value={draft.q}
@@ -177,7 +178,7 @@ export function AdminOnlineUsersDirectory({ initial }: { initial: AdminOnlineUse
           onValueChange={platform => setDraft(value => ({ ...value, platform }))} />
         <AdminDirectorySelect name="role" label="Account role" compact value={draft.role} options={roles}
           onValueChange={role => setDraft(value => ({ ...value, role }))} />
-        <button type="submit" className="focus-ring h-10 min-w-[112px] rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97]">
+        <button type="submit" className="focus-ring inline-flex h-10 w-full min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white hover:bg-[#003D97]">
           Apply filters
         </button>
       </form>
@@ -193,15 +194,16 @@ export function AdminOnlineUsersDirectory({ initial }: { initial: AdminOnlineUse
         No online users match the selected filters.
       </div> : <div className="admin-responsive-records min-w-0 overflow-x-auto" role="region"
           aria-label="Current online identities" tabIndex={0}>
-        <table className="w-full min-w-[780px] table-fixed text-left text-[13px]">
+        <table className="w-full min-w-[900px] table-fixed text-left text-[13px]">
           <thead className="border-b border-[#E2E8F0] text-[11px] font-medium text-[#64748B]">
             <tr>
-              <th className="w-[27%] px-3 py-3 font-medium">IDENTITY</th>
-              <th className="w-[13%] px-3 py-3 font-medium">TYPE</th>
-              <th className="w-[25%] px-3 py-3 font-medium">PLATFORMS</th>
-              <th className="w-[14%] px-3 py-3 font-medium">LAST SEEN</th>
-              <th className="w-[10%] px-3 py-3 font-medium">STATUS</th>
-              <th className="w-[11%] px-3 py-3 font-medium">ACTIVITY</th>
+              <th className="w-[24%] px-3 py-3 font-medium">IDENTITY</th>
+              <th className="w-[10%] px-3 py-3 font-medium">TYPE</th>
+              <th className="w-[17%] px-3 py-3 font-medium">PLATFORMS</th>
+              <th className="w-[16%] px-3 py-3 font-medium">LOCATION</th>
+              <th className="w-[15%] px-3 py-3 font-medium">LAST SEEN</th>
+              <th className="w-[9%] px-3 py-3 font-medium">STATUS</th>
+              <th className="w-[9%] px-3 py-3 font-medium">ACTIVITY</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#E2E8F0]">
@@ -219,6 +221,10 @@ export function AdminOnlineUsersDirectory({ initial }: { initial: AdminOnlineUse
                   <span key={platform} className="rounded-md border border-[#E2E8F0] px-2 py-1 text-[11px] text-[#475569]">
                     {platformNames[platform]}
                   </span>)}</div>
+              </td>
+              <td className="break-words px-3 py-3 text-[#475569]" data-testid="online-user-location"
+                  title={row.locationLabel ? "Approximate location from a recorded device session" : "No verified location recorded"}>
+                {row.locationLabel ?? "Unavailable"}
               </td>
               <td className="px-3 py-3 tabular-nums text-[#475569]">
                 <time dateTime={row.lastSeenAt}>{clock.format(new Date(row.lastSeenAt))} UTC</time>

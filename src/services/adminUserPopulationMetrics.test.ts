@@ -86,6 +86,11 @@ test("Online Users owns the four live metrics while Users Directory keeps its se
   assert.match(onlineUi, /"Website online"/);
   assert.match(onlineUi, /data-testid="users-online-metrics"/);
   assert.match(onlineUi, /data-testid="online-user-row"/);
+  assert.match(onlineUi, /data-testid="online-users-filter-row"/);
+  assert.match(onlineUi, /lg:grid-cols-\[minmax\(0,2fr\)_repeat\(3,minmax\(0,1fr\)\)_112px\]/);
+  assert.match(onlineUi, /data-testid="online-user-location"/);
+  assert.match(onlineUi, /row\.locationLabel \?\? "Unavailable"/);
+  assert.match(onlineReader, /THEN s\."locationLabel" ELSE NULL END AS "locationLabel"/);
   assert.match(onlineUi, /fetch\("\/api\/admin\/users\/online"/);
   assert.match(onlineUi, /role="status"/);
   assert.match(onlineUi, /onSubmit=\{event =>/);

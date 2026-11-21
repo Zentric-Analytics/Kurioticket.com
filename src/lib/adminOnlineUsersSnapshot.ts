@@ -6,6 +6,8 @@ export type OnlineIdentityRow = {
   name: string;
   email: string | null;
   role: "USER" | "SUPPORT" | "ADMIN" | null;
+  /** Most recent live account session's recorded approximate access location. */
+  locationLabel: string | null;
   platforms: Array<"desktop_web" | "mobile_web" | "ios" | "android" | "unclassified">;
   lastSeenAt: string;
 };
@@ -19,13 +21,21 @@ type Platform = OnlineIdentityRow["platforms"][number];
 export type RawPresenceRow = {
   sourceId: string; platform: string | null; accountSessionId: string | null;
   userId: string | null; name: string | null; email: string | null; role: string | null;
-  lastSeenAt: Date;
+  locationLabel: string | null; lastSeenAt: Date;
 };
 const platformKeys = ["desktop_web", "mobile_web", "ios", "android"] as const;
 function normalizePlatform(value: string | null): Platform {
   return platformKeys.find(platform => platform === value) ?? "unclassified";
 }
 const roles = new Set(["USER", "SUPPORT", "ADMIN"]);
+
+/** Display only the location label recorded by the trusted session observation.
+ * An unverified or invalid label stays unavailable; never infer from locale. */
+function safeLocation(label: string | null): string | null {
+  const trimmed = label?.trim() ?? "";
+  if (!trimmed || trimmed.length > 160 || [...trimmed].some(char => char.charCodeAt(0) < 32)) return null;
+  return trimmed;
+}
 
 export function buildAdminOnlineUsersSnapshot(
   observations: RawPresenceRow[], now: Date,
@@ -55,13 +65,18 @@ export function buildAdminOnlineUsersSnapshot(
     const existing = accounts.get(observation.userId);
     if (existing) {
       existing.platforms.add(platform);
-      if (at > Date.parse(existing.row.lastSeenAt)) existing.row.lastSeenAt = observation.lastSeenAt.toISOString();
+      if (at > Date.parse(existing.row.lastSeenAt)) {
+        existing.row.lastSeenAt = observation.lastSeenAt.toISOString();
+        // A different, older device's location is not necessarily current.
+        existing.row.locationLabel = safeLocation(observation.locationLabel);
+      }
     } else {
       accounts.set(observation.userId, {
         row: {
           id: observation.userId, kind: "registered",
           name: observation.name?.trim() || "Unnamed user",
           email: observation.email, role: observation.role as "USER" | "SUPPORT" | "ADMIN",
+          locationLabel: safeLocation(observation.locationLabel),
           platforms: [], lastSeenAt: observation.lastSeenAt.toISOString(),
         },
         platforms: new Set([platform]),
@@ -75,7 +90,7 @@ export function buildAdminOnlineUsersSnapshot(
     b.lastSeenAt.getTime() - a.lastSeenAt.getTime()).map((guest, index): OnlineIdentityRow => ({
     // This is only a per-snapshot display key; never a stable anonymous identifier.
     id: "guest-" + (index + 1),
-    kind: "guest", name: "Guest session", email: null, role: null,
+    kind: "guest", name: "Guest session", email: null, role: null, locationLabel: null,
     platforms: [...guest.platforms].sort(), lastSeenAt: guest.lastSeenAt.toISOString(),
   }));
   const rows = [...registered, ...anonymous].sort((a, b) =>

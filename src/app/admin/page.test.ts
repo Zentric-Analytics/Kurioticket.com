@@ -56,6 +56,9 @@ test("Operations Snapshot includes handoffs and visitor metrics without the remo
     assert.ok(accountGroup.includes('label="' + label + '" value={' + value + "}"), label);
   }
   assert.equal((snapshot.match(/<SnapshotLink /g) ?? []).length, 2);
+  assert.match(snapshot, /<SnapshotLink href="\/admin\/users" label="Total accounts"/);
+  assert.match(snapshot, /<SnapshotLink href="\/admin\/users\/online" label="Online Users"/);
+  assert.doesNotMatch(snapshot, /<SnapshotLink href="\/admin\/users" label="Online Users"/);
   assert.match(snapshot, /aria-label="Account snapshot" className="grid min-w-0 grid-cols-1 grid-rows-2 items-stretch gap-2"/);
   assert.doesNotMatch(snapshot, /label="Recorded searches"|label="Customer journeys"/);
   assert.match(snapshot, /<Section title="Visitor Activity"/);
