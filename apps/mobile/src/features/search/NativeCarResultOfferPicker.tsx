@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Alert, Image, LayoutAnimation, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CarFront, ChevronRight, IdCard, Info, MapPin, ShieldCheck, Wallet, X } from "lucide-react-native";
+import { journeyEvents } from "../privacy/journeyEvents";
 import { SvgUri } from "react-native-svg";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import type { CarResult } from "../../api/travelApi";
@@ -97,8 +98,11 @@ export function NativeCarResultOfferPicker({
 
   // Keep Rate details mounted while the provider browser is presented.
   // Dismissing the sheet here returns users to Cars results when Safari closes.
-  const continueRateDeal = (url: string) => {
+  const continueRateDeal = (offerId: string, providerName: string, url: string) => {
     if (dealOpeningRef.current) return;
+    // This records the actual provider selection, not a rate-details preview.
+    // The shared coordinator enforces consent, search ownership and deduplication.
+    journeyEvents.offerSelected(journeyRequestId ?? undefined, `car:${result.id}:${offerId}`, providerName, "/car-results");
     void openProviderInApp(url);
   };
   const choices = nativeCarResultDealChoices(result);
@@ -152,7 +156,7 @@ export function NativeCarResultOfferPicker({
             accessibilityLabel={"View deal from " + providerName}
             accessibilityState={{ disabled: !bookingUrl }}
             disabled={!bookingUrl}
-            onPress={bookingUrl ? () => void openProviderInApp(bookingUrl) : undefined}
+            onPress={bookingUrl ? () => continueRateDeal(offer.id, providerName, bookingUrl) : undefined}
             style={styles.action}
           >
             <Text style={[styles.link, { color: actionColor }]}>View deal</Text>
@@ -237,7 +241,7 @@ export function NativeCarResultOfferPicker({
               accessibilityLabel={selectedChoice ? "View deal from " + selectedChoice.providerName : "View deal"}
               accessibilityState={{ disabled: !selectedRateBookingUrl }}
               disabled={!selectedRateBookingUrl}
-              onPress={selectedRateBookingUrl ? () => continueRateDeal(selectedRateBookingUrl) : undefined}
+              onPress={selectedRateBookingUrl && selectedChoice ? () => continueRateDeal(selectedChoice.offer.id, selectedChoice.providerName, selectedRateBookingUrl) : undefined}
               style={({ pressed }) => [
                 styles.sheetViewDeal,
                 !selectedRateBookingUrl && styles.sheetViewDealDisabled,
