@@ -1238,16 +1238,13 @@ async function runPhase3AHomepageFareRefresh({
     departureDate: dateStrategy.departureDate,
     currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
   });
-  const freshRouteIds = new Set(
-    allCandidateRoutes
-      .filter((route) =>
-        isUsableHomepageFareSnapshotRecord({
-          snapshot: snapshotsByRouteId.get(route.id),
-          now,
-          currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
-        }),
-      )
-      .map((route) => route.id),
+  // A last-known-good snapshot preserves history; it does not satisfy
+  // current public coverage or excuse a route from a provider refresh.
+  const freshRouteIds = getFreshHomepageFareSnapshotRouteIds(
+    allCandidateRoutes,
+    snapshotsByRouteId,
+    now,
+    HOMEPAGE_FARE_DEFAULT_CURRENCY,
   );
   const readinessBefore = computeHomepageFareRefreshReadiness(
     allCandidateRoutes,
@@ -1415,7 +1412,9 @@ async function runPhase3AHomepageFareRefresh({
 
     recordHomepageFareVisibleGapAttempt(counts, route, result);
 
-    if (result === "refreshed" || result === "retained") {
+    if (shouldCountHomepageFareRefreshResultAsFresh(
+      result, snapshotsByRouteId.get(route.id), new Date(),
+    )) {
       freshRouteIds.add(route.id);
       updateRefreshMarketFreshMetadata(
         counts,
@@ -1485,7 +1484,9 @@ async function runPhase3AHomepageFareRefresh({
           route.id,
         );
 
-        if (replacementResult === "refreshed" || replacementResult === "retained") {
+        if (shouldCountHomepageFareRefreshResultAsFresh(
+          replacementResult, snapshotsByRouteId.get(replacement.id), new Date(),
+        )) {
           freshRouteIds.add(replacement.id);
           updateRefreshMarketFreshMetadata(
             counts,
@@ -2563,6 +2564,37 @@ function isLastKnownGoodHomepageFareSnapshotRecord({
       now.getTime() - snapshot.searchedAt.getTime() <= maxAgeMs &&
       price &&
       normalizeHomepageFareCurrency(snapshot.currency) === currency,
+  );
+}
+
+function getFreshHomepageFareSnapshotRouteIds(
+  routes: HomepageFareRoute[],
+  snapshotsByRouteId: Map<string, HomepageFareSnapshotRecord>,
+  now: Date,
+  currency: string,
+) {
+  return new Set(
+    routes.filter((route) => isFreshHomepageFareSnapshotRecord({
+      snapshot: snapshotsByRouteId.get(route.id),
+      now,
+      currency,
+    })).map((route) => route.id),
+  );
+}
+
+function shouldCountHomepageFareRefreshResultAsFresh(
+  result: HomepageFareRefreshRouteResult,
+  existingSnapshot: HomepageFareSnapshotRecord | undefined,
+  now: Date,
+) {
+  // A failed provider attempt may retain a last-known-good snapshot. Retained
+  // is an operational outcome, not proof of a newly fresh public fare.
+  return result === "refreshed" || (
+    result === "retained" && isFreshHomepageFareSnapshotRecord({
+      snapshot: existingSnapshot,
+      now,
+      currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+    })
   );
 }
 
@@ -4093,6 +4125,8 @@ function isPrismaKnownRequestLikeError(error: unknown) {
 export const __homepageFareCoverageTest = {
   getRefreshRoutes,
   getFreshHomepageFareStatusRouteIds,
+  getFreshHomepageFareSnapshotRouteIds,
+  shouldCountHomepageFareRefreshResultAsFresh,
   computeHomepageFareMarketTargets,
   computeFreshCountsByMarket,
   getHomepageFareSmartRefreshBudget,
