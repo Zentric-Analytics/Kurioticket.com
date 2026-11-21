@@ -14,6 +14,9 @@ test("device history is account-scoped and excludes credentials and network iden
   assert.match(source, /snapshot\.status === "ok"/);
   assert.match(source, /p\."lastSeenAt" > \$\{cutoff\}/);
   assert.match(source, /s\."id" IN \(\$\{Prisma\.join\(ids\)\}\)/);
+  assert.match(source, /LEFT JOIN "OnlinePresenceSession" p/);
+  assert.match(source, /BOOL_OR\(p\."accountSessionId" IS NOT NULL\)/);
+  assert.match(source, /validSessionIds = verified\.map/);
   assert.match(source, /s\."userId" = \$\{userId\}/);
   assert.match(source, /s\."revokedAt" IS NULL AND s\."expiresAt" > \$\{now\}/);
   assert.match(source, /s\."sessionVersion" = u\."sessionVersion"/);
