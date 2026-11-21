@@ -61,7 +61,7 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/system/cms-health", parentHref: "/admin/system", label: "CMS Health", icon: FileText, roles: ["ADMIN"], section: "controls", description: "Monitor content integrity, fallback policy and publishing health." },
   { href: "/admin/email-delivery", parentHref: "/admin/system", label: "Email Delivery", icon: Mail, roles: ["ADMIN"], section: "controls", description: "Monitor transactional email delivery health and test sending readiness." },
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls", description: "Manage authoritative persisted platform controls." },
-  { href: "/admin/platforms/devices", parentHref: "/admin/platform-health", label: "Platforms & Devices", icon: MonitorSmartphone, roles: ["ADMIN"], section: "controls", description: "Platform-wide online presence, app download reporting and recorded account session history." },
+  { href: "/admin/platforms/devices", parentHref: "/admin/platform-health", label: "Platform Metrics", icon: MonitorSmartphone, roles: ["ADMIN"], section: "controls", description: "Platform checks, live online presence, mobile app reporting and aggregate account sessions." },
   { href: "/admin/redirects", parentHref: "/admin/searches/activity", label: "Provider Handoffs", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Investigate verified outbound provider handoffs." },
   { href: "/admin/referral-attribution", parentHref: "/admin/providers", label: "Referral Attribution", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Review provider referral-attribution reporting." },
 ];
@@ -126,7 +126,7 @@ const workspaceSections: ReadonlyArray<{
     paths: ["/admin/platform-health", "/admin/platforms"],
     links: [
       { href: "/admin/platform-health", label: "Platform Health" },
-      { href: "/admin/platforms/devices", label: "Platforms & Devices" },
+      { href: "/admin/platforms/devices", label: "Platform Metrics" },
     ],
   },
   {
