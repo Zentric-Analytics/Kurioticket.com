@@ -38,7 +38,7 @@ export async function readUserPopulationMetrics(
     // unattributed search/handoff records in the selected deployment.
     // First seen is calculated across all history before applying the new-guest window.
     const [registered, newRegistrations, consentedGuests, newConsentedGuests, anonymous] = await Promise.all([
-      db.user.count(),
+      db.user.count({ where: {} }),
       db.user.count({ where: period ? { createdAt: period } : {} }),
       db.visitor.count({ where: eligibleGuests }),
       db.visitor.count({ where: { ...eligibleGuests, ...(period ? { firstSeenAt: period } : {}) } }),
