@@ -87,29 +87,44 @@ test("market coverage targets count replacement-ready backup candidates", () => 
   assert.equal(targets.US.targetMet, true);
 });
 
-test("market coverage keeps visible discovery and backup candidates in separate buckets", () => {
+test("market coverage allocates backups to visible gaps before counting reserve", () => {
   const routes = __homepageFareCoverageTest.getRefreshRoutes("all-phase-3a");
   const jpRoutes = routes.filter((route) => route.market === "JP");
   const popular = jpRoutes.find((route) => route.isPopular && route.visibility === "visible");
-  const visibleDiscovery = jpRoutes.find((route) => route.isDiscover && route.visibility === "visible");
+  const visibleDiscovery = jpRoutes.filter((route) => route.isDiscover && route.visibility === "visible");
   const backups = jpRoutes.filter((route) => route.isDiscover && route.visibility === "backup").slice(0, 4);
-  assert.ok(popular && visibleDiscovery);
+  assert.ok(popular && visibleDiscovery[0]);
   assert.equal(backups.length, 4, "test needs at least four real JP backup candidates");
+  const budget = __homepageFareCoverageTest.getHomepageFareSmartRefreshBudget();
 
-  const available = new Set([popular.id, visibleDiscovery.id, ...backups.map((route) => route.id)]);
-  const targets = __homepageFareCoverageTest.computeHomepageFareMarketTargets(
-    routes, available, __homepageFareCoverageTest.getHomepageFareSmartRefreshBudget(),
+  const available = new Set([popular.id, visibleDiscovery[0].id, ...backups.map((route) => route.id)]);
+  const targets = __homepageFareCoverageTest.computeHomepageFareMarketTargets(routes, available, budget);
+  const backupsUsedForVisible = Math.min(
+    Math.max(0, targets.JP.discoveryVisibleTarget - 1), backups.length,
   );
   assert.equal(targets.JP.popularVisibleFresh, 1);
-  assert.equal(targets.JP.discoveryVisibleFresh, 1, "backups cannot also count as visible discovery");
-  assert.equal(targets.JP.backupFresh, 4, "all backup candidates remain observable even above target");
+  assert.equal(targets.JP.discoveryVisibleFresh, 1 + backupsUsedForVisible);
+  assert.equal(targets.JP.backupFresh, backups.length - backupsUsedForVisible);
+  assert.equal(targets.JP.discoveryVisibleFresh + targets.JP.backupFresh, 1 + backups.length,
+    "every discovered fare is assigned to one bucket only");
   assert.equal(targets.JP.freshCount, available.size, "each route contributes once to the market total");
   assert.equal(
     targets.JP.missingCount,
     Math.max(0, targets.JP.popularVisibleTarget - 1) +
-    Math.max(0, targets.JP.discoveryVisibleTarget - 1) +
-    Math.max(0, targets.JP.backupTarget - 4),
+    Math.max(0, targets.JP.discoveryVisibleTarget - targets.JP.discoveryVisibleFresh) +
+    Math.max(0, targets.JP.backupTarget - targets.JP.backupFresh),
   );
+
+  const completeVisible = new Set([
+    popular.id,
+    ...visibleDiscovery.map((route) => route.id),
+    ...backups.map((route) => route.id),
+  ]);
+  const full = __homepageFareCoverageTest.computeHomepageFareMarketTargets(routes, completeVisible, budget);
+  assert.equal(full.JP.discoveryVisibleFresh, full.JP.discoveryVisibleTarget);
+  assert.equal(full.JP.backupFresh, backups.length,
+    "backups remain in reserve when visible discovery slots are already covered");
+  assert.equal(full.JP.freshCount, completeVisible.size);
 });
 
 test("snapshot readiness excludes last-known-good routes from fresh market coverage", () => {
