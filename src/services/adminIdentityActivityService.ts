@@ -8,7 +8,7 @@ import {
   type ActivityCursor, type ActivityFilters, type JourneyStage,
 } from "@/lib/adminIdentityActivity";
 import { completeActivityReadTimeout, readCompleteActivitySource, type ActivitySourcePrefix, type ActivitySourceRow } from "@/lib/adminIdentityActivityComplete";
-import { escapePrismaContainsQuery } from "@/lib/adminIdentityDirectory";
+import { adminRegisteredLastSeenSql, escapePrismaContainsQuery } from "@/lib/adminIdentityDirectory";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
 
@@ -80,6 +80,8 @@ export type IdentityActivityRecord = {
   status: string;
   firstSeenAt: Date;
   lastSeenAt: Date | null;
+  /** False only when the separate recorded-observation read fails. */
+  lastSeenAvailable?: boolean;
   events: ActivityRow[];
   /** Exact matching record counts across all pages, never the current cursor page. */
   summary: IdentityActivitySummary;
@@ -489,6 +491,22 @@ export async function loadAdminIdentityActivity(
         recordedEvents: sorted.length,
       });
     }
+    let accountLastSeen: Date | null = null;
+    let lastSeenAvailable = true;
+    if (account) {
+      try {
+        // This is the exact unfiltered observation expression used by Users Directory.
+        // A login/heartbeat is a last-seen observation, NOT a search/journey event.
+        const [observation] = await db.$queryRaw<Array<{ lastSeenAt: Date | null }>>(Prisma.sql`
+          SELECT ${adminRegisteredLastSeenSql(environment)} AS "lastSeenAt"
+          FROM "User" u WHERE u."id" = ${id}
+        `);
+        if (!observation) throw new Error("Recorded account observation missing");
+        accountLastSeen = observation.lastSeenAt;
+      } catch {
+        lastSeenAvailable = false;
+      }
+    }
     return {
       status: "ok",
       data: {
@@ -498,7 +516,8 @@ export async function loadAdminIdentityActivity(
         role: account?.role ?? null,
         status: account?.status ?? "Anonymous",
         firstSeenAt: account?.createdAt ?? visitor?.firstSeenAt ?? operationalFirstSeen!,
-        lastSeenAt: visitor?.lastSeenAt ?? operationalLastSeen ?? latestVisibleActivityAt(page),
+        lastSeenAt: account ? accountLastSeen : visitor?.lastSeenAt ?? operationalLastSeen ?? latestVisibleActivityAt(page),
+        lastSeenAvailable,
         source: kind === "user" ? "account" : isOperationalGuest ? "operational" : "visitor",
         events: page,
         summary,

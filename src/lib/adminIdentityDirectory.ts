@@ -66,6 +66,23 @@ export function adminRegisteredActivityDateWhere(
   };
 }
 
+/** Same account-owned recorded-observation calculation for Directory and Activity.
+ * Session observations are independent of journey-event filters; searches,
+ * handoffs and analytics are scoped to the active deployment environment. */
+export function adminRegisteredLastSeenSql(environment: "staging" | "production"): Prisma.Sql {
+  return Prisma.sql`
+    GREATEST(
+      (SELECT MAX(a."lastSeenAt") FROM "AccountSession" a WHERE a."userId" = u."id"),
+      (SELECT MAX(s."createdAt") FROM "SearchHistory" s
+        WHERE s."userId" = u."id" AND s."query"->>'environment' = ${environment}),
+      (SELECT MAX(r."createdAt") FROM "RedirectLog" r
+        WHERE r."userId" = u."id" AND r."metadata"->>'environment' = ${environment}),
+      (SELECT MAX(e."createdAt") FROM "AnalyticsEvent" e
+        WHERE e."userId" = u."id" AND e."metadata"->>'environment' = ${environment})
+    )
+  `;
+}
+
 export type AdminIdentityReference = { kind: "user" | "guest"; id: string };
 /** One directory read carries operational guest totals and recorded timestamps. */
 export type AdminIdentityDirectoryRow = {
@@ -182,15 +199,7 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
       SELECT 'user'::text AS "kind", u."id" AS "id", u."createdAt" AS "joinedAt",
         COALESCE(NULLIF(BTRIM(u."name"), ''), 'Unnamed user') AS "displayName",
         NULL::timestamp AS "firstSeenAt",
-        GREATEST(
-          (SELECT MAX(a."lastSeenAt") FROM "AccountSession" a WHERE a."userId" = u."id"),
-          (SELECT MAX(s."createdAt") FROM "SearchHistory" s
-            WHERE s."userId" = u."id" AND s."query"->>'environment' = ${environment}),
-          (SELECT MAX(r."createdAt") FROM "RedirectLog" r
-            WHERE r."userId" = u."id" AND r."metadata"->>'environment' = ${environment}),
-          (SELECT MAX(e."createdAt") FROM "AnalyticsEvent" e
-            WHERE e."userId" = u."id" AND e."metadata"->>'environment' = ${environment})
-        ) AS "lastSeenAt"
+        ${adminRegisteredLastSeenSql(environment)} AS "lastSeenAt"
       FROM "User" u
       WHERE TRUE
         ${bounds ? Prisma.sql`AND (
