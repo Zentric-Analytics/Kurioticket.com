@@ -52,7 +52,7 @@ test("health navigation is ADMIN-only, discoverable and overview has a separate 
     assert.ok(getAdminNavForRole("ADMIN").some(item => item.href === "/admin/platform-health"));
     assert.deepEqual(getAdminNavForRole("USER"), []);
     assert.deepEqual(getAdminNavForRole("SUPPORT"), []);
-    assert.ok(getAdminHeaderGroups("ADMIN").find(group => group.label === "System & security")?.links.some(link => link.item.href === "/admin/platform-health"));
+    assert.ok(getAdminHeaderGroups("ADMIN").find(group => group.label === "System & security")?.links.some(link => link.item.href === "/admin/platform-health" && link.item.label === "Platforms"));
     const page = readFileSync("src/app/admin/page.tsx", "utf8"), overview = readFileSync("src/components/admin/AdminOverviewDashboard.tsx", "utf8");
     assert.match(page, /<PlatformOverviewSummary/);
     assert.match(page, /requireAdminApiSession/);

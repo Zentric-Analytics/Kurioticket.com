@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, getAdminWorkspaceSections, isAdminWorkspaceSectionActive, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage destinations", "Flight routes", "Hotel destinations", "FAQs", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platform Health", "CMS Health", "Email Delivery", "Settings", "Platforms & Devices", "Provider Handoffs", "Referral Attribution"];
+const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage destinations", "Flight routes", "Hotel destinations", "FAQs", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platforms", "CMS Health", "Email Delivery", "Settings", "Platforms & Devices", "Provider Handoffs", "Referral Attribution"];
 
 test("admin navigation restores the flat module order without a duplicate Flights workspace", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
@@ -34,7 +34,7 @@ test("admin navigation preserves role restrictions", () => {
     ["Homepage Fares", "/admin/providers"],
     ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"],
     ["Audit Logs", "/admin/system"], ["CMS Health", "/admin/system"], ["Email Delivery", "/admin/system"],
-    ["Platforms & Devices", "/admin/users"], ["Provider Handoffs", "/admin/searches/activity"],
+    ["Platforms & Devices", "/admin/platform-health"], ["Provider Handoffs", "/admin/searches/activity"],
     ["Referral Attribution", "/admin/providers"],
   ]);
   assert.deepEqual(getAdminNavForRole("USER"), []);
@@ -62,7 +62,8 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   const homepageFares = entries.find(({ item }) => item.href === "/admin/homepage-fares");
   const settings = entries.find(({ item }) => item.href === "/admin/settings");
   assert.deepEqual(searches?.children.map((item) => item.href), ["/admin/redirects"]);
-  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.href), ["/admin/users/platforms-devices"]);
+  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.href), []);
+  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/platform-health")?.children.map(item => item.href), ["/admin/platforms/devices"]);
   assert.deepEqual(providers?.children.map((item) => item.href), ["/admin/homepage-fares", "/admin/hotels", "/admin/cars", "/admin/referral-attribution"]);
   assert.deepEqual(trips?.children.map((item) => item.href), ["/admin/confirmed-trips/monitoring"]);
   assert.deepEqual(entries.find(({ item }) => item.href === "/admin/content")?.children.map(item => item.href), [
@@ -71,7 +72,7 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   ]);
   assert.deepEqual(support?.children.map((item) => item.href), ["/admin/account-deletions"]);
   assert.deepEqual(system?.children.map((item) => item.href), ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]);
-  assert.equal(entries.filter(({ item }) => item.href === "/admin/platform-health").length, 1, "Platform Health belongs in the horizontal navbar");
+  assert.equal(entries.filter(({ item }) => item.href === "/admin/platform-health" && item.label === "Platforms").length, 1, "One Platforms entry replaces standalone Platform Health in the navbar");
   assert.equal(homepageFares, undefined, "Homepage Fares must not appear in the admin header");
   assert.deepEqual(settings?.children.map((item) => item.href), ["/admin/preview-testers"], "staging-only Team Access is owned by Settings");
   assert.equal(entries.some(({ item }) => item.href === "/admin/flights"), false);
@@ -81,7 +82,7 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   assert.deepEqual(getAdminHeaderGroups("USER"), []);
 });
 
-test("System diagnostic pages keep their canonical System owner while Platform Health is independently reachable", () => {
+test("System diagnostics stay under System while Platforms is a distinct workspace", () => {
   for (const href of ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]) {
     const item = getAdminNavForRole("ADMIN").find(entry => entry.href === href);
     assert.ok(item);
@@ -90,6 +91,10 @@ test("System diagnostic pages keep their canonical System owner while Platform H
   assert.equal(getAdminNavForRole("ADMIN").find(entry => entry.href === "/admin/platform-health")?.parentHref, undefined);
   assert.ok(getAdminHeaderGroups("ADMIN").flatMap(group => group.links).some(entry => entry.item.href === "/admin/platform-health"));
   assert.ok(!getAdminWorkspaceSections("/admin/system", "ADMIN")?.links.some(link => link.href === "/admin/platform-health"));
+  assert.deepEqual(getAdminWorkspaceSections("/admin/platform-health", "ADMIN")?.links.map(link => link.label), ["Platform Health", "Platforms & Devices"]);
+  assert.deepEqual(getAdminWorkspaceSections("/admin/platforms/devices", "ADMIN")?.links.map(link => link.label), ["Platform Health", "Platforms & Devices"]);
+  assert.equal(getAdminWorkspaceSections("/admin/platform-health", "ADMIN")?.label, "Platforms");
+  assert.equal(getAdminWorkspaceSections("/admin/users/user/example123/devices", "ADMIN")?.label, "Users");
 });
 
 test("Notifications has one Settings sidebar owner rather than a duplicate global nav destination", () => {
@@ -103,9 +108,11 @@ test("Notifications has one Settings sidebar owner rather than a duplicate globa
 
 test("secondary routes are owned by a single parent workspace", () => {
   const expectations = [
-    ["/admin/users", ["Users Directory", "Platforms & Devices"]],
-    ["/admin/journeys/fixture", ["Users Directory", "Platforms & Devices"]],
-    ["/admin/users/platforms-devices", ["Users Directory", "Platforms & Devices"]],
+    ["/admin/users", ["Users Directory"]],
+    ["/admin/journeys/fixture", ["Users Directory"]],
+    ["/admin/platform-health", ["Platform Health", "Platforms & Devices"]],
+    ["/admin/platforms/devices", ["Platform Health", "Platforms & Devices"]],
+    ["/admin/users/user/example123/devices", ["Users Directory"]],
     ["/admin/searches/activity", ["Search Records", "Provider Handoffs"]],
     ["/admin/redirects", ["Search Records", "Provider Handoffs"]],
     ["/admin/support", ["Support Tickets", "Deletion Requests"]],
@@ -126,13 +133,44 @@ test("secondary routes are owned by a single parent workspace", () => {
   for (const [path, labels] of expectations) {
     assert.deepEqual(getAdminWorkspaceSections(path, "ADMIN")?.links.map((link) => link.label), [...labels], path);
   }
-  assert.equal(getAdminWorkspaceSections("/admin/platform-health", "ADMIN"), null, "Standalone Platform Health is not a System subsection");
+  assert.ok(!getAdminWorkspaceSections("/admin/system", "ADMIN")?.links.some(link => link.href === "/admin/platform-health"),
+    "Platforms remains separate from System");
   assert.equal(getAdminWorkspaceSections("/admin/settings", "ADMIN"), null);
   assert.equal(getAdminWorkspaceSections("/admin/confirmed-trips/monitoring", "ADMIN")?.label, "Trips");
   assert.equal(getAdminWorkspaceSections("/admin/content", "ADMIN")?.label, "Content");
   assert.equal(getAdminWorkspaceSections("/admin/users", "SUPPORT"), null);
   assert.equal(getAdminWorkspaceSections("/admin/system", "USER"), null);
 });
+test("Platform device history keeps one canonical route and a guarded legacy redirect", () => {
+  const canonical = readFileSync("src/app/admin/platforms/devices/page.tsx", "utf8");
+  const legacy = readFileSync("src/app/admin/users/platforms-devices/page.tsx", "utf8");
+  const links = readFileSync("src/lib/adminPlatformAccessQuery.ts", "utf8");
+  const health = readFileSync("src/components/admin/PlatformHealthDashboard.tsx", "utf8");
+  assert.match(canonical, /requireAdminSession\("\/admin\/platforms\/devices"\)/);
+  assert.match(canonical, /<form action="\/admin\/platforms\/devices"/);
+  assert.match(canonical, /loadPlatformAccess\(query\)/);
+  assert.match(links, /"\/admin\/platforms\/devices\?"/);
+  assert.match(health, /href="\/admin\/platforms\/devices"/);
+  assert.match(legacy, /requireAdminSession\("\/admin\/users\/platforms-devices"\)/);
+  assert.match(legacy, /for \(const key of \["range", "platform", "page"\] as const\)/);
+  assert.match(legacy, /redirect\("\/admin\/platforms\/devices"/);
+  assert.doesNotMatch(legacy, /loadPlatformAccess|readPlatformOperations|getOnlinePresenceSnapshot/);
+  assert.equal(getAdminWorkspaceSections("/admin/platforms/devices", "ADMIN")?.label, "Platforms");
+  assert.equal(getAdminWorkspaceSections("/admin/users/user/example123/devices", "ADMIN")?.label, "Users");
+});
+
+test("Platforms reuses the former Platform Health header destination without duplicating the navbar", () => {
+  const entries = getAdminHeaderGroups("ADMIN").flatMap(group => group.links);
+  assert.equal(entries.filter(entry => entry.item.label === "Platforms").length, 1);
+  assert.equal(entries.filter(entry => entry.item.label === "Platform Health").length, 0);
+  assert.deepEqual(entries.find(entry => entry.item.label === "Platforms")?.children.map(item => item.label),
+    ["Platforms & Devices"]);
+  assert.equal(getAdminWorkspaceSections("/admin/platforms/devices", "ADMIN")?.label, "Platforms");
+  assert.equal(getAdminWorkspaceSections("/admin/users/user/known-account/devices", "ADMIN")?.label, "Users");
+  assert.equal(isAdminWorkspaceSectionActive("/admin/users/user/known-account/devices", "/admin/users"), true);
+  assert.equal(isAdminWorkspaceSectionActive("/admin/platforms/devices", "/admin/platform-health"), false);
+});
+
 test("staging-only Team Access remains separate from permanently available routes", () => {
   assert.equal(getAdminNavForRole("ADMIN", false).some(item => item.href === "/admin/preview-testers"), false);
   assert.equal(getAdminNavForRole("ADMIN", true).find(item => item.href === "/admin/preview-testers")?.parentHref, "/admin/settings");
@@ -143,7 +181,7 @@ test("Visitor Journeys sidebar destination is absent but historic journeys and i
   const visible = getAdminNavForRole("ADMIN");
   assert.equal(visible.some(item => item.href === "/admin/journeys"), false);
   const users = getAdminWorkspaceSections("/admin/journeys/old-journey-id", "ADMIN");
-  assert.deepEqual(users?.links.map(item => item.label), ["Users Directory", "Platforms & Devices"]);
+  assert.deepEqual(users?.links.map(item => item.label), ["Users Directory"]);
   assert.equal(isAdminWorkspaceSectionActive("/admin/journeys/old-journey-id", "/admin/users"), true);
   const activity = readFileSync("src/components/admin/AdminActivityOverview.tsx", "utf8");
   const details = readFileSync("src/app/admin/journeys/[id]/page.tsx", "utf8");
@@ -158,10 +196,12 @@ test("contextual tabs highlight the actual current subsection, including nested 
     ["/admin/users", "/admin/users", true],
     ["/admin/journeys/abc", "/admin/users", true],
     ["/admin/journeys", "/admin/users", true],
-    ["/admin/users/platforms-devices", "/admin/users", false],
-    ["/admin/users/platforms-devices", "/admin/users/platforms-devices", true],
-    ["/admin/users/user/example123/devices", "/admin/users", false],
-    ["/admin/users/user/example123/devices", "/admin/users/platforms-devices", true],
+    ["/admin/platforms/devices", "/admin/platform-health", false],
+    ["/admin/platforms/devices", "/admin/platforms/devices", true],
+    ["/admin/platform-health", "/admin/platform-health", true],
+    ["/admin/platform-health", "/admin/platforms/devices", false],
+    ["/admin/users/user/example123/devices", "/admin/users", true],
+    ["/admin/users/user/example123/devices", "/admin/platforms/devices", false],
     ["/admin/users/user/example123/activity", "/admin/users", true],
     ["/admin/searches/activity", "/admin/searches/activity", true],
     ["/admin/searches/a1b2c3", "/admin/searches/activity", true],

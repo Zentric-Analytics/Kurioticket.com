@@ -26,10 +26,10 @@ test("health renders separate measures, labels shared scope and retains explicit
     assert.match(html, /Refresh observations/);
     assert.match(html, /Apply view/);
     assert.match(html, /Shared controls &amp; content/);
-    assert.match(html, /href="\/admin\/users\/platforms-devices"/);
+    assert.match(html, /href="\/admin\/platforms\/devices"/);
     assert.match(html, /View Platforms &amp; Devices/);
     assert.match(html, /No reliable installed-app crash evidence is configured/);
-    assert.equal((html.match(/href="\/admin\/users\/platforms-devices"/g) ?? []).length, 1,
+    assert.equal((html.match(/href="\/admin\/platforms\/devices"/g) ?? []).length, 1,
       "Existing native-app health signal owns the single Platforms & Devices link");
 
     assert.match(html, /No installed-client content-consumption acknowledgment is collected/);

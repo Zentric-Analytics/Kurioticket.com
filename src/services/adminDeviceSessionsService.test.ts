@@ -18,7 +18,7 @@ test("device history is account-scoped and excludes credentials and network iden
 test("registered Activity embeds a heading-free Today preview with a separate full history", () => {
   const activity = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx", "utf8");
   const preview = readFileSync("src/components/admin/AdminIdentityDeviceAccess.tsx", "utf8");
-  const dedicated = readFileSync("src/app/admin/users/platforms-devices/page.tsx", "utf8");
+  const dedicated = readFileSync("src/app/admin/platforms/devices/page.tsx", "utf8");
   const history = readFileSync("src/app/admin/users/[kind]/[id]/devices/page.tsx", "utf8");
   assert.match(activity, /kind === "user" \? await loadAdminDeviceSessions\(id\) : null/);
   assert.match(activity, /<AdminIdentityDeviceAccess/);

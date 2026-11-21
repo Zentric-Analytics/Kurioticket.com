@@ -57,11 +57,11 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/account-deletions", parentHref: "/admin/support", label: "Deletion Requests", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Review account deletion request lifecycles." },
   { href: "/admin/logs", parentHref: "/admin/system", label: "Audit Logs", icon: BookOpen, roles: ["ADMIN"], section: "controls", description: "Review administrative and security-sensitive actions." },
   { href: "/admin/system", label: "System", icon: LockKeyhole, roles: ["ADMIN"], section: "controls", description: "Review safe runtime health and deployment configuration status." },
-  { href: "/admin/platform-health", label: "Platform Health", icon: Activity, roles: ["ADMIN"], section: "controls", description: "Combined and application-specific operational observations and shared service health." },
+  { href: "/admin/platform-health", label: "Platforms", icon: MonitorSmartphone, roles: ["ADMIN"], section: "controls", description: "Platform Health, online presence, mobile app distribution and operational diagnostics." },
   { href: "/admin/system/cms-health", parentHref: "/admin/system", label: "CMS Health", icon: FileText, roles: ["ADMIN"], section: "controls", description: "Monitor content integrity, fallback policy and publishing health." },
   { href: "/admin/email-delivery", parentHref: "/admin/system", label: "Email Delivery", icon: Mail, roles: ["ADMIN"], section: "controls", description: "Monitor transactional email delivery health and test sending readiness." },
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls", description: "Manage authoritative persisted platform controls." },
-  { href: "/admin/users/platforms-devices", parentHref: "/admin/users", label: "Platforms & Devices", icon: MonitorSmartphone, roles: ["ADMIN"], section: "operations", description: "Inspect recorded account platforms, devices and access history." },
+  { href: "/admin/platforms/devices", parentHref: "/admin/platform-health", label: "Platforms & Devices", icon: MonitorSmartphone, roles: ["ADMIN"], section: "controls", description: "Platform-wide online presence, app download reporting and recorded account session history." },
   { href: "/admin/redirects", parentHref: "/admin/searches/activity", label: "Provider Handoffs", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Investigate verified outbound provider handoffs." },
   { href: "/admin/referral-attribution", parentHref: "/admin/providers", label: "Referral Attribution", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Review provider referral-attribution reporting." },
 ];
@@ -107,7 +107,7 @@ export function getAdminHeaderGroups(role: AdminRole, includePreviewTesters = fa
 /**
  * Each secondary destination has one parent workspace. These are page-level
  * navigation groups; none of these links are repeated in the global header.
- * Keep the routes themselves unchanged for bookmarks and deep links.
+ * Keep legacy URLs working through explicit redirects for bookmarks and deep links.
  */
 const workspaceSections: ReadonlyArray<{
   label: string;
@@ -119,7 +119,14 @@ const workspaceSections: ReadonlyArray<{
     paths: ["/admin/users", "/admin/journeys"],
     links: [
       { href: "/admin/users", label: "Users Directory" },
-      { href: "/admin/users/platforms-devices", label: "Platforms & Devices" },
+    ],
+  },
+  {
+    label: "Platforms",
+    paths: ["/admin/platform-health", "/admin/platforms"],
+    links: [
+      { href: "/admin/platform-health", label: "Platform Health" },
+      { href: "/admin/platforms/devices", label: "Platforms & Devices" },
     ],
   },
   {
@@ -189,16 +196,11 @@ export function isAdminWorkspaceSectionActive(pathname: string, href: string): b
   if (href.includes("?")) return pathname === "/admin/referral-attribution";
   if (destination === "/admin/searches/activity"
     && /^\/admin\/searches\/(?!activity(?:\/|$))[^/]+\/?$/.test(pathname)) return true;
-  // Legacy journey pages and per-identity Activity/profile pages belong to Directory.
-  // Removing their sidebar entry must not remove journeys or lose Users navigation.
-  // detail route belongs to Platforms & Devices instead of selecting both tabs.
+  // Legacy journeys and account-specific activity/device history belong to Users.
+  // Only platform-wide monitoring belongs to the separate Platforms workspace.
   if (destination === "/admin/users") return pathname === destination
     || pathname === "/admin/journeys" || pathname.startsWith("/admin/journeys/")
-    || (/^\/admin\/users\/(?:user|guest)\/[^/]+(?:\/.*)?$/.test(pathname)
-      && !/^\/admin\/users\/user\/[^/]+\/devices(?:\/|$)/.test(pathname));
-  if (destination === "/admin/users/platforms-devices") return pathname === destination
-    || pathname.startsWith(destination + "/")
-    || /^\/admin\/users\/user\/[^/]+\/devices\/?$/.test(pathname);
+    || /^\/admin\/users\/(?:user|guest)\/[^/]+(?:\/.*)?$/.test(pathname);
   if (destination === "/admin/providers" || destination === "/admin/content"
     || destination === "/admin/system") return pathname === destination;
   if (destination === "/admin/confirmed-trips") {
