@@ -1,29 +1,40 @@
-import { UsersRound, UserRoundCheck, UserRound, UserRoundPlus, UserPlus } from "lucide-react";
+import { Info, ShieldOff, UsersRound, UserRoundCheck, UserRound, UserRoundPlus, UserPlus } from "lucide-react";
 import type { UserPopulationMetrics } from "@/services/adminUserPopulationMetrics";
 
 const number = new Intl.NumberFormat("en-US");
 
 /** All-time identities are deliberately independent of the directory's activity/search filters. */
-export function AdminUserPopulationCards({ metrics, period }: {
+const nonConsentedGuestSource = "Counts unlinked operational session IDs observed through searches or provider handoffs in the selected period. Consent refusal is not verified; these are not distinct people or all visitors, and this count is not included in Total recorded identities.";
+
+export function AdminUserPopulationCards({ metrics, period, unlinkedOperationalSessions }: {
   metrics: UserPopulationMetrics | null;
   period: string;
+  unlinkedOperationalSessions: number | null;
 }) {
   const cards = [
     { label: "Total recorded identities", value: metrics?.total, icon: UsersRound, scope: "All time" },
     { label: "Registered accounts", value: metrics?.registered, icon: UserRoundCheck, scope: "All time" },
-    { label: "Consented guest identities", value: metrics?.guests, icon: UserRound, scope: "All time" },
+    { label: "Consented guest", value: metrics?.guests, icon: UserRound, scope: "All time" },
+    { label: "Non consented guest", value: unlinkedOperationalSessions, icon: ShieldOff,
+      scope: unlinkedOperationalSessions === null ? "Unfiltered records only" : `Recorded sessions · ${period}`,
+      detail: nonConsentedGuestSource },
     { label: "New registrations", value: metrics?.newRegistrations, icon: UserPlus, scope: period },
     { label: "New consented guests", value: metrics?.newGuests, icon: UserRoundPlus, scope: period },
   ];
   return <section aria-label="User population metrics" className="min-w-0 pb-3">
-    <div className="grid min-w-0 grid-cols-2 gap-3 min-[640px]:grid-cols-3 min-[1120px]:grid-cols-5">
-      {cards.map(({ label, value, icon: Icon, scope }) => <div key={label} data-testid="user-population-metric" className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/75 px-3.5 py-3">
+    <div className="grid min-w-0 grid-cols-2 gap-3 min-[640px]:grid-cols-3 min-[1420px]:grid-cols-6">
+      {cards.map(({ label, value, icon: Icon, scope, detail }) => <div key={label} data-testid="user-population-metric" className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/75 px-3.5 py-3">
         <div className="flex min-h-9 items-start gap-2 text-[12px] leading-4 text-[#64748B]">
           <Icon size={16} aria-hidden="true" className="mt-0.5 shrink-0" />
           <span className="min-w-0">{label}</span>
+          {detail ? <span role="note" tabIndex={0} title={detail} aria-label={detail}
+            className="ml-auto shrink-0 rounded-sm text-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+            <Info size={13} aria-hidden="true" />
+          </span> : null}
         </div>
         <p className="mt-1 text-[22px] font-semibold leading-7 tabular-nums tracking-tight text-[#0F172A]">
-          {metrics && value !== undefined ? number.format(value) : "Unavailable"}
+          {(detail || metrics) && value !== null && value !== undefined && Number.isSafeInteger(value) && value >= 0
+            ? number.format(value) : "Unavailable"}
         </p>
         <p className="mt-1 text-[11px] leading-4 text-[#64748B]">{scope}</p>
       </div>)}

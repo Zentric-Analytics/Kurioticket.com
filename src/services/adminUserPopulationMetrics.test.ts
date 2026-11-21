@@ -31,6 +31,20 @@ test("population totals use one consistent and bounded DB read, not journey acti
   assert.match(populationCards, /data-testid="user-population-metric"/);
   assert.match(populationCards, /rounded-lg border border-slate-200 bg-slate-50\/75/);
   assert.match(populationCards, /grid-cols-2 gap-3/);
+  assert.match(populationCards, /min-\[1420px\]:grid-cols-6/);
+  assert.match(populationCards, /label: "Consented guest"/);
+  assert.match(populationCards, /label: "Non consented guest"/);
+  assert.doesNotMatch(populationCards, /label: "Consented guest identities"|label: "Non consented guest sessions"/);
+  assert.match(populationCards, /Counts unlinked operational session IDs observed through searches or provider handoffs/);
+  assert.match(populationCards, /Consent refusal is not verified/);
+  assert.match(populationCards, /not distinct people or all visitors/);
+  assert.match(populationCards, /Recorded sessions/);
+  assert.match(populationCards, /value !== null && value !== undefined/);
+  assert.match(users, /unlinkedOperationalSessions: number \| null/);
+  assert.match(users, /unlinkedOperationalSessions = !q && guestsEligibleForFilters && sql/);
+  assert.match(users, /Number\.isSafeInteger\(operationalGuestCount\)/);
+  assert.match(users, /unlinkedOperationalSessions=\{result\.unlinkedOperationalSessions\}/);
+  assert.doesNotMatch(users, /readUserPopulationMetrics\([^)]*operationalGuestCount/);
   assert.doesNotMatch(populationCards, /gap-px overflow-hidden rounded-xl/);
 });
 

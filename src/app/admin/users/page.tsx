@@ -71,7 +71,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   // Operational sessions are not accounts or analytics visitor identities.
   // A single identity query supplies the operational guest cohort, timestamps,
   // and total. Account and consented visitor counts remain independent of tab.
-  const result = await withOptionalDb<{ rows: IdentityRow[]; registeredCount: number; guestCount: number } | null>(async db => {
+  const result = await withOptionalDb<{ rows: IdentityRow[]; registeredCount: number; guestCount: number; unlinkedOperationalSessions: number | null } | null>(async db => {
     const [registeredCount, consentedGuestCount] = await Promise.all([
       db.user.count({ where }),
       guestsEligibleForFilters ? db.visitor.count({ where: guestWhere }) : Promise.resolve(0),
@@ -84,7 +84,18 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       limit: Math.max(1, countBeforeOperational), offset: 0, allIdentities: true,
     });
     const fetched: AdminIdentityDirectoryRow[] = sql ? await db.$queryRaw<AdminIdentityDirectoryRow[]>(sql) : [];
+    // The directory already materializes these essential-only sessions once.
+    // Reuse its count rather than rescan unindexed search/handoff history.
     const operationalGuestCount = Number(fetched[0]?.operationalGuestCount ?? BigInt(0));
+    if (!Number.isSafeInteger(operationalGuestCount) || operationalGuestCount < 0
+      || (guestsEligibleForFilters && sql && !fetched.length)) {
+      throw new Error("Invalid or missing operational guest summary");
+    }
+    // An unlinked operational session is not proof of an explicit consent refusal.
+    // No consent-status claim or unique-person count can be derived from it.
+    // Filtered directory searches cannot supply an independent aggregate.
+    const unlinkedOperationalSessions = !q && guestsEligibleForFilters && sql
+      ? operationalGuestCount : null;
     const identities = fetched.filter((item): item is AdminIdentityDirectoryRow & { kind: "user" | "guest"; id: string } =>
       item.kind !== null && item.id !== null);
     const userIds = identities.filter(item => item.kind === "user").map(item => item.id);
@@ -116,7 +127,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       const record = guestMap.get(identity.id);
       return record ? [{ kind: "guest" as const, record, lastSeenAt: observed.get("guest:" + identity.id) ?? record.lastSeenAt }] : [];
     });
-    return { rows, registeredCount, guestCount: consentedGuestCount + operationalGuestCount };
+    return { rows, registeredCount, guestCount: consentedGuestCount + operationalGuestCount,
+      unlinkedOperationalSessions };
   }, null);
   const population = await readUserPopulationMetrics(date, now, from, to);
   const periodLabel = date === "today" ? "Today (UTC)" : date === "last7" ? "Last 7 days"
@@ -145,7 +157,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   return (
     <div className="w-full min-w-0 bg-white">
       <h1 className="sr-only">Users</h1>
-      <AdminUserPopulationCards metrics={population} period={periodLabel} />
+      <AdminUserPopulationCards metrics={population} period={periodLabel}
+        unlinkedOperationalSessions={result.unlinkedOperationalSessions} />
       <AdminUsersToolbar query={q} role={role} status={status} tab={tab} sort={sort} date={date} from={from || ""} to={to || ""}
         registeredCount={result.registeredCount} guestCount={result.guestCount} pageHref={link}>
         <AdminIdentityTable rows={result.rows} pageHref={link} sort={sort} />
