@@ -27,6 +27,7 @@ try {
     const workspace = page.getByRole("navigation", { name: "Users subsections" });
     await expect(page.getByRole("complementary", { name: "Users navigation" }).getByRole("heading", { name: "Users", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toBeVisible();
+    await expect(workspace.getByRole("link", { name: "Online Users", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Visitor Journeys", exact: true })).toHaveCount(0);
     await expect(workspace.getByRole("link", { name: "Platform Metrics", exact: true })).toHaveCount(0);
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
