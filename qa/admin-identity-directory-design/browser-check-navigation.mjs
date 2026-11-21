@@ -27,7 +27,7 @@ try {
     const workspace = page.getByRole("navigation", { name: "Users subsections" });
     await expect(page.getByRole("complementary", { name: "Users navigation" }).getByRole("heading", { name: "Users", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toBeVisible();
-    await expect(workspace.getByRole("link", { name: "Visitor Journeys", exact: true })).toBeVisible();
+    await expect(workspace.getByRole("link", { name: "Visitor Journeys", exact: true })).toHaveCount(0);
     await expect(workspace.getByRole("link", { name: "Platforms & Devices", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
     for (const unrelated of ["Trips", "Support", "Settings", "System"]) {
@@ -141,7 +141,9 @@ try {
     const journeys = page.getByRole("region", { name: "Journey records" });
     await expect(journeys).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Users subsections" })
-      .getByRole("link", { name: "Visitor Journeys", exact: true })).toHaveAttribute("aria-current", "page");
+      .getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("navigation", { name: "Users subsections" })
+      .getByRole("link", { name: "Visitor Journeys", exact: true })).toHaveCount(0);
     await expect(journeys.locator("thead th")).toHaveCount(8);
     await expect(journeys.locator("tbody tr")).toHaveCount(4);
     await expect(journeys.locator("tbody tr:first-child td")).toHaveCount(8);
