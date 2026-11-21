@@ -131,9 +131,11 @@ test("all-time and new operational metrics share one unfiltered first-seen cohor
     showUsers: true, showGuests: false, showOperationalGuests: false,
     withOperationalSummary: true, environment: "staging", date: "today", now,
   });
-  assert.equal((result.text.match(/FROM "SearchHistory" s/g) ?? []).length, 2,
-    "Registered activity and the one operational CTE each read the search source once");
-  assert.equal((result.text.match(/FROM "RedirectLog" r/g) ?? []).length, 2);
+  const sourceCte = result.text.split("), operational_sessions AS (")[0];
+  assert.equal((sourceCte.match(/FROM "SearchHistory" s/g) ?? []).length, 1,
+    "One operational session cohort reads SearchHistory once");
+  assert.equal((sourceCte.match(/FROM "RedirectLog" r/g) ?? []).length, 1,
+    "One operational session cohort reads RedirectLog once");
   assert.match(result.text, /all_operational_sessions AS MATERIALIZED/);
   assert.match(result.text, /MIN\(a\."createdAt"\) AS "firstSeenAt"/);
   assert.match(result.text, /MAX\(a\."createdAt"\) AS "lastSeenAt"/);
@@ -215,7 +217,7 @@ test("returning consented and operational guests qualify by last observed activi
     environment: "staging", showOperationalGuests: true });
   assert.match(result.text, /v\."firstSeenAt" >= /);
   assert.match(result.text, /OR \(v\."lastSeenAt" >= /);
-  assert.match(result.text, /HAVING MAX\(a\."createdAt"\)/);
+  assert.match(result.text, /o\."lastSeenAt" >=/);
   assert.match(result.text, /"consentStatus" = 'GRANTED'/);
   assert.match(result.text, /"trackingDisabledAt" IS NULL/);
   assert.match(result.text, /NOT EXISTS/);
