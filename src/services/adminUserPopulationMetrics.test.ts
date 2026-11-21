@@ -74,9 +74,9 @@ test("Platform Health leads the dedicated page and uses measured narrow signals"
   const downloads = platformPage.indexOf('aria-label="Mobile app distribution"');
   const sessions = platformPage.indexOf('data-testid="platform-session-metrics"');
   const filters = platformPage.indexOf('<form action="/admin/platforms/devices"');
-  const history = platformPage.indexOf('aria-labelledby="access-history-heading"');
   assert.ok(health > 0 && health < online && online < downloads
-    && downloads < sessions && sessions < filters && filters < history);
+    && downloads < sessions && sessions < filters);
+  assert.doesNotMatch(platformPage, /access-history-heading|Device &amp; Access History|Platform access pagination/);
   assert.match(platformPage, /readPlatformOperations\(24, "today"\)/);
   assert.match(platformPage, /getOnlinePresenceSnapshot\(getPublicEnvironment\(\)\)/);
   assert.match(platformPage, /applications\.WEB\.state/);
@@ -85,7 +85,6 @@ test("Platform Health leads the dedicated page and uses measured narrow signals"
   assert.match(platformPage, /"MONITORING_UNAVAILABLE"/);
   assert.match(platformPage, /Store reports are not connected/);
   assert.match(platformPage, /Sessions and online activity are not download counts/);
-  assert.match(platformPage, /Device &amp; Access History/);
   assert.match(platformPage, /data-testid="platform-health-metric"/);
   assert.doesNotMatch(platformPage, /href="\/admin\/platform-health"/);
   assert.doesNotMatch(platformPage, /Full monitoring details|See full monitoring details/);
@@ -97,10 +96,8 @@ test("Platform Health leads the dedicated page and uses measured narrow signals"
   assert.match(platformPage, /grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2/);
   assert.doesNotMatch(platformPage, /sm:grid-cols-2 min-\[1050px\]:grid-cols-4/);
   assert.match(platformPage, /data-testid="platform-session-metric"/);
-  assert.match(platformPage, /recorded sessions · Times in UTC/);
-  assert.match(platformPage, /Checked <time dateTime=\{result\.observedAt\.toISOString\(\)\}/);
+  assert.match(platformPage, /Historical sessions for the selected filters/);
   assert.doesNotMatch(platformPage, /matching recorded sessions · Last seen times in UTC|Source: stored AccountSession records/);
-  assert.match(platformPage, /Session records do not identify the deployment environment/);
   assert.match(platformPage, /grid-cols-2 gap-3 min-\[900px\]:grid-cols-4/);
   assert.doesNotMatch(platformPage, /gap-px overflow-hidden rounded-xl/);
 });
