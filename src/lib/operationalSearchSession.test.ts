@@ -145,3 +145,87 @@ test("installed native v1 clients retain signed guest session continuity without
     if (old === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = old;
   }
 });
+
+test("fresh opted-out guests receive one short-lived operational session for flight, hotel and car searches", () => {
+  const prevSecret = process.env.AUTH_SECRET;
+  const prevUrl = process.env.NEXT_PUBLIC_APP_URL;
+  process.env.AUTH_SECRET = "server-only-test-secret-for-operational-guest-searches";
+  process.env.NEXT_PUBLIC_APP_URL = "https://staging.kurioticket.com";
+  try {
+    const now = Date.UTC(2026, 10, 21, 12, 0, 0);
+    for (const product of ["flights", "hotels", "cars"] as const) {
+      const path = "/api/" + product + "/search";
+      const request = new Request("https://staging.kurioticket.com" + path, {
+        method: "POST",
+        headers: {
+          origin: "https://staging.kurioticket.com",
+          "sec-fetch-site": "same-origin",
+          cookie: "kt_analytics_denied=1",
+        },
+      });
+      const first = prepareOperationalSearchSession(request, now, "staging");
+      assert.ok(first, "first-party " + product + " search must receive operational attribution despite analytics opt-out");
+      assert.equal(first.transport, "web");
+      assert.equal(first.newCredential, true);
+      const response = attachOperationalSearchSession(Response.json({ results: [] }), first);
+      const header = response.headers.get("set-cookie") || "";
+      assert.ok(header.startsWith(operationalSessionCookieName + "="));
+      assert.match(header, /HttpOnly; SameSite=Lax/);
+      assert.equal(response.headers.get("X-Kt-Search-Session"), null, "browser never receives readable session header");
+      const returning = prepareOperationalSearchSession(new Request(request.url, {
+        method: "POST", headers: {
+          origin: "https://staging.kurioticket.com",
+          "sec-fetch-site": "same-origin",
+          cookie: "kt_analytics_denied=1; " + operationalSessionCookieName + "=" + first.credential,
+        },
+      }), now + 1000, "staging");
+      assert.equal(returning?.reference.id, first.reference.id);
+      assert.equal(returning?.newCredential, false);
+    }
+  } finally {
+    if (prevSecret === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = prevSecret;
+    if (prevUrl === undefined) delete process.env.NEXT_PUBLIC_APP_URL; else process.env.NEXT_PUBLIC_APP_URL = prevUrl;
+  }
+});
+
+test("missing first-party proof is unattributed rather than creating a false guest", () => {
+  const prevSecret = process.env.AUTH_SECRET;
+  process.env.AUTH_SECRET = "server-only-test-secret-for-operational-guest-searches";
+  try {
+    const now = Date.UTC(2026, 10, 21, 12);
+    const url = "https://staging.kurioticket.com/api/cars/search";
+    const untrusted: Headers[] = [new Headers(), new Headers({ origin: "https://external.example" }), new Headers({ "sec-fetch-site": "cross-site" })];
+    for (const headers of untrusted) {
+      const request = new Request(url, { method: "POST", headers });
+      assert.equal(prepareOperationalSearchSession(request, now, "staging"), null);
+    }
+  } finally {
+    if (prevSecret === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = prevSecret;
+  }
+});
+
+test("a misconfigured short AUTH_SECRET does not suppress a valid server-side fallback", () => {
+  const primary = process.env.AUTH_SECRET;
+  const fallback = process.env.NEXTAUTH_SECRET;
+  const publicUrl = process.env.NEXT_PUBLIC_APP_URL;
+  try {
+    process.env.AUTH_SECRET = "too-short";
+    process.env.NEXTAUTH_SECRET = "valid-fallback-server-only-auth-secret-at-least-32-chars";
+    process.env.NEXT_PUBLIC_APP_URL = "https://staging.kurioticket.com";
+    const now = Date.UTC(2026, 10, 21, 14);
+    const req = new Request("https://staging.kurioticket.com/api/hotels/search", {
+      method: "POST", headers: { origin: "https://staging.kurioticket.com" },
+    });
+    const prepared = prepareOperationalSearchSession(req, now, "staging");
+    assert.ok(prepared);
+    const returning = new Request(req.url, { method: "POST", headers: {
+      origin: "https://staging.kurioticket.com",
+      cookie: operationalSessionCookieName + "=" + prepared.credential,
+    } });
+    assert.equal(readOperationalSearchSession(returning, now + 1000, "staging")?.id, prepared.reference.id);
+  } finally {
+    if (primary === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = primary;
+    if (fallback === undefined) delete process.env.NEXTAUTH_SECRET; else process.env.NEXTAUTH_SECRET = fallback;
+    if (publicUrl === undefined) delete process.env.NEXT_PUBLIC_APP_URL; else process.env.NEXT_PUBLIC_APP_URL = publicUrl;
+  }
+});

@@ -1,10 +1,12 @@
 import { Info, ShieldOff, UsersRound, UserRoundCheck, UserRound, UserRoundPlus, UserPlus } from "lucide-react";
 import type { UserPopulationMetrics } from "@/services/adminUserPopulationMetrics";
+import { recordedAccountsAndGuestSessionsTotal } from "@/lib/adminRecordedPopulationTotal";
 
 const number = new Intl.NumberFormat("en-US");
 
 /** All-time identities are deliberately independent of the directory's activity/search filters. */
-const nonConsentedGuestSource = "Counts unique unlinked operational session IDs recorded through searches and provider handoffs, not verified individual people or explicit consent refusals. These sessions are excluded from Total recorded identities.";
+const nonConsentedGuestSource = "Counts unique unlinked operational session IDs recorded through searches and provider handoffs, not verified individual people or explicit consent refusals. A search without verified session attribution is not counted as a guest session.";
+const combinedTotalSource = "All-time registered accounts + eligible consented guest identities + distinct unlinked operational guest sessions. These are different record types, not unique people. Missing source data makes this total unavailable.";
 
 export function AdminUserPopulationCards({ metrics, period, operationalAllTimeCount, operationalNewCount }: {
   metrics: UserPopulationMetrics | null;
@@ -12,8 +14,10 @@ export function AdminUserPopulationCards({ metrics, period, operationalAllTimeCo
   operationalAllTimeCount: number | null;
   operationalNewCount: number | null;
 }) {
+  const combinedTotal = recordedAccountsAndGuestSessionsTotal(metrics, operationalAllTimeCount);
   const cards = [
-    { label: "Total recorded identities", value: metrics?.total, icon: UsersRound, scope: "All time" },
+    { label: "Total recorded accounts & guest sessions", value: combinedTotal, icon: UsersRound,
+      scope: "All time", detail: combinedTotalSource },
     { label: "Registered accounts", value: metrics?.registered, icon: UserRoundCheck, scope: "All time" },
     { label: "Consented guest", value: metrics?.guests, icon: UserRound, scope: "All time" },
     { label: "Non consented guest", value: operationalAllTimeCount, icon: ShieldOff,

@@ -170,6 +170,19 @@ test("unconsented car searches never invent a visitor identity", async (t) => {
   assert.ok(!Object.hasOwn(f.histories[0].query as object, "operationalSessionId"));
 });
 
+test("new non-consented car search has a recorded session without granting visitor consent", async (t) => {
+  const f = fixture(t, { consent: false, session: true });
+  const response = await f.post();
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("X-Kt-Search-Session"), f.session!.credential);
+  await f.flush();
+  assert.equal(f.histories.length, 1);
+  assert.equal(f.histories[0].userId, null);
+  assert.equal(f.histories[0].visitorId, null);
+  assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionId, f.session!.reference.id);
+  assert.ok(!JSON.stringify(f.histories).includes(f.session!.credential));
+});
+
 test("unavailable car provider records a failed search without affecting the response", async (t) => {
   const f = fixture(t, { status: "unavailable" });
   const response = await f.post();

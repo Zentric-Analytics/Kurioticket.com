@@ -88,10 +88,17 @@ export function AdminUsersToolbar({
   const [dateError, setDateError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const paramsRef = useRef(new URLSearchParams(pageHref.split("?")[1] || ""));
+  const initialServerSync = useRef(true);
 
   // Navigations (tabs, Back/Forward, Apply) restore the authoritative URL.
   // Editing the search field or a dropdown never updates paramsRef or reloads data.
   useEffect(() => {
+    // Initial draft state already comes from server props. A late hydration
+    // effect must not erase an administrator's first typed search before Apply.
+    if (initialServerSync.current) {
+      initialServerSync.current = false;
+      return;
+    }
     paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
     setSearchText(query);
     setDraftDate(date);

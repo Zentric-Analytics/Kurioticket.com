@@ -27,8 +27,12 @@ const signature = /^[A-Za-z0-9_-]{43}$/;
 
 /** Use the server's existing authentication secret, never a public or client secret. */
 function secret() {
-  const value = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
-  return value && value.length >= 32 ? value : null;
+  // A present but invalid primary secret must not suppress a valid existing
+  // NextAuth secret and silently drop operational attribution on searches.
+  for (const value of [process.env.AUTH_SECRET, process.env.NEXTAUTH_SECRET]) {
+    if (value && value.length >= 32) return value;
+  }
+  return null;
 }
 function mac(payload: string, key: string, version: "v1" | "v2" = "v1") {
   return createHmac("sha256", key).update("operational-search-" + version + ":" + payload).digest("base64url");

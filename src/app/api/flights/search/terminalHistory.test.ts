@@ -10,7 +10,7 @@ import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
 const requestId = "78e1de9e-6dfe-494f-9fdb-83726d83bf64";
 type History = { requestId: string; type: string; status: string; userId: string | null; visitorId: string | null; resultCount: number; query: unknown; latencyMs: number };
 
-function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string; withOffers?: boolean; rateLimited?: boolean; crawlerBlocked?: boolean; applicationSource?: "WEB" | "IOS" | "ANDROID" | "UNKNOWN" } = {}) {
+function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; operationalGuest?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string; withOffers?: boolean; rateLimited?: boolean; crawlerBlocked?: boolean; applicationSource?: "WEB" | "IOS" | "ANDROID" | "UNKNOWN" } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: History[] = [];
   const providerCalls: Array<{ metadata: Record<string, unknown>; status: string }> = [];
@@ -42,7 +42,17 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
     "@/services/travel/flightAggregator": { searchFlights: async () => aggregate },
     "@/services/travel/hotelAggregator": { searchHotels: async (criteria: unknown) => { providerCriteria.push(criteria); return aggregate; }, searchHotelsByProvider: async (criteria: unknown) => { providerCriteria.push(criteria); return aggregate; } },
     "@/lib/feature-controls/service": { isFeatureEnabled: async () => true },
-    "@/lib/operationalSearchSession": { prepareOperationalSearchSession: () => null, attachOperationalSearchSession: (response: Response) => response },
+    "@/lib/operationalSearchSession": {
+      prepareOperationalSearchSession: () => options.operationalGuest ? ({
+        reference: { id: "38d77b62-f43d-40d5-9597-a6ff76f02c28",
+          environment: "staging", expiresAt: new Date("2099-05-01") },
+        credential: "synthetic-test-only", transport: "web", newCredential: true,
+      }) : null,
+      attachOperationalSearchSession: (response: Response, prepared: {reference:{id:string}} | null) => {
+        if (prepared) response.headers.set("X-Synthetic-Operational-Session", "issued");
+        return response;
+      },
+    },
     "@/services/requestActivityIdentity": { resolveRequestActivityIdentity: async () => {
       identityLookups += 1;
       const attribution = options.applicationSource ? { applicationSource: options.applicationSource } : {};
@@ -122,6 +132,18 @@ for (const product of ["flight", "hotel"] as const) {
     assert.equal(fixture.histories[0].userId, null);
     assert.equal(fixture.histories[0].visitorId, null);
     assert.equal(fixture.histories[0].status, "FAILED");
+  });
+
+  test(`${product} records a fresh non-consented guest session without a visitor identity`, async () => {
+    const fixture = routeFixture(product, { anonymous: true, operationalGuest: true });
+    const response = await fixture.post();
+    assert.equal(response.headers.get("X-Synthetic-Operational-Session"), "issued");
+    await fixture.deferred[0]();
+    assert.equal(fixture.histories[0].userId, null);
+    assert.equal(fixture.histories[0].visitorId, null);
+    assert.equal((fixture.histories[0].query as Record<string, unknown>).operationalSessionId,
+      "38d77b62-f43d-40d5-9597-a6ff76f02c28");
+    assert.ok(!JSON.stringify(fixture.histories).includes("synthetic-test-only"));
   });
 
   test(`${product} optional failure-history storage errors leave the response and deferred task safe`, async () => {

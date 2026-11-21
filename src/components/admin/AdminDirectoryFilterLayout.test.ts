@@ -11,6 +11,9 @@ test("Users Directory places search, date, role, status, and Apply on one deskto
   assert.match(users, /data-testid="users-directory-filter-row"/);
   assert.match(users, /lg:grid-cols-\[minmax\(0,2fr\)_repeat\(3,minmax\(0,1fr\)\)_128px\]/);
   assert.match(users, /onClick=\{applyFilters\}/);
+  assert.match(users, /initialServerSync\.current = false;/);
+  assert.match(users, /if \(initialServerSync\.current\) \{/);
+  assert.match(users, /q: searchText\.trim\(\)\.slice\(0, 120\)/);
   assert.match(users, /type="button" onClick=\{applyFilters\}/);
   assert.match(users, /function onSearchSubmit\(event: FormEvent<HTMLFormElement>\) \{\s*\/\/ Enter must not submit a draft\.[\s\S]*?event\.preventDefault\(\)/);
   assert.doesNotMatch(users, /setTimeout|setInterval|router\.replace/);
