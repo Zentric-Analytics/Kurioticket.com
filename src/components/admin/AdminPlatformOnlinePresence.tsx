@@ -92,7 +92,7 @@ export function AdminPlatformOnlinePresence({ initial, variant = "platforms" }: 
   return <section aria-label={onUsersPage ? "Online Users" : "Online presence by platform"}
     className="min-w-0 space-y-2">
     <div className="flex flex-wrap items-end justify-between gap-2">
-      <h2 className="text-[15px] font-semibold text-[#0F172A]">{onUsersPage ? "Online Users" : "Online Users"}</h2>
+      <h2 className="text-[15px] font-semibold text-[#0F172A]">Online Users</h2>
       <span className="text-[11px] tabular-nums text-[#64748B]">
         Live · last {snapshot.windowSeconds} seconds
       </span>
