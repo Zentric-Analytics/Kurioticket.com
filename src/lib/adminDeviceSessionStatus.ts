@@ -1,12 +1,20 @@
-/** A recorded status, not a live authentication or presence check. */
+/** An unexpired session is not evidence that its device is currently online. */
+export type DevicePresenceEvidence = "online" | "offline" | "unavailable";
+export type DeviceSessionStatus = "Active" | "Inactive" | "Signed out" | "Expired" | "Unknown";
+
 export function recordedDeviceSessionStatus(
   session: { revokedAt: Date | null; expiresAt: Date },
   now: Date,
-): "Signed out" | "Expired" | "Not expired" {
-  // An explicit revocation remains meaningful even after its expiration time.
+  presence: DevicePresenceEvidence,
+): DeviceSessionStatus {
+  // Explicit sign-out/revocation outranks expiry and retained presence rows.
   if (session.revokedAt) return "Signed out";
+  if (!Number.isFinite(now.getTime()) || !Number.isFinite(session.expiresAt.getTime())) return "Unknown";
   if (session.expiresAt.getTime() <= now.getTime()) return "Expired";
-  return "Not expired";
+  // Only authenticated, recent account-session presence can produce Active.
+  if (presence === "online") return "Active";
+  if (presence === "offline") return "Inactive";
+  return "Unknown";
 }
 
 /** Human-readable explanations without exposing raw internal security codes. */
