@@ -20,6 +20,18 @@ test("homepage fare status distinguishes loading, telemetry outage, and real mis
   assert.match(component, /operationsAvailable=\{statusPayload\.dataAvailable\}/);
 });
 
+test("scheduled and manual refresh use fresh-only coverage and do not promote retained stale fares", () => {
+  const executor = service.slice(
+    service.indexOf("async function runPhase3AHomepageFareRefresh("),
+    service.indexOf("async function executeHomepageFareRefreshRoute("),
+  );
+  assert.match(executor, /const freshRouteIds = getFreshHomepageFareSnapshotRouteIds\(/);
+  assert.doesNotMatch(executor, /isUsableHomepageFareSnapshotRecord\(/);
+  assert.match(executor, /shouldCountHomepageFareRefreshResultAsFresh\(\s*result,/);
+  assert.match(executor, /shouldCountHomepageFareRefreshResultAsFresh\(\s*replacementResult,/);
+  assert.match(service, /result === "retained" && isFreshHomepageFareSnapshotRecord\(/);
+});
+
 test("homepage fare reload preserves snapshot-derived failure and unavailable counts", () => {
   assert.match(service, /failedByMarket,/);
   assert.match(service, /unavailableByMarket,/);
