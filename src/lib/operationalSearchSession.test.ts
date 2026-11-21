@@ -194,7 +194,8 @@ test("missing first-party proof is unattributed rather than creating a false gue
   try {
     const now = Date.UTC(2026, 10, 21, 12);
     const url = "https://staging.kurioticket.com/api/cars/search";
-    for (const headers of [{}, { origin: "https://external.example" }, { "sec-fetch-site": "cross-site" }]) {
+    const untrusted: Headers[] = [new Headers(), new Headers({ origin: "https://external.example" }), new Headers({ "sec-fetch-site": "cross-site" })];
+    for (const headers of untrusted) {
       const request = new Request(url, { method: "POST", headers });
       assert.equal(prepareOperationalSearchSession(request, now, "staging"), null);
     }
