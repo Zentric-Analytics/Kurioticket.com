@@ -232,6 +232,7 @@ test("crawler searches stay Unknown even with website attribution", async () => 
     ["Mozilla/5.0 (compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)", "UNKNOWN"],
     ["Mozilla/5.0 (Linux; Android 6.0.1) Mobile Safari/537.36 (compatible; GoogleOther)", "UNKNOWN"],
     ["ExampleSpider/2.0", "UNKNOWN"],
+    ["Mozilla/5.0 (compatible; Claude-User/1.0)", "UNKNOWN"],
     ["Mozilla/5.0 (Linux; Android 14) Chrome/130.0 Mobile Safari/537.36", "WEB"],
   ]) {
     const request = new Request("https://kurioticket.com/api/flights/search", {
