@@ -27,13 +27,17 @@ const syntheticSessions = [
     deviceLabel: index % 2 ? "iOS device" : "Windows computer",
     browser: index % 2 ? null : "Firefox 160", os: index % 2 ? "iOS" : "Windows",
     locationLabel: null, createdAt: new Date(dayStart + index * 1000),
-    lastSeenAt: new Date(dayStart + (index + 1) * 1000), revokedAt: null,
+    lastSeenAt: new Date(dayStart + (index + 1) * 1000),
+    expiresAt: new Date(dayStart + 7 * 86_400_000),
+    revokedAt: index === 1 || index === 3 ? new Date(dayStart + 5_000) : null,
+    revokeReason: index === 1 ? "mobile_logout" : index === 3 ? "password_reset" : null,
   })),
   {
     id: "qa-device-yesterday", client: "WEB", platform: null,
     deviceLabel: "Mac", browser: "Safari 18", os: "macOS",
     locationLabel: null, createdAt: new Date(dayStart - 86_400_000),
-    lastSeenAt: new Date(dayStart - 86_400_000), revokedAt: null,
+    lastSeenAt: new Date(dayStart - 86_400_000),
+    expiresAt: new Date(dayStart - 60_000), revokedAt: null, revokeReason: null,
   },
 ];
 function selectSyntheticSessions(where = {}) {
