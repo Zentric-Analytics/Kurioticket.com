@@ -1086,14 +1086,21 @@ function computeHomepageFareMarketTargets(
       const popularVisibleFresh = visiblePopularRoutes.filter((route) =>
         freshRouteIds.has(route.id),
       ).length;
-      // Only candidates assigned to visible discovery slots count here.
-      // Backup candidates have their own target and must never fill both buckets.
-      const discoveryVisibleFresh = visibleDiscoveryRoutes.filter((route) =>
+      // The public discovery carousel can use fresh backup candidates to fill
+      // unpriced visible slots. Allocate those backups to display first, then
+      // count only unused backups toward the separate reserve target.
+      const designatedDiscoveryFresh = visibleDiscoveryRoutes.filter((route) =>
         freshRouteIds.has(route.id),
       ).length;
-      const backupFresh = backupRoutes.filter((route) =>
+      const availableBackups = backupRoutes.filter((route) =>
         freshRouteIds.has(route.id),
       ).length;
+      const backupsUsedForVisible = Math.min(
+        Math.max(0, discoveryVisibleTarget - designatedDiscoveryFresh),
+        availableBackups,
+      );
+      const discoveryVisibleFresh = designatedDiscoveryFresh + backupsUsedForVisible;
+      const backupFresh = availableBackups - backupsUsedForVisible;
       const targetMet =
         popularVisibleFresh >= popularVisibleTarget &&
         discoveryVisibleFresh >= discoveryVisibleTarget &&
