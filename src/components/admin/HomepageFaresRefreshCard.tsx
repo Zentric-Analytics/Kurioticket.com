@@ -608,6 +608,11 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
   const readinessFallbackValue = readinessLoading ? "Loading…" : "Unavailable";
   const readinessFallbackTone: SummaryTone = readinessLoading ? "neutral" : "danger";
   const marketsNeedingAnotherRun = latestCounts?.marketsNeedingAnotherRun ?? statusPayload.marketsNeedingAnotherRun;
+  // This headline describes the public countries in Market coverage. Regional
+  // and global fallback pools remain visible in Fare Diagnostics instead.
+  const publicMarketsNeedingAttention = publicMarkets.filter(
+    (market) => !market.targetMet || market.status !== "ready",
+  ).length;
 
   return (
     <section className="min-w-0 bg-white text-[#020617]">
@@ -649,7 +654,7 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
               <SummaryMetricCard label="Last-known-good" value={statusPayload.dataAvailable ? statusPayload.summary.last_known_good : readinessFallbackValue} tone={statusPayload.dataAvailable ? "info" : readinessFallbackTone} />
               <SummaryMetricCard label="Missing routes" value={statusPayload.dataAvailable ? statusPayload.summary.missing : readinessFallbackValue} tone={!statusPayload.dataAvailable ? readinessFallbackTone : statusPayload.summary.missing ? "warning" : "neutral"} />
               <SummaryMetricCard label="Failed / unavailable" value={statusPayload.dataAvailable ? statusPayload.summary.failed + statusPayload.summary.unavailable : readinessFallbackValue} tone={!statusPayload.dataAvailable ? readinessFallbackTone : statusPayload.summary.failed + statusPayload.summary.unavailable ? "warning" : "neutral"} />
-              <SummaryMetricCard label="Markets needing attention" value={statusPayload.dataAvailable ? marketsNeedingAnotherRun.filter((market) => market.needed).length : readinessFallbackValue} tone={!statusPayload.dataAvailable ? readinessFallbackTone : marketsNeedingAnotherRun.some((market) => market.needed) ? "warning" : "good"} />
+              <SummaryMetricCard label="Markets needing attention" value={statusPayload.dataAvailable ? publicMarketsNeedingAttention : readinessFallbackValue} tone={!statusPayload.dataAvailable ? readinessFallbackTone : publicMarketsNeedingAttention ? "warning" : "good"} />
           </dl>
         </div>
           </section>
@@ -1007,6 +1012,7 @@ function MarketReadinessDashboard({
               const detailsId = "fare-market-details-" + market.marketCode.replace(/[^a-zA-Z0-9_-]/g, "-");
               const healthNotes = [
                 (market.freshCount ?? 0) > 0 ? String(market.freshCount) + " fresh" : null,
+                (market.lastKnownGoodCount ?? 0) > 0 ? String(market.lastKnownGoodCount) + " last-known-good" : null,
                 (market.missingCount ?? 0) > 0 ? String(market.missingCount) + " missing" : null,
                 market.failed > 0 ? String(market.failed) + " failed" : null,
               ].filter(Boolean).join(" · ") || "No issues";
