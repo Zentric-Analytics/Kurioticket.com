@@ -9,18 +9,26 @@ const platformPage = readFileSync("src/app/admin/users/platforms-devices/page.ts
 const liveCards = readFileSync("src/components/admin/AdminPlatformOnlinePresence.tsx", "utf8");
 const presenceService = readFileSync("src/services/onlinePresenceService.ts", "utf8");
 
-test("population cards precede directory filters but do not reclassify filtered activity as new users", () => {
+test("population totals use one consistent and bounded DB read, not journey activity", () => {
   assert.ok(users.indexOf("<AdminUserPopulationCards") < users.indexOf("<AdminUsersToolbar"));
-  assert.match(users, /readUserPopulationMetrics\(date, environment, now, from, to\)/);
-  assert.match(population, /db\.user\.count\(\{ where: \{\} \}\)/);
-  assert.match(population, /createdAt: period/);
-  assert.match(population, /firstSeenAt: period/);
-  assert.match(population, /MIN\("seenAt"\) AS "firstSeenAt"/);
-  assert.match(population, /environment' = \$\{environment\}/);
+  assert.match(users, /readUserPopulationMetrics\(date, now, from, to\)/);
   assert.match(population, /withOptionalDb<UserPopulationMetrics \| null>/);
+  assert.match(population, /db\.\$queryRaw/);
+  assert.match(population, /FROM "User"/);
+  assert.match(population, /FROM "Visitor" v/);
+  assert.match(population, /FROM "VisitorIdentityLink" link/);
+  assert.match(population, /"consentStatus" = 'GRANTED'/);
+  assert.match(population, /v\."trackingDisabledAt" IS NULL/);
+  assert.match(population, /v\."currentUserId" IS NULL/);
+  assert.match(population, /"createdAt" >= \$\{bounds.from\}/);
+  assert.match(population, /v\."firstSeenAt" >= \$\{bounds.from\}/);
+  assert.match(population, /CROSS JOIN/);
+  assert.match(population, /newRegistrations > registered \|\| newGuests > guests/);
+  assert.doesNotMatch(population, /FROM "SearchHistory"|FROM "RedirectLog"/);
+  assert.doesNotMatch(population, /Promise\.all|db\.user\.count|db\.visitor\.count/);
   assert.match(populationCards, /"Unavailable"/);
-  assert.match(populationCards, /do not prove unique people or devices/);
-  assert.match(populationCards, /separate from directory search/);
+  assert.match(populationCards, /excluded because/);
+  assert.match(populationCards, /independent of directory search/);
 });
 
 test("Platform Health leads the dedicated page and uses measured narrow signals", () => {

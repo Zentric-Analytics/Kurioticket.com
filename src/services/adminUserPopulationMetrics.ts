@@ -3,79 +3,78 @@ import "server-only";
 import { Prisma } from "@/generated/prisma/client";
 import { withOptionalDb } from "@/lib/prisma";
 import { adminIdentityDateBounds, type AdminIdentityDate } from "@/lib/adminIdentityDirectory";
-import type { PublicEnvironment } from "@/lib/stagingSafety";
 
 export type UserPopulationMetrics = {
+  /** Durable accounts and consented, unlinked visitor identities; not distinct people. */
   total: number;
   registered: number;
   guests: number;
   newRegistrations: number;
   newGuests: number;
-  /** Guests consist of consented unlinked visitor identities plus unattributed operational sessions. */
-  consentedGuests: number;
-  operationalGuestSessions: number;
-  environment: PublicEnvironment;
 };
 
-/** Population is independent of directory search, role and status filters.
- * A directory activity window MUST NOT be mistaken for a signup date window.
- * Operational anonymous sessions cannot establish unique people or downloads.
+/**
+ * One PostgreSQL statement provides all population counts in the same MVCC
+ * snapshot. This prevents a simultaneous signup from making "new" exceed
+ * "total". A single read also avoids repeating the directory's unbounded
+ * SearchHistory / RedirectLog aggregation on every request.
+ *
+ * Guest counts intentionally include only eligible first-party Visitor
+ * identities. Anonymous operational search-session IDs remain available in
+ * the directory, but are not reliable distinct-person population metrics.
+ *
+ * Directory activity filters do not redefine the registration/first-seen
+ * time window used here.
  */
 export async function readUserPopulationMetrics(
-  date: AdminIdentityDate, environment: PublicEnvironment, now = new Date(),
-  from?: string, to?: string,
+  date: AdminIdentityDate, now = new Date(), from?: string, to?: string,
 ): Promise<UserPopulationMetrics | null> {
   const bounds = adminIdentityDateBounds(date, now, from, to);
-  const period = bounds ? { gte: bounds.from, ...(bounds.to ? { lt: bounds.to } : {}) } : undefined;
+  const newlyRegistered = bounds ? Prisma.sql`
+    COUNT(*) FILTER (WHERE "createdAt" >= ${bounds.from}
+      ${bounds.to ? Prisma.sql`AND "createdAt" < ${bounds.to}` : Prisma.empty})::bigint
+  ` : Prisma.sql`COUNT(*)::bigint`;
+  const newlyObservedGuests = bounds ? Prisma.sql`
+    COUNT(*) FILTER (WHERE v."firstSeenAt" >= ${bounds.from}
+      ${bounds.to ? Prisma.sql`AND v."firstSeenAt" < ${bounds.to}` : Prisma.empty})::bigint
+  ` : Prisma.sql`COUNT(*)::bigint`;
+
   return withOptionalDb<UserPopulationMetrics | null>(async db => {
-    const eligibleGuests = {
-      consentStatus: "GRANTED" as const,
-      trackingDisabledAt: null,
-      currentUserId: null,
-      identityLinks: { none: {} },
-    };
-    // The operational identifier is an opaque UUID attached only to unlinked,
-    // unattributed search/handoff records in the selected deployment.
-    // First seen is calculated across all history before applying the new-guest window.
-    const [registered, newRegistrations, consentedGuests, newConsentedGuests, anonymous] = await Promise.all([
-      db.user.count({ where: {} }),
-      db.user.count({ where: period ? { createdAt: period } : {} }),
-      db.visitor.count({ where: eligibleGuests }),
-      db.visitor.count({ where: { ...eligibleGuests, ...(period ? { firstSeenAt: period } : {}) } }),
-      db.$queryRaw<Array<{ total: bigint; recent: bigint }>>(Prisma.sql`
-        WITH recorded AS (
-          SELECT s."query"->>'operationalSessionId' AS "sessionId", s."createdAt" AS "seenAt"
-          FROM "SearchHistory" s
-          WHERE s."userId" IS NULL AND s."visitorId" IS NULL
-            AND s."query"->>'environment' = ${environment}
-          UNION ALL
-          SELECT r."metadata"->>'operationalSessionId' AS "sessionId", r."createdAt" AS "seenAt"
-          FROM "RedirectLog" r
-          WHERE r."userId" IS NULL AND r."visitorId" IS NULL
-            AND r."metadata"->>'environment' = ${environment}
-        ), sessions AS (
-          SELECT "sessionId", MIN("seenAt") AS "firstSeenAt"
-          FROM recorded
-          WHERE "sessionId" ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
-          GROUP BY "sessionId"
-        )
-        SELECT COUNT(*)::bigint AS "total",
-          ${bounds ? Prisma.sql`COUNT(*) FILTER (WHERE "firstSeenAt" >= ${bounds.from} ${bounds.to ? Prisma.sql`AND "firstSeenAt" < ${bounds.to}` : Prisma.empty})::bigint` : Prisma.sql`COUNT(*)::bigint`} AS "recent"
-        FROM sessions
-      `),
-    ]);
-    if (anonymous.length !== 1) return null;
-    const operationalGuestSessions = Number(anonymous[0].total);
-    const newOperationalGuests = Number(anonymous[0].recent);
-    const guests = consentedGuests + operationalGuestSessions;
-    const newGuests = newConsentedGuests + newOperationalGuests;
+    const rows = await db.$queryRaw<Array<{
+      registered: bigint;
+      newRegistrations: bigint;
+      guests: bigint;
+      newGuests: bigint;
+    }>>(Prisma.sql`
+      SELECT accounts."registered", accounts."newRegistrations",
+        guest_identities."guests", guest_identities."newGuests"
+      FROM (
+        SELECT COUNT(*)::bigint AS "registered",
+          ${newlyRegistered} AS "newRegistrations"
+        FROM "User"
+      ) accounts
+      CROSS JOIN (
+        SELECT COUNT(*)::bigint AS "guests",
+          ${newlyObservedGuests} AS "newGuests"
+        FROM "Visitor" v
+        WHERE v."consentStatus" = 'GRANTED'
+          AND v."trackingDisabledAt" IS NULL
+          AND v."currentUserId" IS NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM "VisitorIdentityLink" link
+            WHERE link."visitorId" = v."id"
+          )
+      ) guest_identities
+    `);
+    if (rows.length !== 1) return null;
+    const registered = Number(rows[0].registered);
+    const guests = Number(rows[0].guests);
+    const newRegistrations = Number(rows[0].newRegistrations);
+    const newGuests = Number(rows[0].newGuests);
     const total = registered + guests;
-    const values = [registered, newRegistrations, consentedGuests, newConsentedGuests,
-      operationalGuestSessions, newOperationalGuests, guests, newGuests, total];
-    if (!values.every(value => Number.isSafeInteger(value) && value >= 0)
-      || newRegistrations > registered || newConsentedGuests > consentedGuests
-      || newOperationalGuests > operationalGuestSessions || newGuests > guests) return null;
-    return { total, registered, guests, newRegistrations, newGuests,
-      consentedGuests, operationalGuestSessions, environment };
+    if (![registered, guests, newRegistrations, newGuests, total]
+      .every(value => Number.isSafeInteger(value) && value >= 0)
+      || newRegistrations > registered || newGuests > guests) return null;
+    return { total, registered, guests, newRegistrations, newGuests };
   }, null);
 }

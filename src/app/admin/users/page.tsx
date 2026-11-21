@@ -118,7 +118,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     });
     return { rows, registeredCount, guestCount: consentedGuestCount + operationalGuestCount };
   }, null);
-  const population = await readUserPopulationMetrics(date, environment, now, from, to);
+  const population = await readUserPopulationMetrics(date, now, from, to);
   const periodLabel = date === "today" ? "Today (UTC)" : date === "last7" ? "Last 7 days"
     : date === "last30" ? "Last 30 days" : date === "all" ? "All time"
     : date === "custom" ? "Custom range (UTC)" : date === "24h" ? "Last 24 hours"
