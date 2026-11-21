@@ -50,13 +50,13 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
   // Application activity is an observed search signal, not an uptime or crash-free claim.
   const healthTiles = [
     { label: "Website search operations", state: health?.activity.data?.searches.applications.WEB.state ?? "MONITORING_UNAVAILABLE",
-      scope: "Desktop and mobile web together" },
+      scope: "Desktop and mobile web" },
     { label: "iOS search operations", state: health?.activity.data?.searches.applications.IOS.state ?? "MONITORING_UNAVAILABLE",
-      scope: "Verified iOS search observations" },
+      scope: "iOS search activity" },
     { label: "Android search operations", state: health?.activity.data?.searches.applications.ANDROID.state ?? "MONITORING_UNAVAILABLE",
-      scope: "Verified Android search observations" },
+      scope: "Android search activity" },
     { label: "Database connection", state: health?.database.state ?? "MONITORING_UNAVAILABLE",
-      scope: "Shared service connection check" },
+      scope: "Shared connection check" },
   ];
   const totalPages = result.status === "ok" ? Math.max(1, Math.ceil(result.total / PLATFORM_ACCESS_PAGE_SIZE)) : 1;
   const summaries = result.status === "ok" ? [
@@ -65,17 +65,17 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
     { label: "Android app sessions", value: result.counts.android, icon: TabletSmartphone },
     { label: "Unclassified native sessions", value: result.counts.other, icon: Users },
   ] : [];
-  return <div className="min-w-0 space-y-5 bg-white pb-6 text-[#0F172A]">
+  return <div className="min-w-0 space-y-6 bg-white pb-6 text-[#0F172A]">
     <header className="min-w-0 border-b border-[#E2E8F0] pb-3">
       <h1 className="text-xl font-semibold tracking-tight">Platforms &amp; Devices</h1>
       <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-        Verified platform operations, live presence and stored account sessions are reported separately.
+        Monitor platform checks, online activity and account sessions.
       </p>
     </header>
 
-    <section aria-labelledby="platform-health-heading" className="min-w-0 space-y-3 border-b border-[#E2E8F0] pb-4">
+    <section aria-labelledby="platform-health-heading" className="min-w-0 space-y-3 border-b border-[#E2E8F0] pb-5">
       <h2 id="platform-health-heading" className="text-[15px] font-semibold">Platform Health</h2>
-      <div className="grid min-w-0 grid-cols-2 gap-3 min-[1050px]:grid-cols-4">
+      <div className="grid min-w-0 grid-cols-2 gap-3 min-[1024px]:grid-cols-4">
         {healthTiles.map(tile => <div key={tile.label} data-testid="platform-health-metric" className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/75 px-3.5 py-3">
           <h3 className="min-h-9 text-[12px] font-medium leading-4 text-[#334155]">{tile.label}</h3>
           <OperationalStatus state={tile.state} />
@@ -83,12 +83,11 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
         </div>)}
       </div>
       <p className="text-[11px] leading-[17px] text-[#64748B]">
-        Health states reflect only the named observations and do not certify overall app or website uptime.
-        Installed-app crash and device health: <span className="font-medium">
+        These checks do not measure overall uptime. Installed-app crash health: <span className="font-medium">
           {health?.nativeApplicationHealth.state === "UNKNOWN" ? "Unknown"
             : health?.nativeApplicationHealth.state === "MONITORING_UNAVAILABLE" || !health
               ? "Monitoring unavailable" : "Not verified by these observations"}.
-        </span> Account sessions and presence do not establish installed-app crash health.
+        </span> Sessions and online activity do not verify crash health.
       </p>
     </section>
 
@@ -96,7 +95,7 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
 
     <section aria-label="Mobile app distribution" className="min-w-0 space-y-2">
       <h2 className="text-[15px] font-semibold">Mobile App Downloads</h2>
-      <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 min-[1050px]:grid-cols-4">
+      <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
         <div data-testid="ios-download-metric" className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/75 px-3.5 py-3">
           <p className="text-[12px] text-[#64748B]">iOS App Store downloads</p>
           <p className="mt-2 text-[18px] font-semibold text-[#0F172A]">Not connected</p>
@@ -109,14 +108,13 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
         </div>
       </div>
       <p className="text-[11px] leading-4 text-[#64748B]">
-        No verified store-download or install reporting source is wired to this dashboard.
-        Account sessions and live presence cannot be used as download counts.
+        Store reports are not connected. Sessions and online activity are not download counts.
       </p>
     </section>
 
     <div className="min-w-0">
       <h2 className="mb-2 text-[15px] font-semibold">Recorded Account Sessions</h2>
-      <p className="mb-3 text-[11px] leading-4 text-[#64748B]">Historical account sessions matching the applied filters; not online users, unique devices or app downloads.</p>
+      <p className="mb-3 text-[11px] leading-4 text-[#64748B]">Recorded sessions for the selected filters, not unique devices or online users.</p>
     {result.status === "ok" ? <section data-testid="platform-session-metrics"
       aria-label="Recorded platform summary matching applied filters"
       className="grid min-w-0 grid-cols-2 gap-3 min-[900px]:grid-cols-4">
@@ -158,21 +156,18 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
       action={<Link className={navigationLink} href={platformAccessHref(query, 1)}>Retry</Link>} /> : <>
 
       <section aria-labelledby="access-history-heading" className="min-w-0 rounded-xl border border-[#E2E8F0] bg-white">
-        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 px-3 py-4 sm:px-4">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 px-3 py-3.5 sm:px-4">
           <div>
             <h2 id="access-history-heading" className="flex items-center gap-2 text-[15px] font-semibold">
               <Clock3 size={16} aria-hidden="true" className="text-[#64748B]"/>Device &amp; Access History
             </h2>
             <p className="mt-1 text-[12px] text-[#64748B]">
-              {result.total.toLocaleString()} matching recorded sessions · Last seen times in UTC
+              {result.total.toLocaleString()} recorded sessions · Times in UTC
             </p>
             <p className="mt-1 text-[11px] text-[#64748B]">
-              Read at <time dateTime={result.observedAt.toISOString()}>{format(result.observedAt)}</time>
+              Checked <time dateTime={result.observedAt.toISOString()}>{format(result.observedAt)}</time>
             </p>
           </div>
-          <span className="text-[11px] text-[#64748B]">
-            {rangeOptions.find(item => item.value === query.range)?.label}
-          </span>
         </div>
         {result.sessions.length === 0 ? <p role="status" className="border-t border-[#E2E8F0] px-4 py-8 text-center text-[13px] text-[#64748B]">
           {result.total === 0 ? "No recorded account sessions match these filters." : "No records on this page. Return to the first page."}
@@ -231,10 +226,9 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
         </nav>
       </section>
       <p className="text-[12px] leading-5 text-[#64748B]">
-        Source: stored AccountSession records. Each row represents a recorded account session, not a distinct user, installed device or live visitor.
-        Web covers desktop and mobile browsers; unknown native platforms remain unclassified rather than being counted as iOS or Android.
-        Guest device details are not linked to accounts here. Location is a network estimate when recorded; missing fields are not inferred.
-        Historical sessions can be expired or revoked. Records are not separated by deployment environment because AccountSession has no environment field.
+        Each row is an account session, not a unique user or device. Web includes desktop and mobile browsers;
+        unknown app platforms stay unclassified. Guest devices are not linked here, and locations are estimates.
+        Expired or revoked sessions remain in history. Session records do not identify the deployment environment.
       </p>
     </>}
   </div>;
