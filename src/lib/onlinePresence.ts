@@ -5,7 +5,7 @@ export type OnlinePresencePlatform = "desktop_web" | "mobile_web" | "android" | 
 
 /** A registered account can appear on multiple platforms; anonymous credentials are sessions. */
 export type OnlinePresencePlatformCounts = Record<OnlinePresencePlatform, number> & {
-  /** Distinct authenticated customer accounts across both web platforms plus anonymous web sessions. */
+  /** Verified accounts of any role across both web platforms plus anonymous web sessions. */
   website: number;
   unclassified: number;
 };
@@ -19,11 +19,13 @@ export type OnlinePresenceSnapshot = {
   | { status: "unavailable" }
 );
 
-export function isWebsiteOnlinePresenceRoute(pathname: string | null, _authenticated: boolean) {
+export function isWebsiteOnlinePresenceRoute(pathname: string | null, authenticated: boolean) {
   if (!pathname?.startsWith("/")) return false;
   const section = pathname.split("/", 2)[1];
-  // Internal admin workspace activity is not customer-facing platform use.
-  return section !== "api" && section !== "mobile" && section !== "admin";
+  if (section === "api" || section === "mobile") return false;
+  // The admin workspace contributes only for verified signed-in sessions:
+  // blocked/unauthenticated admin routes must never inflate guest presence.
+  return section !== "admin" || authenticated;
 }
 
 /** Reject partial or contradictory presence breakdowns before showing a metric. */
@@ -34,7 +36,7 @@ export function hasVerifiedPlatformCounts(snapshot: OnlinePresenceSnapshot): boo
     counts.desktop_web, counts.mobile_web, counts.ios, counts.android, counts.website, counts.unclassified];
   if (!values.every(value => Number.isSafeInteger(value) && value >= 0)) return false;
   const sum = counts.desktop_web + counts.mobile_web + counts.ios + counts.android + counts.unclassified;
-  // A signed-in customer may use both website clients: website must be their
+  // A signed-in account (customer or staff) may use both website clients: website must be their
   // union, not desktop + mobile web. The per-platform sum can exceed total
   // when an account is simultaneously active on native and web platforms.
   return Number.isSafeInteger(sum) && snapshot.total === snapshot.registeredAccounts + snapshot.guestSessions

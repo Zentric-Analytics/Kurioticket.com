@@ -134,8 +134,11 @@ export async function getOnlinePresenceSnapshot(
         website: bigint; unclassified: bigint;
       }>>`
         WITH observed AS (
+          -- Verified accounts of all roles share the same user ID across
+          -- admin, customer web and native sessions; count each once overall.
           SELECT p."platform", p."accountSessionId",
-            CASE WHEN u."status" = 'ACTIVE' AND u."role" = 'USER' AND u."emailVerified" IS NOT NULL
+            CASE WHEN u."status" = 'ACTIVE' AND u."role" IN ('USER', 'SUPPORT', 'ADMIN')
+                AND u."emailVerified" IS NOT NULL
                 AND s."revokedAt" IS NULL AND s."expiresAt" > ${now}
                 AND s."sessionVersion" = u."sessionVersion"
                 AND (NOT COALESCE(security."twoFactorEnabled", false) OR s."assuranceLevel" <> 'PRIMARY')

@@ -60,3 +60,27 @@ test("Strict breakdowns require total coverage even when all individual values a
   };
   assert.equal(hasVerifiedPlatformCounts(invalid), false);
 });
+
+test("one admin on dashboard, customer website and iOS counts once overall", () => {
+  const adminEverywhere: OnlinePresenceSnapshot = {
+    status: "ok", total: 1, registeredAccounts: 1, guestSessions: 0,
+    observedAt: base.observedAt, windowSeconds: 90,
+    platforms: { desktop_web: 1, mobile_web: 1, website: 1, ios: 1, android: 0, unclassified: 0 },
+  };
+  assert.equal(hasVerifiedPlatformCounts(adminEverywhere), true);
+  if (adminEverywhere.status !== "ok" || !adminEverywhere.platforms) throw new Error("Invalid fixture");
+  assert.equal(adminEverywhere.total, 1);
+  assert.equal(adminEverywhere.platforms.website, 1);
+  assert.equal(adminEverywhere.platforms.ios, 1);
+  assert.equal(adminEverywhere.platforms.android, 0);
+});
+
+test("one staff member, one customer and one guest session can share a platform without inflating total", () => {
+  const snapshot: OnlinePresenceSnapshot = {
+    status: "ok", total: 3, registeredAccounts: 2, guestSessions: 1,
+    observedAt: base.observedAt, windowSeconds: 90,
+    platforms: { desktop_web: 2, mobile_web: 1, website: 3, ios: 1, android: 0, unclassified: 0 },
+  };
+  assert.equal(hasVerifiedPlatformCounts(snapshot), true);
+  assert.equal(snapshot.status === "ok" ? snapshot.registeredAccounts + snapshot.guestSessions : null, 3);
+});

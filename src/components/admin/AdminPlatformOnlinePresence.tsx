@@ -112,7 +112,7 @@ export function AdminPlatformOnlinePresence({ initial, variant = "platforms" }: 
     </div>
     <p className="text-[11px] leading-[17px] text-[#64748B]">
       {onUsersPage
-        ? "Live presence is independent of directory date filters. Signed-in customer accounts are deduplicated; anonymous visitors count as sessions. Website includes desktop and mobile web without double-counting the same account."
+        ? "Online counts ignore date filters. Each signed-in account counts once overall, even across devices. Guests count by session. Website includes desktop and mobile browsers."
         : "Online counts estimate recent activity, not logins or downloads. Accounts may appear on multiple platforms; anonymous sessions are counted separately. Unclassified activity appears in the total only."}
     </p>
   </section>;
