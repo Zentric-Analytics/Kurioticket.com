@@ -53,7 +53,13 @@ export async function readAdminOnlineUsers(
           AND s."revokedAt" IS NULL AND s."expiresAt" > ${now}
           AND s."sessionVersion" = u."sessionVersion"
           AND (NOT COALESCE(security."twoFactorEnabled", FALSE) OR s."assuranceLevel" <> 'PRIMARY')
-          THEN u."role"::text ELSE NULL END AS "role"
+          THEN u."role"::text ELSE NULL END AS "role",
+        CASE WHEN u."status" = 'ACTIVE' AND u."role" IN ('USER', 'SUPPORT', 'ADMIN')
+          AND u."emailVerified" IS NOT NULL
+          AND s."revokedAt" IS NULL AND s."expiresAt" > ${now}
+          AND s."sessionVersion" = u."sessionVersion"
+          AND (NOT COALESCE(security."twoFactorEnabled", FALSE) OR s."assuranceLevel" <> 'PRIMARY')
+          THEN s."locationLabel" ELSE NULL END AS "locationLabel"
       FROM "OnlinePresenceSession" p
       LEFT JOIN "AccountSession" s ON s."id" = p."accountSessionId"
       LEFT JOIN "User" u ON u."id" = s."userId"
