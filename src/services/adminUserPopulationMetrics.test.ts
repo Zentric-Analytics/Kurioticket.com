@@ -59,7 +59,7 @@ test("population totals use one consistent and bounded DB read, not journey acti
   assert.doesNotMatch(populationCards, /gap-px overflow-hidden rounded-xl/);
 });
 
-test("Users Directory shows four live customer presence cards above seven recorded-user metrics", () => {
+test("Users Directory shows four live all-role presence cards above seven recorded-user metrics", () => {
   const online = users.indexOf('<AdminPlatformOnlinePresence initial={onlinePresence} variant="users" />');
   const population = users.indexOf("<AdminUserPopulationCards");
   const directory = users.indexOf("<AdminUsersToolbar");
@@ -74,7 +74,7 @@ test("Users Directory shows four live customer presence cards above seven record
   assert.match(liveCards, /onUsersPage \? usersCards : platformCards/);
   assert.match(liveCards, /"users-online-metrics"/);
   assert.match(liveCards, /grid-cols-2 gap-3 min-\[1024px\]:grid-cols-4/);
-  assert.match(liveCards, /Live presence is independent of directory date filters/);
+  assert.match(liveCards, /Online counts ignore date filters/);
   assert.match(liveCards, /hasVerifiedPlatformCounts\(next\)/);
   assert.match(liveCards, /fetch\("\/api\/admin\/overview\/online-presence"/);
   assert.doesNotMatch(users, /loadPlatformAccess|accountSession\.count\(/);
