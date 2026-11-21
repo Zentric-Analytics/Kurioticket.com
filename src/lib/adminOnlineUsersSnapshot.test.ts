@@ -7,12 +7,13 @@ const now = new Date("2026-11-21T20:00:00.000Z");
 function observation(
   sourceId: string, platform: string, atSecondsAgo: number,
   account: { id: string; role: string; name: string; email?: string } | null = null,
-  linkedSession = Boolean(account),
+  linkedSession = Boolean(account), locationLabel: string | null = null,
 ): RawPresenceRow {
   return {
     sourceId, platform, accountSessionId: linkedSession ? "session-" + sourceId : null,
     userId: account?.id ?? null, name: account?.name ?? null, email: account?.email ?? null,
-    role: account?.role ?? null, lastSeenAt: new Date(now.getTime() - atSecondsAgo * 1000),
+    role: account?.role ?? null, locationLabel,
+    lastSeenAt: new Date(now.getTime() - atSecondsAgo * 1000),
   };
 }
 
@@ -83,4 +84,45 @@ test("per-platform totals preserve website union without double counting the sam
   assert.equal(snapshot.platforms.website, 1);
   assert.equal(snapshot.platforms.unclassified, 1);
   assert.equal(snapshot.rows[0].role, "SUPPORT");
+});
+
+test("the latest verified account heartbeat owns the displayed approximate location", () => {
+  const account = { id: "u-location", role: "ADMIN", name: "Verified Example" };
+  const snapshot = buildAdminOnlineUsersSnapshot([
+    observation("older", "desktop_web", 65, account, true, "New York, United States"),
+    observation("latest", "ios", 2, account, true, "Lagos, Nigeria"),
+    observation("middle", "mobile_web", 35, account, true, "Accra, Ghana"),
+  ], now);
+  assert.equal(snapshot.total, 1);
+  assert.equal(snapshot.rows[0].locationLabel, "Lagos, Nigeria");
+  assert.deepEqual(snapshot.rows[0].platforms, ["desktop_web", "ios", "mobile_web"]);
+});
+
+test("missing recent location and anonymous presence never inherit an unrelated place", () => {
+  const account = { id: "u-location", role: "USER", name: "Verified Example" };
+  const snapshot = buildAdminOnlineUsersSnapshot([
+    observation("older-known", "desktop_web", 30, account, true, "Lagos, Nigeria"),
+    observation("latest-unknown", "ios", 1, account, true, null),
+    observation("anonymous", "android", 4, null, false, "Do not expose guest location"),
+    observation("invalid", "ios", 3, null, true, "Unverified location"),
+  ], now);
+  assert.equal(snapshot.total, 2);
+  assert.equal(snapshot.rows.find(row => row.kind === "registered")?.locationLabel, null);
+  assert.equal(snapshot.rows.find(row => row.kind === "guest")?.locationLabel, null);
+  assert.equal(JSON.stringify(snapshot).includes("Do not expose guest location"), false);
+  assert.equal(JSON.stringify(snapshot).includes("Unverified location"), false);
+});
+
+test("recorded location strings are trimmed and invalid characters or oversized labels are rejected", () => {
+  const account = { id: "u-location", role: "ADMIN", name: "Verified Example" };
+  const good = buildAdminOnlineUsersSnapshot([
+    observation("valid", "desktop_web", 1, account, true, "  Lagos, Nigeria  "),
+  ], now);
+  assert.equal(good.rows[0].locationLabel, "Lagos, Nigeria");
+  for (const label of ["   ", "X".repeat(161), "Lagos" + String.fromCharCode(10) + "Nigeria"]) {
+    const invalid = buildAdminOnlineUsersSnapshot([
+      observation("invalid", "desktop_web", 1, account, true, label),
+    ], now);
+    assert.equal(invalid.rows[0].locationLabel, null);
+  }
 });
