@@ -30,30 +30,10 @@ try {
   for (const width of [1440,1280,768,390,320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(url);
-    const online = page.locator('section[aria-label="Online Users"]');
-    await expect(online).toBeVisible();
-    await expect(online.getByRole("heading", { name: "Online Users" })).toBeVisible();
-    await expect(online.locator('[data-testid="online-platform-metric"]')).toHaveCount(4);
-    assert.deepEqual((await online.locator('[data-testid="online-platform-metric"]')
-      .allTextContents()).map(text => text.match(/Total online users|iOS online|Android online|Website online/)?.[0]),
-      ["Total online users", "iOS online", "Android online", "Website online"]);
-    assert.deepEqual((await online.locator("p.tabular-nums").allTextContents()).map(text => text.trim()),
-      ["3", "1", "0", "3"], "Live synthetic metrics use deduplicated website union");
-    const onlineCards = await online.locator('[data-testid="online-platform-metric"]')
-      .evaluateAll(nodes => nodes.map(node => {
-        const box = node.getBoundingClientRect();
-        return { left: box.left, right: box.right, top: box.top };
-      }));
-    if (width >= 1024) {
-      assert.ok(onlineCards.every(card => Math.abs(card.top - onlineCards[0].top) <= 1),
-        "All four online cards occupy one row on desktop");
-      assert.ok(onlineCards.every((card, index) => index === 0 || card.left - onlineCards[index - 1].right >= 6),
-        "Online cards retain separate gutters at desktop width");
-    }
+    await expect(page.locator('section[aria-label="Online Users"]')).toHaveCount(0);
+    await expect(page.getByRole("navigation",{name:"Users subsections"})
+      .getByRole("link",{name:"Online Users",exact:true})).toBeVisible();
     const population = page.locator('section[aria-label="User population metrics"]');
-    const onlineBottom = await online.evaluate(node => node.getBoundingClientRect().bottom);
-    const populationTop = await population.evaluate(node => node.getBoundingClientRect().top);
-    assert.ok(populationTop > onlineBottom, "Live online cards precede recorded-user population cards");
     await expect(population).toContainText("Consented guest");
     await expect(population).not.toContainText("Non consented guest");
     await expect(population).not.toContainText("New non consented guest");
@@ -137,6 +117,33 @@ try {
     await page.screenshot({path: output + "/after-search-filter-" + width + ".png", fullPage:true});
     console.log("PASS responsive premium users toolbar",width);
   }
+  await page.setViewportSize({width:1280,height:900});
+  await page.goto(base + "/admin/users/online");
+  const live = page.locator('section[aria-label="Online Users"]');
+  await expect(live).toBeVisible();
+  await expect(live.locator('[data-testid="online-platform-metric"]')).toHaveCount(4);
+  assert.deepEqual((await live.locator('p.tabular-nums').allTextContents()).map(text => text.trim()),
+    ["3","1","0","3"]);
+  await expect(page.getByRole("navigation",{name:"Users subsections"}).getByRole("link",{name:"Online Users"}))
+    .toHaveAttribute("aria-current","page");
+  await expect(page.getByTestId("online-user-row")).toHaveCount(3);
+  await expect(page.getByTestId("online-user-row").first()).toContainText("Alana Example");
+  await expect(page.getByText("Guest session")).toHaveCount(1);
+  await expect(page.getByTestId("online-user-row").filter({hasText:"Guest session"})
+    .getByRole("link",{name:"View Activity"})).toHaveCount(0);
+  await expect(page.getByTestId("online-user-row").filter({hasText:"Alana Example"})
+    .getByRole("link",{name:"View Activity"})).toHaveCount(1);
+  await page.getByRole("combobox",{name:"Platform"}).click();
+  await page.getByRole("listbox",{name:"Platform"}).getByRole("option",{name:"iOS"}).click();
+  await expect(page.getByTestId("online-user-row")).toHaveCount(3);
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
+  await expect(page.getByTestId("online-user-row")).toHaveCount(1);
+  await expect(page.getByTestId("online-user-row").first()).toContainText("Alana Example");
+  await page.setViewportSize({width:320,height:800});
+  await page.goto(base + "/admin/users/online");
+  await expect(page.getByRole("heading",{name:"Online Users",exact:true})).toBeVisible();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),true);
+  await page.screenshot({path:output+"/online-users-mobile-320.png",fullPage:true});
   await page.setViewportSize({width:1280,height:900});
   await page.goto(url);
   await expect(page.getByRole("navigation",{name:"Identity pagination"})).toHaveCount(0);
