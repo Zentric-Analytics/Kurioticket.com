@@ -92,7 +92,7 @@ export function AdminPlatformOnlinePresence({ initial, variant = "platforms" }: 
   return <section aria-label={onUsersPage ? "Online Users" : "Online presence by platform"}
     className="min-w-0 space-y-2">
     <div className="flex flex-wrap items-end justify-between gap-2">
-      <h2 className="text-[15px] font-semibold text-[#0F172A]">{onUsersPage ? "Online Users" : "Online Users by Platform"}</h2>
+      <h2 className="text-[15px] font-semibold text-[#0F172A]">Online Users</h2>
       <span className="text-[11px] tabular-nums text-[#64748B]">
         Live · last {snapshot.windowSeconds} seconds
       </span>
@@ -113,7 +113,7 @@ export function AdminPlatformOnlinePresence({ initial, variant = "platforms" }: 
     <p className="text-[11px] leading-[17px] text-[#64748B]">
       {onUsersPage
         ? "Online counts ignore date filters. Each signed-in account counts once overall, even across devices. Guests count by session. Website includes desktop and mobile browsers."
-        : "Online counts estimate recent activity, not logins or downloads. Accounts may appear on multiple platforms; anonymous sessions are counted separately. Unclassified activity appears in the total only."}
+        : "Online activity is estimated from recent visits, not logins or downloads. Accounts can appear on multiple platforms; anonymous sessions are counted separately. Unclassified activity appears in the overall total."}
     </p>
   </section>;
 }

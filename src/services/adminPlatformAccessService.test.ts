@@ -38,6 +38,31 @@ test("Platform metrics stay before filters with no duplicate global device histo
   assert.doesNotMatch(page, /access-history-heading|Device &amp; Access History|Platform access pagination|result\.sessions|<table/);
 });
 
+test("Platform Metrics labels match current summary content without changing existing routes", () => {
+  const page = readFileSync("src/app/admin/platforms/devices/page.tsx", "utf8");
+  const nav = readFileSync("src/lib/adminNavigation.ts", "utf8");
+  const presence = readFileSync("src/components/admin/AdminPlatformOnlinePresence.tsx", "utf8");
+  const health = readFileSync("src/components/admin/PlatformHealthDashboard.tsx", "utf8");
+
+  assert.match(page, /title: "Admin Platform Metrics"/);
+  assert.match(page, /<h1[^>]*>Platform Metrics<\/h1>/);
+  assert.match(page, /<h2[^>]*>Platform Checks<\/h2>/);
+  assert.match(page, /<h2[^>]*>App Download Reporting<\/h2>/);
+  assert.match(page, /<h2[^>]*>Account Sessions<\/h2>/);
+  assert.match(page, /Web Search Activity|iOS Search Activity|Android Search Activity|Database Status/);
+  assert.match(page, /Session period/);
+  assert.match(page, /aria-label="Platform Metrics filters"/);
+  assert.match(page, /"MONITORING_UNAVAILABLE"/);
+  assert.match(page, />Not connected<\/p>/);
+  assert.match(page, /href="\/admin\/platforms\/devices"/);
+  assert.doesNotMatch(page, /Platforms &amp; Devices|Platforms & Devices|Device &amp; Access History/);
+
+  assert.match(nav, /href: "\/admin\/platforms\/devices", parentHref: "\/admin\/platform-health", label: "Platform Metrics"/);
+  assert.match(presence, /"Online Users"/);
+  assert.match(health, /href="\/admin\/platforms\/devices" linkLabel="View Platform Metrics"/);
+  assert.doesNotMatch(nav, /Platforms & Devices/);
+});
+
 test("Platform monitoring uses bounded aggregate counts, not account history rows or credentials", () => {
   const service = readFileSync("src/services/adminPlatformAccessService.ts", "utf8");
   const page = readFileSync("src/app/admin/platforms/devices/page.tsx", "utf8");

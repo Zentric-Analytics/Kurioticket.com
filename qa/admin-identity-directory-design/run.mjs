@@ -76,7 +76,7 @@ await put("app/admin/page.jsx", 'export default function Overview(){return <div>
 await put("app/admin/platform-health/page.jsx",
   'export default function Health(){return <main><h1>Platform Health QA</h1></main>;}');
 await put("app/admin/platforms/devices/page.jsx",
-  'export default function PlatformsDevices(){return <main><h1>Platforms & Devices QA</h1></main>;}');
+  'export default function PlatformsDevices(){return <main><h1>Platform Metrics QA</h1></main>;}');
 await put("app/admin/users/user/[id]/devices/page.jsx",
   'export default function UserDeviceHistory(){return <main><h1>User Device History QA</h1></main>;}');
 // The real legacy route should redirect without losing validated query inputs.

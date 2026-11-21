@@ -28,7 +28,7 @@ try {
     await expect(page.getByRole("complementary", { name: "Users navigation" }).getByRole("heading", { name: "Users", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Visitor Journeys", exact: true })).toHaveCount(0);
-    await expect(workspace.getByRole("link", { name: "Platforms & Devices", exact: true })).toHaveCount(0);
+    await expect(workspace.getByRole("link", { name: "Platform Metrics", exact: true })).toHaveCount(0);
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
     for (const unrelated of ["Trips", "Support", "Settings", "System"]) {
       await expect(workspace.getByRole("link", { name: unrelated, exact: true })).toHaveCount(0);
@@ -77,13 +77,13 @@ try {
     await page.setViewportSize({ width, height: 900 });
     for (const [path, selected] of [
       ["/admin/platform-health", "Platform Health"],
-      ["/admin/platforms/devices", "Platforms & Devices"],
+      ["/admin/platforms/devices", "Platform Metrics"],
     ]) {
       await page.goto(root + path, { waitUntil: "networkidle" });
       const platforms = page.getByRole("navigation", { name: "Platforms subsections" });
       await expect(page.getByRole("complementary", { name: "Platforms navigation" })).toBeVisible();
       await expect(platforms.getByRole("link", { name: "Platform Health", exact: true })).toBeVisible();
-      await expect(platforms.getByRole("link", { name: "Platforms & Devices", exact: true })).toBeVisible();
+      await expect(platforms.getByRole("link", { name: "Platform Metrics", exact: true })).toBeVisible();
       await expect(platforms.getByRole("link", { name: selected, exact: true }))
         .toHaveAttribute("aria-current", "page");
       await expect(platforms.getByRole("link", { name: "Users Directory", exact: true })).toHaveCount(0);
@@ -103,7 +103,7 @@ try {
   await page.goto(root + "/admin/users/platforms-devices?range=7d&platform=ios&page=3", { waitUntil: "networkidle" });
   await expect(page).toHaveURL(/\/admin\/platforms\/devices\?range=7d&platform=ios&page=3$/);
   await expect(page.getByRole("navigation", { name: "Platforms subsections" })
-    .getByRole("link", { name: "Platforms & Devices", exact: true })).toHaveAttribute("aria-current", "page");
+    .getByRole("link", { name: "Platform Metrics", exact: true })).toHaveAttribute("aria-current", "page");
   checks.push("Legacy device URL preserves range, platform and page during redirect");
 
   // The real Visitor Journeys page uses synthetic QA-only rows; preserve
