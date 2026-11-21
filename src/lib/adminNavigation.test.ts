@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, getAdminWorkspaceSections, isAdminWorkspaceSectionActive, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage destinations", "Flight routes", "Hotel destinations", "FAQs", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platform Health", "CMS Health", "Email Delivery", "Settings", "Visitor Journeys", "Platforms & Devices", "Provider Handoffs", "Referral Attribution"];
+const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage destinations", "Flight routes", "Hotel destinations", "FAQs", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platform Health", "CMS Health", "Email Delivery", "Settings", "Platforms & Devices", "Provider Handoffs", "Referral Attribution"];
 
 test("admin navigation restores the flat module order without a duplicate Flights workspace", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
@@ -34,7 +34,7 @@ test("admin navigation preserves role restrictions", () => {
     ["Homepage Fares", "/admin/providers"],
     ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"],
     ["Audit Logs", "/admin/system"], ["CMS Health", "/admin/system"], ["Email Delivery", "/admin/system"],
-    ["Visitor Journeys", "/admin/users"], ["Platforms & Devices", "/admin/users"], ["Provider Handoffs", "/admin/searches/activity"],
+    ["Platforms & Devices", "/admin/users"], ["Provider Handoffs", "/admin/searches/activity"],
     ["Referral Attribution", "/admin/providers"],
   ]);
   assert.deepEqual(getAdminNavForRole("USER"), []);
@@ -62,7 +62,7 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   const homepageFares = entries.find(({ item }) => item.href === "/admin/homepage-fares");
   const settings = entries.find(({ item }) => item.href === "/admin/settings");
   assert.deepEqual(searches?.children.map((item) => item.href), ["/admin/redirects"]);
-  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.href), ["/admin/journeys", "/admin/users/platforms-devices"]);
+  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.href), ["/admin/users/platforms-devices"]);
   assert.deepEqual(providers?.children.map((item) => item.href), ["/admin/homepage-fares", "/admin/hotels", "/admin/cars", "/admin/referral-attribution"]);
   assert.deepEqual(trips?.children.map((item) => item.href), ["/admin/confirmed-trips/monitoring"]);
   assert.deepEqual(entries.find(({ item }) => item.href === "/admin/content")?.children.map(item => item.href), [
@@ -103,9 +103,9 @@ test("Notifications has one Settings sidebar owner rather than a duplicate globa
 
 test("secondary routes are owned by a single parent workspace", () => {
   const expectations = [
-    ["/admin/users", ["Users Directory", "Visitor Journeys", "Platforms & Devices"]],
-    ["/admin/journeys/fixture", ["Users Directory", "Visitor Journeys", "Platforms & Devices"]],
-    ["/admin/users/platforms-devices", ["Users Directory", "Visitor Journeys", "Platforms & Devices"]],
+    ["/admin/users", ["Users Directory", "Platforms & Devices"]],
+    ["/admin/journeys/fixture", ["Users Directory", "Platforms & Devices"]],
+    ["/admin/users/platforms-devices", ["Users Directory", "Platforms & Devices"]],
     ["/admin/searches/activity", ["Search Records", "Provider Handoffs"]],
     ["/admin/redirects", ["Search Records", "Provider Handoffs"]],
     ["/admin/support", ["Support Tickets", "Deletion Requests"]],
@@ -139,11 +139,25 @@ test("staging-only Team Access remains separate from permanently available route
   assert.equal(getAdminHeaderGroups("ADMIN", true).some(group => group.links.some(entry => entry.item.href === "/admin/preview-testers")), false);
 });
 
+test("Visitor Journeys sidebar destination is absent but historic journeys and identity history routes remain", () => {
+  const visible = getAdminNavForRole("ADMIN");
+  assert.equal(visible.some(item => item.href === "/admin/journeys"), false);
+  const users = getAdminWorkspaceSections("/admin/journeys/old-journey-id", "ADMIN");
+  assert.deepEqual(users?.links.map(item => item.label), ["Users Directory", "Platforms & Devices"]);
+  assert.equal(isAdminWorkspaceSectionActive("/admin/journeys/old-journey-id", "/admin/users"), true);
+  const activity = readFileSync("src/components/admin/AdminActivityOverview.tsx", "utf8");
+  const details = readFileSync("src/app/admin/journeys/[id]/page.tsx", "utf8");
+  const scoped = readFileSync("src/app/admin/users/[kind]/[id]/journeys/page.tsx", "utf8");
+  assert.match(activity, /View Journey History/);
+  assert.match(scoped, /adminJourneys\.list/);
+  assert.match(details, /adminJourneys\.detail/);
+});
+
 test("contextual tabs highlight the actual current subsection, including nested detail routes", () => {
   const examples: Array<[string, string, boolean]> = [
     ["/admin/users", "/admin/users", true],
-    ["/admin/journeys/abc", "/admin/journeys", true],
-    ["/admin/journeys", "/admin/users", false],
+    ["/admin/journeys/abc", "/admin/users", true],
+    ["/admin/journeys", "/admin/users", true],
     ["/admin/users/platforms-devices", "/admin/users", false],
     ["/admin/users/platforms-devices", "/admin/users/platforms-devices", true],
     ["/admin/users/user/example123/devices", "/admin/users", false],
