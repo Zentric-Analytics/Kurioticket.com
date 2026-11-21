@@ -14,7 +14,9 @@ export type AdminDeviceSession = {
   locationLabel: string | null;
   lastSeenAt: Date;
   createdAt: Date;
+  expiresAt: Date;
   revokedAt: Date | null;
+  revokeReason: string | null;
 };
 
 export type DeviceSessionResult =
@@ -37,7 +39,7 @@ export async function loadAdminDeviceSessions(userId: string): Promise<DeviceSes
       select: {
         id: true, client: true, platform: true,
         deviceLabel: true, browser: true, os: true, locationLabel: true,
-        lastSeenAt: true, createdAt: true, revokedAt: true,
+        lastSeenAt: true, createdAt: true, expiresAt: true, revokedAt: true, revokeReason: true,
       },
     });
     return { status: "ok", sessions };
@@ -67,7 +69,7 @@ export async function loadAdminFullDeviceHistory(
         select: {
           id: true, client: true, platform: true,
           deviceLabel: true, browser: true, os: true, locationLabel: true,
-          lastSeenAt: true, createdAt: true, revokedAt: true,
+          lastSeenAt: true, createdAt: true, expiresAt: true, revokedAt: true, revokeReason: true,
         },
       }),
     ]);

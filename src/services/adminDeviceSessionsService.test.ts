@@ -9,6 +9,14 @@ test("device history is account-scoped and excludes credentials and network iden
   assert.match(source, /take:\s*3/);
   assert.match(source, /deviceTodayWindow\(\)/);
   assert.match(source, /loadAdminFullDeviceHistory/);
+  assert.match(source, /expiresAt: true, revokedAt: true, revokeReason: true/);
+  assert.match(source, /loadAdminFullDeviceHistory/);
+  const historyPage = readFileSync("src/app/admin/users/[kind]/[id]/devices/page.tsx", "utf8");
+  assert.match(historyPage, /recordedDeviceSessionStatus\(session, observedAt\)/);
+  assert.match(historyPage, /recordedDeviceSignOutReason\(session\.revokeReason\)/);
+  assert.match(historyPage, />Status<\/th>/);
+  assert.doesNotMatch(historyPage, /Revoked<\/span>| · Revoked/);
+  assert.match(historyPage, /View full history|Device &amp; Access History/);
   assert.match(source, /skip: \(query\.page - 1\) \* DEVICE_HISTORY_PAGE_SIZE/);
   assert.doesNotMatch(source, /select:\s*\{[^}]*tokenHash/);
   assert.doesNotMatch(source, /select:\s*\{[^}]*maskedIp/);
