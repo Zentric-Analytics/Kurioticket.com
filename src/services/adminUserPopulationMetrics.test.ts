@@ -90,8 +90,9 @@ test("Online Users owns the four live metrics while Users Directory keeps its se
   assert.match(onlineUi, /role="status"/);
   assert.match(onlineUi, /onSubmit=\{event =>/);
   assert.match(onlineUi, /document\.visibilityState/);
-  assert.match(onlineUi, /"Guest session"/);
-  assert.match(onlineUi, /"Not linked"/);
+  const grouping = readFileSync("src/lib/adminOnlineUsersSnapshot.ts", "utf8");
+  assert.match(grouping, /name: "Guest session"/);
+  assert.match(onlineUi, />Not linked<\/span>/);
   assert.doesNotMatch(onlineUi, /createVisitorToken|Visitor\.create/);
   assert.doesNotMatch(users, /loadPlatformAccess|accountSession\.count\(/);
 });
