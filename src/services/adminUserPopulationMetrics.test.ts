@@ -20,7 +20,7 @@ test("population cards precede directory filters but do not reclassify filtered 
   assert.match(population, /withOptionalDb<UserPopulationMetrics \| null>/);
   assert.match(populationCards, /"Unavailable"/);
   assert.match(populationCards, /do not prove unique people or devices/);
-  assert.match(populationCards, /independent of directory search/);
+  assert.match(populationCards, /separate from directory search/);
 });
 
 test("Platform Health leads the dedicated page and uses measured narrow signals", () => {
