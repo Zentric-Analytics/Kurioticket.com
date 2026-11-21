@@ -127,20 +127,20 @@ test("Platform Health leads the dedicated page and uses measured narrow signals"
   assert.match(platformPage, /applications\.IOS\.state/);
   assert.match(platformPage, /applications\.ANDROID\.state/);
   assert.match(platformPage, /"MONITORING_UNAVAILABLE"/);
-  assert.match(platformPage, /Store reports are not connected/);
-  assert.match(platformPage, /Sessions and online activity are not download counts/);
+  assert.match(platformPage, /Store reporting is not connected/);
+  assert.match(platformPage, /Session and online counts are not downloads/);
   assert.match(platformPage, /data-testid="platform-health-metric"/);
   assert.doesNotMatch(platformPage, /href="\/admin\/platform-health"/);
   assert.doesNotMatch(platformPage, /Full monitoring details|See full monitoring details/);
   assert.match(platformPage, /Not verified by these observations/);
-  assert.match(platformPage, /Sessions and online activity do not verify crash health/);
+  assert.match(platformPage, /Online activity and sessions cannot verify crash health/);
 
   assert.match(platformPage, /data-testid="ios-download-metric"/);
   assert.match(platformPage, /data-testid="android-download-metric"/);
   assert.match(platformPage, /grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2/);
   assert.doesNotMatch(platformPage, /sm:grid-cols-2 min-\[1050px\]:grid-cols-4/);
   assert.match(platformPage, /data-testid="platform-session-metric"/);
-  assert.match(platformPage, /Historical sessions for the selected filters/);
+  assert.match(platformPage, /Sessions in the selected period/);
   assert.doesNotMatch(platformPage, /matching recorded sessions · Last seen times in UTC|Source: stored AccountSession records/);
   assert.match(platformPage, /grid-cols-2 gap-3 min-\[900px\]:grid-cols-4/);
   assert.doesNotMatch(platformPage, /gap-px overflow-hidden rounded-xl/);
@@ -156,8 +156,8 @@ test("online cards validate live API totals and never approximate online users f
   assert.match(liveCards, /data-testid="online-platform-metric"/);
   assert.match(liveCards, /grid-cols-2 gap-3 min-\[640px\]:grid-cols-3 min-\[1024px\]:grid-cols-5/);
   assert.match(liveCards, /Live · last \{snapshot\.windowSeconds\} seconds/);
-  assert.match(liveCards, /Online counts estimate recent activity, not logins or downloads/);
-  assert.match(liveCards, /Unclassified activity appears in the total only/);
+  assert.match(liveCards, /Online activity is estimated from recent visits, not logins or downloads/);
+  assert.match(liveCards, /Unclassified activity appears in the overall total/);
   assert.doesNotMatch(liveCards, /gap-px overflow-hidden rounded-xl/);
   assert.match(presenceService, /COUNT\(DISTINCT "registeredUserId"\)/);
   assert.match(presenceService, /"platform" = 'ios'/);
