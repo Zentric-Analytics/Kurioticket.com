@@ -53,7 +53,7 @@ const db = {
     ["qa-registered-0001", "qa-registered-unavailable-0001", "qa-admin"].includes(where.id)
       ? { id: where.id, email: "customer.qa@example.invalid", role: "USER", status: "ACTIVE" }
       : null },
-  $queryRaw: async () => [{ id: "qa-device-0" }],
+  $queryRaw: async () => [{ id: "qa-device-0", online: true }, { id: "qa-device-2", online: false }],
   accountSession: {
     findMany: async ({ where, take = 20, skip = 0 }) =>
       selectSyntheticSessions(where).sort((a, b) => b.lastSeenAt.getTime() - a.lastSeenAt.getTime()).slice(skip, skip + take),
