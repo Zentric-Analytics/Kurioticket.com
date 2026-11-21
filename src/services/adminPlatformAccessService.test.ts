@@ -53,7 +53,7 @@ test("Platform Metrics labels match current summary content without changing exi
   assert.match(page, /Session period/);
   assert.match(page, /aria-label="Platform Metrics filters"/);
   assert.match(page, /"MONITORING_UNAVAILABLE"/);
-  assert.match(page, /"Not connected"/);
+  assert.match(page, />Not connected<\/p>/);
   assert.match(page, /href="\/admin\/platforms\/devices"/);
   assert.doesNotMatch(page, /Platforms &amp; Devices|Platforms & Devices|Device &amp; Access History/);
 
