@@ -34,6 +34,9 @@ test("population totals use one consistent and bounded DB read, not journey acti
   assert.match(populationCards, /min-\[1420px\]:grid-cols-7/);
   assert.match(populationCards, /label: "Consented guest"/);
   assert.match(populationCards, /label: "Non consented guest"/);
+  assert.match(populationCards, /label: "Total recorded accounts & guest sessions"/);
+  assert.match(populationCards, /recordedAccountsAndGuestSessionsTotal\(metrics, operationalAllTimeCount\)/);
+  assert.doesNotMatch(populationCards, /label: "Total recorded identities"/);
   assert.match(populationCards, /label: "New non consented guest"/);
   assert.match(populationCards, /scope: "Recorded sessions · All time"/);
   assert.match(populationCards, /New recorded sessions · \$\{period\}/);
