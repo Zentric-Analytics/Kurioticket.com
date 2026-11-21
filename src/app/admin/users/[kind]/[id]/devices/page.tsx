@@ -8,6 +8,7 @@ import { loadAdminFullDeviceHistory } from "@/services/adminDeviceSessionsServic
 import { platformLabel, sourceIcon, deviceValue } from "@/components/admin/AdminIdentityDeviceAccess";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { AdminDeviceHistoryFilters } from "@/components/admin/AdminDeviceHistoryFilters";
+import { recordedDeviceSessionStatus, recordedDeviceSignOutReason } from "@/lib/adminDeviceSessionStatus";
 
 export const metadata = { title: "Admin Device & Access History" };
 type RawQuery = Record<string, string | string[] | undefined>;
@@ -48,6 +49,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
 
   const totalPages = Math.max(1, Math.ceil(result.total / DEVICE_HISTORY_PAGE_SIZE));
   const pagePath = path + "/devices";
+  const observedAt = new Date();
   return <div className="min-w-0 space-y-5 bg-white pb-6 text-[#0F172A]">
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[13px]">
       <Link href={backHref} className="focus-ring inline-flex items-center gap-1.5 text-[#004BB8] hover:underline">
@@ -59,7 +61,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
       <header className="flex min-w-0 flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-[19px] font-semibold">Device &amp; Access History</h1>
-          <p className="mt-1 text-[12px] text-[#64748B]">Recorded account sessions · Times in UTC · Location is a network estimate when available</p>
+          <p className="mt-1 text-[12px] text-[#64748B]">Recorded sessions · Times in UTC · Locations are estimates · Signed out includes security-initiated endings</p>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-md bg-[#F8FAFC] px-2.5 py-1.5 text-[12px] text-[#475569]">
           <Clock3 size={14} aria-hidden="true"/>{result.total.toLocaleString()} matching sessions
@@ -78,21 +80,26 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
               <p className="flex items-center gap-2 font-semibold"><Icon size={15} aria-hidden="true"/>{platformLabel(session)}</p>
               <p className="break-words text-[#475569]">{deviceValue(session.deviceLabel)} · {deviceValue(session.os)}</p>
               <p className="break-words text-[#64748B]">{session.client === "MOBILE" ? "In-app" : deviceValue(session.browser)} · {deviceValue(session.locationLabel)}</p>
-              <p className="tabular-nums text-[#64748B]"><time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt)}</time>{session.revokedAt ? " · Revoked" : ""}</p>
+              <p className="tabular-nums text-[#64748B]">Last seen <time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt)}</time></p>
+              <p className="text-[#475569]">Status: <span className="font-medium">{recordedDeviceSessionStatus(session, observedAt)}</span></p>
+              {session.revokedAt && recordedDeviceSignOutReason(session.revokeReason) ? <p className="text-[#64748B]">
+                Reason: {recordedDeviceSignOutReason(session.revokeReason)}
+              </p> : null}
             </article>;
           })}
         </div>
         <div className="admin-responsive-records hidden min-w-0 overflow-x-auto md:block"
           role="region" aria-label="Full device history table" tabIndex={0}>
-          <table className="w-full min-w-[760px] table-fixed text-left text-[12px]">
+          <table className="w-full min-w-[900px] table-fixed text-left text-[12px]">
             <thead className="border-b border-[#E2E8F0] bg-[#F8FAFC] uppercase text-[11px] text-[#64748B]">
               <tr>
-                <th scope="col" className="w-[17%] px-3 py-3 font-medium">Platform</th>
-                <th scope="col" className="w-[22%] px-3 py-3 font-medium">Device</th>
-                <th scope="col" className="w-[12%] px-3 py-3 font-medium">OS</th>
-                <th scope="col" className="w-[14%] px-3 py-3 font-medium">Browser</th>
-                <th scope="col" className="w-[17%] px-3 py-3 font-medium">Location</th>
-                <th scope="col" className="w-[18%] px-3 py-3 font-medium">Last seen</th>
+                <th scope="col" className="w-[15%] px-3 py-3 font-medium">Platform</th>
+                <th scope="col" className="w-[18%] px-3 py-3 font-medium">Device</th>
+                <th scope="col" className="w-[10%] px-3 py-3 font-medium">OS</th>
+                <th scope="col" className="w-[12%] px-3 py-3 font-medium">Browser</th>
+                <th scope="col" className="w-[13%] px-3 py-3 font-medium">Location</th>
+                <th scope="col" className="w-[17%] px-3 py-3 font-medium">Last seen</th>
+                <th scope="col" className="w-[15%] px-3 py-3 font-medium">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E8F0]">
@@ -104,7 +111,13 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
                   <td className="px-3 py-3">{deviceValue(session.os)}</td>
                   <td className="px-3 py-3">{session.client === "MOBILE" ? "In-app" : deviceValue(session.browser)}</td>
                   <td className="break-words px-3 py-3">{deviceValue(session.locationLabel)}</td>
-                  <td className="px-3 py-3 tabular-nums"><time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt)}</time>{session.revokedAt ? <span className="block text-[11px] text-[#64748B]">Revoked</span> : null}</td>
+                  <td className="px-3 py-3 tabular-nums"><time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt)}</time></td>
+                  <td className="px-3 py-3">
+                    <span className="font-medium text-[#334155]">{recordedDeviceSessionStatus(session, observedAt)}</span>
+                    {session.revokedAt && recordedDeviceSignOutReason(session.revokeReason) ? <span className="mt-1 block break-words text-[11px] leading-4 text-[#64748B]">
+                      {recordedDeviceSignOutReason(session.revokeReason)}
+                    </span> : null}
+                  </td>
                 </tr>;
               })}
             </tbody>
