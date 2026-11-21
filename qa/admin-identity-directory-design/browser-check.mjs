@@ -127,7 +127,28 @@ try {
   await expect(page.getByRole("navigation",{name:"Users subsections"}).getByRole("link",{name:"Online Users"}))
     .toHaveAttribute("aria-current","page");
   await expect(page.getByTestId("online-user-row")).toHaveCount(3);
+  await expect(page.getByRole("columnheader",{name:"LOCATION"})).toBeVisible();
   await expect(page.getByTestId("online-user-row").first()).toContainText("Alana Example");
+  await expect(page.getByTestId("online-user-row").first().getByTestId("online-user-location")).toHaveText("Lagos, Nigeria");
+  await expect(page.getByTestId("online-user-row").nth(1).getByTestId("online-user-location")).toHaveText("Unavailable");
+  await expect(page.getByTestId("online-user-row").nth(2).getByTestId("online-user-location")).toHaveText("Unavailable");
+  const filters = page.locator('[data-testid="online-users-filter-row"]');
+  const filterRects = await filters.evaluate(form => {
+    const items = [...form.children].map(child => child.getBoundingClientRect());
+    const parent = form.getBoundingClientRect();
+    return { items: items.map(item => ({top:item.top,left:item.left,right:item.right,width:item.width})),
+      left: parent.left, right: parent.right };
+  });
+  assert.equal(filterRects.items.length,5);
+  assert.ok(filterRects.items.every(item => Math.abs(item.top - filterRects.items[0].top) < 2),
+    "All five Online Users filters must stay in one balanced horizontal row on desktop");
+  assert.ok(filterRects.items.every((item,index) => index === 0 || item.left >= filterRects.items[index-1].right + 4),
+    "Filter controls must not overlap");
+  assert.ok(filterRects.items.every(item => item.left >= filterRects.left && item.right <= filterRects.right + 2),
+    "All filters must remain inside content width");
+  assert.ok(filterRects.items[0].width > filterRects.items[1].width,
+    "Online user search should be wider than dropdowns");
+  await page.screenshot({path:output+"/online-users-desktop-1280.png",fullPage:true);
   await expect(page.getByText("Guest session")).toHaveCount(1);
   await expect(page.getByTestId("online-user-row").filter({hasText:"Guest session"})
     .getByRole("link",{name:"View Activity"})).toHaveCount(0);
