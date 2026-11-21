@@ -202,3 +202,29 @@ test("missing first-party proof is unattributed rather than creating a false gue
     if (prevSecret === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = prevSecret;
   }
 });
+
+test("a misconfigured short AUTH_SECRET does not suppress a valid server-side fallback", () => {
+  const primary = process.env.AUTH_SECRET;
+  const fallback = process.env.NEXTAUTH_SECRET;
+  const publicUrl = process.env.NEXT_PUBLIC_APP_URL;
+  try {
+    process.env.AUTH_SECRET = "too-short";
+    process.env.NEXTAUTH_SECRET = "valid-fallback-server-only-auth-secret-at-least-32-chars";
+    process.env.NEXT_PUBLIC_APP_URL = "https://staging.kurioticket.com";
+    const now = Date.UTC(2026, 10, 21, 14);
+    const req = new Request("https://staging.kurioticket.com/api/hotels/search", {
+      method: "POST", headers: { origin: "https://staging.kurioticket.com" },
+    });
+    const prepared = prepareOperationalSearchSession(req, now, "staging");
+    assert.ok(prepared);
+    const returning = new Request(req.url, { method: "POST", headers: {
+      origin: "https://staging.kurioticket.com",
+      cookie: operationalSessionCookieName + "=" + prepared.credential,
+    } });
+    assert.equal(readOperationalSearchSession(returning, now + 1000, "staging")?.id, prepared.reference.id);
+  } finally {
+    if (primary === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = primary;
+    if (fallback === undefined) delete process.env.NEXTAUTH_SECRET; else process.env.NEXTAUTH_SECRET = fallback;
+    if (publicUrl === undefined) delete process.env.NEXT_PUBLIC_APP_URL; else process.env.NEXT_PUBLIC_APP_URL = publicUrl;
+  }
+});
