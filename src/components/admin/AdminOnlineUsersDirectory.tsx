@@ -164,7 +164,7 @@ export function AdminOnlineUsersDirectory({ initial }: { initial: AdminOnlineUse
       <form aria-label="Filter online users" onSubmit={event => {
         event.preventDefault(); setApplied(draft); setPage(1);
       }} data-testid="online-users-filter-row"
-        className="grid min-w-0 grid-cols-1 items-center gap-2 border-b border-[#E2E8F0] pb-4 sm:grid-cols-2 min-[1000px]:grid-cols-[minmax(190px,1.7fr)_repeat(3,minmax(110px,1fr))_minmax(112px,auto)]">
+        className="grid min-w-0 grid-cols-1 items-center gap-2 border-b border-[#E2E8F0] pb-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_112px]">
         <label className="min-w-0">
           <span className="sr-only">Search online users</span>
           <input type="search" aria-label="Search online users" value={draft.q}
