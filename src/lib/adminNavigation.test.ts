@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, getAdminWorkspaceSections, isAdminWorkspaceSectionActive, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage destinations", "Flight routes", "Hotel destinations", "FAQs", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platforms", "CMS Health", "Email Delivery", "Settings", "Platforms & Devices", "Provider Handoffs", "Referral Attribution"];
+const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage destinations", "Flight routes", "Hotel destinations", "FAQs", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platforms", "CMS Health", "Email Delivery", "Settings", "Platform Metrics", "Provider Handoffs", "Referral Attribution"];
 
 test("admin navigation restores the flat module order without a duplicate Flights workspace", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
@@ -34,7 +34,7 @@ test("admin navigation preserves role restrictions", () => {
     ["Homepage Fares", "/admin/providers"],
     ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"],
     ["Audit Logs", "/admin/system"], ["CMS Health", "/admin/system"], ["Email Delivery", "/admin/system"],
-    ["Platforms & Devices", "/admin/platform-health"], ["Provider Handoffs", "/admin/searches/activity"],
+    ["Platform Metrics", "/admin/platform-health"], ["Provider Handoffs", "/admin/searches/activity"],
     ["Referral Attribution", "/admin/providers"],
   ]);
   assert.deepEqual(getAdminNavForRole("USER"), []);
@@ -91,8 +91,8 @@ test("System diagnostics stay under System while Platforms is a distinct workspa
   assert.equal(getAdminNavForRole("ADMIN").find(entry => entry.href === "/admin/platform-health")?.parentHref, undefined);
   assert.ok(getAdminHeaderGroups("ADMIN").flatMap(group => group.links).some(entry => entry.item.href === "/admin/platform-health"));
   assert.ok(!getAdminWorkspaceSections("/admin/system", "ADMIN")?.links.some(link => link.href === "/admin/platform-health"));
-  assert.deepEqual(getAdminWorkspaceSections("/admin/platform-health", "ADMIN")?.links.map(link => link.label), ["Platform Health", "Platforms & Devices"]);
-  assert.deepEqual(getAdminWorkspaceSections("/admin/platforms/devices", "ADMIN")?.links.map(link => link.label), ["Platform Health", "Platforms & Devices"]);
+  assert.deepEqual(getAdminWorkspaceSections("/admin/platform-health", "ADMIN")?.links.map(link => link.label), ["Platform Health", "Platform Metrics"]);
+  assert.deepEqual(getAdminWorkspaceSections("/admin/platforms/devices", "ADMIN")?.links.map(link => link.label), ["Platform Health", "Platform Metrics"]);
   assert.equal(getAdminWorkspaceSections("/admin/platform-health", "ADMIN")?.label, "Platforms");
   assert.equal(getAdminWorkspaceSections("/admin/users/user/example123/devices", "ADMIN")?.label, "Users");
 });
@@ -110,8 +110,8 @@ test("secondary routes are owned by a single parent workspace", () => {
   const expectations = [
     ["/admin/users", ["Users Directory"]],
     ["/admin/journeys/fixture", ["Users Directory"]],
-    ["/admin/platform-health", ["Platform Health", "Platforms & Devices"]],
-    ["/admin/platforms/devices", ["Platform Health", "Platforms & Devices"]],
+    ["/admin/platform-health", ["Platform Health", "Platform Metrics"]],
+    ["/admin/platforms/devices", ["Platform Health", "Platform Metrics"]],
     ["/admin/users/user/example123/devices", ["Users Directory"]],
     ["/admin/searches/activity", ["Search Records", "Provider Handoffs"]],
     ["/admin/redirects", ["Search Records", "Provider Handoffs"]],
@@ -164,7 +164,7 @@ test("Platforms reuses the former Platform Health header destination without dup
   assert.equal(entries.filter(entry => entry.item.label === "Platforms").length, 1);
   assert.equal(entries.filter(entry => entry.item.label === "Platform Health").length, 0);
   assert.deepEqual(entries.find(entry => entry.item.label === "Platforms")?.children.map(item => item.label),
-    ["Platforms & Devices"]);
+    ["Platform Metrics"]);
   assert.equal(getAdminWorkspaceSections("/admin/platforms/devices", "ADMIN")?.label, "Platforms");
   assert.equal(getAdminWorkspaceSections("/admin/users/user/known-account/devices", "ADMIN")?.label, "Users");
   assert.equal(isAdminWorkspaceSectionActive("/admin/users/user/known-account/devices", "/admin/users"), true);
