@@ -109,6 +109,10 @@ const db = {
       }
       return created(b) - created(a) || a.record.id.localeCompare(b.record.id);
     });
+    if (!all.length && statement.includes("operational_summary AS")) {
+      return [{ id: null, kind: null, firstSeenAt: null, lastSeenAt: null,
+        operationalGuestCount: 0n, operationalAllTimeCount: 0n, operationalNewCount: 0n }];
+    }
     const hasPage = statement.includes("LIMIT");
     const limit = hasPage ? sql.values.at(-2) : all.length;
     const offset = hasPage ? sql.values.at(-1) : 0;
@@ -116,6 +120,7 @@ const db = {
       id: item.record.id, kind: item.kind,
       firstSeenAt: item.kind === "guest" ? item.record.firstSeenAt : null,
       lastSeenAt: item.record.lastSeenAt ?? null, operationalGuestCount: 0n,
+      operationalAllTimeCount: 0n, operationalNewCount: 0n,
     }));
   },
 };

@@ -34,10 +34,12 @@ try {
     await expect(population).toContainText("Consented guest");
     await expect(population).toContainText("Non consented guest");
     await expect(population).not.toContainText("Consented guest identities");
-    await expect(population.getByRole("note")).toHaveAttribute("title", /not distinct people or all visitors/);
-    await expect(population.locator('[data-testid="user-population-metric"]').nth(3)).toContainText("Recorded sessions · Today (UTC)");
+    await expect(population.getByRole("note")).toHaveCount(2);
+    await expect(population.getByRole("note").first()).toHaveAttribute("title", /not verified individual people or explicit consent refusals/);
+    await expect(population.locator('[data-testid="user-population-metric"]').nth(3)).toContainText("Recorded sessions · All time");
+    await expect(population.locator('[data-testid="user-population-metric"]').nth(6)).toContainText("New recorded sessions · Today (UTC)");
     await expect(population).not.toContainText("Registered counts include all account roles");
-    await expect(population.locator('[data-testid="user-population-metric"]')).toHaveCount(6);
+    await expect(population.locator('[data-testid="user-population-metric"]')).toHaveCount(7);
     const cardLayout = await population.evaluate(section => {
       const cards = [...section.querySelectorAll('[data-testid="user-population-metric"]')];
       const first = cards[0].getBoundingClientRect();
@@ -52,7 +54,7 @@ try {
     }
     assert.notEqual(cardLayout.radius, "0px", "Metric cards are rounded");
     assert.deepEqual((await population.locator("p.tabular-nums").allTextContents()).map(value => value.trim()),
-      ["30", "2", "28", "0", "0", "0"], "Verified snapshot counts include an explicitly scoped zero operational-session observation");
+      ["30", "2", "28", "0", "0", "0", "0"], "Verified synthetic totals include all-time and new operational sessions separately");
     await expect(search()).toHaveAttribute("placeholder", "Search by name, email, user ID, or guest ID");
     await expect(combo("Sort by")).toHaveCount(0);
     await expect(combo("Date range")).toContainText("Today");
@@ -174,6 +176,9 @@ try {
     await choose("Date range",label);
     await page.getByRole("button",{name:"Apply filters",exact:true}).click();
     await expect(page).toHaveURL(new RegExp("date="+date));
+    await expect(page.locator('[data-testid="user-population-metric"]').nth(3)).toContainText("Recorded sessions · All time");
+    await expect(page.locator('[data-testid="user-population-metric"]').nth(6)).toContainText(
+      date === "all" ? "New recorded sessions · All time" : `New recorded sessions · ${label}`);
   }
   await tabs().getByRole("link",{name:/Guests/}).click();
   await expect(page).toHaveURL(/tab=GUEST/);
