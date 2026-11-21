@@ -80,8 +80,8 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
           Full monitoring details
         </Link>
       </div>
-      <div className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#E2E8F0] min-[1050px]:grid-cols-4">
-        {healthTiles.map(tile => <div key={tile.label} className="min-w-0 bg-white px-3.5 py-3">
+      <div className="grid min-w-0 grid-cols-2 gap-3 min-[1050px]:grid-cols-4">
+        {healthTiles.map(tile => <div key={tile.label} data-testid="platform-health-metric" className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/75 px-3.5 py-3">
           <h3 className="min-h-9 text-[12px] font-medium leading-4 text-[#334155]">{tile.label}</h3>
           <OperationalStatus state={tile.state} />
           <p className="mt-2 text-[11px] leading-4 text-[#64748B]">{tile.scope}</p>
@@ -101,13 +101,13 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
 
     <section aria-label="Mobile app distribution" className="min-w-0 space-y-2">
       <h2 className="text-[15px] font-semibold">Mobile App Downloads</h2>
-      <div className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#E2E8F0]">
-        <div className="min-w-0 bg-white px-3.5 py-3">
+      <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 min-[1050px]:grid-cols-4">
+        <div data-testid="ios-download-metric" className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/75 px-3.5 py-3">
           <p className="text-[12px] text-[#64748B]">iOS App Store downloads</p>
           <p className="mt-2 text-[18px] font-semibold text-[#0F172A]">Not connected</p>
           <p className="mt-1 text-[11px] text-[#64748B]">Verified App Store reporting required</p>
         </div>
-        <div className="min-w-0 bg-white px-3.5 py-3">
+        <div data-testid="android-download-metric" className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/75 px-3.5 py-3">
           <p className="text-[12px] text-[#64748B]">Android Google Play installs</p>
           <p className="mt-2 text-[18px] font-semibold text-[#0F172A]">Not connected</p>
           <p className="mt-1 text-[11px] text-[#64748B]">Verified Google Play reporting required</p>
@@ -124,10 +124,10 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
       <p className="mb-3 text-[11px] leading-4 text-[#64748B]">Historical account sessions matching the applied filters; not online users, unique devices or app downloads.</p>
     {result.status === "ok" ? <section data-testid="platform-session-metrics"
       aria-label="Recorded platform summary matching applied filters"
-      className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#E2E8F0] min-[900px]:grid-cols-4">
+      className="grid min-w-0 grid-cols-2 gap-3 min-[900px]:grid-cols-4">
       {summaries.map(({ label, value, icon: Icon }) =>
         <div key={label} data-testid="platform-session-metric"
-          className="min-w-0 bg-white px-3.5 py-3.5 sm:px-4">
+          className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/75 px-3.5 py-3 sm:px-4">
           <div className="flex min-h-9 min-w-0 items-start gap-2 text-[12px] leading-[17px] text-[#64748B]">
             <Icon size={15} aria-hidden="true" className="mt-0.5 shrink-0"/>
             <span className="min-w-0">{label}</span>

@@ -32,6 +32,21 @@ try {
     await page.goto(url);
     const population = page.locator('section[aria-label="User population metrics"]');
     await expect(population).toContainText("Consented guest identities");
+    await expect(population).not.toContainText("Registered counts include all account roles");
+    await expect(population.locator('[data-testid="user-population-metric"]')).toHaveCount(5);
+    const cardLayout = await population.evaluate(section => {
+      const cards = [...section.querySelectorAll('[data-testid="user-population-metric"]')];
+      const first = cards[0].getBoundingClientRect();
+      const second = cards[1].getBoundingClientRect();
+      const style = getComputedStyle(cards[0]);
+      return { firstRight: first.right, secondLeft: second.left, firstTop: first.top,
+        secondTop: second.top, radius: style.borderTopLeftRadius };
+    });
+    if (Math.abs(cardLayout.firstTop - cardLayout.secondTop) < 2) {
+      assert.ok(cardLayout.secondLeft - cardLayout.firstRight >= 6,
+        "Separate metric cards must have an actual visible gutter");
+    }
+    assert.notEqual(cardLayout.radius, "0px", "Metric cards are rounded");
     assert.deepEqual((await population.locator("p.tabular-nums").allTextContents()).map(value => value.trim()),
       ["30", "2", "28", "0", "0"], "Verified snapshot metrics match the labelled synthetic identities");
     await expect(search()).toHaveAttribute("placeholder", "Search by name, email, user ID, or guest ID");

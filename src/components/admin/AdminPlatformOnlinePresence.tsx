@@ -85,8 +85,8 @@ export function AdminPlatformOnlinePresence({ initial }: { initial: OnlinePresen
         Live presence · {snapshot.windowSeconds}-second activity window
       </span>
     </div>
-    <div data-testid="online-platform-metrics" className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#E2E8F0] md:grid-cols-3 min-[1250px]:grid-cols-5">
-      {cards.map(({ label, key, icon: Icon }) => <div key={key} className="min-w-0 bg-white px-3.5 py-3">
+    <div data-testid="online-platform-metrics" className="grid min-w-0 grid-cols-2 gap-3 md:grid-cols-3 min-[1150px]:grid-cols-5">
+      {cards.map(({ label, key, icon: Icon }) => <div key={key} data-testid="online-platform-metric" className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/75 px-3.5 py-3">
         <div className="flex min-h-8 items-start gap-2 text-[12px] leading-4 text-[#64748B]">
           <Icon size={15} aria-hidden="true" className="mt-0.5 shrink-0" />{label}
         </div>
