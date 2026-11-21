@@ -299,10 +299,42 @@ try {
   await page.screenshot({caret:"initial",path:output+"/device-history-today-mobile-320.png",fullPage:true});
   console.log("PASS full device history drill-down, date filters, and mobile layout");
 
-  // Operational-only guest sessions are not analytics identities and cannot disable tracking.
-  await page.goto(base + "/admin/users/guest/qa-operational-guest-0001/activity?range=all");
+  // Operational-only guest searches and handoffs must be visible here,
+  // without an extra Other Activity page or a fictitious consented journey.
+  const operationalPath = base + "/admin/users/guest/qa-operational-guest-0001/activity";
+  await page.setViewportSize({width:1280,height:900});
+  await page.goto(operationalPath + "?range=all");
   await expect(page.getByText("Essential operational activity")).toBeVisible();
   await expect(page.getByRole("button",{name:/Manage guest/})).toHaveCount(0);
+  await expect(page.getByRole("link",{name:"View recorded session activity"})).toHaveCount(0);
+  await expect(page.getByRole("link",{name:"View Journey History"})).toHaveCount(0);
+  await expect(page.getByRole("heading",{name:"Activity history"})).toBeVisible();
+  await expect(page.getByRole("region",{name:"Activity summary"}).locator('[data-testid="activity-metric-value"]'))
+    .toHaveText(["2","0","0","1","0"]);
+  const operationalEvents = page.locator('[data-testid="activity-overview"] [data-activity-id]');
+  await expect(operationalEvents).toHaveCount(3);
+  assert.deepEqual(await operationalEvents.evaluateAll(nodes => nodes.map(node => node.dataset.activityId)),
+    ["s-qa-operational-flight","s-qa-operational-hotel","r-qa-operational-handoff"]);
+  await expect(operationalEvents.first()).toContainText("ATL → MCO");
+  await expect(operationalEvents.first()).toContainText("Partial");
+  assert.equal(await operationalEvents.evaluateAll(nodes => new Set(nodes.map(node => node.dataset.activityId)).size), 3);
+  await expect(page.getByTestId("activity-journey-row")).toHaveCount(0);
+  await page.goto(operationalPath + "?range=all&tab=searches&stage=SEARCH_COMPLETED&product=FLIGHT&q=ATL");
+  await expect(page.locator('[data-testid="activity-overview"] [data-activity-id]')).toHaveCount(1);
+  await expect(page.getByRole("region",{name:"Activity summary"}).locator('[data-testid="activity-metric-value"]'))
+    .toHaveText(["1","0","0","0","0"]);
+  await page.goto(operationalPath + "?range=all&tab=handoffs");
+  await expect(page.locator('[data-testid="activity-overview"] [data-activity-id]')).toHaveCount(1);
+  await expect(page.getByRole("region",{name:"Activity summary"}).locator('[data-testid="activity-metric-value"]'))
+    .toHaveText(["0","0","0","1","0"]);
+  await page.goto(operationalPath + "?range=all&product=CAR");
+  await expect(page.locator('[data-testid="activity-overview"] [data-activity-id]')).toHaveCount(0);
+  await expect(page.getByText("No activity matches your filters")).toBeVisible();
+  await page.setViewportSize({width:320,height:800});
+  await page.goto(operationalPath + "?range=all");
+  await expect(page.locator('[data-testid="activity-overview"] [data-activity-id]')).toHaveCount(3);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),true,
+    "Operational guest activity must fit mobile without horizontal scroll");
 
   // Registered accounts use the same fact grid, including protected-admin labels.
   await page.setViewportSize({width:1024,height:900});
