@@ -1013,7 +1013,7 @@ function MarketReadinessDashboard({
               const healthNotes = [
                 (market.freshCount ?? 0) > 0 ? String(market.freshCount) + " fresh" : null,
                 (market.lastKnownGoodCount ?? 0) > 0 ? String(market.lastKnownGoodCount) + " last-known-good" : null,
-                (market.missingCount ?? 0) > 0 ? String(market.missingCount) + " missing" : null,
+                (market.missingCount ?? 0) > 0 ? String(market.missingCount) + " coverage gaps" : null,
                 market.failed > 0 ? String(market.failed) + " failed" : null,
               ].filter(Boolean).join(" · ") || "No issues";
 
