@@ -55,7 +55,12 @@ try {
     const populationTop = await population.evaluate(node => node.getBoundingClientRect().top);
     assert.ok(populationTop > onlineBottom, "Live online cards precede recorded-user population cards");
     await expect(population).toContainText("Consented guest");
-    await expect(population).toContainText("Non consented guest");
+    await expect(population).not.toContainText("Non consented guest");
+    await expect(population).not.toContainText("New non consented guest");
+    await expect(population.locator('[data-testid="user-population-metric"]').nth(3)
+      .getByText("Guest", {exact:true})).toBeVisible();
+    await expect(population.locator('[data-testid="user-population-metric"]').nth(6)
+      .getByText("New guest", {exact:true})).toBeVisible();
     await expect(population).not.toContainText("Consented guest identities");
     await expect(population).toContainText("Total recorded accounts & guest sessions");
     await expect(population.getByRole("note")).toHaveCount(0);
@@ -64,6 +69,28 @@ try {
     await expect(population.locator('[data-testid="user-population-metric"]').nth(6)).toContainText("New recorded sessions · Today (UTC)");
     await expect(population).not.toContainText("Registered counts include all account roles");
     await expect(population.locator('[data-testid="user-population-metric"]')).toHaveCount(7);
+    const rows = population.locator('[data-testid="user-population-row"]');
+    await expect(rows).toHaveCount(2);
+    await expect(rows.nth(0).locator('[data-testid="user-population-metric"]')).toHaveCount(4);
+    await expect(rows.nth(1).locator('[data-testid="user-population-metric"]')).toHaveCount(3);
+    const rowLayout = await rows.evaluateAll(nodes => nodes.map(node => {
+      const cards = [...node.querySelectorAll('[data-testid="user-population-metric"]')];
+      return cards.map(card => {
+        const rect = card.getBoundingClientRect();
+        return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
+      });
+    }));
+    assert.ok(Math.min(...rowLayout[1].map(card => card.top)) >= Math.max(...rowLayout[0].map(card => card.bottom)) + 6,
+      "New metrics row follows recorded metrics row with a clear gutter");
+    if (width >= 1200) {
+      assert.ok(rowLayout[0].every(card => Math.abs(card.top - rowLayout[0][0].top) <= 1),
+        "Recorded metrics must occupy one row of four cards at desktop width");
+      assert.ok(rowLayout[1].every(card => Math.abs(card.top - rowLayout[1][0].top) <= 1),
+        "New metrics must occupy one row of three cards at desktop width");
+      assert.ok(rowLayout.every(row => row.every((card, index) =>
+        index === 0 || card.left - row[index - 1].right >= 6)),
+        "Every metric in a horizontal row keeps a visible gap");
+    }
     const cardLayout = await population.evaluate(section => {
       const cards = [...section.querySelectorAll('[data-testid="user-population-metric"]')];
       const first = cards[0].getBoundingClientRect();
