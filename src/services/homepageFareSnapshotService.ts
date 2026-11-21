@@ -1086,13 +1086,11 @@ function computeHomepageFareMarketTargets(
       const popularVisibleFresh = visiblePopularRoutes.filter((route) =>
         freshRouteIds.has(route.id),
       ).length;
-      const discoveryPoolFresh = marketRoutes.filter(
-        (route) => route.isDiscover && freshRouteIds.has(route.id),
+      // Only candidates assigned to visible discovery slots count here.
+      // Backup candidates have their own target and must never fill both buckets.
+      const discoveryVisibleFresh = visibleDiscoveryRoutes.filter((route) =>
+        freshRouteIds.has(route.id),
       ).length;
-      const discoveryVisibleFresh = Math.min(
-        discoveryVisibleTarget,
-        discoveryPoolFresh,
-      );
       const backupFresh = backupRoutes.filter((route) =>
         freshRouteIds.has(route.id),
       ).length;
@@ -1120,10 +1118,11 @@ function computeHomepageFareMarketTargets(
         metrics.replacementCandidatesUsedByMarket?.[market] ??
         computeReplacementCandidatesUsedByMarket(routes, freshRouteIds)[market] ??
         0;
-      const freshCount = Math.max(
-        0,
-        popularVisibleFresh + discoveryVisibleFresh + backupFresh - lastKnownGoodCount,
-      );
+      // The caller supplies the IDs eligible for this calculation. Count each
+      // route once, rather than adding category totals or subtracting stale data.
+      const freshCount = marketRoutes.filter((route) =>
+        freshRouteIds.has(route.id),
+      ).length;
       const missingCount = missingPopular + missingDiscovery + missingBackup;
       const underfillReason = targetMet
         ? undefined
@@ -3031,6 +3030,12 @@ function isUsableHomepageFareSnapshotResponseEntry(
   );
 }
 
+function getFreshHomepageFareStatusRouteIds(routes: HomepageFareSnapshotStatusRoute[]) {
+  return new Set(
+    routes.filter((route) => route.status === "fresh").map((route) => route.id),
+  );
+}
+
 export async function readHomepageFareSnapshotStatus({
   routes = getAllHomepageFareRefreshRoutes(),
   departureDate = getHomepageFareDateStrategy().departureDate,
@@ -3170,11 +3175,9 @@ export async function readHomepageFareSnapshotStatus({
   });
 
   const refreshBudget = getHomepageFareSmartRefreshBudget();
-  const freshRouteIds = new Set(
-    statusRoutes
-      .filter((route) => route.status === "fresh" || route.status === "last_known_good")
-      .map((route) => route.id),
-  );
+  // Last-known-good snapshots are retained for diagnostics, not public
+  // freshness or market readiness. This mirrors the six-hour public rule.
+  const freshRouteIds = getFreshHomepageFareStatusRouteIds(statusRoutes);
   const refreshRoutes = eligibleRoutes.filter(
     (route): route is HomepageRefreshRoute =>
       "isPopular" in route && "isDiscover" in route && "visibility" in route,
@@ -3599,12 +3602,10 @@ function classifyHomepageFareDisplayReadiness(
   marketTargets?: Record<string, HomepageFareMarketTarget>,
 ): HomepageFareDisplayReadiness {
   const popularFresh = routes.filter(
-    (route) => route.id.startsWith("popular-") &&
-      (route.status === "fresh" || route.status === "last_known_good"),
+    (route) => route.id.startsWith("popular-") && route.status === "fresh",
   ).length;
   const discoverFresh = routes.filter(
-    (route) => route.id.startsWith("discover-") &&
-      (route.status === "fresh" || route.status === "last_known_good"),
+    (route) => route.id.startsWith("discover-") && route.status === "fresh",
   ).length;
   const discoverDisplayedFresh = Math.min(
     discoverFresh,
@@ -3655,7 +3656,9 @@ function classifyHomepageFareDisplayReadiness(
   return {
     status: "attention",
     label: "Global homepage not ready",
-    message: "No fresh provider-backed fares available.",
+    message: routes.some((route) => route.status === "fresh")
+      ? "No public market meets the required homepage fare targets."
+      : "No fresh provider-backed fares available.",
     globalReadinessStatus,
     popularFresh,
     popularTarget: budget.popularVisibleTarget,
@@ -4082,6 +4085,7 @@ function isPrismaKnownRequestLikeError(error: unknown) {
 
 export const __homepageFareCoverageTest = {
   getRefreshRoutes,
+  getFreshHomepageFareStatusRouteIds,
   computeHomepageFareMarketTargets,
   computeFreshCountsByMarket,
   getHomepageFareSmartRefreshBudget,
