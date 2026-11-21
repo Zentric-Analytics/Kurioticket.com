@@ -41,7 +41,12 @@ test("population totals use one consistent and bounded DB read, not journey acti
   assert.match(populationCards, /label: "New non consented guest"/);
   assert.match(populationCards, /scope: "Recorded sessions · All time"/);
   assert.match(populationCards, /New recorded sessions · \$\{period\}/);
-  assert.match(populationCards, /not verified individual people or explicit consent refusals/);
+  assert.doesNotMatch(populationCards, /role="note"|title=\{detail\}|combinedTotalSource|nonConsentedGuestSource|<Info\b/);
+  assert.doesNotMatch(populationCards, /\bdetail\b/);
+  assert.match(populationCards, /value !== null && value !== undefined && Number\.isSafeInteger\(value\) && value >= 0/);
+  assert.match(populationCards, /recordedAccountsAndGuestSessionsTotal\(metrics, operationalAllTimeCount\)/);
+  assert.match(populationCards, /operationalAllTimeCount, icon: ShieldOff/);
+  assert.match(populationCards, /operationalNewCount, icon: ShieldOff/);
   assert.match(populationCards, /value !== null && value !== undefined/);
   assert.match(users, /operationalAllTimeCount: number \| null/);
   assert.match(users, /operationalNewCount: number \| null/);
