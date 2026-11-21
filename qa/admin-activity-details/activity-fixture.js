@@ -36,6 +36,17 @@ const newerRecorded = [
     stage: "SEARCH_COMPLETED", product: "FLIGHT", searchHistoryId: "qa-newer-search",
   }),
 ];
+// These are fictional, non-consented operational records. They have no
+// JourneyEvent, user ID, analytics consent, or linked visitor identity.
+const operationalRecorded = [
+  { id: "s-qa-operational-flight", at: time(51), label: "Search completed",
+    detail: "FLIGHT · ATL → MCO · PARTIAL", stage: "SEARCH_COMPLETED", product: "FLIGHT", searchHistoryId: "qa-operational-flight" },
+  { id: "s-qa-operational-hotel", at: time(45), label: "Search completed",
+    detail: "HOTEL · Abuja · SUCCESS", stage: "SEARCH_COMPLETED", product: "HOTEL", searchHistoryId: "qa-operational-hotel" },
+  { id: "r-qa-operational-handoff", at: time(40), label: "Provider handoff started",
+    detail: "FLIGHT · ATL → MCO · Example provider", stage: "PROVIDER_HANDOFF_STARTED", product: "FLIGHT",
+    provider: "Example provider", redirectLogId: "qa-operational-handoff" },
+];
 const completeHistory = Array.from({ length: 1005 }, (_, index) => ({
   id: "s-qa-complete-" + String(index).padStart(4, "0"),
   at: new Date(Date.parse("2026-10-22T18:00:00Z") - index * 60000),
@@ -62,7 +73,8 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     && (!filters.q || (row.detail + row.label).toLowerCase().includes(filters.q.toLowerCase()))
     && (!fromBound || row.at >= fromBound)
     && (!toBound || row.at < toBound);
-  const sourceRows = id === "qa-complete-history-0001" ? completeHistory : [...recorded, ...olderRecorded, ...newerRecorded];
+  const sourceRows = id === "qa-operational-guest-0001" ? operationalRecorded
+    : id === "qa-complete-history-0001" ? completeHistory : [...recorded, ...olderRecorded, ...newerRecorded];
   const allMatched = id === "qa-no-events-0001" ? [] : sourceRows.filter(matches);
   const summary = {
     searchProducts: {
