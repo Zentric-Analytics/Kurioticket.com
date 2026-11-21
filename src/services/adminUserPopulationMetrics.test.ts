@@ -12,7 +12,7 @@ const presenceService = readFileSync("src/services/onlinePresenceService.ts", "u
 test("population cards precede directory filters but do not reclassify filtered activity as new users", () => {
   assert.ok(users.indexOf("<AdminUserPopulationCards") < users.indexOf("<AdminUsersToolbar"));
   assert.match(users, /readUserPopulationMetrics\(date, environment, now, from, to\)/);
-  assert.match(population, /db\.user\.count\(\)/);
+  assert.match(population, /db\.user\.count\(\{ where: \{\} \}\)/);
   assert.match(population, /createdAt: period/);
   assert.match(population, /firstSeenAt: period/);
   assert.match(population, /MIN\("seenAt"\) AS "firstSeenAt"/);
