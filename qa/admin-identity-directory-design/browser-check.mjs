@@ -30,7 +30,30 @@ try {
   for (const width of [1440,1280,768,390,320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(url);
+    const online = page.locator('section[aria-label="Online Users"]');
+    await expect(online).toBeVisible();
+    await expect(online.getByRole("heading", { name: "Online Users" })).toBeVisible();
+    await expect(online.locator('[data-testid="online-platform-metric"]')).toHaveCount(4);
+    assert.deepEqual((await online.locator('[data-testid="online-platform-metric"]')
+      .allTextContents()).map(text => text.match(/Total online users|iOS online|Android online|Website online/)?.[0]),
+      ["Total online users", "iOS online", "Android online", "Website online"]);
+    assert.deepEqual((await online.locator("p.tabular-nums").allTextContents()).map(text => text.trim()),
+      ["3", "1", "0", "3"], "Live synthetic metrics use deduplicated website union");
+    const onlineCards = await online.locator('[data-testid="online-platform-metric"]')
+      .evaluateAll(nodes => nodes.map(node => {
+        const box = node.getBoundingClientRect();
+        return { left: box.left, right: box.right, top: box.top };
+      }));
+    if (width >= 1024) {
+      assert.ok(onlineCards.every(card => Math.abs(card.top - onlineCards[0].top) <= 1),
+        "All four online cards occupy one row on desktop");
+      assert.ok(onlineCards.every((card, index) => index === 0 || card.left - onlineCards[index - 1].right >= 6),
+        "Online cards retain separate gutters at desktop width");
+    }
     const population = page.locator('section[aria-label="User population metrics"]');
+    const onlineBottom = await online.evaluate(node => node.getBoundingClientRect().bottom);
+    const populationTop = await population.evaluate(node => node.getBoundingClientRect().top);
+    assert.ok(populationTop > onlineBottom, "Live online cards precede recorded-user population cards");
     await expect(population).toContainText("Consented guest");
     await expect(population).toContainText("Non consented guest");
     await expect(population).not.toContainText("Consented guest identities");

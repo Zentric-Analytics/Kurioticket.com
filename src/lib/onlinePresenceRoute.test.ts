@@ -158,16 +158,15 @@ test("invalid authorization is not counted as a guest and storage failures never
   assert.deepEqual(failures, ["production"], "expected rejections do not signal an outage");
 });
 
-test("operational website presence includes authenticated Admin routes and public guests", () => {
-  for (const path of ["/", "/flights", "/admin-guide"]) {
+test("customer-facing online presence excludes internal Admin pages for guests and logged-in staff", () => {
+  for (const path of ["/", "/flights", "/hotels", "/cars", "/admin-guide"]) {
     assert.equal(isWebsiteOnlinePresenceRoute(path, false), true);
-  }
-  for (const path of ["/admin", "/admin/users"]) {
-    assert.equal(isWebsiteOnlinePresenceRoute(path, false), false);
     assert.equal(isWebsiteOnlinePresenceRoute(path, true), true);
   }
-  for (const path of [null, "/api", "/api/admin", "/mobile", "/mobile/legal"]) {
+  for (const path of ["/admin", "/admin/users", "/admin/platforms/devices", "/admin/platform-health",
+    "/api", "/api/admin", "/mobile", "/mobile/legal", null]) {
     assert.equal(isWebsiteOnlinePresenceRoute(path, true), false);
+    assert.equal(isWebsiteOnlinePresenceRoute(path, false), false);
   }
 });
 

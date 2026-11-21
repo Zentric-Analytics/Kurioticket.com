@@ -130,11 +130,12 @@ export async function getOnlinePresenceSnapshot(
       if (removed !== 1) throw new Error("Online presence probe could not be removed");
       return tx.$queryRaw<Array<{
         registered: bigint; guests: bigint;
-        desktop_web: bigint; mobile_web: bigint; ios: bigint; android: bigint; unclassified: bigint;
+        desktop_web: bigint; mobile_web: bigint; ios: bigint; android: bigint;
+        website: bigint; unclassified: bigint;
       }>>`
         WITH observed AS (
           SELECT p."platform", p."accountSessionId",
-            CASE WHEN u."status" = 'ACTIVE' AND u."emailVerified" IS NOT NULL
+            CASE WHEN u."status" = 'ACTIVE' AND u."role" = 'USER' AND u."emailVerified" IS NOT NULL
                 AND s."revokedAt" IS NULL AND s."expiresAt" > ${now}
                 AND s."sessionVersion" = u."sessionVersion"
                 AND (NOT COALESCE(security."twoFactorEnabled", false) OR s."assuranceLevel" <> 'PRIMARY')
@@ -157,6 +158,9 @@ export async function getOnlinePresenceSnapshot(
             + COUNT(*) FILTER (WHERE "accountSessionId" IS NULL AND "platform" = 'ios')) AS "ios",
           (COUNT(DISTINCT "registeredUserId") FILTER (WHERE "platform" = 'android')
             + COUNT(*) FILTER (WHERE "accountSessionId" IS NULL AND "platform" = 'android')) AS "android",
+          (COUNT(DISTINCT "registeredUserId") FILTER (WHERE "platform" IN ('desktop_web', 'mobile_web'))
+            + COUNT(*) FILTER (WHERE "accountSessionId" IS NULL
+              AND "platform" IN ('desktop_web', 'mobile_web'))) AS "website",
           (COUNT(DISTINCT "registeredUserId") FILTER (WHERE "platform" IS NULL OR "platform" NOT IN ('desktop_web', 'mobile_web', 'ios', 'android'))
             + COUNT(*) FILTER (WHERE "accountSessionId" IS NULL AND ("platform" IS NULL OR "platform" NOT IN ('desktop_web', 'mobile_web', 'ios', 'android')))) AS "unclassified"
         FROM observed
@@ -169,13 +173,17 @@ export async function getOnlinePresenceSnapshot(
     const total = registeredAccounts + guestSessions;
     const platforms = {
       desktop_web: Number(row.desktop_web), mobile_web: Number(row.mobile_web),
-      ios: Number(row.ios), android: Number(row.android), unclassified: Number(row.unclassified),
+      ios: Number(row.ios), android: Number(row.android), website: Number(row.website),
+      unclassified: Number(row.unclassified),
     };
     const measures = [registeredAccounts, guestSessions, total, ...Object.values(platforms)];
     const platformSum = Object.values(platforms).reduce((sum, count) => sum + count, 0);
     if (!measures.every(value => Number.isSafeInteger(value) && value >= 0)
         || !Number.isSafeInteger(platformSum) || platformSum < total
-        || Object.values(platforms).some(value => value > total)) return unavailable;
+        || Object.values(platforms).some(value => value > total)
+        || platforms.website < Math.max(platforms.desktop_web, platforms.mobile_web)
+        || platforms.website > platforms.desktop_web + platforms.mobile_web
+        || platforms.website + platforms.ios + platforms.android + platforms.unclassified < total) return unavailable;
     return { status: "ok", total, registeredAccounts, guestSessions, platforms, ...window };
   } catch {
     return unavailable;
