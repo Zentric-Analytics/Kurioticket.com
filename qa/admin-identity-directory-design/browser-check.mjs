@@ -30,6 +30,10 @@ try {
   for (const width of [1440,1280,768,390,320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(url);
+    const population = page.locator('section[aria-label="User population metrics"]');
+    await expect(population).toContainText("Consented guest identities");
+    assert.deepEqual((await population.locator("p.tabular-nums").allTextContents()).map(value => value.trim()),
+      ["30", "2", "28", "0", "0"], "Verified snapshot metrics match the labelled synthetic identities");
     await expect(search()).toHaveAttribute("placeholder", "Search by name, email, user ID, or guest ID");
     await expect(combo("Sort by")).toHaveCount(0);
     await expect(combo("Date range")).toContainText("Today");
