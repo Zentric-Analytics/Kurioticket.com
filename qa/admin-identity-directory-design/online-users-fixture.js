@@ -6,10 +6,10 @@ export async function readAdminOnlineUsers() {
     platforms:{desktop_web:2,mobile_web:2,ios:1,android:0,website:3,unclassified:0},
     rows:[
       {id:"qa-admin-001",kind:"registered",name:"Alana Example",email:"alana@example.invalid",
-        role:"ADMIN",platforms:["desktop_web","mobile_web","ios"],lastSeenAt:"2026-11-21T19:29:59.000Z"},
+        role:"ADMIN",locationLabel:"Lagos, Nigeria",platforms:["desktop_web","mobile_web","ios"],lastSeenAt:"2026-11-21T19:29:59.000Z"},
       {id:"qa-support-001",kind:"registered",name:"Zara Example",email:"zara@example.invalid",
-        role:"SUPPORT",platforms:["desktop_web"],lastSeenAt:"2026-11-21T19:29:58.000Z"},
-      {id:"guest-1",kind:"guest",name:"Guest session",email:null,role:null,
+        role:"SUPPORT",locationLabel:null,platforms:["desktop_web"],lastSeenAt:"2026-11-21T19:29:58.000Z"},
+      {id:"guest-1",kind:"guest",name:"Guest session",email:null,role:null,locationLabel:null,
         platforms:["mobile_web"],lastSeenAt:"2026-11-21T19:29:57.000Z"},
     ],
   };
