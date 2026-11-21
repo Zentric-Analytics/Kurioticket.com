@@ -8,6 +8,7 @@ const populationCards = readFileSync("src/components/admin/AdminUserPopulationCa
 const platformPage = readFileSync("src/app/admin/users/platforms-devices/page.tsx", "utf8");
 const liveCards = readFileSync("src/components/admin/AdminPlatformOnlinePresence.tsx", "utf8");
 const presenceService = readFileSync("src/services/onlinePresenceService.ts", "utf8");
+const searchDetails = readFileSync("src/app/admin/searches/[id]/page.tsx", "utf8");
 
 test("population totals use one consistent and bounded DB read, not journey activity", () => {
   assert.ok(users.indexOf("<AdminUserPopulationCards") < users.indexOf("<AdminUsersToolbar"));
@@ -51,6 +52,15 @@ test("population totals use one consistent and bounded DB read, not journey acti
   assert.match(users, /operationalNewCount=\{result\.operationalNewCount\}/);
   assert.doesNotMatch(users, /unlinkedOperationalSessions/);
   assert.doesNotMatch(populationCards, /gap-px overflow-hidden rounded-xl/);
+});
+
+test("Search Activity links only verified operational guest sessions to Users Directory", () => {
+  assert.match(searchDetails, /validActivityIdentity\("guest", search\.operationalSessionId \?\? ""\)/);
+  assert.match(searchDetails, /search\.environment === getPublicEnvironment\(\)/);
+  assert.match(searchDetails, /!search\.identity\.userId && !search\.identity\.visitorId/);
+  assert.match(searchDetails, /View recorded guest session/);
+  assert.match(searchDetails, /No verified guest session was attached to this search/);
+  assert.doesNotMatch(searchDetails, /createVisitorToken|Visitor\.create/);
 });
 
 test("Platform Health leads the dedicated page and uses measured narrow signals", () => {
