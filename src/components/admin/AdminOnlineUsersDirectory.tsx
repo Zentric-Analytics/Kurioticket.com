@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Monitor, Smartphone, TabletSmartphone, UsersRound } from "lucide-react";
 
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
-import { onlinePresenceHeartbeatMs, type OnlinePresencePlatform } from "@/lib/onlinePresence";
+import { onlinePresenceHeartbeatMs } from "@/lib/onlinePresence";
 import type { AdminOnlineUsersSnapshot, OnlineIdentityRow } from "@/services/adminOnlineUsersService";
 
 type Filters = { q: string; type: string; role: string; platform: string };
