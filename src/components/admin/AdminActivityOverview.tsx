@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, Route } from "lucide-react";
 import { activityOverviewRows } from "@/lib/adminActivityOverview";
+import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
 
 const stamp = (date: Date) => new Intl.DateTimeFormat("en-GB", {
@@ -13,12 +14,12 @@ const name = (product: string) => ({
 const action = "focus-ring inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1.5 text-[13px] font-medium text-[#004BB8] hover:bg-[#F1F6FF]";
 
 export function AdminActivityOverview({
-  events, journeyHistoryHref, operational, otherHref,
+  events, journeyHistoryHref, operational, environment,
 }: {
   events: ActivityRow[];
   journeyHistoryHref: string;
   operational: boolean;
-  otherHref: string;
+  environment: string;
 }) {
   const overview = activityOverviewRows(events);
   return <section data-testid="activity-overview" aria-label="Activity overview" className="min-w-0 space-y-6">
@@ -53,10 +54,11 @@ export function AdminActivityOverview({
         })}
       </div> : <p className="rounded-lg border border-[#E2E8F0] p-4 text-[13px] text-[#64748B]">No tracked journeys match these filters. Open Journey History to review full records.</p>}
     </section> : <section aria-label="Operational guest session" className="min-w-0">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[13px] text-[#475569]">This guest session has operational records, not a consented journey.</p>
-        <Link href={otherHref} className={action}>View recorded session activity <ChevronRight size={15} aria-hidden="true" /></Link>
-      </div>
+      {/* Operational searches and handoffs are already owner-scoped by the
+          authorized reader. Display their actual events here, not a link to
+          another page or fabricated consented journeys. */}
+      <p className="mb-3 text-[12px] text-[#64748B]">Recorded searches and handoffs for this session.</p>
+      <ActivityTimeline events={events} nextHref={null} environment={environment}/>
     </section>}
   </section>;
 }

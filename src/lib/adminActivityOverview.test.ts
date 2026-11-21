@@ -102,8 +102,15 @@ test("old inclusive UTC date filters become a strict same-day Journey window", (
   assert.equal(p.get("to"),"2026-10-23T00:00:00.000Z");
 });
 
-test("other activity routes to the selected identity sibling, not an Activity subroute", () => {
-  const page = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx","utf8");
-  assert.match(page, /encodeURIComponent\(id\) \+ "\/other"/);
-  assert.doesNotMatch(page, /basePath \+ "\/other"/);
+test("operational guest events appear directly in Activity without a second-page redirect", () => {
+  const page = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx", "utf8");
+  const overview = readFileSync("src/components/admin/AdminActivityOverview.tsx", "utf8");
+  const legacy = readFileSync("src/app/admin/users/[kind]/[id]/other/page.tsx", "utf8");
+  assert.match(page, /<AdminActivityOverview events=\{data\.events\}/);
+  assert.match(page, /environment=\{environment\} operational=\{operational\}/);
+  assert.doesNotMatch(page, /otherHref|encodeURIComponent\(id\) \+ "\/other"/);
+  assert.match(overview, /<ActivityTimeline events=\{events\} nextHref=\{null\} environment=\{environment\}/);
+  assert.doesNotMatch(overview, /View recorded session activity|href=\{otherHref\}/);
+  assert.match(overview, /!operational \? <section/);
+  assert.match(legacy, /loadAdminIdentityActivity\(kind, id, parsed\.filters, undefined, "all"\)/);
 });
