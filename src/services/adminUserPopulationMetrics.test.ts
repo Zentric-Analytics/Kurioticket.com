@@ -27,8 +27,11 @@ test("population totals use one consistent and bounded DB read, not journey acti
   assert.doesNotMatch(population, /FROM "SearchHistory"|FROM "RedirectLog"/);
   assert.doesNotMatch(population, /Promise\.all|db\.user\.count|db\.visitor\.count/);
   assert.match(populationCards, /"Unavailable"/);
-  assert.match(populationCards, /excluded because/);
-  assert.match(populationCards, /independent of directory search/);
+  assert.doesNotMatch(populationCards, /Registered counts include all account roles|anonymous operational session IDs remain in the directory/);
+  assert.match(populationCards, /data-testid="user-population-metric"/);
+  assert.match(populationCards, /rounded-lg border border-slate-200 bg-slate-50\/75/);
+  assert.match(populationCards, /grid-cols-2 gap-3/);
+  assert.doesNotMatch(populationCards, /gap-px overflow-hidden rounded-xl/);
 });
 
 test("Platform Health leads the dedicated page and uses measured narrow signals", () => {
@@ -49,6 +52,12 @@ test("Platform Health leads the dedicated page and uses measured narrow signals"
   assert.match(platformPage, /No verified store-download or install reporting source/);
   assert.match(platformPage, /Account sessions and live presence cannot be used as download counts/);
   assert.match(platformPage, /Device &amp; Access History/);
+  assert.match(platformPage, /data-testid="platform-health-metric"/);
+  assert.match(platformPage, /data-testid="ios-download-metric"/);
+  assert.match(platformPage, /data-testid="android-download-metric"/);
+  assert.match(platformPage, /data-testid="platform-session-metric"/);
+  assert.match(platformPage, /grid-cols-2 gap-3 min-\[900px\]:grid-cols-4/);
+  assert.doesNotMatch(platformPage, /gap-px overflow-hidden rounded-xl/);
 });
 
 test("online cards validate live API totals and never approximate online users from historic sessions", () => {
@@ -58,6 +67,9 @@ test("online cards validate live API totals and never approximate online users f
   assert.match(liveCards, /onlinePresenceHeartbeatMs/);
   assert.match(liveCards, /document\.visibilityState/);
   assert.match(liveCards, /"Unavailable"/);
+  assert.match(liveCards, /data-testid="online-platform-metric"/);
+  assert.match(liveCards, /grid-cols-2 gap-3/);
+  assert.doesNotMatch(liveCards, /gap-px overflow-hidden rounded-xl/);
   assert.match(presenceService, /COUNT\(DISTINCT "registeredUserId"\)/);
   assert.match(presenceService, /"platform" = 'ios'/);
   assert.match(presenceService, /"platform" = 'android'/);
