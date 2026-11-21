@@ -82,10 +82,10 @@ export function AdminPlatformOnlinePresence({ initial }: { initial: OnlinePresen
     <div className="flex flex-wrap items-end justify-between gap-2">
       <h2 className="text-[15px] font-semibold text-[#0F172A]">Online Users by Platform</h2>
       <span className="text-[11px] tabular-nums text-[#64748B]">
-        Live presence · {snapshot.windowSeconds}-second activity window
+        Live · last {snapshot.windowSeconds} seconds
       </span>
     </div>
-    <div data-testid="online-platform-metrics" className="grid min-w-0 grid-cols-2 gap-3 md:grid-cols-3 min-[1150px]:grid-cols-5">
+    <div data-testid="online-platform-metrics" className="grid min-w-0 grid-cols-2 gap-3 min-[640px]:grid-cols-3 min-[1024px]:grid-cols-5">
       {cards.map(({ label, key, icon: Icon }) => <div key={key} data-testid="online-platform-metric" className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/75 px-3.5 py-3">
         <div className="flex min-h-8 items-start gap-2 text-[12px] leading-4 text-[#64748B]">
           <Icon size={15} aria-hidden="true" className="mt-0.5 shrink-0" />{label}
@@ -96,10 +96,8 @@ export function AdminPlatformOnlinePresence({ initial }: { initial: OnlinePresen
       </div>)}
     </div>
     <p className="text-[11px] leading-[17px] text-[#64748B]">
-      Online is an active heartbeat estimate, not a login or installation count. Signed-in accounts are
-      deduplicated within each platform; anonymous users are counted by active presence session.
-      The same account can appear on multiple platforms, so the cards need not add up to the overall total.
-      Unclassified platform observations, if present, are included in the overall total only.
+      Online counts estimate recent activity, not logins or downloads. Accounts may appear on multiple platforms;
+      anonymous sessions are counted separately. Unclassified activity appears in the total only.
     </p>
   </section>;
 }
