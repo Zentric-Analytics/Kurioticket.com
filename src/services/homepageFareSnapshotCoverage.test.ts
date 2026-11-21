@@ -161,6 +161,35 @@ test("snapshot readiness excludes last-known-good routes from fresh market cover
   );
 });
 
+test("refresh executor excludes last-known-good snapshots and never promotes retained stale fares", () => {
+  const routes = __homepageFareCoverageTest.getRefreshRoutes("all-phase-3a").filter((route) => route.market === "US");
+  const [freshRoute, staleRoute] = routes;
+  assert.ok(freshRoute && staleRoute);
+  const now = new Date("2026-06-09T00:00:00.000Z");
+  const fresh = snapshot({
+    origin: freshRoute.origin, destination: freshRoute.destination,
+    searchedAt: "2026-06-08T23:00:00.000Z", expiresAt: "2026-06-09T23:00:00.000Z",
+  });
+  const stale = snapshot({
+    origin: staleRoute.origin, destination: staleRoute.destination,
+    searchedAt: "2026-06-05T00:00:00.000Z", expiresAt: "2026-06-06T00:00:00.000Z",
+  });
+  const snapshotMap = new Map([[freshRoute.id, fresh], [staleRoute.id, stale]])
+    as Parameters<typeof __homepageFareCoverageTest.getFreshHomepageFareSnapshotRouteIds>[1];
+  const freshIds = __homepageFareCoverageTest.getFreshHomepageFareSnapshotRouteIds(
+    routes, snapshotMap, now, HOMEPAGE_FARE_DEFAULT_CURRENCY,
+  );
+  assert.deepEqual([...freshIds], [freshRoute.id]);
+  assert.equal(__homepageFareCoverageTest.shouldCountHomepageFareRefreshResultAsFresh("retained", stale, now), false);
+  assert.equal(__homepageFareCoverageTest.shouldCountHomepageFareRefreshResultAsFresh("retained", fresh, now), true);
+  assert.equal(__homepageFareCoverageTest.shouldCountHomepageFareRefreshResultAsFresh("refreshed", stale, now), true);
+  assert.equal(__homepageFareCoverageTest.shouldCountHomepageFareRefreshResultAsFresh("unavailable", fresh, now), false);
+  const targets = __homepageFareCoverageTest.computeHomepageFareMarketTargets(
+    routes, freshIds, __homepageFareCoverageTest.getHomepageFareSmartRefreshBudget(),
+  );
+  assert.equal(targets.US.targetMet, false, "retained stale snapshots must not skip provider refresh");
+});
+
 test("admin readiness reports underfilled markets precisely", () => {
   const routes = __homepageFareCoverageTest.getRefreshRoutes("all-phase-3a");
   const budget = {
