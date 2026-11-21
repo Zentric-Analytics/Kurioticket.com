@@ -174,8 +174,7 @@ test("refresh executor excludes last-known-good snapshots and never promotes ret
     origin: staleRoute.origin, destination: staleRoute.destination,
     searchedAt: "2026-06-05T00:00:00.000Z", expiresAt: "2026-06-06T00:00:00.000Z",
   });
-  const snapshotMap = new Map([[freshRoute.id, fresh], [staleRoute.id, stale]])
-    as Parameters<typeof __homepageFareCoverageTest.getFreshHomepageFareSnapshotRouteIds>[1];
+  const snapshotMap = new Map([[freshRoute.id, fresh], [staleRoute.id, stale]]) as Parameters<typeof __homepageFareCoverageTest.getFreshHomepageFareSnapshotRouteIds>[1];
   const freshIds = __homepageFareCoverageTest.getFreshHomepageFareSnapshotRouteIds(
     routes, snapshotMap, now, HOMEPAGE_FARE_DEFAULT_CURRENCY,
   );
