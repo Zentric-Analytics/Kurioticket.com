@@ -43,6 +43,37 @@ test("native identity uses the app token and validated bearer without borrowing 
   }
 });
 
+test("one verified account retains independent iOS and Android search identities alongside website activity", async () => {
+  for (const platform of ["ios", "android"] as const) {
+    for (const path of ["/api/flights/search", "/api/hotels/search", "/api/cars/search"]) {
+      const visitorToken = platform === "ios" ? "i".repeat(43) : "a".repeat(43);
+      const identity = await resolveRequestActivityIdentity(new Request("https://staging.kurioticket.com" + path, {
+        method: "POST",
+        headers: {
+          authorization: "Bearer verified-mobile-session",
+          "x-mobile-platform": platform,
+          "x-kt-visitor": visitorToken,
+          cookie: "kt_visitor=" + "w".repeat(43),
+        },
+      }), {
+        web: async () => { throw new Error("mobile activity cannot borrow website credentials"); },
+        mobile: async () => ({ user: { id: "shared-account", status: "ACTIVE" }, platform, appVersion: "1.2.3" }),
+        visitor: async (token, userId) => {
+          assert.equal(token, visitorToken, "must resolve the native device, not website cookie");
+          assert.equal(userId, "shared-account");
+          return platform + "-visitor";
+        },
+      });
+      assert.deepEqual(identity, {
+        userId: "shared-account",
+        visitorId: platform + "-visitor",
+        applicationSource: platform.toUpperCase(),
+        appVersion: "1.2.3",
+      });
+    }
+  }
+});
+
 test("a revoked native bearer cannot fall back to a different web account", async () => {
   const identity = await resolveRequestActivityIdentity(new Request("https://kurioticket.com/api/redirect", {
     headers: { authorization: "Bearer revoked", "x-kt-visitor": token },
