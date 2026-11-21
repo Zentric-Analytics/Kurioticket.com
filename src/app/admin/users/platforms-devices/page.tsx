@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { Monitor, Smartphone, TabletSmartphone, Clock3, Users } from "lucide-react";
+import { getPublicEnvironment } from "@/lib/stagingSafety";
+import { getOnlinePresenceSnapshot } from "@/services/onlinePresenceService";
+import { readPlatformOperations } from "@/services/platformOperationsService";
+import { OperationalStatus } from "@/components/admin/OperationalStatus";
+import { AdminPlatformOnlinePresence } from "@/components/admin/AdminPlatformOnlinePresence";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { platformLabel, deviceValue } from "@/components/admin/AdminIdentityDeviceAccess";
@@ -37,7 +42,22 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
     message="Choose a valid time range, platform and page."
     action={<Link className={navigationLink} href="/admin/users/platforms-devices">Reset filters</Link>} />;
 
-  const result = await loadPlatformAccess(query);
+  const [result, health, presence] = await Promise.all([
+    loadPlatformAccess(query),
+    readPlatformOperations(24, "today").catch(() => null),
+    getOnlinePresenceSnapshot(getPublicEnvironment()),
+  ]);
+  // Application activity is an observed search signal, not an uptime or crash-free claim.
+  const healthTiles = [
+    { label: "Website search operations", state: health?.activity.data?.searches.applications.WEB.state ?? "MONITORING_UNAVAILABLE",
+      scope: "Desktop and mobile web together" },
+    { label: "iOS search operations", state: health?.activity.data?.searches.applications.IOS.state ?? "MONITORING_UNAVAILABLE",
+      scope: "Verified iOS search observations" },
+    { label: "Android search operations", state: health?.activity.data?.searches.applications.ANDROID.state ?? "MONITORING_UNAVAILABLE",
+      scope: "Verified Android search observations" },
+    { label: "Database connection", state: health?.database.state ?? "MONITORING_UNAVAILABLE",
+      scope: "Shared service connection check" },
+  ];
   const totalPages = result.status === "ok" ? Math.max(1, Math.ceil(result.total / PLATFORM_ACCESS_PAGE_SIZE)) : 1;
   const summaries = result.status === "ok" ? [
     { label: "Web browser sessions", value: result.counts.web, icon: Monitor },
@@ -49,10 +69,59 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
     <header className="min-w-0 border-b border-[#E2E8F0] pb-3">
       <h1 className="text-xl font-semibold tracking-tight">Platforms &amp; Devices</h1>
       <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-        Recorded account sessions across web and native apps, not live device presence.
+        Verified platform operations, live presence and stored account sessions are reported separately.
       </p>
     </header>
 
+    <section aria-labelledby="platform-health-heading" className="min-w-0 space-y-3 border-b border-[#E2E8F0] pb-4">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+        <h2 id="platform-health-heading" className="text-[15px] font-semibold">Platform Health</h2>
+        <Link href="/admin/platform-health" className="focus-ring text-[12px] font-medium text-[#004BB8] hover:underline">
+          Full monitoring details
+        </Link>
+      </div>
+      <div className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#E2E8F0] min-[1050px]:grid-cols-4">
+        {healthTiles.map(tile => <div key={tile.label} className="min-w-0 bg-white px-3.5 py-3">
+          <h3 className="min-h-9 text-[12px] font-medium leading-4 text-[#334155]">{tile.label}</h3>
+          <OperationalStatus state={tile.state} />
+          <p className="mt-2 text-[11px] leading-4 text-[#64748B]">{tile.scope}</p>
+        </div>)}
+      </div>
+      <p className="text-[11px] leading-[17px] text-[#64748B]">
+        Health states reflect only the named observations and do not certify overall app or website uptime.
+        Installed-app crash and device health: <span className="font-medium">
+          {health?.nativeApplicationHealth.state === "UNKNOWN" ? "Unknown"
+            : health?.nativeApplicationHealth.state === "MONITORING_UNAVAILABLE" || !health
+              ? "Monitoring unavailable" : "See full monitoring details"}.
+        </span> Detailed diagnostics and refresh controls remain available through Full monitoring details.
+      </p>
+    </section>
+
+    <AdminPlatformOnlinePresence initial={presence} />
+
+    <section aria-label="Mobile app distribution" className="min-w-0 space-y-2">
+      <h2 className="text-[15px] font-semibold">Mobile App Downloads</h2>
+      <div className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#E2E8F0]">
+        <div className="min-w-0 bg-white px-3.5 py-3">
+          <p className="text-[12px] text-[#64748B]">iOS App Store downloads</p>
+          <p className="mt-2 text-[18px] font-semibold text-[#0F172A]">Not connected</p>
+          <p className="mt-1 text-[11px] text-[#64748B]">Verified App Store reporting required</p>
+        </div>
+        <div className="min-w-0 bg-white px-3.5 py-3">
+          <p className="text-[12px] text-[#64748B]">Android Google Play installs</p>
+          <p className="mt-2 text-[18px] font-semibold text-[#0F172A]">Not connected</p>
+          <p className="mt-1 text-[11px] text-[#64748B]">Verified Google Play reporting required</p>
+        </div>
+      </div>
+      <p className="text-[11px] leading-4 text-[#64748B]">
+        No verified store-download or install reporting source is wired to this dashboard.
+        Account sessions and live presence cannot be used as download counts.
+      </p>
+    </section>
+
+    <div className="min-w-0">
+      <h2 className="mb-2 text-[15px] font-semibold">Recorded Account Sessions</h2>
+      <p className="mb-3 text-[11px] leading-4 text-[#64748B]">Historical account sessions matching the applied filters; not online users, unique devices or app downloads.</p>
     {result.status === "ok" ? <section data-testid="platform-session-metrics"
       aria-label="Recorded platform summary matching applied filters"
       className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#E2E8F0] min-[900px]:grid-cols-4">
@@ -68,6 +137,7 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
           </p>
         </div>)}
     </section> : null}
+    </div>
 
     <form action="/admin/users/platforms-devices" method="get" aria-label="Platforms and devices filters"
       className="flex min-w-0 flex-wrap items-end gap-3 border-b border-[#E2E8F0] pb-4">

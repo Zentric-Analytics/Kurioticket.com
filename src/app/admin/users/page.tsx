@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminIdentityTable";
 import { AdminUsersToolbar } from "@/components/admin/AdminUsersToolbar";
+import { AdminUserPopulationCards } from "@/components/admin/AdminUserPopulationCards";
+import { readUserPopulationMetrics } from "@/services/adminUserPopulationMetrics";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { adminIdentityPageSql, adminRegisteredActivityDateWhere, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityDirectoryRow } from "@/lib/adminIdentityDirectory";
@@ -116,6 +118,11 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     });
     return { rows, registeredCount, guestCount: consentedGuestCount + operationalGuestCount };
   }, null);
+  const population = await readUserPopulationMetrics(date, now, from, to);
+  const periodLabel = date === "today" ? "Today (UTC)" : date === "last7" ? "Last 7 days"
+    : date === "last30" ? "Last 30 days" : date === "all" ? "All time"
+    : date === "custom" ? "Custom range (UTC)" : date === "24h" ? "Last 24 hours"
+    : date === "thisMonth" ? "This month" : date === "lastMonth" ? "Last month" : "Last 3 months";
   const link = "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date, ...(from && to ? {from,to} : {}) }).toString();
   if (result === null) {
     return (
@@ -138,6 +145,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   return (
     <div className="w-full min-w-0 bg-white">
       <h1 className="sr-only">Users</h1>
+      <AdminUserPopulationCards metrics={population} period={periodLabel} />
       <AdminUsersToolbar query={q} role={role} status={status} tab={tab} sort={sort} date={date} from={from || ""} to={to || ""}
         registeredCount={result.registeredCount} guestCount={result.guestCount} pageHref={link}>
         <AdminIdentityTable rows={result.rows} pageHref={link} sort={sort} />

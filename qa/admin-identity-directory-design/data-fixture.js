@@ -70,6 +70,20 @@ const db = {
   },
   async $queryRaw(sql) {
     const statement = sql.strings.join("?");
+    // The new population read is one statement snapshot over durable records.
+    // Keep fixture counts independent of prior directory-filtered queries.
+    if (statement.includes('SELECT accounts."registered"')) {
+      const dates = sql.values.filter(value => value instanceof Date);
+      const from = dates[0] ?? null;
+      const to = dates.length > 1 ? dates[1] : null;
+      const inWindow = recordDate => !from || (recordDate >= from && (!to || recordDate < to));
+      return [{
+        registered: BigInt(users.length),
+        newRegistrations: BigInt(users.filter(user => inWindow(user.createdAt)).length),
+        guests: BigInt(guests.length),
+        newGuests: BigInt(guests.filter(guest => inWindow(guest.firstSeenAt)).length),
+      }];
+    }
     // The isolated fixture has no essential-only operational sessions.
     // The production directory returns counts and timestamps in one read.
     if (statement.includes('COUNT(*)::bigint AS "count"')) return [{ count: 0n }];
