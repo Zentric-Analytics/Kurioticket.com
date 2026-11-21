@@ -273,13 +273,16 @@ try {
   await expect(page.getByRole("heading",{name:"Device & Access History"})).toBeVisible();
   await expect(page.locator('[data-testid="device-history-row"]:visible')).toHaveCount(5);
   await expect(page.getByRole("columnheader", { name: "Status" })).toBeVisible();
-  // Match individual status text exactly: "Expired" must never match "Not expired".
-  // Restrict each assertion to visible history rows so the hidden mobile copy
-  // does not inflate desktop counts.
+  // Restrict each assertion to visible rows, excluding the hidden mobile copy.
+  // Verified presence is per device: two distinct valid sessions differ here.
   const visibleDeviceRows = page.locator('[data-testid="device-history-row"]:visible');
   await expect(visibleDeviceRows.filter({ has: page.getByText("Signed out", { exact: true }) })).toHaveCount(2);
   await expect(visibleDeviceRows.filter({ has: page.getByText("Expired", { exact: true }) })).toHaveCount(1);
-  await expect(visibleDeviceRows.filter({ has: page.getByText("Not expired", { exact: true }) })).toHaveCount(2);
+  await expect(visibleDeviceRows.filter({ has: page.getByText("Active", { exact: true }) })).toHaveCount(1);
+  await expect(visibleDeviceRows.filter({ has: page.getByText("Inactive", { exact: true }) })).toHaveCount(1);
+  await expect(visibleDeviceRows.filter({ hasText: "Not expired" })).toHaveCount(0);
+  await expect(visibleDeviceRows.filter({ has: page.getByText("Active", { exact: true }) })
+    .locator("span.rounded-full.bg-\\[\\#16A34A\\]")).toHaveCount(1);
   await expect(visibleDeviceRows.filter({ hasText: "Password reset" })).toHaveCount(1);
   await page.getByRole("button",{name:"Device history range: All time"}).click();
   await page.getByRole("listbox",{name:"Device history range"}).getByRole("option",{name:"Today",exact:true}).click();
@@ -289,7 +292,8 @@ try {
   await page.setViewportSize({width:320,height:800});
   await expect(page.locator('[data-testid="device-history-row"]:visible')).toHaveCount(4);
   await expect(page.locator('[data-testid="device-history-row"]:visible').filter({ hasText: "Status: Signed out" })).toHaveCount(2);
-  await expect(page.locator('[data-testid="device-history-row"]:visible').filter({ hasText: "Status: Not expired" })).toHaveCount(2);
+  await expect(page.locator('[data-testid="device-history-row"]:visible').filter({ hasText: "Status: Active" })).toHaveCount(1);
+  await expect(page.locator('[data-testid="device-history-row"]:visible').filter({ hasText: "Status: Inactive" })).toHaveCount(1);
   const deviceOverflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
   assert.equal(deviceOverflow,false,"Full device history must fit mobile viewport without page overflow");
   await page.screenshot({caret:"initial",path:output+"/device-history-today-mobile-320.png",fullPage:true});
