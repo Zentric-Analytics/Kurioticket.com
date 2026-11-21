@@ -74,6 +74,10 @@ export type AdminIdentityDirectoryRow = {
   firstSeenAt: Date | null;
   lastSeenAt: Date | null;
   operationalGuestCount: bigint;
+  /** All recorded, unlinked operational sessions in this deployment. */
+  operationalAllTimeCount: bigint;
+  /** Sessions first recorded inside the selected UTC period. */
+  operationalNewCount: bigint;
 };
 
 export const ADMIN_IDENTITY_SORTS = ["newest", "oldest", "name_asc", "name_desc"] as const;
@@ -93,7 +97,7 @@ export type AdminIdentityPageRequest = {
   environment?: "staging" | "production";
   /** Used only by the existing full-directory view, to avoid repeating JSON-log aggregation per batch. */
   allIdentities?: boolean;
-  /** Include the operational guest count in this same read, even on Registered tab. */
+  /** Read unfiltered all-time/new session totals alongside date-scoped directory rows. */
   withOperationalSummary?: boolean;
   limit: number;
   offset: number;
@@ -125,17 +129,18 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
       : sort === "name_desc"
         ? Prisma.sql`lower("displayName") DESC, "joinedAt" DESC, "kind" ASC, "id" DESC`
         : Prisma.sql`"lastSeenAt" DESC NULLS LAST, "joinedAt" DESC, "kind" ASC, "id" DESC`;
-  if (!showUsers && !showGuests && !showOperationalGuests) return null;
+  if (!showUsers && !showGuests && !showOperationalGuests && !input.withOperationalSummary) return null;
   if (!Number.isSafeInteger(limit) || limit < 1 || (!input.allIdentities && limit > 100)
     || !Number.isSafeInteger(offset) || offset < 0) {
     throw new Error("Invalid Admin identity page bounds");
   }
 
   const includeOperational = showOperationalGuests || input.withOperationalSummary === true;
-  // Materialize the scoped session cohort once. Both directory rows and the
-  // count read from this same grouped result, never rescanning the JSON logs.
+  // Group deployment-scoped operational sessions once, across all recorded history.
+  // The directory keeps its last-seen activity filter, while metric totals are
+  // independent of search, role and status filters. Do not rescan the JSON logs.
   const operationalCte = includeOperational ? Prisma.sql`
-    WITH operational_sessions AS MATERIALIZED (
+    WITH all_operational_sessions AS MATERIALIZED (
       SELECT a."sessionId" AS "id",
         MIN(a."createdAt") AS "firstSeenAt",
         MAX(a."createdAt") AS "lastSeenAt"
@@ -153,10 +158,21 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
           AND r."metadata"->>'operationalSessionId' IS NOT NULL
       ) a
       WHERE a."sessionId" ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
-        ${query ? Prisma.sql`AND strpos(lower(a."sessionId"), lower(${query})) > 0` : Prisma.empty}
       GROUP BY a."sessionId"
-      ${bounds ? Prisma.sql`HAVING MAX(a."createdAt") >= ${bounds.from}
-        ${bounds.to ? Prisma.sql`AND MAX(a."createdAt") < ${bounds.to}` : Prisma.empty}` : Prisma.empty}
+    ), operational_sessions AS (
+      SELECT o."id", o."firstSeenAt", o."lastSeenAt"
+      FROM all_operational_sessions o
+      WHERE TRUE
+        ${query ? Prisma.sql`AND strpos(lower(o."id"), lower(${query})) > 0` : Prisma.empty}
+        ${bounds ? Prisma.sql`AND o."lastSeenAt" >= ${bounds.from}
+          ${bounds.to ? Prisma.sql`AND o."lastSeenAt" < ${bounds.to}` : Prisma.empty}` : Prisma.empty}
+    ), operational_summary AS (
+      SELECT COUNT(*)::bigint AS "operationalAllTimeCount",
+        ${bounds ? Prisma.sql`
+          COUNT(*) FILTER (WHERE "firstSeenAt" >= ${bounds.from}
+            ${bounds.to ? Prisma.sql`AND "firstSeenAt" < ${bounds.to}` : Prisma.empty})::bigint
+        ` : Prisma.sql`COUNT(*)::bigint`} AS "operationalNewCount"
+      FROM all_operational_sessions
     )
   ` : Prisma.empty;
 
@@ -245,6 +261,18 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
     `);
   }
 
+  // A metric-only request (for example Guest tab + account-only role filters)
+  // still needs a single null identity row to carry the independent aggregates.
+  if (!sources.length) {
+    if (!input.withOperationalSummary) return null;
+    sources.push(Prisma.sql`
+      SELECT NULL::text AS "kind", NULL::text AS "id",
+        NULL::timestamp AS "joinedAt", NULL::text AS "displayName",
+        NULL::timestamp AS "firstSeenAt", NULL::timestamp AS "lastSeenAt"
+      WHERE FALSE
+    `);
+  }
+
   // Sort all eligible identities together in PostgreSQL before pagination.
   // Latest observed activity, not registration, sets the default order.
   // Null timestamps are last; Joined, kind and ID provide stable ties.
@@ -253,11 +281,18 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
     SELECT identities."kind", identities."id", identities."firstSeenAt",
       identities."lastSeenAt",
       ${input.withOperationalSummary
-        ? Prisma.sql`totals."operationalGuestCount"`
-        : Prisma.sql`0::bigint AS "operationalGuestCount"`}
+        ? Prisma.sql`totals."operationalGuestCount", totals."operationalAllTimeCount", totals."operationalNewCount"`
+        : Prisma.sql`0::bigint AS "operationalGuestCount",
+            0::bigint AS "operationalAllTimeCount", 0::bigint AS "operationalNewCount"`}
     FROM (${Prisma.join(sources, " UNION ALL ")}) AS identities
     ${input.withOperationalSummary ? Prisma.sql`
-      RIGHT JOIN (SELECT COUNT(*)::bigint AS "operationalGuestCount" FROM operational_sessions) totals ON TRUE
+      RIGHT JOIN (
+        SELECT scoped."operationalGuestCount",
+          summary."operationalAllTimeCount", summary."operationalNewCount"
+        FROM (SELECT COUNT(*)::bigint AS "operationalGuestCount"
+          FROM operational_sessions) scoped
+        CROSS JOIN operational_summary summary
+      ) totals ON TRUE
     ` : Prisma.empty}
     ORDER BY ${order}
     ${input.allIdentities ? Prisma.empty : Prisma.sql`LIMIT ${limit} OFFSET ${offset}`}

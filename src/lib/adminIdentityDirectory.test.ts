@@ -117,9 +117,53 @@ test("operational session lookup and date limits remain parameterized", () => {
   assert.ok(result.values.includes("session-id"));
   assert.ok(result.values.includes("production"));
   assert.equal(result.text.includes("session-id"), false);
-  assert.match(result.text, /HAVING MAX\(a\."createdAt"\)/);
+  assert.match(result.text, /o\."lastSeenAt" >=/);
+  assert.match(result.text, /"firstSeenAt" >=/);
+  assert.doesNotMatch(result.text, /HAVING MAX\(a\."createdAt"\)/);
 });
 
+
+test("all-time and new operational metrics share one unfiltered first-seen cohort", () => {
+  const now = new Date("2026-11-21T15:00:00.000Z");
+  const from = new Date("2026-11-21T00:00:00.000Z");
+  const result = sql({
+    ...base, query: "example", role: "ADMIN", status: "ACTIVE",
+    showUsers: true, showGuests: false, showOperationalGuests: false,
+    withOperationalSummary: true, environment: "staging", date: "today", now,
+  });
+  const sourceCte = result.text.split("), operational_sessions AS (")[0];
+  assert.equal((sourceCte.match(/FROM "SearchHistory" s/g) ?? []).length, 1,
+    "One operational session cohort reads SearchHistory once");
+  assert.equal((sourceCte.match(/FROM "RedirectLog" r/g) ?? []).length, 1,
+    "One operational session cohort reads RedirectLog once");
+  assert.match(result.text, /all_operational_sessions AS MATERIALIZED/);
+  assert.match(result.text, /MIN\(a\."createdAt"\) AS "firstSeenAt"/);
+  assert.match(result.text, /MAX\(a\."createdAt"\) AS "lastSeenAt"/);
+  assert.match(result.text, /COUNT\(\*\)::bigint AS "operationalAllTimeCount"/);
+  assert.match(result.text, /COUNT\(\*\) FILTER \(WHERE "firstSeenAt" >=/);
+  assert.match(result.text, /summary\."operationalNewCount"/);
+  assert.match(result.text, /FROM all_operational_sessions\s*\)/);
+  assert.match(result.text, /FROM all_operational_sessions o\s+WHERE TRUE/);
+  assert.ok(result.values.some(v => v instanceof Date && v.getTime() === from.getTime()));
+  assert.ok(result.values.some(v => v instanceof Date && v.getTime() === now.getTime()));
+  assert.ok(result.values.includes("staging"));
+  assert.ok(result.values.includes("example"));
+  assert.equal(result.text.includes("example"), false);
+  // The all-time CTE is declared before directory-only search/last-seen constraints.
+  assert.ok(result.text.indexOf("all_operational_sessions AS MATERIALIZED")
+    < result.text.indexOf("strpos(lower(o."));
+});
+
+test("metric summary is returned even when the directory has no selected identities", () => {
+  const result = sql({ ...base, showUsers: false, showGuests: false,
+    showOperationalGuests: false, withOperationalSummary: true });
+  assert.match(result.text, /WHERE FALSE/);
+  assert.match(result.text, /RIGHT JOIN/);
+  assert.match(result.text, /"operationalAllTimeCount"/);
+  assert.match(result.text, /"operationalNewCount"/);
+  assert.equal(adminIdentityPageSql({ ...base, showUsers: false, showGuests: false,
+    showOperationalGuests: false }), null);
+});
 
 test("Today includes returning account sessions and environment-scoped searches/handoffs", () => {
   const now = new Date("2026-11-20T08:00:00.000Z");
@@ -173,7 +217,7 @@ test("returning consented and operational guests qualify by last observed activi
     environment: "staging", showOperationalGuests: true });
   assert.match(result.text, /v\."firstSeenAt" >= /);
   assert.match(result.text, /OR \(v\."lastSeenAt" >= /);
-  assert.match(result.text, /HAVING MAX\(a\."createdAt"\)/);
+  assert.match(result.text, /o\."lastSeenAt" >=/);
   assert.match(result.text, /"consentStatus" = 'GRANTED'/);
   assert.match(result.text, /"trackingDisabledAt" IS NULL/);
   assert.match(result.text, /NOT EXISTS/);

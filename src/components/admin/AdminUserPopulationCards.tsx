@@ -4,25 +4,27 @@ import type { UserPopulationMetrics } from "@/services/adminUserPopulationMetric
 const number = new Intl.NumberFormat("en-US");
 
 /** All-time identities are deliberately independent of the directory's activity/search filters. */
-const nonConsentedGuestSource = "Counts unlinked operational session IDs observed through searches or provider handoffs in the selected period. Consent refusal is not verified; these are not distinct people or all visitors, and this count is not included in Total recorded identities.";
+const nonConsentedGuestSource = "Counts unique unlinked operational session IDs recorded through searches and provider handoffs, not verified individual people or explicit consent refusals. These sessions are excluded from Total recorded identities.";
 
-export function AdminUserPopulationCards({ metrics, period, unlinkedOperationalSessions }: {
+export function AdminUserPopulationCards({ metrics, period, operationalAllTimeCount, operationalNewCount }: {
   metrics: UserPopulationMetrics | null;
   period: string;
-  unlinkedOperationalSessions: number | null;
+  operationalAllTimeCount: number | null;
+  operationalNewCount: number | null;
 }) {
   const cards = [
     { label: "Total recorded identities", value: metrics?.total, icon: UsersRound, scope: "All time" },
     { label: "Registered accounts", value: metrics?.registered, icon: UserRoundCheck, scope: "All time" },
     { label: "Consented guest", value: metrics?.guests, icon: UserRound, scope: "All time" },
-    { label: "Non consented guest", value: unlinkedOperationalSessions, icon: ShieldOff,
-      scope: unlinkedOperationalSessions === null ? "Unfiltered records only" : `Recorded sessions · ${period}`,
-      detail: nonConsentedGuestSource },
+    { label: "Non consented guest", value: operationalAllTimeCount, icon: ShieldOff,
+      scope: "Recorded sessions · All time", detail: nonConsentedGuestSource },
     { label: "New registrations", value: metrics?.newRegistrations, icon: UserPlus, scope: period },
     { label: "New consented guests", value: metrics?.newGuests, icon: UserRoundPlus, scope: period },
+    { label: "New non consented guest", value: operationalNewCount, icon: ShieldOff,
+      scope: `New recorded sessions · ${period}`, detail: nonConsentedGuestSource },
   ];
   return <section aria-label="User population metrics" className="min-w-0 pb-3">
-    <div className="grid min-w-0 grid-cols-2 gap-3 min-[640px]:grid-cols-3 min-[1420px]:grid-cols-6">
+    <div className="grid min-w-0 grid-cols-2 gap-3 min-[640px]:grid-cols-3 min-[1420px]:grid-cols-7">
       {cards.map(({ label, value, icon: Icon, scope, detail }) => <div key={label} data-testid="user-population-metric" className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/75 px-3.5 py-3">
         <div className="flex min-h-9 items-start gap-2 text-[12px] leading-4 text-[#64748B]">
           <Icon size={16} aria-hidden="true" className="mt-0.5 shrink-0" />
