@@ -41,6 +41,7 @@ export const adminNavigationGroups = [
 export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, roles: ["ADMIN"], section: "operations", description: "Operations dashboard and platform health." },
   { href: "/admin/users", label: "Users", icon: Users, roles: ["ADMIN"], section: "operations", description: "Manage customer accounts, roles and status." },
+  { href: "/admin/users/online", parentHref: "/admin/users", label: "Online Users", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Review verified current account and guest presence across platforms." },
   { href: "/admin/providers", label: "Providers", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Monitor provider configuration and health." },
   { href: "/admin/searches/activity", label: "Search Activity", icon: Search, roles: ["ADMIN"], section: "operations", description: "Review platform-wide search records, outcomes, and diagnostics." },
   { href: "/admin/confirmed-trips", label: "Trips", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Monitor provider-confirmed trips and their flight-status readiness." },
@@ -119,6 +120,7 @@ const workspaceSections: ReadonlyArray<{
     paths: ["/admin/users", "/admin/journeys"],
     links: [
       { href: "/admin/users", label: "Users Directory" },
+      { href: "/admin/users/online", label: "Online Users" },
     ],
   },
   {
@@ -198,9 +200,9 @@ export function isAdminWorkspaceSectionActive(pathname: string, href: string): b
     && /^\/admin\/searches\/(?!activity(?:\/|$))[^/]+\/?$/.test(pathname)) return true;
   // Legacy journeys and account-specific activity/device history belong to Users.
   // Only platform-wide monitoring belongs to the separate Platforms workspace.
-  if (destination === "/admin/users") return pathname === destination
+  if (destination === "/admin/users") return (pathname === destination
     || pathname === "/admin/journeys" || pathname.startsWith("/admin/journeys/")
-    || /^\/admin\/users\/(?:user|guest)\/[^/]+(?:\/.*)?$/.test(pathname);
+    || /^\/admin\/users\/(?:user|guest)\/[^/]+(?:\/.*)?$/.test(pathname));
   if (destination === "/admin/providers" || destination === "/admin/content"
     || destination === "/admin/system") return pathname === destination;
   if (destination === "/admin/confirmed-trips") {

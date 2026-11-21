@@ -13,6 +13,9 @@ test("Users Directory places search, date, role, status, and Apply on one deskto
   assert.match(users, /onClick=\{applyFilters\}/);
   assert.match(users, /initialServerSync\.current = false;/);
   assert.match(users, /if \(initialServerSync\.current\) \{/);
+  assert.match(users, /const appliedStateKey = JSON\.stringify\(/);
+  assert.match(users, /if \(appliedStateKey === lastAppliedStateKey\.current\) return;/);
+  assert.match(users, /lastAppliedStateKey\.current = appliedStateKey;/);
   assert.match(users, /q: searchText\.trim\(\)\.slice\(0, 120\)/);
   assert.match(users, /type="button" onClick=\{applyFilters\}/);
   assert.match(users, /function onSearchSubmit\(event: FormEvent<HTMLFormElement>\) \{\s*\/\/ Enter must not submit a draft\.[\s\S]*?event\.preventDefault\(\)/);

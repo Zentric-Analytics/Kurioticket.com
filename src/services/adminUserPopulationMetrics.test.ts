@@ -64,24 +64,36 @@ test("population totals use one consistent and bounded DB read, not journey acti
   assert.doesNotMatch(populationCards, /gap-px overflow-hidden rounded-xl/);
 });
 
-test("Users Directory shows four live all-role presence cards above seven recorded-user metrics", () => {
-  const online = users.indexOf('<AdminPlatformOnlinePresence initial={onlinePresence} variant="users" />');
-  const population = users.indexOf("<AdminUserPopulationCards");
-  const directory = users.indexOf("<AdminUsersToolbar");
-  assert.ok(online > 0 && online < population && population < directory);
-  assert.match(users, /getOnlinePresenceSnapshot\(environment, now\)/);
+test("Online Users owns the four live metrics while Users Directory keeps its seven recorded cards", () => {
+  const onlinePage = readFileSync("src/app/admin/users/online/page.tsx", "utf8");
+  const onlineUi = readFileSync("src/components/admin/AdminOnlineUsersDirectory.tsx", "utf8");
+  const onlineApi = readFileSync("src/app/api/admin/users/online/route.ts", "utf8");
+  const onlineReader = readFileSync("src/services/adminOnlineUsersService.ts", "utf8");
+  const populationIndex = users.indexOf("<AdminUserPopulationCards");
+  const directoryIndex = users.indexOf("<AdminUsersToolbar");
+  assert.ok(populationIndex > 0 && directoryIndex > populationIndex);
+  assert.doesNotMatch(users, /AdminPlatformOnlinePresence|getOnlinePresenceSnapshot/);
   assert.match(users, /readUserPopulationMetrics\(date, now, from, to\)/);
-  assert.match(users, /Promise\.all\(\[/);
-  assert.match(liveCards, /label: "Total online users"/);
-  assert.match(liveCards, /label: "iOS online"/);
-  assert.match(liveCards, /label: "Android online"/);
-  assert.match(liveCards, /label: "Website online", key: "website"/);
-  assert.match(liveCards, /onUsersPage \? usersCards : platformCards/);
-  assert.match(liveCards, /"users-online-metrics"/);
-  assert.match(liveCards, /grid-cols-2 gap-3 min-\[1024px\]:grid-cols-4/);
-  assert.match(liveCards, /Online counts ignore date filters/);
-  assert.match(liveCards, /hasVerifiedPlatformCounts\(next\)/);
-  assert.match(liveCards, /fetch\("\/api\/admin\/overview\/online-presence"/);
+  assert.match(onlinePage, /requireAdminSession\("\/admin\/users\/online"\)/);
+  assert.match(onlinePage, /<AdminOnlineUsersDirectory initial=\{initial\}/);
+  assert.match(onlineApi, /requireAdminApiSession\(\)/);
+  assert.match(onlineReader, /getOnlinePresenceSnapshot\(environment, now, browserReferrer\)/);
+  assert.match(onlineReader, /FROM "OnlinePresenceSession" p/);
+  assert.match(onlineReader, /s\."sessionVersion" = u\."sessionVersion"/);
+  assert.match(onlineUi, /"Total online users"/);
+  assert.match(onlineUi, /"iOS online"/);
+  assert.match(onlineUi, /"Android online"/);
+  assert.match(onlineUi, /"Website online"/);
+  assert.match(onlineUi, /data-testid="users-online-metrics"/);
+  assert.match(onlineUi, /data-testid="online-user-row"/);
+  assert.match(onlineUi, /fetch\("\/api\/admin\/users\/online"/);
+  assert.match(onlineUi, /role="status"/);
+  assert.match(onlineUi, /onSubmit=\{event =>/);
+  assert.match(onlineUi, /document\.visibilityState/);
+  const grouping = readFileSync("src/lib/adminOnlineUsersSnapshot.ts", "utf8");
+  assert.match(grouping, /name: "Guest session"/);
+  assert.match(onlineUi, />Not linked<\/span>/);
+  assert.doesNotMatch(onlineUi, /createVisitorToken|Visitor\.create/);
   assert.doesNotMatch(users, /loadPlatformAccess|accountSession\.count\(/);
 });
 

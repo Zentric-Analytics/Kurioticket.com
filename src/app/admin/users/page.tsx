@@ -4,8 +4,6 @@ import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminIdentityTable";
 import { AdminUsersToolbar } from "@/components/admin/AdminUsersToolbar";
 import { AdminUserPopulationCards } from "@/components/admin/AdminUserPopulationCards";
-import { AdminPlatformOnlinePresence } from "@/components/admin/AdminPlatformOnlinePresence";
-import { getOnlinePresenceSnapshot } from "@/services/onlinePresenceService";
 import { readUserPopulationMetrics } from "@/services/adminUserPopulationMetrics";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
@@ -133,12 +131,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       (guestsEligibleForFilters ? scopedOperationalGuestCount : 0),
       operationalAllTimeCount, operationalNewCount };
   }, null);
-  // Live online presence is a separate, environment-scoped observation, not
-  // affected by directory activity, identity, account-status or date filters.
-  const [population, onlinePresence] = await Promise.all([
-    readUserPopulationMetrics(date, now, from, to),
-    getOnlinePresenceSnapshot(environment, now),
-  ]);
+  const population = await readUserPopulationMetrics(date, now, from, to);
   const periodLabel = date === "today" ? "Today (UTC)" : date === "last7" ? "Last 7 days"
     : date === "last30" ? "Last 30 days" : date === "all" ? "All time"
     : date === "custom" ? "Custom range (UTC)" : date === "24h" ? "Last 24 hours"
@@ -165,9 +158,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   return (
     <div className="w-full min-w-0 bg-white">
       <h1 className="sr-only">Users</h1>
-      <div className="min-w-0 pb-5">
-        <AdminPlatformOnlinePresence initial={onlinePresence} variant="users" />
-      </div>
       <AdminUserPopulationCards metrics={population} period={periodLabel}
         operationalAllTimeCount={result.operationalAllTimeCount}
         operationalNewCount={result.operationalNewCount} />

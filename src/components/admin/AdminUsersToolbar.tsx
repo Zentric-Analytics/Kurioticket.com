@@ -89,6 +89,10 @@ export function AdminUsersToolbar({
   const [isPending, startTransition] = useTransition();
   const paramsRef = useRef(new URLSearchParams(pageHref.split("?")[1] || ""));
   const initialServerSync = useRef(true);
+  // Canonical URL normalization can change pageHref without changing applied
+  // filters. Do not erase user-typed drafts during that transition.
+  const appliedStateKey = JSON.stringify([query, role, status, tab, sort, date, from, to]);
+  const lastAppliedStateKey = useRef(appliedStateKey);
 
   // Navigations (tabs, Back/Forward, Apply) restore the authoritative URL.
   // Editing the search field or a dropdown never updates paramsRef or reloads data.
@@ -100,13 +104,15 @@ export function AdminUsersToolbar({
       return;
     }
     paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
+    if (appliedStateKey === lastAppliedStateKey.current) return;
+    lastAppliedStateKey.current = appliedStateKey;
     setSearchText(query);
     setDraftDate(date);
     setDraftRole(role);
     setDraftStatus(status);
     setDraftDates({ from, to });
     setDateError(null);
-  }, [pageHref, query, date, role, status, from, to]);
+  }, [pageHref, query, date, role, status, from, to, appliedStateKey]);
 
   useEffect(() => {
     const onHistoryNavigation = () => {
