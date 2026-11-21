@@ -21,7 +21,7 @@ test("approved car results use live canonical inventory and inline safe provider
   assert.doesNotMatch(screen, /pathname:\s*"\/car-details"|carResultsStack|const openDeal=/);
   assert.match(card, /<NativeCarResultOfferPicker result=\{result\}/);
   assert.doesNotMatch(card, /nativeCarPrimaryBookingUrl\(result\)/);
-  assert.match(picker, /onPress=\{bookingUrl \? \(\) => void openProviderInApp\(bookingUrl\) : undefined\}/);
+  assert.match(picker, /onPress=\{bookingUrl \? \(\) => continueRateDeal\(offer\.id, providerName, bookingUrl\) : undefined\}/);
   assert.match(picker, /WebBrowser\.openBrowserAsync\(url, \{ dismissButtonStyle: "close" \}\)/);
   assert.doesNotMatch(picker, /Linking\.openURL/);
   assert.match(deals, /getCarDealPickerGroups\(result\)/);

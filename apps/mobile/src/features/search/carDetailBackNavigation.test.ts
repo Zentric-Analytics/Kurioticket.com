@@ -20,10 +20,10 @@ test("Cars Results exposes provider links in cards without navigating to the det
   assert.match(card, /<NativeCarResultOfferPicker result=\{result\}/);
   assert.doesNotMatch(card, /nativeCarPrimaryBookingUrl\(result\)/);
   assert.match(picker, /disabled=\{!bookingUrl\}/);
-  assert.match(picker, /onPress=\{bookingUrl \? \(\) => void openProviderInApp\(bookingUrl\) : undefined\}/);
-  assert.match(picker, /onPress=\{selectedRateBookingUrl \? \(\) => continueRateDeal\(selectedRateBookingUrl\) : undefined\}/);
+  assert.match(picker, /onPress=\{bookingUrl \? \(\) => continueRateDeal\(offer\.id, providerName, bookingUrl\) : undefined\}/);
+  assert.match(picker, /onPress=\{selectedRateBookingUrl && selectedChoice \? \(\) => continueRateDeal\(selectedChoice\.offer\.id, selectedChoice\.providerName, selectedRateBookingUrl\) : undefined\}/);
   assert.doesNotMatch(picker, /onDismiss=\{openPendingRateDeal\}/);
-  assert.match(picker, /const continueRateDeal = \(url: string\) => \{\s*if \(dealOpeningRef\.current\) return;\s*void openProviderInApp\(url\);/);
+  assert.match(picker, /const continueRateDeal = \(offerId: string, providerName: string, url: string\) => \{\s*if \(dealOpeningRef\.current\) return;[\s\S]*?journeyEvents\.offerSelected\(journeyRequestId \?\? undefined,[\s\S]*?\);\s*void openProviderInApp\(url\);/);
   assert.doesNotMatch(picker, /Linking\.openURL/);
 
   assert.match(dealActions, /getCarDealPickerGroups\(result\)/);
