@@ -181,4 +181,45 @@ WHERE current_database() = 'kurioticket_web_staging'
   AND s.type::text = 'HOTEL'
   AND s."countAsSearch" = TRUE;
 
+-- Exact FLIGHT singleton matches: eight unidentified/historical crawler
+-- source rows, four native iOS Preview client requests, plus the independently
+-- confirmed 2026-11-19 PerplexityBot flight search previously marked WEB.
+-- The mixed Googlebot/GoogleOther window proves BOT, but not exact subtype.
+-- Three okhttp-only car searches remain UNKNOWN without platform proof.
+WITH singleton_evidence (search_id, recorded_at, old_source, new_source, observed_client, evidence) AS (
+  VALUES
+    ('cmwjnvood003r2ak4wa938ei8', TIMESTAMPTZ '2026-11-16T19:33:31.693Z', 'UNKNOWN', 'IOS', 'KURIOTICKET_PREVIEW_IOS', 'FOUR_IOS_PREVIEW_POSTS_FOR_FOUR_ROWS'),
+    ('cmwjnvox8003u2ak46r0qw2v3', TIMESTAMPTZ '2026-11-16T19:33:32.012Z', 'UNKNOWN', 'IOS', 'KURIOTICKET_PREVIEW_IOS', 'FOUR_IOS_PREVIEW_POSTS_FOR_FOUR_ROWS'),
+    ('cmwjnvp2s003y2ak44nv6v65n', TIMESTAMPTZ '2026-11-16T19:33:32.212Z', 'UNKNOWN', 'IOS', 'KURIOTICKET_PREVIEW_IOS', 'FOUR_IOS_PREVIEW_POSTS_FOR_FOUR_ROWS'),
+    ('cmwjnvp3600422ak4aia5g7tk', TIMESTAMPTZ '2026-11-16T19:33:32.226Z', 'UNKNOWN', 'IOS', 'KURIOTICKET_PREVIEW_IOS', 'FOUR_IOS_PREVIEW_POSTS_FOR_FOUR_ROWS'),
+    ('cmwkkc7ac00052ahxn4gk45q5', TIMESTAMPTZ '2026-11-17T10:42:10.02Z', 'UNKNOWN', 'BOT', 'BINGBOT', 'TWO_BINGBOT_POSTS_FOR_TWO_ROWS'),
+    ('cmwkkc7zq000a2ahxzdqmffgp', TIMESTAMPTZ '2026-11-17T10:42:10.934Z', 'UNKNOWN', 'BOT', 'BINGBOT', 'TWO_BINGBOT_POSTS_FOR_TWO_ROWS'),
+    ('cmwlz7g80000u2eivb1ryp0dl', TIMESTAMPTZ '2026-11-18T10:26:08.736Z', 'UNKNOWN', 'BOT', 'BINGBOT', 'ONE_TO_ONE_POST_LOG_MATCH'),
+    ('cmwog6t9700hz2aklfdti0r8e', TIMESTAMPTZ '2026-11-20T03:57:04.795Z', 'UNKNOWN', 'BOT', 'GOOGLEBOT', 'ONE_TO_ONE_POST_LOG_MATCH'),
+    ('cmwosjhht00022ejh9bsbtwai', TIMESTAMPTZ '2026-11-20T09:42:51.473Z', 'UNKNOWN', 'BOT', 'GOOGLEBOT', 'ONE_TO_ONE_POST_LOG_MATCH'),
+    ('cmwqigfkn00342djm0a68gmgb', TIMESTAMPTZ '2026-11-21T14:36:05.207Z', 'UNKNOWN', 'BOT', 'PERPLEXITYBOT', 'ONE_TO_ONE_POST_LOG_MATCH'),
+    ('cmwqjaa84000w2eiwuvilezjy', TIMESTAMPTZ '2026-11-21T14:59:17.956Z', 'UNKNOWN', 'BOT', 'GOOGLE_CRAWLER_UNRESOLVED', 'BOTH_REQUESTS_GOOGLE_BOT_TYPES'),
+    ('cmwqll6ka000i2fhfuocpqpda', TIMESTAMPTZ '2026-11-21T16:03:45.658Z', 'UNKNOWN', 'BOT', 'PERPLEXITYBOT', 'ONE_TO_ONE_POST_LOG_MATCH'),
+    ('cmwn0jrj000042akju1rjmou0', TIMESTAMPTZ '2026-11-19T03:51:29.052Z', 'WEB', 'BOT', 'PERPLEXITYBOT', 'ONE_TO_ONE_POST_LOG_MATCH')
+)
+UPDATE "SearchHistory" s
+SET query = s.query
+    || jsonb_build_object('applicationSource',e.new_source)
+    || jsonb_build_object('historicalSearchReconciliation',jsonb_build_object(
+         'version','20261123-v1','originalApplicationSource',e.old_source,
+         'observedClient',e.observed_client,'sourceEvidence',e.evidence,
+         'countingRule','ONE_SEARCH_ROW_PRESERVED'))
+    || CASE WHEN e.new_source = 'BOT' THEN jsonb_build_object(
+         'identifiedCrawler',e.observed_client,'crawlerEvidence','DECLARED_USER_AGENT')
+       ELSE '{}'::jsonb END
+FROM singleton_evidence e
+WHERE current_database() = 'kurioticket_web_staging'
+  AND s.id=e.search_id AND s."createdAt"=e.recorded_at
+  AND s."createdAt" >= TIMESTAMPTZ '2026-11-16T14:27:53Z'
+  AND s."createdAt" < TIMESTAMPTZ '2026-11-23T14:27:53Z'
+  AND s.query->>'environment' = 'staging'
+  AND s.query->>'applicationSource'=e.old_source
+  AND s.type::text='FLIGHT'
+  AND s."countAsSearch"=TRUE;
+
 COMMIT;
