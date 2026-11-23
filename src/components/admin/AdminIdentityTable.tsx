@@ -1,3 +1,4 @@
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 import { ChevronRight, UserRound } from "lucide-react";
 import { CopyIdentityId } from "./CopyIdentityId";
@@ -34,17 +35,12 @@ const label = (value: string) =>
     .replaceAll("_", " ")
     .replace(/^\w/, (char) => char.toUpperCase());
 function IdentityDate({ at }: { at: Date }) {
-  return (
-    <time
-      dateTime={at.toISOString()}
-      className="block whitespace-nowrap text-[13px] font-medium text-[#020617]"
-    >
-      {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(at)}
-      <span className="mt-0.5 block text-[12px] font-normal text-[#64748B]">
-        {new Intl.DateTimeFormat("en", { timeStyle: "short" }).format(at)}
-      </span>
-    </time>
-  );
+  return <div className="block whitespace-nowrap text-[13px] font-medium text-[#020617]">
+    <AdminLocalDateTime value={at} style="date" />
+    <span className="mt-0.5 block text-[12px] font-normal text-[#64748B]">
+      <AdminLocalDateTime value={at} style="time" />
+    </span>
+  </div>;
 }
 
 export function AdminIdentityTable({
