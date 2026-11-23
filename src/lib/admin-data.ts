@@ -60,7 +60,7 @@ export async function getAdminMetrics(): Promise<AdminMetrics> {
       db.user.count({ where: { status: "ACTIVE" } }),
       db.user.count({ where: { status: "SUSPENDED" } }),
       db.user.count({ where: { role: "ADMIN" } }),
-      db.searchHistory.count({ where: { createdAt: { gte: since } } }),
+      db.searchHistory.count({ where: { createdAt: { gte: since }, countAsSearch: true } }),
       db.adminAuditLog.count({ where: { createdAt: { gte: since } } }),
     ]);
 
@@ -80,12 +80,12 @@ export async function getSearchHealth(): Promise<SearchHealth> {
   return withOptionalDb<SearchHealth>(async (db) => {
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const [totalRecentSearches, noResultSearches, failedSearches, topProducts] = await Promise.all([
-      db.searchHistory.count({ where: { createdAt: { gte: since } } }),
-      db.searchHistory.count({ where: { createdAt: { gte: since }, resultCount: 0, status: "SUCCESS" } }),
-      db.searchHistory.count({ where: { createdAt: { gte: since }, status: "FAILED" } }),
+      db.searchHistory.count({ where: { createdAt: { gte: since }, countAsSearch: true } }),
+      db.searchHistory.count({ where: { createdAt: { gte: since }, countAsSearch: true, resultCount: 0, status: "SUCCESS" } }),
+      db.searchHistory.count({ where: { createdAt: { gte: since }, countAsSearch: true, status: "FAILED" } }),
       db.searchHistory.groupBy({
         by: ["type"],
-        where: { createdAt: { gte: since } },
+        where: { createdAt: { gte: since }, countAsSearch: true },
         _count: { _all: true },
         orderBy: { _count: { type: "desc" } },
         take: 5,
