@@ -17,6 +17,8 @@ import {
   searchDetailOutcomeLabel,
   searchDetailDiagnosisSummary,
   searchDetailNextChecks,
+  searchDetailCrawlerName,
+  searchDetailCrawlerEvidenceLabel,
 } from "@/lib/adminSearchDetailPresentation";
 import { formatDateTime } from "@/lib/admin-data";
 import type { AdminSearchDetail } from "@/services/adminOperationalReadContract";
@@ -58,6 +60,8 @@ export default async function AdminSearchDetailPage({
 function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
   const diagnostic = search.diagnostic;
   const showProviderReasons = diagnostic.providers.some(provider => provider.status !== "SUCCESS");
+  const isBot = search.applicationSource === "BOT";
+  const botName = searchDetailCrawlerName(search.crawler?.name);
   const countryCode = search.network?.countryCode;
   const country = countryCode ? (countryCodeToCountryName(countryCode) || countryCode) + " (" + countryCode + ")" : "Unavailable";
   const providerReasonCodes = diagnostic.providers
@@ -90,6 +94,8 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
         <h2 className="text-[14px] font-semibold text-[#111827]">Search information</h2>
         <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3 md:grid-cols-3 lg:grid-cols-5">
           <Field label="Application source" value={applicationLabel(search.applicationSource)} />
+          {isBot ? <Field label="Bot name" value={botName} /> : null}
+          {isBot ? <Field label="Verification" value={searchDetailCrawlerEvidenceLabel(search.crawler?.evidence)} /> : null}
           {search.appVersion?<Field label="App version" value={search.appVersion}/>:null}
           {/* Product and locations are already identifiable in the Search overview headline. */}
           {search.checkIn || search.checkOut ? (
@@ -108,29 +114,29 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
           <div className="mt-2 min-w-0 sm:flex sm:items-start sm:justify-between sm:gap-5">
             <div className="min-w-0">
             <p className="text-[13px] font-semibold text-[#111827]">
-              {search.identity.kind === "registered"
+              {isBot ? botName : search.identity.kind === "registered"
                 ? search.searcher.name || search.searcher.email || "Registered account"
                 : search.identity.kind === "guest" && !search.identity.visitorId && search.operationalSessionId ? "Guest search session"
                 : search.identity.kind === "guest" ? "Guest visitor" : "Unidentified visitor"}
             </p>
-            {search.identity.kind === "registered" && search.searcher.name && search.searcher.email ? (
+            {!isBot && search.identity.kind === "registered" && search.searcher.name && search.searcher.email ? (
               <p className="mt-0.5 break-words text-[12px] text-[#6B7280]">{search.searcher.email}</p>
             ) : null}
-            <p className="mt-0.5 text-[12px] text-[#6B7280]">{search.operationalSessionId && search.identity.kind === "guest" && !search.identity.visitorId ? "Operational session (no account linked)" : searchDetailIdentityLabel(search.identity.kind)}</p>
-            {search.identity.kind === "guest" && !search.identity.userId && !search.identity.visitorId
+            <p className="mt-0.5 text-[12px] text-[#6B7280]">{isBot ? "Automated crawler · Not a customer identity" : search.operationalSessionId && search.identity.kind === "guest" && !search.identity.visitorId ? "Operational session (no account linked)" : searchDetailIdentityLabel(search.identity.kind)}</p>
+            {!isBot && search.identity.kind === "guest" && !search.identity.userId && !search.identity.visitorId
               && search.environment === getPublicEnvironment()
               && validActivityIdentity("guest", search.operationalSessionId ?? "") ? (
               <Link href={"/admin/users/guest/" + encodeURIComponent(search.operationalSessionId!) + "/activity"}
                 className="focus-ring mt-2 inline-flex min-h-9 items-center rounded-md text-[12px] font-medium text-[#004BB8] hover:underline">
                 View recorded guest session
               </Link>
-            ) : search.identity.kind === "unattributed" && !search.operationalSessionId ? (
+            ) : !isBot && search.identity.kind === "unattributed" && !search.operationalSessionId ? (
               <p className="mt-2 text-[12px] leading-5 text-[#64748B]">
                 No verified guest session was attached to this search. It remains a search record, not a recorded guest identity.
               </p>
             ) : null}
             </div>
-            {search.searcher.activity ? (
+            {!isBot && search.searcher.activity ? (
               <Link href={"/admin/users/" + (search.searcher.activity.kind === "user" ? "user/" : "guest/") + encodeURIComponent(search.searcher.activity.id) + "/activity"}
                 className="focus-ring mt-2 inline-flex shrink-0 min-h-9 items-center text-[13px] font-medium text-[#004BB8] hover:underline sm:mt-0">
                 View user details ↗
