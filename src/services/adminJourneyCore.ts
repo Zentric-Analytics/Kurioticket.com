@@ -209,7 +209,8 @@ function operationalSql(scope: AdminJourneyScope) {
     count(*) FILTER (WHERE "status" = 'PARTIAL' AND "resultCount" <= 0) AS "partialWithoutResults",
     count(*) FILTER (WHERE "status" = 'FAILED') AS "failed"
     FROM "SearchHistory" WHERE "createdAt" >= ${new Date(scope.from)} AND "createdAt" < ${new Date(scope.to)}
-      AND "query"->>'environment' = ${scope.environment}`;
+      AND "query"->>'environment' = ${scope.environment}
+      AND "countAsSearch" = TRUE`;
 }
 
 /**
