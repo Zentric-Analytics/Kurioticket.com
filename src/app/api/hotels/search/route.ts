@@ -74,7 +74,7 @@ export async function POST(request: Request) {
   // require USD and must not depend on the customer's display preference.
   const providerSearch = { ...search };
   delete providerSearch.currency;
-  const operationalSession = prepareOperationalSearchSession(request);
+  const operationalSession = verifiedCrawler ? null : prepareOperationalSearchSession(request);
   const recordedSearch = { ...search, ...searchNetworkObservation(request),
     ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}),
     ...(verifiedCrawler ? { verifiedCrawler } : {}) };
