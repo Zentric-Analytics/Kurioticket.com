@@ -26,6 +26,7 @@ import { hotelAlertPresentation } from "../flow/hotelPriceAlertModel";
 import { buildSearchPlan } from "../flow/travelSearchModel";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { journeyEvents } from "../privacy/journeyEvents";
+import { shareNativeResult } from "../privacy/nativeShareTracking";
 import {
   resolveDisplayCurrencyContext,
   type DisplayCurrencyResolution,
@@ -478,9 +479,9 @@ function HotelDetail({
   };
 
   const shareHotel = () =>
-    void Share.share({
+    void shareNativeResult({share:()=>Share.share({
       message: `${result.name} — ${address}${nightlyPrice ? ` — ${nightlyPrice.formatted}/night` : ""}`,
-    });
+    }),product:"HOTEL",resultId:result.id,requestId:journeyRequestId}).catch(() => undefined);
 
   const returnToHotelResults = () => {
     if (hotelResultsStack) {
