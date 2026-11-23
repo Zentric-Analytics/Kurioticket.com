@@ -6,6 +6,7 @@ test("OS-reported shared action produces one consented optional observation", as
   const contexts: number[] = [];
   const response = await shareAndRecordObservedAction({
     share: async () => ({ action: "sharedAction" }),
+    canVerifyCompletion: true,
     trackingContext: () => 7,
     record: async context => { contexts.push(context); },
   });
@@ -18,7 +19,8 @@ test("dismissed or unknown share actions produce no completion event", async () 
     let count = 0;
     await shareAndRecordObservedAction({
       share: async () => ({ action }),
-      trackingContext: () => 4,
+      canVerifyCompletion: true,
+    trackingContext: () => 4,
       record: async () => { count++; },
     });
     assert.equal(count, 0);
@@ -29,6 +31,7 @@ test("no consent or withdrawn consent never records an OS share action", async (
   let count = 0;
   await shareAndRecordObservedAction({
     share: async () => ({ action: "sharedAction" }),
+    canVerifyCompletion: true,
     trackingContext: () => null,
     record: async () => { count++; },
   });
@@ -37,6 +40,7 @@ test("no consent or withdrawn consent never records an OS share action", async (
   const share = new Promise<{ action: string }>(resolve => { finish = resolve; });
   const pending = shareAndRecordObservedAction({
     share: async () => share,
+    canVerifyCompletion: true,
     trackingContext: () => active,
     record: async () => { count++; },
   });
@@ -51,6 +55,7 @@ test("a switch to another account never attaches the former share", async () => 
   let finish!: (value: { action: string }) => void;
   const pending = shareAndRecordObservedAction({
     share: () => new Promise<{ action: string }>(resolve => { finish = resolve; }),
+    canVerifyCompletion: true,
     trackingContext: () => generation,
     record: async () => { assert.fail("no cross-account share event"); },
   });
@@ -62,6 +67,7 @@ test("a switch to another account never attaches the former share", async () => 
 test("an optional analytics failure never changes a valid share outcome", async () => {
   const result = await shareAndRecordObservedAction({
     share: async () => ({ action: "sharedAction" }),
+    canVerifyCompletion: true,
     trackingContext: () => 3,
     record: async () => { throw new Error("offline"); },
   });
@@ -71,6 +77,7 @@ test("an optional analytics failure never changes a valid share outcome", async 
 test("a rejected or cancelled native share does not invoke analytics", async () => {
   await assert.rejects(() => shareAndRecordObservedAction({
     share: async (): Promise<{ action: string }> => { throw new Error("share unavailable"); },
+    canVerifyCompletion: true,
     trackingContext: () => 1,
     record: async () => { assert.fail("no analytics after share error"); },
   }), /share unavailable/);
@@ -81,9 +88,22 @@ test("genuine repeated completed share actions are distinct observations", async
   for (let i = 0; i < 2; i++) {
     await shareAndRecordObservedAction({
       share: async () => ({ action: "sharedAction" }),
-      trackingContext: () => 8,
+      canVerifyCompletion: true,
+    trackingContext: () => 8,
       record: async () => { count++; },
     });
   }
   assert.equal(count, 2);
+});
+
+test("Android chooser sharedAction never claims successful sharing", async () => {
+  let observations = 0;
+  const response = await shareAndRecordObservedAction({
+    share: async () => ({ action: "sharedAction" }),
+    canVerifyCompletion: false,
+    trackingContext: () => 99,
+    record: async () => { observations++; },
+  });
+  assert.equal(response.action, "sharedAction");
+  assert.equal(observations, 0);
 });
