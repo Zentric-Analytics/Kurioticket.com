@@ -8,7 +8,7 @@ ALTER TABLE "SearchHistory" ADD COLUMN "countAsSearch" BOOLEAN NOT NULL DEFAULT 
 -- On the actual staging database, abort if the fixed-window audit baseline has
 -- drifted since the request logs were correlated. Never silently reclassify a
 -- different cohort. On production and CI databases, no historical rows change.
-DO $
+DO $historical_cohort_guard$
 BEGIN
   IF current_database() = 'kurioticket_web_staging' THEN
     IF (SELECT COUNT(*) FROM "SearchHistory" WHERE
@@ -19,7 +19,7 @@ BEGIN
       RAISE EXCEPTION 'Staging historical source cohort drift; reconcile manifest before migration';
     END IF;
   END IF;
-END $;
+END $historical_cohort_guard$;
 
 -- Each row here is a SINGLE operational session whose SearchHistory contains
 -- nearby-date fan-out. The manifest hashes are MD5 of the historical, otherwise
