@@ -408,6 +408,7 @@ function providerLogsForPageSql(requestIds: readonly string[], services: readonl
 function exactProviderFilteredSearchSql(scope: AdminSearchScope, cursor: { at: string; id: string } | null = null): Prisma.Sql {
   const clauses: Prisma.Sql[] = [
     Prisma.sql`s."query"->>'environment' = ${scope.environment}`,
+    Prisma.sql`s."countAsSearch" = TRUE`,
     ...(scope.provider ? [Prisma.sql`s."requestId" IS NOT NULL`,
     Prisma.sql`EXISTS (
       SELECT 1 FROM "ApiProviderLog" p
@@ -586,6 +587,7 @@ function deletionDto(row: DeletionRow): AdminDeletionListItem {
 function searchWhere(scope: AdminSearchScope, cursor?: { at: string; id: string } | null): Prisma.SearchHistoryWhereInput {
   return {
     ...identityWhere({ ...scope, identity: scope.identity === "guest" ? "all" : scope.identity }),
+    countAsSearch: true,
     ...(scope.product ? { type: scope.product } : {}),
     ...(scope.status ? { status: scope.status } : {}),
     ...(dateRange(scope.from, scope.to) ? { createdAt: dateRange(scope.from, scope.to) } : {}),
@@ -907,6 +909,7 @@ export const __adminOperationalReadCoreTest = {
   exactProviderSummary,
   correlatedProviderLogs,
   exactProviderFilteredSearchSql,
+  searchWhere,
   providerLogWhere,
   providerLogsForPageSql,
 };

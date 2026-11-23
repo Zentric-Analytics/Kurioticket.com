@@ -623,6 +623,7 @@ model SearchHistory {
   userId      String?
   visitorId   String?
   requestId   String?      @unique
+  countAsSearch Boolean    @default(true)
   type        SearchType
   origin      String?
   destination String?

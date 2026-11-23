@@ -37,7 +37,7 @@ export async function readExpandedAdminAlertSignals(database: ExpandedAlertDatab
   if (!Number.isFinite(until)) return empty;
   const [searches, support, users] = await Promise.all([
     database.$transaction(async tx => {
-      const shared = { type: { in: [...products] }, query: { path: ["environment"], equals: environment } };
+      const shared = { type: { in: [...products] }, countAsSearch: true, query: { path: ["environment"], equals: environment } };
       const [previousRows, currentRows, flags] = await Promise.all([
         tx.searchHistory.groupBy({ by: ["type", "status"], where: { ...shared, createdAt: { gte: new Date(until - 2 * SEARCH_WINDOW_MS), lt: new Date(until - SEARCH_WINDOW_MS) } }, _count: { _all: true }, _max: { createdAt: true } }),
         tx.searchHistory.groupBy({ by: ["type", "status"], where: { ...shared, createdAt: { gte: new Date(until - SEARCH_WINDOW_MS), lte: now } }, _count: { _all: true }, _max: { createdAt: true } }),

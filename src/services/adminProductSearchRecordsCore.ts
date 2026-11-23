@@ -162,6 +162,7 @@ function scopeWhere(product: ProviderProduct, filter: ProductSearchFilter, windo
   const hours = window === "24h" ? 24 : window === "7d" ? 24 * 7 : window === "30d" ? 24 * 30 : null;
   return {
     type: product,
+    countAsSearch: true,
     query: { path: ["environment"], equals: environment },
     createdAt: {
       lte: asOf,

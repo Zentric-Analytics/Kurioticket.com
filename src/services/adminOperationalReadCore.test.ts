@@ -512,6 +512,7 @@ test("provider filter SQL uses exact correlated request IDs before cursor and su
   } as never;
   const sql = __adminOperationalReadCoreTest.exactProviderFilteredSearchSql(scope);
   assert.match(sql.sql, /EXISTS/);
+  assert.match(sql.sql, /"countAsSearch" = TRUE/, "provider-filtered totals exclude historical nearby-date children");
   assert.match(sql.sql, /"requestId"/);
   assert.match(sql.sql, /'trackId'/);
   assert.match(sql.sql, /lower/);
@@ -698,4 +699,13 @@ test("unverified and withdrawn handoff visitors never gain fabricated identities
   assert.equal(withdrawn.identity.visitorId, null);
   const registered = handoffDto({ ...row, userId: "registered-account" } as never, "staging");
   assert.equal(registered.identity.kind, "registered");
+});
+
+test("unfiltered Search Activity lists and totals exclude reconciled nearby-date child rows", () => {
+  const where = __adminOperationalReadCoreTest.searchWhere({
+    environment: "staging", identity: "all", product: null, status: null,
+    applicationSource: null, provider: null, userId: null, visitorId: null,
+    from: null, to: null,
+  } as never);
+  assert.equal(where.countAsSearch, true);
 });
