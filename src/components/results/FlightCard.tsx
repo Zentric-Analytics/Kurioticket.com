@@ -1,6 +1,7 @@
 "use client";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+import { rememberResultsScroll } from "@/lib/results/resultsReturnScroll";
 
 
 import Image from "next/image";
@@ -63,7 +64,12 @@ export function FlightCard({
   searchRequestId?: string | null;
 }) {
   const journeyEvents = useJourneyEvents();
-  const rememberDetailsContext = () => journeyEvents.rememberDetailsContext("flight", flight.id, searchRequestId ?? null);
+  const rememberDetailsContext = () => {
+    journeyEvents.rememberDetailsContext("flight", flight.id, searchRequestId ?? null);
+    if (typeof window !== "undefined" && resolvedDetailsHref?.startsWith("/flights/details/")) {
+      rememberResultsScroll("flight", window.scrollY);
+    }
+  };
   const { t: dictionary, locale } = useLocale();
   const router = useRouter();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
