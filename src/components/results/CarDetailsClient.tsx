@@ -18,6 +18,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useResultsReturnIntent } from "@/components/results/useResultsReturnIntent";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
@@ -1006,6 +1007,7 @@ export function CarDetailsClient({
   requestId?: string | null;
 }) {
   const { t } = useLocale();
+  useResultsReturnIntent("car", resultsHref);
   const { start: startRouteProgress } = useRouteProgress();
   const [mobileResultsPending, setMobileResultsPending] = useState(false);
   const copy = (key: string) => t[key] || enTranslations[key] || key;
