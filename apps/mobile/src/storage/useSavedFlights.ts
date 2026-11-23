@@ -52,6 +52,8 @@ export function useSavedFlights() {
       void recordNativeSavedInteraction({
         action: operation === "remove" ? "saved_item_removed" : "saved_item_confirmed",
         product: "FLIGHT", resultId: flight.id, requestId: journeyRequestId,
+        observedResult: { label: flight.airlineName, provider: flight.provider,
+          amount: flight.price, currency: flight.currency, priceBasis: "total" },
       });
     } catch (error) {
       if (error instanceof TravelApiError && error.status === 401) {
