@@ -329,3 +329,20 @@ test("urgent clickout preserves ordinary backoff on rate limit and offline failu
     assert.equal(h.timers[0].cancelled, true);
   }
 });
+
+test("a retryable response that arrives after handoff settling begins is retried before navigation", async () => {
+  const h = harness();
+  const requestId = h.remember("2f29a1e6-c6b1-4ba5-952c-5a8e8509c58a");
+  let respond!: (value: JourneyEventResponse) => void;
+  h.responses.push(new Promise(resolve => { respond = resolve; }), { accepted: true });
+  h.coordinator.resultsViewed(requestId, "/flight-results", 4);
+  await turn();
+  const handoff = h.coordinator.settleBeforeExternalHandoff(requestId, 500);
+  await turn();
+  respond({ accepted: false, retryable: true });
+  await handoff;
+  assert.equal(h.calls.length, 2, "settlement must recheck retries scheduled by the awaited attempt");
+  assert.equal(h.calls[0].event.eventId, h.calls[1].event.eventId,
+    "the accelerated request reuses the same idempotency key");
+  assert.equal(h.timers[0].cancelled, true);
+});
