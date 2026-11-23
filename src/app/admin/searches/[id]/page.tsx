@@ -175,8 +175,6 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
       <SearchDetailActivityPanel
         searchId={search.id}
         environment={search.environment}
-        searchedAt={search.createdAt}
-        status={search.status}
       />
 
       {diagnostic.outcome !== "SUCCESS" ? (
