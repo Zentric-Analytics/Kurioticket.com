@@ -1906,7 +1906,17 @@ const HotelCard = memo(function HotelCard({
   const mealPlan=result.catalogueProfile?.mealPlan?.trim();
   const policy=[result.catalogueProfile?.cancellationPolicy,result.catalogueProfile?.paymentPolicy].filter((value):value is string=>Boolean(value?.trim()));
   const openHotel = () => {
-    if (result.searchPolicy.action.kind !== "provider") journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", requestId, "/hotel-results", { offerId: result.id });
+    if (result.searchPolicy.action.kind !== "provider") journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", requestId, "/hotel-results", {
+      offerId: result.id,
+      ...(typeof result.pricePerNight === "number" && result.pricePerNight > 0
+        && typeof result.currency === "string" && /^[A-Z]{3}$/.test(result.currency) ? {
+          observedResult: {
+            label: result.name, provider: result.provider,
+            amount: result.pricePerNight, currency: result.currency, priceBasis: "per_night" as const,
+            ...(typeof result.totalPrice === "number" && result.totalPrice > 0 ? { totalAmount: result.totalPrice } : {}),
+          },
+        } : {}),
+    });
     journeyEvents.offerSelected(requestId, result.id, result.provider, "/hotel-results");
     if (result.searchPolicy.action.kind === "provider") {
       void Linking.openURL(result.searchPolicy.action.href);
