@@ -1,5 +1,5 @@
 import { createProviderHandoffMetadata } from "../../../../../src/lib/providerHandoffClient";
-import type { ClientJourneyDecisionType, JourneyFilterGroup, JourneySortMode } from "../../../../../src/lib/search-journey";
+import type { ClientJourneyDecisionType, JourneyFilterGroup, JourneySortMode, JourneySortChoice } from "../../../../../src/lib/search-journey";
 
 export type JourneyEvent = {
   eventId: string;
@@ -11,6 +11,7 @@ export type JourneyEvent = {
   sourcePage: string;
   filterGroup?: JourneyFilterGroup;
   sortMode?: JourneySortMode;
+  sortChoice?: JourneySortChoice;
 };
 export type JourneyEventResponse = { accepted: boolean; retryable?: boolean };
 
@@ -117,13 +118,13 @@ export class JourneyEventCoordinator {
 
   /** Each committed action is distinct; retries keep the same eventId. */
   workflowDecision(type: ClientJourneyDecisionType, requestId: string | undefined, sourcePage: string,
-    detail: { offerId?: string; filterGroup?: JourneyFilterGroup; sortMode?: JourneySortMode } = {}) {
+    detail: { offerId?: string; filterGroup?: JourneyFilterGroup; sortMode?: JourneySortMode; sortChoice?: JourneySortChoice } = {}) {
     const requiresReference = type === "RESULT_DETAILS_OPENED" || type === "RATE_DETAILS_OPENED";
     if (requiresReference && !/^[A-Za-z0-9._:+~=-]{1,128}$/.test(detail.offerId ?? "")) return;
     if (type === "SEARCH_FILTER_APPLIED" ? !detail.filterGroup : Boolean(detail.filterGroup)) return;
     if (type === "SEARCH_SORT_CHANGED" ? !detail.sortMode : Boolean(detail.sortMode)) return;
     return this.enqueue(type, requestId, sourcePage, detail.offerId ?? "", undefined, requiresReference,
-      { filterGroup: detail.filterGroup, sortMode: detail.sortMode }, true);
+      { filterGroup: detail.filterGroup, sortMode: detail.sortMode, sortChoice: detail.sortChoice }, true);
   }
 
   prepareHandoff(requestId: string | undefined) {
@@ -137,7 +138,7 @@ export class JourneyEventCoordinator {
 
   private enqueue(type: JourneyEvent["type"], requestId: string | undefined, sourcePage: string,
     offerId = "", provider?: string, includeOfferReference = false,
-    decision: { filterGroup?: JourneyFilterGroup; sortMode?: JourneySortMode } = {}, allowRepeat = false) {
+    decision: { filterGroup?: JourneyFilterGroup; sortMode?: JourneySortMode; sortChoice?: JourneySortChoice } = {}, allowRepeat = false) {
     this.contextChanged();
     const sourcePath = journeySourcePath(sourcePage);
     if (this.context === null || !validRequestId(requestId) || !this.searches.has(requestId) || !sourcePath) return;
@@ -157,6 +158,7 @@ export class JourneyEventCoordinator {
         ...(includeOfferReference ? { offerId } : {}),
         ...(decision.filterGroup ? { filterGroup: decision.filterGroup } : {}),
         ...(decision.sortMode ? { sortMode: decision.sortMode } : {}),
+        ...(decision.sortChoice ? { sortChoice: decision.sortChoice } : {}),
       },
       context: this.context,
       controller: new AbortController(),
