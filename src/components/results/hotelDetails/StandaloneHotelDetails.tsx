@@ -30,6 +30,8 @@ type RoomChoice = {
 type GalleryProps = Parameters<typeof HotelDetailsGallery>[0];
 
 export type StandaloneHotelDetailsProps = {
+  hotelResultId: string;
+  searchRequestId?: string | null;
   locationIsSimulated?: boolean;
   hotelName: string;
   starRating: number | null;
