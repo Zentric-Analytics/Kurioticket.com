@@ -50,6 +50,7 @@ export function activityOverviewRows(events: readonly ActivityRow[], limit = 10)
   const bySearch = new Map<string, RecentSearchSummary>();
   const other: ActivityRow[] = [];
   const seenEventIds = new Set<string>();
+  const matchedJourneyIds = new Set<string>();
   let unlinkedStageCount = 0;
   for (const event of events) {
     if (seenEventIds.has(event.id)) continue;
@@ -66,11 +67,9 @@ export function activityOverviewRows(events: readonly ActivityRow[], limit = 10)
       continue;
     }
     let item = bySearch.get(searchId);
-    if (item?.journeyId && event.journeyId && item.journeyId !== event.journeyId) {
-      // Conflicting journey ownership is not evidence of one search journey.
-      unlinkedStageCount++;
-      continue;
-    }
+    // A verified search can span multiple visitor journeys after the idle
+    // rollover. SearchHistory ID is the authoritative correlation; identity,
+    // consent and environment were already checked by the activity reader.
     if (!item) {
       item = {
         id: searchId, at: event.at, searchedAt: null,
@@ -81,7 +80,10 @@ export function activityOverviewRows(events: readonly ActivityRow[], limit = 10)
       };
       bySearch.set(searchId, item);
     }
-    if (event.journeyId && !item.journeyId) item.journeyId = event.journeyId;
+    if (event.journeyId) {
+      matchedJourneyIds.add(event.journeyId);
+      if (!item.journeyId) item.journeyId = event.journeyId;
+    }
     if (event.at > item.at) item.at = event.at;
     if (event.platform) item.platform = event.platform;
     if (typeof event.resultCount === "number") item.resultCount = event.resultCount;
@@ -104,11 +106,11 @@ export function activityOverviewRows(events: readonly ActivityRow[], limit = 10)
     b.at.getTime() - a.at.getTime() || a.id.localeCompare(b.id));
   const otherSorted = other.sort((a, b) =>
     b.at.getTime() - a.at.getTime() || a.id.localeCompare(b.id));
-  const journeyIds = new Set(searches.map(search => search.journeyId).filter(Boolean));
+
   return {
     searches: searches.slice(0, Math.max(0, limit)),
     matchingSearchCount: searches.length,
-    matchingJourneyCount: journeyIds.size,
+    matchingJourneyCount: matchedJourneyIds.size,
     unlinkedStageCount,
     other: otherSorted.slice(0, Math.max(0, limit)),
     otherCount: otherSorted.length,
