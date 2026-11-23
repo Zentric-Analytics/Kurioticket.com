@@ -254,6 +254,11 @@ export async function loadAdminIdentityActivity(
       AND: [
         analyticsOwner, environmentScope.analytics, { createdAt: window },
         { type: { in: Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[] } },
+        // The dedicated interaction tab excludes signup, support and provider
+        // diagnostics while All activity keeps their operational audit trail.
+        ...(filters.tab === "interactions" ? [{
+          OR: [{ type: "SAVE" as const }, { type: "SHARE" as const }, { type: "ALERT_CREATED" as const }],
+        }] : []),
         ...(product ? [{ OR: [
           { metadata: { path: ["product"], equals: product } },
           // Only legacy SAVEs missing a product may match their saved type.
