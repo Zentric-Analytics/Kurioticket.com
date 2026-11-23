@@ -3,12 +3,18 @@ import { encodeActivityJourneyReturn } from "./adminActivityJourneyNavigation";
 import type { ActivityRow, IdentityKind } from "./adminIdentityJourney";
 import type { ActivityFilters } from "./adminIdentityActivity";
 
-export type RecentJourneySummary = {
+export type RecentSearchSummary = {
+  /** The verified SearchHistory ID, not the broader visitor journey ID. */
   id: string;
+  /** Latest matching stage in the selected filters. */
   at: Date;
-  startedAt: Date | null;
-  products: string[];
+  searchedAt: Date | null;
+  journeyId: string | null;
+  product: string | null;
   route: string | null;
+  searchStatus: string | null;
+  platform: "WEB" | "IOS" | "ANDROID" | null;
+  resultCount: number | null;
   providers: string[];
   eventCount: number;
   searches: number;
@@ -17,54 +23,97 @@ export type RecentJourneySummary = {
   handoffs: number;
 };
 
-/** Read-only presentation. Aggregate by actual journey ID, never timestamps,
- * route similarity or provider. Do not lose unlinked searches or account actions.
+/** Only server-sanitized activity descriptions are available to this display.
+ * Prefer the search row's location over a later stage; do not infer a route
+ * from provider-only text or from other searches in the visitor journey.
  */
-export function activityOverviewRows(events: readonly ActivityRow[], limit = 5) {
-  const byJourney = new Map<string, RecentJourneySummary>();
+function recordedSearchRoute(event: ActivityRow): string | null {
+  if (!["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED"].includes(event.stage ?? "")) return null;
+  const parts = event.detail.split(" · ");
+  if (parts.length < 2) return null;
+  if (event.stage === "OFFER_SELECTED" && parts.length < 3) return null;
+  const route = parts[1].trim();
+  return route && route.length <= 110 ? route : null;
+}
+const searchableStages = new Set(["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED"]);
+
+/** Read-only recent search presentation, never a redefinition of SearchJourney.
+ * One card per explicitly linked SearchHistory ID, even when one consented
+ * visitor journey contains flight, hotel, car and repeat searches. Show
+ * independently recorded searches too, but NEVER infer missing journey stages
+ * by product, route, time proximity or identity.
+ *
+ * events are already authorized, deduplicated and filtered by the Activity
+ * reader. This function does not mutate them or grant new data access.
+ */
+export function activityOverviewRows(events: readonly ActivityRow[], limit = 10) {
+  const bySearch = new Map<string, RecentSearchSummary>();
   const other: ActivityRow[] = [];
+  const seenEventIds = new Set<string>();
+  const matchedJourneyIds = new Set<string>();
+  let unlinkedStageCount = 0;
   for (const event of events) {
-    if (!event.journeyId) {
+    if (seenEventIds.has(event.id)) continue;
+    seenEventIds.add(event.id);
+    if (!searchableStages.has(event.stage ?? "")) {
       other.push(event);
       continue;
     }
-    let item = byJourney.get(event.journeyId);
+    const searchId = event.searchHistoryId;
+    if (!searchId) {
+      // Some handoffs or older selections have no verified search reference.
+      // Leave them in Journey History instead of assigning them by time/route.
+      unlinkedStageCount++;
+      continue;
+    }
+    let item = bySearch.get(searchId);
+    // A verified search can span multiple visitor journeys after the idle
+    // rollover. SearchHistory ID is the authoritative correlation; identity,
+    // consent and environment were already checked by the activity reader.
     if (!item) {
       item = {
-        id: event.journeyId, at: event.at, startedAt: event.journeyStartedAt ?? null,
-        products: [], providers: [], route: null, eventCount: 0,
+        id: searchId, at: event.at, searchedAt: null,
+        journeyId: event.journeyId ?? null, product: event.product ?? null,
+        route: null, searchStatus: null, platform: event.platform ?? null,
+        resultCount: event.resultCount ?? null, providers: [], eventCount: 0,
         searches: 0, resultsViewed: 0, offersSelected: 0, handoffs: 0,
       };
-      byJourney.set(event.journeyId, item);
+      bySearch.set(searchId, item);
     }
-    item.eventCount++;
+    if (event.journeyId) {
+      matchedJourneyIds.add(event.journeyId);
+      if (!item.journeyId) item.journeyId = event.journeyId;
+    }
     if (event.at > item.at) item.at = event.at;
-    if (event.journeyStartedAt && (!item.startedAt || event.journeyStartedAt < item.startedAt))
-      item.startedAt = event.journeyStartedAt;
-    if (event.product && !item.products.includes(event.product)) item.products.push(event.product);
+    if (event.platform) item.platform = event.platform;
+    if (typeof event.resultCount === "number") item.resultCount = event.resultCount;
+    item.eventCount++;
+    if (!item.product && event.product) item.product = event.product;
     if (event.provider && !item.providers.includes(event.provider)) item.providers.push(event.provider);
-    if (event.stage === "SEARCH_COMPLETED") item.searches++;
-    else if (event.stage === "RESULTS_VIEWED") item.resultsViewed++;
+    const route = recordedSearchRoute(event);
+    if (route && (!item.route || event.stage === "SEARCH_COMPLETED")) item.route = route;
+    if (event.stage === "SEARCH_COMPLETED") {
+      item.searches++;
+      if (!item.searchedAt || event.at < item.searchedAt) item.searchedAt = event.at;
+      const status = event.detail.split(" · ").at(-1)?.trim() ?? "";
+      if (["SUCCESS", "PARTIAL", "FAILED", "UNAVAILABLE", "ZERO_RESULTS"].includes(status))
+        item.searchStatus = status;
+    } else if (event.stage === "RESULTS_VIEWED") item.resultsViewed++;
     else if (event.stage === "OFFER_SELECTED") item.offersSelected++;
     else if (event.stage === "PROVIDER_HANDOFF_STARTED") item.handoffs++;
-
-    // The existing Activity reader supplies a sanitized product · route ·
-    // outcome description. Never infer a journey relationship from this text.
-    if (!item.route && ["SEARCH_COMPLETED", "RESULTS_VIEWED"].includes(event.stage ?? "")) {
-      const parts = event.detail.split(" · ");
-      const recordedRoute = parts.length >= 2 ? parts[1].trim() : "";
-      if (recordedRoute && recordedRoute.length <= 110) item.route = recordedRoute;
-    }
   }
-  const journeys = [...byJourney.values()].sort((a, b) =>
+  const searches = [...bySearch.values()].sort((a, b) =>
     b.at.getTime() - a.at.getTime() || a.id.localeCompare(b.id));
-  const unlinked = other.sort((a,b) =>
+  const otherSorted = other.sort((a, b) =>
     b.at.getTime() - a.at.getTime() || a.id.localeCompare(b.id));
+
   return {
-    journeys: journeys.slice(0, limit),
-    other: unlinked.slice(0, limit),
-    matchingJourneyCount: journeys.length,
-    otherCount: unlinked.length,
+    searches: searches.slice(0, Math.max(0, limit)),
+    matchingSearchCount: searches.length,
+    matchingJourneyCount: matchedJourneyIds.size,
+    unlinkedStageCount,
+    other: otherSorted.slice(0, Math.max(0, limit)),
+    otherCount: otherSorted.length,
   };
 }
 

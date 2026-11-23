@@ -41,7 +41,7 @@ try {
   }
   for(const kind of ["guest","user"]) {
     await page.goto(base+"/admin/users/"+kind+"/qa-complete-history-0001/activity?range=all");
-    await expect(page.getByTestId("activity-journey-row")).toHaveCount(0);
+    await expect(page.getByTestId("activity-journey-row")).toHaveCount(10);
     await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
     await expect(page.locator("[data-activity-id]")).toHaveCount(0);
     const other = "/admin/users/"+kind+"/qa-complete-history-0001/other?range=all";
