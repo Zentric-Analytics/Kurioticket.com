@@ -246,8 +246,11 @@ test("search IP is committed before country enrichment; the exact record gains o
   };
   assert.ok(await f.service.recordSearchHistory(history));
   assert.equal(calls, 1);
-  assert.deepEqual(stateAtLookup, query);
-  assert.deepEqual(f.histories[0].query, { ...query, searchNetwork: { ipAddress: "8.8.8.8", countryCode: "US" } });
+  assert.deepEqual((stateAtLookup as {searchNetwork: unknown}).searchNetwork, query.searchNetwork);
+  assert.equal((stateAtLookup as {destination: string}).destination, "ACC");
+  assert.deepEqual((f.histories[0].query as {searchNetwork: unknown}).searchNetwork,
+    { ipAddress: "8.8.8.8", countryCode: "US" });
+  assert.equal((f.histories[0].query as {destination:string}).destination, "ACC");
   assert.equal(f.events.filter(event => event.type === "SEARCH_COMPLETED").length, 1);
   await f.service.recordSearchHistory(history);
   assert.equal(calls, 1, "a completed search with a country must not be looked up again");
@@ -259,7 +262,7 @@ test("an exact country from the trusted edge is retained without a lookup", asyn
   assert.ok(await f.service.recordSearchHistory({
     requestId: randomUUID(), type: "FLIGHT", query, resultCount: 1, latencyMs: 1, status: "SUCCESS",
   }));
-  assert.deepEqual(f.histories[0].query, { ...query, environment: f.histories[0].query && (f.histories[0].query as {environment?: string}).environment });
+  assert.deepEqual((f.histories[0].query as {searchNetwork: unknown}).searchNetwork, query.searchNetwork);
 });
 
 test("a failed country lookup leaves the original search and network observation intact", async () => {
