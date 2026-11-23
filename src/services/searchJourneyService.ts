@@ -11,6 +11,7 @@ import {
   type JourneySortMode,
   type JourneySortChoice,
   type JourneyFilterSelection,
+  type JourneyObservedResult,
 } from "@/lib/search-journey";
 import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
@@ -47,6 +48,7 @@ export type ClientJourneyEventInput = ApplicationAttribution & {
   sortMode?: JourneySortMode;
   sortChoice?: JourneySortChoice;
   filterSelections?: JourneyFilterSelection[];
+  observedResult?: JourneyObservedResult;
 };
 export type SearchHistoryInput = ApplicationAttribution & {
   userId?: string | null;
@@ -233,7 +235,8 @@ export function createSearchJourneyService(
             ...(input.filterGroup ? { filterGroup: input.filterGroup } : {}),
             ...(input.sortMode ? { sortMode: input.sortMode } : {}),
             ...(input.sortChoice ? { sortChoice: input.sortChoice } : {}),
-            ...(input.filterSelections ? { filterSelections: input.filterSelections } : {}) },
+            ...(input.filterSelections ? { filterSelections: input.filterSelections } : {}),
+            ...(input.observedResult ? { observedResult: input.observedResult, observedSource: "customer_display" } : {}) },
         }, now());
         return { accepted: Boolean(result) };
       });
