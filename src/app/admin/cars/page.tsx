@@ -1,8 +1,8 @@
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import {
   AdminEmptyState,
   AdminPageShell,
 } from "@/components/admin/AdminPageShell";
-import { formatDateTime } from "@/lib/admin-data";
 import { ProductSearchRecordsPanel } from "@/components/admin/ProductSearchRecordsPanel";
 import { OperationsMetric, OperationsMetricStrip, OperationsSection, OperationsStatus } from "@/components/admin/TravelOperationsOverviewUI";
 import { getCarOperationsSnapshot } from "@/services/adminCarOperationsService";
@@ -69,7 +69,7 @@ export default async function AdminCarsPage() {
                     <Stat label="Disabled (Today)" value={health ? String(health.disabledCalls) : "—"} />
                     <Stat label="Failed (Today)" value={health ? String(health.failedCalls) : "—"} />
                     <Stat label="Avg latency" value={health?.averageLatencyMs === null || health?.averageLatencyMs === undefined ? "—" : health.averageLatencyMs + " ms"} />
-                    <Stat label="Last issue" value={health?.lastIssueAt ? formatDateTime(new Date(health.lastIssueAt)) : "—"} />
+                    <Stat label="Last issue" value={health?.lastIssueAt ? <AdminLocalDateTime value={health.lastIssueAt} /> : "—"} />
                     <Stat label="Booking" value={integration.bookingEnabled ? "Enabled" : "Not enabled"} />
                   </div>
                   <p className="mt-3 text-xs leading-5 text-[#64748B]">{integration.note}</p>
@@ -97,7 +97,7 @@ export default async function AdminCarsPage() {
                     <div key={(location.origin || "unknown") + "-" + (location.destination || "unknown") + "-" + index} className="flex min-w-0 flex-wrap items-start justify-between gap-3 py-3 sm:items-center">
                       <div>
                         <p className="break-words text-[13px] font-semibold text-[#020617]">{location.origin || "—"} → {location.destination || "—"}</p>
-                        <p className="mt-1 text-xs font-semibold text-[#64748B]">{location.lastIssueAt ? "Last issue " + formatDateTime(new Date(location.lastIssueAt)) : "No timestamp"}</p>
+                        <p className="mt-1 text-xs font-semibold text-[#64748B]">{location.lastIssueAt ? <>Last issue <AdminLocalDateTime value={location.lastIssueAt} /></> : "No timestamp"}</p>
                       </div>
                       <OperationsStatus tone="warn">{location.issueCount} {location.issueCount === 1 ? "exception" : "exceptions"}</OperationsStatus>
                     </div>
@@ -119,6 +119,6 @@ export default async function AdminCarsPage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return <div className="min-w-0 border-b border-[#E7ECF5] py-2"><p className="text-[11px] font-medium text-[#64748B]">{label}</p><p className="mt-1 break-words text-[12px] font-semibold text-[#020617]">{value}</p></div>;
 }
