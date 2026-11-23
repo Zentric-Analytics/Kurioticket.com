@@ -12,7 +12,13 @@ export function KayakResultCard({offer,vertical,criteria,desktopCarSurfaceParity
   const days=Math.max(1,Math.ceil((Date.parse(end)-Date.parse(start))/86400000)||1);
   const flight=vertical === "flights" ? kayakFlightCardModel(offer, criteria) : null;
   const detailsHref=`/sandbox/kayak/details?id=${encodeURIComponent(offer.id)}`;
-  const preserve=()=>saveKayakOffer(sessionStorage,{offer,vertical,criteria});
+  const preserve=()=>{
+    const resultsHref = typeof window !== "undefined" && vertical === "flights" &&
+      window.location.pathname === "/flights/results"
+      ? window.location.pathname + window.location.search : undefined;
+    saveKayakOffer(sessionStorage,{offer,vertical,criteria,
+      ...(resultsHref ? { resultsHref } : {})});
+  };
   return <div className="min-w-0" onClickCapture={preserve}>
     {flight ? <FlightCard flight={flight} detailsHref={detailsHref} actionLabel="View flight" />
       : vertical === "hotels" ? <HotelCard hotel={kayakHotelCardModel(offer,days)} detailsHref={detailsHref} allowSave={false} actionLabel="View hotel" unavailableActionLabel="View hotel" />
