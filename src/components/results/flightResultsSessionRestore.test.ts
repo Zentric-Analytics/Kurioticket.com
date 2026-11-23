@@ -14,7 +14,7 @@ test("FlightResultsClient reuses a fresh result snapshot without another search"
   const restoreBlock = source.slice(restoreIndex, fetchIndex);
   assert.ok(keyIndex >= 0 && keyIndex < readIndex && readIndex < restoreIndex && restoreIndex < fetchIndex);
   assert.match(restoreBlock, /filterResultsByRequestedOutboundDate\([\s\S]*snapshot\.results/);
-  assert.match(restoreBlock, /setError\("")/);
+  assert.match(restoreBlock, /setError\(""\)/);
   assert.match(restoreBlock, /setLoading\(refreshingStaleSnapshot\)/);
   assert.match(restoreBlock, /setBackgroundRefreshing\(refreshingStaleSnapshot\)/);
   assert.match(restoreBlock, /if \(!refreshingStaleSnapshot\) \{\s*mainInventoryReadyRef\.current = true;\s*return;/);
