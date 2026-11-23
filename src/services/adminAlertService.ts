@@ -94,12 +94,13 @@ export function getDatabaseOutageAlertSnapshot(
 export async function getAdminAlertSnapshot(
   adminUserId?: string | null,
   now = new Date(),
-  options: { forceRefreshCandidates?: boolean } = {},
+  options: { forceRefreshCandidates?: boolean; includeTicketNotifications?: boolean } = {},
 ): Promise<AdminAlertSnapshot> {
   const alerts = await getAdminOperationalAlerts(
     adminUserId,
     now,
     options.forceRefreshCandidates !== false,
+    options.includeTicketNotifications ?? false,
   );
 
   return {
@@ -116,7 +117,7 @@ export async function getAdminAlertSummary(
   adminUserId?: string | null,
   now = new Date(),
 ): Promise<AdminAlertSummary> {
-  const alerts = await getAdminOperationalAlerts(adminUserId, now, false);
+  const alerts = await getAdminOperationalAlerts(adminUserId, now, false, true);
   return {
     generatedAt: now.toISOString(),
     activeCount: alerts.length,
@@ -136,11 +137,13 @@ async function getAdminOperationalAlerts(
   adminUserId: string | null | undefined,
   now: Date,
   forceRefreshCandidates: boolean,
+  includeTicketNotifications: boolean,
 ): Promise<AdminOperationalAlert[]> {
-  const candidates = await readAdminAlertCandidates(
-    now,
-    forceRefreshCandidates,
-  );
+  const [operational, tickets] = await Promise.all([
+    readAdminAlertCandidates(now, forceRefreshCandidates),
+    includeTicketNotifications ? readNewTicketNotifications(now) : [],
+  ]);
+  const candidates = [...operational, ...tickets];
   const [acknowledgements, dismissals] = adminUserId
     ? await Promise.all([
         readRecentAcknowledgements(adminUserId, candidates, now),
@@ -161,6 +164,26 @@ async function getAdminOperationalAlerts(
       };
     })
     .sort(compareAlerts);
+}
+
+async function readNewTicketNotifications(now: Date): Promise<AdminAlertCandidate[]> {
+  const db = getOptionalPrisma();
+  if (!db) return [];
+  const tickets = await db.supportTicket.findMany({
+    where: { createdAt: { gt: new Date(now.getTime() - ACK_WINDOW_MS), lte: now } },
+    select: { id: true, subject: true, createdAt: true },
+    orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+  });
+  return tickets.map(ticket => ({
+    key: `support.ticket.created.${ticket.id}`,
+    signalToken: ticket.createdAt.toISOString(),
+    signalAt: ticket.createdAt.toISOString(),
+    source: "SUPPORT",
+    severity: "INFO",
+    title: "New support ticket",
+    message: ticket.subject,
+    actionHref: `/admin/support/${encodeURIComponent(ticket.id)}`,
+  }));
 }
 
 async function readAdminAlertCandidates(
@@ -545,6 +568,7 @@ export async function getCurrentAdminAlertByKey(
 ) {
   const snapshot = await getAdminAlertSnapshot(adminUserId, new Date(), {
     forceRefreshCandidates: true,
+    includeTicketNotifications: alertKey.startsWith("support.ticket.created."),
   });
   return snapshot.alerts.find((alert) => alert.key === alertKey) ?? null;
 }
@@ -649,6 +673,7 @@ function compareAlerts(a: AdminOperationalAlert, b: AdminOperationalAlert) {
   const severityRank: Record<AdminAlertSeverity, number> = {
     CRITICAL: 0,
     WARNING: 1,
+    INFO: 2,
   };
   if (severityRank[a.severity] !== severityRank[b.severity]) {
     return severityRank[a.severity] - severityRank[b.severity];
