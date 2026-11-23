@@ -252,8 +252,10 @@ export const travelApi = {
   faqContent: (locale: string) => request<unknown>(`/api/content/faqs?locale=${encodeURIComponent(locale)}`),
   journeyEvent: (body: JourneyEvent, options: { signal: AbortSignal; visitorContext: number }) => request<JourneyEventResponse>("/api/journey/events", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: 4000 }),
   customerInteraction: (body: {
-    action: "share_sheet_completed"; product: "FLIGHT" | "HOTEL" | "CAR";
+    action: "share_sheet_completed" | "saved_item_confirmed" | "saved_item_removed"; product: "FLIGHT" | "HOTEL" | "CAR";
     resultId: string; eventId: string; requestId?: string;
+    observedResult?: { label: string; provider: string; amount: number; currency: string;
+      priceBasis: "total" | "per_night" | "per_day"; totalAmount?: number };
   }, options: { visitorContext: number }) =>
     request<{ accepted: boolean }>("/api/activity/interactions", {
       method: "POST", body: JSON.stringify(body),

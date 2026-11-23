@@ -11,10 +11,15 @@ test("iOS flight View deal does not double count an offer and settles queued con
     "the View deal button is not a separate selection action");
   assert.match(handoff, /setSelectedDealOfferId\(offerId\)/);
   const redirectIndex = handoff.indexOf("await travelApi.flightRedirect");
-  const settleIndex = handoff.indexOf('if(Platform.OS === "ios") await journeyEvents.settleBeforeExternalHandoff(journeyRequestId)');
-  const externalIndex = handoff.indexOf("await Linking.openURL(response.url)");
-  assert.ok(redirectIndex > 0 && settleIndex > redirectIndex && externalIndex > settleIndex,
-    "the provider redirect remains authoritative; do not open the external app before optional delivery has had a bounded chance");
+  const settleIndex = handoff.indexOf("await journeyEvents.settleBeforeExternalHandoff(journeyRequestId)");
+  const iosBrowserIndex = handoff.indexOf('await WebBrowser.openBrowserAsync(response.url, { dismissButtonStyle: "close" })');
+  const androidFallbackIndex = handoff.indexOf("else await Linking.openURL(response.url)");
+  assert.ok(redirectIndex > 0 && settleIndex > redirectIndex && iosBrowserIndex > settleIndex,
+    "the provider redirect remains authoritative and the consented journey settles before the iOS in-app browser opens");
+  assert.ok(androidFallbackIndex > iosBrowserIndex,
+    "Android continues to use the existing external browser fallback");
+  assert.match(handoff, /if\(Platform\.OS === "ios"\) \{/,
+    "the in-app browser must be scoped to iOS");
 });
 
 test("native analytics settings show disconnected grant separately from a connected device", () => {

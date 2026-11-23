@@ -5,6 +5,7 @@ import { favoriteAction } from "./favoriteAccess";
 import { showFavoriteSignInPrompt } from "./favoriteSignInPrompt";
 import { clearSession, readSession } from "./sessionStorage";
 import { flightSavedSignature, type SavableFlight } from "./savedMapping";
+import { recordNativeSavedInteraction } from "../features/privacy/nativeSavedTracking";
 import { savedRepositoryFor, type SavedSnapshot } from "./savedRepository";
 
 export function useSavedFlights() {
@@ -31,7 +32,7 @@ export function useSavedFlights() {
     void repository.refresh();
     return unsubscribe;
   }, [userId]);
-  const toggle = useCallback(async (flight: SavableFlight, searchParams?: Record<string, unknown>) => {
+  const toggle = useCallback(async (flight: SavableFlight, searchParams?: Record<string, unknown>, journeyRequestId?: string | null) => {
     let resolvedUserId = userId;
     if (resolvedUserId === undefined) {
       const session = await readSession();
@@ -43,9 +44,17 @@ export function useSavedFlights() {
       return;
     }
     const repository = savedRepositoryFor(resolvedUserId);
-    const operation = repository.snapshot().flights.has(flightSavedSignature(flight)) ? "remove" : "save";
+    const key = flightSavedSignature(flight);
+    if (repository.snapshot().pendingFlightKeys.has(key)) return;
+    const operation = repository.snapshot().flights.has(key) ? "remove" : "save";
     try {
-      await savedRepositoryFor(resolvedUserId).toggleFlight(flight, searchParams);
+      await repository.toggleFlight(flight, searchParams);
+      void recordNativeSavedInteraction({
+        action: operation === "remove" ? "saved_item_removed" : "saved_item_confirmed",
+        product: "FLIGHT", resultId: flight.id, requestId: journeyRequestId,
+        observedResult: { label: flight.airlineName, provider: flight.provider,
+          amount: flight.price, currency: flight.currency, priceBasis: "total" },
+      });
     } catch (error) {
       if (error instanceof TravelApiError && error.status === 401) {
         await clearSession();

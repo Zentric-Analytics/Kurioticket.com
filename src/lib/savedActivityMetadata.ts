@@ -1,11 +1,15 @@
 import { applicationMetadata, type ApplicationAttribution } from "@/lib/application-source";
+import { createHash } from "node:crypto";
 
 export type SavedActivityType = "flight" | "hotel" | "car" | "search";
 export type SavedActivityProduct = "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE";
 
 function safeReference(value: unknown): string | undefined {
-  return typeof value === "string" && value.length >= 1 && value.length <= 128
-    && /^[A-Za-z0-9._:-]+$/.test(value) ? value : undefined;
+  if (typeof value !== "string" || !value.length || value.length > 4096) return undefined;
+  // Keep provider references with punctuation private, but correlate the same
+  // result across native/web interactions and verified server save audits.
+  return /^[A-Za-z0-9._:-]{1,128}$/.test(value)
+    ? value : createHash("sha256").update(value).digest("hex");
 }
 
 export function savedResultReference(

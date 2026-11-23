@@ -15,7 +15,9 @@ test("flight favorites resolve an unknown session before choosing save or sign-i
   assert.match(hook, /useState<string \| null \| undefined>\(undefined\)/);
   assert.match(hook, /if \(resolvedUserId === undefined\) \{[\s\S]*?await readSession\(\)[\s\S]*?setUserId\(resolvedUserId\)/);
   assert.match(hook, /favoriteAction\(resolvedUserId\) === "sign-in"[\s\S]*?showFavoriteSignInPrompt\("\/saved"\)/);
-  assert.match(hook, /await savedRepositoryFor\(resolvedUserId\)\.toggleFlight/);
+  assert.match(hook, /const repository = savedRepositoryFor\(resolvedUserId\)/);
+  assert.match(hook, /await repository\.toggleFlight\(flight, searchParams\)/);
+  assert.match(hook, /recordNativeSavedInteraction/);
   assert.doesNotMatch(hook, /toggleFlight\([\s\S]*?catch\(\(\) => undefined\)/);
 });
 

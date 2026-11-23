@@ -7,6 +7,7 @@ test("car save state delegates to the account-backed canonical repository", () =
   assert.match(source, /useCanonicalSaved/);
   assert.match(source, /carSavedSignature\(result, searchParams\)/);
   assert.match(source, /savedState\.cars\.has\(signature\)/);
-  assert.match(source, /savedState\.toggleCar\(result, searchParams\)/);
+  assert.match(source, /savedState\.toggleCar\(result, searchParams, journeyRequestId/);
+  assert.match(source, /typeof searchParams\.journeyRequestId === "string"/);
   assert.doesNotMatch(source, /new Set/);
 });

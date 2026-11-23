@@ -41,6 +41,14 @@ export type AdminJourneyRow = {
   stages: Record<AdminJourneyStage, number>;
 };
 
+/** Allowlisted values extracted from an actual recorded search. No raw query JSON or network metadata. */
+export type AdminJourneySearchDetails =
+  | { product: "FLIGHT"; tripType?: "one-way" | "round-trip" | "multi-city"; departureDate?: string; returnDate?: string;
+      cabinClass?: "economy" | "premium-economy" | "business" | "first"; adults?: number; children?: number; infants?: number; travelers?: number;
+      legs?: Array<{ origin: string; destination: string; departureDate: string }> }
+  | { product: "HOTEL"; checkIn?: string; checkOut?: string; rooms?: number; guests?: number; adults?: number; children?: number }
+  | { product: "CAR"; pickupDate?: string; pickupTime?: string; dropoffDate?: string; dropoffTime?: string; driverAge?: string };
+
 export type AdminJourneySearch = {
   id: string;
   requestId: string | null;
@@ -52,6 +60,7 @@ export type AdminJourneySearch = {
   status: "SUCCESS" | "PARTIAL" | "FAILED";
   resultCount: number;
   latencyMs: number | null;
+  details?: AdminJourneySearchDetails | null;
 };
 
 export type AdminJourneyEvent = {

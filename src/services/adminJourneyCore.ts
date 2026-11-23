@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { isJourneySourcePath, journeySourcePath } from "@/lib/search-journey";
+import { safeAdminJourneySearchDetails } from "./adminJourneySearchDetails";
 import {
   adminJourneyProducts,
   adminJourneyStages,
@@ -43,7 +44,7 @@ type EventRecord = {
   observedResult?: unknown;
   provider: string | null; sourcePage: string | null;
   searchHistoryId: string | null; requestId: string | null; searchProduct: AdminJourneyProduct | null;
-  origin: string | null; destination: string | null; checkIn: Date | null; checkOut: Date | null;
+  origin: string | null; destination: string | null; checkIn: Date | null; checkOut: Date | null; searchQuery?: unknown;
   searchStatus: "SUCCESS" | "PARTIAL" | "FAILED" | null; resultCount: number | null; latencyMs: number | null;
   redirectLogId: string | null; redirectProvider: string | null; route: string | null; destinationUrl: string | null;
 };
@@ -86,7 +87,7 @@ function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
         e."metadata"->>'alertMode' AS "alertMode", e."metadata"->>'alertCurrency' AS "alertCurrency",
         e."metadata"->>'alertTargetPrice' AS "alertTargetPrice", e."metadata"->>'alertBaselinePrice' AS "alertBaselinePrice", j."visitorId", v."currentUserId" AS "userId", j."startedAt",
         s."id" AS "searchHistoryId", s."requestId", s."type"::text AS "searchProduct", s."origin", s."destination",
-        s."checkIn", s."checkOut", s."status"::text AS "searchStatus", s."resultCount", s."latencyMs",
+        s."checkIn", s."checkOut", s."query" AS "searchQuery", s."status"::text AS "searchStatus", s."resultCount", s."latencyMs",
         r."id" AS "redirectLogId", r."provider" AS "redirectProvider", r."route", r."destinationUrl"
       FROM "JourneyEvent" e
       JOIN "SearchJourney" j ON j."id" = e."journeyId"
@@ -343,6 +344,7 @@ function eventDto(row: EventRecord): AdminJourneyEvent {
       id: row.searchHistoryId, requestId: row.requestId, product: row.searchProduct,
       origin: text(row.origin), destination: text(row.destination), checkIn: row.checkIn?.toISOString() ?? null, checkOut: row.checkOut?.toISOString() ?? null,
       status: row.searchStatus, resultCount: count(row.resultCount ?? 0), latencyMs: row.latencyMs,
+      details: safeAdminJourneySearchDetails(row.searchProduct, row.searchQuery),
     } : null,
     handoff: row.redirectLogId ? {
       id: row.redirectLogId, provider: text(row.redirectProvider, 100) ?? "Unknown provider", route: text(row.route),
