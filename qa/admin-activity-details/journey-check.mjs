@@ -67,7 +67,7 @@ try {
   assert.equal(detailUrl.searchParams.get("visitorId"),"qa-guest-activity-0001");
   await expect(page.getByRole('heading',{name:'Event History'})).toBeVisible();
   await expect(page.getByRole('table')).toContainText('Search completed');
-  await expect(page.getByRole('table')).toContainText('Results viewed');
+  await expect(page.getByRole('table')).toContainText('Results page viewed');
   await expect(page.getByRole('table')).toContainText('Offer selected');
   await expect(page.getByRole('table')).toContainText('Provider handoff started');
   await expect(page.getByRole('table')).toContainText('LOS → IST');
