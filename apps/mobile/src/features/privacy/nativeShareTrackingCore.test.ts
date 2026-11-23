@@ -50,7 +50,7 @@ test("a switch to another account never attaches the former share", async () => 
   let generation = 10;
   let finish!: (value: { action: string }) => void;
   const pending = shareAndRecordObservedAction({
-    share: () => new Promise(resolve => { finish = resolve; }),
+    share: () => new Promise<{ action: string }>(resolve => { finish = resolve; }),
     trackingContext: () => generation,
     record: async () => { assert.fail("no cross-account share event"); },
   });
