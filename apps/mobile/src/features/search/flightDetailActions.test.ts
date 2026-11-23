@@ -95,7 +95,7 @@ test("hero controls preserve independent save and share targets in a smaller gla
   assert.doesNotMatch(native, /rgba\(255, 255, 255, 0\.68\)/);
   assert.match(native, /heroAction:\{width:44,height:44,alignItems:"center",justifyContent:"center"\}/);
   assert.equal(controls.match(/<IconButton/g)?.length, 2);
-  assert.match(controls, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>savedFlights\.toggle/);
+  assert.match(controls, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>void savedFlights\.toggle/);
   assert.match(controls, /label="Share flight" onPress=\{\(\)=>void share\(\)\}/);
   assert.match(native, /heroIconButton:\{width:44,height:44,borderRadius:22/);
   assert.match(native, /routeMetadata:\{color:"#FFFFFF"[^}]*textTransform:"uppercase"/);
@@ -127,8 +127,8 @@ test("flight Hotel light glass keeps unsaved Save icon visible in dark mode", ()
 });
 
 test("flight save action uses the canonical favorite visual states", () => {
-  assert.match(native, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>savedFlights\.toggle/);
-  assert.match(native, /savedFlights\.toggle\(savedOffer,nativeFlightEditSearchParams\(details,one\(params\.currency\)\)\)/);
+  assert.match(native, /label=\{saved\?"Remove saved flight":"Save flight"\} onPress=\{\(\)=>void savedFlights\.toggle/);
+  assert.match(native, /savedFlights\.toggle\(savedOffer,nativeFlightEditSearchParams\(details,one\(params\.currency\)\),journeyRequestId\)/);
   assert.match(native, /<Heart size=\{17\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{saved \? androidFavoriteColors\.savedStroke : androidFavoriteColors\.unsavedStroke\} fill=\{saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/>/);
   assert.match(native, /const heroIconColor="#0F172A"/);
   assert.doesNotMatch(native, /<Heart[^>]*fill="transparent"/);
