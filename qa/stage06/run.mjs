@@ -88,7 +88,7 @@ try{
   await page.screenshot({path:path.join(output,'search-'+width+'.png'),fullPage:true});
   await page.setExtraHTTPHeaders({'x-qa-unavailable':'1'});await page.goto(base+'/admin/platform-health',{waitUntil:'networkidle'});await expect(page.getByText('Telemetry could not be read')).toHaveCount(3);await page.setExtraHTTPHeaders({});await page.getByRole('button',{name:'Refresh observations'}).click();await expect(page.getByText('Recorded operations · sample size')).toHaveCount(3);
   await page.goto(base+'/admin/platform-health?hours=24&hours=168');const invalidFilterAlert=page.getByRole('alert').filter({hasText:'Check the health filters'});await expect(invalidFilterAlert).toBeVisible();await expect(invalidFilterAlert).toContainText('Choose an application and a Today, 7-day or 30-day window.');
-  expect(errors).toEqual([]);results.push({width,overflow,keyboardPolishedFilters:true,filterNavigation:true,detailBackContext:true,unknown:true,unavailableRefreshRecovery:true,reducedMotion:true,runningMotion,pageErrors:errors});await context.close();
+  expect(errors).toEqual([]);results.push({width,overflow,keyboardPolishedFilters:true,filterNavigation:true,detailBackContext:true,unverified:true,unavailableRefreshRecovery:true,reducedMotion:true,runningMotion,pageErrors:errors});await context.close();
  }
 
  // Actual Team Access client component and calendar/time picker (synthetic member).
