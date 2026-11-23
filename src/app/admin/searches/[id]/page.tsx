@@ -94,7 +94,6 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
         <h2 className="text-[14px] font-semibold text-[#111827]">Search information</h2>
         <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3 md:grid-cols-3 lg:grid-cols-5">
           <Field label="Application source" value={applicationLabel(search.applicationSource)} />
-          {isBot ? <Field label="Bot name" value={botName} /> : null}
           {isBot ? <Field label="Verification" value={searchDetailCrawlerEvidenceLabel(search.crawler?.evidence)} /> : null}
           {search.appVersion?<Field label="App version" value={search.appVersion}/>:null}
           {/* Product and locations are already identifiable in the Search overview headline. */}
