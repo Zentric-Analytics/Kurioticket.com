@@ -136,6 +136,30 @@ test("guest events require the exact search ID, consented unlinked visitor, and 
   assert.equal(JSON.stringify(where).includes("request_00001"), true);
 });
 
+test("distinct native flight actions retain exact stage and only safe recorded offer references", async () => {
+  const instance = reader({
+    events: [
+      eventRow({ id: "event_details", type: "FLIGHT_DETAILS_VIEWED", provider: "KAYAK sandbox",
+        metadata: { resultId: "flight:112" } }),
+      eventRow({ id: "event_fare", type: "OFFER_SELECTED", metadata: { resultId: "fare-2" } }),
+      eventRow({ id: "event_deal", type: "PROVIDER_DEAL_SELECTED", provider: "Trip.com",
+        metadata: { resultId: "deal_003" } }),
+      eventRow({ id: "event_bad", type: "PROVIDER_DEAL_SELECTED", metadata: { resultId: "https://secret.test?token=private" } }),
+    ],
+  });
+  const result = await instance.read(searchId, urlParams());
+  assert.equal(result.status, "ok");
+  if (result.status !== "ok") return;
+  assert.deepEqual(result.data.events.map(event => event.stage),
+    ["FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_DEAL_SELECTED"]);
+  assert.deepEqual(result.data.events.map(event => event.offerReference),
+    ["flight:112", "fare-2", "deal_003", null]);
+  assert.doesNotMatch(JSON.stringify(result), /secret\.test|private/);
+  const conditions = JSON.stringify((instance.inspected().eventQuery as {where:unknown}).where);
+  assert.match(conditions, /FLIGHT_DETAILS_VIEWED/);
+  assert.match(conditions, /PROVIDER_DEAL_SELECTED/);
+});
+
 test("registered search requires verified active exclusive account linkage, not a guest directory lookup", async () => {
   const instance = reader({
     search: searchRow({ userId: "account_00001" }),
