@@ -9,7 +9,7 @@ export function useResultsReturnIntent(product: ResultsProduct, resultsHref: str
   useEffect(() => {
     if (!isResultsHref(product, resultsHref, window.location.href)) return;
     const remember = () => markResultsReturn(product, resultsHref,
-      window.sessionStorage, Date.now(), window.location.href);
+      undefined, Date.now(), window.location.href);
 
     const onClick = (event: MouseEvent) => {
       if (event.defaultPrevented || event.button !== 0 ||
