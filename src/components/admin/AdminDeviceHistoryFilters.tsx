@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useAdminTimeZone } from "./AdminTimeZoneProvider";
 import { SearchMonitorSelect } from "./SearchMonitorSelect";
 import { AdminCalendarInput } from "./AdminCalendarInput";
 import { deviceHistoryHref, type DeviceHistoryQuery, type DeviceHistoryRange } from "@/lib/adminDeviceHistory";
@@ -44,12 +45,12 @@ export function AdminDeviceHistoryFilters({ path, query, returnHref }: {
       </button>
     </div>
     {range === "custom" ? <div className="flex min-w-0 flex-wrap items-end gap-3">
-      <label className={field}><span>From (UTC)</span>
-        <AdminCalendarInput ariaLabel="Device history From UTC" value={from} max={to || undefined}
+      <label className={field}><span>From (local)</span>
+        <AdminCalendarInput timeZone="local" ariaLabel="Device history From local" value={from} max={to || undefined}
           onValueChange={setFrom} className="w-[185px] max-w-full"/>
       </label>
-      <label className={field}><span>To (UTC)</span>
-        <AdminCalendarInput ariaLabel="Device history To UTC" value={to} min={from || undefined}
+      <label className={field}><span>To (local)</span>
+        <AdminCalendarInput timeZone="local" ariaLabel="Device history To local" value={to} min={from || undefined}
           onValueChange={setTo} className="w-[185px] max-w-full"/>
       </label>
     </div> : null}
