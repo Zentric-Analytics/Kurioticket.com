@@ -353,8 +353,16 @@ export async function loadAdminIdentityActivity(
           }
           // SearchJourney is unique by ID: count distinct journeys server-side
           // within the same repeatable-read snapshot, not from the current page.
+          // The existing "Journeys tracked" funnel metric retains its
+          // original four-stage meaning. Newly visible saved/shared/alert
+          // actions do not silently inflate this established metric.
+          const funnelEvents: Prisma.JourneyEventWhereInput = {
+            AND: [validEvents, { type: { in: [
+              "SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED",
+            ] } }],
+          };
           distinctJourneyCount += await tx.searchJourney.count({
-            where: { visitorId: { in: visitorIds }, events: { some: validEvents } },
+            where: { visitorId: { in: visitorIds }, events: { some: funnelEvents } },
           });
         };
         phase = "journey_ownership_counts";
