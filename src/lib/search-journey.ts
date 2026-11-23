@@ -1,6 +1,6 @@
 const journeyIdleWindowMs = 30 * 60 * 1000;
 
-export const clientJourneyEventTypes = ["RESULTS_VIEWED", "OFFER_SELECTED"] as const;
+export const clientJourneyEventTypes = ["RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"] as const;
 export type ClientJourneyEventType = (typeof clientJourneyEventTypes)[number];
 export type JourneyEventReceipt = { accepted: boolean; retryable?: boolean };
 
