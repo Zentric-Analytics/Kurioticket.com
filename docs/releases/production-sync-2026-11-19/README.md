@@ -4,7 +4,7 @@ Status: NOT READY FOR PRODUCTION PROMOTION. This branch is preparation only; no 
 
 November 22 follow-up: [Provider Management implementation and operating limits](provider-management.md). This focused addition preserves the frozen baselines below; it does not authorize promotion or import newer dev changes.
 
-November 23 follow-up: [Final cutover readiness and specific approval boundaries](final-cutover-readiness.md). Includes current read-only database/store observations, refreshed Play upload history and the bounded recovery proposal. Earlier dated findings below remain historical evidence.
+November 23 follow-up: [Final cutover readiness and specific approval boundaries](final-cutover-readiness.md). Includes current read-only database/store observations, refreshed Play upload history, focused migration time controls and the owner decision to defer recovery testing. Recovery is OWNER-DEFERRED, not a release gate. Owner selected admin@kurioticket.com and authorized KAYAK sandbox for initial web scope. Six-field Save-only configuration is approved; merge/deployment still require approval. Earlier dated findings below remain historical evidence.
 
 ## Immutable scope
 

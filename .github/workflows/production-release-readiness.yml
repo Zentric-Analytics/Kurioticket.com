@@ -78,11 +78,15 @@ jobs:
           --health-interval 10s --health-timeout 5s --health-retries 5
     env:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kurioticket_release_ci?schema=public
+      NEXT_PUBLIC_APP_URL: https://kurioticket.com
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
         with: { node-version: 24, cache: npm }
       - run: npm ci
+      - run: node --test scripts/production-migration-controls.test.mjs
+      - run: node scripts/verify-production-migration-timeouts.mjs
+        env: { KURIOTICKET_SYNTHETIC_PG18: "1" }
       - run: npx --no-install prisma validate
       - run: npm run check:migration-timestamps
       - run: npx --no-install prisma migrate deploy
