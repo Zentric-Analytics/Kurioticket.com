@@ -16,6 +16,7 @@ import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafe
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
 import { applicationMetadata, type ApplicationAttribution } from "@/lib/application-source";
 import { completeSearchNetworkObservation, recordedSearchNetwork } from "@/lib/searchNetworkObservation";
+import { carFilterGroups } from "@/lib/cars/carFilterPresentation";
 
 export { clientJourneyEventTypes, journeyEventKey, type ClientJourneyEventType };
 export type SearchJourneyDatabase = Pick<PrismaClient, "$transaction">;
@@ -208,6 +209,9 @@ export function createSearchJourneyService(
         // Retry this race, but never retry an already-known ownership mismatch.
         if (!search) return { accepted: false, retryable: true };
         if (!ownsActivity(search, visitorId, input.userId ?? null)) return { accepted: false };
+        if (search.type === "CAR" && input.filterSelections?.some(choice =>
+          !carFilterGroups.some(group => group.id === choice.group && group.options.some(option => option.id === choice.option))
+        )) return { accepted: false };
         if ((clientJourneyDecisionTypes as readonly string[]).includes(input.type)) {
           const query = search.query;
           if (!query || typeof query !== "object" || Array.isArray(query) || query.environment !== getPublicEnvironment()) return { accepted: false };
