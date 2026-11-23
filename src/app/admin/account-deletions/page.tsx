@@ -1,3 +1,4 @@
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
@@ -21,7 +22,7 @@ const statusPresentation: Record<string, { label: string; dot: string; text: str
 
 export default async function AdminAccountDeletionsPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
-  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) });
+  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) }, new Date(), await getAdminTimeZone());
   const applied = { ...raw, from: window.from || undefined, to: window.to || undefined };
   const params = toParams(applied);
   if (!params.has("limit")) params.set("limit", "50");
