@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   try { body = await request.json(); } catch { return Response.json({ error: "Invalid JSON request body.", requestId }, { status: 400, headers: noStore }); }
   const search = canonicalSearch(body);
   if (!search) return Response.json({ error: "Invalid car search parameters.", requestId }, { status: 400, headers: noStore });
-  const operationalSession = prepareOperationalSearchSession(request);
+  const operationalSession = verifiedCrawler ? null : prepareOperationalSearchSession(request);
   const recordedSearch = { ...search, ...searchNetworkObservation(request),
     ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}),
     ...(verifiedCrawler ? { verifiedCrawler } : {}) };
