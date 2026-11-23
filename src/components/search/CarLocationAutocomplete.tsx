@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, KeyboardEvent, MouseEvent, PointerEvent, RefObject, useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import { ChangeEvent, KeyboardEvent, MouseEvent, PointerEvent as ReactPointerEvent, RefObject, useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { Building2, CarFront, LocateFixed, MapPin, Plane } from "lucide-react";
 
@@ -219,7 +219,7 @@ export function CarLocationAutocomplete({
 
   // Mouse selection must commit before focus/portal dismissal can remove the option.
   // Keep click for touch, keyboard and assistive-technology activation.
-  const onOptionPointerDown = (event: PointerEvent<HTMLButtonElement>, suggestion: CarLocationSuggestion) => {
+  const onOptionPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, suggestion: CarLocationSuggestion) => {
     if (event.pointerType !== "mouse" || event.button !== 0) return;
     event.preventDefault();
     selectSuggestion(suggestion);
