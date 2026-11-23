@@ -39,7 +39,7 @@ export function PlatformOverviewSummary({ data }: {
               </div>
             ))}
             <div className="flex min-h-[72px] min-w-0 flex-col justify-center rounded-lg bg-slate-50 p-3">
-              <dt className="text-xs font-medium text-slate-600">Bots</dt>
+              <dt className="text-xs font-medium text-slate-600">Bots<span className="sr-only"> (verified search crawler attempts blocked before provider execution)</span></dt>
               <dd className="mt-1 text-lg font-semibold leading-6 tabular-nums text-slate-950">
                 {verifiedBotAttempts === null ? "Unavailable" : verifiedBotAttempts.toLocaleString()}
               </dd>
@@ -54,9 +54,6 @@ export function PlatformOverviewSummary({ data }: {
               {" "}included in All Platforms, but not in Bots. Investigate missing source verification.
             </p>
           ) : null}
-          <p className="mt-2 text-xs leading-5 text-slate-500">
-            Bots counts verified crawler search requests blocked before provider execution, not completed customer searches.
-          </p>
         </div>
       ) : (
         <p role="status" className="mt-4 text-sm text-slate-600">
