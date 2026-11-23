@@ -1,10 +1,12 @@
 "use client";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { CarsResultsClient } from "./CarsResultsClient";
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import { journeyRequestId } from "@/lib/journeyEventClient";
 import { carSearchRecoveryHref } from "@/lib/cars/carSearchRecovery";
+import { carResultsReturnKey, rememberCarResultsReturn, readCarResultsReturn } from "@/lib/cars/carResultsReturnSnapshot";
+import { takeResultsReturn } from "@/lib/results/resultsReturnIntent";
 
 /** Keep the document small; inventory arrives through the canonical JSON API. */
 export function CarInventoryLoader({ values, fallback }: {
@@ -18,7 +20,29 @@ export function CarInventoryLoader({ values, fallback }: {
   const [invalidSearch, setInvalidSearch] = useState(false);
   const [unsupported, setUnsupported] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const returnIntentRef = useRef<{ key: string; returning: boolean } | null>(null);
+  const [expiredReturn, setExpiredReturn] = useState(false);
   useEffect(() => {
+    const key = carResultsReturnKey(values);
+    // Consume the marker once, but keep it for StrictMode's effect replay.
+    if (returnIntentRef.current?.key !== key) {
+      returnIntentRef.current = { key, returning: takeResultsReturn("car", window.location.href) };
+    }
+    if (returnIntentRef.current.returning && attempt === 0) {
+      const snapshot = readCarResultsReturn(key);
+      const timer = window.setTimeout(() => {
+        if (snapshot) {
+          setRequestId(snapshot.requestId);
+          setResults(snapshot.results);
+          setExpiredReturn(false);
+        } else {
+          // Do not request new supplier inventory or log another search on Back.
+          setExpiredReturn(true);
+          setResults(null);
+        }
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
     const controller = new AbortController();
     let active = true;
     const timeout = window.setTimeout(() => controller.abort(), 60_000);
@@ -38,8 +62,11 @@ export function CarInventoryLoader({ values, fallback }: {
       const data = await response.json();
       if (!Array.isArray(data.results)) throw new Error("Invalid car inventory");
       if (active) {
-        setRequestId(journeyRequestId(data.requestId));
+        const id = journeyRequestId(data.requestId);
+        rememberCarResultsReturn(key, data.results, id);
+        setRequestId(id);
         setResults(data.results);
+        setExpiredReturn(false);
       }
     }).catch(() => { if (active) setError(true); })
       .finally(() => window.clearTimeout(timeout));
@@ -52,6 +79,11 @@ export function CarInventoryLoader({ values, fallback }: {
   useEffect(() => {
     if (results?.length && requestId) journeyEvents.resultsViewed(requestId);
   }, [results, requestId, journeyEvents]);
+  if (expiredReturn) return <main className="page-shell py-8" data-cars-return-expired>
+    <p role="alert">Your previous car results have expired. Search again to check current prices.</p>
+    <button type="button" className="focus-ring mt-4 rounded-lg border border-[#004BB8] px-4 py-2 font-semibold text-[#004BB8]"
+      onClick={() => { setExpiredReturn(false); setResults(null); setAttempt(value => value + 1); }}>Search again</button>
+  </main>;
   if (invalidSearch) return <CarsResultsClient values={values} initialResults={[]} inventoryStatus="invalid-search" />;
   if (unsupported) return <main className="page-shell py-8">
     <p role="alert">These rental locations could not be verified or are unsupported. Select the locations again, then search.</p>
