@@ -100,9 +100,10 @@ test("car result and details share the account-backed canonical save store", () 
   const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
   const detail = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
   const store = readFileSync("src/features/search/carSavedState.ts", "utf8");
-  assert.match(card, /useSavedCar\(result, searchParams\)/);
+  assert.match(card, /useSavedCar\(result, searchParams, journeyRequestId\)/);
   assert.match(detail, /useSavedCar\(\s*result,\s*params\s*\)/);
   assert.match(store, /useCanonicalSaved/);
+  assert.match(store, /savedState\.toggleCar\(result, searchParams, journeyRequestId/);
   assert.doesNotMatch(store, /new Set/);
 });
 
