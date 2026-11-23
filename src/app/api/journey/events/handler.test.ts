@@ -88,6 +88,43 @@ test("browser journey events use the configured public origin behind an internal
   });
 });
 
+test("new native flight stages require a bounded offer reference and keep exact consented ownership", async () => {
+  const f = fixture();
+  const requestId = randomUUID();
+  for (const [type, offerId] of [
+    ["FLIGHT_DETAILS_VIEWED", "flight-result_01"],
+    ["OFFER_SELECTED", "fare-001"],
+    ["PROVIDER_DEAL_SELECTED", "deal:KAYAK.2"],
+  ] as const) {
+    const response = await f.handler(request({ eventId: randomUUID(), type, requestId, offerId,
+      sourcePage: type === "FLIGHT_DETAILS_VIEWED" ? "/flight-results" : "/flight-details" }));
+    assert.equal(response.status, 202);
+    assert.deepEqual(await response.json(), { accepted: true });
+  }
+  assert.deepEqual(f.records.map(record => record.type),
+    ["FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"]);
+  assert.deepEqual(f.records.map(record => record.offerId),
+    ["flight-result_01", "fare-001", "deal:KAYAK.2"]);
+  assert.ok(f.records.every(record => record.visitorId === "web-visitor"));
+});
+
+test("untrusted references, extra fields and absent new-stage references cannot become events", async () => {
+  const f = fixture();
+  const base = { eventId: randomUUID(), requestId: randomUUID(), type: "PROVIDER_DEAL_SELECTED",
+    sourcePage: "/flight-details" };
+  for (const body of [
+    base,
+    { ...base, offerId: "https://example.test/?secret=token" },
+    { ...base, offerId: "<script>" },
+    { ...base, offerId: "x".repeat(129) },
+    { ...base, offerId: "offer_ok", privateMetadata: { email: "secret" } },
+    { ...base, offerId: "offer_ok", sourcePage: "https://example.test/private" },
+  ]) {
+    assert.equal((await f.handler(request(body))).status, 400);
+  }
+  assert.equal(f.records.length, 0);
+});
+
 test("canonical journey origin cannot be bypassed with attacker-controlled request or forwarding hosts", async () => {
   await withOrigins({ app: publicOrigin }, async () => {
     const f = fixture();
