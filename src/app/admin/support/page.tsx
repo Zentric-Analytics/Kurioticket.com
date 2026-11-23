@@ -1,3 +1,4 @@
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
@@ -53,7 +54,7 @@ function priorityStyle(priority: AdminSupportPriority) {
 
 export default async function AdminSupportPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
-  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) });
+  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) }, new Date(), await getAdminTimeZone());
   const applied = { ...raw, from: window.from || undefined, to: window.to || undefined };
   const params = scopedParams(applied);
   // Forward the continuation cursor only to the ticket read. Status tabs and
