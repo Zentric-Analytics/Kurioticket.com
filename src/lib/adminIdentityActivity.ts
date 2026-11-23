@@ -98,7 +98,7 @@ export function activityWindow(filters: ActivityFilters) {
   };
 }
 export type JourneyStage = Exclude<ActivityStage, "all" | "ACCOUNT_ACTIVITY">;
-const allJourneyStages: JourneyStage[] = ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED",
+const allJourneyStages: JourneyStage[] = ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED",
   "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED"];
 export function allowedActivityStages(filters: ActivityFilters): Set<ActivityStage> {
   const available: ActivityStage[] = filters.tab === "all"
