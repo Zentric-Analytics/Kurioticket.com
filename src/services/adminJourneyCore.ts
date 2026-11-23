@@ -290,7 +290,7 @@ function eventDto(row: EventRecord): AdminJourneyEvent {
     ...(["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"].includes(row.type) ? {
       action: ["local_saved", "local_unsaved", "saved_item_confirmed", "saved_item_removed", "share_link_copied", "share_sheet_completed"].includes(row.action ?? "")
         ? row.action as AdminJourneyEvent["action"] : null,
-      resultReference: row.resultReference && /^[a-zA-Z0-9._:-]{1,128}$/.test(row.resultReference) ? row.resultReference : null,
+      resultReference: row.resultReference && /^[A-Za-z0-9._:+~=-]{1,128}$/.test(row.resultReference) ? row.resultReference : null,
     } : {}),
     provider: text(row.provider, 100), sourcePage: safePath(row.sourcePage),
     search: row.searchHistoryId && row.searchProduct && row.searchStatus ? {
