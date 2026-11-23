@@ -50,7 +50,11 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
                   {searchTitle ? <p className="font-medium text-[#020617]">{searchTitle}</p> : null}
                   <p className={searchTitle ? "mt-1 text-xs text-[#64748B]" : "text-xs text-[#64748B]"}>{readable(event.search.status)} · {event.search.resultCount} results</p>
                 </> : <p className="text-xs text-[#64748B]">Search details not recorded</p>}
-                {event.filterGroup ? <p className="mt-1 text-xs text-[#64748B]">Applied filter group: {readable(event.filterGroup)}</p> : null}
+                {event.filterSelections?.length ? <div className="mt-1 text-xs text-[#475569]">
+                  <p className="font-medium">Selected filters (observed on customer device):</p>
+                  <ul className="mt-1 space-y-0.5">{event.filterSelections.map((choice, index) =>
+                    <li key={`${choice.group}:${choice.option}:${index}`}>{choice.group.replace(/([a-z])([A-Z])/g, "$1 $2")}: {choice.option.replace(/([a-z])([A-Z])/g, "$1 $2")}</li>)}</ul>
+                </div> : event.filterGroup ? <p className="mt-1 text-xs text-[#64748B]">Filter category: {readable(event.filterGroup)} · Exact options not recorded</p> : null}
                 {event.sortChoice ? <p className="mt-1 text-xs text-[#64748B]">Selected sort: {({
                   best: "Best", cheapest: "Cheapest", fastest: "Fastest", stops: "Fewest stops",
                   bestValue: "Best value", topRated: "Top rated", recommended: "Recommended", lowestTotal: "Lowest total price",
