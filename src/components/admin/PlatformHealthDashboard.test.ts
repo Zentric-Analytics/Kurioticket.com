@@ -73,14 +73,14 @@ test("empty activity remains UNKNOWN with no invented latency; Overview keeps un
     assert.doesNotMatch(empty, />Healthy<|>0 ms</);
     const { PlatformOverviewSummary } = jiti("./PlatformOverviewSummary") as typeof import("./PlatformOverviewSummary");
     const fixture = platformFixture();
-    const data = { environment: fixture.environment, window: fixture.window, searches: fixture.activity.data!.searches, verifiedBotAttempts: 7 };
+    const data = { environment: fixture.environment, window: fixture.window, searches: fixture.activity.data!.searches };
     const overview = renderToStaticMarkup(createElement(PlatformOverviewSummary, { data }));
     for (const label of ["All Platforms", "Website", "iOS", "Android", "Bots", "unverified platform searches"])
         assert.ok(overview.includes(label));
-    assert.match(overview, />48</);
+    assert.match(overview, />55</);
     assert.equal((overview.match(/>12</g) || []).length, 3);
     assert.match(overview, />7</);
-    assert.match(overview, /verified search crawler attempts blocked before provider execution/);
+    assert.doesNotMatch(overview, /verified search crawler attempts blocked before provider execution/);
     assert.match(overview, />Platform Search Activity</);
     assert.match(overview, /View details/);
     assert.doesNotMatch(overview, /View Search Activity →/);
@@ -93,14 +93,14 @@ test("empty activity remains UNKNOWN with no invented latency; Overview keeps un
     assert.equal((overview.match(/bg-slate-50 p-3/g) || []).length, 5);
     const links = Array.from(overview.matchAll(/href="([^"]+)"/g), ([, href]) =>
         new URL(href.replaceAll("&amp;", "&"), "https://example.invalid"));
-    assert.equal(links.length, 6);
+    assert.equal(links.length, 7);
     for (const url of links) {
         assert.equal(url.pathname, "/admin/searches/activity");
         assert.equal(url.searchParams.get("range"), "custom");
         assert.equal(url.searchParams.get("from"), "2026-11-15T00:00:00.000Z");
         assert.equal(url.searchParams.get("to"), "2026-11-16T00:00:00.000Z");
     }
-    assert.deepEqual(links.map(url => url.searchParams.get("applicationSource")), [null, null, "WEB", "IOS", "ANDROID", "UNKNOWN"]);
+    assert.deepEqual(links.map(url => url.searchParams.get("applicationSource")), [null, null, "WEB", "IOS", "ANDROID", "BOT", "UNKNOWN"]);
 
     const missing = renderToStaticMarkup(createElement(PlatformOverviewSummary, { data: { ...data, searches: null } }));
     assert.match(missing, /unavailable/);
@@ -116,14 +116,14 @@ test("Platform Health filter dropdowns use polished accessible Admin selectors w
     assert.match(directorySource, /<select/);
     assert.match(filtersSource, /action="\/admin\/platform-health"/);
     assert.match(filtersSource, /method="get"/);
-    for (const value of ["24", "168", "720", "ALL", "WEB", "IOS", "ANDROID", "UNKNOWN"]) {
+    for (const value of ["24", "168", "720", "ALL", "WEB", "IOS", "ANDROID", "BOT", "UNKNOWN"]) {
       assert.ok((filtersSource + readFileSync("src/lib/platformHealthPresentation.ts", "utf8")).includes('"' + value + '"'));
     }
     assert.match(filtersSource, /sm:grid-cols-2/);
     assert.match(filtersSource, /lg:grid-cols-/);
     assert.match(filtersSource, /Apply view/);
     const html = render();
-    for (const option of ["All Platforms", "Website", "iOS", "Android", "Unverified", "Today", "Last 7 days", "Last 30 days"]) {
+    for (const option of ["All Platforms", "Website", "iOS", "Android", "Bots", "Unverified", "Today", "Last 7 days", "Last 30 days"]) {
       assert.ok(html.includes(option), option);
     }
 });
