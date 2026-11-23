@@ -134,7 +134,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       action={<Link className={buttonClass} href={activityHref(basePath, queryParams, { cursor: null, order: null })}>Return to newest activity</Link>} />
   </div>;
   const data = result.data;
-  const deviceSessions = kind === "user" ? await loadAdminDeviceSessions(id) : null;
+  const deviceSessions = kind === "user" ? await loadAdminDeviceSessions(id, await getAdminTimeZone()) : null;
   const environment = data.environment;
   const operational = data.source === "operational";
   const order = filters.order === "oldest" ? "oldest" : "newest";
