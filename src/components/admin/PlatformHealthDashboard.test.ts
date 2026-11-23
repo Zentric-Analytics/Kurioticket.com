@@ -64,7 +64,7 @@ test("strict view parsing, rates and investigation scope preserve truthful windo
 });
 for (const state of ["HEALTHY", "DEGRADED", "FAILING", "DISABLED", "UNKNOWN", "MONITORING_UNAVAILABLE"])
     test(`status ${state} has text independent of color`, () => { assert.equal(renderToStaticMarkup(createElement(OperationalStatus, { state })).replace(/<[^>]+>/g, "").trim(), ({HEALTHY:"Healthy",DEGRADED:"Degraded",FAILING:"Failing",DISABLED:"Disabled",UNKNOWN:"Unknown",MONITORING_UNAVAILABLE:"Monitoring unavailable"} as Record<string,string>)[state]); });
-test("empty activity remains UNKNOWN with no invented latency; Overview lists all partitions", () => {
+test("empty activity remains UNKNOWN with no invented latency; Overview keeps unverified searches separate from verified Bots", () => {
     const { PlatformActivitySummary } = jiti("./PlatformActivitySummary") as typeof import("./PlatformActivitySummary");
     const empty = renderToStaticMarkup(createElement(PlatformActivitySummary, { label: "Search operations", value: { total: 0, successful: 0, partial: 0, failed: 0, disabled: 0, averageLatencyMs: null, state: "UNKNOWN" }, href: "/admin/searches/activity", linkLabel: "Investigate" }));
     assert.match(empty, /Unknown/);
