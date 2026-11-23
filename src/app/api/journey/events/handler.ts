@@ -18,6 +18,14 @@ const clientEventSchema = z.object({
   filterGroup: z.enum(journeyFilterGroups).optional(),
   sortMode: z.enum(journeySortModes).optional(),
   sortChoice: z.enum(journeySortChoices).optional(),
+  observedResult: z.object({
+    label: z.string().trim().min(1).max(120).regex(/^[^\u0000-\u001f\u007f<>]+$/),
+    provider: z.string().trim().min(1).max(100).regex(/^[^\u0000-\u001f\u007f<>]+$/),
+    amount: z.number().finite().positive().max(1_000_000_000),
+    currency: z.string().regex(/^[A-Z]{3}$/),
+    priceBasis: z.enum(["total", "per_night", "per_day"]),
+    totalAmount: z.number().finite().positive().max(1_000_000_000).optional(),
+  }).strict().optional(),
   filterSelections: z.array(z.object({
     group: z.enum(journeyFilterSelectionGroups),
     option: z.string().trim().min(1).max(72).regex(/^[\p{L}\p{N} ._:+\-']+$/u),
@@ -32,6 +40,9 @@ const clientEventSchema = z.object({
   }
   if (event.type === "SEARCH_FILTER_APPLIED" ? !event.filterGroup : Boolean(event.filterGroup)) {
     ctx.addIssue({ code: "custom", path: ["filterGroup"], message: "Filter group must match the applied-filter action." });
+  }
+  if (event.observedResult && !["RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"].includes(event.type)) {
+    ctx.addIssue({ code: "custom", path: ["observedResult"], message: "Result evidence requires an actual details opening." });
   }
   if (event.type !== "SEARCH_FILTER_APPLIED" && event.filterSelections !== undefined) {
     ctx.addIssue({ code: "custom", path: ["filterSelections"], message: "Selections belong only to applied filters." });
