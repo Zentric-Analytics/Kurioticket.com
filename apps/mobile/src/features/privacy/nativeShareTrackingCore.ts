@@ -11,14 +11,17 @@ export async function shareAndRecordObservedAction<T extends NativeShareOutcome>
   share,
   trackingContext,
   record,
+  canVerifyCompletion,
 }: {
   share: () => Promise<T>;
   trackingContext: () => number | null;
   record: (context: number) => Promise<unknown>;
+  /** Android's RN chooser API reports sharedAction even if later dismissed. */
+  canVerifyCompletion: boolean;
 }): Promise<T> {
   const context = trackingContext();
   const result = await share();
-  if (result?.action !== "sharedAction" || context === null || trackingContext() !== context) return result;
+  if (!canVerifyCompletion || result?.action !== "sharedAction" || context === null || trackingContext() !== context) return result;
   try {
     await record(context);
   } catch {
