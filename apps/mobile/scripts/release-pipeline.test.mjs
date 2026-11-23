@@ -146,8 +146,8 @@ test('Production IPA verification enforces identity, version, schemes, and Previ
     CFBundleURLTypes: [{ CFBundleURLSchemes: ['kurioticket', 'com.googleusercontent.apps.459496589401-b4npe68m8c358rqr79edi7igvi3sauao'] }],
   };
   const provisioningProfile = {
-    UUID: '6888380e-ad09-4383-9fe4-8d8924661765',
-    Name: 'Kurioticket Production App Store',
+    UUID: 'da065922-c441-4c1b-b13b-ed70d482666f',
+    Name: 'Kurioticket Production App Store Associated Domains',
     TeamIdentifier: ['N23R45R4CY'],
     Entitlements: {
       'application-identifier': 'N23R45R4CY.com.kurioticket.app',
@@ -541,8 +541,8 @@ test('Production delivery is manual-only, main-only, and requires the reviewed P
   assert.equal(history.package, policy.production.androidPackage);
   assert.equal(history.recordStatus, 'present');
   assert.equal(history.playApplicationRecord, 'present');
-  assert.deepEqual(history.uploadedBundles, [2]);
-  assert.equal(history.highestUploadedVersionCode, 2);
+  assert.deepEqual(history.uploadedBundles, [2, 5]);
+  assert.equal(history.highestUploadedVersionCode, 5);
   assert.ok(Date.parse(history.verifiedAt));
   assert.ok(history.evidenceReference.includes('9106799153088925304'));
 });

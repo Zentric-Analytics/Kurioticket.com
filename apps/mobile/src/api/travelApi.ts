@@ -119,7 +119,7 @@ subscribeSession?.(session => {
   observedSessionToken = token;
 });
 
-async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string; visitorContext?: number; body?: () => unknown; expectedUserId?: string } = {}) {
+async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string; sandboxDisplay?: boolean; visitorContext?: number; body?: () => unknown; expectedUserId?: string } = {}) {
   const requestStartedAt = Date.now();
   const base = getApiBaseUrl(Platform.OS, __DEV__);
   if (!base.ok) throw new TravelApiError(base.message, 0, "configuration");
@@ -149,9 +149,10 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
       ...(options.body ? { body: JSON.stringify(options.body()) } : {}),
       signal: controller.signal,
       headers: {
+        ...(options.sandboxDisplay ? {"x-sandbox-results-policy":"1"} : {}),
         Accept: "application/json",
         "Content-Type": "application/json",
-        ...(path === "/api/cars/search" ? carSearchClientHeaders(Platform.OS, Constants.expoConfig?.version) : {}),
+        ...((path === "/api/cars/search" || (/^https:\/\/(?:www\.)?kurioticket\.com$/.test(base.baseUrl) && ["/api/flights/search","/api/hotels/search","/api/mobile/v1/hotels/progressive"].includes(path))) ? carSearchClientHeaders(Platform.OS, Constants.expoConfig?.version) : {}),
         "X-Mobile-Platform": Platform.OS,
         ...(operationalPaths.has(path) && (Platform.OS === "android" || Platform.OS === "ios") ? { "X-Kt-Search-Protocol": "v2" } : {}),
         ...(Constants.expoConfig?.version ? { "X-Mobile-App-Version": Constants.expoConfig.version } : {}),
@@ -251,12 +252,12 @@ export const travelApi = {
   homepageContent: (market: string, locale: string) => request<unknown>(`/api/content/homepage?market=${encodeURIComponent(market)}&locale=${encodeURIComponent(locale)}`),
   faqContent: (locale: string) => request<unknown>(`/api/content/faqs?locale=${encodeURIComponent(locale)}`),
   journeyEvent: (body: JourneyEvent, options: { signal: AbortSignal; visitorContext: number }) => request<JourneyEventResponse>("/api/journey/events", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: 4000 }),
-  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<FlightSearchResponse>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<FlightSearchResponse>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   lookupNearbyFlightFare: (body: Record<string, unknown>, options?: { signal?: AbortSignal }) => request<{ fares: NearbyFlightFare[]; requestId: string; resultsCacheValidUntil?: number }>("/api/flights/nearby-fare", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   flightDetails: (id: string, options: { signal?: AbortSignal } = {}) => request<FlightDetailsResponse>(`/api/flights/details?id=${encodeURIComponent(id)}`, {}, options),
   flightRedirect: (id: string, options: RedirectOptions = {}) => providerRedirect(id, "flight", options),
-  searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<HotelSearchResponse>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
-  searchHotelsProgressive: (body: Record<string, unknown>, cursor: string | null, options?: { signal?: AbortSignal; requestId?: string }) => request<HotelSearchResponse>("/api/mobile/v1/hotels/progressive", { method: "POST", body: JSON.stringify(cursor ? { cursor } : { search: body }) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<HotelSearchResponse>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  searchHotelsProgressive: (body: Record<string, unknown>, cursor: string | null, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<HotelSearchResponse>("/api/mobile/v1/hotels/progressive", { method: "POST", body: JSON.stringify(cursor ? { cursor } : { search: body }) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   hotelRedirect: (id: string, options: RedirectOptions = {}) => providerRedirect(id, "hotel", options),
   hotelDetails: (input: MobileHotelDetailsRequest, options: { signal?: AbortSignal } = {}) => {
     const params = new URLSearchParams({ id: input.id, destination: input.destination, checkIn: input.checkIn, checkOut: input.checkOut, guests: String(input.guests), rooms: String(input.rooms), relatedLimit: "12" });
@@ -268,8 +269,8 @@ export const travelApi = {
     if (options.locale) params.set("locale", options.locale);
     return request<{ suggestions?: HotelDestinationSuggestion[] }>(`/api/hotels/destinations?${params.toString()}`, {}, { signal: options.signal });
   },
-  searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
-  searchPackages: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<PackageSearchResponse>("/api/packages/search", { method: "POST", body: JSON.stringify(body) }, options),
+  searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  searchPackages: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<PackageSearchResponse>("/api/packages/search", { method: "POST", body: JSON.stringify(body) }, options),
   trips: (status?: "upcoming" | "past" | "cancelled") => request<{ trips: MobileTrip[]; summary: Record<string, number> }>(`/api/mobile/v1/trips${status ? `?status=${status}` : ""}`),
   flightStatus: (tripId: string) => request<MobileFlightStatus>(`/api/mobile/v1/trips/${encodeURIComponent(tripId)}/flight-status`),
   profile: () => request<{ profile: MobileProfile | null; user: { id: string; email: string; name?: string | null } }>("/api/mobile/v1/profile"),

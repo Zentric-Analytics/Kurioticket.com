@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useId, useState } from "react";
+import React, { Fragment, useEffect, useId, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
@@ -60,10 +60,19 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
 
   const cursor = pageCursors[pageIndex] ?? null;
 
+  const readScope = JSON.stringify([window.start, window.end, environment, provider, product, cursor]);
+  const [previousReadScope, setPreviousReadScope] = useState(readScope);
+  const [previousReload, setPreviousReload] = useState(reload);
+  if (previousReadScope !== readScope || previousReload !== reload) {
+    if (previousReadScope !== readScope) setResult(null);
+    setPreviousReadScope(readScope);
+    setPreviousReload(reload);
+    setLoadState("loading");
+  }
+
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
-    setLoadState("loading");
     // Keep the current rows visible on an explicit refresh; filters and page
     // navigation clear stale rows synchronously before triggering the read.
 

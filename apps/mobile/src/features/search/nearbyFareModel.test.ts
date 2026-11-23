@@ -103,3 +103,18 @@ test("a stale generation stops taking queued work", async () => {
   }, () => current, 1);
   assert.deepEqual(handled, ["one"]);
 });
+
+test("display-only inventory cannot seed native nearby-fare storage", () => {
+  const sandbox = { price: 1, currency: "USD", sandboxDisplayOnly: true };
+  const live = { price: 110, currency: "USD" };
+  assert.equal(selectNearbyFareResult([sandbox, live], fare => fare.price), live);
+  assert.equal(selectNearbyFareResult([sandbox], fare => fare.price), undefined);
+});
+
+// Production inventory provenance must be filtered before projecting price/currency.
+test("native screen filters display-only inventory before stripping provenance for fare memory", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("./ApprovedResultsScreen.tsx", import.meta.url), "utf8");
+  assert.match(source, /ownedFlightResults\.filter\(\(result\) => !hasDisplayOnlyInventory\(result\)\)\.map/);
+  assert.match(source, /ownedFlightResults\.filter\(\(result\) => !hasDisplayOnlyInventory\(result\)\)\.flatMap/);
+});

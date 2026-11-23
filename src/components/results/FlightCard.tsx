@@ -1,4 +1,5 @@
 "use client";
+import { sandboxCardAction } from "./sandboxCardActions";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 
@@ -173,7 +174,7 @@ export function FlightCard({
         onAction={onAction}
         onSelect={rememberDetailsContext}
       />
-    <Card
+    <Card onClickCapture={event=>sandboxCardAction(flight,event)} onAuxClickCapture={event=>sandboxCardAction(flight,event)} onKeyDownCapture={event=>sandboxCardAction(flight,event)}
       data-flight-result-card
       className={cn(
         "relative hidden w-full overflow-hidden rounded-[14px] border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.5)] transition duration-200 hover:-translate-y-0.5 hover:border-[#BFCEDF] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.4)] sm:block lg:rounded-2xl lg:border-[#CDD8E5] lg:bg-[#FEFFFF]",

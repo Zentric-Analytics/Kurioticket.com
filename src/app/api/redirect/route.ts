@@ -1,3 +1,4 @@
+import { productionSandboxHost } from "@/lib/productionSandboxPolicy";
 import { isProviderHotelResult } from "@/services/travel/hotelInventorySource";
 import { after, NextResponse } from "next/server";
 import { getFlightFromCache, getHotelFromCache } from "@/lib/searchCache";
@@ -21,10 +22,12 @@ export function previewAllowsKayakSandboxHandoff(
 }
 
 export async function POST(request: Request) {
+  if (productionSandboxHost() && process.env.DUFFEL_API_KEY?.startsWith("duffel_test_")) return NextResponse.json({error:"Sandbox inventory is display-only."},{status:403});
   const staging = isStagingEnvironment();
   const body = await request.json().catch(() => ({})) as {
     id?: string; type?: "flight" | "hotel"; sourcePage?: string; requestId?: unknown; handoffId?: unknown;
   };
+  if (productionSandboxHost() && body.id?.startsWith("kayak-sandbox:")) return NextResponse.json({error:"Sandbox inventory is display-only."},{status:403});
   if (staging && !previewAllowsKayakSandboxHandoff(body)) {
     return NextResponse.json(
       { error: "Provider checkout is disabled in Preview." },

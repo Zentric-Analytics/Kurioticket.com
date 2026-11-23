@@ -17,7 +17,7 @@ type Alert = {
   destination: string;
   query: unknown;
 };
-const comparable = (value: unknown) => typeof value === "string" ? value.trim().toLowerCase() : "";
+const comparable = (value: unknown) => typeof value === "string" ? value.trim().toLowerCase() : typeof value === "number" && Number.isFinite(value) ? String(value) : "";
 const object = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const sameDate = (a: string | Date | null | undefined, b: unknown) =>

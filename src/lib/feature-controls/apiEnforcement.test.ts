@@ -1,3 +1,4 @@
+import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
@@ -11,6 +12,7 @@ function loadModule<T>(path: string) {
   runInNewContext(compiled, {
     exports: exported, Response, URL, performance, crypto: { randomUUID: () => "request-id" },
     require: (name: string) => {
+      if (name === "@/lib/productionSandboxPolicy") return {withProductionSandboxRequest};
       if (name === "next/server") return { NextResponse: { json: Response.json } };
       if (name === "@/lib/feature-controls/service") return { isFeatureEnabled: async () => false };
       if (name === "@/lib/searchCrawlerGate") return { blockVerifiedCrawlerSearch: async () => null };

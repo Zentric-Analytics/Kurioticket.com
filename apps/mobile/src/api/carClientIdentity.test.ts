@@ -5,11 +5,11 @@ import { URL as NodeURL } from "node:url";
 import test from "node:test";
 import ts from "typescript";
 
-function fixture(platform = "android", version = "0.3.0", registered = true, signedSearchCredential?: string) {
+function fixture(platform = "android", version = "0.3.0", registered = true, signedSearchCredential?: string, baseUrl = "https://staging.kurioticket.com") {
   const journeyResponses: unknown[] = [];
   const calls: Array<{ url: string; init: RequestInit }> = [];
   const dependencies: Record<string, unknown> = {
-    "../config/apiUrl": { getApiBaseUrl: () => ({ ok: true, baseUrl: "https://staging.kurioticket.com" }) },
+    "../config/apiUrl": { getApiBaseUrl: () => ({ ok: true, baseUrl }) },
     "../storage/sessionStorage": { readSession: async () => registered ? { user: { id: "test-user" }, token: "test-session" } : null },
     "react-native": { Platform: { OS: platform } },
     "expo-constants": { default: { expoConfig: { version } } },
@@ -97,4 +97,19 @@ test("native guest client never stores invalid server continuity credentials", a
   await h.api.searchFlights({});
   await h.api.searchHotels({});
   assert.equal(new Headers(h.calls[1].init.headers).get("X-Kt-Search-Session"), null);
+});
+test("production display capability is opt-in and preserves actual Android identity and authorization", async () => {
+  const h = fixture("android", "0.3.0", true, undefined, "https://kurioticket.com");
+  await h.api.searchFlights({}, { sandboxDisplay: true });
+  await h.api.searchHotels({}, { sandboxDisplay: true });
+  await h.api.searchHotelsProgressive({}, null, { sandboxDisplay: true });
+  await h.api.searchCars({}, { sandboxDisplay: true });
+  for (const call of h.calls) {
+    const headers = new Headers(call.init.headers);
+    assert.equal(headers.get("x-sandbox-results-policy"), "1");
+    assert.equal(headers.get("User-Agent"), "KurioticketMobile/0.3.0 (Android; Native) OkHttp");
+    assert.equal(headers.get("Authorization"), "Bearer test-session");
+  }
+  await h.api.searchFlights({});
+  assert.equal(new Headers(h.calls.at(-1)!.init.headers).get("x-sandbox-results-policy"), null);
 });

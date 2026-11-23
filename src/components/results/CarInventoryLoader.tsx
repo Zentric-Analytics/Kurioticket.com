@@ -1,4 +1,5 @@
 "use client";
+import { useSandboxResults } from "./useSandboxResults";
 import { useEffect, useState, type ReactNode } from "react";
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { CarsResultsClient } from "./CarsResultsClient";
@@ -11,7 +12,8 @@ export function CarInventoryLoader({ values, fallback }: {
   values: LocationBoundCarSearchParams & { returnToDifferentLocation: boolean };
   fallback: ReactNode;
 }) {
-  const [results, setResults] = useState<NormalizedCarResult[] | null>(null);
+  const [rawSandboxResults, setResults] = useState<NormalizedCarResult[] | null>(null);
+  const results = useSandboxResults(rawSandboxResults);
   const [requestId, setRequestId] = useState<string | null>(null);
   const journeyEvents = useJourneyEvents();
   const [error, setError] = useState(false);
@@ -23,7 +25,7 @@ export function CarInventoryLoader({ values, fallback }: {
     let active = true;
     const timeout = window.setTimeout(() => controller.abort(), 60_000);
     fetch("/api/cars/search", {
-      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json", "x-sandbox-results-policy": "1" },
       body: JSON.stringify(values), signal: controller.signal,
     }).then(async response => {
       if (response.status === 422) {

@@ -37,7 +37,11 @@ export function AdminPlatformOnlinePresence({ initial, variant = "platforms" }: 
 }) {
   const [snapshot, setSnapshot] = useState<OnlinePresenceSnapshot>(initial);
 
-  useEffect(() => setSnapshot(initial), [initial]);
+  const [previousInitial, setPreviousInitial] = useState(initial);
+  if (previousInitial !== initial) {
+    setPreviousInitial(initial);
+    setSnapshot(initial);
+  }
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let inFlight: AbortController | undefined;

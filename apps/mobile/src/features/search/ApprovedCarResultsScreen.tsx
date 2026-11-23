@@ -1,3 +1,4 @@
+import { useSandboxResults } from "./useSandboxResults";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -60,7 +61,8 @@ export function ApprovedCarResultsScreen() {
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string,string|string[]>>();
   const plan = useMemo(() => buildSearchPlan("car",params),[JSON.stringify(params)]);
-  const [results,setResults] = useState<CarResult[]>([]);
+  const [rawSandboxResults, setResults] = useState<CarResult[]>([]);
+  const results = useSandboxResults(rawSandboxResults);
   const [resultsRequestId,setResultsRequestId] = useState<string>();
   const [status,setStatus] = useState<Status>("loading");
   const [message,setMessage] = useState("");
@@ -91,7 +93,7 @@ export function ApprovedCarResultsScreen() {
     const requestId=`mobile-car-${Date.now()}-${sequence}`;
     setResultsRequestId(undefined);
     setStatus("loading");setMessage("");
-    try{const response=await travelApi.searchCars(plan.plan.payload,{signal:controller.signal,requestId});if(controller.signal.aborted||sequence!==searchSequence.current)return;const acceptance=acceptCanonicalResults(response.results,safeCanonicalCarResult);if(acceptance.rejectedIds.length)console.warn("[travel-search] canonical car results failed client safety checks",{requestId:response.requestId,canonicalCount:acceptance.canonicalCount,acceptedCount:acceptance.accepted.length,rejectedIds:acceptance.rejectedIds});setResults(acceptance.accepted);if(canonicalResultsWereSilentlyLost(acceptance)){setStatus("error");setMessage("The canonical search returned inventory that this app could not render safely.");}else{journeyEvents.rememberSearch(response.requestId,journeyResponseContext(response));setResultsRequestId(response.requestId);if(acceptance.accepted.length)await prefetchInitialCarImages(acceptance.accepted);if(controller.signal.aborted||sequence!==searchSequence.current)return;setStatus(acceptance.accepted.length?"ready":"empty");setMessage(response.warnings?.[0]||"");void recordRecentSearchBestEffort(buildRecentSearch("car",plan.plan.payload));}}
+    try{const response=await travelApi.searchCars(plan.plan.payload,{signal:controller.signal,requestId,sandboxDisplay:true});if(controller.signal.aborted||sequence!==searchSequence.current)return;const acceptance=acceptCanonicalResults(response.results,safeCanonicalCarResult);if(acceptance.rejectedIds.length)console.warn("[travel-search] canonical car results failed client safety checks",{requestId:response.requestId,canonicalCount:acceptance.canonicalCount,acceptedCount:acceptance.accepted.length,rejectedIds:acceptance.rejectedIds});setResults(acceptance.accepted);if(canonicalResultsWereSilentlyLost(acceptance)){setStatus("error");setMessage("The canonical search returned inventory that this app could not render safely.");}else{journeyEvents.rememberSearch(response.requestId,journeyResponseContext(response));setResultsRequestId(response.requestId);if(acceptance.accepted.length)await prefetchInitialCarImages(acceptance.accepted);if(controller.signal.aborted||sequence!==searchSequence.current)return;setStatus(acceptance.accepted.length?"ready":"empty");setMessage(response.warnings?.[0]||"");void recordRecentSearchBestEffort(buildRecentSearch("car",plan.plan.payload));}}
     catch(error){if(controller.signal.aborted||sequence!==searchSequence.current)return;setStatus("error");setMessage(error instanceof Error?error.message:"Car search failed");}
   },[plan.plan?.key,retry]);
   useEffect(()=>{const executionKey=`${plan.plan?.key??"invalid"}:${retry}`;if(searchAbortTimer.current)clearTimeout(searchAbortTimer.current);searchAbortTimer.current=undefined;if(activeExecutionKey.current!==executionKey){activeExecutionKey.current=executionKey;void load();}return()=>{searchAbortTimer.current=setTimeout(()=>{if(activeExecutionKey.current!==executionKey)return;searchSequence.current+=1;activeSearch.current?.abort("screen-cleanup");activeExecutionKey.current=undefined;},0);};},[load,plan.plan?.key,retry]);

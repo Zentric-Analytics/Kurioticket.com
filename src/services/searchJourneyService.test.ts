@@ -268,8 +268,7 @@ test("retries do not extend sessions and a reused UUID cannot claim a different 
 test("search IP is committed before country enrichment; the exact record gains only verified country", async () => {
   let calls = 0;
   let stateAtLookup: unknown;
-  let f!: ReturnType<typeof fixture>;
-  f = fixture(async ip => {
+  const f = fixture(async ip => {
     calls++;
     assert.equal(ip, "8.8.8.8");
     assert.equal(f.histories.length, 1, "save original search before geolocation lookup");

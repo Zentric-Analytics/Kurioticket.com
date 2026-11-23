@@ -1,3 +1,4 @@
+import { productionSandboxInventory } from "@/lib/productionSandboxPolicy";
 import type {
   AggregatedResult,
   FlightSearchParams,
@@ -60,11 +61,12 @@ export async function searchFlights(
     ),
   );
   const aggregationMs = performance.now() - aggregationStartedAt;
-  const cacheResult = results.length && !options.fareOnly
-    ? await rememberFlights(results, now, search, options.requestId)
+  const liveResults = results.filter(result => !productionSandboxInventory(result));
+  const cacheResult = liveResults.length && !options.fareOnly
+    ? await rememberFlights(liveResults, now, search, options.requestId)
     : null;
   const cacheUnavailable = cacheResult?.persisted === false;
-  const availableResults = cacheUnavailable ? [] : results;
+  const availableResults = cacheUnavailable ? results.filter(productionSandboxInventory) : results;
   // Fare comparisons never expose booking actions or populate their cache.
   // Their quote validity still ends at the earliest provider expiration.
   const validForMs = cacheResult?.validForMs ?? (results.length

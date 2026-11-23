@@ -223,7 +223,7 @@ const fake = (
 ) =>
   (async (url, init) => fn(new URL(String(url)), init || {})) as typeof fetch;
 
-test("sandbox is disabled by default and on production even with a key", () => {
+test("sandbox configuration is disabled by default; approved production hosts still require an uncached request grant", () => {
   assert.equal(isKayakSandboxEnabled({}), false);
   assert.equal(
     isKayakSandboxEnabled({
@@ -232,7 +232,7 @@ test("sandbox is disabled by default and on production even with a key", () => {
       NEXT_PUBLIC_APP_URL: "https://kurioticket.com",
       NODE_ENV: "production",
     }),
-    false,
+    true,
   );
   assert.equal(
     isKayakSandboxEnabled({

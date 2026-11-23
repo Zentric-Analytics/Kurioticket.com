@@ -23,7 +23,9 @@ test("both product pages remove redundant header search links without losing rec
     assert.doesNotMatch(source, /<OperationsProviderIssues|Provider exceptions/);
   }
   assert.doesNotMatch(panelSource, /export function ProductSearchJumpLink/);
-  assert.match(panelSource, /window.location.hash === "#" \+ sectionId/);
+  assert.match(panelSource, /locationHash === "#" \+ sectionId/);
+  assert.match(panelSource, /useSyncExternalStore\(subscribeLocationHash/);
+  assert.match(panelSource, /window.addEventListener\("hashchange", onChange\)/);
 });
 
 test("both product directories render independently accessible, responsive read-only record tables", () => {
@@ -94,7 +96,7 @@ test("both new Providers API endpoints independently authorize requests and rest
 
 test("hotel and car search filters keep draft selections until Apply filters", () => {
   assert.match(panelSource, /const \[draftFilter, setDraftFilter\] = useState<ProductSearchFilter>\("EXCEPTIONS"\)/);
-  assert.match(panelSource, /const \[draftWindow, setDraftWindow\] = useState<ProductSearchWindow>\("24h"\)/);
+  assert.match(panelSource, /const \[draftWindow, setDraftWindow\] = useState<ProductSearchWindow>\("today"\)/);
   assert.match(panelSource, /value=\{draftFilter\}/);
   assert.match(panelSource, /value=\{draftWindow\}/);
   assert.match(panelSource, /setDraftFilter\(value as ProductSearchFilter\)/);

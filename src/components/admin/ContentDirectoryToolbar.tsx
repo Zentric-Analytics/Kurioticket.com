@@ -65,8 +65,16 @@ export function ContentDirectoryToolbar({
     else if (appliedSearch === searchTerm) editingRef.current = false;
   }, [query, appliedSearch, searchTerm]);
 
-  useEffect(() => { setDraftMarket(market || "ALL"); }, [market]);
-  useEffect(() => { setDraftCountry(country || ""); }, [country]);
+  const [previousMarket, setPreviousMarket] = useState(market);
+  if (previousMarket !== market) {
+    setPreviousMarket(market);
+    setDraftMarket(market || "ALL");
+  }
+  const [previousCountry, setPreviousCountry] = useState(country);
+  if (previousCountry !== country) {
+    setPreviousCountry(country);
+    setDraftCountry(country || "");
+  }
 
   useEffect(() => {
     const onPop = () => {

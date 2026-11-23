@@ -90,12 +90,15 @@ export function AdminAuditLogsToolbar({
   const [isPending, startTransition] = useTransition();
   const paramsRef = useRef(new URLSearchParams(pageHref.split("?")[1] || ""));
 
-  useEffect(() => {
-    paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
+  useEffect(() => { paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || ""); }, [pageHref]);
+  const CommittedFilterScope = JSON.stringify([pageHref, range, action, targetType]);
+  const [previousCommittedFilterScope, setPreviousCommittedFilterScope] = useState(CommittedFilterScope);
+  if (previousCommittedFilterScope !== CommittedFilterScope) {
+    setPreviousCommittedFilterScope(CommittedFilterScope);
     setDraftRange(range);
     setDraftAction(action);
     setDraftTargetType(targetType);
-  }, [pageHref, range, action, targetType]);
+  }
 
   const committedScope = JSON.stringify([pageHref, fromDate, toDate, customOpen]);
   const [previousScope, setPreviousScope] = useState(committedScope);

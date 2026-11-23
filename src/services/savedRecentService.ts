@@ -1,3 +1,4 @@
+import { productionSandboxInventory } from "@/lib/productionSandboxPolicy";
 import { z } from "zod";
 import { resolveSavedFlightTime } from "@/shared/flights/savedFlightTime";
 import { createHash } from "node:crypto";
@@ -58,8 +59,8 @@ export async function listUserSavedItems(userId: string, options: { type?: Saved
     ...hotels.map(x => ({ ...x, type: "hotel" as const, totalPrice: Number(x.totalPrice), checkIn: iso(x.checkIn), checkOut: iso(x.checkOut), createdAt: iso(x.createdAt) })),
     ...cars.map(x => ({ ...x, type: "car" as const, totalPrice: Number(x.totalPrice), createdAt: iso(x.createdAt) })),
     ...searches.map(x => ({ ...x, type: "search" as const, searchType: x.type.toLowerCase(), checkIn: iso(x.checkIn), checkOut: iso(x.checkOut), createdAt: iso(x.createdAt) })),
-  ];
-  const summary = { flights: flights.length, hotels: hotels.length, cars: cars.length, searches: searches.length, total: items.length };
+  ].filter(item=>!productionSandboxInventory(item));
+  const summary = { flights: items.filter(x=>x.type === "flight").length, hotels:items.filter(x=>x.type === "hotel").length, cars:items.filter(x=>x.type === "car").length, searches:items.filter(x=>x.type === "search").length,total:items.length };
   return { items, summary };
 }
 function stableSavedValue(value: unknown): string {
@@ -95,7 +96,9 @@ function savedActivityEventMetadata(input: CreateSavedItemInput, itemId: string,
  * *same transaction* only for a newly created saved item.
  */
 export function createSavedItemWriter(database: () => Pick<PrismaClient, "$transaction">, audit = false) {
-  return async (userId: string, input: CreateSavedItemInput, attribution: ApplicationAttribution = {}) => database().$transaction(async tx => {
+  return async (userId: string, input: CreateSavedItemInput, attribution: ApplicationAttribution = {}) => {
+    if (productionSandboxInventory(input)) throw new Error("Sandbox inventory cannot be saved.");
+    return database().$transaction(async tx => {
     const retryIdentity = input.type === "car"
       ? "car:" + userId + ":" + carSavedSignature(input) : savedRetryKey(userId, input);
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('saved-item-retry'), hashtext(${retryIdentity}))`;
@@ -119,6 +122,7 @@ export function createSavedItemWriter(database: () => Pick<PrismaClient, "$trans
     } });
     return item;
   });
+  };
 }
 const writeUserSavedItem = createSavedItemWriter(getPrisma, true);
 export async function createUserSavedItem(

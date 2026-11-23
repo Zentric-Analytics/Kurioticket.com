@@ -682,6 +682,9 @@ test("fare subpages share Providers-style tabs with back navigation above the ta
   assert.match(nav, /flex min-w-0 flex-wrap items-end gap-x-6 border-b/);
   assert.match(provider, /aria-label="Filter providers by product"/);
   assert.match(provider, /border-b-2 px-1 text-\[13px\]/);
+  assert.match(readFileSync("src/lib/adminNavigation.ts", "utf8"), /href: "\/admin\/providers\?view=attribution"/);
+  assert.match(provider, /<ProviderDirectoryTable rows={directoryRows}/);
+  assert.match(provider, /<ProviderHealthWindowFilter/);
   assert.ok(nav.indexOf("Back to Homepage Fare Operations") < nav.indexOf('aria-label="Homepage fare sections"'));
   for (const page of [routes, diagnostics]) {
     assert.doesNotMatch(page, /<nav aria-label="Homepage fares pages"|<header className="flex flex-wrap items-start justify-between/);

@@ -1,3 +1,6 @@
+import { currentSandboxGrant, productionSandboxHost } from "@/lib/productionSandboxPolicy";
+import { displayOnlyInventory } from "@/shared/presentation/sandboxInventory";
+
 import {
   assertProductionLiveProvider,
   assertSandboxProviderAllowed,
@@ -64,6 +67,7 @@ export function getDuffelProviderBlockReason(apiKey: string) {
   if (!stagingSafety.safe) return stagingSafety.reason;
 
   const apiMode = getDuffelApiMode();
+  if (productionSandboxHost() && apiMode === "test" && apiKey.trim().startsWith("duffel_test_")) return undefined;
 
   try {
     assertProductionLiveProvider("Duffel", apiMode);
@@ -149,6 +153,7 @@ export function selectGraphBackedDuffelOffers(
 export function searchDuffelDealsItineraryInventory(
   search: FlightSearchParams,
 ): Promise<ProviderResult<DuffelDealsItineraryInventory>> {
+  if (productionSandboxHost() && getDuffelApiMode() === "test") return Promise.resolve(skippedProvider("Duffel", "display_only_inventory"));
   const apiKey = process.env.DUFFEL_API_KEY;
   const stagingSafety = getStagingProviderSafety();
   if (!stagingSafety.safe)
@@ -242,7 +247,7 @@ export function searchDuffelDealsItineraryInventory(
   });
 }
 
-export function searchDuffelFlights(
+export async function searchDuffelFlights(
   search: FlightSearchParams,
   signal?: AbortSignal,
 ): Promise<ProviderResult<NormalizedFlightResult>> {
@@ -262,6 +267,9 @@ export function searchDuffelFlights(
     return Promise.resolve(skippedProvider("Duffel", blockReason));
   }
 
+  const sandbox = productionSandboxHost() && getDuffelApiMode() === "test";
+  const grant = sandbox ? await currentSandboxGrant() : null;
+  if (sandbox && !grant) return skippedProvider("Duffel", "sandbox_display_disabled");
   let supplierMs = 0;
   let normalizationMs = 0;
   let offerCount = 0;
@@ -293,7 +301,7 @@ export function searchDuffelFlights(
     normalizationMs = performance.now() - normalizationStartedAt;
     connectingOfferCount = results.filter((result) => result.stops > 0).length;
     return results;
-  }).then((result) => {
+  }).then(async (result) => {
     console.info("[flight-search:duffel-request]", {
       tripType: search.tripType,
       legCount,
@@ -305,6 +313,7 @@ export function searchDuffelFlights(
     });
     return {
       ...result,
+      results: sandbox ? ((await currentSandboxGrant())?.revision === grant?.revision ? result.results.map(value => displayOnlyInventory({...value,id:"sandbox:duffel:"+value.id},grant!.revision)) : []) : result.results,
       performance: { supplierMs, normalizationMs, offerCount, connectingOfferCount },
     };
   });
@@ -315,6 +324,7 @@ export function getDuffelFlightOffer(
   providerOfferId: string,
   search: FlightSearchParams,
 ): Promise<ProviderResult<NormalizedFlightResult>> {
+  if (productionSandboxHost() && getDuffelApiMode() === "test") return Promise.resolve(skippedProvider("Duffel", "display_only_inventory"));
   const apiKey = process.env.DUFFEL_API_KEY;
   const stagingSafety = getStagingProviderSafety();
   if (!stagingSafety.safe)
@@ -345,6 +355,7 @@ export function getDuffelFlightUpsellOffers(
   providerOfferId: string,
   search: FlightSearchParams,
 ): Promise<ProviderResult<NormalizedFlightResult>> {
+  if (productionSandboxHost() && getDuffelApiMode() === "test") return Promise.resolve(skippedProvider("Duffel", "display_only_inventory"));
   const apiKey = process.env.DUFFEL_API_KEY;
   const stagingSafety = getStagingProviderSafety();
   if (!stagingSafety.safe)

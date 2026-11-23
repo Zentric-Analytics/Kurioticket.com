@@ -1,3 +1,4 @@
+import { hasDisplayOnlyInventory } from "../../../../../src/shared/presentation/sandboxInventory";
 import { useEffect, useState, type ReactNode } from "react";
 import { Image, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import { Award, BriefcaseBusiness, CarFront, DoorOpen, MapPin, Share2, ShieldCheck, Star, Tag, Users } from "lucide-react-native";
@@ -64,7 +65,7 @@ export function CarResultCard({ result, rank, badge, imageUri, searchParams, res
             {categoryLabel ? <Text numberOfLines={1} style={c.category}>{categoryLabel}</Text> : null}
           </View>
           <View style={c.utilityColumn}>
-            <View style={c.actions}><Pressable accessibilityRole="button" accessibilityLabel={savedState.saved ? `Remove ${result.modelName} from saved` : `Save ${result.modelName}`} accessibilityState={{ selected: savedState.saved }} onPress={savedState.toggle} style={({pressed}) => [c.action,c.saveAction,pressed&&c.pressed]}><FlowIcon name="heart" size={20} strokeWidth={androidFavoriteColors.strokeWidth} color={savedState.saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={savedState.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Share ${result.modelName}`} onPress={share} style={({pressed}) => [c.action,c.shareAction,pressed&&c.pressed]}><Share2 size={18} strokeWidth={androidFavoriteColors.strokeWidth} color={theme.dark ? theme.icon : androidFavoriteColors.shareStroke} /></Pressable></View>
+            <View style={c.actions}><Pressable disabled={hasDisplayOnlyInventory(result)} accessibilityRole="button" accessibilityLabel={savedState.saved ? `Remove ${result.modelName} from saved` : `Save ${result.modelName}`} accessibilityState={{ selected: savedState.saved }} onPress={savedState.toggle} style={({pressed}) => [c.action,c.saveAction,pressed&&c.pressed]}><FlowIcon name="heart" size={20} strokeWidth={androidFavoriteColors.strokeWidth} color={savedState.saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={savedState.saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} /></Pressable><Pressable disabled={hasDisplayOnlyInventory(result)} accessibilityRole="button" accessibilityLabel={`Share ${result.modelName}`} onPress={share} style={({pressed}) => [c.action,c.shareAction,pressed&&c.pressed]}><Share2 size={18} strokeWidth={androidFavoriteColors.strokeWidth} color={theme.dark ? theme.icon : androidFavoriteColors.shareStroke} /></Pressable></View>
           </View>
         </View>
         <View style={c.identityDetails}>

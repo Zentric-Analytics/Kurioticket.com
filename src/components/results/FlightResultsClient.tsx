@@ -1,4 +1,6 @@
 "use client";
+import { useSandboxResults } from "./useSandboxResults";
+import { hasDisplayOnlyInventory } from "@/shared/presentation/sandboxInventory";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import { displayedJourneyRequest, journeyRequestId } from "@/lib/journeyEventClient";
@@ -1003,7 +1005,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [desktopSortOpen, setDesktopSortOpen] = useState(false);
   const desktopSortRef = useRef<HTMLDivElement | null>(null);
   const desktopSortButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [providerResults, setResults] = useState<PublicFlightResult[]>([]);
+  const [rawSandboxResults, setResults] = useState<PublicFlightResult[]>([]);
+  const providerResults = useSandboxResults(rawSandboxResults);
   const kayak = useKayakResults();
   const results = useMemo(() => guidedMode || kayak?.vertical !== "flights" ? providerResults : [
     ...providerResults, ...kayak.offers.map(offer => kayakFlightCardModel(offer, kayak.criteria)).filter((flight): flight is PublicFlightResult => flight !== null),
@@ -2679,7 +2682,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const fareScope = currentNearbyFareScope();
       fetch("/api/flights/search", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-sandbox-results-policy": "1" },
         body: JSON.stringify(body),
         signal: controller.signal,
       })
@@ -2828,7 +2831,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const { fetchedAt, validUntil, fareScope } = mainInventoryFreshness.current;
     const selectedDate = body.departureDate;
     const selected: NearbyFareQuote = providerResults.length
-      ? { date: selectedDate, status: "success", fares: providerResults.map(({ price, currency }) => ({ price, currency })), fetchedAt, validUntil }
+      ? { date: selectedDate, status: "success", fares: providerResults.filter((result) => !hasDisplayOnlyInventory(result)).map(({ price, currency }) => ({ price, currency })), fetchedAt, validUntil }
       : { date: selectedDate, status: "unavailable", fetchedAt };
     const selectedKey = getNearbyFareCacheKey(body, selectedDate, nearbyFareScope);
     const cachedSelected = getFreshNearbyFareCacheEntry(nearbyFareCacheRef.current, selectedKey);

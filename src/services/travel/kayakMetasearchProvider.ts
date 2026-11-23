@@ -1,3 +1,6 @@
+import { currentSandboxGrant, productionSandboxHost } from "@/lib/productionSandboxPolicy";
+import { displayOnlyInventory } from "@/shared/presentation/sandboxInventory";
+
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import type { FlightSearchParams, HotelSearchParams, NormalizedFlightResult, PublicHotelResult, ProviderResult } from "@/lib/types";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
@@ -29,7 +32,15 @@ export function kayakProviderUserAgent(vertical: KayakVertical, incoming?: strin
 async function search<T>(vertical: KayakVertical, criteria: Record<string, string>, context?: KayakRequestContext, map?: (offer: Parameters<typeof kayakFlightCardModel>[0]) => T | null): Promise<ProviderResult<T>> {
   const startedAt = Date.now();
   if (!isKayakSandboxEnabled() || !context?.clientIp) return { provider: "KAYAK sandbox", results: [], status: "skipped", latencyMs: Date.now() - startedAt };
-  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, kayakProviderUserAgent(vertical, context.userAgent), context.clientIp, undefined,
+  const production = productionSandboxHost();
+  const grant = production ? await currentSandboxGrant() : null;
+  if (production && (!grant || !context?.userAgent?.trim())) return {provider:"KAYAK sandbox",results:[],status:"skipped",latencyMs:0};
+  const protect = async (results: T[]) => {
+    if (!production) return results;
+    const fresh=await currentSandboxGrant();
+    return fresh && fresh.revision === grant?.revision ? results.map(result=>displayOnlyInventory(result,fresh.revision)) : [];
+  };
+  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, production ? context.userAgent : kayakProviderUserAgent(vertical, context.userAgent), context.clientIp, undefined,
     diagnostic => console.warn("[kayak-search:http-rejection]", JSON.stringify({ ...diagnostic, requestId: context.requestId })),
     diagnostic => console.info("[kayak-search:car-request]", JSON.stringify({ ...diagnostic, requestId: context.requestId })));
   try {
@@ -51,7 +62,7 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
       await client.search(resolved.search, trackId, context.signal),
       crypto.randomUUID(),
     );
-    return { provider: "KAYAK sandbox", results: offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; }), status: "success", latencyMs: Date.now() - startedAt };
+    return { provider: "KAYAK sandbox", results: await protect(offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; })), status: "success", latencyMs: Date.now() - startedAt };
   } catch (error) {
     const reason = error instanceof KayakError ? error.code : "unavailable";
     // A 403 can reject the client agent, not just the key. Keep the real agent
@@ -63,7 +74,7 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
     const results = error instanceof KayakPartialSearchError
       ? scopeKayakOfferIds(error.offers, crypto.randomUUID()).flatMap(offer => { const value = map?.(offer); return value ? [value] : []; })
       : [];
-    return { provider: "KAYAK sandbox", results, status: "failed", latencyMs: Date.now() - startedAt, error: reason, errorCategory, errorReason };
+    return { provider: "KAYAK sandbox", results: await protect(results), status: "failed", latencyMs: Date.now() - startedAt, error: reason, errorCategory, errorReason };
   }
 }
 

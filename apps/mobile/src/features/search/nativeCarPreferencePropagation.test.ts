@@ -58,7 +58,7 @@ test("new users inherit detected-market currency until they explicitly choose an
 test("language and currency presentation changes cannot restart or rewrite the canonical Cars search", () => {
   assert.ok(carPlanStart >= 0 && carPlanEnd > carPlanStart);
   assert.doesNotMatch(carPlan, /\blocale\b|\blanguage\b|\bcurrency\b/);
-  assert.match(results, /travelApi\.searchCars\(plan\.plan\.payload,\{signal:controller\.signal,requestId\}\)/);
+  assert.match(results, /travelApi\.searchCars\(plan\.plan\.payload,\{signal:controller\.signal,requestId,sandboxDisplay:true\}\)/);
   assert.match(results, /\},\[plan\.plan\?\.key,retry\]\);/);
   assert.doesNotMatch(card + currencyHook, /searchCars\(|setFilters\(|setSort\(/);
 });

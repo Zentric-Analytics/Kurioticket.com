@@ -1,3 +1,4 @@
+import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -28,6 +29,7 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
   };
   const schema = { safeParse: (data: unknown) => ({ success: true, data }) };
   const dependencies: Record<string, unknown> = {
+    "@/lib/productionSandboxPolicy": {withProductionSandboxRequest},
     "next/server": { NextResponse: { json: Response.json }, after: (callback: () => Promise<unknown>) => { deferred.push(callback); } },
     "node:crypto": { createHash },
     "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },

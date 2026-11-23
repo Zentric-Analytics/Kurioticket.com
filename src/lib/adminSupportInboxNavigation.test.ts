@@ -124,10 +124,13 @@ test("Deletion Requests has the same clean white Support workspace and a compact
   assert.match(shell, /const accountDeletionWorkspace = pathname === "\/admin\/account-deletions"/);
   assert.match(shell, /\|\| accountDeletionWorkspace \|\| accountDeletionDetail/);
   assert.match(queue, /<AdminPageShell title="Account deletion requests" hideHeader>/);
-  assert.match(queue, /aria-label="Filter account deletion requests"/);
-  assert.match(queue, /<AdminDirectorySelect name="status" label="Request status"/);
-  assert.match(queue, /options=\{statusOptions\} plain align="end"/);
-  assert.match(queue, /bg-\[#004BB8\] px-4/);
+  assert.match(queue, /<AdminDeletionFilters/);
+  const filters = readFileSync("src/components/admin/AdminDeletionFilters.tsx", "utf8");
+  assert.match(filters, /aria-label="Filter account deletion requests"/);
+  assert.match(filters, /<AdminDirectorySelect[^>]*name="status"/);
+  assert.match(filters, /label="Request status"/);
+  assert.match(filters, /options=\{statusOptions\}/);
+  assert.match(filters, /type="submit" disabled=\{isPending\}/);
   assert.doesNotMatch(queue, /<AdminFilterBar|<AdminDataTable|<AdminStatusBadge/);
   assert.doesNotMatch(queue, /Review the account-deletion lifecycle through the safe admin queue/);
 });
@@ -145,7 +148,7 @@ test("Deletion queue preserves every lifecycle field and review destination when
   }
   assert.match(queue, /adminOperationalReads\.deletions\.list\(params\)/);
   assert.match(queue, /href=\{"\/admin\/account-deletions\/" \+ request\.id\}/);
-  assert.match(queue, /href=\{cursorHref\(raw, result\.data\.nextCursor\)\}/);
+  assert.match(queue, /href=\{cursorHref\(applied, result\.data\.nextCursor\) \+ "&range=" \+ window\.range\}/);
   assert.match(queue, /status: "invalid"|result\.status === "invalid"/);
   assert.match(queue, /An unavailable read is not shown as an empty queue/);
 });

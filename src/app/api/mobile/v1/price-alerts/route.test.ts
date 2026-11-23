@@ -89,7 +89,7 @@ function nativeFixture(options: NativeFixtureOptions = {}) {
   const baseline = evaluateNative<typeof selectedOffer>(`exports.value = ${nativeExpression("baseline")};`, { plan, offer });
   const scopeKey = evaluateNative<string>(`exports.value = ${nativeExpression("scopeKey")};`, { planKey: plan.key, scope });
   const bindings = {
-    ...hooks, plan, baseline, scope, scopeKey, matchingAlert: options.matching,
+    ...hooks, plan, baseline, scope, scopeKey, journeyRequestId: undefined, matchingAlert: options.matching,
     pendingRef, reconciliationRef: { current: 0 }, alertKnown: options.alertKnown ?? true, available: options.available ?? true,
     buildAutomaticCarPriceAlertPayload, matchingCarPriceAlert, TravelApiError: NativeApiError, signInHref,
     readSession: async () => options.session === false ? null : { fixture: true },

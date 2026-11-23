@@ -25,6 +25,8 @@ test("Hotel price alerts require actual check-in and check-out dates", () => {
   const target = { type: "HOTEL", origin: null, destination: "Paris",
     query: { checkIn: "2026-12-12", checkOut: "2026-12-14", rooms: 1, guests: 2 } };
   assert.equal(priceAlertMatchesRecordedSearch(hotel, target), true);
+  assert.equal(priceAlertMatchesRecordedSearch(hotel, { ...target, query: { ...target.query, guests: 3 } }), false);
+  assert.equal(priceAlertMatchesRecordedSearch(hotel, { ...target, query: { ...target.query, rooms: Number.NaN } }), false);
   assert.equal(priceAlertMatchesRecordedSearch(hotel, { ...target, query: { ...target.query, checkOut: "2026-12-16" } }), false);
 });
 

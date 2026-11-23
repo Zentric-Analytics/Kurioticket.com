@@ -1,3 +1,4 @@
+import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
 import { applicationMetadata } from "@/lib/application-source";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -46,6 +47,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
   };
   const dependencies: Record<string, unknown> = {
     "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
+    "@/lib/productionSandboxPolicy": {withProductionSandboxRequest},
     "@/lib/application-source": { applicationMetadata },
     "@/lib/searchCrawlerGate": { blockVerifiedCrawlerSearch: async () => options.crawlerBlocked
       ? Response.json({ code: "CRAWLER_SEARCH_BLOCKED" }, { status: 403 }) : null },

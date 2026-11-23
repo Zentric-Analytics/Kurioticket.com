@@ -225,7 +225,7 @@ test("data-availability boundaries remain truthful without explanatory helper co
   assert.match(page, /Recent flight-status data unavailable/);
   assert.match(page, /No status feed configured/);
   assert.match(monitoring, /<AdminPageShell title="Trip monitoring" hideHeader>/);
-  assert.match(monitoring, /<TripWorkspaceNavigation active="monitoring" \/>/);
+  assert.match(readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8"), /<WorkspaceSidebar pathname=\{pathname\} role=\{role\}/);
   const tabs = readFileSync("src/components/admin/TripWorkspaceNavigation.tsx", "utf8");
   assert.match(tabs, /href="\/admin\/confirmed-trips"/);
   assert.doesNotMatch(page, /href="\/admin\/flights"|href="\/admin\/searches\/activity/);
@@ -276,7 +276,7 @@ test("legacy Flight Status links redirect securely to the expanded monitoring pa
   assert.match(route, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=flight#flight-status-overview-title"\)/);
   assert.doesNotMatch(route, /<AdminPageShell|<AdminSectionCard|<FlightStatusMetric/);
   assert.match(monitoring, /<AdminPageShell title="Trip monitoring" hideHeader>/);
-  assert.match(monitoring, /<TripWorkspaceNavigation active="monitoring" \/>/);
+  assert.match(readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8"), /<WorkspaceSidebar pathname=\{pathname\} role=\{role\}/);
   assert.doesNotMatch(monitoring, /Back to Trips|Trip monitoring navigation/);
   assert.match(monitoring, /<TripFlightStatusMonitoringPanel \/>/);
   assert.match(monitoring, /id="trip-flight-status-panel"/);

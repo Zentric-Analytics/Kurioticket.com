@@ -1,3 +1,4 @@
+import { hasDisplayOnlyInventory } from "../../../../src/shared/presentation/sandboxInventory";
 import type { CarResult,CreateMobileSavedItem,FlightResult,MobileSavedItem } from "../api/travelApi";
 import { carSavedSignature,flightSavedSignature,mapCarToSaved,mapDestinationToSaved,mapFlightToSaved,mapHotelToSaved,savedSignature,type SavableFlight } from "./savedMapping";
 export type SavedSnapshot={destinationIds:Set<string>;flights:Map<string,FlightResult>;cars:Map<string,MobileSavedItem>;pendingFlightKeys:Set<string>;items:MobileSavedItem[];loading:boolean;error:string};
@@ -77,9 +78,10 @@ export class SavedRepository {
     return this.mutate(`remove:${id}`, this.confirmed.find(item => item.id === id), undefined, type, id);
   }
   async toggleDestination(id: string) { const payload = mapDestinationToSaved(id); if (payload) return this.toggle(payload, item => item.type === "search" && (item.query as Record<string, unknown> | undefined)?.destinationId === id); }
-  async toggleHotel(hotel: import("../api/travelApi").HotelResult, params: Record<string, unknown>) { const payload = mapHotelToSaved(hotel, params); if (payload) return this.toggle(payload, item => item.type === "hotel" && ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === hotel.id); }
-  async toggleCar(car: CarResult, params: Record<string, unknown>) { const payload = mapCarToSaved(car, params), signature = carSavedSignature(car, params); if (payload && signature) return this.toggle(payload, item => item.type === "car" && savedSignature(item) === signature); }
+  async toggleHotel(hotel: import("../api/travelApi").HotelResult, params: Record<string, unknown>) { if(hasDisplayOnlyInventory(hotel))return; const payload = mapHotelToSaved(hotel, params); if (payload) return this.toggle(payload, item => item.type === "hotel" && ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === hotel.id); }
+  async toggleCar(car: CarResult, params: Record<string, unknown>) { if(hasDisplayOnlyInventory(car))return; const payload = mapCarToSaved(car, params), signature = carSavedSignature(car, params); if (payload && signature) return this.toggle(payload, item => item.type === "car" && savedSignature(item) === signature); }
   async toggleFlight(flight: SavableFlight, params?: Record<string, unknown>) {
+    if(hasDisplayOnlyInventory(flight))return;
     const key = flightSavedSignature(flight); if (this.pendingFlightKeys.has(key)) return;
     this.pendingFlightKeys.add(key);
     try { return await this.toggle(mapFlightToSaved(flight, params), item => item.type === "flight" && savedSignature(item) === key); }

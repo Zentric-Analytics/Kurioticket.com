@@ -1,4 +1,5 @@
 "use client";
+import { useSandboxResults } from "./useSandboxResults";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import { displayedJourneyRequest, journeyRequestId } from "@/lib/journeyEventClient";
@@ -285,7 +286,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }, [selectedOption.currency]);
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
 
-  const [results, setResults] = useState<PublicHotelResult[]>([]);
+  const [rawSandboxResults, setResults] = useState<PublicHotelResult[]>([]);
+  const results = useSandboxResults(rawSandboxResults);
   const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>([]);
   const [inventoryLoading, setLoading] = useState(true);
   const [completedSearchKey, setCompletedSearchKey] = useState<string | null>(null);
@@ -594,7 +596,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     const request = snapshot ? Promise.resolve(snapshot) : fetch("/api/hotels/search", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json", "x-sandbox-results-policy": "1",
         ...(providerMode ? { "x-hotel-provider-mode": providerMode } : {}),
       },
       body: JSON.stringify({ ...body, currency: displayCurrencyRef.current }),

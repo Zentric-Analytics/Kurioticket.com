@@ -50,7 +50,7 @@ test("Activity server-scope resets drafts without background navigation or losin
 
 test("Provider health drafts reset only on committed scope changes and never read incomplete dates", async () => {
   await withComponentBrowser(bundle(), mount("providers", "ProviderHealthWindowFilter", { product: "CAR", hours: 24, custom: null }), async page => {
-    await page.getByRole("button", { name: "Date range: Last 24 hrs", exact: true }).click();
+    await page.getByRole("button", { name: "Date range: Last 24 hrs (legacy)", exact: true }).click();
     await page.getByRole("option", { name: "Custom range", exact: true }).click();
     await page.getByRole("button", { name: "Provider health start date UTC" }).click();
     const providerCalendar = page.getByRole("dialog", { name: "Provider health start date UTC" });

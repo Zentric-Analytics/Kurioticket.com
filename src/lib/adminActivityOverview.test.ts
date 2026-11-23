@@ -7,7 +7,7 @@ import type { ActivityRow } from "./adminIdentityJourney";
 import type { ActivityFilters } from "./adminIdentityActivity";
 
 const now = new Date("2026-11-20T12:50:00.000Z");
-const activityPath = "/admin/users/user/qa-account-0001/activity?range=today&product=CAR&tab=searches&q=CDG";
+const activityPath = "/admin/users/user/qa-account-0001/activity?tab=searches&range=today&product=CAR&q=CDG";
 const filters: ActivityFilters = {
   tab: "searches", stage: "SEARCH_COMPLETED", product: "CAR",
   from: "2026-11-20T00:00:00.000Z", to: now.toISOString(),

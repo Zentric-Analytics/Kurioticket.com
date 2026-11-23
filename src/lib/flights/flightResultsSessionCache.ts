@@ -1,3 +1,4 @@
+import { hasDisplayOnlyInventory, containsSandboxInventory } from "@/shared/presentation/sandboxInventory";
 import type { FlightSearchLeg, PublicFlightResult } from "@/lib/types";
 
 export const FLIGHT_RESULTS_SESSION_CACHE_KEY =
@@ -95,6 +96,7 @@ export function readFlightResultsSessionSnapshotForRefresh(
 
   try {
     const value = JSON.parse(serialized) as Partial<FlightResultsSessionSnapshot>;
+    if (hasDisplayOnlyInventory(value) || containsSandboxInventory(value)) { removeSnapshot(storage); return null; }
     const valid =
       value !== null &&
       typeof value === "object" &&
@@ -155,6 +157,9 @@ export function writeFlightResultsSessionSnapshot(
   requestId?: string,
 ): void {
   if (!storage) return;
+  const hadSandbox = hasDisplayOnlyInventory(results);
+  results = results.filter(result=>!hasDisplayOnlyInventory(result));
+  if (hadSandbox && !results.length) { removeSnapshot(storage); return; }
   if (!Number.isFinite(resultsCacheValidUntil) || resultsCacheValidUntil <= now) {
     removeSnapshot(storage);
     return;

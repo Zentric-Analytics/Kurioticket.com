@@ -1,5 +1,6 @@
 import { convertCurrencyAmount, type ExchangeRates } from "@/lib/currency/exchangeRates";
 import type { PublicFlightResult } from "@/lib/types";
+import { hasDisplayOnlyInventory } from "@/shared/presentation/sandboxInventory";
 
 export type ComparableFlightPrice = {
   amount: number;
@@ -38,6 +39,7 @@ export function getLowestComparableFlightFare<T extends Pick<PublicFlightResult,
   rates: ExchangeRates,
 ): T | null {
   return flights.reduce<{ flight: T; amount: number } | null>((lowest, flight) => {
+    if (hasDisplayOnlyInventory(flight)) return lowest;
     const comparable = getComparableFlightPrice(flight, displayCurrency, rates);
     if (!comparable) return lowest;
     if (!lowest || comparable.amount < lowest.amount) {

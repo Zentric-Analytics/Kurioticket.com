@@ -74,6 +74,7 @@ test("nearby fares use live provider inventory and expiry without writing action
   let cacheWrites = 0;
   const provider = { provider: "Duffel", results: offers, status: "success", latencyMs: 15 };
   const dependencies: Record<string, unknown> = {
+    "@/lib/productionSandboxPolicy": { productionSandboxInventory: () => false },
     "@/lib/utils": { getItineraryDateKey: (value: string) => value.slice(0, 10) },
     "@/lib/flights/flightSearchJourney": { getSearchLegs: () => [search] },
     "@/lib/searchCache": {

@@ -5,7 +5,7 @@ import { isKayakSandboxEnabled, KayakError, KayakSandboxClient } from "./kayakSa
 const hotel = { vertical: "hotels", destination: "kplace:58075", departure: "2099-12-16", returnDate: "2099-12-18", adults: 1 } as const;
 const car = { vertical: "cars", origin: "BOS", departure: "2099-12-16", returnDate: "2099-12-18" } as const;
 test("invalid environment, disabled integration and missing key fail closed", async () => {
-  for (const env of [{}, { KAYAK_SANDBOX_ENABLED: "true" }, { KAYAK_SANDBOX_ENABLED: "true", KAYAK_SANDBOX_API_KEY: "   " }, { KAYAK_SANDBOX_ENABLED: "true", KAYAK_SANDBOX_API_KEY: "test", NEXT_PUBLIC_APP_URL: "https://kurioticket.com" }]) assert.equal(isKayakSandboxEnabled(env), false);
+  for (const env of [{}, { KAYAK_SANDBOX_ENABLED: "true" }, { KAYAK_SANDBOX_ENABLED: "true", KAYAK_SANDBOX_API_KEY: "   " }, { KAYAK_SANDBOX_ENABLED: "true", KAYAK_SANDBOX_API_KEY: "test", NEXT_PUBLIC_APP_URL: "https://unauthorized.example" }]) assert.equal(isKayakSandboxEnabled(env), false);
   let calls = 0;
   const client = new KayakSandboxClient("", (async () => { calls++; return Response.json({}); }) as typeof fetch);
   await assert.rejects(client.search(hotel, "test"), { code: "unauthorized" });

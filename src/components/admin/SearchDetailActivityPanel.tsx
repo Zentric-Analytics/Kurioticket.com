@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import type { SearchScopedActivityResult, SearchScopedEvent } from "@/services/adminSearchScopedActivityCore";
 
@@ -45,11 +45,17 @@ export function SearchDetailActivityPanel({ searchId, environment }: Props) {
   const [result, setResult] = useState<SearchScopedActivityResult | null>(null);
   const cursor = cursors[pageIndex];
 
+  const readScope = JSON.stringify([searchId, environment, cursor, request]);
+  const [previousReadScope, setPreviousReadScope] = useState(readScope);
+  if (previousReadScope !== readScope) {
+    setPreviousReadScope(readScope);
+    setLoading(true);
+    setResult(null);
+  }
+
   useEffect(() => {
     const controller = new AbortController();
     let current = true;
-    setLoading(true);
-    setResult(null);
     const params = new URLSearchParams({ environment });
     if (cursor) params.set("cursor", cursor);
     void (async () => {

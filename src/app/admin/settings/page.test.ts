@@ -265,7 +265,7 @@ test("the Deals feature flag is presented as Packages without changing the inter
 
 test("Settings sidebar offers four deep-linkable sections without changing the global header", () => {
   assert.match(settingsLayout, /<AdminPageShell title="Settings" hideHeader>/);
-  assert.match(settingsLayout, /<AdminSettingsNavigation \/>/);
+  assert.match(settingsLayout, /<AdminSettingsNavigation showTeamAccess=\{isStagingEnvironment\(\)\} \/>/);
   assert.match(settingsNavigation, /usePathname\(\)/);
   assert.match(settingsNavigation, /aria-label="Settings sections"/);
   assert.match(settingsNavigation, /aria-current=\{active \? "page" : undefined\}/);
