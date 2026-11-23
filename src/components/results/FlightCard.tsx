@@ -65,6 +65,7 @@ export function FlightCard({
 }) {
   const journeyEvents = useJourneyEvents();
   const rememberDetailsContext = () => {
+    if (resolvedDetailsHref) journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", searchRequestId, { offerId: flight.id, sourcePage: "/flights/results" });
     journeyEvents.rememberDetailsContext("flight", flight.id, searchRequestId ?? null);
     if (typeof window !== "undefined" && resolvedDetailsHref?.startsWith("/flights/details/")) {
       rememberResultsScroll("flight", window.scrollY);
