@@ -29,6 +29,27 @@ test("journey events render only for the matching visitor and account", () => {
   assert.equal(toAdminJourneyActivity({ ...sample, searchHistory: null }, "guest", "visitor-1"), null);
 });
 
+test("explicit native flight fare, provider-deal and detail stages have distinct labels", () => {
+  for (const [type, label] of [
+    ["FLIGHT_DETAILS_VIEWED", "Flight details viewed"],
+    ["PROVIDER_DEAL_SELECTED", "Provider deal selected"],
+  ] as const) {
+    const event = toAdminJourneyActivity({ ...sample, type, metadata: {
+      resultId: "flight_safe_01", sourcePage: "/flight-details", private: "secret",
+    } }, "guest", "visitor-1");
+    assert.equal(event?.label, label);
+    assert.doesNotMatch(event?.detail ?? "", /secret|private/);
+  }
+  const fare = toAdminJourneyActivity({ ...sample, type: "OFFER_SELECTED",
+    metadata: { resultId: "fare_01", sourcePage: "/flight-details" },
+  }, "guest", "visitor-1");
+  assert.equal(fare?.label, "Fare selected");
+  const legacy = toAdminJourneyActivity({ ...sample, type: "OFFER_SELECTED",
+    metadata: { sourcePage: "/flight-details" },
+  }, "guest", "visitor-1");
+  assert.equal(legacy?.label, "Offer selected", "do not relabel historical events without source evidence");
+});
+
 test("recorded search and handoff stages use safe fields without raw metadata", () => {
   const search = toAdminJourneyActivity({ ...sample, type: "SEARCH_COMPLETED" }, "guest", "visitor-1");
   assert.equal(search?.dedupeKey, "search:search-1");

@@ -19,7 +19,9 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 const stages: Array<{ value: AdminJourneyStage; label: string }> = [
   { value: "SEARCH_COMPLETED", label: "Search completed" },
   { value: "RESULTS_VIEWED", label: "Results viewed" },
+  { value: "FLIGHT_DETAILS_VIEWED", label: "Flight details viewed" },
   { value: "OFFER_SELECTED", label: "Offer selected" },
+  { value: "PROVIDER_DEAL_SELECTED", label: "Provider deal selected" },
   { value: "PROVIDER_HANDOFF_STARTED", label: "Provider handoff" },
 ];
 

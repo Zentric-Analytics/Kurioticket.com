@@ -2,9 +2,11 @@ import { createProviderHandoffMetadata } from "../../../../../src/lib/providerHa
 
 export type JourneyEvent = {
   eventId: string;
-  type: "RESULTS_VIEWED" | "OFFER_SELECTED";
+  type: "RESULTS_VIEWED" | "FLIGHT_DETAILS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_DEAL_SELECTED";
   requestId: string;
   provider?: string;
+  /** Safe, bounded reference only on explicit new flight interactions. */
+  offerId?: string;
   sourcePage: string;
 };
 export type JourneyEventResponse = { accepted: boolean; retryable?: boolean };
@@ -94,6 +96,21 @@ export class JourneyEventCoordinator {
     return this.enqueue("OFFER_SELECTED", requestId, sourcePage, offerId, provider);
   }
 
+  /** Opening a result is not choosing an offer. */
+  flightDetailsViewed(requestId: string | undefined, offerId: string, provider?: string) {
+    return this.enqueue("FLIGHT_DETAILS_VIEWED", requestId, "/flight-results", offerId, provider, true);
+  }
+
+  /** Explicit change to the fare choice, not an automatic initial selection. */
+  flightFareSelected(requestId: string | undefined, offerId: string, provider?: string) {
+    return this.enqueue("OFFER_SELECTED", requestId, "/flight-details", offerId, provider, true);
+  }
+
+  /** Explicit provider option selection, distinct from a View deal handoff. */
+  providerDealSelected(requestId: string | undefined, offerId: string, provider?: string) {
+    return this.enqueue("PROVIDER_DEAL_SELECTED", requestId, "/flight-details", offerId, provider, true);
+  }
+
   prepareHandoff(requestId: string | undefined) {
     const context = this.captureContext();
     return createProviderHandoffMetadata(() => {
@@ -103,13 +120,15 @@ export class JourneyEventCoordinator {
     }, this.dependencies.createId);
   }
 
-  private enqueue(type: JourneyEvent["type"], requestId: string | undefined, sourcePage: string, offerId = "", provider?: string) {
+  private enqueue(type: JourneyEvent["type"], requestId: string | undefined, sourcePage: string,
+    offerId = "", provider?: string, includeOfferReference = false) {
     this.contextChanged();
     const sourcePath = journeySourcePath(sourcePage);
     if (this.context === null || !validRequestId(requestId) || !this.searches.has(requestId) || !sourcePath) return;
+    if (includeOfferReference && !/^[A-Za-z0-9._:+~=-]{1,128}$/.test(offerId)) return;
     // Re-renders, reopening cached details and repeated presses on the same offer
     // do not create duplicate funnel steps. Delivery retries retain this UUID.
-    const key = JSON.stringify([type, requestId, sourcePath, offerId]);
+    const key = JSON.stringify([type, requestId, sourcePath, offerId, provider ?? null]);
     const existing = this.events.get(key);
     if (existing) return existing.event.eventId;
     let eventId: string;
@@ -119,6 +138,7 @@ export class JourneyEventCoordinator {
       event: {
         eventId, type, requestId, sourcePage: sourcePath,
         ...(provider?.trim() ? { provider: provider.trim().slice(0, 100) } : {}),
+        ...(includeOfferReference ? { offerId } : {}),
       },
       context: this.context,
       controller: new AbortController(),

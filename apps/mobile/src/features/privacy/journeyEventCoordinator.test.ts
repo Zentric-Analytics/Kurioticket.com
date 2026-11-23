@@ -190,6 +190,51 @@ test("account transition aborts an in-flight event and never sends it under the 
   assert.equal(h.calls[1].event.requestId, "account-b-search");
 });
 
+test("native flight records details, fare and provider deal as separate consented stages", async () => {
+  const h = harness();
+  const requestId = h.remember();
+  const detail = h.coordinator.flightDetailsViewed(requestId, "flight-1", "KAYAK sandbox");
+  const sameDetail = h.coordinator.flightDetailsViewed(requestId, "flight-1", "KAYAK sandbox");
+  const fare = h.coordinator.flightFareSelected(requestId, "fare-1", "Duffel");
+  const deal = h.coordinator.providerDealSelected(requestId, "deal-1", "Trip.com");
+  const sameDeal = h.coordinator.providerDealSelected(requestId, "deal-1", "Trip.com");
+  h.coordinator.providerDealSelected(requestId, "deal-2", "Priceline");
+  await turn();
+
+  assert.equal(detail, sameDetail);
+  assert.equal(deal, sameDeal);
+  assert.ok(fare && detail && deal);
+  assert.deepEqual(h.calls.map(call => call.event.type),
+    ["FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_DEAL_SELECTED"]);
+  assert.deepEqual(h.calls.map(call => call.event.offerId), ["flight-1", "fare-1", "deal-1", "deal-2"]);
+  assert.deepEqual(h.calls.map(call => call.event.sourcePage),
+    ["/flight-results", "/flight-details", "/flight-details", "/flight-details"]);
+  assert.equal(new Set(h.calls.map(call => call.event.eventId)).size, 4);
+});
+
+test("native flight references reject URL-like or oversized IDs without blocking navigation", async () => {
+  const h = harness();
+  const requestId = h.remember();
+  for (const bad of ["https://provider.test/secret", "x".repeat(129), "a?token=secret", "<script>"]) {
+    h.coordinator.flightDetailsViewed(requestId, bad, "Provider");
+    h.coordinator.flightFareSelected(requestId, bad, "Provider");
+    h.coordinator.providerDealSelected(requestId, bad, "Provider");
+  }
+  await turn();
+  assert.equal(h.calls.length, 0);
+});
+
+test("flight events disappear on consent withdrawal or account change", async () => {
+  const h = harness();
+  const requestId = h.remember();
+  h.setContext(null);
+  h.coordinator.flightDetailsViewed(requestId, "flight-1", "Provider");
+  h.coordinator.flightFareSelected(requestId, "fare-1", "Provider");
+  h.coordinator.providerDealSelected(requestId, "deal-1", "Provider");
+  await turn();
+  assert.equal(h.calls.length, 0);
+});
+
 test("selected result and chosen detail rates are distinct steps while a repeated booking press is deduplicated", async () => {
   const h = harness();
   const requestId = h.remember();

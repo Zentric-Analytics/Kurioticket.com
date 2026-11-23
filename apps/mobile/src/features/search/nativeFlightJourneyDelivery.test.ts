@@ -5,9 +5,11 @@ import test from "node:test";
 const flight = readFileSync("src/features/search/NativeFlightDetails.tsx", "utf8");
 const consent = readFileSync("src/features/privacy/AnalyticsConsentControl.tsx", "utf8");
 
-test("iOS flight View deal lets already-queued consented journey stages settle after a successful redirect", () => {
+test("iOS flight View deal does not double count an offer and settles queued consented journey stages", () => {
   const handoff = flight.slice(flight.indexOf("const handoff=async(offerId:string)"), flight.indexOf("const share=async"));
-  assert.match(handoff, /trackSelectedOffer\(offerId\)/);
+  assert.doesNotMatch(handoff, /trackSelectedOffer|offerSelected\(|providerDealSelected\(|flightFareSelected\(/,
+    "the View deal button is not a separate selection action");
+  assert.match(handoff, /setSelectedDealOfferId\(offerId\)/);
   const redirectIndex = handoff.indexOf("await travelApi.flightRedirect");
   const settleIndex = handoff.indexOf('if(Platform.OS === "ios") await journeyEvents.settleBeforeExternalHandoff(journeyRequestId)');
   const externalIndex = handoff.indexOf("await Linking.openURL(response.url)");

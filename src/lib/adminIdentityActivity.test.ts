@@ -59,9 +59,9 @@ test("rolling activity windows accept strict UTC instants while legacy calendar 
 test("every tab exposes only its own recorded stages", () => {
   const stages = (tab: ActivityFilters["tab"], stage: ActivityFilters["stage"] = "all") =>
     [...allowedActivityStages({ ...filters, tab, stage })];
-  assert.deepEqual(stages("searches"), ["SEARCH_COMPLETED", "RESULTS_VIEWED"]);
-  assert.deepEqual(stages("selections"), ["OFFER_SELECTED"]);
-  assert.deepEqual(stages("journeys"), ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED",
+  assert.deepEqual(stages("searches"), ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED"]);
+  assert.deepEqual(stages("selections"), ["OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"]);
+  assert.deepEqual(stages("journeys"), ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED",
     "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED"]);
   assert.deepEqual(stages("handoffs"), ["PROVIDER_HANDOFF_STARTED"]);
   assert.deepEqual(stages("interactions"), ["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "ACCOUNT_ACTIVITY"]);

@@ -10,7 +10,7 @@ import { Search } from "lucide-react";
 type Values = { tab: string; q: string; product: string; stage: string; order: string; from: string; to: string; range: string };
 const options = {
   product: [["all","All products"],["FLIGHT","Flights"],["HOTEL","Hotels"],["CAR","Cars"],["PACKAGE","Packages"]],
-  stage: [["all","All activity types"],["SEARCH_COMPLETED","Search completed"],["RESULTS_VIEWED","Results viewed"],["OFFER_SELECTED","Offer selected"],["PROVIDER_HANDOFF_STARTED","Provider handoff"],["RESULT_SAVED","Result saved"],["RESULT_UNSAVED","Result unsaved"],["RESULT_SHARED","Result shared"],["PRICE_ALERT_CREATED","Price alert created"],["ACCOUNT_ACTIVITY","Account activity"]],
+  stage: [["all","All activity types"],["SEARCH_COMPLETED","Search completed"],["RESULTS_VIEWED","Results viewed"],["FLIGHT_DETAILS_VIEWED","Flight details viewed"],["OFFER_SELECTED","Offer selected"],["PROVIDER_DEAL_SELECTED","Provider deal selected"],["PROVIDER_HANDOFF_STARTED","Provider handoff"],["RESULT_SAVED","Result saved"],["RESULT_UNSAVED","Result unsaved"],["RESULT_SHARED","Result shared"],["PRICE_ALERT_CREATED","Price alert created"],["ACCOUNT_ACTIVITY","Account activity"]],
   order: [["newest","Newest first"],["oldest","Oldest first"]],
 };
 function utcWindow(days: number) {

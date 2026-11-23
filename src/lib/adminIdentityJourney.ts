@@ -13,7 +13,7 @@ export type ActivityRow = {
   journeyId?: string;
   journeyStartedAt?: Date;
   dedupeKey?: string;
-  stage?: "SEARCH_COMPLETED" | "RESULTS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_HANDOFF_STARTED"
+  stage?: "SEARCH_COMPLETED" | "RESULTS_VIEWED" | "FLIGHT_DETAILS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_DEAL_SELECTED" | "PROVIDER_HANDOFF_STARTED"
     | "RESULT_SAVED" | "RESULT_UNSAVED" | "RESULT_SHARED" | "PRICE_ALERT_CREATED" | "ACCOUNT_ACTIVITY";
   product?: string | null;
   provider?: string | null;
@@ -26,7 +26,7 @@ export type ActivityRow = {
 
 export type JourneyEventRecord = {
   id: string;
-  type: "SEARCH_COMPLETED" | "RESULTS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_HANDOFF_STARTED"
+  type: "SEARCH_COMPLETED" | "RESULTS_VIEWED" | "FLIGHT_DETAILS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_DEAL_SELECTED" | "PROVIDER_HANDOFF_STARTED"
     | "RESULT_SAVED" | "RESULT_UNSAVED" | "RESULT_SHARED" | "PRICE_ALERT_CREATED";
   product: string | null;
   provider: string | null;
@@ -123,7 +123,9 @@ function relatedRecordAllowed(
 const eventLabels = {
   SEARCH_COMPLETED: "Search completed",
   RESULTS_VIEWED: "Results viewed",
+  FLIGHT_DETAILS_VIEWED: "Flight details viewed",
   OFFER_SELECTED: "Offer selected",
+  PROVIDER_DEAL_SELECTED: "Provider deal selected",
   PROVIDER_HANDOFF_STARTED: "Provider handoff started",
   RESULT_SAVED: "Result saved",
   RESULT_UNSAVED: "Result unsaved",
@@ -167,9 +169,16 @@ export function toAdminJourneyActivity(event: JourneyEventRecord, kind: Identity
     PRICE_ALERT_CREATED: { price_alert_created: "Price alert created" },
   };
   const action = typeof rawAction === "string" ? allowedActions[event.type]?.[rawAction] : undefined;
-  const label = event.type === "RESULT_SAVED" || event.type === "RESULT_UNSAVED"
-    || event.type === "RESULT_SHARED" || event.type === "PRICE_ALERT_CREATED"
-    ? action ?? eventLabels[event.type] : eventLabels[event.type];
+  const metadata = event.metadata && typeof event.metadata === "object" && !Array.isArray(event.metadata)
+    ? event.metadata as Record<string, unknown> : null;
+  const fareIsExplicit = event.type === "OFFER_SELECTED" && event.product === "FLIGHT"
+    && metadata?.sourcePage === "/flight-details"
+    && typeof metadata.resultId === "string"
+    && /^[A-Za-z0-9._:+~=-]{1,128}$/.test(metadata.resultId);
+  const label = fareIsExplicit ? "Fare selected"
+    : event.type === "RESULT_SAVED" || event.type === "RESULT_UNSAVED"
+      || event.type === "RESULT_SHARED" || event.type === "PRICE_ALERT_CREATED"
+      ? action ?? eventLabels[event.type] : eventLabels[event.type];
   const detail = [product, route, provider, status].filter(Boolean).join(" · ");
 
   return {

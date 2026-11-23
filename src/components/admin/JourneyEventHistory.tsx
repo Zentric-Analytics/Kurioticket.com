@@ -40,6 +40,8 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
                     ? event.action === "local_saved" ? "Saved locally" : event.action === "saved_item_confirmed" ? "Saved to account" : "Result saved"
                     : event.type === "RESULT_UNSAVED"
                       ? event.action === "local_unsaved" ? "Removed local save" : event.action === "saved_item_removed" ? "Removed saved item" : "Result unsaved"
+                      : event.type === "OFFER_SELECTED" && event.product === "FLIGHT" && event.resultReference && event.sourcePage === "/flight-details"
+                        ? "Fare selected"
                       : readable(event.type)}</span>
                 {event.product ? <p className="mt-1 text-xs text-[#64748B]">{readable(event.product)}</p> : null}
               </td>

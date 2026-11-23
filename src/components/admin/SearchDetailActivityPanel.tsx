@@ -12,7 +12,9 @@ type Props = {
 const PAGE_SIZE = 25;
 const activityLabels: Record<Exclude<SearchScopedEvent["stage"], "SEARCH_COMPLETED">, string> = {
   RESULTS_VIEWED: "Results viewed",
+  FLIGHT_DETAILS_VIEWED: "Flight details viewed",
   OFFER_SELECTED: "Offer selected",
+  PROVIDER_DEAL_SELECTED: "Provider deal selected",
   PROVIDER_HANDOFF_STARTED: "Provider handoff started",
 };
 const buttonStyle = "inline-flex min-h-9 items-center rounded-md border border-[#D8E1EC] bg-white px-3 text-[12px] font-medium text-[#004BB8] hover:bg-[#F5F8FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-50";
@@ -111,7 +113,9 @@ export function SearchDetailActivityPanel({ searchId, environment }: Props) {
               <div className="flex min-w-0 items-start gap-3">
                 <span aria-hidden="true" className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-600" />
                 <div>
-                  <p className="font-semibold text-[#111827]">{activityLabels[event.stage as Exclude<SearchScopedEvent["stage"], "SEARCH_COMPLETED">]}</p>
+                  <p className="font-semibold text-[#111827]">{event.stage === "OFFER_SELECTED" && event.offerReference
+                      ? "Fare selected"
+                      : activityLabels[event.stage as Exclude<SearchScopedEvent["stage"], "SEARCH_COMPLETED">]}</p>
                   <p className="text-[#6B7280]">{timestamp(event.occurredAt)}</p>
                 </div>
               </div>
@@ -120,9 +124,12 @@ export function SearchDetailActivityPanel({ searchId, environment }: Props) {
                   ? <><p>{event.provider ? "Handoff initiated to " + event.provider : "Provider handoff initiated"}</p>
                       {handoffLabel(event) ? <p className="mt-0.5 text-[#64748B]">{handoffLabel(event)}</p> : null}
                       <p className="mt-0.5 text-[11px] text-[#64748B]">Destination visit not independently confirmed</p></>
-                  : event.provider ? "Provider: " + event.provider
                   : event.stage === "RESULTS_VIEWED" ? "Results viewed; exact number viewed is not recorded"
-                  : "Offer selected; offer details not recorded"}
+                  : event.offerReference
+                    ? <> {event.provider ? <p>Provider: {event.provider}</p> : null}
+                        <p className="mt-0.5 text-[11px] text-[#64748B]">Offer reference: {event.offerReference}</p></>
+                    : event.provider ? "Provider: " + event.provider
+                    : "No additional offer details recorded"}
               </div>
             </li>
           ))}

@@ -12,8 +12,14 @@ const clientEventSchema = z.object({
   type: z.enum(clientJourneyEventTypes),
   requestId: z.string().uuid(),
   provider: z.string().trim().min(1).max(100).regex(/^[^\u0000-\u001f\u007f]+$/).optional(),
+  /** Optional for old clients. Required for newly differentiated flight stages. */
+  offerId: z.string().min(1).max(128).regex(/^[A-Za-z0-9._:+~=-]+$/).optional(),
   sourcePage: z.string().max(240).refine(isJourneySourcePath).optional(),
-}).strict();
+}).strict().superRefine((event, ctx) => {
+  if ((event.type === "FLIGHT_DETAILS_VIEWED" || event.type === "PROVIDER_DEAL_SELECTED") && !event.offerId) {
+    ctx.addIssue({ code: "custom", path: ["offerId"], message: "Offer reference required." });
+  }
+});
 
 type Dependencies = {
   identity: typeof resolveRequestActivityIdentity;
