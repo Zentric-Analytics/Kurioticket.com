@@ -125,6 +125,7 @@ export function CarResultCard({
     orSimilar: string;
   };
 }) {
+  const journeyEvents = useJourneyEvents();
   const { isSaved, toggleSavedCar } = useSavedCar(car, search, requestId);
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? key;
@@ -219,7 +220,6 @@ export function CarResultCard({
     setLocalSelectedOfferId(nextOffer.id);
   };
 
-  const journeyEvents = useJourneyEvents();
   const handleMobileDetailsNavigation = (
     event: ReactMouseEvent<HTMLAnchorElement>,
   ) => {
