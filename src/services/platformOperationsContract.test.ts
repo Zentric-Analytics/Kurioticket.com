@@ -77,6 +77,7 @@ test("operational service scopes aggregate SQL to its environment and outages re
         assert.ok(!values.includes("production"));
         assert.match(_strings.join("?"), /service NOT IN \('scheduled-job','crawler-blocked-search'\)/);
         assert.doesNotMatch(_strings.join("?"), /SELECT 'crawlerBlocks'/);
+        assert.match(_strings.join("?"), /"countAsSearch" = TRUE/, "historical nearby child searches are not aggregate searches");
         return [
           { kind: "searches", source: "WEB", status: "SUCCESS", count: 2, latency: 0 },
           { kind: "searches", source: "BOT", status: "SUCCESS", count: 17, latency: 0 },
@@ -113,6 +114,7 @@ test("Overview search activity observes exact bounds in the deployment and disti
     "@/lib/prisma": { getOptionalPrisma: () => ({ $queryRaw: async (sql: TemplateStringsArray, ...params: unknown[]) => {
       assert.match(sql.join("?"), /FROM "SearchHistory"[\s\S]*"createdAt" >= \? AND "createdAt" < \?/);
       assert.doesNotMatch(sql.join("?"), /ApiProviderLog|crawler-blocked-search/);
+      assert.match(sql.join("?"), /"countAsSearch" = TRUE/, "Overview counts one parent search only");
       assert.deepEqual(params, [from, to, "staging"]);
       if (state === "unavailable") throw new Error("database down");
       return state === "empty" ? [] : [
