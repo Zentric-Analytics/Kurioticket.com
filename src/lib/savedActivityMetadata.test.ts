@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
 import { confirmedSavedActivityMetadata, savedResultReference } from "./savedActivityMetadata";
 
@@ -29,9 +30,11 @@ test("verified native attribution is stored while unknown device source is not i
   assert.equal(confirmedSavedActivityMetadata({ savedType: "flight", product: "FLIGHT", savedItemId: "x" }).applicationSource, "UNKNOWN");
 });
 
-test("safe references reject untrusted result payloads and do not copy sensitive travel data", () => {
-  assert.equal(savedResultReference("flight", { flightResultId: "https://example.com?a=1" }), undefined);
-  assert.equal(savedResultReference("hotel", { hotelResultId: "x".repeat(129) }), undefined);
+test("safe references hash opaque identifiers and never copy sensitive travel data", () => {
+  const opaque = "https://example.com?a=1";
+  assert.equal(savedResultReference("flight", { flightResultId: opaque }), createHash("sha256").update(opaque).digest("hex"));
+  assert.equal(savedResultReference("hotel", { hotelResultId: "x".repeat(129) }), createHash("sha256").update("x".repeat(129)).digest("hex"));
+  assert.equal(savedResultReference("hotel", { hotelResultId: "x".repeat(4097) }), undefined);
   assert.equal(savedResultReference("hotel", { result: { id: "opaque:safe-23" } }), "opaque:safe-23");
   assert.equal(savedResultReference("search", { result: { id: "x" } }), "x");
   const event = confirmedSavedActivityMetadata({
