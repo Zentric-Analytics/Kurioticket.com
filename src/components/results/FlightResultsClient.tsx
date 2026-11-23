@@ -7598,8 +7598,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 <>
                   <div data-flight-results-card-list onClickCapture={rememberVisibleFlightResults} className="space-y-3 sm:space-y-4">
                     <VirtualResultsList items={sortedResults} itemKey={resultIdKey} label="Flight results" estimateHeight={320} renderItem={(flight, index) => {
-                      const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
-                      if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
+                      const sandboxOffer = displayedKayakOffers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
+                      if (sandboxOffer) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={displayedKayakCriteria} />;
                       const detailsQuery = params.toString();
                       const internalDetailsHref =
                         `/flights/details/${encodeURIComponent(flight.id)}` +
