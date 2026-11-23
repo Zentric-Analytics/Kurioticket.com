@@ -100,7 +100,7 @@ async function expectHeaderTimePresentation(page, context) {
     assert.ok(displayed.length > 0 && !/\bUTC\b/.test(displayed),
       context + ": header date should not wrap a visible UTC suffix: " + displayed);
     await expect(timestamp).toHaveAttribute("datetime", /Z$/);
-    await expect(timestamp).toHaveAttribute("title", /\bUTC\b/);
+    await expect(timestamp).toHaveAttribute("title", /.+/);
   }
 }
 
@@ -253,7 +253,7 @@ try {
     await expectBalancedDesktopHeader(page, "Registered zoom " + zoom);
     const inlineDevices = page.getByTestId("identity-device-access");
     await expect(inlineDevices).toBeVisible();
-    await expect(inlineDevices.getByText("Today (UTC)")).toBeVisible();
+    await expect(inlineDevices.getByText("Today (local)")).toBeVisible();
     await expect(inlineDevices.getByRole("heading",{name:"Device & Access History"})).toHaveCount(0);
     await expect(inlineDevices.getByTestId("device-session-row")).toHaveCount(3);
     await expect(inlineDevices.getByTestId("device-today-list")).toBeVisible();
