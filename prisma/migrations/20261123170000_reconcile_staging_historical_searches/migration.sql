@@ -5,6 +5,22 @@
 BEGIN;
 ALTER TABLE "SearchHistory" ADD COLUMN "countAsSearch" BOOLEAN NOT NULL DEFAULT TRUE;
 
+-- On the actual staging database, abort if the fixed-window audit baseline has
+-- drifted since the request logs were correlated. Never silently reclassify a
+-- different cohort. On production and CI databases, no historical rows change.
+DO $
+BEGIN
+  IF current_database() = 'kurioticket_web_staging' THEN
+    IF (SELECT COUNT(*) FROM "SearchHistory" WHERE
+       "createdAt" >= TIMESTAMPTZ '2026-11-16T14:27:53Z'
+       AND "createdAt" < TIMESTAMPTZ '2026-11-23T14:27:53Z'
+       AND query->>'environment'='staging'
+       AND query->>'applicationSource'='UNKNOWN') <> 602 THEN
+      RAISE EXCEPTION 'Staging historical source cohort drift; reconcile manifest before migration';
+    END IF;
+  END IF;
+END $;
+
 -- Each row here is a SINGLE operational session whose SearchHistory contains
 -- nearby-date fan-out. The manifest hashes are MD5 of the historical, otherwise
 -- unpersisted signed session references; no IPs or user agents are committed.
@@ -99,6 +115,10 @@ UPDATE "SearchHistory" s
 SET "countAsSearch" = (r.rn = 1),
     query = s.query
       || jsonb_build_object('applicationSource',r.source)
+      || CASE WHEN r.source='BOT' THEN jsonb_build_object(
+           'identifiedCrawler',r.observed_client,
+           'crawlerEvidence','DECLARED_USER_AGENT')
+         ELSE '{}'::jsonb END
       || jsonb_build_object('historicalSearchReconciliation',
           jsonb_build_object(
             'version','20261123-v1', 'originalApplicationSource','UNKNOWN',
@@ -221,5 +241,24 @@ WHERE current_database() = 'kurioticket_web_staging'
   AND s.query->>'applicationSource'=e.old_source
   AND s.type::text='FLIGHT'
   AND s."countAsSearch"=TRUE;
+
+-- Verify that the fixed historical cohort was relabeled exactly as
+-- planned. Raw audit rows remain; only the 408 nearby-date children are no
+-- longer counted as independent searches.
+DO $$
+DECLARE corrected int; hidden int;
+BEGIN
+  IF current_database()='kurioticket_web_staging' THEN
+    SELECT COUNT(*)::int,COUNT(*) FILTER (WHERE "countAsSearch"=FALSE)::int
+      INTO corrected,hidden FROM "SearchHistory"
+      WHERE "createdAt" >= TIMESTAMPTZ '2026-11-16T14:27:53Z'
+        AND "createdAt" < TIMESTAMPTZ '2026-11-23T14:27:53Z'
+        AND query->>'environment'='staging'
+        AND query#>>'{historicalSearchReconciliation,version}'='20261123-v1';
+    IF corrected<>513 OR hidden<>408 THEN
+      RAISE EXCEPTION 'Historical reconciliation mismatch: corrected %, child rows %', corrected, hidden;
+    END IF;
+  END IF;
+END $$;
 
 COMMIT;
