@@ -332,7 +332,7 @@ test("search detail renders the reorganized read-only diagnostics without the vi
   assert.doesNotMatch(page, /What happened/);
   assert.match(page, /What to check/);
   assert.doesNotMatch(page, /<Field label="Product"|<Field label="Origin"|<Field label="Destination"|<Field label="Pickup location"|<Field label="Drop-off location"/);
-  assert.match(page, /Searched \{formatDateTime/);
+  assert.match(page, /Searched <AdminLocalDateTime value=\{search\.createdAt\} \/>/);
   assert.match(page, /Stay dates/);
   assert.doesNotMatch(page, /<p className="mt-0\.5 text-\[10px\] text-\[#9CA3AF\]">\{formatDateTime\(new Date\(provider\.observedAt\)\)\}/);
   assert.match(page, /Search diagnosis/);
