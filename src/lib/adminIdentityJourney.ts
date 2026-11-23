@@ -169,9 +169,16 @@ export function toAdminJourneyActivity(event: JourneyEventRecord, kind: Identity
     PRICE_ALERT_CREATED: { price_alert_created: "Price alert created" },
   };
   const action = typeof rawAction === "string" ? allowedActions[event.type]?.[rawAction] : undefined;
-  const label = event.type === "RESULT_SAVED" || event.type === "RESULT_UNSAVED"
-    || event.type === "RESULT_SHARED" || event.type === "PRICE_ALERT_CREATED"
-    ? action ?? eventLabels[event.type] : eventLabels[event.type];
+  const metadata = event.metadata && typeof event.metadata === "object" && !Array.isArray(event.metadata)
+    ? event.metadata as Record<string, unknown> : null;
+  const fareIsExplicit = event.type === "OFFER_SELECTED" && event.product === "FLIGHT"
+    && metadata?.sourcePage === "/flight-details"
+    && typeof metadata.resultId === "string"
+    && /^[A-Za-z0-9._:+~=-]{1,128}$/.test(metadata.resultId);
+  const label = fareIsExplicit ? "Fare selected"
+    : event.type === "RESULT_SAVED" || event.type === "RESULT_UNSAVED"
+      || event.type === "RESULT_SHARED" || event.type === "PRICE_ALERT_CREATED"
+      ? action ?? eventLabels[event.type] : eventLabels[event.type];
   const detail = [product, route, provider, status].filter(Boolean).join(" · ");
 
   return {
