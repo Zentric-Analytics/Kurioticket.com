@@ -56,7 +56,7 @@ test("active hotel keeps icon-only header controls fixed over the hero and scrol
 test("save and share remain independent accessible actions inside one compact pill", () => {
   assert.match(hotel, /accessibilityLabel=\{saved \? `Remove \$\{result\.name\} hotel from saved` : `Save \$\{result\.name\} hotel`\}/);
   assert.match(hotel, /accessibilityState=\{\{ selected: saved \}\}/);
-  assert.match(hotel, /onPress=\{\(\) => void canonical\.toggleHotel\(result, params\)\}/);
+  assert.match(hotel, /onPress=\{\(\) => void canonical\.toggleHotel\(result, params, journeyRequestId)\}/);
   assert.match(hotel, /<Heart[\s\S]*?size=\{22\}[\s\S]*?strokeWidth=\{androidFavoriteColors\.strokeWidth\}/);
   assert.match(hotel, /accessibilityLabel=\{`Share \$\{result\.name\}`\}[\s\S]*?onPress=\{shareHotel\}/);
   assert.match(hotel, /<FlowIcon name="share" size=\{22\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{androidFavoriteColors\.shareStroke\} \/>/);
