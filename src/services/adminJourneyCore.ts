@@ -38,7 +38,7 @@ type JourneyRecord = {
 };
 type EventRecord = {
   id: string; type: AdminJourneyEventType; createdAt: Date; product: AdminJourneyProduct | null;
-  action: string | null; resultReference: string | null; filterGroup: string | null; sortMode: string | null; sortChoice?: string | null;
+  action: string | null; resultReference: string | null; filterGroup: string | null; sortMode: string | null; sortChoice?: string | null; filterSelections?: unknown;
   alertMode?: string | null; alertCurrency?: string | null; alertTargetPrice?: string | null; alertBaselinePrice?: string | null;
   provider: string | null; sourcePage: string | null;
   searchHistoryId: string | null; requestId: string | null; searchProduct: AdminJourneyProduct | null;
@@ -80,7 +80,7 @@ function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
     WITH eligible_events AS (
       SELECT e."id", e."journeyId", e."type"::text AS "type", e."product"::text AS "product", e."provider", e."createdAt",
         e."metadata"->>'sourcePage' AS "sourcePage", e."metadata"->>'action' AS "action", e."metadata"->>'resultId' AS "resultReference",
-        e."metadata"->>'filterGroup' AS "filterGroup", e."metadata"->>'sortMode' AS "sortMode", e."metadata"->>'sortChoice' AS "sortChoice",
+        e."metadata"->>'filterGroup' AS "filterGroup", e."metadata"->'filterSelections' AS "filterSelections", e."metadata"->>'sortMode' AS "sortMode", e."metadata"->>'sortChoice' AS "sortChoice",
         e."metadata"->>'alertMode' AS "alertMode", e."metadata"->>'alertCurrency' AS "alertCurrency",
         e."metadata"->>'alertTargetPrice' AS "alertTargetPrice", e."metadata"->>'alertBaselinePrice' AS "alertBaselinePrice", j."visitorId", v."currentUserId" AS "userId", j."startedAt",
         s."id" AS "searchHistoryId", s."requestId", s."type"::text AS "searchProduct", s."origin", s."destination",
@@ -294,6 +294,14 @@ function eventDto(row: EventRecord): AdminJourneyEvent {
     filterGroup: row.type === "SEARCH_FILTER_APPLIED" && ["all", "price", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "transmission", "other"].includes(row.filterGroup ?? "") ? row.filterGroup : null,
     sortMode: row.type === "SEARCH_SORT_CHANGED" && ["price", "best", "fastest", "stops", "rating", "recommended", "other"].includes(row.sortMode ?? "") ? row.sortMode : null,
     sortChoice: row.type === "SEARCH_SORT_CHANGED" && ["best", "cheapest", "fastest", "stops", "bestValue", "topRated", "recommended", "lowestTotal"].includes(row.sortChoice ?? "") ? row.sortChoice : null,
+    filterSelections: row.type === "SEARCH_FILTER_APPLIED" && Array.isArray(row.filterSelections)
+      ? row.filterSelections.slice(0, 20).flatMap((choice: unknown) => {
+          if (!choice || typeof choice !== "object" || Array.isArray(choice)) return [];
+          const entry = choice as Record<string, unknown>;
+          if (typeof entry.group !== "string" || typeof entry.option !== "string") return [];
+          if (!/^[A-Za-z][A-Za-z0-9]{0,30}$/.test(entry.group) || !/^[\p{L}\p{N} ._:+\-']{1,72}$/u.test(entry.option)) return [];
+          return [{ group: entry.group, option: entry.option }];
+        }) : null,
     ...(row.type === "PRICE_ALERT_CREATED" && /^(TARGET|AUTOMATIC)$/.test(row.alertMode ?? "")
       && /^[A-Z]{3}$/.test(row.alertCurrency ?? "")
       ? { alertDetails: {
