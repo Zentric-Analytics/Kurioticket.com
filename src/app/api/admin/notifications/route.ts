@@ -34,6 +34,7 @@ export async function GET(request: Request) {
       return NextResponse.json(
         await getAdminAlertSnapshot(auth.session.user.id, new Date(), {
           forceRefreshCandidates: !panelOnly,
+          includeTicketNotifications: true,
         }),
       );
     }

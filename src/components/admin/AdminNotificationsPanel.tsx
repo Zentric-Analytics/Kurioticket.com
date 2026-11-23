@@ -299,7 +299,8 @@ export function AdminNotificationsPanel({ open, onToggle, onClose, headerRef, tr
                 window.dispatchEvent(new Event("admin-alerts-updated"));
               }}>
               <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 pr-7 text-[11px] leading-4">
-                <span className={"font-semibold " + (alert.severity === "CRITICAL" ? "text-rose-700" : "text-amber-700")}>{alert.severity === "CRITICAL" ? "Critical" : "Warning"}</span>
+                {alert.severity === "INFO" ? <span className="font-semibold text-blue-700">Info</span> :
+                  <span className={"font-semibold " + (alert.severity === "CRITICAL" ? "text-rose-700" : "text-amber-700")}>{alert.severity === "CRITICAL" ? "Critical" : "Warning"}</span>}
                 <span className="font-normal text-[#6B7280]">{adminNotificationSourceLabel(alert.source)}</span>
               </div>
               <h3 className="break-words text-[13px] font-semibold leading-5 text-[#111827]">{alert.title}</h3>

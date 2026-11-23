@@ -18,6 +18,8 @@ function harness() {
   const audit: AuditRow[] = [];
   let reads = 0;
   const state = {
+    ticketReadFails: false,
+    tickets: [] as { id: string; createdAt: Date; subject: string }[],
     databaseConnected: true,
     cmsAvailable: true,
     environment: "staging",
@@ -30,6 +32,11 @@ function harness() {
     } as expandedCore.ExpandedAlertSnapshot,
   };
   const tx = {
+    supportTicket: { findMany: async ({ where }: { where: { createdAt: { gt: Date; lte: Date } } }) =>
+      {
+        if (state.ticketReadFails) throw new Error("Ticket lookup unavailable");
+        return state.tickets.filter(ticket => ticket.createdAt > where.createdAt.gt && ticket.createdAt <= where.createdAt.lte);
+      } },
     $executeRaw: async () => 1,
     adminAuditLog: {
       findFirst: async ({ where }: Lookup) => audit.filter(row => row.action === where.action && row.targetType === where.targetType && row.targetId === where.targetId).at(-1) ?? null,
@@ -129,4 +136,24 @@ test("a fresh occurrence and a different environment are not hidden by a prior d
   assert.notEqual(reopened.signalToken, alert.signalToken);
   h.state.environment = "production";
   assert.notEqual(h.api.adminAlertDismissalKey(alert.key, alert.signalToken), oldKey);
+});
+
+test("the bell counts each new ticket once alongside urgent escalation", async () => {
+  const h = harness();
+  h.state.tickets.push(...["one", "two", "three", "four"].map(id => ({ id, subject: "Same subject", createdAt: now })));
+  const panel = await h.api.getAdminAlertSnapshot("admin-a", now, { includeTicketNotifications: true });
+  const notices = panel.alerts.filter(alert => alert.severity === "INFO");
+  assert.equal(new Set(notices.map(alert => alert.id)).size, 4);
+  assert.equal(notices[0].actionHref, "/admin/support/one");
+  assert.equal((await h.api.getAdminAlertSummary("admin-a", now)).unreadCount, 6);
+  assert.equal((await h.api.getAdminAlertSnapshot(undefined, now)).activeCount, 2);
+  assert.equal((await h.api.getAdminAlertSummary("admin-a", new Date(+now + 86400000))).activeCount, 2);
+});
+
+test("a failed ticket query leaves other bell alerts available", async () => {
+  const h = harness();
+  h.state.ticketReadFails = true;
+  const panel = await h.api.getAdminAlertSnapshot("admin-a", now, { includeTicketNotifications: true });
+  assert.deepEqual(Array.from(panel.alerts, alert => alert.source), ["SUPPORT", "USERS"]);
+  assert.equal((await h.api.getAdminAlertSummary("admin-a", now)).unreadCount, 2);
 });
