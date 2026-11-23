@@ -58,12 +58,16 @@ export function adminCalendarNextDayStart(day: string, timeZone: string) {
   return adminCalendarDayStart(next, timeZone);
 }
 
-export function adminDisplayDateTime(value: Date | string | number, timeZone: string, style: "datetime" | "date" | "time" | "relative" = "datetime", referenceNow = new Date()) {
+export function adminDisplayDateTime(value: Date | string | number, timeZone: string, style: "datetime" | "date" | "time" | "relative" | "compact" = "datetime", referenceNow = new Date()) {
   const date = value instanceof Date ? value : new Date(value);
   if (!Number.isFinite(date.getTime())) return "—";
   const zone = safeAdminTimeZone(timeZone);
   const timeFormat = new Intl.DateTimeFormat("en", { timeZone: zone, hour: "numeric", minute: "2-digit" });
   if (style === "time") return timeFormat.format(date);
+  if (style === "compact") return new Intl.DateTimeFormat("en-GB", {
+    timeZone: zone, day: "numeric", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  }).format(date);
   if (style === "relative") {
     const sameDay = adminCalendarDate(date, zone) === adminCalendarDate(referenceNow, zone);
     if (sameDay) return "Today, " + timeFormat.format(date);
