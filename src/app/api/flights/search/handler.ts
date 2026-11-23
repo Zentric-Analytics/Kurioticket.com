@@ -107,19 +107,10 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
         }),
       );
 
-      // Nearby fare lookups remain absent from customer Search Activity, but
-      // each *executed* verified-bot lookup is an observable BOT search.
-      // Blocked, invalid and rate-limited requests never reach this callback.
+      // Nearby comparisons are part of a parent flight search, never separate
+      // SearchHistory rows for humans or verified crawlers.
       if (nearby) {
-        await Promise.all([
-          ...providerLogs,
-          ...(verifiedCrawler ? [logSearchHistory({
-            applicationSource: "BOT", userId: null, visitorId: null,
-            requestId, type: "FLIGHT", origin: parsed.data.origin, destination: parsed.data.destination,
-            query: { ...operationalQuery(parsed.data), verifiedCrawler, searchPurpose: "nearby-fare" },
-            resultCount, latencyMs: aggregate.latencyMs, status,
-          })] : []),
-        ]);
+        await Promise.all(providerLogs);
         return;
       }
 
