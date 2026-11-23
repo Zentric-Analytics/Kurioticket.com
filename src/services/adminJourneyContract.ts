@@ -61,6 +61,7 @@ export type AdminJourneyEvent = {
   action?: "local_saved" | "local_unsaved" | "saved_item_confirmed" | "saved_item_removed" | "share_link_copied" | "share_sheet_completed" | null;
   resultReference?: string | null;
   filterGroup?: string | null;
+  filterSelections?: Array<{ group: string; option: string }> | null;
   sortMode?: string | null;
   sortChoice?: string | null;
   alertDetails?: { mode: "TARGET" | "AUTOMATIC"; currency: string; targetPrice: string | null; baselinePrice: string | null } | null;
