@@ -46,6 +46,19 @@ export function useSavedHotel({ hotelId, getSnapshot, searchRequestId }: UseSave
   const { status: sessionStatus } = useSession();
   const [isSaved, setIsSaved] = useState(false);
 
+  const observedResult = () => {
+    try {
+      const snapshot = getSnapshot();
+      return Number.isFinite(snapshot.totalPrice) && snapshot.totalPrice > 0
+        && /^[A-Z]{3}$/.test(snapshot.currency)
+        ? { label: snapshot.hotelName, provider: snapshot.provider,
+            amount: snapshot.totalPrice, currency: snapshot.currency, priceBasis: "total" as const }
+        : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
   function writeLocalHotelSave(nextSaved: boolean) {
     const savedIds = parseSavedHotelIds(
       window.localStorage.getItem(SAVED_HOTEL_IDS_STORAGE_KEY),
@@ -73,7 +86,7 @@ export function useSavedHotel({ hotelId, getSnapshot, searchRequestId }: UseSave
     );
 
     setIsSaved(nextSaved);
-    recordCustomerInteraction({ action: nextSaved ? "local_saved" : "local_unsaved", product: "HOTEL", resultId: hotelId, requestId: searchRequestId });
+    recordCustomerInteraction({ action: nextSaved ? "local_saved" : "local_unsaved", product: "HOTEL", resultId: hotelId, requestId: searchRequestId, observedResult: observedResult() });
 
     window.dispatchEvent(
       new CustomEvent(SAVED_HOTEL_IDS_CHANGED_EVENT, {
@@ -154,7 +167,7 @@ export function useSavedHotel({ hotelId, getSnapshot, searchRequestId }: UseSave
         const deleteResult = await deleteBackendHotel(savedHotel.id);
         if (deleteResult.ok) {
           setIsSaved(false);
-          recordCustomerInteraction({ action: "saved_item_removed", product: "HOTEL", resultId: hotelId, requestId: searchRequestId });
+          recordCustomerInteraction({ action: "saved_item_removed", product: "HOTEL", resultId: hotelId, requestId: searchRequestId, observedResult: observedResult() });
         }
         return;
       }
@@ -172,7 +185,7 @@ export function useSavedHotel({ hotelId, getSnapshot, searchRequestId }: UseSave
       });
       if (saveResult.ok || saveResult.duplicate) setIsSaved(true);
       if (saveResult.ok && !saveResult.duplicate) recordCustomerInteraction({
-        action: "saved_item_confirmed", product: "HOTEL", resultId: hotelId, requestId: searchRequestId,
+        action: "saved_item_confirmed", product: "HOTEL", resultId: hotelId, requestId: searchRequestId, observedResult: observedResult(),
       });
       return;
     }
