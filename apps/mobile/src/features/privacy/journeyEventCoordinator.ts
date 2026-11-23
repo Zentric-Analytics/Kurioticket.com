@@ -21,6 +21,7 @@ type PendingEvent = {
   controller: AbortController;
   attempts: number;
   cancelRetry?: () => void;
+  immediateRetryAllowed?: boolean;
 };
 
 const retryDelays = [250, 1000, 3000];
@@ -154,9 +155,10 @@ export class JourneyEventCoordinator {
     if (this.context === null || !validRequestId(requestId) || !this.searches.has(requestId)) return;
     const current = this.context;
     for (const pending of this.events.values()) {
-      if (pending.context !== current || pending.event.requestId !== requestId || !pending.cancelRetry) continue;
+      if (pending.context !== current || pending.event.requestId !== requestId || !pending.cancelRetry || !pending.immediateRetryAllowed) continue;
       pending.cancelRetry();
       pending.cancelRetry = undefined;
+      pending.immediateRetryAllowed = false;
       this.startDelivery(pending);
     }
     const active = [...this.deliveries.entries()]
@@ -179,10 +181,15 @@ export class JourneyEventCoordinator {
     if (pending.controller.signal.aborted || this.context !== pending.context) return;
     pending.attempts += 1;
     let retry = false;
+    pending.immediateRetryAllowed = false;
     try {
       const response = await this.dependencies.send(pending.event, pending.context, pending.controller.signal);
       retry = !response.accepted && response.retryable === true;
+      // The server explicitly requested a retry (usually a deferred
+      // SearchHistory write); it is safe to expedite once before clickout.
+      pending.immediateRetryAllowed = retry;
     } catch (error) {
+      // Retain normal backoff for rate limiting, outages and network errors.
       retry = retryableFailure(error);
     }
     this.contextChanged();
@@ -192,6 +199,6 @@ export class JourneyEventCoordinator {
       const timer = setTimeout(callback, delayMs);
       return () => clearTimeout(timer);
     });
-    pending.cancelRetry = schedule(() => { pending.cancelRetry = undefined; this.startDelivery(pending); }, delay);
+    pending.cancelRetry = schedule(() => { pending.cancelRetry = undefined; pending.immediateRetryAllowed = false; this.startDelivery(pending); }, delay);
   }
 }
