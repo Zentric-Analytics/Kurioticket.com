@@ -55,6 +55,22 @@ test("recent searches split the same visitor journey by verified SearchHistory r
   assert.equal(rows.length,10,"never mutate, remove or backfill source records");
 });
 
+test("verified stages stay on the same search across a visitor journey rollover", () => {
+  const rows: ActivityRow[] = [
+    { ...row("search-event","first-journey","SEARCH_COMPLETED",new Date("2026-11-23T08:00:00Z"),"FLIGHT"),searchHistoryId:"same-search" },
+    { ...row("view-event","second-journey","RESULTS_VIEWED",new Date("2026-11-23T08:40:00Z"),"FLIGHT"),searchHistoryId:"same-search" },
+    { ...row("selection-event","second-journey","OFFER_SELECTED",new Date("2026-11-23T08:41:00Z"),"FLIGHT"),searchHistoryId:"same-search" },
+  ];
+  const result=activityOverviewRows(rows);
+  assert.equal(result.matchingSearchCount,1);
+  assert.equal(result.matchingJourneyCount,2);
+  assert.equal(result.unlinkedStageCount,0);
+  assert.equal(result.searches[0].searches,1);
+  assert.equal(result.searches[0].resultsViewed,1);
+  assert.equal(result.searches[0].offersSelected,1);
+  assert.equal(result.searches[0].eventCount,3);
+});
+
 test("unreferenced stages are never assigned to a nearby search or another product", () => {
   const rows: ActivityRow[] = [
     { ...row("flight","joint","SEARCH_COMPLETED",new Date("2026-11-20T12:48:00Z"),"FLIGHT"), searchHistoryId:"flight" },
