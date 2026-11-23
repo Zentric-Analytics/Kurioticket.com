@@ -224,7 +224,14 @@ export function CarResultCard({
     event: ReactMouseEvent<HTMLAnchorElement>,
   ) => {
     if (!event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && detailsHref) {
-      journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", requestId, { offerId: car.id, sourcePage: "/cars/results" });
+      journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", requestId, { offerId: car.id, sourcePage: "/cars/results",
+        ...(Number.isFinite(offer.pricePerDay) && offer.pricePerDay > 0
+          && /^[A-Z]{3}$/.test(offer.currency) ? { observedResult: {
+            label: car.modelName, provider: offer.bookingProviderName,
+            amount: offer.pricePerDay, currency: offer.currency, priceBasis: "per_day" as const,
+            ...(Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 ? { totalAmount: offer.totalPrice } : {}),
+          } } : {}),
+      });
     }
     if (
       event.defaultPrevented ||
