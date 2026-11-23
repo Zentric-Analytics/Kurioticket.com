@@ -114,7 +114,7 @@ test("display-only inventory cannot seed native nearby-fare storage", () => {
 // Production inventory provenance must be filtered before projecting price/currency.
 test("native screen filters display-only inventory before stripping provenance for fare memory", async () => {
   const { readFile } = await import("node:fs/promises");
-  const source = await readFile(new URL("./ApprovedResultsScreen.tsx", import.meta.url), "utf8");
+  const source = await readFile("src/features/search/ApprovedResultsScreen.tsx", "utf8");
   assert.match(source, /ownedFlightResults\.filter\(\(result\) => !hasDisplayOnlyInventory\(result\)\)\.map/);
   assert.match(source, /ownedFlightResults\.filter\(\(result\) => !hasDisplayOnlyInventory\(result\)\)\.flatMap/);
 });
