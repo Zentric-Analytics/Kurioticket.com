@@ -68,7 +68,7 @@ test("verified bot package search executes once and records one BOT search, not 
   }).outputText;
   const exports: { POST?: (request: Request) => Promise<Response> } = {};
   runInNewContext(compiled, {
-    exports, Response, URL, crypto, performance, require: (name: string) => {
+    exports, Response, URL, URLSearchParams, crypto, performance, require: (name: string) => {
       assert.ok(name in modules, name);
       return modules[name];
     },
