@@ -11,7 +11,7 @@ export type JourneyFilterSelection = { group: JourneyFilterSelectionGroup; optio
 export const journeySortModes = ["price", "best", "fastest", "stops", "rating", "recommended", "other"] as const;
 export type JourneySortMode = (typeof journeySortModes)[number];
 /** Actual selectable sort keys, not generalized categories or translated labels. */
-export const journeySortChoices = ["best", "cheapest", "fastest", "stops", "bestValue", "topRated", "recommended", "lowestTotal"] as const;
+export const journeySortChoices = ["best", "cheapest", "fastest", "stops", "bestValue", "topRated", "recommended", "lowestTotal", "price", "duration", "departure-asc", "departure-desc"] as const;
 export type JourneySortChoice = (typeof journeySortChoices)[number];
 export function normalizeJourneySortChoice(value: string): JourneySortChoice | undefined {
   return (journeySortChoices as readonly string[]).includes(value) ? value as JourneySortChoice : undefined;
