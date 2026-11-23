@@ -18,6 +18,17 @@ test("Back from all three detail pages is recognized without a new search action
   assert.match(carDetail, /useResultsReturnIntent\("car", resultsHref\)/);
 });
 
+test("unavailable car details still marks browser Back and the Back to Cars results link", () => {
+  const guard = text("src/components/results/CarUnavailableResultsReturnIntent.tsx");
+  assert.match(guard, /useResultsReturnIntent\("car", resultsHref\)/);
+  assert.match(carPage, /import \{ CarUnavailableResultsReturnIntent \} from/);
+  const fallback = carPage.indexOf(': <><CarUnavailableResultsReturnIntent resultsHref={resultsHref} />');
+  assert.ok(fallback > 0, "the unavailable server-rendered details branch must install a client return handler");
+  const link = carPage.indexOf('Back to Cars results</Link>', fallback);
+  assert.ok(link > fallback, "the fallback Back to results link remains inside the guarded branch");
+  assert.match(carPage.slice(fallback, link), /<Link href=\{resultsHref\}/);
+});
+
 test("flight returning without a valid snapshot never enters the provider request", () => {
   const guard = flight.indexOf("if (!shouldBypassSnapshot && returnIntentRef.current?.returning");
   const fetch = flight.indexOf('fetch("/api/flights/search"', guard);
