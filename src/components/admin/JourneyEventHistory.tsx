@@ -50,6 +50,8 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
                   {searchTitle ? <p className="font-medium text-[#020617]">{searchTitle}</p> : null}
                   <p className={searchTitle ? "mt-1 text-xs text-[#64748B]" : "text-xs text-[#64748B]"}>{readable(event.search.status)} · {event.search.resultCount} results</p>
                 </> : <p className="text-xs text-[#64748B]">Search details not recorded</p>}
+                {event.filterGroup ? <p className="mt-1 text-xs text-[#64748B]">Applied filter group: {readable(event.filterGroup)}</p> : null}
+                {event.sortMode ? <p className="mt-1 text-xs text-[#64748B]">Sort: {readable(event.sortMode)}</p> : null}
                 {event.resultReference ? <p className="mt-1.5 break-all text-[11px] leading-4 text-[#64748B]">
                   Recorded result reference: {event.resultReference}
                 </p> : null}

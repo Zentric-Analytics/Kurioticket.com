@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { analyticsConsentAccountKey, analyticsConsentChangedEvent, analyticsConsentStorageKey, hasAnalyticsDenial, parseAnalyticsConsent } from "@/lib/analyticsConsentClient";
 import { createJourneyEventSender, forgetJourneySelections, journeyRequestId, readJourneySelection, rememberJourneySelection } from "@/lib/journeyEventClient";
 import { createProviderHandoffMetadata, type ProviderHandoffMetadataReader } from "@/lib/providerHandoffClient";
+import type { ClientJourneyDecisionType, JourneyFilterGroup, JourneySortMode } from "@/lib/search-journey";
 
 function browserAllowsAnalytics() {
   try { return !hasAnalyticsDenial(document.cookie) && parseAnalyticsConsent(window.localStorage.getItem(analyticsConsentStorageKey)) === "granted"; }
@@ -17,9 +18,12 @@ type Recorder = {
   rememberDetailsContext: (product: "flight" | "hotel", resultId: string, requestId: string | null) => void;
   prepareHandoff: (product: "flight" | "hotel", resultId: string) => ProviderHandoffMetadataReader;
   interactionRequestId: (product: "flight" | "hotel", resultId: string, explicit?: string | null) => string | null;
+  workflowDecision: (type: ClientJourneyDecisionType, requestId: string | null | undefined, detail?: {
+    sourcePage?: string; offerId?: string; filterGroup?: JourneyFilterGroup; sortMode?: JourneySortMode;
+  }) => void;
 };
 const browserActionId = () => crypto.randomUUID();
-const quiet: Recorder = { resultsViewed: () => undefined, offerSelected: () => undefined, rememberDetailsContext: () => undefined, prepareHandoff: () => createProviderHandoffMetadata(() => null, browserActionId), interactionRequestId: () => null };
+const quiet: Recorder = { resultsViewed: () => undefined, offerSelected: () => undefined, rememberDetailsContext: () => undefined, prepareHandoff: () => createProviderHandoffMetadata(() => null, browserActionId), interactionRequestId: () => null, workflowDecision: () => undefined };
 const JourneyEventsContext = createContext<Recorder>(quiet);
 
 /** Keep valid user-action delivery alive across internal navigation, but never across an account/consent change. */
@@ -86,6 +90,15 @@ export function JourneyEventsProvider({ children }: { children: ReactNode }) {
     },
     resultsViewed(requestId) {
       if (requestId) sender.send({ type: "RESULTS_VIEWED", requestId, sourcePage: window.location.pathname });
+    },
+    workflowDecision(type, requestId, detail) {
+      if (!browserAllowsAnalytics()) return;
+      const verifiedRequestId = journeyRequestId(requestId);
+      if (!verifiedRequestId) return;
+      sender.send({ type, requestId: verifiedRequestId, sourcePage: detail?.sourcePage ?? window.location.pathname,
+        ...(detail?.offerId ? { offerId: detail.offerId } : {}),
+        ...(detail?.filterGroup ? { filterGroup: detail.filterGroup } : {}),
+        ...(detail?.sortMode ? { sortMode: detail.sortMode } : {}) });
     },
     rememberDetailsContext(product, resultId, requestId) {
       if (!browserAllowsAnalytics()) return;

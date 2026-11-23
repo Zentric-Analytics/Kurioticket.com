@@ -74,6 +74,7 @@ import {
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { journeyEvents } from "../privacy/journeyEvents";
+import { normalizeJourneySortMode } from "../../../../../src/lib/search-journey";
 import { shareNativeResult } from "../privacy/nativeShareTracking";
 import { journeyResponseContext } from "../privacy/journeyResponseContext";
 import { flightEditSearchParams, flightSearchRouteParamPatch } from "../flow/flightSearchModel";
@@ -277,6 +278,8 @@ function ResultsScreen({ product }: { product: Product }) {
   const [sort, setSort] = useState<FlightSort>("price");
   const [sortOpen, setSortOpen] = useState(false);
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
+  // Only emit an applied-filter decision if the completed sheet actually changed filters.
+  const flightFiltersAtOpen = useRef<string | null>(null);
   const [serverFlightResultCount, setServerFlightResultCount] = useState(0);
   const [filterOpen, setFilterOpen] = useState(false);
   const [editSearchOpen, setEditSearchOpen] = useState(false);
@@ -667,8 +670,9 @@ function ResultsScreen({ product }: { product: Product }) {
       return;
     }
     pendingFlightEditTargetKey.current = nextPlan.plan.key;
+    journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", resultsRequestId, "/flight-results");
     router.setParams(flightSearchRouteParamPatch(nextParams));
-  }, [plan.plan?.key]);
+  }, [plan.plan?.key, resultsRequestId]);
   const closeFlightEditSearch = useCallback(() => {
     pendingFlightEditTargetKey.current = null;
     setEditSearchOpen(false);
@@ -683,8 +687,9 @@ function ResultsScreen({ product }: { product: Product }) {
     const nextPlan = buildSearchPlan("hotel", nextParams);
     if (!nextPlan.plan) return;
     pendingHotelEditParams.current = nextPlan.plan.key === plan.plan?.key ? null : nextParams;
+    if (pendingHotelEditParams.current) journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", resultsRequestId, "/hotel-results");
     setHotelEditSearchOpen(false);
-  }, [plan.plan?.key]);
+  }, [plan.plan?.key, resultsRequestId]);
   const finishAndroidHotelEdit = useCallback(() => {
     const nextParams = pendingHotelEditParams.current;
     if (!nextParams) return;
@@ -841,6 +846,7 @@ function ResultsScreen({ product }: { product: Product }) {
   }, []);
   const openFlightFilters = (section: FlightFilterSectionName) => {
     if (filterOpen) return;
+    flightFiltersAtOpen.current = JSON.stringify(filters);
     setSortOpen(false);
     setFilterSection(section);
     setFilterOpen(true);
@@ -878,7 +884,7 @@ function ResultsScreen({ product }: { product: Product }) {
     startHotelFilterTransition(() => setHotelFilters(next));
   };
   const transitionHotelFilters = (next: SetStateAction<HotelFilters>) => { startHotelFilterTransition(() => setHotelFilters(next)); startHotelResultsTransition(false); };
-  const completeHotelFilterSession = () => { setHotelFilterOpen(false); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;startHotelResultsTransition(false);} };
+  const completeHotelFilterSession = () => { setHotelFilterOpen(false); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", resultsRequestId, "/hotel-results", { filterGroup: "all" });startHotelResultsTransition(false);} };
   const openHotelFilters = (section: HotelFilterSectionName) => {
     hotelFilterSessionDirtyRef.current=false;
     setHotelFilterSection(section);
@@ -927,9 +933,13 @@ function ResultsScreen({ product }: { product: Product }) {
     scrollToFlightResultsBeginning();
   }, [scrollToFlightResultsBeginning]);
   const completeFullFlightFilters = useCallback(() => {
+    if (flightFiltersAtOpen.current !== null && flightFiltersAtOpen.current !== JSON.stringify(filters)) {
+      journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", resultsRequestId, "/flight-results", { filterGroup: "all" });
+    }
+    flightFiltersAtOpen.current = null;
     setFilterOpen(false);
     scrollToFlightResultsBeginning();
-  }, [scrollToFlightResultsBeginning]);
+  }, [scrollToFlightResultsBeginning, resultsRequestId, filters]);
   const canonicalHotelDestination = String(payload.destination || "");
   const hotelDestinationDisplay = getHotelLocationFieldDisplay(canonicalHotelDestination, locale);
   const hotelSummary = buildHotelResultsSummary({
@@ -1374,7 +1384,7 @@ function ResultsScreen({ product }: { product: Product }) {
       )}
       {product === "flight" ? (
         <>
-          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { setSort(next); setSortOpen(false); scrollToFlightResultsBeginning(); }} onClose={() => setSortOpen(false)} />
+          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { if (next !== sort) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", resultsRequestId, "/flight-results", { sortMode: normalizeJourneySortMode(next) }); setSort(next); setSortOpen(false); scrollToFlightResultsBeginning(); }} onClose={() => setSortOpen(false)} />
           <FlightFilterSheet
             visible={filterOpen}
             section={filterSection}
@@ -1392,7 +1402,7 @@ function ResultsScreen({ product }: { product: Product }) {
       ) : (
         <>
           <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} totalCount={results.length} matchingCount={sorted.length} onChange={changeHotelFilters} onClose={completeHotelFilterSession}/>
-          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { if(next===hotelSort)return;setHotelSort(next);startHotelResultsTransition(); }} onChange={changeHotelQuickFilters} onClose={closeHotelQuickFilter} /> : null}
+          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { if(next===hotelSort)return;journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", resultsRequestId, "/hotel-results", { sortMode: normalizeJourneySortMode(next) });setHotelSort(next);startHotelResultsTransition(); }} onChange={changeHotelQuickFilters} onClose={closeHotelQuickFilter} /> : null}
         </>
       )}
       {!flightResults ? (
@@ -1868,6 +1878,7 @@ const HotelCard = memo(function HotelCard({
   const mealPlan=result.catalogueProfile?.mealPlan?.trim();
   const policy=[result.catalogueProfile?.cancellationPolicy,result.catalogueProfile?.paymentPolicy].filter((value):value is string=>Boolean(value?.trim()));
   const openHotel = () => {
+    if (result.searchPolicy.action.kind !== "provider") journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", requestId, "/hotel-results", { offerId: result.id });
     journeyEvents.offerSelected(requestId, result.id, result.provider, "/hotel-results");
     if (result.searchPolicy.action.kind === "provider") {
       void Linking.openURL(result.searchPolicy.action.href);
