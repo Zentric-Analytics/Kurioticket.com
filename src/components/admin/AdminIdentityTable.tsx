@@ -35,12 +35,8 @@ const label = (value: string) =>
     .replaceAll("_", " ")
     .replace(/^\w/, (char) => char.toUpperCase());
 function IdentityDate({ at }: { at: Date }) {
-  return <div className="block whitespace-nowrap text-[13px] font-medium text-[#020617]">
-    <AdminLocalDateTime value={at} style="date" />
-    <span className="mt-0.5 block text-[12px] font-normal text-[#64748B]">
-      <AdminLocalDateTime value={at} style="time" />
-    </span>
-  </div>;
+  return <AdminLocalDateTime value={at} style="split"
+    className="block whitespace-nowrap text-[13px] font-medium text-[#020617]" />;
 }
 
 export function AdminIdentityTable({
