@@ -1,31 +1,12 @@
-import { after } from "next/server";
-import { verifySearchCrawler } from "@/lib/verifiedSearchCrawler";
-import { logProviderCall } from "@/services/analyticsService";
-
-export type SearchProduct = "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE";
+import { verifySearchCrawler, type VerifiedSearchCrawler } from "@/lib/verifiedSearchCrawler";
 
 /**
- * Search POST endpoints only. Public pages, robots.txt and their GET APIs
- * remain accessible for indexing. Crawler attempts never create SearchHistory,
- * customer analytics, or paid travel-provider calls.
+ * Identification only: verified Googlebot/Bingbot search requests are allowed
+ * through the normal validation, rate limits and provider-search pipeline.
+ * A User-Agent claim by itself never establishes a bot.
+ * Call only from a search handler, before its search executes, then mark the
+ * completed search as BOT in SearchHistory (not an attempted-search counter).
  */
-export async function blockVerifiedCrawlerSearch(
-  request: Request, product: SearchProduct,
-): Promise<Response | null> {
-  const verified = await verifySearchCrawler(request);
-  if (!verified) return null;
-  after(async () => {
-    try {
-      await logProviderCall({
-        provider: verified,
-        service: "crawler-blocked-search",
-        status: "DISABLED",
-        metadata: { applicationSource: "CRAWLER", product },
-      });
-    } catch { /* Optional aggregate diagnostics must not affect the response. */ }
-  });
-  return Response.json(
-    { error: "Automated search requests are unavailable.", code: "CRAWLER_SEARCH_BLOCKED" },
-    { status: 403, headers: { "Cache-Control": "no-store" } },
-  );
+export async function identifyVerifiedCrawlerSearch(request: Request): Promise<VerifiedSearchCrawler | null> {
+  return verifySearchCrawler(request);
 }
