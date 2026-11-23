@@ -1,7 +1,7 @@
 "use client";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
-import { normalizeJourneySortMode, normalizeJourneySortChoice, boundedJourneyFilterSelections } from "@/lib/search-journey";
+import { normalizeJourneySortMode, normalizeJourneySortChoice, boundedJourneyFilterSelections, type JourneyFilterSelectionGroup } from "@/lib/search-journey";
 import { displayedJourneyRequest, journeyRequestId } from "@/lib/journeyEventClient";
 import { resultIdKey, VirtualResultsList } from "./VirtualResultsList";
 import { readHotelDestinationSelection } from "@/lib/hotels/destinationSelection";
@@ -815,7 +815,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const selectedJourneyHotelFilters = (overrides?: Partial<HotelFilterSelections>, stars = selectedHotelClasses) =>
     boundedJourneyFilterSelections([
       ...Object.entries({ ...selectedFilters, ...overrides }).map(([group, options]) => ({
-        group: (group === "cancellationPolicies" ? "cancellation" : group) as "cancellation" | keyof HotelFilterSelections,
+        group: (group === "cancellationPolicies" ? "cancellation" : group) as JourneyFilterSelectionGroup,
         options,
       })),
       { group: "stars" as const, options: stars.map(star => String(star)) },
