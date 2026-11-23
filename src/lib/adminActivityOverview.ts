@@ -32,14 +32,14 @@ export type RecentSearchSummary = {
  * from provider-only text or from other searches in the visitor journey.
  */
 function recordedSearchRoute(event: ActivityRow): string | null {
-  if (!["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED"].includes(event.stage ?? "")) return null;
+  if (!["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"].includes(event.stage ?? "")) return null;
   const parts = event.detail.split(" · ");
   if (parts.length < 2) return null;
   if (event.stage === "OFFER_SELECTED" && parts.length < 3) return null;
   const route = parts[1].trim();
   return route && route.length <= 110 ? route : null;
 }
-const searchableStages = new Set(["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED",
+const searchableStages = new Set(["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED",
   "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED"]);
 
 /** Read-only recent search presentation, never a redefinition of SearchJourney.
@@ -127,7 +127,7 @@ export function activityOverviewRows(events: readonly ActivityRow[], limit = 10)
   };
 }
 
-const stages = new Set(["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED"]);
+const stages = new Set(["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED"]);
 const ranges = new Set(["today", "24h", "7d", "30d", "90d", "all", "custom"]);
 
 /** Only shared, supported date/product/stage filters move to Journey History.
