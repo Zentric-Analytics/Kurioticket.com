@@ -472,7 +472,8 @@ try {
   await expect(page.getByRole("button",{name:"Set custom dates"})).toHaveCount(0);
   await expect(page).toHaveURL(/to=2026-10-23/);
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
-  await expect(page).toHaveURL(/to=2026-10-24/);
+  // The selected local day is inclusive; the persisted UTC bound is the next midnight.
+  await expect(page).toHaveURL(/to=2026-10-25/);
   await page.getByRole("button",{name:/Date range:/}).click();
   await page.getByRole("listbox",{name:"Date range"}).getByRole("option",{name:"Last 7 days"}).click();
   await expect(page).toHaveURL(/range=custom/);
