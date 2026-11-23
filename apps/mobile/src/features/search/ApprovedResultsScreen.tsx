@@ -278,6 +278,8 @@ function ResultsScreen({ product }: { product: Product }) {
   const [sort, setSort] = useState<FlightSort>("price");
   const [sortOpen, setSortOpen] = useState(false);
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
+  // Only emit an applied-filter decision if the completed sheet actually changed filters.
+  const flightFiltersAtOpen = useRef<string | null>(null);
   const [serverFlightResultCount, setServerFlightResultCount] = useState(0);
   const [filterOpen, setFilterOpen] = useState(false);
   const [editSearchOpen, setEditSearchOpen] = useState(false);
@@ -844,6 +846,7 @@ function ResultsScreen({ product }: { product: Product }) {
   }, []);
   const openFlightFilters = (section: FlightFilterSectionName) => {
     if (filterOpen) return;
+    flightFiltersAtOpen.current = JSON.stringify(filters);
     setSortOpen(false);
     setFilterSection(section);
     setFilterOpen(true);
@@ -930,10 +933,13 @@ function ResultsScreen({ product }: { product: Product }) {
     scrollToFlightResultsBeginning();
   }, [scrollToFlightResultsBeginning]);
   const completeFullFlightFilters = useCallback(() => {
-    journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", resultsRequestId, "/flight-results", { filterGroup: "all" });
+    if (flightFiltersAtOpen.current !== null && flightFiltersAtOpen.current !== JSON.stringify(filters)) {
+      journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", resultsRequestId, "/flight-results", { filterGroup: "all" });
+    }
+    flightFiltersAtOpen.current = null;
     setFilterOpen(false);
     scrollToFlightResultsBeginning();
-  }, [scrollToFlightResultsBeginning, resultsRequestId]);
+  }, [scrollToFlightResultsBeginning, resultsRequestId, filters]);
   const canonicalHotelDestination = String(payload.destination || "");
   const hotelDestinationDisplay = getHotelLocationFieldDisplay(canonicalHotelDestination, locale);
   const hotelSummary = buildHotelResultsSummary({
