@@ -5,6 +5,7 @@ import { onlinePresenceWindowSeconds } from "@/lib/onlinePresence";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { getOnlinePresenceSnapshot } from "@/services/onlinePresenceService";
 import { getOptionalPrisma } from "@/lib/prisma";
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import { deviceTodayWindow, deviceHistoryWindow, DEVICE_HISTORY_PAGE_SIZE, type DeviceHistoryQuery } from "@/lib/adminDeviceHistory";
 
 /** A bounded, account-owned view. Never return tokens, IPs or raw user agents. */
@@ -37,7 +38,7 @@ export async function loadAdminDeviceSessions(userId: string): Promise<DeviceSes
     const db = getOptionalPrisma();
     if (!db) return { status: "unavailable" };
     const sessions = await db.accountSession.findMany({
-      where: { userId, lastSeenAt: deviceTodayWindow() },
+      where: { userId, lastSeenAt: deviceTodayWindow(new Date(), await getAdminTimeZone()) },
       orderBy: [{ lastSeenAt: "desc" }, { id: "desc" }],
       take: 3,
       select: {
@@ -55,14 +56,14 @@ export async function loadAdminDeviceSessions(userId: string): Promise<DeviceSes
 
 /** All retained records, paginated at the database. Not limited by the profile's Today preview. */
 export async function loadAdminFullDeviceHistory(
-  userId: string, query: DeviceHistoryQuery,
+  userId: string, query: DeviceHistoryQuery, timeZone = "UTC",
 ): Promise<FullDeviceHistoryResult> {
   try {
     const db = getOptionalPrisma();
     if (!db) return { status: "unavailable" };
     const owner = await db.user.findUnique({ where: { id: userId }, select: { id: true } });
     if (!owner) return { status: "not_found" };
-    const where = { userId, lastSeenAt: deviceHistoryWindow(query) };
+    const where = { userId, lastSeenAt: deviceHistoryWindow(query, new Date(), timeZone) };
     const [total, sessions] = await Promise.all([
       db.accountSession.count({ where }),
       db.accountSession.findMany({
