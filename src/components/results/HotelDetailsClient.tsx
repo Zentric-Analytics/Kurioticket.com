@@ -885,6 +885,8 @@ export function HotelDetailsClient({
           <div className="mx-auto w-full max-w-[1400px] px-0 lg:max-w-[1080px] lg:px-[30px]" data-hotel-details-page-shell>
             <div>
               <StandaloneHotelDetails
+                hotelResultId={hotel.id}
+                searchRequestId={journeyEvents.interactionRequestId("hotel", hotel.id)}
                 locationIsSimulated={hotel.provider === "KAYAK sandbox"}
                 hotelName={hotel.name}
                 starRating={starRating}
