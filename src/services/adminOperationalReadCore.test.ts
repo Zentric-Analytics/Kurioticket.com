@@ -324,7 +324,7 @@ test("search detail renders the reorganized read-only diagnostics without the vi
   assert.match(page, /<AdminPageShell title="Search detail" hideHeader>/);
   assert.match(page, /Search overview/);
   assert.match(page, /Search information/);
-  assert.match(page, /<Field label="Bot name" value=\{botName\}/);
+  assert.doesNotMatch(page, /<Field label="Bot name"/);
   assert.match(page, /<Field label="Verification" value=\{searchDetailCrawlerEvidenceLabel/);
   assert.match(page, /isBot \? botName/);
   assert.match(page, /!isBot && search.searcher.activity/);
