@@ -12,7 +12,8 @@ test("Car result views use only the actual server-issued UUID, never invented se
   assert.equal(journeyRequestId(requestId), requestId);
   assert.equal(journeyRequestId("guided-car-0"), null);
   assert.equal(journeyRequestId(""), null);
-  assert.match(loader, /setRequestId\(journeyRequestId\(data\.requestId\)\)/);
+  assert.match(loader, /const id = journeyRequestId\(data\.requestId\)/);
+  assert.match(loader, /setRequestId\(id\)/);
   assert.match(loader, /if \(results\?\.length && requestId\) journeyEvents\.resultsViewed\(requestId\)/);
   assert.doesNotMatch(loader, /crypto\.randomUUID|Date\.now\(\).*requestId/);
 });
@@ -20,7 +21,9 @@ test("Car result views use only the actual server-issued UUID, never invented se
 test("the Car inventory loader sends an impression only after accepted visible results", () => {
   assert.match(loader, /if \(!response\.ok\) throw new Error\("Car inventory unavailable"\)/);
   assert.match(loader, /if \(!Array\.isArray\(data\.results\)\) throw new Error\("Invalid car inventory"\)/);
-  assert.match(loader, /if \(active\) \{\s*setRequestId\(journeyRequestId\(data\.requestId\)\);\s*setResults\(data\.results\);\s*\}/);
+  assert.match(loader, /if \(active\) \{\s*const id = journeyRequestId\(data\.requestId\)/);
+  assert.match(loader, /rememberCarResultsReturn\(key, data\.results, id\)/);
+  assert.match(loader, /setRequestId\(id\);\s*setResults\(data\.results\)/);
   assert.match(loader, /useEffect\(\(\) => \{\s*if \(results\?\.length && requestId\) journeyEvents\.resultsViewed\(requestId\)/);
   assert.match(loader, /credentials: "same-origin"/);
   assert.match(loader, /<CarsResultsClient values=\{values\} initialResults=\{results\} inventoryStatus="available" requestId=\{requestId\} \/>/);
