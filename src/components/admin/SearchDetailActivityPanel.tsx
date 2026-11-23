@@ -7,13 +7,10 @@ import type { SearchScopedActivityResult, SearchScopedEvent } from "@/services/a
 type Props = {
   searchId: string;
   environment: "staging" | "production";
-  searchedAt: string;
-  status: "SUCCESS" | "PARTIAL" | "FAILED";
 };
 
 const PAGE_SIZE = 25;
-const activityLabels: Record<SearchScopedEvent["stage"], string> = {
-  SEARCH_COMPLETED: "Search completed",
+const activityLabels: Record<Exclude<SearchScopedEvent["stage"], "SEARCH_COMPLETED">, string> = {
   RESULTS_VIEWED: "Results viewed",
   OFFER_SELECTED: "Offer selected",
   PROVIDER_HANDOFF_STARTED: "Provider handoff started",
@@ -38,7 +35,7 @@ function handoffLabel(event: SearchScopedEvent) {
 
 /** A first-class section, not a hidden View activity link. It only loads
  * consented events linked to this exact search and verified provider handoffs. */
-export function SearchDetailActivityPanel({ searchId, environment, searchedAt, status }: Props) {
+export function SearchDetailActivityPanel({ searchId, environment }: Props) {
   const [cursors, setCursors] = useState<Array<string | null>>([null]);
   const [pageIndex, setPageIndex] = useState(0);
   const [request, setRequest] = useState(0);
@@ -75,6 +72,7 @@ export function SearchDetailActivityPanel({ searchId, environment, searchedAt, s
   }, [searchId, environment, cursor, request]);
 
   const list = !loading && result?.status === "ok" ? result.data : null;
+  const interactions = list?.events.filter(event => event.stage !== "SEARCH_COMPLETED") ?? [];
   const errorMessage = result?.status === "forbidden"
     ? "You do not have permission to inspect this search's interactions."
     : result?.status === "not_found"
@@ -96,35 +94,24 @@ export function SearchDetailActivityPanel({ searchId, environment, searchedAt, s
           setRequest(value => value + 1);
         }}>Refresh</button>
       </div>
-      {pageIndex === 0 ? (
-        <ol className="mt-3" aria-label="Recorded search milestone">
-          <li className="grid min-w-0 gap-1 border-b border-[#E5E7EB] py-2 text-[12px] sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] sm:gap-4">
-            <div className="flex min-w-0 items-start gap-3">
-              <span aria-hidden="true" className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-600" />
-              <div><p className="font-semibold text-[#111827]">Search recorded</p><p className="text-[#6B7280]">{timestamp(searchedAt)}</p></div>
-            </div>
-            <p className="text-[#475569] sm:self-center">Recorded status: {status.toLowerCase()}</p>
-          </li>
-        </ol>
-      ) : null}
       {loading || !result ? (
         <p role="status" className="py-4 text-[12px] text-[#6B7280]">Loading verified user interactions…</p>
       ) : !list ? (
         <p role="alert" className="py-4 text-[12px] text-[#9A3412]">{errorMessage}</p>
-      ) : list.events.length === 0 ? (
+      ) : interactions.length === 0 ? (
         <p role="status" className="py-3 text-[12px] text-[#6B7280]">
           {list.searchOnly
             ? "No eligible, verified interactions are available for this search. This does not prove that no action occurred."
-            : "No additional verified interactions were recorded for this search on this page."}
+            : "No verified post-search interactions were recorded for this search on this page."}
         </p>
       ) : (
         <ol className="mt-1" aria-label="Verified search interactions">
-          {list.events.map(event => (
+          {interactions.map(event => (
             <li key={event.id} className="grid min-w-0 gap-1 border-b border-[#E5E7EB] py-2.5 text-[12px] last:border-b-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] sm:gap-4">
               <div className="flex min-w-0 items-start gap-3">
                 <span aria-hidden="true" className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-600" />
                 <div>
-                  <p className="font-semibold text-[#111827]">{activityLabels[event.stage]}</p>
+                  <p className="font-semibold text-[#111827]">{activityLabels[event.stage as Exclude<SearchScopedEvent["stage"], "SEARCH_COMPLETED">]}</p>
                   <p className="text-[#6B7280]">{timestamp(event.occurredAt)}</p>
                 </div>
               </div>
@@ -135,8 +122,7 @@ export function SearchDetailActivityPanel({ searchId, environment, searchedAt, s
                       <p className="mt-0.5 text-[11px] text-[#64748B]">Destination visit not independently confirmed</p></>
                   : event.provider ? "Provider: " + event.provider
                   : event.stage === "RESULTS_VIEWED" ? "Results viewed; exact number viewed is not recorded"
-                  : event.stage === "OFFER_SELECTED" ? "Offer selected; offer details not recorded"
-                  : "Search completed"}
+                  : "Offer selected; offer details not recorded"}
               </div>
             </li>
           ))}
