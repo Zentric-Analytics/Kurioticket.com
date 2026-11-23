@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { adminDisplayDateTime } from "@/lib/adminTimeZone";
+import { useAdminTimeZone } from "./AdminTimeZoneProvider";
 import { useEffect, useMemo, useState } from "react";
 import { Monitor, Smartphone, TabletSmartphone, UsersRound } from "lucide-react";
 
@@ -42,10 +44,6 @@ const cardItems = [
   { label: "Website online", icon: Monitor, key: "website" },
 ] as const;
 const pageSize = 25;
-const clock = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric", month: "short", year: "numeric",
-  hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC",
-});
 
 function matches(row: OnlineIdentityRow, filters: Filters) {
   if (filters.type !== "ALL" && row.kind !== filters.type) return false;
@@ -73,6 +71,7 @@ function isSnapshot(value: unknown): value is AdminOnlineUsersSnapshot {
 }
 
 export function AdminOnlineUsersDirectory({ initial }: { initial: AdminOnlineUsersSnapshot }) {
+  const timeZone = useAdminTimeZone();
   const [snapshot, setSnapshot] = useState(initial);
   const [draft, setDraft] = useState<Filters>(empty);
   const [applied, setApplied] = useState<Filters>(empty);
@@ -227,7 +226,7 @@ export function AdminOnlineUsersDirectory({ initial }: { initial: AdminOnlineUse
                 {row.locationLabel ?? "Unavailable"}
               </td>
               <td className="px-3 py-3 tabular-nums text-[#475569]">
-                <time dateTime={row.lastSeenAt}>{clock.format(new Date(row.lastSeenAt))} UTC</time>
+                <time dateTime={row.lastSeenAt}>{adminDisplayDateTime(row.lastSeenAt, timeZone)} ({timeZone})</time>
               </td>
               <td className="px-3 py-3">
                 <span className="inline-flex items-center gap-1.5 font-medium text-[#15803D]">
