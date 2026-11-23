@@ -1,5 +1,6 @@
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
-import { adminTodayStart, adminCalendarDayStart, adminCalendarNextDayStart, adminDisplayDateTime } from "@/lib/adminTimeZone";
+import { adminTodayStart, adminCalendarDayStart, adminCalendarNextDayStart } from "@/lib/adminTimeZone";
 import Link from "next/link";
 
 import { EmailDeliveryRangeFilter, type EmailDeliveryRange } from "@/components/admin/EmailDeliveryRangeFilter";
@@ -33,16 +34,6 @@ const statusLabels: Record<string, string> = {
   DELIVERY_DELAYED: "Delayed",
   QUEUED: "Queued",
 };
-
-function formatDateTime(value: Date | string | null) {
-  if (!value) return "—";
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
 
 function statusTone(status: string): StatusTone {
   if (["DELIVERED", "OPENED", "CLICKED", "SENT"].includes(status)) return "good";
@@ -207,9 +198,9 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
                     <td className="px-3 py-3">
                       <StatusIndicator value={statusLabels[delivery.status] || delivery.status} tone={statusTone(delivery.status)} />
                     </td>
-                    <td className="px-3 py-3 text-[12px] text-[#475569]">{formatDateTime(delivery.createdAt)}</td>
-                    <td className="px-3 py-3 text-[12px] text-[#475569]">{formatDateTime(delivery.sentAt)}</td>
-                    <td className="px-3 py-3 text-[12px] text-[#475569]">{formatDateTime(delivery.deliveredAt)}</td>
+                    <td className="px-3 py-3 text-[12px] text-[#475569]">{<AdminLocalDateTime value={delivery.createdAt} />}</td>
+                    <td className="px-3 py-3 text-[12px] text-[#475569]">{<AdminLocalDateTime value={delivery.sentAt} />}</td>
+                    <td className="px-3 py-3 text-[12px] text-[#475569]">{<AdminLocalDateTime value={delivery.deliveredAt} />}</td>
                   </tr>
                 ))}
               </tbody>
