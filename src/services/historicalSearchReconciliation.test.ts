@@ -54,3 +54,46 @@ test("singleton evidence is exhaustive for investigated request-log matches and 
   assert.match(sql, /DECLARED_USER_AGENT/);
   assert.match(sql, /ONE_SEARCH_ROW_PRESERVED/);
 });
+
+
+const alltimeSql = readFileSync(
+  "prisma/migrations/20261123180000_alltime_nearby_fare_search_counts/migration.sql",
+  "utf8",
+);
+
+test("all-time staging-only reconciliation preserves sources and raw search rows", () => {
+  assert.match(alltimeSql, /BEGIN;[\s\S]+COMMIT;/);
+  assert.match(alltimeSql, /current_database\(\)\s*<>\s*'kurioticket_web_staging'/);
+  assert.match(alltimeSql, /IF current_database\(\) <> 'kurioticket_web_staging' THEN\s+RETURN;/);
+  assert.match(alltimeSql, /"countAsSearch"=\(c\.rn=1\)/);
+  assert.match(alltimeSql, /parentSearchHistoryId/);
+  assert.match(alltimeSql, /previously_excluded=0/);
+  assert.match(alltimeSql, /last_at<TIMESTAMPTZ '2026-11-23T14:18:27Z'/);
+  assert.match(alltimeSql, /originalApplicationSource/);
+  assert.doesNotMatch(alltimeSql, /SET\s+[^;]*applicationSource.*=/);
+  assert.doesNotMatch(alltimeSql, /\b(?:DELETE\s+FROM|TRUNCATE\s+TABLE|DROP\s+TABLE)\b/i);
+});
+
+test("all-time nearby-fare correction requires strong per-session or date-strip evidence", () => {
+  assert.match(alltimeSql, /n BETWEEN 4 AND 10/);
+  assert.match(alltimeSql, /products=1 AND product='FLIGHT' AND routes=1/);
+  assert.match(alltimeSql, /departure_dates=n AND max_departure-min_departure=n-1/);
+  assert.match(alltimeSql, /stable_queries=1/);
+  assert.match(alltimeSql, /users=1 AND visitors=1/);
+  assert.match(alltimeSql, /n BETWEEN 8 AND 10/);
+  assert.match(alltimeSql, /dates=n AND max_dep-min_dep=n-1/);
+  assert.match(alltimeSql, /last_at-first_at<INTERVAL '20 seconds'/);
+  assert.match(alltimeSql, /query->>'applicationSource' IS NULL/);
+  assert.match(alltimeSql, /"countAsSearch"=TRUE/);
+  assert.match(alltimeSql, /parentSelection','EARLIEST_RECORDED_RESULT_NOT_PROVEN_USER_SELECTED_DATE'/);
+});
+
+test("all-time audit baseline is fail-closed and excludes 9,355 child rows", () => {
+  assert.match(alltimeSql, /session_groups<>563 OR session_rows<>4955/);
+  assert.match(alltimeSql, /legacy_groups<>565 OR legacy_rows<>5528 OR child_rows<>9355/);
+  assert.match(alltimeSql, /updated_rows<>10483/);
+  assert.match(alltimeSql, /verified_children<>9355/);
+  assert.match(alltimeSql, /RAISE EXCEPTION 'All-time reconciliation baseline drift/);
+  assert.match(alltimeSql, /RAISE EXCEPTION 'All-time reconciliation update row count/);
+  assert.match(alltimeSql, /RAISE EXCEPTION 'All-time reconciled child count/);
+});
