@@ -61,8 +61,14 @@ test("every tab exposes only its own recorded stages", () => {
     [...allowedActivityStages({ ...filters, tab, stage })];
   assert.deepEqual(stages("searches"), ["SEARCH_COMPLETED", "RESULTS_VIEWED"]);
   assert.deepEqual(stages("selections"), ["OFFER_SELECTED"]);
-  assert.deepEqual(stages("journeys"), ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED"]);
+  assert.deepEqual(stages("journeys"), ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED",
+    "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED"]);
   assert.deepEqual(stages("handoffs"), ["PROVIDER_HANDOFF_STARTED"]);
+  assert.deepEqual(stages("interactions"), ["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "ACCOUNT_ACTIVITY"]);
+  assert.deepEqual(stages("interactions", "RESULT_SHARED"), ["RESULT_SHARED"]);
+  assert.deepEqual(stages("interactions", "PROVIDER_HANDOFF_STARTED"), []);
+  assert.deepEqual(stages("journeys", "ACCOUNT_ACTIVITY"), []);
+  assert.equal(parseActivityFilters({ tab: "interactions", stage: "RESULT_SAVED", product: "HOTEL" }).ok, true);
   assert.deepEqual(stages("searches", "OFFER_SELECTED"), []);
   assert.ok(stages("all").includes("ACCOUNT_ACTIVITY"));
   assert.ok(!stages("selections").includes("ACCOUNT_ACTIVITY"));
