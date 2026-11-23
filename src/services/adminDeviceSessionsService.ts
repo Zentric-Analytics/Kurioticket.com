@@ -5,7 +5,6 @@ import { onlinePresenceWindowSeconds } from "@/lib/onlinePresence";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { getOnlinePresenceSnapshot } from "@/services/onlinePresenceService";
 import { getOptionalPrisma } from "@/lib/prisma";
-import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import { deviceTodayWindow, deviceHistoryWindow, DEVICE_HISTORY_PAGE_SIZE, type DeviceHistoryQuery } from "@/lib/adminDeviceHistory";
 
 /** A bounded, account-owned view. Never return tokens, IPs or raw user agents. */
@@ -33,12 +32,12 @@ export type FullDeviceHistoryResult =
   | { status: "not_found" }
   | { status: "unavailable" };
 
-export async function loadAdminDeviceSessions(userId: string): Promise<DeviceSessionResult> {
+export async function loadAdminDeviceSessions(userId: string, timeZone = "UTC"): Promise<DeviceSessionResult> {
   try {
     const db = getOptionalPrisma();
     if (!db) return { status: "unavailable" };
     const sessions = await db.accountSession.findMany({
-      where: { userId, lastSeenAt: deviceTodayWindow(new Date(), await getAdminTimeZone()) },
+      where: { userId, lastSeenAt: deviceTodayWindow(new Date(), timeZone) },
       orderBy: [{ lastSeenAt: "desc" }, { id: "desc" }],
       take: 3,
       select: {
