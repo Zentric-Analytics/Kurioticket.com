@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { readBoundedJsonBody } from "@/lib/bounded-json-body";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
-import { clientJourneyDecisionTypes, clientJourneyEventTypes, isJourneySourcePath, journeyFilterGroups, journeySortModes, type JourneyEventReceipt } from "@/lib/search-journey";
+import { clientJourneyDecisionTypes, clientJourneyEventTypes, isJourneySourcePath, journeyFilterGroups, journeySortModes, journeySortChoices, type JourneyEventReceipt } from "@/lib/search-journey";
 import { isSameOriginRequest } from "@/lib/visitor-identity";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { recordClientJourneyEvent } from "@/services/searchJourneyService";
@@ -17,6 +17,7 @@ const clientEventSchema = z.object({
   sourcePage: z.string().max(240).refine(isJourneySourcePath).optional(),
   filterGroup: z.enum(journeyFilterGroups).optional(),
   sortMode: z.enum(journeySortModes).optional(),
+  sortChoice: z.enum(journeySortChoices).optional(),
 }).strict().superRefine((event, ctx) => {
   const isDecision = (clientJourneyDecisionTypes as readonly string[]).includes(event.type);
   if (isDecision && (!event.sourcePage || !/^\/(?:flights\/results|hotels\/results|cars\/results|flight-results|hotel-results|car-results|flight-details|hotel-details|car-details)$/.test(event.sourcePage))) {
@@ -30,6 +31,9 @@ const clientEventSchema = z.object({
   }
   if (event.type === "SEARCH_SORT_CHANGED" ? !event.sortMode : Boolean(event.sortMode)) {
     ctx.addIssue({ code: "custom", path: ["sortMode"], message: "Sort mode must match the sort action." });
+  }
+  if (event.type !== "SEARCH_SORT_CHANGED" && event.sortChoice) {
+    ctx.addIssue({ code: "custom", path: ["sortChoice"], message: "Sort choice is only valid for a sort action." });
   }
   if ((event.type === "FLIGHT_DETAILS_VIEWED" || event.type === "PROVIDER_DEAL_SELECTED") && !event.offerId) {
     ctx.addIssue({ code: "custom", path: ["offerId"], message: "Offer reference required." });
