@@ -1,4 +1,4 @@
-import { adminUtcTodayStart } from "./adminReportingRanges";
+import { adminCalendarDate, adminCalendarDayStart, adminCalendarNextDayStart, adminTodayStart } from "./adminTimeZone";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -22,20 +22,21 @@ export function validOverviewCustomDates({ fromDate, toDate }: OverviewCustomDat
 export function resolveOverviewRange(
   raw: { range?: string | string[]; from?: string | string[]; to?: string | string[] } = {},
   now = new Date(),
+  timeZone = "UTC",
 ): { period: OverviewPeriod; from: Date; to: Date; today: string; invalidCustom: boolean } {
-  const today = now.toISOString().slice(0, 10);
+  const today = adminCalendarDate(now, timeZone);
   if (raw.range === "custom" && typeof raw.from === "string" && typeof raw.to === "string") {
     const period = { range: "custom", fromDate: raw.from, toDate: raw.to } as const;
     if (validOverviewCustomDates(period, today)) {
-      const from = new Date(utcDay(period.fromDate));
-      const to = new Date(Math.min(now.getTime(), utcDay(period.toDate) + DAY_MS));
+      const from = adminCalendarDayStart(period.fromDate, timeZone);
+      const to = new Date(Math.min(now.getTime(), adminCalendarNextDayStart(period.toDate, timeZone).getTime()));
       if (from < to) return { period, from, to, today, invalidCustom: false };
     }
   }
 
   const range = raw.range === "24h" || raw.range === "7d" || raw.range === "30d" ? raw.range : "today";
   const duration = range === "30d" ? 30 * DAY_MS : range === "7d" ? 7 * DAY_MS : DAY_MS;
-  return { period: { range }, from: range === "today" ? adminUtcTodayStart(now) : new Date(now.getTime() - duration), to: now, today, invalidCustom: raw.range === "custom" };
+  return { period: { range }, from: range === "today" ? adminTodayStart(now, timeZone) : new Date(now.getTime() - duration), to: now, today, invalidCustom: raw.range === "custom" };
 }
 
 export function overviewPeriodHref(period: OverviewPeriod) {
