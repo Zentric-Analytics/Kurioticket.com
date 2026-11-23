@@ -13,6 +13,7 @@ export function identityJourneyHistoryQuery(
   raw: JourneyDateParams,
   now: Date,
   environment: AdminJourneyEnvironment,
+  timeZone = "UTC",
 ): { ok: true; range: JourneyDateRange; input: Record<string, unknown> } | { ok: false } {
   if (Object.values(raw).some(Array.isArray)) return { ok: false };
   // A direct journey-history visit uses the same Today default as Activity.
@@ -27,7 +28,7 @@ export function identityJourneyHistoryQuery(
   for (const key of ["product", "provider", "stage", "from", "to", "cursor"] as const) {
     if (raw[key] !== undefined) filters[key] = raw[key];
   }
-  const fixed = journeyWindow({ ...raw, range }, now);
+  const fixed = journeyWindow({ ...raw, range }, now, timeZone);
   return {
     ok: true,
     range,
