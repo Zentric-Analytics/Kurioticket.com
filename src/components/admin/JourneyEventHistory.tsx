@@ -57,7 +57,7 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
                 </div> : event.filterGroup ? <p className="mt-1 text-xs text-[#64748B]">Filter category: {readable(event.filterGroup)} · Exact options not recorded</p> : null}
                 {event.sortChoice ? <p className="mt-1 text-xs text-[#64748B]">Selected sort: {({
                   best: "Best", cheapest: "Cheapest", fastest: "Fastest", stops: "Fewest stops",
-                  bestValue: "Best value", topRated: "Top rated", recommended: "Recommended", lowestTotal: "Lowest total price",
+                  bestValue: "Best value", topRated: "Top rated", recommended: "Recommended", lowestTotal: "Lowest total price", price: "Cheapest", duration: "Fastest", "departure-asc": "Earliest departure", "departure-desc": "Latest departure",
                 } as Record<string, string>)[event.sortChoice] ?? "Not recorded"}</p>
                   : event.sortMode ? <p className="mt-1 text-xs text-[#64748B]">Sort category: {readable(event.sortMode)}</p> : null}
                 {event.alertDetails ? <div className="mt-2 space-y-1 text-xs text-[#475569]">
