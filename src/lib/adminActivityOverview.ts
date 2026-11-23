@@ -13,6 +13,8 @@ export type RecentSearchSummary = {
   product: string | null;
   route: string | null;
   searchStatus: string | null;
+  platform: "WEB" | "IOS" | "ANDROID" | null;
+  resultCount: number | null;
   providers: string[];
   eventCount: number;
   searches: number;
@@ -73,13 +75,16 @@ export function activityOverviewRows(events: readonly ActivityRow[], limit = 10)
       item = {
         id: searchId, at: event.at, searchedAt: null,
         journeyId: event.journeyId ?? null, product: event.product ?? null,
-        route: null, searchStatus: null, providers: [], eventCount: 0,
+        route: null, searchStatus: null, platform: event.platform ?? null,
+        resultCount: event.resultCount ?? null, providers: [], eventCount: 0,
         searches: 0, resultsViewed: 0, offersSelected: 0, handoffs: 0,
       };
       bySearch.set(searchId, item);
     }
     if (event.journeyId && !item.journeyId) item.journeyId = event.journeyId;
     if (event.at > item.at) item.at = event.at;
+    if (event.platform) item.platform = event.platform;
+    if (typeof event.resultCount === "number") item.resultCount = event.resultCount;
     item.eventCount++;
     if (!item.product && event.product) item.product = event.product;
     if (event.provider && !item.providers.includes(event.provider)) item.providers.push(event.provider);
