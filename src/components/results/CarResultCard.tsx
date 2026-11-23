@@ -254,17 +254,21 @@ export function CarResultCard({
     startRouteProgress();
   };
 
+  const observedShareResult = Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && /^[A-Z]{3}$/.test(offer.currency)
+      ? { label: car.modelName, provider: offer.bookingProviderName, amount: offer.totalPrice, currency: offer.currency, priceBasis: "total" as const }
+      : undefined;
+
   async function shareCar() {
     const relativeUrl = detailsHref ?? window.location.href;
     const url = new URL(relativeUrl, window.location.origin).toString();
     try {
       if (navigator.share) {
         await navigator.share({ title: car.modelName, url });
-        recordCustomerInteraction({ action: "share_sheet_completed", product: "CAR", resultId: car.id, requestId });
+        recordCustomerInteraction({ action: "share_sheet_completed", product: "CAR", resultId: car.id, requestId, observedResult: observedShareResult });
         return;
       }
       await navigator.clipboard.writeText(url);
-      recordCustomerInteraction({ action: "share_link_copied", product: "CAR", resultId: car.id, requestId });
+      recordCustomerInteraction({ action: "share_link_copied", product: "CAR", resultId: car.id, requestId, observedResult: observedShareResult });
       setShareConfirmation(`${car.modelName} link copied`);
       window.setTimeout(() => setShareConfirmation(""), 2200);
     } catch (error) {
