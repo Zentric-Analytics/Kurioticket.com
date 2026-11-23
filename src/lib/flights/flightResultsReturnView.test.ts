@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   writeFlightResultsReturnView, readFlightResultsReturnView, peekFlightResultsReturnView,
+  type FlightResultsReturnView,
 } from "./flightResultsReturnView";
 
 function store() {
@@ -12,7 +13,7 @@ function store() {
     removeItem: (key: string) => { records.delete(key); } };
 }
 const href = "/flights/results?origin=LOS&destination=LHR&sort=fastest";
-const base = { searchKey: "LOS|LHR|2026-12-15", href, validUntil: 400_000,
+const base: Omit<FlightResultsReturnView, "version" | "savedAt"> = { searchKey: "LOS|LHR|2026-12-15", href, validUntil: 400_000,
   resultIds: ["flight-2", "kayak-sandbox:abc", "flight-1"], sortMode: "fastest",
   kayakOffers: [], kayakCriteria: { origin: "LOS", destination: "LHR" } };
 
