@@ -1,7 +1,7 @@
 "use client";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
-import { normalizeJourneySortMode } from "@/lib/search-journey";
+import { normalizeJourneySortMode, normalizeJourneySortChoice } from "@/lib/search-journey";
 import { displayedJourneyRequest, journeyRequestId } from "@/lib/journeyEventClient";
 import { resultIdKey, VirtualResultsList } from "./VirtualResultsList";
 import { readHotelDestinationSelection } from "@/lib/hotels/destinationSelection";
@@ -1080,7 +1080,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   };
 
   const updateHotelSummarySortMode = (sortMode: HotelSummarySortMode) => {
-    if (hotelSummarySortMode !== sortMode) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", journeyResponse?.searchKey === bodySearchKey ? journeyResponse.requestId : null, { sortMode: normalizeJourneySortMode(sortMode) });
+    if (hotelSummarySortMode !== sortMode) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", journeyResponse?.searchKey === bodySearchKey ? journeyResponse.requestId : null, { sortMode: normalizeJourneySortMode(sortMode), sortChoice: normalizeJourneySortChoice(sortMode) });
     setHotelSummarySortMode(sortMode);
   };
 
