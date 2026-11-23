@@ -1,3 +1,4 @@
+import { adminTodayStart } from "./adminTimeZone";
 /** Presentation-only queue date-range selection. Backend receives only ISO from/to. */
 export type AdminQueueRange = "24h" | "today" | "7d" | "30d" | "custom" | "all";
 
@@ -19,6 +20,7 @@ export function isAdminQueueRange(value: string): value is AdminQueueRange {
 export function resolveAdminQueueWindow(
   raw: { range?: string; from?: string; to?: string },
   now: Date = new Date(),
+  timeZone = "UTC",
 ): AdminQueueWindow {
   const range: AdminQueueRange = isAdminQueueRange(raw.range || "")
     ? raw.range as AdminQueueRange
@@ -28,7 +30,7 @@ export function resolveAdminQueueWindow(
   // Reuse the exact applied interval across pagination and status-tab navigation.
   if (raw.from && raw.to) return { range, from: raw.from, to: raw.to };
   const to = now.toISOString();
-  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
+  const dayStart = adminTodayStart(now, timeZone).toISOString();
   const durationMs = range === "7d" ? 7 * 86400000 : range === "30d" ? 30 * 86400000 : 86400000;
   return { range, from: range === "today" ? dayStart : new Date(now.getTime() - durationMs).toISOString(), to };
 }
