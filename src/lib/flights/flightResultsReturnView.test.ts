@@ -35,6 +35,16 @@ test("expired provider quotes are never treated as fresh or extended by returnin
   assert.equal(peekFlightResultsReturnView(href, storage, 200), null);
 });
 
+test("only known flight sort modes are trusted when restoring", () => {
+  const storage = store();
+  writeFlightResultsReturnView(base, storage, 100);
+  const key = [...storage.records.keys()][0];
+  const data = JSON.parse(storage.records.get(key) || "{}");
+  data.sortMode = "untrusted";
+  storage.records.set(key, JSON.stringify(data));
+  assert.equal(readFlightResultsReturnView(base.searchKey, href, storage, 101), null);
+});
+
 test("unrelated pages, excess results and unavailable storage fail closed", () => {
   const storage = store();
   writeFlightResultsReturnView({ ...base, href: "/cars/results" }, storage, 100);
