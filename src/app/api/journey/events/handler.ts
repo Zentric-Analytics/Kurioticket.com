@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { readBoundedJsonBody } from "@/lib/bounded-json-body";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
-import { clientJourneyDecisionTypes, clientJourneyEventTypes, isJourneySourcePath, journeyFilterGroups, journeySortModes, journeySortChoices, type JourneyEventReceipt } from "@/lib/search-journey";
+import { clientJourneyDecisionTypes, clientJourneyEventTypes, isJourneySourcePath, journeyFilterGroups, journeySortModes, journeySortChoices, journeyFilterSelectionGroups, type JourneyEventReceipt } from "@/lib/search-journey";
 import { isSameOriginRequest } from "@/lib/visitor-identity";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { recordClientJourneyEvent } from "@/services/searchJourneyService";
@@ -18,6 +18,10 @@ const clientEventSchema = z.object({
   filterGroup: z.enum(journeyFilterGroups).optional(),
   sortMode: z.enum(journeySortModes).optional(),
   sortChoice: z.enum(journeySortChoices).optional(),
+  filterSelections: z.array(z.object({
+    group: z.enum(journeyFilterSelectionGroups),
+    option: z.string().trim().min(1).max(72).regex(/^[\p{L}\p{N} ._:+\-']+$/u),
+  }).strict()).max(20).optional(),
 }).strict().superRefine((event, ctx) => {
   const isDecision = (clientJourneyDecisionTypes as readonly string[]).includes(event.type);
   if (isDecision && (!event.sourcePage || !/^\/(?:flights\/results|hotels\/results|cars\/results|flight-results|hotel-results|car-results|flight-details|hotel-details|car-details)$/.test(event.sourcePage))) {
@@ -28,6 +32,9 @@ const clientEventSchema = z.object({
   }
   if (event.type === "SEARCH_FILTER_APPLIED" ? !event.filterGroup : Boolean(event.filterGroup)) {
     ctx.addIssue({ code: "custom", path: ["filterGroup"], message: "Filter group must match the applied-filter action." });
+  }
+  if (event.type !== "SEARCH_FILTER_APPLIED" && event.filterSelections !== undefined) {
+    ctx.addIssue({ code: "custom", path: ["filterSelections"], message: "Selections belong only to applied filters." });
   }
   if (event.type === "SEARCH_SORT_CHANGED" ? !event.sortMode : Boolean(event.sortMode)) {
     ctx.addIssue({ code: "custom", path: ["sortMode"], message: "Sort mode must match the sort action." });
