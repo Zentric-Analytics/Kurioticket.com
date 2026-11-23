@@ -22,16 +22,18 @@ assert.match((await admin.query('SHOW server_version')).rows[0].server_version, 
 try {
   for (const kind of ['statement','lock']) {
     const schema = `kt_timeout_${randomUUID().replaceAll('-','')}`;
+    const lockSchema = `${schema}_target`;
     const dir = mkdtempSync(join(tmpdir(), 'kurioticket-migration-timeout-'));
     let blocker;
     try {
       await admin.query(`CREATE SCHEMA "${schema}"`);
       let sql = 'SELECT pg_sleep(1);';
       if (kind === 'lock') {
-        await admin.query(`CREATE TABLE "${schema}".lock_probe (id integer)`);
+        await admin.query(`CREATE SCHEMA "${lockSchema}"`);
+        await admin.query(`CREATE TABLE "${lockSchema}".lock_probe (id integer)`);
         blocker = new pg.Client({connectionString:raw}); await blocker.connect();
-        await blocker.query('BEGIN'); await blocker.query(`LOCK TABLE "${schema}".lock_probe IN ACCESS EXCLUSIVE MODE`);
-        sql = `ALTER TABLE "${schema}".lock_probe ADD COLUMN value integer;`;
+        await blocker.query('BEGIN'); await blocker.query(`LOCK TABLE "${lockSchema}".lock_probe IN ACCESS EXCLUSIVE MODE`);
+        sql = `ALTER TABLE "${lockSchema}".lock_probe ADD COLUMN value integer;`;
       }
       const base = new URL(raw); base.searchParams.set('schema',schema);
       const bounded = withMigrationLimits(base.href, {lockTimeoutMs:150, statementTimeoutMs:kind === 'lock' ? 2000 : 150});
@@ -50,6 +52,7 @@ try {
       console.log(`PASS actual Prisma migration ${kind} timeout (synthetic PostgreSQL 18; scaled 150 ms limit)`);
     } finally {
       if(blocker){await blocker.query('ROLLBACK');await blocker.end();}
+      await admin.query(`DROP SCHEMA IF EXISTS "${lockSchema}" CASCADE`);
       await admin.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
       const safe=resolve(dir); assert.equal(dirname(safe),resolve(tmpdir())); assert.ok(basename(safe).startsWith('kurioticket-migration-timeout-'));
       rmSync(safe,{recursive:true,force:true});

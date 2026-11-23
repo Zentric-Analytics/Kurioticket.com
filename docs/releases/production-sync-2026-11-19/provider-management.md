@@ -38,4 +38,4 @@ Consequently, the current Duffel live path remains independent of this switch. T
 - Deliver compatible updated Android/iOS JavaScript and, where required by the existing runtime difference, signed store binaries. Local Metro exports are not signed builds, installation or device acceptance. No paid build/update/submission is included here.
 - Obtain explicit main merge/deployment approval. Keep the master OFF for initial deployment unless separately authorized; validate its audited change workflow after deployment under the approved production plan.
 
-The earlier staging recovery deferral does not authorize skipping production recovery requirements. Disabling this switch or rolling back application code does not restore database data.
+The latest production completion assignment explicitly records recovery testing as OWNER-DEFERRED; it is not a release prerequisite. See final-cutover-readiness.md for the current decision. Disabling this switch or rolling back application code does not restore database data.

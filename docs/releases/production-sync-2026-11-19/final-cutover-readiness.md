@@ -82,3 +82,11 @@ Existing production cron crn-d8gcdbhkh4rs73ai5rl0 follows main and is active at 
 Timeouts bound lock waiting and individual statements, not one transaction across all migrations. Failed/timed-out predeploy can leave committed migrations. Save the ledger, keep the old application serving and inspect the exact failed file before separately approved remediation. Do not automatically retry, resolve or run down SQL.
 
 References: [Render predeploy lifecycle](https://render.com/docs/deploys#pre-deploy-command), [Prisma PostgreSQL connection details](https://www.prisma.io/docs/orm/overview/databases/postgresql#connection-details). Actual pinned-Prisma startup evidence and synthetic CI establish implementation behavior; documentation alone is not treated as execution evidence.
+
+## Focused follow-up findings
+
+The synthetic statement-timeout case passed. Its first lock case was rejected by Prisma P3005 because the fixture put a table in the unbaselined migration schema; the corrected fixture locks a table in a second uniquely owned synthetic schema, leaving the migration schema empty. No production ledger or migration SQL is changed.
+
+New registry advisory GHSA-7589-6fvf-x4pw flags Effect 3.20.0 through Prisma configuration. Scope is template-literal decoding of untrusted input, not an established Kurioticket request exploit. The existing @prisma/config override now pins patched Effect 3.22.1; only that lockfile package changes. Local audit reports zero vulnerabilities, Prisma config validation and actual startup option forwarding still pass. Require final CI after this correction. Do not downgrade Prisma or run npm audit fix --force.
+
+The owner conditionally permits reusing only the existing staging KAYAK sandbox key if current validity and production web/Android/iOS authorization can be verified. Existing evidence contains the native-scope owner attestation but no current key-specific production-host/expiry confirmation. No credential transfer or Save-only submission has occurred. The approval condition must be verified before transfer; no provider contact is authorized.
