@@ -33,7 +33,7 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
               </td>
               <td className="px-3 py-3 [overflow-wrap:anywhere]">
                 <span className="block text-[11px] font-semibold tabular-nums text-[#64748B]">Step {index + 1}</span>
-                <span className="mt-1 inline-flex rounded-md border border-[#D8E1EC] bg-white px-2 py-1 text-[11px] font-medium text-[#475569]">{event.type === "RESULT_SHARED"
+                <span className="mt-1 inline-flex rounded-md border border-[#D8E1EC] bg-white px-2 py-1 text-[11px] font-medium text-[#475569]">{event.type === "RESULTS_VIEWED" ? "Results page viewed" : event.type === "RESULT_SHARED"
                   ? event.action === "share_link_copied" ? "Result link copied" : event.action === "share_sheet_completed" ? "Share sheet completed" : "Result shared"
                    : event.type === "PRICE_ALERT_CREATED" ? "Price alert created"
                   : event.type === "RESULT_SAVED"
@@ -50,8 +50,29 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
                   {searchTitle ? <p className="font-medium text-[#020617]">{searchTitle}</p> : null}
                   <p className={searchTitle ? "mt-1 text-xs text-[#64748B]" : "text-xs text-[#64748B]"}>{readable(event.search.status)} · {event.search.resultCount} results</p>
                 </> : <p className="text-xs text-[#64748B]">Search details not recorded</p>}
-                {event.filterGroup ? <p className="mt-1 text-xs text-[#64748B]">Applied filter group: {readable(event.filterGroup)}</p> : null}
-                {event.sortMode ? <p className="mt-1 text-xs text-[#64748B]">Sort: {readable(event.sortMode)}</p> : null}
+                {event.filterSelections?.length ? <div className="mt-1 text-xs text-[#475569]">
+                  <p className="font-medium">Selected filters (observed on customer device):</p>
+                  <ul className="mt-1 space-y-0.5">{event.filterSelections.map((choice, index) =>
+                    <li key={`${choice.group}:${choice.option}:${index}`}>{choice.group.replace(/([a-z])([A-Z])/g, "$1 $2")}: {choice.option.replace(/([a-z])([A-Z])/g, "$1 $2")}</li>)}</ul>
+                </div> : event.filterGroup ? <p className="mt-1 text-xs text-[#64748B]">Filter category: {readable(event.filterGroup)} · Exact options not recorded</p> : null}
+                {event.sortChoice ? <p className="mt-1 text-xs text-[#64748B]">Selected sort: {({
+                  best: "Best", cheapest: "Cheapest", fastest: "Fastest", stops: "Fewest stops",
+                  bestValue: "Best value", topRated: "Top rated", recommended: "Recommended", lowestTotal: "Lowest total price", price: "Cheapest", duration: "Fastest", "departure-asc": "Earliest departure", "departure-desc": "Latest departure",
+                } as Record<string, string>)[event.sortChoice] ?? "Not recorded"}</p>
+                  : event.sortMode ? <p className="mt-1 text-xs text-[#64748B]">Sort category: {readable(event.sortMode)}</p> : null}
+                {event.observedResult ? <div className="mt-2 space-y-1 rounded-lg border border-[#E7ECF5] px-2.5 py-2 text-xs text-[#334155]">
+                  <p className="font-medium text-[#020617]">Result shown when details opened</p>
+                  <p>{event.observedResult.label} · {event.observedResult.provider}</p>
+                  <p>Displayed quote: {event.observedResult.currency} {event.observedResult.amount.toLocaleString("en", { maximumFractionDigits: 2 })}
+                    {event.observedResult.priceBasis === "per_night" ? " per night" : event.observedResult.priceBasis === "per_day" ? " per day" : " total"}</p>
+                  {event.observedResult.totalAmount !== undefined ? <p>Displayed total: {event.observedResult.currency} {event.observedResult.totalAmount.toLocaleString("en", { maximumFractionDigits: 2 })}</p> : null}
+                  <p className="text-[#64748B]">Captured from the displayed result at this action; not independently confirmed by the provider.</p>
+                </div> : null}
+                {event.alertDetails ? <div className="mt-2 space-y-1 text-xs text-[#475569]">
+                  <p>Alert mode: {event.alertDetails.mode === "TARGET" ? "Target price" : "Automatic price tracking"}</p>
+                  <p>Selected target: {event.alertDetails.targetPrice ? `${event.alertDetails.currency} ${event.alertDetails.targetPrice}` : "Not set"}</p>
+                  <p>Recorded baseline: {event.alertDetails.baselinePrice ? `${event.alertDetails.currency} ${event.alertDetails.baselinePrice}` : "Not recorded"}</p>
+                </div> : null}
                 {event.resultReference ? <p className="mt-1.5 break-all text-[11px] leading-4 text-[#64748B]">
                   Recorded result reference: {event.resultReference}
                 </p> : null}

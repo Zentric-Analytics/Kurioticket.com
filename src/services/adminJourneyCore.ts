@@ -38,7 +38,9 @@ type JourneyRecord = {
 };
 type EventRecord = {
   id: string; type: AdminJourneyEventType; createdAt: Date; product: AdminJourneyProduct | null;
-  action: string | null; resultReference: string | null; filterGroup: string | null; sortMode: string | null;
+  action: string | null; resultReference: string | null; filterGroup: string | null; sortMode: string | null; sortChoice?: string | null; filterSelections?: unknown;
+  alertMode?: string | null; alertCurrency?: string | null; alertTargetPrice?: string | null; alertBaselinePrice?: string | null;
+  observedResult?: unknown;
   provider: string | null; sourcePage: string | null;
   searchHistoryId: string | null; requestId: string | null; searchProduct: AdminJourneyProduct | null;
   origin: string | null; destination: string | null; checkIn: Date | null; checkOut: Date | null;
@@ -79,7 +81,10 @@ function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
     WITH eligible_events AS (
       SELECT e."id", e."journeyId", e."type"::text AS "type", e."product"::text AS "product", e."provider", e."createdAt",
         e."metadata"->>'sourcePage' AS "sourcePage", e."metadata"->>'action' AS "action", e."metadata"->>'resultId' AS "resultReference",
-        e."metadata"->>'filterGroup' AS "filterGroup", e."metadata"->>'sortMode' AS "sortMode", j."visitorId", v."currentUserId" AS "userId", j."startedAt",
+        e."metadata"->'observedResult' AS "observedResult",
+        e."metadata"->>'filterGroup' AS "filterGroup", e."metadata"->'filterSelections' AS "filterSelections", e."metadata"->>'sortMode' AS "sortMode", e."metadata"->>'sortChoice' AS "sortChoice",
+        e."metadata"->>'alertMode' AS "alertMode", e."metadata"->>'alertCurrency' AS "alertCurrency",
+        e."metadata"->>'alertTargetPrice' AS "alertTargetPrice", e."metadata"->>'alertBaselinePrice' AS "alertBaselinePrice", j."visitorId", v."currentUserId" AS "userId", j."startedAt",
         s."id" AS "searchHistoryId", s."requestId", s."type"::text AS "searchProduct", s."origin", s."destination",
         s."checkIn", s."checkOut", s."status"::text AS "searchStatus", s."resultCount", s."latencyMs",
         r."id" AS "redirectLogId", r."provider" AS "redirectProvider", r."route", r."destinationUrl"
@@ -286,11 +291,48 @@ function journeyDto(row: JourneyRecord): AdminJourneyRow {
       PROVIDER_DEAL_SELECTED: count(row.providerDealSelected), PROVIDER_HANDOFF_STARTED: count(row.handoffStarted) },
   };
 }
+function safeObservedResult(value: unknown): AdminJourneyEvent["observedResult"] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const result = value as Record<string, unknown>;
+  const label = typeof result.label === "string" ? result.label.trim() : "";
+  const provider = typeof result.provider === "string" ? result.provider.trim() : "";
+  const amount = result.amount;
+  const currency = result.currency;
+  const basis = result.priceBasis;
+  if (!label || label.length > 120 || !provider || provider.length > 100
+    || /[\u0000-\u001f\u007f<>]/.test(label + provider)
+    || typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0 || amount > 1e9
+    || typeof currency !== "string" || !/^[A-Z]{3}$/.test(currency)
+    || !["total", "per_night", "per_day"].includes(String(basis))) return null;
+  const total = result.totalAmount;
+  return {
+    label, provider, amount, currency, priceBasis: basis as "total" | "per_night" | "per_day",
+    ...(typeof total === "number" && Number.isFinite(total) && total > 0 && total <= 1e9 ? { totalAmount: total } : {}),
+    provenance: "customer_display",
+  };
+}
 function eventDto(row: EventRecord): AdminJourneyEvent {
   return {
     id: row.id, type: row.type, createdAt: row.createdAt.toISOString(), product: row.product,
+    observedResult: ["RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED", "FLIGHT_DETAILS_VIEWED", "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED"].includes(row.type) ? safeObservedResult(row.observedResult) : null,
     filterGroup: row.type === "SEARCH_FILTER_APPLIED" && ["all", "price", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "transmission", "other"].includes(row.filterGroup ?? "") ? row.filterGroup : null,
     sortMode: row.type === "SEARCH_SORT_CHANGED" && ["price", "best", "fastest", "stops", "rating", "recommended", "other"].includes(row.sortMode ?? "") ? row.sortMode : null,
+    sortChoice: row.type === "SEARCH_SORT_CHANGED" && ["best", "cheapest", "fastest", "stops", "bestValue", "topRated", "recommended", "lowestTotal", "price", "duration", "departure-asc", "departure-desc"].includes(row.sortChoice ?? "") ? row.sortChoice : null,
+    filterSelections: row.type === "SEARCH_FILTER_APPLIED" && Array.isArray(row.filterSelections)
+      ? row.filterSelections.slice(0, 20).flatMap((choice: unknown) => {
+          if (!choice || typeof choice !== "object" || Array.isArray(choice)) return [];
+          const entry = choice as Record<string, unknown>;
+          if (typeof entry.group !== "string" || typeof entry.option !== "string") return [];
+          if (!/^[A-Za-z][A-Za-z0-9]{0,30}$/.test(entry.group) || !/^[\p{L}\p{N} ._:+\-']{1,72}$/u.test(entry.option)) return [];
+          return [{ group: entry.group, option: entry.option }];
+        }) : null,
+    ...(row.type === "PRICE_ALERT_CREATED" && /^(TARGET|AUTOMATIC)$/.test(row.alertMode ?? "")
+      && /^[A-Z]{3}$/.test(row.alertCurrency ?? "")
+      ? { alertDetails: {
+          mode: row.alertMode as "TARGET" | "AUTOMATIC", currency: row.alertCurrency!,
+          targetPrice: row.alertTargetPrice && /^\d{1,12}(?:\.\d{1,2})?$/.test(row.alertTargetPrice) ? row.alertTargetPrice : null,
+          baselinePrice: row.alertBaselinePrice && /^\d{1,12}(?:\.\d{1,2})?$/.test(row.alertBaselinePrice) ? row.alertBaselinePrice : null,
+        } } : {}),
     ...(["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"].includes(row.type) ? {
       action: ["local_saved", "local_unsaved", "saved_item_confirmed", "saved_item_removed", "share_link_copied", "share_sheet_completed"].includes(row.action ?? "")
         ? row.action as AdminJourneyEvent["action"] : null,

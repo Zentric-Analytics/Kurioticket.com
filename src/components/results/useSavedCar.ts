@@ -83,6 +83,12 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams, r
     return () => { window.removeEventListener(SAVED_CARS_CHANGED_EVENT, update); window.removeEventListener(SAVED_CARS_INVALIDATED_EVENT, invalidate); };
   }, [identity, owner, status]);
 
+  const observedResult = offer && Number.isFinite(offer.totalPrice) && offer.totalPrice > 0
+    && /^[A-Z]{3}$/.test(offer.currency) ? {
+      label: car.modelName, provider: offer.bookingProviderName || offer.rentalCompanyName || car.rentalCompanyName,
+      amount: offer.totalPrice, currency: offer.currency, priceBasis: "total" as const,
+    } : undefined;
+
   async function toggleSavedCar() {
     if (pending) return;
     if (status !== "authenticated") { await signIn(undefined, { callbackUrl: window.location.href }); return; }
@@ -94,7 +100,7 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams, r
         const response = await deleteBackendCar(previous.id);
         if (response.ok) {
           publishSavedCars((savedCarsCache ?? []).filter((item) => item.id !== previous.id));
-          recordCustomerInteraction({ action: "saved_item_removed", product: "CAR", resultId: car.id, requestId });
+          recordCustomerInteraction({ action: "saved_item_removed", product: "CAR", resultId: car.id, requestId, observedResult });
         }
         else setSavedItem(previous);
         return;
@@ -119,7 +125,7 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams, r
       if (response.ok && response.item) {
         const item = { ...response.item, type: "car" as const, resultId: car.id };
         publishSavedCars([...(savedCarsCache ?? []), item]);
-        recordCustomerInteraction({ action: "saved_item_confirmed", product: "CAR", resultId: car.id, requestId });
+        recordCustomerInteraction({ action: "saved_item_confirmed", product: "CAR", resultId: car.id, requestId, observedResult });
       }
       else if (response.duplicate) {
         clearSavedCarsCache(owner);

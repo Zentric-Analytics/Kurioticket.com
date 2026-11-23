@@ -74,7 +74,7 @@ import {
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { journeyEvents } from "../privacy/journeyEvents";
-import { normalizeJourneySortMode } from "../../../../../src/lib/search-journey";
+import { normalizeJourneySortMode, normalizeJourneySortChoice, boundedJourneyFilterSelections } from "../../../../../src/lib/search-journey";
 import { shareNativeResult } from "../privacy/nativeShareTracking";
 import { journeyResponseContext } from "../privacy/journeyResponseContext";
 import { flightEditSearchParams, flightSearchRouteParamPatch } from "../flow/flightSearchModel";
@@ -884,7 +884,21 @@ function ResultsScreen({ product }: { product: Product }) {
     startHotelFilterTransition(() => setHotelFilters(next));
   };
   const transitionHotelFilters = (next: SetStateAction<HotelFilters>) => { startHotelFilterTransition(() => setHotelFilters(next)); startHotelResultsTransition(false); };
-  const completeHotelFilterSession = () => { setHotelFilterOpen(false); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", resultsRequestId, "/hotel-results", { filterGroup: "all" });startHotelResultsTransition(false);} };
+  const completeHotelFilterSession = () => { setHotelFilterOpen(false); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", resultsRequestId, "/hotel-results", {
+        filterGroup: "all",
+        filterSelections: boundedJourneyFilterSelections([
+          { group: "areas", options: hotelFilters.areas },
+          { group: "propertyTypes", options: hotelFilters.propertyTypes },
+          { group: "roomTypes", options: hotelFilters.roomTypes },
+          { group: "bedTypes", options: hotelFilters.bedTypes },
+          { group: "meals", options: hotelFilters.meals },
+          { group: "cancellation", options: hotelFilters.cancellationPolicies },
+          { group: "facilities", options: hotelFilters.facilities },
+          { group: "travellerFeatures", options: hotelFilters.travellerFeatures },
+          { group: "accessibility", options: hotelFilters.accessibility },
+          { group: "stars", options: hotelFilters.starRatings.map(value => String(value)) },
+        ]),
+      });startHotelResultsTransition(false);} };
   const openHotelFilters = (section: HotelFilterSectionName) => {
     hotelFilterSessionDirtyRef.current=false;
     setHotelFilterSection(section);
@@ -934,7 +948,17 @@ function ResultsScreen({ product }: { product: Product }) {
   }, [scrollToFlightResultsBeginning]);
   const completeFullFlightFilters = useCallback(() => {
     if (flightFiltersAtOpen.current !== null && flightFiltersAtOpen.current !== JSON.stringify(filters)) {
-      journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", resultsRequestId, "/flight-results", { filterGroup: "all" });
+      journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", resultsRequestId, "/flight-results", {
+        filterGroup: "all",
+        filterSelections: boundedJourneyFilterSelections([
+          { group: "stops", options: filters.stops },
+          { group: "airlines", options: filters.airlines },
+          { group: "fromAirports", options: filters.fromAirports },
+          { group: "toAirports", options: filters.toAirports },
+          { group: "baggage", options: filters.baggageIncluded ? ["included"] : [] },
+          { group: "cancellation", options: filters.refundable ? ["refundable"] : [] },
+        ]),
+      });
     }
     flightFiltersAtOpen.current = null;
     setFilterOpen(false);
@@ -1384,7 +1408,7 @@ function ResultsScreen({ product }: { product: Product }) {
       )}
       {product === "flight" ? (
         <>
-          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { if (next !== sort) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", resultsRequestId, "/flight-results", { sortMode: normalizeJourneySortMode(next) }); setSort(next); setSortOpen(false); scrollToFlightResultsBeginning(); }} onClose={() => setSortOpen(false)} />
+          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { if (next !== sort) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", resultsRequestId, "/flight-results", { sortMode: normalizeJourneySortMode(next), sortChoice: normalizeJourneySortChoice(next) }); setSort(next); setSortOpen(false); scrollToFlightResultsBeginning(); }} onClose={() => setSortOpen(false)} />
           <FlightFilterSheet
             visible={filterOpen}
             section={filterSection}
@@ -1402,7 +1426,7 @@ function ResultsScreen({ product }: { product: Product }) {
       ) : (
         <>
           <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} totalCount={results.length} matchingCount={sorted.length} onChange={changeHotelFilters} onClose={completeHotelFilterSession}/>
-          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { if(next===hotelSort)return;journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", resultsRequestId, "/hotel-results", { sortMode: normalizeJourneySortMode(next) });setHotelSort(next);startHotelResultsTransition(); }} onChange={changeHotelQuickFilters} onClose={closeHotelQuickFilter} /> : null}
+          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { if(next===hotelSort)return;journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", resultsRequestId, "/hotel-results", { sortMode: normalizeJourneySortMode(next), sortChoice: normalizeJourneySortChoice(next) });setHotelSort(next);startHotelResultsTransition(); }} onChange={changeHotelQuickFilters} onClose={closeHotelQuickFilter} /> : null}
         </>
       )}
       {!flightResults ? (
@@ -1670,7 +1694,11 @@ function FlightCard({ result, requestId, displayPrice: fare, displayCurrencyCont
   const mainPriceBasis = flightMainPriceBasis(fare, labels);
   const fareAccessibility = `${fare?.accessibilityLabel ?? "price unavailable"}${mainPriceBasis ? `, ${mainPriceBasis.accessibilityText}` : ""}${providerFare ? `, provider price ${providerFare.accessibilityLabel}` : ""}`;
   const openDetails = () => {
-    journeyEvents.flightDetailsViewed(requestId, result.id, result.provider);
+    journeyEvents.flightDetailsViewed(requestId, result.id, result.provider,
+      Number.isFinite(result.price) && result.price > 0 && /^[A-Z]{3}$/.test(result.currency)
+        ? { label: result.airlineName, provider: result.provider, amount: result.price,
+            currency: result.currency, priceBasis: "total" }
+        : undefined);
     router.push({ pathname: "/flight-details", params: buildFlightDetailParams({ searchParams: params, result, requestId }) });
   };
   const cardAccessibilityLabel = `View flight details for ${result.airlineName}, ${journeys.map((journey) => flightCardJourneyAccessibility(journey, clock)).join(", ")}, ${fareAccessibility}`;
@@ -1878,9 +1906,21 @@ const HotelCard = memo(function HotelCard({
   const mealPlan=result.catalogueProfile?.mealPlan?.trim();
   const policy=[result.catalogueProfile?.cancellationPolicy,result.catalogueProfile?.paymentPolicy].filter((value):value is string=>Boolean(value?.trim()));
   const openHotel = () => {
-    if (result.searchPolicy.action.kind !== "provider") journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", requestId, "/hotel-results", { offerId: result.id });
-    journeyEvents.offerSelected(requestId, result.id, result.provider, "/hotel-results");
+    if (result.searchPolicy.action.kind !== "provider") journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", requestId, "/hotel-results", {
+      offerId: result.id,
+      ...(typeof result.pricePerNight === "number" && result.pricePerNight > 0
+        && typeof result.currency === "string" && /^[A-Z]{3}$/.test(result.currency) ? {
+          observedResult: {
+            label: result.name, provider: result.provider,
+            amount: result.pricePerNight, currency: result.currency, priceBasis: "per_night" as const,
+            ...(typeof result.totalPrice === "number" && result.totalPrice > 0 ? { totalAmount: result.totalPrice } : {}),
+          },
+        } : {}),
+    });
     if (result.searchPolicy.action.kind === "provider") {
+      // A direct provider action is a selection; opening internal hotel
+      // details is only a view and must not inflate selected-offer counts.
+      journeyEvents.offerSelected(requestId, result.id, result.provider, "/hotel-results");
       void Linking.openURL(result.searchPolicy.action.href);
       return;
     }

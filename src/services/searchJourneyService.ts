@@ -9,11 +9,15 @@ import {
   type JourneyEventReceipt,
   type JourneyFilterGroup,
   type JourneySortMode,
+  type JourneySortChoice,
+  type JourneyFilterSelection,
+  type JourneyObservedResult,
 } from "@/lib/search-journey";
 import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
 import { applicationMetadata, type ApplicationAttribution } from "@/lib/application-source";
 import { completeSearchNetworkObservation, recordedSearchNetwork } from "@/lib/searchNetworkObservation";
+import { carFilterGroups } from "@/lib/cars/carFilterPresentation";
 
 export { clientJourneyEventTypes, journeyEventKey, type ClientJourneyEventType };
 export type SearchJourneyDatabase = Pick<PrismaClient, "$transaction">;
@@ -42,6 +46,9 @@ export type ClientJourneyEventInput = ApplicationAttribution & {
   offerId?: string;
   filterGroup?: JourneyFilterGroup;
   sortMode?: JourneySortMode;
+  sortChoice?: JourneySortChoice;
+  filterSelections?: JourneyFilterSelection[];
+  observedResult?: JourneyObservedResult;
 };
 export type SearchHistoryInput = ApplicationAttribution & {
   userId?: string | null;
@@ -204,6 +211,9 @@ export function createSearchJourneyService(
         // Retry this race, but never retry an already-known ownership mismatch.
         if (!search) return { accepted: false, retryable: true };
         if (!ownsActivity(search, visitorId, input.userId ?? null)) return { accepted: false };
+        if (search.type === "CAR" && input.filterSelections?.some(choice =>
+          !carFilterGroups.some(group => group.id === choice.group && group.options.some(option => option.id === choice.option))
+        )) return { accepted: false };
         if ((clientJourneyDecisionTypes as readonly string[]).includes(input.type)) {
           const query = search.query;
           if (!query || typeof query !== "object" || Array.isArray(query) || query.environment !== getPublicEnvironment()) return { accepted: false };
@@ -223,7 +233,10 @@ export function createSearchJourneyService(
           metadata: { ...applicationMetadata(input), ...(input.sourcePage ? { sourcePage: input.sourcePage } : {}),
             ...(input.offerId ? { resultId: input.offerId } : {}),
             ...(input.filterGroup ? { filterGroup: input.filterGroup } : {}),
-            ...(input.sortMode ? { sortMode: input.sortMode } : {}) },
+            ...(input.sortMode ? { sortMode: input.sortMode } : {}),
+            ...(input.sortChoice ? { sortChoice: input.sortChoice } : {}),
+            ...(input.filterSelections ? { filterSelections: input.filterSelections } : {}),
+            ...(input.observedResult ? { observedResult: input.observedResult, observedSource: "customer_display" } : {}) },
         }, now());
         return { accepted: Boolean(result) };
       });
