@@ -62,6 +62,7 @@ export type AdminJourneyEvent = {
   resultReference?: string | null;
   filterGroup?: string | null;
   sortMode?: string | null;
+  alertDetails?: { mode: "TARGET" | "AUTOMATIC"; currency: string; targetPrice: string | null; baselinePrice: string | null } | null;
   product: AdminJourneyProduct | null;
   provider: string | null;
   sourcePage: string | null;
