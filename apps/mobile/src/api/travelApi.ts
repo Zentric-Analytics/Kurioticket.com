@@ -254,6 +254,8 @@ export const travelApi = {
   customerInteraction: (body: {
     action: "share_sheet_completed" | "saved_item_confirmed" | "saved_item_removed"; product: "FLIGHT" | "HOTEL" | "CAR";
     resultId: string; eventId: string; requestId?: string;
+    observedResult?: { label: string; provider: string; amount: number; currency: string;
+      priceBasis: "total" | "per_night" | "per_day"; totalAmount?: number };
   }, options: { visitorContext: number }) =>
     request<{ accepted: boolean }>("/api/activity/interactions", {
       method: "POST", body: JSON.stringify(body),
