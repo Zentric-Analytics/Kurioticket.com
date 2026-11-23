@@ -35,6 +35,8 @@ export type ClientJourneyEventInput = ApplicationAttribution & {
   requestId: string;
   provider?: string;
   sourcePage?: string;
+  /** Canonical offer reference from the validated search response. Not an arbitrary URL. */
+  offerId?: string;
 };
 export type SearchHistoryInput = ApplicationAttribution & {
   userId?: string | null;
@@ -197,6 +199,10 @@ export function createSearchJourneyService(
         // Retry this race, but never retry an already-known ownership mismatch.
         if (!search) return { accepted: false, retryable: true };
         if (!ownsActivity(search, visitorId, input.userId ?? null)) return { accepted: false };
+        // These stages are specific to native flight navigation. Do not allow
+        // other product searches to be recast as a flight action.
+        if ((input.type === "FLIGHT_DETAILS_VIEWED" || input.type === "PROVIDER_DEAL_SELECTED")
+          && search.type !== "FLIGHT") return { accepted: false };
         const result = await appendEvent(tx, {
           visitorId,
           userId: input.userId,
@@ -205,7 +211,8 @@ export function createSearchJourneyService(
           product: search.type,
           provider: input.provider,
           searchHistoryId: search.id,
-          metadata: { ...applicationMetadata(input), ...(input.sourcePage ? { sourcePage: input.sourcePage } : {}) },
+          metadata: { ...applicationMetadata(input), ...(input.sourcePage ? { sourcePage: input.sourcePage } : {}),
+            ...(input.offerId ? { resultId: input.offerId } : {}) },
         }, now());
         return { accepted: Boolean(result) };
       });
