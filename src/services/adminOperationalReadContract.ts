@@ -125,6 +125,8 @@ export type AdminSearchDiagnostic = {
 };
 
 export type AdminSearchDetail = AdminSearchRead & {
+  /** Trusted ingress observation recorded with this exact search, when available. */
+  network?: { ipAddress: string | null; countryCode: string | null };
   diagnostic: AdminSearchDiagnostic;
   /** Resolved only for an authorized detail read. Never infer a person from a visitor ID. */
   searcher: {
