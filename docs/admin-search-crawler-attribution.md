@@ -6,10 +6,10 @@ Search Activity and Platform Health must distinguish **application origin** from
 
 - `WEB`: validated web account session, same-origin Fetch Metadata, or a previously issued, server-signed same-origin operational web search session. A freshly prepared session from an Origin header alone does not qualify. Includes desktop and mobile browsers.
 - `IOS` and `ANDROID`: authenticated mobile session provenance or a server-signed, platform-bound v2 operational search session for guests. No analytics consent is required for essential operational attribution.
-- `UNKNOWN` (displayed to administrators as **Unknown**): no trustworthy platform proof. It **must not** be labeled a crawler, WEB, Android or iOS merely because of user-agent or IP shape.
+- `UNKNOWN` (displayed in platform filters as **Unverified**): no trustworthy platform proof. It **must not** be labeled a crawler, WEB, Android or iOS merely because of user-agent or IP shape.
 - **Verified crawler:** independent request-origin classification. Only an identifying Googlebot/Bingbot user-agent **and** forward-confirmed reverse DNS for its connecting IP qualify. Claimed crawler headers are not enough. Unverified or unavailable DNS fails open for human search behavior.
  
-The system does not use `UNKNOWN` as a synonym for crawler. A dedicated aggregate records verified crawlers; it is deliberately separate from the application-source filter.
+The system does not use `UNKNOWN` as a synonym for crawler. A dedicated aggregate records verified blocked crawler search attempts; it is deliberately separate from the application-source filter. The Overview **Bots** tile presents those verified blocked attempts and is not a customer-search or application-source bucket. All Platforms continues to include unverified genuine search records; when present, Overview links to these for attribution investigation instead of hiding or mislabeling them.
 
 ## POST search protection
 

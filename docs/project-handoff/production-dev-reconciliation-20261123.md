@@ -2,7 +2,7 @@
 
 ## Branches and intent
 Production baseline: fcb413180c4d9829a32f3c98232be1bc3e9183e3 (tree bacfe6f34e35a88a96edbb84d10f4d7206f5d7a0).
-Latest incorporated dev: 1c33b1d7c5cfad03707a23628a75f0ce2274a6d7.
+Latest incorporated dev: 60fe451c43fb17aeea1d702395c96a96cc2939e7.
 Integration branch: integration/dev-production-sync-2026-11-23. Do not merge automatically.
 No development changes are promoted to production by this PR.
 
@@ -47,3 +47,5 @@ CI on this exact PR remains required. The PR must stay open for separate review.
 Final dev6d2ec367 integration adds Android share-chooser outcome safeguards without conflicts; focused share tests pass.
 
 Dev1c33b1d7 Back-navigation changes: one CarInventoryLoader import conflict combines policy hook and useRef. New car return snapshots exclude display-only inventory before cloning while retaining live/empty states. Return regressions26/26PASS; final web buildPASS. Total21conflict resolutions across three integrations. Production CI main merge71a893bee is present; its only differences from the deployed baseline are two workflow files.
+
+Dev60fe451c bot attribution labels and unavailable-car return intent integrated cleanly, without further conflicts; affected focused tests pass. The previous candidate bd52a396 passed all15GitHub checks. This final candidate requires its own CI.
