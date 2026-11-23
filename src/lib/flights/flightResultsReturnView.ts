@@ -25,9 +25,24 @@ export type FlightResultsReturnView = {
   validUntil: number;
   resultIds: string[];
   sortMode: SortMode;
+  /** Mobile's per-leg time constraints do not all appear in search params. */
+  journeyTimeMaximums: Record<string, { takeoff: number | null; landing: number | null }>;
   kayakOffers: SandboxOffer[];
   kayakCriteria: Record<string, string>;
 };
+
+function validTimeMaximums(value: unknown): value is FlightResultsReturnView["journeyTimeMaximums"] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const entries = Object.entries(value);
+  return entries.length <= 20 && entries.every(([key, raw]) => {
+    if (!key || key.length > 80 || !raw || typeof raw !== "object" || Array.isArray(raw)) return false;
+    const v = raw as Record<string, unknown>;
+    return Object.keys(v).every(k => k === "takeoff" || k === "landing")
+      && ["takeoff", "landing"].every(mode =>
+        v[mode] === null || (typeof v[mode] === "number" && Number.isFinite(v[mode])
+          && (v[mode] as number) >= 0 && (v[mode] as number) <= 1440));
+  });
+}
 
 export function writeFlightResultsReturnView(
   value: Omit<FlightResultsReturnView, "version" | "savedAt">,
@@ -38,7 +53,8 @@ export function writeFlightResultsReturnView(
     || value.resultIds.length === 0 || value.resultIds.length > MAX_RESULT_IDS
     || value.kayakOffers.length > MAX_KAYAK_OFFERS
     || value.resultIds.some(id => typeof id !== "string" || !id || id.length > 512)
-    || !["cheapest", "best", "fastest", "stops"].includes(value.sortMode)) return;
+    || !["cheapest", "best", "fastest", "stops"].includes(value.sortMode)
+    || !validTimeMaximums(value.journeyTimeMaximums)) return;
   try {
     // Never write raw provider credentials, internal refs or an arbitrary URL.
     const safeOffers = value.kayakOffers.map(offer => {
@@ -76,6 +92,7 @@ export function readFlightResultsReturnView(
       || snapshot.resultIds.length > MAX_RESULT_IDS
       || snapshot.resultIds.some(id => typeof id !== "string" || !id || id.length > 512)
       || !["cheapest", "best", "fastest", "stops"].includes(snapshot.sortMode ?? "")
+      || !validTimeMaximums(snapshot.journeyTimeMaximums)
       || !Array.isArray(snapshot.kayakOffers) || snapshot.kayakOffers.length > MAX_KAYAK_OFFERS
       || !snapshot.kayakOffers.every(offer => offer && typeof offer === "object"
         && typeof offer.id === "string"
