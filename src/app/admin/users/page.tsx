@@ -134,9 +134,9 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       operationalAllTimeCount, operationalNewCount };
   }, null);
   const population = await readUserPopulationMetrics(date, now, from, to, timeZone);
-  const periodLabel = date === "today" ? "Today (UTC)" : date === "last7" ? "Last 7 days"
+  const periodLabel = date === "today" ? "Today (local)" : date === "last7" ? "Last 7 days"
     : date === "last30" ? "Last 30 days" : date === "all" ? "All time"
-    : date === "custom" ? "Custom range (UTC)" : date === "24h" ? "Last 24 hours"
+    : date === "custom" ? "Custom range (local)" : date === "24h" ? "Last 24 hours"
     : date === "thisMonth" ? "This month" : date === "lastMonth" ? "Last month" : "Last 3 months";
   const link = "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date, ...(from && to ? {from,to} : {}) }).toString();
   if (result === null) {
