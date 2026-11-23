@@ -487,7 +487,7 @@ try {
   console.log("PASS hidden sort normalizes to newest");
 
   await page.goto(base+"/admin/users/guest/qa-no-events-0001/activity");
-  await expect(page.getByText("No tracked journeys match these filters. Open Journey History to review full records.")).toBeVisible();
+  await expect(page.getByText("No recorded searches match these filters. Open Journey History to review full records.")).toBeVisible();
   await page.screenshot({caret:"initial",path:output+"/after-approved-empty-state-1536.png",fullPage:true});
   await page.goto(url+"&cursor=bad");
   await expect(page.getByText("Activity page link expired")).toHaveCount(0);
