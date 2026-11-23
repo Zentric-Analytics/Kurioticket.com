@@ -6,7 +6,7 @@ const readable = (value: string) => value.toLowerCase().replaceAll("_", " ").rep
 const searchStatusLabel = (status: string, resultCount: number) =>
   status === "PARTIAL"
     ? resultCount > 0 ? "Partial provider coverage (results received)" : "Partial provider coverage"
-    : status === "SUCCESS" ? "Search completed" : readable(status);
+    : readable(status);
 const searchCriteria = (search: NonNullable<AdminJourneyEvent["search"]>): string[] => {
   const details = search.details;
   if (!details) return [];
