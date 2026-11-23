@@ -2,6 +2,7 @@
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import { rememberResultsScroll } from "@/lib/results/resultsReturnScroll";
+import { markResultsReturn } from "@/lib/results/resultsReturnIntent";
 
 
 import Image from "next/image";
@@ -66,8 +67,12 @@ export function FlightCard({
   const journeyEvents = useJourneyEvents();
   const rememberDetailsContext = () => {
     journeyEvents.rememberDetailsContext("flight", flight.id, searchRequestId ?? null);
-    if (typeof window !== "undefined" && resolvedDetailsHref?.startsWith("/flights/details/")) {
+    if (typeof window !== "undefined" && window.location.pathname === "/flights/results" &&
+      (resolvedDetailsHref?.startsWith("/flights/details/") || resolvedDetailsHref?.startsWith("/sandbox/kayak/details"))) {
       rememberResultsScroll("flight", window.scrollY);
+      // Mark at the departure point: mobile hardware Back does not reliably
+      // fire popstate in the details page that is being left.
+      markResultsReturn("flight", window.location.href);
     }
   };
   const { t: dictionary, locale } = useLocale();
