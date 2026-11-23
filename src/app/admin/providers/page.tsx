@@ -1,3 +1,6 @@
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
+import { adminDisplayDateTime } from "@/lib/adminTimeZone";
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import AdminReferralAttributionPage from "@/app/admin/referral-attribution/page";
 import { ReferralWindowFilter } from "@/components/admin/ReferralWindowFilter";
 import { DEFAULT_ATTRIBUTION_DAYS, parseAttributionDays } from "@/services/referralAttributionService";
@@ -8,7 +11,7 @@ import { parseProviderHealthRange, providerHealthRangeHref } from "@/lib/adminPr
 import { ProviderHealthWindowFilter } from "@/components/admin/ProviderHealthWindowFilter";
 import { getProviderOutcomeWidths } from "@/lib/adminProviderVisuals";
 import { ProviderDirectoryTable, type ProviderDirectoryRecord } from "@/components/admin/ProviderDirectoryTable";
-import { formatDateTime, getProviderStatuses } from "@/lib/admin-data";
+import { getProviderStatuses } from "@/lib/admin-data";
 import {
   filterProviderOperationalStatuses,
   filterProviderStatuses,
@@ -34,6 +37,7 @@ const numberHeadingClass = "px-3 py-3 text-right text-[12px] font-medium upperca
 
 export default async function AdminProvidersPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
+  const adminTimeZone = await getAdminTimeZone();
   const filter = normalizeProductFilter(raw.product);
   const attribution = raw.view === "attribution";
   const attributionPeriod = raw.period === "today" || raw.days === "today" || (raw.days === undefined && raw.period === undefined) ? "today" : "rolling";
@@ -82,7 +86,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
             ? { label: operationalLabel(status.operationalState), tone: operationalTone(status.operationalState) }
             : { label: "Not monitored", tone: "neutral" as const },
         lastActivity: displayTime(status?.lastActivityAt ?? null,
-          unscopedTiming ? "Not tracked by service" : operational === null ? "Unavailable" : "No activity in selected window"),
+          unscopedTiming ? "Not tracked by service" : operational === null ? "Unavailable" : "No activity in selected window", adminTimeZone),
         detail: {
           environment: integration.environment === "test" ? "Test mode"
             : integration.environment === "live" ? "Live mode" : "Sandbox",
@@ -90,8 +94,8 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           search: integration.searchEnabled ? "Enabled" : "Not enabled",
           booking: integration.bookingEnabled ? "Enabled" : "Not available",
           externalHandoff: integration.externalHandoffEnabled ? "Enabled" : "Not enabled",
-          lastSuccess: displayTime(status?.lastSuccessAt ?? null, timingUnavailable),
-          lastFailure: displayTime(status?.lastFailureAt ?? null, timingUnavailable),
+          lastSuccess: displayTime(status?.lastSuccessAt ?? null, timingUnavailable, adminTimeZone),
+          lastFailure: displayTime(status?.lastFailureAt ?? null, timingUnavailable, adminTimeZone),
           note: integration.note,
         },
         canRetestDuffel: integration.id === "duffel",
@@ -109,15 +113,15 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
         tone: catalogue.searchEnabled ? "good" as const : "warn" as const,
       },
       health: { label: "Internal catalogue", tone: "neutral" as const },
-      lastActivity: displayTime(null, "Not externally monitored"),
+      lastActivity: displayTime(null, "Not externally monitored", adminTimeZone),
       detail: {
         environment: catalogue.environment,
         configured: "Not required",
         search: catalogue.searchEnabled ? "Enabled" : "Not enabled",
         booking: catalogue.bookingEnabled ? "Enabled" : "Not live yet",
         externalHandoff: null,
-        lastSuccess: displayTime(null, "Not externally monitored"),
-        lastFailure: displayTime(null, "Not externally monitored"),
+        lastSuccess: displayTime(null, "Not externally monitored", adminTimeZone),
+        lastFailure: displayTime(null, "Not externally monitored", adminTimeZone),
         note: catalogue.notes,
       },
       canRetestDuffel: false,
@@ -452,9 +456,9 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
   );
 }
 
-function displayTime(value: string | null, empty: string) {
+function displayTime(value: string | null, empty: string, timeZone: string) {
   return value
-    ? { text: formatDateTime(new Date(value)), iso: value }
+    ? { text: adminDisplayDateTime(value, timeZone), iso: value }
     : { text: empty, iso: null };
 }
 
@@ -540,6 +544,6 @@ function StatusIndicator({ value, tone }: { value: string; tone: StatusTone }) {
 
 function ActivityTime({ value, empty = "Not recorded" }: { value: string | null; empty?: string }) {
   return value
-    ? <time dateTime={value}>{formatDateTime(new Date(value))}</time>
+    ? <AdminLocalDateTime value={value} />
     : <span className="text-[12px] text-[#64748B]">{empty}</span>;
 }
