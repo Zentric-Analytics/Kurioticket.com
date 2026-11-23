@@ -55,6 +55,29 @@ test("recent searches split the same visitor journey by verified SearchHistory r
   assert.equal(rows.length,10,"never mutate, remove or backfill source records");
 });
 
+test("new flight interaction stages belong to verified search cards without inflating offer selections", () => {
+  const at = new Date("2026-11-23T12:09:00Z");
+  const rows: ActivityRow[] = [
+    { ...row("detail", "journey-1", "FLIGHT_DETAILS_VIEWED", at, "FLIGHT"),
+      searchHistoryId: "flight-verified", detail: "Flight · LOS → LHR · KAYAK sandbox", provider: "KAYAK sandbox" },
+    { ...row("provider", "journey-1", "PROVIDER_DEAL_SELECTED", new Date(at.getTime() + 1000), "FLIGHT"),
+      searchHistoryId: "flight-verified", detail: "Flight · LOS → LHR · Trip.com", provider: "Trip.com" },
+    { ...row("orphan", "journey-1", "PROVIDER_DEAL_SELECTED", new Date(at.getTime() + 2000), "FLIGHT"),
+      provider: "Unknown" },
+  ];
+  const summary = activityOverviewRows(rows);
+  assert.equal(summary.matchingSearchCount, 1, "both stages use the exact same SearchHistory ID");
+  assert.equal(summary.matchingJourneyCount, 1);
+  assert.equal(summary.otherCount, 0, "these are search actions, not account actions");
+  assert.equal(summary.unlinkedStageCount, 1, "never infer a search for an unlinked provider choice");
+  const match = summary.searches[0];
+  assert.equal(match.id, "flight-verified");
+  assert.equal(match.route, "LOS → LHR");
+  assert.equal(match.eventCount, 2);
+  assert.equal(match.offersSelected, 0, "new interaction stages are not historical offer selections");
+  assert.deepEqual(match.providers.sort(), ["KAYAK sandbox", "Trip.com"]);
+});
+
 test("saved, unsaved, shared and alert creation are counted only against their exact search", () => {
   const rows: ActivityRow[] = [
     { ...row("search","journey-a","SEARCH_COMPLETED",new Date("2026-11-23T10:00:00Z"),"FLIGHT"),searchHistoryId:"flight-1" },
@@ -167,6 +190,17 @@ test("journey navigation carries only applicable product/date/stage filters and 
   assert.equal(url.searchParams.get("q"),null);
   assert.equal(url.searchParams.get("tab"),null);
   assert.equal(decodeActivityJourneyReturn(url.searchParams.get("activityReturn")),activityPath);
+});
+
+test("Journey History links preserve newly supported native flight stage filters", () => {
+  for (const stage of ["FLIGHT_DETAILS_VIEWED", "PROVIDER_DEAL_SELECTED"] as const) {
+    const href = journeyHistoryHrefFromActivity("user", "qa-account-0001",
+      { ...filters, stage, product: "FLIGHT" }, "today", activityPath);
+    const url = new URL(href, "https://kurioticket.test");
+    assert.equal(url.searchParams.get("stage"), stage);
+    assert.equal(url.searchParams.get("product"), "FLIGHT");
+    assert.equal(decodeActivityJourneyReturn(url.searchParams.get("activityReturn")), activityPath);
+  }
 });
 
 test("journey detail opens all eligible recorded stages for one identity; filter state is return-only", () => {
