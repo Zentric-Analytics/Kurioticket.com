@@ -44,7 +44,7 @@ type EventRecord = {
   observedResult?: unknown;
   provider: string | null; sourcePage: string | null;
   searchHistoryId: string | null; requestId: string | null; searchProduct: AdminJourneyProduct | null;
-  origin: string | null; destination: string | null; checkIn: Date | null; checkOut: Date | null; searchQuery: unknown;
+  origin: string | null; destination: string | null; checkIn: Date | null; checkOut: Date | null; searchQuery?: unknown;
   searchStatus: "SUCCESS" | "PARTIAL" | "FAILED" | null; resultCount: number | null; latencyMs: number | null;
   redirectLogId: string | null; redirectProvider: string | null; route: string | null; destinationUrl: string | null;
 };
