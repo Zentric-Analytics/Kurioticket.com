@@ -47,7 +47,7 @@ export function useAdminTimeZone() {
  * operator's actual time zone. Preserve semantic UTC datetime for machines. */
 export function AdminLocalDateTime({ value, style = "datetime", referenceNow, className }: {
   value: string | number | Date | null | undefined;
-  style?: "datetime" | "date" | "time" | "relative";
+  style?: "datetime" | "date" | "time" | "relative" | "split";
   referenceNow?: string;
   className?: string;
 }) {
@@ -55,6 +55,10 @@ export function AdminLocalDateTime({ value, style = "datetime", referenceNow, cl
   if (value == null) return <>—</>;
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return <>—</>;
+  if (style === "split") return <time dateTime={date.toISOString()} className={className} title={timeZone}>
+    <span className="block">{adminDisplayDateTime(date, timeZone, "date")}</span>
+    <span className="mt-0.5 block text-[12px] font-normal text-[#64748B]">{adminDisplayDateTime(date, timeZone, "time")}</span>
+  </time>;
   const formatted = adminDisplayDateTime(date, timeZone, style, referenceNow ? new Date(referenceNow) : undefined);
   return <time dateTime={date.toISOString()} className={className} title={timeZone}>{formatted}</time>;
 }
