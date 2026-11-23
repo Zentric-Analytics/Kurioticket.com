@@ -47,7 +47,13 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
   const dependencies: Record<string, unknown> = {
     "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
     "@/lib/application-source": { applicationMetadata },
-    "@/lib/searchCrawlerGate": { identifyVerifiedCrawlerSearch: async () => options.verifiedCrawler ?? null },
+    "@/lib/searchCrawlerGate": {
+      identifySearchCrawler: async () => options.verifiedCrawler ? { name: options.verifiedCrawler, evidence: "VERIFIED_DNS" } : null,
+      searchCrawlerMetadata: (crawler: { name: string; evidence: string } | null) => crawler ? ({
+        identifiedCrawler: crawler.name, crawlerEvidence: crawler.evidence,
+        ...(crawler.evidence === "VERIFIED_DNS" ? { verifiedCrawler: crawler.name } : {}),
+      }) : {},
+    },
     "next/server": { after: (callback: () => Promise<unknown>) => { deferred.push(callback); } },
     "@/lib/operationalSearchSession": {
       prepareOperationalSearchSession: (value: Request) => {

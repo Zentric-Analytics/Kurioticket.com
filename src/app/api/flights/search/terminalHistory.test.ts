@@ -10,7 +10,7 @@ import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
 const requestId = "78e1de9e-6dfe-494f-9fdb-83726d83bf64";
 type History = { requestId: string; type: string; status: string; userId: string | null; visitorId: string | null; resultCount: number; query: unknown; latencyMs: number };
 
-function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; operationalGuest?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string; withOffers?: boolean; rateLimited?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT"; applicationSource?: "WEB" | "IOS" | "ANDROID" | "UNKNOWN" } = {}) {
+function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; operationalGuest?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string; withOffers?: boolean; rateLimited?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT"; declaredCrawler?: string; applicationSource?: "WEB" | "IOS" | "ANDROID" | "UNKNOWN" } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: History[] = [];
   const providerCalls: Array<{ metadata: Record<string, unknown>; status: string }> = [];
@@ -61,7 +61,15 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
         ? { userId: null, visitorId: null, ...attribution }
         : { userId: "verified-account", visitorId: "consented-visitor", ...attribution };
     } },
-    "@/lib/searchCrawlerGate": { identifyVerifiedCrawlerSearch: async () => options.verifiedCrawler ?? null },
+    "@/lib/searchCrawlerGate": {
+      identifySearchCrawler: async () => options.verifiedCrawler
+        ? { name: options.verifiedCrawler, evidence: "VERIFIED_DNS" }
+        : options.declaredCrawler ? { name: options.declaredCrawler, evidence: "DECLARED_USER_AGENT" } : null,
+      searchCrawlerMetadata: (crawler: { name: string; evidence: string } | null) => crawler ? ({
+        identifiedCrawler: crawler.name, crawlerEvidence: crawler.evidence,
+        ...(crawler.evidence === "VERIFIED_DNS" ? { verifiedCrawler: crawler.name } : {}),
+      }) : {},
+    },
     "@/lib/kayak-client-ip": { getKayakClientIp: () => "192.0.2.1" },
     "./providerDiagnostics": { logNativeFlightProviderDiagnostics: () => undefined },
     "@/services/travel/kayakSandbox": { isKayakSandboxEnabled: () => false },
@@ -297,4 +305,23 @@ test("failed verified bot flight searches are counted once, but rate-limited req
   assert.equal((await rateLimited.postNearby(2)).status, 429);
   assert.deepEqual(rateLimited.histories, []);
   assert.deepEqual(rateLimited.deferred, []);
+});
+
+test("PerplexityBot executes one search despite nine nearby fares, marked as declared and not DNS-verified", async () => {
+  const fixture = routeFixture("flight", {
+    declaredCrawler: "PERPLEXITYBOT", operationalGuest: true, available: true,
+    withOffers: true,
+  });
+  assert.equal((await fixture.post({ "user-agent": "PerplexityBot/1.0" })).status, 200);
+  for (let day = 2; day <= 10; day++) assert.equal((await fixture.postNearby(day)).status, 200);
+  await Promise.all(fixture.deferred.map(run => run()));
+  assert.equal(fixture.histories.length, 1);
+  const history = fixture.histories[0] as History & { applicationSource: string };
+  assert.equal(history.applicationSource, "BOT");
+  assert.equal((history.query as Record<string, unknown>).identifiedCrawler, "PERPLEXITYBOT");
+  assert.equal((history.query as Record<string, unknown>).crawlerEvidence, "DECLARED_USER_AGENT");
+  assert.equal((history.query as Record<string, unknown>).verifiedCrawler, undefined);
+  assert.equal(fixture.lookups(), 0);
+  assert.deepEqual(fixture.analyticsEvents, []);
+  assert.equal(fixture.providerCalls.length, 10);
 });

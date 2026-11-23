@@ -54,10 +54,16 @@ test("verified bot package search executes once and records one BOT search, not 
       checkRateLimit: () => { rateCalls++; return { allowed: true }; },
       getClientIp: () => "203.0.113.1",
     },
-    "@/lib/searchCrawlerGate": { identifyVerifiedCrawlerSearch: async () => {
-      verificationCalls++;
-      return "GOOGLEBOT";
-    } },
+    "@/lib/searchCrawlerGate": {
+      identifySearchCrawler: async () => {
+        verificationCalls++;
+        return { name: "GOOGLEBOT", evidence: "VERIFIED_DNS" };
+      },
+      searchCrawlerMetadata: (crawler: { name: string; evidence: string } | null) => crawler ? ({
+        identifiedCrawler: crawler.name, crawlerEvidence: crawler.evidence,
+        ...(crawler.evidence === "VERIFIED_DNS" ? { verifiedCrawler: crawler.name } : {}),
+      }) : {},
+    },
     "next/server": { after: (callback: () => Promise<unknown>) => deferred.push(callback) },
     "@/services/analyticsService": { logSearchHistory: async (value: Record<string, unknown>) => {
       recorded.push(value);
@@ -89,6 +95,6 @@ test("verified bot package search executes once and records one BOT search, not 
   assert.equal(recorded[0].type, "PACKAGE");
   assert.equal(recorded[0].resultCount, 3);
   assert.deepEqual(JSON.parse(JSON.stringify(recorded[0].query)), {
-    mode: "hotel-flight", verifiedCrawler: "GOOGLEBOT", searchPurpose: "package",
+    mode: "hotel-flight", identifiedCrawler: "GOOGLEBOT", crawlerEvidence: "VERIFIED_DNS", verifiedCrawler: "GOOGLEBOT", searchPurpose: "package",
   });
 });

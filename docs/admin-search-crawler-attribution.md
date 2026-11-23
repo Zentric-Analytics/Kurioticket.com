@@ -1,36 +1,37 @@
-# Admin search source and verified-crawler policy
+# Admin search platform attribution: Bots, Website, iOS and Android
 
-## Classification
+## How a search is classified
 
-Search Activity and Overview must distinguish **application origin** from **verified crawler identity**.
+- `WEB`: proven web account/session transport.
+- `IOS` and `ANDROID`: authenticated or server-signed native transport.
+- `BOT` (**Bots**): an *executed main search* from an identifiable crawler. Googlebot and Bingbot use forward-confirmed reverse DNS when available. Other identifiable crawler signatures include PerplexityBot/Perplexity-User, GoogleOther, Meta web indexer, Facebook external fetchers, Claude, ChatGPT, Applebot, DuckDuckBot, Bingbot, and other recognizable bot/crawler/spider User-Agent tokens.
+- `UNKNOWN` (**Unverified**): records without trustworthy source information. Missing device data, a missing session or a nearby-date pattern alone **does not prove bot traffic**.
 
-- `WEB`: validated web account session, same-origin Fetch Metadata, or previously server-signed same-origin operational search session. Includes desktop and mobile web.
-- `IOS` / `ANDROID`: authenticated mobile session provenance or server-signed, platform-bound guest operational session.
-- `BOT` (displayed as **Bots**): a main search that actually reaches the search execution pipeline after its request IP and Googlebot/Bingbot user agent are verified through forward-confirmed reverse DNS. This category must be set server-side, never from a client claim or a missing platform header.
-- `UNKNOWN` (displayed as **Unverified**): a search without trustworthy platform or verified crawler evidence. Missing device information does not establish bot identity. Historical unknown rows are unchanged.
+Bot attribution is **not authentication**. The `SearchHistory.query` JSON includes `identifiedCrawler` and `crawlerEvidence`:
+- `VERIFIED_DNS`: DNS-verified Googlebot/Bingbot. Preserves the `verifiedCrawler` field.
+- `DECLARED_USER_AGENT`: recognizable bot signature without DNS proof. No code path may portray this as DNS-verified or use it to grant permissions.
 
-A declared crawler user-agent by itself does not qualify as `BOT`. The existing verification uses the trusted ingress IP, approved Google/Bing crawler DNS hostnames, and a forward-confirmed IP match. DNS failures or timeouts leave the request unverified; they do not grant bot status.
+Signed-in session cookies, Authorization or native platform headers prevent User-Agent-only bot attribution. Native client signatures such as `okhttp`, `CFNetwork` and `KurioticketPreview` are not bots.
 
-## Execution and counting
+## Search counts: one main search equals one record
 
-Verified Googlebot and Bingbot requests are **not blocked by crawler classification**. The regular flight, hotel, car and package request pipelines handle these requests. Feature controls, validation, rate limits, and downstream provider responses remain in effect for all callers.
+Verified and declared-identifiable crawlers may execute ordinary travel searches, subject to the exact same feature controls, validation and rate limits as users. Only main searches that reach provider-search execution are stored under BOT in `SearchHistory`.
 
-**One executed main search = one SearchHistory record** (subject to the existing request-ID idempotency); verified bot requests use `SearchHistory.query.applicationSource = "BOT"` and `SearchHistory.query.verifiedCrawler`. A search that ran but returned unavailable provider results is recorded as FAILED. Requests rejected before execution by validation, feature controls or rate limits are not counted as bot searches. Bots do not acquire guest operational sessions or customer identities; bot searches do not create customer engagement AnalyticsEvent writes.
+- Flight search: one main `/api/flights/search` search.
+- Nearby fares: the nine additional date lookups are internal comparisons and **never counted** as separate searches.
+- Hotel or car search: one main search each.
+- Package search: one parent search, never one per flight/hotel/car component.
 
-- `POST /api/flights/search`: one main flight search (one BOT SearchHistory row).
-- `POST /api/flights/nearby-fare`: optional nearby-date comparisons belong to the main search, and **never create a SearchHistory row**, even for a verified crawler. One flight search plus nine nearby-fare requests counts as **one** search.
-- `POST /api/hotels/search`: one hotel search.
-- `POST /api/cars/search`: one car search.
-- `POST /api/packages/search`: one package search for the parent orchestration, not additional bot searches for each flight/hotel/car component.
+Rejected, blocked or invalid requests do not count. An executed search with no provider availability is recorded once with its actual result status. Bot searches are included in **All Platforms** but are separate from Website, iOS, Android and Unverified. The Bots tile opens Search Activity filtered to BOT. Merely loading a page or public resource—even thousands of times—never increments Bots.
 
-The Overview **Bots** tile, All Platforms, Platform Health, and Search Activity are sourced from the same persisted `SearchHistory` records. `BOT` contributes to All Platforms but is disjoint from Website, iOS, Android and Unverified. The Bots tile opens Search Activity filtered to `BOT`.
+Bot searches do not create fake customer identities, operational guest sessions or human engagement events. Classifying a bot does not permit it to access accounts, private records, or privileged endpoints.
 
-## Historical attempts
+## Historical attribution
 
-The old `ApiProviderLog.service = "crawler-blocked-search"` entries are historical **blocked attempts**, not executed searches. They remain in audit history but are **not** included in the Bots tile, All Platforms or current search activity. Do not migrate, re-label, or inflate these entries as if they had executed. Provider-call metrics still exclude the historical crawler-blocked-search ledger.
+Before the 2026-11-23 deployment, only DNS-verified Googlebot/Bingbot could receive the BOT source. Earlier records may include declared PerplexityBot, GoogleOther or Meta traffic under WEB/UNKNOWN. Retrospective classification requires **evidence for each specific search**: matched request logs or retained verified evidence, plus careful separation from native `okhttp` and `KurioticketPreview` clients.
 
-## Privacy and safeguards
+Historical ten-date batches must be reduced to one parent search for customer-facing counts *without deleting the individual provider audit evidence*. Never move every UNKNOWN record to BOT based solely on timing, session presence, device gaps or a crawler-like pattern. Historical `crawler-blocked-search` attempts remain attempted requests, not searches, and must never be backfilled into `SearchHistory` as successful or completed searches.
 
-A bot classification does not authorize access to user accounts, saved data, traveler identities, or protected endpoints. It does not bypass normal product feature gates, search validation, rate limits or external provider access restrictions. No client-supplied user ID, native-platform header or bare user-agent is sufficient for BOT attribution.
+Only platform-origin and crawler-evidence semantics are changing here. No operational event grants an authorization privilege.
 
-References: Google crawler verification (https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) and Bingbot verification (https://www.bing.com/webmasters/help/how-to-verify-bingbot-3905dc26).
+See [Google crawler verification](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) and [Bingbot verification](https://www.bing.com/webmasters/help/how-to-verify-bingbot-3905dc26).
