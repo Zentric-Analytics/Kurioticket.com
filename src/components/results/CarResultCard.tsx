@@ -28,6 +28,7 @@ import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOv
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSavedCar } from "@/components/results/useSavedCar";
 import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
+import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import {
   getCarSpecificationIcon,
   getMobileCarPrimarySpecs,
@@ -218,9 +219,13 @@ export function CarResultCard({
     setLocalSelectedOfferId(nextOffer.id);
   };
 
+  const journeyEvents = useJourneyEvents();
   const handleMobileDetailsNavigation = (
     event: ReactMouseEvent<HTMLAnchorElement>,
   ) => {
+    if (!event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && detailsHref) {
+      journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", requestId, { offerId: car.id, sourcePage: "/cars/results" });
+    }
     if (
       event.defaultPrevented ||
       event.button !== 0 ||
