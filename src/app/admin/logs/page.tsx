@@ -1,7 +1,7 @@
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 
 import { AdminAuditLogsToolbar } from "@/components/admin/AdminAuditLogsToolbar";
-import { formatDateTime } from "@/lib/admin-data";
 import type { AdminAuditRead } from "@/services/adminAuditReadContract";
 import { adminAuditReads } from "@/services/adminAuditReadService";
 
@@ -113,7 +113,7 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
 function AuditRow({ log }: { log: AdminAuditRead }) {
   const content = (
     <>
-      <time dateTime={log.createdAt} className="text-[12px] leading-5 text-[#475569]">{formatDateTime(new Date(log.createdAt))}</time>
+      <AdminLocalDateTime value={log.createdAt} className="text-[12px] leading-5 text-[#475569]" />
       <div className="min-w-0">
         <p className="break-all text-[13px] font-medium text-[#020617]" title={log.adminEmail}>{log.adminEmail}</p>
       </div>
