@@ -15,11 +15,9 @@ test("Search Detail renders an inline interaction section without a View activit
   const html = renderToStaticMarkup(createElement(SearchDetailActivityPanel, {
     searchId: "search_123456",
     environment: "staging",
-    searchedAt: "2026-11-16T12:34:00.000Z",
-    status: "SUCCESS",
   }));
   assert.match(html, /User interactions/);
-  assert.match(html, /Search recorded/);
+  assert.doesNotMatch(html, /Search recorded/);
   assert.match(html, /Loading verified user interactions/);
   assert.doesNotMatch(html, /View activity|aria-expanded|href="\/admin\/users\//);
 });
