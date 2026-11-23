@@ -13,7 +13,7 @@ function loadModule<T>(path: string) {
     require: (name: string) => {
       if (name === "next/server") return { NextResponse: { json: Response.json } };
       if (name === "@/lib/feature-controls/service") return { isFeatureEnabled: async () => false };
-      if (name === "@/lib/searchCrawlerGate") return { identifyVerifiedCrawlerSearch: async () => null };
+      if (name === "@/lib/searchCrawlerGate") return { identifySearchCrawler: async () => null, searchCrawlerMetadata: () => ({}) };
       if (name === "@/lib/search-journey") return { resolveSearchRequestId: () => "request-id" };
       if (name === "./handler" || name === "../search/handler") return loadModule("src/app/api/flights/search/handler.ts");
       return new Proxy({}, { get: () => () => { throw new Error(`Disabled request touched ${name}`); } });

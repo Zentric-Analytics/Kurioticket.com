@@ -2,7 +2,7 @@ import { getIncludedProducts, parseDealsSearchParams, validateDealsSearch } from
 import { searchPackage } from "@/services/travel/packageOrchestrator";
 import { isFeatureEnabled as resolveFeatureEnabled } from "@/lib/feature-controls/service";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { identifyVerifiedCrawlerSearch } from "@/lib/searchCrawlerGate";
+import { identifySearchCrawler, searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { after } from "next/server";
 import { logSearchHistory } from "@/services/analyticsService";
 
@@ -10,7 +10,7 @@ const noStore = { "Cache-Control": "no-store" };
 
 export function createPackageSearchHandler(isFeatureEnabled = resolveFeatureEnabled) {
 return async function POST(request: Request) {
-  const verifiedCrawler = await identifyVerifiedCrawlerSearch(request);
+  const crawler = await identifySearchCrawler(request);
   const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
   if (!(await isFeatureEnabled("DEALS_ENABLED"))) return Response.json({ error: "Package search is temporarily unavailable.", status: "unavailable", requestId }, { status: 503, headers: noStore });
   const rate = checkRateLimit(`package-search:${getClientIp(request)}`, 25, 60_000);
@@ -31,13 +31,13 @@ return async function POST(request: Request) {
   if (Object.keys(errors).length) return Response.json({ error: "Package search needs more detail.", issues: errors }, { status: 400, headers: noStore });
   const started = performance.now();
   const result = await searchPackage(query, requestId, {}, journey === "staged" ? "hotel-only" : "all");
-  if (verifiedCrawler) {
+  if (crawler) {
     // Count only a completed package-search execution. Internal flight/hotel/car
     // fan-out belongs to this one parent search, not three new bot searches.
     after(async () => {
       await logSearchHistory({
         applicationSource: "BOT", userId: null, visitorId: null, requestId,
-        type: "PACKAGE", query: { mode: query.mode, verifiedCrawler, searchPurpose: "package" },
+        type: "PACKAGE", query: { mode: query.mode, ...searchCrawlerMetadata(crawler), searchPurpose: "package" },
         resultCount: Object.values(result.components).reduce((sum, component) => sum + (component?.results.length ?? 0), 0),
         latencyMs: Math.max(0, Math.round(performance.now() - started)),
         status: result.status === "unavailable" ? "FAILED" : result.status === "partial" ? "PARTIAL" : "SUCCESS",
