@@ -1,4 +1,4 @@
-import type { Prisma } from "@/generated/prisma/client";
+import type { Prisma, JourneyEventType } from "@/generated/prisma/client";
 
 /** Safe, read-only presentation of server-recorded journey events in Admin.
  * Never expose raw event metadata, search query JSON, or destination URLs.
@@ -13,8 +13,7 @@ export type ActivityRow = {
   journeyId?: string;
   journeyStartedAt?: Date;
   dedupeKey?: string;
-  stage?: "SEARCH_COMPLETED" | "RESULTS_VIEWED" | "FLIGHT_DETAILS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_DEAL_SELECTED" | "PROVIDER_HANDOFF_STARTED"
-    | "RESULT_SAVED" | "RESULT_UNSAVED" | "RESULT_SHARED" | "PRICE_ALERT_CREATED" | "ACCOUNT_ACTIVITY";
+  stage?: JourneyEventType | "ACCOUNT_ACTIVITY";
   product?: string | null;
   provider?: string | null;
   searchHistoryId?: string | null;
@@ -26,8 +25,7 @@ export type ActivityRow = {
 
 export type JourneyEventRecord = {
   id: string;
-  type: "SEARCH_COMPLETED" | "RESULTS_VIEWED" | "FLIGHT_DETAILS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_DEAL_SELECTED" | "PROVIDER_HANDOFF_STARTED"
-    | "RESULT_SAVED" | "RESULT_UNSAVED" | "RESULT_SHARED" | "PRICE_ALERT_CREATED";
+  type: JourneyEventType;
   product: string | null;
   provider: string | null;
   createdAt: Date;
@@ -131,6 +129,11 @@ const eventLabels = {
   RESULT_UNSAVED: "Result unsaved",
   RESULT_SHARED: "Result shared",
   PRICE_ALERT_CREATED: "Price alert created",
+  SEARCH_EDIT_APPLIED: "Search edit submitted",
+  SEARCH_FILTER_APPLIED: "Results filter applied",
+  SEARCH_SORT_CHANGED: "Results sort changed",
+  RESULT_DETAILS_OPENED: "Result details opened",
+  RATE_DETAILS_OPENED: "Rate details opened",
 } satisfies Record<JourneyEventRecord["type"], string>;
 
 function displayProduct(product: string | null) {

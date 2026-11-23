@@ -66,6 +66,9 @@ export function FlightCard({
 }) {
   const journeyEvents = useJourneyEvents();
   const rememberDetailsContext = () => {
+    // A guided selection may have a default details URL yet call onAction
+    // instead of navigating. Never report an unobserved details opening.
+    if (resolvedDetailsHref && !onAction) journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", searchRequestId, { offerId: flight.id, sourcePage: "/flights/results" });
     journeyEvents.rememberDetailsContext("flight", flight.id, searchRequestId ?? null);
     if (typeof window !== "undefined" && window.location.pathname === "/flights/results" &&
       (resolvedDetailsHref?.startsWith("/flights/details/") || resolvedDetailsHref?.startsWith("/sandbox/kayak/details"))) {

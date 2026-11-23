@@ -1,6 +1,24 @@
 const journeyIdleWindowMs = 30 * 60 * 1000;
 
-export const clientJourneyEventTypes = ["RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"] as const;
+export const clientJourneyDecisionTypes = ["SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"] as const;
+export type ClientJourneyDecisionType = (typeof clientJourneyDecisionTypes)[number];
+export const journeyFilterGroups = ["all", "price", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "transmission", "other"] as const;
+export type JourneyFilterGroup = (typeof journeyFilterGroups)[number];
+export const journeySortModes = ["price", "best", "fastest", "stops", "rating", "recommended", "other"] as const;
+export type JourneySortMode = (typeof journeySortModes)[number];
+
+/** Convert only known UI choices to coarse, non-sensitive values. */
+export function normalizeJourneySortMode(value: string): JourneySortMode {
+  const key = value.trim().toLowerCase();
+  if (/price|cheap|lowest|total/.test(key)) return "price";
+  if (/fast|duration|quick/.test(key)) return "fastest";
+  if (/stops?/.test(key)) return "stops";
+  if (/rat(?:e|ing)|review/.test(key)) return "rating";
+  if (/best|value/.test(key)) return "best";
+  if (/recommend/.test(key)) return "recommended";
+  return "other";
+}
+export const clientJourneyEventTypes = ["RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", ...clientJourneyDecisionTypes] as const;
 export type ClientJourneyEventType = (typeof clientJourneyEventTypes)[number];
 export type JourneyEventReceipt = { accepted: boolean; retryable?: boolean };
 
