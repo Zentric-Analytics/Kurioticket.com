@@ -29,6 +29,7 @@ const tabs = [
   { value: "searches", label: "Searches" },
   { value: "selections", label: "Selections" },
   { value: "handoffs", label: "Provider handoffs" },
+  { value: "interactions", label: "Saved, shared & alerts" },
 ] as const;
 // Keep the UTC instant, but use a compact, unambiguous header label so
 // each date stays on one line beside the workspace sidebar at desktop zoom.
