@@ -80,7 +80,7 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
               <td className="px-3 py-3 [overflow-wrap:anywhere]">
                 {event.search ? <>
                   {searchTitle ? <p className="font-medium text-[#020617]">{searchTitle}</p> : null}
-                  <p className={searchTitle ? "mt-1 text-xs text-[#64748B]" : "text-xs text-[#64748B]"}>{searchStatusLabel(event.search.status, event.search.resultCount)} · {event.search.resultCount} results</p>
+                  <p className={searchTitle ? "mt-1 text-xs text-[#64748B]" : "text-xs text-[#64748B]"}>Search status: {searchStatusLabel(event.search.status, event.search.resultCount)} · {event.search.resultCount} results</p>
                   {searchCriteria(event.search).length ? <p className="mt-1.5 text-xs leading-5 text-[#475569]">{searchCriteria(event.search).join(" · ")}</p> : null}
                 </> : <p className="text-xs text-[#64748B]">Search details not recorded</p>}
                 {event.filterSelections?.length ? <div className="mt-1 text-xs text-[#475569]">
