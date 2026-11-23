@@ -42,8 +42,12 @@ type SearchCountryLookup = (ip: string) => Promise<string | null>;
  * The injected lookup allows fully offline, deterministic tests. */
 export async function completeSearchNetworkObservation(
   query: Record<string, unknown>,
-  countryLookup: SearchCountryLookup = async ip =>
-    (await resolveIpinfoLiteCountryContext(ip, { allowMeFallback: false }))?.countryCode ?? null,
+  countryLookup: SearchCountryLookup = async ip => {
+    // The existing IPinfo integration is optional. Missing credentials should
+    // not cause repeated network attempts or noisy request logging.
+    if (!process.env.IPINFO_TOKEN?.trim()) return null;
+    return (await resolveIpinfoLiteCountryContext(ip, { allowMeFallback: false }))?.countryCode ?? null;
+  },
 ): Promise<Record<string, unknown>> {
   const observed = recordedSearchNetwork(query);
   if (!observed.ipAddress || observed.countryCode || publicVisitorIp(observed.ipAddress) !== observed.ipAddress) {
