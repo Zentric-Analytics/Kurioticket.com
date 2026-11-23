@@ -47,7 +47,7 @@ export type SearchHistoryInput = ApplicationAttribution & {
   userId?: string | null;
   visitorId?: string | null;
   requestId?: string | null;
-  type: "FLIGHT" | "HOTEL" | "CAR";
+  type: "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE";
   origin?: string | null;
   destination?: string | null;
   checkIn?: Date | null;

@@ -1,46 +1,36 @@
 # Admin search source and verified-crawler policy
 
-## Classification contract
+## Classification
 
-Search Activity and Platform Health must distinguish **application origin** from **crawler identity**.
+Search Activity and Overview must distinguish **application origin** from **verified crawler identity**.
 
-- `WEB`: validated web account session, same-origin Fetch Metadata, or a previously issued, server-signed same-origin operational web search session. A freshly prepared session from an Origin header alone does not qualify. Includes desktop and mobile browsers.
-- `IOS` and `ANDROID`: authenticated mobile session provenance or a server-signed, platform-bound v2 operational search session for guests. No analytics consent is required for essential operational attribution.
-- `UNKNOWN` (displayed in platform filters as **Unverified**): no trustworthy platform proof. It **must not** be labeled a crawler, WEB, Android or iOS merely because of user-agent or IP shape.
-- **Verified crawler:** independent request-origin classification. Only an identifying Googlebot/Bingbot user-agent **and** forward-confirmed reverse DNS for its connecting IP qualify. Claimed crawler headers are not enough. Unverified or unavailable DNS fails open for human search behavior.
- 
-The system does not use `UNKNOWN` as a synonym for crawler. A dedicated aggregate records verified blocked crawler search attempts; it is deliberately separate from the application-source filter. The Overview **Bots** tile presents those verified blocked attempts and is not a customer-search or application-source bucket. All Platforms continues to include unverified genuine search records; when present, Overview links to these for attribution investigation instead of hiding or mislabeling them.
+- `WEB`: validated web account session, same-origin Fetch Metadata, or previously server-signed same-origin operational search session. Includes desktop and mobile web.
+- `IOS` / `ANDROID`: authenticated mobile session provenance or server-signed, platform-bound guest operational session.
+- `BOT` (displayed as **Bots**): a main search that actually reaches the search execution pipeline after its request IP and Googlebot/Bingbot user agent are verified through forward-confirmed reverse DNS. This category must be set server-side, never from a client claim or a missing platform header.
+- `UNKNOWN` (displayed as **Unverified**): a search without trustworthy platform or verified crawler evidence. Missing device information does not establish bot identity. Historical unknown rows are unchanged.
 
-## POST search protection
+A declared crawler user-agent by itself does not qualify as `BOT`. The existing verification uses the trusted ingress IP, approved Google/Bing crawler DNS hostnames, and a forward-confirmed IP match. DNS failures or timeouts leave the request unverified; they do not grant bot status.
 
-The server checks verified crawler identities before paid provider execution, SearchHistory creation or AnalyticsEvent writes on:
+## Execution and counting
 
-- `POST /api/flights/search`
-- `POST /api/flights/nearby-fare`
-- `POST /api/hotels/search`
-- `POST /api/cars/search`
-- `POST /api/packages/search` (before flight, hotel and car fan-out)
+Verified Googlebot and Bingbot requests are **not blocked by crawler classification**. The regular flight, hotel, car and package request pipelines handle these requests. Feature controls, validation, rate limits, and downstream provider responses remain in effect for all callers.
 
-These endpoints return HTTP 403 with `CRAWLER_SEARCH_BLOCKED` only after successful DNS verification. Public website GET pages, `robots.txt`, public images and indexing remain unaffected.
+**One executed main search = one SearchHistory record** (subject to the existing request-ID idempotency); verified bot requests use `SearchHistory.query.applicationSource = "BOT"` and `SearchHistory.query.verifiedCrawler`. A search that ran but returned unavailable provider results is recorded as FAILED. Requests rejected before execution by validation, feature controls or rate limits are not counted as bot searches. Bots do not acquire guest operational sessions or customer identities; bot searches do not create customer engagement AnalyticsEvent writes.
 
-Verified blocked attempts are recorded through the existing `ApiProviderLog` ledger under service `crawler-blocked-search` with **only** product, crawler kind and environment. No IP, user-agent, customer identity, URL, route or search payload is written. These records are excluded from platform provider-call health totals and customer-search counts; Platform Health shows their count for the selected window as a separate shared operational observation.
+- `POST /api/flights/search`: one main flight search (one BOT SearchHistory row).
+- `POST /api/flights/nearby-fare`: optional nearby-date comparisons belong to the main search, and **never create a SearchHistory row**, even for a verified crawler. One flight search plus nine nearby-fare requests counts as **one** search.
+- `POST /api/hotels/search`: one hotel search.
+- `POST /api/cars/search`: one car search.
+- `POST /api/packages/search`: one package search for the parent orchestration, not additional bot searches for each flight/hotel/car component.
 
-DNS verification is bounded to 2.5 seconds for **claimed crawler** requests only, with short negative and 30-minute positive cache. It is not performed for ordinary web/native requests. DNS failures do not generate an authenticated crawler classification.
+The Overview **Bots** tile, All Platforms, Platform Health, and Search Activity are sourced from the same persisted `SearchHistory` records. `BOT` contributes to All Platforms but is disjoint from Website, iOS, Android and Unverified. The Bots tile opens Search Activity filtered to `BOT`.
 
-References: Google's crawler verification guidance (https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) and Microsoft's Bingbot verification guidance (https://www.bing.com/webmasters/help/how-to-verify-bingbot-3905dc26). Crawler providers without an approved forward-confirmed reverse DNS policy remain unverified.
+## Historical attempts
 
-## Historical records and correctness
+The old `ApiProviderLog.service = "crawler-blocked-search"` entries are historical **blocked attempts**, not executed searches. They remain in audit history but are **not** included in the Bots tile, All Platforms or current search activity. Do not migrate, re-label, or inflate these entries as if they had executed. Provider-call metrics still exclude the historical crawler-blocked-search ledger.
 
-Existing `SearchHistory.query.applicationSource = 'UNKNOWN'` entries are kept **unaltered**. They cannot be safely transformed into verified crawlers or native/web users using stored route, time, request count, operational session UUID or bare user-agent alone. The November 19–20 staging review found many Googlebot-*claimed* requests in infrastructure logs and historical native searches sharing this raw label. Neither source-log adjacency nor a claimed user-agent establishes a record-level audit-grade backfill.
+## Privacy and safeguards
 
-Never edit raw SearchHistory rows or collapse ten old searches in place solely to make dashboards look cleaner. Retain complete provider, search and audit history, and investigate attribution anomalies with consent and ownership preserved.
+A bot classification does not authorize access to user accounts, saved data, traveler identities, or protected endpoints. It does not bypass normal product feature gates, search validation, rate limits or external provider access restrictions. No client-supplied user ID, native-platform header or bare user-agent is sufficient for BOT attribution.
 
-## Test invariants
-
-- Real Android/iOS signed sessions and server-verified web requests retain their source.
-- A forged native header, invalid token or unverified crawler request cannot claim a platform or bot identity.
-- A verified crawler never triggers customer-search history, optional customer analytics or provider execution.
-- Blocked-crawler totals are reported separately; Platform Health and Search Activity customer counts remain consistent.
-- No changes to native builds, providers, feature controls, application routes, consent or permissions.
-
-A search that runs with a declared crawler user agent receives `UNKNOWN` application attribution, including PerplexityBot and GoogleOther. This affects reporting only. A crawler declaration alone does not establish verified identity or trigger the search block.
+References: Google crawler verification (https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) and Bingbot verification (https://www.bing.com/webmasters/help/how-to-verify-bingbot-3905dc26).

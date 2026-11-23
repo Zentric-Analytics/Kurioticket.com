@@ -6,7 +6,7 @@ import type { readPlatformSearchActivity } from "@/services/platformOperationsSe
 export function PlatformOverviewSummary({ data }: {
   data: Awaited<ReturnType<typeof readPlatformSearchActivity>>;
 }) {
-  const { searches, window, verifiedBotAttempts } = data;
+  const { searches, window } = data;
   const displayedPlatforms = platformOptions.filter(option => option.value !== "UNKNOWN");
   const unverifiedSearches = searches?.applications.UNKNOWN.total ?? 0;
 
@@ -38,12 +38,6 @@ export function PlatformOverviewSummary({ data }: {
                 </dd>
               </div>
             ))}
-            <div className="flex min-h-[72px] min-w-0 flex-col justify-center rounded-lg bg-slate-50 p-3">
-              <dt className="text-xs font-medium text-slate-600">Bots<span className="sr-only"> (verified search crawler attempts blocked before provider execution)</span></dt>
-              <dd className="mt-1 text-lg font-semibold leading-6 tabular-nums text-slate-950">
-                {verifiedBotAttempts === null ? "Unavailable" : verifiedBotAttempts.toLocaleString()}
-              </dd>
-            </div>
           </dl>
           {unverifiedSearches > 0 ? (
             <p className="mt-2 text-xs leading-5 text-slate-600">

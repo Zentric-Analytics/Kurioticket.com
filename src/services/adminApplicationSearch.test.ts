@@ -4,7 +4,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { applicationMetadata } from "@/lib/application-source";
 import { parseAdminSearchQuery, encodeAdminOperationalCursor } from "./adminOperationalReadContract";
 import { createAdminOperationalReadService, __adminOperationalReadCoreTest } from "./adminOperationalReadCore";
-for (const source of ["WEB", "IOS", "ANDROID", "UNKNOWN"] as const)
+for (const source of ["WEB", "IOS", "ANDROID", "BOT", "UNKNOWN"] as const)
     test(`search source ${source} uses one bound SQL predicate for list and summary before pagination`, async () => {
         const queries: Prisma.Sql[] = [];
         const rows = [0, 1].map(i => ({ id: `search_00${i}`, requestId: null, userId: null, visitorId: null, visitor: null, type: "FLIGHT", origin: "LOS", destination: "LHR", checkIn: null, checkOut: null, query: { environment: "staging", applicationSource: source, appVersion: i ? "bad version" : "1.2.3" }, resultCount: 2, latencyMs: null, status: "SUCCESS", createdAt: new Date(`2026-11-01T00:00:0${2 - i}Z`) }));
