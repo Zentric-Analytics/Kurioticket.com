@@ -31,7 +31,7 @@ test("priced Hotel results wait for currency context before exposing their initi
 test("changed Sort Apply updates ordering state and resets scroll position without network work", () => {
   const sheet = source.slice(source.indexOf("<HotelResultsQuickFilterSheet"), source.indexOf("/> : null", source.indexOf("<HotelResultsQuickFilterSheet")));
   assert.match(sheet, /sort=\{hotelSort\}/);
-  assert.match(sheet, /onSortChange=\{\(next\) => \{ if\(next===hotelSort\)return;journeyEvents\.workflowDecision\("SEARCH_SORT_CHANGED", resultsRequestId, "\/hotel-results", \{ sortMode: normalizeJourneySortMode\(next\) \}\);setHotelSort\(next\);startHotelResultsTransition\(\); \}\}/);
+  assert.match(sheet, /onSortChange=\{\(next\) => \{ if\(next===hotelSort\)return;journeyEvents\.workflowDecision\("SEARCH_SORT_CHANGED", resultsRequestId, "\/hotel-results", \{ sortMode: normalizeJourneySortMode\(next\), sortChoice: normalizeJourneySortChoice\(next\) \}\);setHotelSort\(next\);startHotelResultsTransition\(\); \}\}/);
   assert.doesNotMatch(sheet, /setHotelPage|setHotelFilters|travelApi|retry|setResults/);
   const transition = source.slice(source.indexOf("const startHotelResultsTransition"), source.indexOf("const transitionHotelFilters"));
   assert.doesNotMatch(transition, /setHotelPage/);
