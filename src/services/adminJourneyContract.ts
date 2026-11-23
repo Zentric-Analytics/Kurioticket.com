@@ -65,6 +65,16 @@ export type AdminJourneyEvent = {
   sortMode?: string | null;
   sortChoice?: string | null;
   alertDetails?: { mode: "TARGET" | "AUTOMATIC"; currency: string; targetPrice: string | null; baselinePrice: string | null } | null;
+  /** Optional result card information observed on the customer device, not server-confirmed. */
+  observedResult?: {
+    label: string;
+    provider: string;
+    amount: number;
+    currency: string;
+    priceBasis: "total" | "per_night" | "per_day";
+    totalAmount?: number;
+    provenance: "customer_display";
+  } | null;
   product: AdminJourneyProduct | null;
   provider: string | null;
   sourcePage: string | null;
