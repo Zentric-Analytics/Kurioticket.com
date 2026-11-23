@@ -160,13 +160,13 @@ export function toAdminJourneyActivity(event: JourneyEventRecord, kind: Identity
   // Never put raw client metadata or a complete URL into an admin timeline.
   const rawAction = event.metadata && typeof event.metadata === "object" && !Array.isArray(event.metadata)
     ? (event.metadata as Record<string, unknown>).action : null;
-  const allowedActions: Record<string, string> = {
-    local_saved: "Saved locally", local_unsaved: "Removed local save",
-    saved_item_confirmed: "Saved to account", saved_item_removed: "Removed saved item",
-    share_link_copied: "Result link copied", share_sheet_completed: "Share sheet completed",
-    price_alert_created: "Price alert created",
+  const allowedActions: Partial<Record<JourneyEventRecord["type"], Record<string, string>>> = {
+    RESULT_SAVED: { local_saved: "Saved locally", saved_item_confirmed: "Saved to account" },
+    RESULT_UNSAVED: { local_unsaved: "Removed local save", saved_item_removed: "Removed saved item" },
+    RESULT_SHARED: { share_link_copied: "Result link copied", share_sheet_completed: "Share sheet completed" },
+    PRICE_ALERT_CREATED: { price_alert_created: "Price alert created" },
   };
-  const action = typeof rawAction === "string" ? allowedActions[rawAction] : undefined;
+  const action = typeof rawAction === "string" ? allowedActions[event.type]?.[rawAction] : undefined;
   const label = event.type === "RESULT_SAVED" || event.type === "RESULT_UNSAVED"
     || event.type === "RESULT_SHARED" || event.type === "PRICE_ALERT_CREATED"
     ? action ?? eventLabels[event.type] : eventLabels[event.type];
