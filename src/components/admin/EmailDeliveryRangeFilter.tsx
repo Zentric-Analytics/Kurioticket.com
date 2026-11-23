@@ -1,6 +1,8 @@
 "use client";
 
 import { AdminCalendarInput } from "@/components/admin/AdminCalendarInput";
+import { adminCalendarDate } from "@/lib/adminTimeZone";
+import { useAdminTimeZone } from "./AdminTimeZoneProvider";
 import { useState, useTransition } from "react";
 import { LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -33,28 +35,29 @@ function validDate(value: string) {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
-function defaultCustomDates() {
+function defaultCustomDates(timeZone: string) {
   const to = new Date();
   const from = new Date(to.getTime() - 7 * 24 * 60 * 60 * 1000);
   return {
-    from: from.toISOString().slice(0, 10),
-    to: to.toISOString().slice(0, 10),
+    from: adminCalendarDate(from, timeZone),
+    to: adminCalendarDate(to, timeZone),
   };
 }
 
 export function EmailDeliveryRangeFilter({ range, fromDate, toDate }: Props) {
   const router = useRouter();
+  const timeZone = useAdminTimeZone();
   const [customOpen, setCustomOpen] = useState(false);
   const [rangeSelectVersion, setRangeSelectVersion] = useState(0);
-  const initial = fromDate && toDate ? { from: fromDate, to: toDate } : defaultCustomDates();
+  const initial = fromDate && toDate ? { from: fromDate, to: toDate } : defaultCustomDates(timeZone);
   const [draftDates, setDraftDates] = useState(initial);
   const [isPending, startTransition] = useTransition();
-  const todayUtc = new Date().toISOString().slice(0, 10);
+  const todayLocal = adminCalendarDate(new Date(), timeZone);
   const validCustom =
     validDate(draftDates.from) &&
     validDate(draftDates.to) &&
     draftDates.from <= draftDates.to &&
-    draftDates.to <= todayUtc;
+    draftDates.to <= todayLocal;
 
   function navigate(next: string) {
     startTransition(() => router.push(next, { scroll: false }));
@@ -62,7 +65,7 @@ export function EmailDeliveryRangeFilter({ range, fromDate, toDate }: Props) {
 
   function changeRange(next: string) {
     if (next === "custom") {
-      setDraftDates(fromDate && toDate ? { from: fromDate, to: toDate } : defaultCustomDates());
+      setDraftDates(fromDate && toDate ? { from: fromDate, to: toDate } : defaultCustomDates(timeZone));
       setCustomOpen(true);
       return;
     }
@@ -87,11 +90,11 @@ export function EmailDeliveryRangeFilter({ range, fromDate, toDate }: Props) {
       {(customOpen || range === "custom") ? (
         <div className="flex flex-wrap items-end gap-2">
           <label className="text-[11px] font-medium text-[#64748B]">
-            From (UTC)
-            <AdminCalendarInput
-              ariaLabel="Email delivery custom start date UTC"
+            From (local)
+            <AdminCalendarInput timeZone="local"
+              ariaLabel="Email delivery custom start date local"
               value={draftDates.from}
-              max={draftDates.to || todayUtc}
+              max={draftDates.to || todayLocal}
               onChange={(event) => {
                 setCustomOpen(true);
                 setDraftDates((current) => ({ ...current, from: event.target.value }));
@@ -99,12 +102,12 @@ export function EmailDeliveryRangeFilter({ range, fromDate, toDate }: Props) {
               className="w-[210px] max-w-full" />
           </label>
           <label className="text-[11px] font-medium text-[#64748B]">
-            To (UTC)
-            <AdminCalendarInput
-              ariaLabel="Email delivery custom end date UTC"
+            To (local)
+            <AdminCalendarInput timeZone="local"
+              ariaLabel="Email delivery custom end date local"
               value={draftDates.to}
               min={draftDates.from || undefined}
-              max={todayUtc}
+              max={todayLocal}
               onChange={(event) => {
                 setCustomOpen(true);
                 setDraftDates((current) => ({ ...current, to: event.target.value }));
@@ -131,7 +134,7 @@ export function EmailDeliveryRangeFilter({ range, fromDate, toDate }: Props) {
             type="button"
             onClick={() => {
               setCustomOpen(false);
-              setDraftDates(fromDate && toDate ? { from: fromDate, to: toDate } : defaultCustomDates());
+              setDraftDates(fromDate && toDate ? { from: fromDate, to: toDate } : defaultCustomDates(timeZone));
               setRangeSelectVersion((version) => version + 1);
             }}
             className="h-10 px-2 text-[13px] font-medium text-[#475569] hover:underline"
