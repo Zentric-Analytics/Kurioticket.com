@@ -49,6 +49,19 @@ test("unlinked account actions are available in Journey History without invented
   assert.match(reader, /if \(typeof meta\?\.linkedJourneyId === "string" && typeof meta\?\.linkedSearchHistoryId === "string"\) return \[\]/);
 });
 
+test("the interactions tab excludes unrelated signup, support and provider-failure audits", () => {
+  const reader = read("src/services/adminIdentityActivityService.ts");
+  assert.match(reader, /filters\.tab === "interactions"/);
+  assert.match(reader, /type: "SAVE" as const/);
+  assert.match(reader, /type: "SHARE" as const/);
+  assert.match(reader, /type: "ALERT_CREATED" as const/);
+  assert.match(reader, /safeAnalyticsLabels/);
+  assert.match(reader, /SIGNUP: "Account signup"/);
+  assert.match(reader, /SUPPORT_TICKET: "Support ticket"/);
+  // These other categories remain present in the broad All activity view.
+  assert.match(reader, /PROVIDER_FAILURE: "Provider issue"/);
+});
+
 test("no optional client instrumentation, screenshot collection or new data capture is introduced", () => {
   const source = read("src/lib/adminIdentityJourney.ts");
   assert.match(source, /allowedActions\[event\.type\]/);
