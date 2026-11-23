@@ -83,12 +83,13 @@ test("real web and native clients never become Bots from unknown or incidental h
     "KurioticketPreview/62 CFNetwork/3896.100.1.2.1 Darwin/27.0.0",
     "okhttp/4.12.0",
   ]) assert.equal(await f.identifySearchCrawler(botRequest(agent)), null);
-  for (const headers of [
+  const protectedRequests: Record<string, string>[] = [
     { authorization: "Bearer customer", "user-agent": "PerplexityBot/1.0" },
     { "x-mobile-platform": "android", "user-agent": "Googlebot/2.1" },
     { cookie: "authjs.session-token=signed-customer-session", "user-agent": "meta-webindexer/1.1" },
     { cookie: "__Secure-next-auth.session-token=signed-customer-session", "user-agent": "GoogleOther" },
-  ]) assert.equal(await f.identifySearchCrawler(botRequest(headers["user-agent"], headers)), null);
+  ];
+  for (const headers of protectedRequests) assert.equal(await f.identifySearchCrawler(botRequest(headers["user-agent"], headers)), null);
   assert.deepEqual(f.checked, []);
   assert.equal(f.declaredSearchCrawler("Mozilla/5.0 Chrome/130"), null);
   assert.equal(f.declaredSearchCrawler("x".repeat(2049)), null);
