@@ -74,7 +74,7 @@ import {
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { journeyEvents } from "../privacy/journeyEvents";
-import { normalizeJourneySortMode, normalizeJourneySortChoice } from "../../../../../src/lib/search-journey";
+import { normalizeJourneySortMode, normalizeJourneySortChoice, boundedJourneyFilterSelections } from "../../../../../src/lib/search-journey";
 import { shareNativeResult } from "../privacy/nativeShareTracking";
 import { journeyResponseContext } from "../privacy/journeyResponseContext";
 import { flightEditSearchParams, flightSearchRouteParamPatch } from "../flow/flightSearchModel";
@@ -884,7 +884,21 @@ function ResultsScreen({ product }: { product: Product }) {
     startHotelFilterTransition(() => setHotelFilters(next));
   };
   const transitionHotelFilters = (next: SetStateAction<HotelFilters>) => { startHotelFilterTransition(() => setHotelFilters(next)); startHotelResultsTransition(false); };
-  const completeHotelFilterSession = () => { setHotelFilterOpen(false); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", resultsRequestId, "/hotel-results", { filterGroup: "all" });startHotelResultsTransition(false);} };
+  const completeHotelFilterSession = () => { setHotelFilterOpen(false); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", resultsRequestId, "/hotel-results", {
+        filterGroup: "all",
+        filterSelections: boundedJourneyFilterSelections([
+          { group: "areas", options: hotelFilters.areas },
+          { group: "propertyTypes", options: hotelFilters.propertyTypes },
+          { group: "roomTypes", options: hotelFilters.roomTypes },
+          { group: "bedTypes", options: hotelFilters.bedTypes },
+          { group: "meals", options: hotelFilters.meals },
+          { group: "cancellation", options: hotelFilters.cancellationPolicies },
+          { group: "facilities", options: hotelFilters.facilities },
+          { group: "travellerFeatures", options: hotelFilters.travellerFeatures },
+          { group: "accessibility", options: hotelFilters.accessibility },
+          { group: "stars", options: hotelFilters.starRatings.map(value => String(value)) },
+        ]),
+      });startHotelResultsTransition(false);} };
   const openHotelFilters = (section: HotelFilterSectionName) => {
     hotelFilterSessionDirtyRef.current=false;
     setHotelFilterSection(section);
@@ -934,7 +948,17 @@ function ResultsScreen({ product }: { product: Product }) {
   }, [scrollToFlightResultsBeginning]);
   const completeFullFlightFilters = useCallback(() => {
     if (flightFiltersAtOpen.current !== null && flightFiltersAtOpen.current !== JSON.stringify(filters)) {
-      journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", resultsRequestId, "/flight-results", { filterGroup: "all" });
+      journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", resultsRequestId, "/flight-results", {
+        filterGroup: "all",
+        filterSelections: boundedJourneyFilterSelections([
+          { group: "stops", options: filters.stops },
+          { group: "airlines", options: filters.airlines },
+          { group: "fromAirports", options: filters.fromAirports },
+          { group: "toAirports", options: filters.toAirports },
+          { group: "baggage", options: filters.baggageIncluded ? ["included"] : [] },
+          { group: "cancellation", options: filters.refundable ? ["refundable"] : [] },
+        ]),
+      });
     }
     flightFiltersAtOpen.current = null;
     setFilterOpen(false);
