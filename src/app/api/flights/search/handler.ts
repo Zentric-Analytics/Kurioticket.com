@@ -1,3 +1,4 @@
+import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
 import { blockVerifiedCrawlerSearch } from "@/lib/searchCrawlerGate";
@@ -41,7 +42,7 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
   }
 
   const operationalSession = nearby ? null : prepareOperationalSearchSession(request);
-  const operationalQuery = (query: Record<string, unknown>) => ({ ...query, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) });
+  const operationalQuery = (query: Record<string, unknown>) => ({ ...query, ...searchNetworkObservation(request), ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) });
   const mobilePlatformHeader = request.headers.get("x-mobile-platform")?.trim().toLowerCase();
   const mobilePlatform = mobilePlatformHeader === "android" || mobilePlatformHeader === "ios"
     ? mobilePlatformHeader

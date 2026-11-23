@@ -184,6 +184,26 @@ test("consented CAR search includes only exactly correlated car handoff", async 
   assert.match(JSON.stringify(where), /"requestId"/);
 });
 
+test("verified provider handoff includes bounded recorded route and price, not destination URL", async () => {
+  const instance = reader({
+    events: [eventRow({
+      type: "PROVIDER_HANDOFF_STARTED", redirectLogId: "redirect_handoff_01",
+      redirectLog: {
+        provider: "Duffel", route: "ABV → ACC", price: { toString: () => "412.00" },
+        currency: "USD", destinationUrl: "https://example.test/?token=private",
+      }, provider: "Duffel",
+    })],
+  });
+  const result = await instance.read(searchId, urlParams());
+  assert.equal(result.status, "ok");
+  if (result.status === "ok") {
+    assert.deepEqual(result.data.events[0].handoff, {
+      route: "ABV → ACC", price: "412.00", currency: "USD",
+    });
+    assert.doesNotMatch(JSON.stringify(result), /example\.test|token=private/);
+  }
+});
+
 test("pagination stays bound to the same search and environment", async () => {
   const events = Array.from({ length: 26 }, (_, index) => eventRow({
     id: "event_" + String(index).padStart(6, "0"),

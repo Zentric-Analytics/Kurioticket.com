@@ -1,5 +1,6 @@
 import { SearchDetailActivityPanel } from "@/components/admin/SearchDetailActivityPanel";
 import { applicationLabel } from "@/lib/platformHealthPresentation";
+import { countryCodeToCountryName } from "@/lib/geo/context";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { validActivityIdentity } from "@/lib/adminIdentityActivity";
@@ -56,13 +57,16 @@ export default async function AdminSearchDetailPage({
 
 function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
   const diagnostic = search.diagnostic;
+  const showProviderReasons = diagnostic.providers.some(provider => provider.status !== "SUCCESS");
+  const countryCode = search.network?.countryCode;
+  const country = countryCode ? (countryCodeToCountryName(countryCode) || countryCode) + " (" + countryCode + ")" : "Unavailable";
   const providerReasonCodes = diagnostic.providers
     .filter(provider => provider.reasonCode)
     .map(provider => provider.provider + ": " + provider.reasonCode);
 
   return (
     <div className="mx-auto w-full max-w-[1500px] text-[#374151]">
-      <section className="border-b border-[#E5E7EB] px-2 py-5">
+      <section className="border-b border-[#E5E7EB] px-2 py-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="text-[14px] font-semibold text-[#111827]">Search overview</h2>
@@ -82,9 +86,9 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
         </div>
       </section>
 
-      <section className="border-b border-[#E5E7EB] px-2 py-5">
+      <section className="border-b border-[#E5E7EB] px-2 py-4">
         <h2 className="text-[14px] font-semibold text-[#111827]">Search information</h2>
-        <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3 lg:grid-cols-3">
+        <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3 md:grid-cols-3 lg:grid-cols-5">
           <Field label="Application source" value={applicationLabel(search.applicationSource)} />
           {search.appVersion?<Field label="App version" value={search.appVersion}/>:null}
           {/* Product and locations are already identifiable in the Search overview headline. */}
@@ -96,26 +100,19 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
           ) : null}
           {search.market ? <Field label="Market" value={search.market} /> : null}
           {search.currency ? <Field label="Currency" value={search.currency} /> : null}
+          <Field label="Country" value={country} />
+          <Field label="IP address" value={search.network?.ipAddress || "Unavailable"} />
         </div>
         <div className="mt-4 border-t border-[#E5E7EB] pt-3">
           <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#6B7280]">Searched by</p>
-          <div className="mt-2 min-w-0">
+          <div className="mt-2 min-w-0 sm:flex sm:items-start sm:justify-between sm:gap-5">
+            <div className="min-w-0">
             <p className="text-[13px] font-semibold text-[#111827]">
               {search.identity.kind === "registered"
                 ? search.searcher.name || search.searcher.email || "Registered account"
                 : search.identity.kind === "guest" && !search.identity.visitorId && search.operationalSessionId ? "Guest search session"
                 : search.identity.kind === "guest" ? "Guest visitor" : "Unidentified visitor"}
             </p>
-            {((search.operationalSessionId && search.environment === getPublicEnvironment()
-              && !search.identity.userId && !search.identity.visitorId)
-              || Boolean(search.searcher.activity)) ? (
-              <SearchDetailActivityPanel
-                searchId={search.id}
-                environment={search.environment}
-                searchedAt={search.createdAt}
-                status={search.status}
-              />
-            ) : null}
             {search.identity.kind === "registered" && search.searcher.name && search.searcher.email ? (
               <p className="mt-0.5 break-words text-[12px] text-[#6B7280]">{search.searcher.email}</p>
             ) : null}
@@ -132,11 +129,18 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
                 No verified guest session was attached to this search. It remains a search record, not a recorded guest identity.
               </p>
             ) : null}
+            </div>
+            {search.searcher.activity ? (
+              <Link href={"/admin/users/" + (search.searcher.activity.kind === "user" ? "user/" : "guest/") + encodeURIComponent(search.searcher.activity.id) + "/activity"}
+                className="focus-ring mt-2 inline-flex shrink-0 min-h-9 items-center text-[13px] font-medium text-[#004BB8] hover:underline sm:mt-0">
+                View user details ↗
+              </Link>
+            ) : null}
           </div>
         </div>
       </section>
 
-      <section className="border-b border-[#E5E7EB] px-2 py-5">
+      <section className="border-b border-[#E5E7EB] px-2 py-4">
         <h2 className="text-[14px] font-semibold text-[#111827]">Provider outcomes</h2>
         {diagnostic.providers.length ? (
           <div className="mt-3 overflow-x-auto">
@@ -144,7 +148,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
               <thead><tr className="border-b border-[#E5E7EB] text-[11px] uppercase tracking-[0.08em] text-[#6B7280]">
                 <th className="px-2 py-3 font-semibold">Provider</th>
                 <th className="px-2 py-3 font-semibold">Status</th>
-                <th className="px-2 py-3 font-semibold">Reason</th>
+                {showProviderReasons ? <th className="px-2 py-3 font-semibold">Reason</th> : null}
                 <th className="px-2 py-3 text-right font-semibold">Duration</th>
               </tr></thead>
               <tbody>
@@ -154,7 +158,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
                       <p className="font-semibold text-[#111827]">{provider.provider}</p>
                     </td>
                     <td className="px-2 py-3 align-top"><StatusDot status={provider.status} /></td>
-                    <td className="px-2 py-3 align-top">{provider.reason}</td>
+                    {showProviderReasons ? <td className="px-2 py-3 align-top">{provider.status === "SUCCESS" ? "—" : provider.reason}</td> : null}
                     <td className="whitespace-nowrap px-2 py-3 text-right align-top">{searchDetailDuration(provider.latencyMs)}</td>
                   </tr>
                 ))}
@@ -168,8 +172,13 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
         )}
       </section>
 
+      <SearchDetailActivityPanel
+        searchId={search.id}
+        environment={search.environment}
+      />
+
       {diagnostic.outcome !== "SUCCESS" ? (
-        <section className="border-b border-[#E5E7EB] px-2 py-5">
+        <section className="border-b border-[#E5E7EB] px-2 py-4">
           <h2 className="text-[14px] font-semibold text-[#111827]">Search diagnosis</h2>
           {searchDetailDiagnosisSummary(diagnostic) ? (
             <p className="mt-2 text-[13px] leading-5 text-[#374151]">{searchDetailDiagnosisSummary(diagnostic)}</p>
@@ -191,7 +200,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
         </section>
       ) : null}
 
-      <section className="border-b border-[#E5E7EB] px-2 py-5">
+      <section className="border-b border-[#E5E7EB] px-2 py-4">
         <details className="group">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 [&::-webkit-details-marker]:hidden">
             <h2 className="text-[14px] font-semibold text-[#111827]">Technical details</h2>
@@ -200,8 +209,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
           <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3 border-t border-[#E5E7EB] pt-4 lg:grid-cols-3">
             <Field label="Search ID" value={search.id} />
             {search.requestId ? <Field label="Request ID" value={search.requestId} /> : null}
-            <Field label="Recorded status" value={search.status} />
-            <Field label="Reason code" value={diagnostic.reasonCode} />
+            {diagnostic.outcome !== "SUCCESS" ? <Field label="Reason code" value={diagnostic.reasonCode} /> : null}
             <Field
               label="Correlation"
               value={diagnostic.correlation === "exact" ? "Exact provider telemetry" : "Legacy / general fallback"}

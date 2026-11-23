@@ -30,6 +30,7 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
   const dependencies: Record<string, unknown> = {
     "next/server": { NextResponse: { json: Response.json }, after: (callback: () => Promise<unknown>) => { deferred.push(callback); } },
     "node:crypto": { createHash },
+    "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
     "@/lib/rate-limit": { getClientIp: () => "192.0.2.1", checkRateLimit: (key: string, limit: number, period: number) => { rates.push([key, limit, period]); return { allowed: !options.rateLimited }; } },
     "@/lib/searchCache": { toPublicFlight: (value: unknown) => value, toPublicHotel: (value: unknown) => value },
     "@/lib/validation": { flightSearchSchema: schema, hotelSearchSchema: schema },

@@ -1,3 +1,4 @@
+import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { applicationMetadata } from "@/lib/application-source";
 import { handoffEvidenceDetailSql, handoffEvidenceListSql, handoffOperationalSessionId, type HandoffEvidenceRow } from "./adminHandoffEvidence";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
@@ -765,6 +766,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
             data: {
               ...searchDto(row, env.data, providers),
               diagnostic: exactSearchDiagnostic(row, providers),
+              network: recordedSearchNetwork(row.query),
               searcher,
             },
           };

@@ -1,3 +1,4 @@
+import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
 import { blockVerifiedCrawlerSearch } from "@/lib/searchCrawlerGate";
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
   const providerSearch = { ...search };
   delete providerSearch.currency;
   const operationalSession = prepareOperationalSearchSession(request);
-  const recordedSearch = { ...search, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) };
+  const recordedSearch = { ...search, ...searchNetworkObservation(request), ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) };
 
   const kayakContext = {
     clientIp: getKayakClientIp(request),
