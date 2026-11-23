@@ -27,7 +27,7 @@ export function CarResultCard({ result, rank, badge, imageUri, searchParams, res
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => setImageFailed(false), [imageUri]);
-  const savedState = useSavedCar(result, searchParams);
+  const savedState = useSavedCar(result, searchParams, journeyRequestId);
   const { displayCurrency, rates } = useCarDisplayCurrency();
   const offer = getPrimaryCarOffer(result);
   const BadgeIcon = badge ? carBadgeIcons[badge] : null;
