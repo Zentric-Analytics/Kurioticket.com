@@ -502,7 +502,7 @@ function HotelDetail({
               accessibilityRole="button"
               accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
               accessibilityState={{ selected: saved }}
-              onPress={() => void canonical.toggleHotel(result, params)}
+              onPress={() => void canonical.toggleHotel(result, params, Array.isArray(params.journeyRequestId) ? params.journeyRequestId[0] : params.journeyRequestId)}
               style={d.hotelHeroAction}
             >
               <Heart size={22} strokeWidth={androidFavoriteColors.strokeWidth} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} />
