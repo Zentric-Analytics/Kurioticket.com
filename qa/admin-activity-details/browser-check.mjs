@@ -460,10 +460,10 @@ try {
   await expect(page).not.toHaveURL(/product=FLIGHT/);
   // Legacy custom-date URLs remain editable without adding a fifth preset option.
   await page.goto(url.split("?")[0]+"?range=custom&from=2026-10-01&to=2026-10-23");
-  await expect(page.getByRole("button", { name: "Custom start date UTC" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Custom end date UTC" })).toBeVisible();
-  await page.getByRole("button", { name: "Custom end date UTC" }).click();
-  const endCalendar = page.getByRole("dialog", { name: "Custom end date UTC" });
+  await expect(page.getByRole("button", { name: "Custom start date local" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Custom end date local" })).toBeVisible();
+  await page.getByRole("button", { name: "Custom end date local" }).click();
+  const endCalendar = page.getByRole("dialog", { name: "Custom end date local" });
   await expect(endCalendar.getByRole("heading")).toHaveText("October 2026");
   await expect(endCalendar.getByRole("combobox")).toHaveCount(0);
   await endCalendar.getByRole("gridcell", { name: "Saturday, October 24, 2026" }).click();
