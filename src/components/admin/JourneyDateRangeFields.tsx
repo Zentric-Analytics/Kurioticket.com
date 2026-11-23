@@ -57,7 +57,7 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
           <label className="text-xs text-[#475569]">To (local)
             <AdminCalendarInput timeZone="local" mode="datetime-local" required value={to}
               min={from ? adminOffsetZonedDateTime(from, 1, timeZone) : undefined}
-              max={from ? (adminOffsetZonedDateTime(from, 90 * 24 * 60, timeZone) < now.slice(0,16) ? adminOffsetZonedDateTime(from, 90 * 24 * 60, timeZone) : now.slice(0,16)) : now.slice(0,16)} onChange={e => setTo(e.target.value)}
+              max={from ? (adminOffsetZonedDateTime(from, 90 * 24 * 60, timeZone) < localNow ? adminOffsetZonedDateTime(from, 90 * 24 * 60, timeZone) : localNow) : localNow} onChange={e => setTo(e.target.value)}
               className="ml-2 w-[220px] max-w-full" />
           </label>
           <input name="from" type="hidden" value={startIso} />
