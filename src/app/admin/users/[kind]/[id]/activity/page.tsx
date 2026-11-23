@@ -61,7 +61,7 @@ function safeDirectoryHref(raw: RawQuery) {
   return "/admin/users" + (safe.size ? "?" + safe.toString() : "");
 }
 function HeaderTime({ at }: { at: Date }) {
-  return <AdminLocalDateTime value={at} />;
+  return <AdminLocalDateTime value={at} style="compact" />;
 }
 function Fact({ label, children, className = "", testId }: {
   label: string; children: React.ReactNode; className?: string; testId?: string;
