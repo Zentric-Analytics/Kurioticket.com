@@ -73,3 +73,41 @@ export function adminDisplayDateTime(value: Date | string | number, timeZone: st
     ? { timeZone: zone, dateStyle: "medium" }
     : { timeZone: zone, dateStyle: "medium", timeStyle: "short" }).format(date);
 }
+
+/** Render a stored UTC instant for an HTML datetime-local field in the
+ * administrator's time zone; no conversion is done for date-only travel dates. */
+export function adminZonedDateTimeInput(value: string, timeZone: string): string {
+  if (!value) return "";
+  const instant = new Date(value);
+  if (!Number.isFinite(instant.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: safeAdminTimeZone(timeZone), hourCycle: "h23",
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
+  }).formatToParts(instant);
+  const p = (type: string) => parts.find(item => item.type === type)?.value ?? "";
+  return p("year") + "-" + p("month") + "-" + p("day") + "T" + p("hour") + ":" + p("minute");
+}
+
+/** Convert an HTML datetime-local wall clock back to its UTC instant.
+ * Reject nonexistent local times at DST transitions instead of silently
+ * selecting the wrong user's day. */
+export function adminZonedDateTimeIso(value: string, timeZone: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return "";
+  const target = Date.parse(value + ":00.000Z");
+  if (!Number.isFinite(target)) return "";
+  const zone = safeAdminTimeZone(timeZone);
+  let instant = target;
+  for (let i = 0; i < 5; i += 1) {
+    const offset = zonedParts(new Date(instant), zone) - instant;
+    const candidate = target - offset;
+    if (candidate === instant) break;
+    instant = candidate;
+  }
+  const asIso = new Date(instant).toISOString();
+  return adminZonedDateTimeInput(asIso, zone) === value ? asIso : "";
+}
+
+export function adminOffsetZonedDateTime(value: string, minutes: number, timeZone: string): string {
+  const iso = adminZonedDateTimeIso(value, timeZone);
+  return iso ? adminZonedDateTimeInput(new Date(Date.parse(iso) + minutes * 60_000).toISOString(), timeZone) : "";
+}
