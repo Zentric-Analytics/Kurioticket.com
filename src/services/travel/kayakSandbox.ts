@@ -1,3 +1,5 @@
+import { currentSandboxGrant, productionSandboxHost } from "@/lib/productionSandboxPolicy";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { normalizeKayakFlightInformation, sanitizeKayakFlightText } from "./kayakFlightInformation";
 import { isIP } from "node:net";
@@ -184,6 +186,7 @@ export function isKayakSandboxEnabled(
     const host = new URL(env.NEXT_PUBLIC_APP_URL || "").hostname;
     return (
       host === "staging.kurioticket.com" ||
+      (new URL(env.NEXT_PUBLIC_APP_URL!).protocol === "https:" && ["kurioticket.com", "www.kurioticket.com"].includes(host)) ||
       (env.NODE_ENV === "development" &&
         ["localhost", "127.0.0.1"].includes(host))
     );
@@ -438,6 +441,10 @@ export class KayakSandboxClient {
     // transport/edge failure once, with the same track id. Do not retry auth,
     // quota, validation, cancellation, or malformed provider responses.
     for (let attempt = 0; attempt < 2; attempt++) {
+      if (productionSandboxHost()) {
+        if (!(await currentSandboxGrant())) throw new KayakError("unauthorized");
+        if (!checkRateLimit("production-sandbox-kayak",250,3600000).allowed) throw new KayakError("rate_limited");
+      }
       try {
         const response = await this.fetcher(url, {
           method: body ? "POST" : "GET",

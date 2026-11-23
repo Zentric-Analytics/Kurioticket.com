@@ -1,3 +1,5 @@
+import { hasDisplayOnlyInventory } from "../../../../../src/shared/presentation/sandboxInventory";
+import { useSandboxResults } from "./useSandboxResults";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode, type SetStateAction } from "react";
 import {
   ActivityIndicator,
@@ -257,7 +259,8 @@ function ResultsScreen({ product }: { product: Product }) {
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const plan = buildSearchPlan(product, params);
   const payload = plan.plan?.payload || {};
-  const [results, setResults] = useState<(FlightResult | HotelResult)[]>([]);
+  const [rawSandboxResults, setResults] = useState<(FlightResult | HotelResult)[]>([]);
+  const results = useSandboxResults(rawSandboxResults);
   const [resultsRequestId, setResultsRequestId] = useState<string>();
   const [status, setStatus] = useState<Status>("loading");
   const [message, setMessage] = useState("");
@@ -431,15 +434,15 @@ function ResultsScreen({ product }: { product: Product }) {
       const response =
         product === "flight"
           ? await withinFlightLoadingDeadline(
-              travelApi.searchFlights(plan.plan.payload, { signal: controller.signal, requestId }),
+              travelApi.searchFlights(plan.plan.payload, { signal: controller.signal, requestId, sandboxDisplay: true }),
               () => {
                 deadlineExpired = true;
                 controller.abort("ui-deadline");
               },
             )
           : Platform.OS === "android"
-            ? await travelApi.searchHotelsProgressive(plan.plan.payload, null, { signal: controller.signal, requestId })
-            : await travelApi.searchHotels(plan.plan.payload, { signal: controller.signal, requestId });
+            ? await travelApi.searchHotelsProgressive(plan.plan.payload, null, { signal: controller.signal, requestId, sandboxDisplay: true })
+            : await travelApi.searchHotels(plan.plan.payload, { signal: controller.signal, requestId, sandboxDisplay: true });
       if (!isCurrent()) return;
       if (product === "hotel" && "warningCategory" in response && response.warningCategory === "provider_unavailable") {
         setResults([]); resultsRef.current = []; setStatus("error");
@@ -519,7 +522,7 @@ function ResultsScreen({ product }: { product: Product }) {
         setHotelProgressivePending(true);
         while (cursor && isCurrent()) {
           try {
-            const page = await travelApi.searchHotelsProgressive(plan.plan.payload, cursor, { signal: controller.signal, requestId });
+            const page = await travelApi.searchHotelsProgressive(plan.plan.payload, cursor, { signal: controller.signal, requestId, sandboxDisplay: true });
             if (!isCurrent()) return;
             const accepted = acceptCanonicalResults(page.results as HotelResult[], safeCanonicalHotelResult);
             if (canonicalResultsWereSilentlyLost(accepted)) {
@@ -1642,7 +1645,7 @@ function FlightCard({ result, requestId, displayPrice: fare, displayCurrencyCont
   };
   const cardAccessibilityLabel = `View flight details for ${result.airlineName}, ${journeys.map((journey) => flightCardJourneyAccessibility(journey, clock)).join(", ")}, ${fareAccessibility}`;
   return (
-    <Pressable
+    <Pressable disabled={hasDisplayOnlyInventory(result)}
       accessibilityRole="button"
       accessibilityLabel={cardAccessibilityLabel}
       accessibilityHint="Opens Kurioticket flight details"
@@ -1871,7 +1874,7 @@ const HotelCard = memo(function HotelCard({
     void Share.share({ message }).catch(() => undefined);
   };
   return (
-    <Pressable
+    <Pressable disabled={hasDisplayOnlyInventory(result)}
       accessible={false}
       onPress={openHotel}
       style={({ pressed }) => [
@@ -1888,13 +1891,13 @@ const HotelCard = memo(function HotelCard({
           <View accessibilityLabel="Hotel image unavailable" style={[s0.hotelImage,s0.hotelImageUnavailable]}><Text style={[s0.hotelImageUnavailableText,{color:theme.textSecondary}]}>Image unavailable</Text></View>
         )}
         {usableGallery.length>1?<>
-          <Pressable accessibilityRole="button" accessibilityLabel={`Previous photo of ${result.name}`} onPress={(event)=>{event.stopPropagation();setActiveImage(index=>(index-1+usableGallery.length)%usableGallery.length);}} style={[s0.galleryControl,s0.galleryPrevious]}>
+          <Pressable disabled={hasDisplayOnlyInventory(result)} accessibilityRole="button" accessibilityLabel={`Previous photo of ${result.name}`} onPress={(event)=>{event.stopPropagation();setActiveImage(index=>(index-1+usableGallery.length)%usableGallery.length);}} style={[s0.galleryControl,s0.galleryPrevious]}>
             <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[s0.galleryChevronStack,s0.galleryIconPrevious]}>
               <ChevronLeft accessible={false} color={HOTEL_GALLERY_CHEVRON_CONTRAST} size={20} strokeWidth={4} style={s0.galleryChevronUnderlay}/>
               <ChevronLeft accessible={false} color="white" size={20} strokeWidth={2.2}/>
             </View>
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={`Next photo of ${result.name}`} onPress={(event)=>{event.stopPropagation();setActiveImage(index=>(index+1)%usableGallery.length);}} style={[s0.galleryControl,s0.galleryNext]}>
+          <Pressable disabled={hasDisplayOnlyInventory(result)} accessibilityRole="button" accessibilityLabel={`Next photo of ${result.name}`} onPress={(event)=>{event.stopPropagation();setActiveImage(index=>(index+1)%usableGallery.length);}} style={[s0.galleryControl,s0.galleryNext]}>
             <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[s0.galleryChevronStack,s0.galleryIconNext]}>
               <ChevronRight accessible={false} color={HOTEL_GALLERY_CHEVRON_CONTRAST} size={20} strokeWidth={4} style={s0.galleryChevronUnderlay}/>
               <ChevronRight accessible={false} color="white" size={20} strokeWidth={2.2}/>
@@ -1917,7 +1920,7 @@ const HotelCard = memo(function HotelCard({
             accessibilityRole="button"
             accessibilityLabel={saved ? `Remove ${result.name} from saved` : `Save ${result.name}`}
             accessibilityState={{ selected: saved }}
-            disabled={!hasPrice && !saved}
+            disabled={hasDisplayOnlyInventory(result) || (!hasPrice && !saved)}
             onPress={(event) => { event.stopPropagation(); void canonical.toggleHotel(result, params); }}
             style={[s0.hotelAction, s0.hotelSaveAction]}
           >
@@ -1929,7 +1932,7 @@ const HotelCard = memo(function HotelCard({
               fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill}
             />
           </Pressable>
-          <Pressable
+          <Pressable disabled={hasDisplayOnlyInventory(result)}
             accessibilityRole="button"
             accessibilityLabel={`Share ${result.name}`}
             onPress={(event) => { event.stopPropagation(); shareHotel(); }}
@@ -1959,7 +1962,7 @@ const HotelCard = memo(function HotelCard({
         <HotelCardAmenityList amenities={result.amenities} />
         {mealPlan && !(/^breakfast/i.test(mealPlan)&&result.amenities.some(item=>/breakfast/i.test(item)))?<Text numberOfLines={1} style={[s0.hotelTerm,{color:theme.textPrimary}]}>{mealPlan.charAt(0).toUpperCase()+mealPlan.slice(1).toLowerCase()}</Text>:null}
         {policy.map(item=><Text key={item} numberOfLines={1} style={[s0.hotelTerm,{color:theme.textPrimary}]}>{item}</Text>)}
-        {result.sourceAttributions?.map(item=>{const safe=typeof item.providerUri==="string"&&/^https?:\/\//i.test(item.providerUri);return <Pressable key={`${item.provider}-${item.providerUri??""}`} disabled={!safe} onPress={(event)=>{event.stopPropagation();if(safe)void Linking.openURL(item.providerUri!);}}><Text numberOfLines={1} style={s0.hotelAttributionLink}>Source: {item.provider}</Text></Pressable>;})}
+        {result.sourceAttributions?.map(item=>{const safe=typeof item.providerUri==="string"&&/^https?:\/\//i.test(item.providerUri);return <Pressable key={`${item.provider}-${item.providerUri??""}`} disabled={hasDisplayOnlyInventory(result) || (!safe)} onPress={(event)=>{event.stopPropagation();if(safe)void Linking.openURL(item.providerUri!);}}><Text numberOfLines={1} style={s0.hotelAttributionLink}>Source: {item.provider}</Text></Pressable>;})}
         <View style={s0.hotelPrice}>
           <View style={s0.hotelPriceCopy}>
             <Text accessibilityLabel={displayPrices?.nightly?.accessibilityLabel} style={[s0.hotelNightlyPrice,{color:theme.textPrimary}]}>
@@ -1967,7 +1970,7 @@ const HotelCard = memo(function HotelCard({
             </Text>
             {hasPrice ? <Text style={[s0.hotelPerNight,{color:theme.textSecondary}]}>per night</Text> : <Text style={[s0.hotelPerNight,{color:theme.textSecondary}]}>No live rate</Text>}
           </View>
-          <Pressable
+          <Pressable disabled={hasDisplayOnlyInventory(result)}
             accessibilityRole="button"
             accessibilityLabel={`View hotel for ${result.name}`}
             accessibilityHint="Opens this hotel"

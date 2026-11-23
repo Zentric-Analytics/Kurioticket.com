@@ -1,3 +1,4 @@
+import { productionSandboxInventory } from "@/lib/productionSandboxPolicy";
 import { z } from "zod";
 import { resolveSavedFlightTime } from "@/shared/flights/savedFlightTime";
 import { createHash } from "node:crypto";
@@ -55,8 +56,8 @@ export async function listUserSavedItems(userId: string, options: { type?: Saved
     ...hotels.map(x => ({ ...x, type: "hotel" as const, totalPrice: Number(x.totalPrice), checkIn: iso(x.checkIn), checkOut: iso(x.checkOut), createdAt: iso(x.createdAt) })),
     ...cars.map(x => ({ ...x, type: "car" as const, totalPrice: Number(x.totalPrice), createdAt: iso(x.createdAt) })),
     ...searches.map(x => ({ ...x, type: "search" as const, searchType: x.type.toLowerCase(), checkIn: iso(x.checkIn), checkOut: iso(x.checkOut), createdAt: iso(x.createdAt) })),
-  ];
-  const summary = { flights: flights.length, hotels: hotels.length, cars: cars.length, searches: searches.length, total: items.length };
+  ].filter(item=>!productionSandboxInventory(item));
+  const summary = { flights: items.filter(x=>x.type === "flight").length, hotels:items.filter(x=>x.type === "hotel").length, cars:items.filter(x=>x.type === "car").length, searches:items.filter(x=>x.type === "search").length,total:items.length };
   return { items, summary };
 }
 function stableSavedValue(value: unknown): string {
@@ -69,7 +70,9 @@ export function savedRetryKey(userId: string, input: CreateSavedItemInput) {
   return createHash("sha256").update(stableSavedValue([userId, input])).digest("hex");
 }
 export function createSavedItemWriter(database: () => Pick<PrismaClient, "$transaction">) {
-  return async (userId: string, input: CreateSavedItemInput) => database().$transaction(async tx => {
+  return async (userId: string, input: CreateSavedItemInput) => {
+    if (productionSandboxInventory(input)) throw new Error("Sandbox inventory cannot be saved.");
+    return database().$transaction(async tx => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('saved-item-retry'), hashtext(${savedRetryKey(userId, input)}))`;
     if (input.type === "flight") {
       const existing = await tx.savedFlight.findFirst({ where: { userId, provider: input.provider, airlineName: input.airlineName, flightNumber: input.flightNumber ?? null, originAirport: input.originAirport, destinationAirport: input.destinationAirport, departureTime: new Date(input.departureTime), arrivalTime: new Date(input.arrivalTime), payload: { equals: input.payload as Prisma.InputJsonValue } } });
@@ -83,6 +86,7 @@ export function createSavedItemWriter(database: () => Pick<PrismaClient, "$trans
     }
     return createSavedItemInTransaction(tx, userId, input);
   });
+  };
 }
 export const createUserSavedItem = createSavedItemWriter(getPrisma);
 async function createSavedItemInTransaction(tx: Prisma.TransactionClient, userId: string, input: CreateSavedItemInput) {

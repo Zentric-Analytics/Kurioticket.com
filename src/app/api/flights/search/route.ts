@@ -1,3 +1,4 @@
+import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
@@ -13,6 +14,8 @@ import { logNativeFlightProviderDiagnostics } from "./providerDiagnostics";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 
 export async function POST(request: Request) {
+ return withProductionSandboxRequest(request, async () => {
+
   const routeStartedAt = performance.now();
   let providerStartedAt = routeStartedAt;
   const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
@@ -42,7 +45,7 @@ export async function POST(request: Request) {
     signal: request.signal,
     requestId,
     onProviderStart: () => { providerStartedAt = performance.now(); },
-    kayak: { clientIp: kayakClientIp, userAgent, signal: request.signal },
+    kayak: { trackId: operationalSession?.reference.id, clientIp: kayakClientIp, userAgent, signal: request.signal },
   });
   logNativeFlightProviderDiagnostics({
     requestId,
@@ -188,4 +191,6 @@ export async function POST(request: Request) {
       "Server-Timing": serverTiming,
     },
   }), operationalSession);
+
+ });
 }

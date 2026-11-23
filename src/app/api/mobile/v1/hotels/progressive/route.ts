@@ -1,3 +1,5 @@
+import { productionSandboxHost } from "@/lib/productionSandboxPolicy";
+import { POST as canonicalHotelSearch } from "@/app/api/hotels/search/route";
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
@@ -55,6 +57,12 @@ function decode(value: unknown, key: string): State | null {
 
 /** Native Android opt-in only: legacy web/iOS/full hotel search is untouched. */
 export async function POST(request: Request) {
+  if (productionSandboxHost()) {
+    const payload=await request.json().catch(()=>null);
+    if(!payload?.search || typeof payload.search !== "object" || payload.cursor) return Response.json({results:[],status:"unavailable",error:"Start a new display-only search."},{status:410,headers:{"Cache-Control":"no-store"}});
+    const headers=new Headers(request.headers);headers.delete("content-length");
+    return canonicalHotelSearch(new Request(request.url,{method:"POST",headers,body:JSON.stringify(payload.search),signal:request.signal}));
+  }
   if (request.headers.get("x-mobile-platform") !== "android")
     return NextResponse.json({ error: "Unsupported platform." }, { status: 404 });
   if (!(await isFeatureEnabled("HOTEL_SEARCH_ENABLED")) || !isKayakSandboxEnabled())

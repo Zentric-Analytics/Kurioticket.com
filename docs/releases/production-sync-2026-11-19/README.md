@@ -2,6 +2,8 @@
 
 Status: NOT READY FOR PRODUCTION PROMOTION. This branch is preparation only; no production mutation is authorized.
 
+November 22 follow-up: [Provider Management implementation and operating limits](provider-management.md). This focused addition preserves the frozen baselines below; it does not authorize promotion or import newer dev changes.
+
 ## Immutable scope
 
 - Captured at 2026-11-19T20:21:42Z.

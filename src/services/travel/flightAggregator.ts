@@ -1,3 +1,4 @@
+import { productionSandboxInventory } from "@/lib/productionSandboxPolicy";
 import type {
   AggregatedResult,
   FlightSearchParams,
@@ -60,11 +61,12 @@ export async function searchFlights(
     ),
   );
   const aggregationMs = performance.now() - aggregationStartedAt;
-  const cacheResult = results.length
-    ? await rememberFlights(results, now, search, options.requestId)
+  const liveResults = results.filter(result=>!productionSandboxInventory(result));
+  const cacheResult = liveResults.length
+    ? await rememberFlights(liveResults, now, search, options.requestId)
     : { persisted: true, validForMs: 0 };
-  const actionableResults = cacheResult.persisted ? results : [];
-  const cacheUnavailable = results.length > 0 && !cacheResult.persisted;
+  const actionableResults = cacheResult.persisted ? results : results.filter(productionSandboxInventory);
+  const cacheUnavailable = results.some(result=>!productionSandboxInventory(result)) && !cacheResult.persisted;
   return {
     results: actionableResults,
     providerStatuses: [provider, kayak],

@@ -15,14 +15,14 @@ test("Flight Search propagates its response request ID into cache persistence", 
   assert.match(route, /searchFlights\(parsed\.data,[\s\S]*requestId,/);
   assert.match(route, /resolveRequestActivityIdentity\(request\)/);
   assert.doesNotMatch(route, /getServerSession\(/);
-  assert.match(aggregator, /rememberFlights\(results, now, search, options\.requestId\)/);
+  assert.match(aggregator, /rememberFlights\(liveResults, now, search, options\.requestId\)/);
 });
 
-test("Flight Search fails closed when provider results are not cache-confirmed", async () => {
+test("Flight Search fails closed when live provider results are not cache-confirmed; display-only inventory has no cache requirement", async () => {
   const aggregator = await readFile(aggregatorPath, "utf8");
 
-  assert.match(aggregator, /const actionableResults = cacheResult\.persisted \? results : \[\]/);
-  assert.match(aggregator, /results\.length > 0 && !cacheResult\.persisted/);
+  assert.match(aggregator, /const actionableResults = cacheResult\.persisted \? results : results\.filter\(productionSandboxInventory\)/);
+  assert.match(aggregator, /results\.some\(result=>!productionSandboxInventory\(result\)\) && !cacheResult\.persisted/);
   assert.match(aggregator, /provider\.status === "failed" \|\| kayak\.status === "failed" \|\| cacheUnavailable/);
 });
 

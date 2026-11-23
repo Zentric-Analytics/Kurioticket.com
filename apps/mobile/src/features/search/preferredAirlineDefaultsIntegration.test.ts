@@ -19,6 +19,6 @@ test("explicit airline filters and clear filters remain available", () => {
 });
 
 test("provider search payload remains unchanged", () => {
-  assert.match(screen, /travelApi\.searchFlights\(plan\.plan\.payload, \{ signal: controller\.signal, requestId \}\)/);
+  assert.match(screen, /travelApi\.searchFlights\(plan\.plan\.payload, \{ signal: controller\.signal, requestId, sandboxDisplay: true \}\)/);
   assert.doesNotMatch(screen, /searchFlights\([^\n]*preferredAirline/);
 });

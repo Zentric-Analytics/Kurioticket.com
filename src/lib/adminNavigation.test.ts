@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, getAdminWorkspaceSections, isAdminWorkspaceSectionActive, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage destinations", "Flight routes", "Hotel destinations", "FAQs", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platform Health", "CMS Health", "Email Delivery", "Settings", "Visitor Journeys", "Provider Handoffs", "Referral Attribution"];
+const originalLabels = ["Provider Management", "Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage destinations", "Flight routes", "Hotel destinations", "FAQs", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platform Health", "CMS Health", "Email Delivery", "Settings", "Visitor Journeys", "Provider Handoffs", "Referral Attribution"];
 
 test("admin navigation restores the flat module order without a duplicate Flights workspace", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
@@ -15,7 +15,7 @@ test("admin navigation restores the flat module order without a duplicate Flight
 test("admin navigation exposes parent workspaces in the header", () => {
   assert.deepEqual(adminNavigationGroups, [
     { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches/activity", "/admin/confirmed-trips", "/admin/support"] },
-    { label: "Provider readiness", hrefs: ["/admin/providers"] },
+    { label: "Provider readiness", hrefs: ["/admin/providers", "/admin/provider-management"] },
     { label: "Website content", hrefs: ["/admin/content"] },
     { label: "System & security", hrefs: ["/admin/system", "/admin/platform-health", "/admin/settings"] },
   ]);

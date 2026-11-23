@@ -1,3 +1,4 @@
+import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
 import { createHash } from "node:crypto";
@@ -19,6 +20,8 @@ import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 
 export async function POST(request: Request) {
+ return withProductionSandboxRequest(request, async () => {
+
   const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("HOTEL_SEARCH_ENABLED"))) return NextResponse.json({ error: "Hotel search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
   const ip = getClientIp(request);
@@ -75,6 +78,7 @@ export async function POST(request: Request) {
   const recordedSearch = { ...search, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) };
 
   const kayakContext = {
+    trackId: operationalSession?.reference.id,
     clientIp: getKayakClientIp(request),
     userAgent: request.headers.get("user-agent") || undefined,
     signal: request.signal,
@@ -194,6 +198,8 @@ export async function POST(request: Request) {
     warningCategory: deriveHotelWarningCategory(aggregate),
     latencyMs: aggregate.latencyMs,
   }), operationalSession);
+
+ });
 }
 
 function sanitizeProviderError(error?: string) {

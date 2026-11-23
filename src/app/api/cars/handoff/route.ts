@@ -1,3 +1,4 @@
+import { productionSandboxHost } from "@/lib/productionSandboxPolicy";
 import { NextResponse } from "next/server";
 import { readBoundedJsonBody } from "@/lib/bounded-json-body";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 /** Car checkout remains the existing external link. This endpoint records verified clicks only. */
 export async function POST(request: Request) {
+
   const origin = request.headers.get("origin");
   if (!origin || !isSameOriginRequest(request)
     || request.headers.get("sec-fetch-site") !== "same-origin"
@@ -37,6 +39,7 @@ export async function POST(request: Request) {
     || body.resultId.length > 512 || body.offerId.length > 512) {
     return NextResponse.json({ error: "Invalid car offer." }, { status: 400 });
   }
+  if (productionSandboxHost() && body.resultId.startsWith("kayak-sandbox:")) return NextResponse.json({error:"Sandbox inventory is display-only."},{status:403});
   const car = await getProviderResult<NormalizedCarResult>("car", body.resultId);
   if (!car || car.id !== body.resultId || !Array.isArray(car.offers)) {
     return NextResponse.json({ error: "Car offer no longer available." }, { status: 410 });

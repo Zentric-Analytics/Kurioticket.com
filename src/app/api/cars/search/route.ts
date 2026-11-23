@@ -1,3 +1,4 @@
+import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
 import { applicationMetadata } from "@/lib/application-source";
 import { after } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
@@ -38,6 +39,8 @@ function canonicalSearch(value: unknown): LocationBoundCarSearchParams | null {
 }
 
 export async function POST(request: Request) {
+ return withProductionSandboxRequest(request, async () => {
+
   const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("CAR_SEARCH_ENABLED"))) return Response.json({ error: "Car search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503, headers: noStore });
   let body: unknown;
@@ -70,7 +73,7 @@ export async function POST(request: Request) {
     });
   };
   try {
-    const { results, status, warnings, providerStatuses, unsupported } = await searchCars(search, { requestId, kayak: { requestId, clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
+    const { results, status, warnings, providerStatuses, unsupported } = await searchCars(search, { requestId, kayak: { trackId: operationalSession?.reference.id, requestId, clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
     const response = classifyCars(results, search, requestId, warnings);
     if (unsupported) {
       recordSearch(0, "FAILED");
@@ -138,4 +141,6 @@ export async function POST(request: Request) {
     recordSearch(0, "FAILED");
     return attachOperationalSearchSession(Response.json({ error: "Car search is temporarily unavailable.", requestId }, { status: 500, headers: noStore }), operationalSession);
   }
+
+ });
 }

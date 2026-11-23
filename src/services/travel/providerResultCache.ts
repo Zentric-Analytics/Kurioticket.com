@@ -1,3 +1,4 @@
+import { productionSandboxInventory } from "@/lib/productionSandboxPolicy";
 import { createHash, randomUUID } from "node:crypto";
 import { hotelOccupancy } from "@/lib/hotels/hotelOccupancy";
 import { encodeCohort, decodeCohort, isCohortManifest } from "@/lib/search/cohortEncoding";
@@ -168,6 +169,7 @@ export async function rememberProviderResults<T extends { id: string }>(
   searchContext: unknown,
   now = Date.now(),
 ) {
+  results = results.filter(result=>!productionSandboxInventory(result));
   if (!results.length) return;
   const expiresAt = new Date(now + TTL_MS);
   if (vertical === "car") {
@@ -213,14 +215,14 @@ export async function getProviderResult<T>(
 ): Promise<T | null> {
   if (vertical === "car") {
     const memory = readCarInMemory<T>(cacheKey("car", resultId), now);
-    if (memory) return memory;
+    if (memory && !productionSandboxInventory(memory)) return memory;
   }
   try {
     const row = await getPrisma().providerResultCache.findUnique({
       where: { cacheKey: cacheKey(vertical, resultId) },
     });
     if (!row || row.expiresAt.getTime() <= now) return null;
-    return structuredClone(row.normalizedResult) as T;
+    return productionSandboxInventory(row.normalizedResult) ? null : structuredClone(row.normalizedResult) as T;
   } catch {
     console.error("[provider-result-cache]", { event: "read_error", vertical });
     return null;
@@ -237,6 +239,7 @@ export async function getProviderResultWithContext<T>(
       where: { cacheKey: cacheKey(vertical, resultId) },
     });
     if (!row || row.expiresAt.getTime() <= now) return null;
+    if (productionSandboxInventory(row.normalizedResult)) return null;
     return {
       result: structuredClone(row.normalizedResult) as T,
       searchContext: row.searchContext ? structuredClone(row.searchContext) : null,
@@ -278,9 +281,9 @@ export async function getCarSearchCohort(
     cacheKey("car", resultId),
     now,
   );
-  if (memory) return memory;
+  if (memory && !productionSandboxInventory(memory)) return memory;
   try {
-    return await readSearchCohort("car", resultId, now) as NormalizedCarResult[];
+    return (await readSearchCohort("car", resultId, now) as NormalizedCarResult[]).filter(result=>!productionSandboxInventory(result));
   } catch {
     console.error("[provider-result-cache]", { event: "cohort_read_error", vertical: "car" });
     return [];
@@ -292,6 +295,7 @@ export async function rememberHotelSearchCohort(
   search: HotelSearchParams,
   now = Date.now(),
 ) {
+  results = results.filter(result=>!productionSandboxInventory(result));
   if (!results.length) return true;
   const resultId = hotelSearchCohortId(search);
   try {
@@ -318,12 +322,12 @@ export async function getHotelSearchCohort(
     const snapshotId = selectedResultId ? hotelSnapshotCohortId(search, selectedResultId) : null;
     if (snapshotId) {
       const snapshot = await readSearchCohort("hotel", snapshotId, now) as NormalizedHotelResult[];
-      if (snapshot.some(result => result.id === selectedResultId)) return snapshot;
+      if (snapshot.some(result => result.id === selectedResultId)) return snapshot.filter(result=>!productionSandboxInventory(result));
     }
     // Rolling deployments can still have only the old criteria-keyed cohort.
     // Never attach it to an offer from a different snapshot.
     const cohort = await readSearchCohort("hotel", resultId, now) as NormalizedHotelResult[];
-    return !selectedResultId || cohort.some(result => result.id === selectedResultId) ? cohort : [];
+    return !selectedResultId || cohort.some(result => result.id === selectedResultId) ? cohort.filter(result=>!productionSandboxInventory(result)) : [];
   } catch {
     console.error("[provider-result-cache]", { event: "cohort_read_error", vertical: "hotel" });
     return [];

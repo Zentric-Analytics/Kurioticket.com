@@ -5,10 +5,10 @@ import { URL as NodeURL } from "node:url";
 import test from "node:test";
 import ts from "typescript";
 
-function fixture(platform = "android", version = "0.3.0") {
+function fixture(platform = "android", version = "0.3.0", baseUrl = "https://staging.kurioticket.com") {
   const calls: Array<{ url: string; init: RequestInit }> = [];
   const dependencies: Record<string, unknown> = {
-    "../config/apiUrl": { getApiBaseUrl: () => ({ ok: true, baseUrl: "https://staging.kurioticket.com" }) },
+    "../config/apiUrl": { getApiBaseUrl: () => ({ ok: true, baseUrl }) },
     "../storage/sessionStorage": { readSession: async () => ({ user: { id: "test-user" }, token: "test-session" }) },
     "react-native": { Platform: { OS: platform } },
     "expo-constants": { default: { expoConfig: { version } } },
@@ -53,4 +53,20 @@ test("unavailable or malformed version never invents identity or permits header 
   const h = fixture();
   for (const version of [undefined, "", "0.3.0\r\nInjected: true", "unknown", "<script>"]) assert.deepEqual(Object.keys(h.headers("android",version)), []);
   assert.match(h.headers("android", "0.3.0-preview.1")["User-Agent"], /0\.3\.0-preview\.1/);
+});
+
+test("production display capability is opt-in and preserves actual Android identity and authorization", async () => {
+  const h = fixture("android", "0.3.0", "https://kurioticket.com");
+  await h.api.searchFlights({}, { sandboxDisplay: true });
+  await h.api.searchHotels({}, { sandboxDisplay: true });
+  await h.api.searchHotelsProgressive({}, null, { sandboxDisplay: true });
+  await h.api.searchCars({}, { sandboxDisplay: true });
+  for (const call of h.calls) {
+    const headers = new Headers(call.init.headers);
+    assert.equal(headers.get("x-sandbox-results-policy"), "1");
+    assert.equal(headers.get("User-Agent"), "KurioticketMobile/0.3.0 (Android; Native) OkHttp");
+    assert.equal(headers.get("Authorization"), "Bearer test-session");
+  }
+  await h.api.searchFlights({});
+  assert.equal(new Headers(h.calls.at(-1)!.init.headers).get("x-sandbox-results-policy"), null);
 });

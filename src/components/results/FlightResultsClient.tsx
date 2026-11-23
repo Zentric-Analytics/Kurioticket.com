@@ -1,4 +1,6 @@
 "use client";
+import { useSandboxResults } from "./useSandboxResults";
+import { hasDisplayOnlyInventory } from "@/shared/presentation/sandboxInventory";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import { displayedJourneyRequest, journeyRequestId } from "@/lib/journeyEventClient";
@@ -992,7 +994,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [desktopSortOpen, setDesktopSortOpen] = useState(false);
   const desktopSortRef = useRef<HTMLDivElement | null>(null);
   const desktopSortButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [providerResults, setResults] = useState<PublicFlightResult[]>([]);
+  const [rawSandboxResults, setResults] = useState<PublicFlightResult[]>([]);
+  const providerResults = useSandboxResults(rawSandboxResults);
   const kayak = useKayakResults();
   const results = useMemo(() => guidedMode || kayak?.vertical !== "flights" ? providerResults : [
     ...providerResults, ...kayak.offers.map(offer => kayakFlightCardModel(offer, kayak.criteria)).filter((flight): flight is PublicFlightResult => flight !== null),
@@ -2658,7 +2661,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       controller = new AbortController();
       fetch("/api/flights/search", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-sandbox-results-policy": "1" },
         body: JSON.stringify(body),
         signal: controller.signal,
       })
@@ -2816,7 +2819,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const dates = getNearbyFareDateRange(getNearbyFareWindowStart(centerDate));
     const fetchedAt = Date.now();
     const currentFare = getLowestComparableFlightFare(
-      providerResults,
+      providerResults.filter((result) => !hasDisplayOnlyInventory(result)),
       selectedCurrency,
       currencyRates.rates,
     );
@@ -2888,7 +2891,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             results?: PublicFlightResult[];
           };
           const fare = getLowestComparableFlightFare(
-            data.results ?? [],
+            (data.results ?? []).filter((result) => !hasDisplayOnlyInventory(result)),
             selectedCurrency,
             currencyRates.rates,
           );

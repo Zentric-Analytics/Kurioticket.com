@@ -1,4 +1,5 @@
 export const featureControlRegistry = {
+  ALLOW_SANDBOX_RESULTS_IN_PRODUCTION: {name:"Allow Sandbox Results in Production",description:"Display-only test inventory across the website, Android and iOS. Never book, save or cache these results.",category:"Provider Management",risk:"Critical",defaultStaging:false,defaultProduction:false,clientExposed:false,productionReasonRequired:true,kind:"product"},
   FLIGHT_SEARCH_ENABLED: control("Flight Search", "Emergency control for flight provider search. Saved travel data is unaffected.", "Travel Search", "Critical", true, "product"),
   HOTEL_SEARCH_ENABLED: control("Hotel Search", "Controls hotel search without affecting flights or cars.", "Travel Search", "High", true, "product"),
   CAR_SEARCH_ENABLED: control("Car Search", "Controls car search without affecting flights or hotels.", "Travel Search", "High", true, "product"),
