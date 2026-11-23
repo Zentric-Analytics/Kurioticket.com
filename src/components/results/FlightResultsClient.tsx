@@ -127,7 +127,7 @@ import {
   readFlightResultsSessionSnapshotForRefresh,
   writeFlightResultsSessionSnapshot,
 } from "@/lib/flights/flightResultsSessionCache";
-import { takeResultsReturn } from "@/lib/results/resultsReturnIntent";
+import { clearResultsReturn, takeResultsReturn } from "@/lib/results/resultsReturnIntent";
 import { takeResultsScroll } from "@/lib/results/resultsReturnScroll";
 import {
   readFlightResultsReturnView,
@@ -3486,6 +3486,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       collapseStickySearch();
     }
 
+    clearResultsReturn("flight");
     router.push(`/flights/results?${nextParams.toString()}`, { scroll: true });
   }
 
@@ -3576,6 +3577,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
       setDepartureDateInput(date);
       triggerFilterApplying();
+      clearResultsReturn("flight");
       router.push(`/flights/results?${nextParams.toString()}`, {
         scroll: true,
       });
@@ -4585,6 +4587,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 // best effort only
               }
 
+              clearResultsReturn("flight");
               router.push(`/flights/results?${nextParams.toString()}`);
             }}
           >
@@ -7059,6 +7062,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           if (value.tripType === "round-trip" && value.returnDate) nextParams.set("returnDate", value.returnDate);
           if (value.tripType === "multi-city") { nextParams.set("currency", selectedCurrency); appendFlightLegParams(nextParams, value.legs); }
           closeMobileSearchDrawer({ restoreFocus: false });
+          clearResultsReturn("flight");
           router.push(`/flights/results?${nextParams.toString()}`, { scroll: true });
         }}
       />
