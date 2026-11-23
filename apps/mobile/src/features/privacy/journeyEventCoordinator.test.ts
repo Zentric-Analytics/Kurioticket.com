@@ -310,3 +310,22 @@ test("settling one search cannot replay a different search or a withdrawn accoun
   await withoutConsent.coordinator.settleBeforeExternalHandoff(first);
   assert.deepEqual(withoutConsent.calls, []);
 });
+
+test("urgent clickout preserves ordinary backoff on rate limit and offline failures", async () => {
+  for (const error of [
+    Object.assign(new Error("rate limited"), { status: 429 }),
+    Object.assign(new Error("offline"), { status: 0, code: "network" }),
+  ]) {
+    const h = harness();
+    const requestId = h.remember("a536b1a5-582e-4b86-86c3-d0c8ce012a92");
+    h.responses.push(error, { accepted: true });
+    h.coordinator.offerSelected(requestId, "offer", "Provider", "/flight-details");
+    await turn();
+    assert.equal(h.timers.length, 1);
+    await h.coordinator.settleBeforeExternalHandoff(requestId);
+    assert.equal(h.calls.length, 1, "only an explicit server retry may be expedited");
+    assert.equal(h.timers[0].cancelled, false, "normal backoff must remain active");
+    h.setContext(null);
+    assert.equal(h.timers[0].cancelled, true);
+  }
+});
