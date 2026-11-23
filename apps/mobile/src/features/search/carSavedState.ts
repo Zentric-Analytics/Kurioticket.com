@@ -8,6 +8,6 @@ export function useSavedCar(result: CarResult, searchParams: Record<string, unkn
   const signature = carSavedSignature(result, searchParams);
   return {
     saved: signature ? savedState.cars.has(signature) : false,
-    toggle: () => savedState.toggleCar(result, searchParams),
+    toggle: () => savedState.toggleCar(result, searchParams, typeof searchParams.journeyRequestId === "string" ? searchParams.journeyRequestId : null),
   };
 }
