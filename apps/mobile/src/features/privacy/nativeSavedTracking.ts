@@ -1,4 +1,4 @@
-import { randomUUID } from "expo-crypto";
+import { CryptoDigestAlgorithm, digestStringAsync, randomUUID } from "expo-crypto";
 import { travelApi } from "../../api/travelApi";
 import { visitorIdentity } from "./visitorIdentity";
 
@@ -17,15 +17,19 @@ export async function recordNativeSavedInteraction(input: {
   resultId: string;
   requestId?: string | null;
 }): Promise<void> {
-  if (!safeReference.test(input.resultId)) return;
+  if (!input.resultId || input.resultId.length > 4096) return;
   if (!input.requestId || !requestUuid.test(input.requestId)) return;
   const context = visitorIdentity.trackingContext();
   if (context === null) return;
   try {
+    const resultId = safeReference.test(input.resultId) ? input.resultId
+      : await digestStringAsync(CryptoDigestAlgorithm.SHA256, input.resultId);
+    // The selected consent/account can change while hashing the result key.
+    if (visitorIdentity.trackingContext() !== context) return;
     await travelApi.customerInteraction({
       action: input.action,
       product: input.product,
-      resultId: input.resultId,
+      resultId,
       eventId: randomUUID(),
       requestId: input.requestId.toLowerCase(),
     }, { visitorContext: context });
