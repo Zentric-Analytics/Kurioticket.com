@@ -399,7 +399,7 @@ try {
     const fullUrl = base+"/admin/users/"+kind+"/qa-complete-history-0001/activity?range=all";
     await page.goto(fullUrl);
     await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
-    await expect(page.getByTestId("activity-journey-row")).toHaveCount(0);
+    await expect(page.getByTestId("activity-journey-row")).toHaveCount(10);
     await expect(page.locator("[data-activity-id]")).toHaveCount(0);
     await expect(page.getByRole("link",{name:/View Journey History/})).toBeVisible();
     const allHref = "/admin/users/"+kind+"/qa-complete-history-0001/other?range=all";
