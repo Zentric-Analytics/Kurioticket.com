@@ -8,6 +8,18 @@ export const journeyFilterSelectionGroups = ["price", "pricePerDay", "stops", "a
 export type JourneyFilterSelectionGroup = (typeof journeyFilterSelectionGroups)[number];
 /** Only UI-chosen option identifiers, never customer-entered search text. */
 export type JourneyFilterSelection = { group: JourneyFilterSelectionGroup; option: string };
+/** UI-observed detail at the time of selection; never treat it as server-confirmed
+ * price evidence. Store only result card labels, supplier, and quoted price.
+ */
+export type JourneyObservedResult = {
+  label: string;
+  provider: string;
+  amount: number;
+  currency: string;
+  priceBasis: "total" | "per_night" | "per_day";
+  totalAmount?: number;
+};
+
 /** Preserve only explicitly chosen UI options. Never serialize typed search terms
  * or present an incomplete subset as if it were the entire filter selection.
  */
