@@ -13,7 +13,7 @@ const query = {
   dropoffDate: "2099-05-02", dropoffTime: "10:00", driverAge: "30",
 };
 
-function fixture(t: TestContext, options: { status?: "available" | "unavailable"; consent?: boolean; failingLog?: boolean; failingProviderLog?: boolean; session?: boolean; crawlerBlocked?: boolean } = {}) {
+function fixture(t: TestContext, options: { status?: "available" | "unavailable"; consent?: boolean; failingLog?: boolean; failingProviderLog?: boolean; session?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT" } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: Array<Record<string, unknown>> = [];
   const analytics: Array<Record<string, unknown>> = [];
@@ -32,7 +32,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
   let attachCalls = 0;
   let providerLogCalls = 0;
   const request = new Request("https://staging.kurioticket.com/api/cars/search", {
-    method: "POST", headers: { "content-type": "application/json", "x-search-request-id": requestId },
+    method: "POST", headers: { "content-type": "application/json", "x-search-request-id": requestId, ...(options.verifiedCrawler ? { "user-agent": options.verifiedCrawler } : {}) },
     body: JSON.stringify(query),
   });
   const session: PreparedOperationalSession | null = options.session === false ? null : {
@@ -47,8 +47,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
   const dependencies: Record<string, unknown> = {
     "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
     "@/lib/application-source": { applicationMetadata },
-    "@/lib/searchCrawlerGate": { blockVerifiedCrawlerSearch: async () => options.crawlerBlocked
-      ? Response.json({ code: "CRAWLER_SEARCH_BLOCKED" }, { status: 403 }) : null },
+    "@/lib/searchCrawlerGate": { identifyVerifiedCrawlerSearch: async () => options.verifiedCrawler ?? null },
     "next/server": { after: (callback: () => Promise<unknown>) => { deferred.push(callback); } },
     "@/lib/operationalSearchSession": {
       prepareOperationalSearchSession: (value: Request) => {
@@ -56,7 +55,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
         return session;
       },
       attachOperationalSearchSession: (response: Response, value: PreparedOperationalSession | null) => {
-        check(value === session && ++attachCalls === 1, "attach the prepared session exactly once");
+        check(value === (options.verifiedCrawler ? null : session) && ++attachCalls === 1, "attach the expected session exactly once");
         return attachOperationalSearchSession(response, value);
       },
     },
@@ -120,7 +119,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
       assert.equal(deferred.length, 2, "history/analytics and provider diagnostics remain separate post-response tasks");
       for (const callback of deferred) await callback();
       assert.equal(searchCalls, 1);
-      assert.equal(prepareCalls, 1);
+      assert.equal(prepareCalls, options.verifiedCrawler ? 0 : 1);
       assert.equal(attachCalls, 1);
       assert.equal(providerLogCalls, 1);
     },
@@ -219,13 +218,20 @@ test("optional provider diagnostics failures do not interrupt search history or 
   assert.equal(f.providerLogs.length, 0);
 });
 
-test("verified crawler is stopped before car search feature access, provider calls and analytics", async (t) => {
-  const f = fixture(t, { crawlerBlocked: true });
+test("verified bot makes a real car search counted once under BOT, with no guest session", async (t) => {
+  const f = fixture(t, { verifiedCrawler: "GOOGLEBOT" });
   const response = await f.post();
-  assert.equal(response.status, 403);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("X-Kt-Search-Session"), null);
+  await f.flush();
   assert.equal(f.calls(), 0);
-  assert.deepEqual(f.histories, []);
+  assert.equal(f.histories.length, 1);
+  assert.equal(f.histories[0].applicationSource, "BOT");
+  assert.equal(f.histories[0].userId, null);
+  assert.equal(f.histories[0].visitorId, null);
+  assert.equal((f.histories[0].query as Record<string, unknown>).verifiedCrawler, "GOOGLEBOT");
+  assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionId, undefined);
   assert.deepEqual(f.analytics, []);
-  assert.deepEqual(f.providerLogs, []);
-  assert.equal(f.deferred.length, 0);
+  assert.equal(f.providerLogs.length, 1);
+  assert.equal((f.providerLogs[0].metadata as Record<string, unknown>).applicationSource, "BOT");
 });
