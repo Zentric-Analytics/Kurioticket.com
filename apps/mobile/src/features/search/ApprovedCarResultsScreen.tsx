@@ -5,7 +5,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, ChevronDown, SlidersHorizontal, SquarePen } from "lucide-react-native";
 import { travelApi, type CarResult } from "../../api/travelApi";
 import { journeyEvents } from "../privacy/journeyEvents";
-import { normalizeJourneySortMode } from "../../../../../src/lib/search-journey";
+import { normalizeJourneySortMode, normalizeJourneySortChoice } from "../../../../../src/lib/search-journey";
 import { journeyResponseContext } from "../privacy/journeyResponseContext";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { acceptCanonicalResults, canonicalResultsWereSilentlyLost } from "../flow/canonicalResultAcceptance";
@@ -150,7 +150,7 @@ export function ApprovedCarResultsScreen() {
     </View>
     {status==="loading"?<View style={StyleSheet.absoluteFill}><NativeBrandedSearchLoading product="car" includeTopInset={false}/></View>:null}
     <CarFilterSheet visible={filterSheetVisible} results={results} filters={filters} pricePerDay={pricePerDay} onChange={changeCarFilters} onClose={completeCarFilterSession}/>
-    {quickSheetKind ? <CarResultsQuickFilterSheet key={quickSheetKind} kind={quickSheetKind} results={results} filters={filters} pricePerDay={pricePerDay} sort={sort} onApplyFilters={(next)=>{changeCarFilters(next);}} onApplySort={(next)=>{if(next!==sort){journeyEvents.workflowDecision("SEARCH_SORT_CHANGED",resultsRequestId,"/car-results",{sortMode:normalizeJourneySortMode(next)});setSort(next);startCarResultsTransition();}}} onClose={()=>{setQuickSheetKind(null);if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}}}/> : null}
+    {quickSheetKind ? <CarResultsQuickFilterSheet key={quickSheetKind} kind={quickSheetKind} results={results} filters={filters} pricePerDay={pricePerDay} sort={sort} onApplyFilters={(next)=>{changeCarFilters(next);}} onApplySort={(next)=>{if(next!==sort){journeyEvents.workflowDecision("SEARCH_SORT_CHANGED",resultsRequestId,"/car-results",{sortMode: normalizeJourneySortMode(next), sortChoice: normalizeJourneySortChoice(next)});setSort(next);startCarResultsTransition();}}} onClose={()=>{setQuickSheetKind(null);if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}}}/> : null}
     <CarEditSearchModal visible={carEditSearchOpen} params={params} onClose={()=>setCarEditSearchOpen(false)} onSubmitSearch={applyEditedSearch}/>
   </SafeAreaView>;
 }
