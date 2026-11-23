@@ -20,7 +20,7 @@ const productLabels = new Map([
   ["FLIGHT", "Flight"], ["HOTEL", "Hotel"], ["CAR", "Car"], ["PACKAGE", "Package"],
 ]);
 const searchOutcomeLabels = new Map([
-  ["SUCCESS", "Success"], ["PARTIAL", "Partial"], ["FAILED", "Failed"],
+  ["SUCCESS", "Success"], ["PARTIAL", "Partial provider coverage"], ["FAILED", "Failed"],
 ]);
 
 /** Format only known display tokens; keep routes, provider brands and stored rows intact. */
