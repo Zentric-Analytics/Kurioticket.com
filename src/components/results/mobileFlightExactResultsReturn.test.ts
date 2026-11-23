@@ -18,6 +18,7 @@ test("flight mobile navigation freezes exact results order and KAYAK offers befo
   assert.match(results, /readFlightResultsReturnView\(searchKey, window\.location\.pathname \+ window\.location\.search\)/);
   assert.match(results, /restoredFlightView\.resultIds\.map\(id => byId\.get\(id\)!\)/);
   assert.match(results, /restoredFlightView\.sortMode === sortMode/);
+  assert.match(results, /if \(returnView\) setSortMode\(returnView\.sortMode\)/);
   assert.match(results, /restoredFlightView\.href === "\/flights\/results\?" \+ queryString/);
 });
 
