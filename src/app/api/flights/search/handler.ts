@@ -40,7 +40,7 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
     return NextResponse.json({ error: "Search needs a little more detail.", issues: parsed.error.flatten() }, { status: 400 });
   }
 
-  const operationalSession = nearby ? null : prepareOperationalSearchSession(request);
+  const operationalSession = nearby || verifiedCrawler ? null : prepareOperationalSearchSession(request);
   const operationalQuery = (query: Record<string, unknown>) => ({ ...query, ...searchNetworkObservation(request), ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) });
   const mobilePlatformHeader = request.headers.get("x-mobile-platform")?.trim().toLowerCase();
   const mobilePlatform = mobilePlatformHeader === "android" || mobilePlatformHeader === "ios"
