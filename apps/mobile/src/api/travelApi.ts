@@ -252,6 +252,13 @@ export const travelApi = {
   homepageContent: (market: string, locale: string) => request<unknown>(`/api/content/homepage?market=${encodeURIComponent(market)}&locale=${encodeURIComponent(locale)}`),
   faqContent: (locale: string) => request<unknown>(`/api/content/faqs?locale=${encodeURIComponent(locale)}`),
   journeyEvent: (body: JourneyEvent, options: { signal: AbortSignal; visitorContext: number }) => request<JourneyEventResponse>("/api/journey/events", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: 4000 }),
+  customerInteraction: (body: {
+    action: "share_sheet_completed"; product: "FLIGHT" | "HOTEL" | "CAR";
+    resultId: string; eventId: string; requestId?: string;
+  }, options: { visitorContext: number }) =>
+    request<{ accepted: boolean }>("/api/activity/interactions", {
+      method: "POST", body: JSON.stringify(body),
+    }, { ...options, timeoutMs: 4000 }),
   searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<FlightSearchResponse>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   lookupNearbyFlightFare: (body: Record<string, unknown>, options?: { signal?: AbortSignal }) => request<{ fares: NearbyFlightFare[]; requestId: string; resultsCacheValidUntil?: number }>("/api/flights/nearby-fare", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   flightDetails: (id: string, options: { signal?: AbortSignal } = {}) => request<FlightDetailsResponse>(`/api/flights/details?id=${encodeURIComponent(id)}`, {}, options),
