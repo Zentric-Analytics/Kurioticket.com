@@ -4,9 +4,10 @@
   "recordStatus": "present",
   "playApplicationRecord": "present",
   "uploadedBundles": [
-    2
+    2,
+    5
   ],
-  "highestUploadedVersionCode": 2,
-  "verifiedAt": "2026-08-22T11:58:09Z",
-  "evidenceReference": "Read-only Google Play Console audit on 2026-08-22 for developer account 9106799153088925304 and package com.kurioticket.app: Latest releases and bundles shows exactly one uploaded Production-package app bundle, versionName 0.3.0 and versionCode 2, active on Internal testing track 4701529328209310489 as release 1 'Kurioticket 0.3.0 (2) - Internal', available to internal testers at full rollout; Production is inactive and no closed, open, or public rollout exists. Google Play App Signing remains active; app-signing certificate SHA-1 97:E5:7C:AF:A9:47:BF:11:02:05:B2:80:18:61:81:95:C5:D7:96:3D and SHA-256 1C:B7:A0:7D:3F:A4:ED:EB:E5:56:7C:06:BA:ED:60:E2:F2:12:05:A9:1A:FB:F1:9F:63:D2:08:24:08:3D:BF:41; upload certificate SHA-1 DC:17:A7:76:11:D4:BA:7C:E5:75:8A:90:B3:AD:2E:9E:F5:2E:87:CD and SHA-256 1D:A3:4F:2F:F8:45:4F:5C:9B:25:0B:EC:69:DE:14:3F:B8:C7:1B:8C:5D:19:30:CE:48:5F:EF:31:C0:44:C8:F4. No store state was changed during this audit."
+  "highestUploadedVersionCode": 5,
+  "verifiedAt": "2026-11-23T10:16:41Z",
+  "evidenceReference": "Authenticated read-only Google Play Console audit on 2026-11-23 for package com.kurioticket.app in developer account 9106799153088925304. Latest releases and bundles lists uploaded versionCodes 2 and 5, both versionName 0.3.0. VersionCode 5 is Active and available to internal testers at full rollout on Internal testing track 4701529328209310489 (release 2, Kurioticket 0.3.0 (5) - Internal); versionCode 2 is Inactive. App dashboard identifies a Draft app with Production Inactive. Read-only audit source: https://play.google.com/console/u/0/developers/9106799153088925304/app/4974364670889094818/releases/overview . This refresh preserves prior bundle 2 evidence and does not change any Play release, signing credential or remote version counter. See docs/releases/production-sync-2026-11-19/final-cutover-readiness.md; evidence must be refreshed again if older than 24 hours at build dispatch."
 }

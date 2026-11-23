@@ -541,8 +541,8 @@ test('Production delivery is manual-only, main-only, and requires the reviewed P
   assert.equal(history.package, policy.production.androidPackage);
   assert.equal(history.recordStatus, 'present');
   assert.equal(history.playApplicationRecord, 'present');
-  assert.deepEqual(history.uploadedBundles, [2]);
-  assert.equal(history.highestUploadedVersionCode, 2);
+  assert.deepEqual(history.uploadedBundles, [2, 5]);
+  assert.equal(history.highestUploadedVersionCode, 5);
   assert.ok(Date.parse(history.verifiedAt));
   assert.ok(history.evidenceReference.includes('9106799153088925304'));
 });
