@@ -670,7 +670,7 @@ function ResultsScreen({ product }: { product: Product }) {
     pendingFlightEditTargetKey.current = nextPlan.plan.key;
     journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", resultsRequestId, "/flight-results");
     router.setParams(flightSearchRouteParamPatch(nextParams));
-  }, [plan.plan?.key]);
+  }, [plan.plan?.key, resultsRequestId]);
   const closeFlightEditSearch = useCallback(() => {
     pendingFlightEditTargetKey.current = null;
     setEditSearchOpen(false);
@@ -687,7 +687,7 @@ function ResultsScreen({ product }: { product: Product }) {
     pendingHotelEditParams.current = nextPlan.plan.key === plan.plan?.key ? null : nextParams;
     if (pendingHotelEditParams.current) journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", resultsRequestId, "/hotel-results");
     setHotelEditSearchOpen(false);
-  }, [plan.plan?.key]);
+  }, [plan.plan?.key, resultsRequestId]);
   const finishAndroidHotelEdit = useCallback(() => {
     const nextParams = pendingHotelEditParams.current;
     if (!nextParams) return;
