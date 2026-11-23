@@ -47,10 +47,10 @@ test("custom dates are editable and preset selection does not submit stale bound
   assert.match(list, /<JourneyDateRangeFields/);
 });
 
-test("equal custom UTC endpoints block native form submission", () => {
+test("equal custom local endpoints block native form submission", () => {
   assert.match(controls, /<AdminCalendarInput mode="datetime-local"/);
-  assert.match(controls, /offsetUtcDateTime\(from, 1\)/);
-  assert.match(controls, /offsetUtcDateTime\(to, -1\)/);
+  assert.match(controls, /adminOffsetZonedDateTime\(from, 1, timeZone\)/);
+  assert.match(controls, /adminOffsetZonedDateTime\(to, -1, timeZone\)/);
   assert.match(controls, /Date\.parse\(startIso\) < Date\.parse\(endIso\)/);
 });
 test("detail event pagination retains the display preset without forwarding it to backend", () => {
@@ -81,7 +81,7 @@ test("Journeys directory shares Users styling without modifying consent-aware da
   assert.match(history, /Step \{index \+ 1\}/);
 });
 
-test("Visitor Journeys defaults to Today UTC, keeps responsive filters on one desktop row and isolates environment", () => {
+test("Visitor Journeys defaults to Today in operator zone, keeps responsive filters on one desktop row and isolates environment", () => {
   assert.match(dates, /return one\(raw\.from\) \|\| one\(raw\.to\) \|\| one\(raw\.cursor\) \? "custom" : "today"/);
   assert.match(dates, /JOURNEY_ALL_TIME_FROM/);
   assert.match(list, /getPublicEnvironment\(\)/);
