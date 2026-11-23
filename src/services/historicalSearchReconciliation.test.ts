@@ -67,7 +67,7 @@ test("all-time staging-only reconciliation preserves sources and raw search rows
   assert.match(alltimeSql, /IF current_database\(\) <> 'kurioticket_web_staging' THEN\s+RETURN;/);
   assert.match(alltimeSql, /"countAsSearch"=\(c\.rn=1\)/);
   assert.match(alltimeSql, /parentSearchHistoryId/);
-  assert.match(alltimeSql, /already_excluded=0/);
+  assert.match(alltimeSql, /previously_excluded=0/);
   assert.match(alltimeSql, /last_at<TIMESTAMPTZ '2026-11-23T14:18:27Z'/);
   assert.match(alltimeSql, /originalApplicationSource/);
   assert.doesNotMatch(alltimeSql, /SET\s+[^;]*applicationSource.*=/);
