@@ -5,6 +5,9 @@ import {
   __emailServiceTest,
   emailPreferencesUpdatedEmail,
   sendOptionalEmail,
+  supportTicketEmail,
+  supportTicketResolvedEmail,
+  supportTicketClosedEmail,
 } from "@/services/emailService";
 import {
   __emailPreferencesServiceTest,
@@ -221,4 +224,23 @@ test("emailPreferencesUpdatedEmail falls back to neutral greeting for unreliable
 
   assert.match(html, /Hi,/);
   assert.doesNotMatch(html, /user@example.com/);
+});
+
+test("support lifecycle templates match the approved brief wording and escape ticket numbers", () => {
+  const ticketId = "ticket-<unsafe>";
+  const received = supportTicketEmail({ ticketId, subject: "Sensitive subject must not be repeated" });
+  const resolved = supportTicketResolvedEmail({ ticketId });
+  const closed = supportTicketClosedEmail({ ticketId });
+  assert.match(received, /We've received your request/);
+  assert.match(received, /Your request has been received successfully/);
+  assert.doesNotMatch(received, /Sensitive subject/);
+  assert.doesNotMatch(received, /Status:|Submitted:/);
+  assert.match(resolved, /Your request has been resolved/);
+  assert.match(closed, /Your support request has been closed/);
+  for (const html of [received, resolved, closed]) {
+    assert.match(html, /Your Ticket Number:/);
+    assert.match(html, /ticket-&lt;unsafe&gt;/);
+    assert.doesNotMatch(html, /ticket-<unsafe>/);
+    assert.match(html, /Kurioticket Support Team/);
+  }
 });
