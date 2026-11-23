@@ -21,6 +21,10 @@ export type RecentSearchSummary = {
   resultsViewed: number;
   offersSelected: number;
   handoffs: number;
+  saved: number;
+  unsaved: number;
+  shared: number;
+  priceAlertsCreated: number;
 };
 
 /** Only server-sanitized activity descriptions are available to this display.
@@ -35,7 +39,8 @@ function recordedSearchRoute(event: ActivityRow): string | null {
   const route = parts[1].trim();
   return route && route.length <= 110 ? route : null;
 }
-const searchableStages = new Set(["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED"]);
+const searchableStages = new Set(["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED",
+  "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED"]);
 
 /** Read-only recent search presentation, never a redefinition of SearchJourney.
  * One card per explicitly linked SearchHistory ID, even when one consented
@@ -77,6 +82,7 @@ export function activityOverviewRows(events: readonly ActivityRow[], limit = 10)
         route: null, searchStatus: null, platform: event.platform ?? null,
         resultCount: event.resultCount ?? null, providers: [], eventCount: 0,
         searches: 0, resultsViewed: 0, offersSelected: 0, handoffs: 0,
+        saved: 0, unsaved: 0, shared: 0, priceAlertsCreated: 0,
       };
       bySearch.set(searchId, item);
     }
@@ -101,6 +107,10 @@ export function activityOverviewRows(events: readonly ActivityRow[], limit = 10)
     } else if (event.stage === "RESULTS_VIEWED") item.resultsViewed++;
     else if (event.stage === "OFFER_SELECTED") item.offersSelected++;
     else if (event.stage === "PROVIDER_HANDOFF_STARTED") item.handoffs++;
+    else if (event.stage === "RESULT_SAVED") item.saved++;
+    else if (event.stage === "RESULT_UNSAVED") item.unsaved++;
+    else if (event.stage === "RESULT_SHARED") item.shared++;
+    else if (event.stage === "PRICE_ALERT_CREATED") item.priceAlertsCreated++;
   }
   const searches = [...bySearch.values()].sort((a, b) =>
     b.at.getTime() - a.at.getTime() || a.id.localeCompare(b.id));

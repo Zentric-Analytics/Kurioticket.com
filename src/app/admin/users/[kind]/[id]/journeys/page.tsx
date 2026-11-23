@@ -126,6 +126,18 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
   </div>;
 
   const operational = identity.data.source === "operational";
+  // Account-only actions are a separate authorized ledger, not an inferred
+  // search journey. Use the complete reader so the history is not silently
+  // truncated by the normal 20-row activity-page cursor. Never mix this
+  // section with a requested stage/provider filter that it cannot satisfy.
+  const accountActions = !operational && !scope.stage && !scope.provider
+    ? await loadAdminIdentityActivity(kind, id, {
+        ...activityFilters, tab: "all", stage: "ACCOUNT_ACTIVITY",
+      }, undefined, "all")
+    : null;
+  const otherActions = accountActions?.status === "ok"
+    ? accountActions.data.events.filter(event => event.stage === "ACCOUNT_ACTIVITY")
+    : [];
   const list = operational ? null : await adminJourneys.list(requested.input);
   const summary = list?.status === "ok"
     ? await adminJourneys.summary(list.data.scope)
@@ -276,5 +288,19 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
         </div> : null}
       </section>
     )}
+    {!operational && !scope.stage && !scope.provider ? (
+      accountActions?.status === "ok" && otherActions.length ? (
+        <section aria-label="Other recorded account actions" className="min-w-0 border-t border-[#D8E1EC] pt-4">
+          <h2 className="text-[16px] font-semibold">Other recorded account actions</h2>
+          <p className="mt-1 mb-3 text-[12px] text-[#64748B]">
+            Verified account actions without an eligible exact journey link are shown separately.
+            They are not assigned to searches by time, route or device.
+          </p>
+          <ActivityTimeline events={otherActions} nextHref={null} environment={environment} order="newest" />
+        </section>
+      ) : accountActions?.status !== "ok" ? (
+        <p role="status" className="text-[12px] text-[#64748B]">Other recorded account actions are temporarily unavailable; this does not mean there are no records.</p>
+      ) : null
+    ) : null}
   </div>;
 }

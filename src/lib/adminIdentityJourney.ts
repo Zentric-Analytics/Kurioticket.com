@@ -13,7 +13,8 @@ export type ActivityRow = {
   journeyId?: string;
   journeyStartedAt?: Date;
   dedupeKey?: string;
-  stage?: "SEARCH_COMPLETED" | "RESULTS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_HANDOFF_STARTED" | "ACCOUNT_ACTIVITY";
+  stage?: "SEARCH_COMPLETED" | "RESULTS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_HANDOFF_STARTED"
+    | "RESULT_SAVED" | "RESULT_UNSAVED" | "RESULT_SHARED" | "PRICE_ALERT_CREATED" | "ACCOUNT_ACTIVITY";
   product?: string | null;
   provider?: string | null;
   searchHistoryId?: string | null;
@@ -25,12 +26,14 @@ export type ActivityRow = {
 
 export type JourneyEventRecord = {
   id: string;
-  type: "SEARCH_COMPLETED" | "RESULTS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_HANDOFF_STARTED";
+  type: "SEARCH_COMPLETED" | "RESULTS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_HANDOFF_STARTED"
+    | "RESULT_SAVED" | "RESULT_UNSAVED" | "RESULT_SHARED" | "PRICE_ALERT_CREATED";
   product: string | null;
   provider: string | null;
   createdAt: Date;
   searchHistoryId: string | null;
   redirectLogId: string | null;
+  metadata?: unknown;
   journey: { id: string; visitorId: string; startedAt: Date };
   searchHistory: {
     visitorId: string | null;
@@ -122,6 +125,10 @@ const eventLabels = {
   RESULTS_VIEWED: "Results viewed",
   OFFER_SELECTED: "Offer selected",
   PROVIDER_HANDOFF_STARTED: "Provider handoff started",
+  RESULT_SAVED: "Result saved",
+  RESULT_UNSAVED: "Result unsaved",
+  RESULT_SHARED: "Result shared",
+  PRICE_ALERT_CREATED: "Price alert created",
 } satisfies Record<JourneyEventRecord["type"], string>;
 
 function displayProduct(product: string | null) {
@@ -149,11 +156,25 @@ export function toAdminJourneyActivity(event: JourneyEventRecord, kind: Identity
     : searchRoute(event.searchHistory?.origin, event.searchHistory?.destination);
   const provider = isHandoff ? (event.redirectLog?.provider ?? event.provider) : event.provider;
   const status = event.type === "SEARCH_COMPLETED" ? event.searchHistory?.status : null;
+  // Read only a closed list of actions from server-owned event metadata.
+  // Never put raw client metadata or a complete URL into an admin timeline.
+  const rawAction = event.metadata && typeof event.metadata === "object" && !Array.isArray(event.metadata)
+    ? (event.metadata as Record<string, unknown>).action : null;
+  const allowedActions: Partial<Record<JourneyEventRecord["type"], Record<string, string>>> = {
+    RESULT_SAVED: { local_saved: "Saved locally", saved_item_confirmed: "Saved to account" },
+    RESULT_UNSAVED: { local_unsaved: "Removed local save", saved_item_removed: "Removed saved item" },
+    RESULT_SHARED: { share_link_copied: "Result link copied", share_sheet_completed: "Share sheet completed" },
+    PRICE_ALERT_CREATED: { price_alert_created: "Price alert created" },
+  };
+  const action = typeof rawAction === "string" ? allowedActions[event.type]?.[rawAction] : undefined;
+  const label = event.type === "RESULT_SAVED" || event.type === "RESULT_UNSAVED"
+    || event.type === "RESULT_SHARED" || event.type === "PRICE_ALERT_CREATED"
+    ? action ?? eventLabels[event.type] : eventLabels[event.type];
   const detail = [product, route, provider, status].filter(Boolean).join(" · ");
 
   return {
     id: "j-" + event.id,
-    label: eventLabels[event.type],
+    label,
     detail: detail || "No additional details recorded",
     at: event.createdAt,
     journeyId: event.journey.id,

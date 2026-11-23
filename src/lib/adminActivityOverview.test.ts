@@ -55,6 +55,36 @@ test("recent searches split the same visitor journey by verified SearchHistory r
   assert.equal(rows.length,10,"never mutate, remove or backfill source records");
 });
 
+test("saved, unsaved, shared and alert creation are counted only against their exact search", () => {
+  const rows: ActivityRow[] = [
+    { ...row("search","journey-a","SEARCH_COMPLETED",new Date("2026-11-23T10:00:00Z"),"FLIGHT"),searchHistoryId:"flight-1" },
+    { ...row("save","journey-a","RESULT_SAVED",new Date("2026-11-23T10:01:00Z"),"FLIGHT"),searchHistoryId:"flight-1" },
+    { ...row("unsave","journey-a","RESULT_UNSAVED",new Date("2026-11-23T10:02:00Z"),"FLIGHT"),searchHistoryId:"flight-1" },
+    { ...row("share","journey-b","RESULT_SHARED",new Date("2026-11-23T10:03:00Z"),"FLIGHT"),searchHistoryId:"flight-1" },
+    { ...row("alert","journey-b","PRICE_ALERT_CREATED",new Date("2026-11-23T10:04:00Z"),"FLIGHT"),searchHistoryId:"flight-1" },
+    { ...row("other-search","journey-a","SEARCH_COMPLETED",new Date("2026-11-23T10:05:00Z"),"HOTEL"),searchHistoryId:"hotel-1" },
+    { ...row("orphan-save","journey-a","RESULT_SAVED",new Date("2026-11-23T10:06:00Z"),"HOTEL") },
+    { ...row("account","undefined","ACCOUNT_ACTIVITY",new Date("2026-11-23T10:07:00Z"),"HOTEL"),journeyId:undefined,label:"Price alert paused" },
+  ];
+  const result=activityOverviewRows(rows);
+  assert.equal(result.matchingSearchCount,2);
+  assert.equal(result.matchingJourneyCount,2);
+  const flight=result.searches.find(item=>item.id==="flight-1")!;
+  assert.equal(flight.eventCount,5);
+  assert.equal(flight.saved,1);
+  assert.equal(flight.unsaved,1);
+  assert.equal(flight.shared,1);
+  assert.equal(flight.priceAlertsCreated,1);
+  assert.equal(flight.resultsViewed,0);
+  assert.equal(flight.handoffs,0);
+  const hotel=result.searches.find(item=>item.id==="hotel-1")!;
+  assert.equal(hotel.saved,0);
+  assert.equal(hotel.unsaved,0);
+  assert.equal(result.unlinkedStageCount,1);
+  assert.equal(result.otherCount,1);
+  assert.equal(result.other[0].label,"Price alert paused");
+});
+
 test("verified stages stay on the same search across a visitor journey rollover", () => {
   const rows: ActivityRow[] = [
     { ...row("search-event","first-journey","SEARCH_COMPLETED",new Date("2026-11-23T08:00:00Z"),"FLIGHT"),searchHistoryId:"same-search" },
@@ -114,6 +144,11 @@ test("recent search presentation is informational and leaves full Journey Histor
   assert.match(component,/search\.route/);
   assert.match(component,/search\.platform/);
   assert.match(component,/search\.resultCount/);
+  assert.match(component,/search\.saved/);
+  assert.match(component,/search\.unsaved/);
+  assert.match(component,/search\.shared/);
+  assert.match(component,/search\.priceAlertsCreated/);
+  assert.match(component,/Other recorded account actions/);
   assert.match(component,/Search record only/);
   assert.match(component,/View Journey History/);
   assert.doesNotMatch(component,/completeJourneyDetailHref|View journey for /);

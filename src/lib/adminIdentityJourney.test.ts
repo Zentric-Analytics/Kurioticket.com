@@ -41,6 +41,39 @@ test("recorded search and handoff stages use safe fields without raw metadata", 
   assert.equal(handoff?.label, "Provider handoff started");
 });
 
+test("existing saved, unsaved, shared and alert-created events retain exact search attribution", () => {
+  const cases = [
+    { type: "RESULT_SAVED", action: "saved_item_confirmed", label: "Saved to account" },
+    { type: "RESULT_UNSAVED", action: "saved_item_removed", label: "Removed saved item" },
+    { type: "RESULT_SHARED", action: "share_link_copied", label: "Result link copied" },
+    { type: "RESULT_SHARED", action: "share_sheet_completed", label: "Share sheet completed" },
+    { type: "PRICE_ALERT_CREATED", action: "price_alert_created", label: "Price alert created" },
+  ] as const;
+  for (const item of cases) {
+    const recorded = toAdminJourneyActivity({
+      ...sample, type: item.type, metadata: { action: item.action,
+        customerEmail: "private@invalid.example", recipient: "private" },
+    }, "guest", "visitor-1");
+    assert.equal(recorded?.label, item.label);
+    assert.equal(recorded?.searchHistoryId, "search-1");
+    assert.equal(recorded?.journeyId, "journey-1");
+    assert.doesNotMatch(recorded?.detail ?? "", /customerEmail|recipient|private/);
+    assert.equal(toAdminJourneyActivity({
+      ...sample, type: item.type, metadata: { action: item.action },
+      searchHistory: { ...sample.searchHistory!, visitorId: "another-visitor" },
+    }, "guest", "visitor-1"), null);
+    assert.equal(toAdminJourneyActivity({
+      ...sample, type: item.type, metadata: { action: item.action },
+      searchHistoryId: null, searchHistory: null,
+    }, "guest", "visitor-1"), null);
+  }
+  const unknown = toAdminJourneyActivity({
+    ...sample, type: "RESULT_SHARED", metadata: { action: "unknown_secret_action" },
+  }, "guest", "visitor-1");
+  assert.equal(unknown?.label, "Result shared");
+  assert.doesNotMatch(unknown?.detail ?? "", /secret/);
+});
+
 test("canonical journey stage replaces duplicate older search but retains unrepresented history", () => {
   const j = toAdminJourneyActivity({ ...sample, type: "SEARCH_COMPLETED" }, "guest", "visitor-1")!;
   const events = mergeAdminActivity([j], [
