@@ -1,3 +1,5 @@
+import { adminTodayStart } from "@/lib/adminTimeZone";
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import Link from "next/link";
 import { platformOptions } from "@/lib/platformHealthPresentation";
 import { redirect } from "next/navigation";
@@ -41,7 +43,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
   const providerOptions = buildAdminSearchProviderOptions(getProviderIntegrationStatuses(), one(raw.provider) || null);
   const referenceNow = new Date().toISOString();
   const range = resolveRange(raw);
-  const params = toBackendParams(raw, range);
+  const params = toBackendParams(raw, range, await getAdminTimeZone());
   params.set("environment", currentEnvironment);
   const listParams = new URLSearchParams(params);
   listParams.set("limit", "100");
@@ -192,7 +194,7 @@ function resolveRange(raw: Record<string, string | string[] | undefined>): Range
   return "today";
 }
 
-function toBackendParams(raw: Record<string, string | string[] | undefined>, range: RangeKey) {
+function toBackendParams(raw: Record<string, string | string[] | undefined>, range: RangeKey, timeZone = "UTC") {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(raw)) {
     if (key === "range" || key === "cursor" || key === "limit") continue;
@@ -209,7 +211,7 @@ function toBackendParams(raw: Record<string, string | string[] | undefined>, ran
     const now = new Date();
     const from = new Date(now);
     if (range === "24h") from.setTime(now.getTime() - 24 * 60 * 60 * 1000);
-    if (range === "today") from.setUTCHours(0, 0, 0, 0);
+    if (range === "today") from.setTime(adminTodayStart(now, timeZone).getTime());
     if (range === "7d") from.setUTCDate(from.getUTCDate() - 7);
     if (range === "30d") from.setUTCDate(from.getUTCDate() - 30);
     params.set("from", from.toISOString());
