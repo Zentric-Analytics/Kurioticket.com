@@ -13,6 +13,7 @@ export async function readPlatformSearchActivity(from: Date, to: Date) {
   const environment = getPublicEnvironment();
   const window = { from: from.toISOString(), to: to.toISOString() };
   let searches: ReturnType<typeof partitionOperationalGroups>["searches"] | null = null;
+  let verifiedBotAttempts: number | null = null;
   try {
     const db = getOptionalPrisma();
     if (db) {
@@ -23,11 +24,26 @@ export async function readPlatformSearchActivity(from: Date, to: Date) {
         WHERE "createdAt" >= ${from} AND "createdAt" < ${to}
           AND query->>'environment' = ${environment}
         GROUP BY 1, 2, 3
+        UNION ALL
+        SELECT 'crawlerBlocks' AS kind, 'CRAWLER' AS source,
+          'DISABLED' AS status, COUNT(*) AS count, 0 AS latency
+        FROM "ApiProviderLog"
+        WHERE "createdAt" >= ${from} AND "createdAt" < ${to}
+          AND metadata->>'environment' = ${environment}
+          AND service = 'crawler-blocked-search'
+          AND metadata->>'applicationSource' = 'CRAWLER'
+          AND status::text = 'DISABLED'
+          AND provider IN ('GOOGLEBOT', 'BINGBOT')
       `;
+      const verifiedRows = rows.filter(row => row.kind === "crawlerBlocks");
+      if (verifiedRows.length !== 1) throw new Error("Verified crawler count unavailable");
+      const total = Number(verifiedRows[0].count);
+      if (!Number.isSafeInteger(total) || total < 0) throw new Error("Invalid verified crawler count");
       searches = partitionOperationalGroups(rows).searches;
+      verifiedBotAttempts = total;
     }
   } catch { /* Failed reads do not describe an empty window. */ }
-  return { environment, window, searches };
+  return { environment, window, searches, verifiedBotAttempts };
 }
 
 /** Aggregate-only operational read. No account IDs, device IDs, raw errors,
@@ -58,6 +74,7 @@ export async function readPlatformOperations(hours = 24, period: "today" | "roll
         FROM "ApiProviderLog" WHERE "createdAt" >= ${from} AND "createdAt" < ${to}
           AND metadata->>'environment' = ${environment}
           AND service = 'crawler-blocked-search' AND metadata->>'applicationSource' = 'CRAWLER'
+          AND status::text = 'DISABLED' AND provider IN ('GOOGLEBOT', 'BINGBOT')
       `,
       tx.apiProviderLog.findMany({ where: { service: "scheduled-job", metadata: { path: ["environment"], equals: environment }, createdAt: { gte: from, lt: to } }, select: { provider: true, status: true, createdAt: true, metadata: true, latencyMs: true }, orderBy: { createdAt: "desc" }, take: 100 }),
     ]), { isolationLevel: "RepeatableRead" });
