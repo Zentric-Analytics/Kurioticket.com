@@ -33,7 +33,7 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
               </td>
               <td className="px-3 py-3 [overflow-wrap:anywhere]">
                 <span className="block text-[11px] font-semibold tabular-nums text-[#64748B]">Step {index + 1}</span>
-                <span className="mt-1 inline-flex rounded-md border border-[#D8E1EC] bg-white px-2 py-1 text-[11px] font-medium text-[#475569]">{event.type === "RESULT_SHARED"
+                <span className="mt-1 inline-flex rounded-md border border-[#D8E1EC] bg-white px-2 py-1 text-[11px] font-medium text-[#475569]">{event.type === "RESULTS_VIEWED" ? "Results page viewed" : event.type === "RESULT_SHARED"
                   ? event.action === "share_link_copied" ? "Result link copied" : event.action === "share_sheet_completed" ? "Share sheet completed" : "Result shared"
                    : event.type === "PRICE_ALERT_CREATED" ? "Price alert created"
                   : event.type === "RESULT_SAVED"
@@ -60,6 +60,14 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
                   bestValue: "Best value", topRated: "Top rated", recommended: "Recommended", lowestTotal: "Lowest total price", price: "Cheapest", duration: "Fastest", "departure-asc": "Earliest departure", "departure-desc": "Latest departure",
                 } as Record<string, string>)[event.sortChoice] ?? "Not recorded"}</p>
                   : event.sortMode ? <p className="mt-1 text-xs text-[#64748B]">Sort category: {readable(event.sortMode)}</p> : null}
+                {event.observedResult ? <div className="mt-2 space-y-1 rounded-lg border border-[#E7ECF5] px-2.5 py-2 text-xs text-[#334155]">
+                  <p className="font-medium text-[#020617]">Result shown when details opened</p>
+                  <p>{event.observedResult.label} · {event.observedResult.provider}</p>
+                  <p>Displayed quote: {event.observedResult.currency} {event.observedResult.amount.toLocaleString("en", { maximumFractionDigits: 2 })}
+                    {event.observedResult.priceBasis === "per_night" ? " per night" : event.observedResult.priceBasis === "per_day" ? " per day" : " total"}</p>
+                  {event.observedResult.totalAmount !== undefined ? <p>Displayed total: {event.observedResult.currency} {event.observedResult.totalAmount.toLocaleString("en", { maximumFractionDigits: 2 })}</p> : null}
+                  <p className="text-[#64748B]">Captured from the displayed result at this action; not independently confirmed by the provider.</p>
+                </div> : null}
                 {event.alertDetails ? <div className="mt-2 space-y-1 text-xs text-[#475569]">
                   <p>Alert mode: {event.alertDetails.mode === "TARGET" ? "Target price" : "Automatic price tracking"}</p>
                   <p>Selected target: {event.alertDetails.targetPrice ? `${event.alertDetails.currency} ${event.alertDetails.targetPrice}` : "Not set"}</p>
