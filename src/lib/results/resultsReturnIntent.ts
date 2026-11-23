@@ -61,6 +61,15 @@ function readReturnMarker(
   } catch { return false; }
 }
 
+/** An explicit new flight search or non-return exit from details must not
+ * inherit an old browser-Back token, even when its criteria are identical. */
+export function clearResultsReturn(
+  product: ResultsProduct, storage: StorageLike | null = browserStorage(),
+) {
+  if (!storage) return;
+  try { storage.removeItem(PREFIX + product); } catch { /* optional storage */ }
+}
+
 /** Read the intent without consuming it, for a companion provider component
  * that must decide whether to fetch before FlightResultsClient effects run. */
 export function peekResultsReturn(
