@@ -1992,7 +1992,7 @@ const HotelCard = memo(function HotelCard({
             accessibilityLabel={saved ? `Remove ${result.name} from saved` : `Save ${result.name}`}
             accessibilityState={{ selected: saved }}
             disabled={!hasPrice && !saved}
-            onPress={(event) => { event.stopPropagation(); void canonical.toggleHotel(result, params); }}
+            onPress={(event) => { event.stopPropagation(); void canonical.toggleHotel(result, params, requestId); }}
             style={[s0.hotelAction, s0.hotelSaveAction]}
           >
             <Heart
