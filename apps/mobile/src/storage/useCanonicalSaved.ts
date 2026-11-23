@@ -36,7 +36,9 @@ export function useCanonicalSaved() {
         ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === hotel.id);
       await repository.toggleHotel(hotel, params);
       void recordNativeSavedInteraction({ action: wasSaved ? "saved_item_removed" : "saved_item_confirmed",
-        product: "HOTEL", resultId: hotel.id, requestId: journeyRequestId });
+        product: "HOTEL", resultId: hotel.id, requestId: journeyRequestId,
+        observedResult: { label: hotel.name, provider: hotel.provider, amount: Number(hotel.totalPrice),
+          currency: hotel.currency, priceBasis: "total" } });
     },
     toggleCar: async (car: import("../api/travelApi").CarResult, params: Record<string, unknown>, journeyRequestId?: string | null) => {
       if (favoriteAction(userId) === "sign-in" || !userId) {
@@ -49,7 +51,10 @@ export function useCanonicalSaved() {
       const wasSaved = repository.snapshot().cars.has(signature);
       await repository.toggleCar(car, params);
       void recordNativeSavedInteraction({ action: wasSaved ? "saved_item_removed" : "saved_item_confirmed",
-        product: "CAR", resultId: car.id, requestId: journeyRequestId });
+        product: "CAR", resultId: car.id, requestId: journeyRequestId,
+        observedResult: car.offers[0] ? { label: car.modelName,
+          provider: car.offers[0].bookingProviderName || car.offers[0].rentalCompanyName || car.rentalCompanyName || "",
+          amount: car.offers[0].totalPrice, currency: car.offers[0].currency, priceBasis: "total" } : undefined });
     },
     remove: async (type: "flight" | "hotel" | "car" | "search", id: string) => { if (userId) await savedRepositoryFor(userId).remove(type, id); },
     refresh: async () => { if (userId) await savedRepositoryFor(userId).refresh(); },
