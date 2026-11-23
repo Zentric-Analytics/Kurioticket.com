@@ -100,6 +100,7 @@ export function useHotelDestinationAutocomplete({
         if (requestLocale) params.set("locale", requestLocale);
 
         const response = await fetch(`/api/hotels/destinations?${params.toString()}`, {
+          headers: { "x-sandbox-results-policy": "1" },
           signal: controller.signal,
           cache: "no-store",
         });

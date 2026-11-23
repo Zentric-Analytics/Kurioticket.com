@@ -62,7 +62,7 @@ export async function searchFlightPlaces(query: string, options: { context?: "or
 
 export async function searchCarLocations(query: string, options: { limit?: number; signal?: AbortSignal } = {}) {
   const params = new URLSearchParams({ q: query.trim(), limit: String(options.limit ?? 8) });
-  const response = await fetch(apiUrl(`/api/cars/locations?${params}`), { headers: { Accept: "application/json" }, signal: options.signal });
+  const response = await fetch(apiUrl(`/api/cars/locations?${params}`), { headers: { Accept: "application/json", "x-sandbox-results-policy": "1" }, signal: options.signal });
   if (!response.ok) throw new Error("Car locations could not be loaded.");
   const body: unknown = await response.json();
   if (!record(body) || !Array.isArray(body.suggestions)) return [];

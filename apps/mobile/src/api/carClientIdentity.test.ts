@@ -70,3 +70,15 @@ test("production display capability is opt-in and preserves actual Android ident
   await h.api.searchFlights({});
   assert.equal(new Headers(h.calls.at(-1)!.init.headers).get("x-sandbox-results-policy"), null);
 });
+
+test("hotel destination discovery opts into production sandbox policy without changing client identity", async () => {
+  for (const platform of ["android", "ios"]) {
+    const h = fixture(platform, "0.3.0", "https://kurioticket.com");
+    await h.api.searchHotelDestinations("New York", { locale: "en-US", limit: 8 });
+    assert.match(h.calls[0].url, /\/api\/hotels\/destinations\?q=New\+York&limit=8&locale=en-US$/);
+    const headers = new Headers(h.calls[0].init.headers);
+    assert.equal(headers.get("x-sandbox-results-policy"), "1");
+    assert.equal(headers.get("User-Agent"), null);
+    assert.equal(headers.get("Authorization"), "Bearer test-session");
+  }
+});

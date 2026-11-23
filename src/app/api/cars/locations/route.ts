@@ -3,6 +3,7 @@ import { discoverLocations } from "@/lib/locations/discovery";
 import { availableDiscoveryAdapters } from "@/lib/locations/providerDiscoveryAdapters";
 import { getCanonicalCarLocationCatalog } from "@/lib/cars/carLocationSuggestions";
 import type { CanonicalLocation } from "@/lib/locations/types";
+import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,10 @@ const toCarSuggestionKind = (canonical: CanonicalLocation): CarLocationSuggestio
 };
 
 export async function GET(request: Request) {
+  return withProductionSandboxRequest(request, () => discoverCarLocations(request));
+}
+
+async function discoverCarLocations(request: Request) {
   const url = new URL(request.url);
   const q = (url.searchParams.get("q") ?? "").trim().replace(/\s+/g, " ").slice(0, 120);
   const parsedLimit = Number.parseInt(url.searchParams.get("limit") ?? "8", 10);
