@@ -5,6 +5,7 @@ import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakCarCardModel } from "./kayakCardModels";
 import { groupKayakCarResults } from "@/lib/cars/carResults";
 import { resultActionHref } from "@/lib/travel/resultAction";
+import { rememberResultsScroll } from "@/lib/results/resultsReturnScroll";
 
 import {
   useCallback,
@@ -1833,6 +1834,12 @@ export function CarsResultsClient({
 
       <div
         ref={resultsGridRef}
+        onClickCapture={event => {
+          const target = event.target;
+          if (!(target instanceof Element)) return;
+          const link = target.closest('a[href*="/cars/details/"]');
+          if (link) rememberResultsScroll("car", window.scrollY);
+        }}
         data-cars-results-scroll-region
         data-cars-results-hotel-column
         className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-0 sm:pt-6 lg:mt-0 lg:max-w-[928px] lg:rounded-2xl lg:border lg:border-[#E1E6EA] lg:bg-white lg:px-5 lg:pb-7 lg:pt-7 lg:shadow-[0_2px_8px_rgba(25,32,36,0.04)]"
