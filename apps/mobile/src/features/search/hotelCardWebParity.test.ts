@@ -56,7 +56,7 @@ test("hotel card galleries keep plain arrows and a native light-glass image coun
 
 test("hotel actions independently save and share without share navigation", () => {
   assert.match(card, /<Heart\s/);
-  assert.match(card, /canonical\.toggleHotel\(result, params\)/);
+  assert.match(card, /canonical\.toggleHotel\(result, params, requestId\)/);
   assert.match(card, /accessibilityState=\{\{ selected: saved \}\}/);
   assert.match(card, /<Share2 /);
   assert.match(card, /Share\.share\(\{ message \}\)/);
