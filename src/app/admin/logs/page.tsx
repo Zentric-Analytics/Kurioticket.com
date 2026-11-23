@@ -1,3 +1,5 @@
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
+import { adminTodayStart, adminCalendarDayStart, adminCalendarNextDayStart } from "@/lib/adminTimeZone";
 import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 
@@ -30,7 +32,7 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
   const range = normalizeRange(one(raw.range));
   const fromDate = one(raw.fromDate);
   const toDate = one(raw.toDate);
-  const params = auditParams(raw, range, now);
+  const params = auditParams(raw, range, now, await getAdminTimeZone());
   const result = await adminAuditReads.list(params);
   const pageHref = currentHref(raw, range);
 
@@ -189,7 +191,7 @@ function normalizeRange(value: string): AuditRange {
   return value === "today" || value === "24h" || value === "7d" || value === "30d" || value === "all" || value === "90d" || value === "custom" ? value : "today";
 }
 
-function auditParams(raw: Record<string, string | string[] | undefined>, range: AuditRange, now: Date) {
+function auditParams(raw: Record<string, string | string[] | undefined>, range: AuditRange, now: Date, timeZone = "UTC") {
   const params = new URLSearchParams();
   const pageOnlyKeys = new Set(["range", "fromDate", "toDate"]);
 
@@ -208,8 +210,8 @@ function auditParams(raw: Record<string, string | string[] | undefined>, range: 
   if (range === "custom") {
     const fromDate = one(raw.fromDate);
     const toDate = one(raw.toDate);
-    params.set("from", /^\d{4}-\d{2}-\d{2}$/.test(fromDate) ? fromDate + "T00:00:00.000Z" : fromDate);
-    params.set("to", customEndIso(toDate, now));
+    params.set("from", /^\d{4}-\d{2}-\d{2}$/.test(fromDate) ? adminCalendarDayStart(fromDate, timeZone).toISOString() : fromDate);
+    params.set("to", customEndIso(toDate, now, timeZone));
     return params;
   }
 
@@ -224,16 +226,15 @@ function auditParams(raw: Record<string, string | string[] | undefined>, range: 
       : range === "90d" ? 90 * 24 * 60 * 60 * 1000
         : 7 * 24 * 60 * 60 * 1000;
   params.set("from", (range === "today"
-    ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+    ? adminTodayStart(now, timeZone)
     : new Date(now.getTime() - durationMs)).toISOString());
   params.set("to", now.toISOString());
   return params;
 }
 
-function customEndIso(value: string, now: Date) {
+function customEndIso(value: string, now: Date, timeZone: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  const end = new Date(value + "T00:00:00.000Z");
-  end.setUTCDate(end.getUTCDate() + 1);
+  const end = adminCalendarNextDayStart(value, timeZone);
   return new Date(Math.min(end.getTime(), now.getTime())).toISOString();
 }
 
