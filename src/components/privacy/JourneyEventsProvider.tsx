@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { analyticsConsentAccountKey, analyticsConsentChangedEvent, analyticsConsentStorageKey, hasAnalyticsDenial, parseAnalyticsConsent } from "@/lib/analyticsConsentClient";
 import { createJourneyEventSender, forgetJourneySelections, journeyRequestId, readJourneySelection, rememberJourneySelection } from "@/lib/journeyEventClient";
 import { createProviderHandoffMetadata, type ProviderHandoffMetadataReader } from "@/lib/providerHandoffClient";
-import type { ClientJourneyDecisionType, JourneyFilterGroup, JourneySortMode, JourneySortChoice } from "@/lib/search-journey";
+import type { ClientJourneyDecisionType, JourneyFilterGroup, JourneySortMode, JourneySortChoice, JourneyFilterSelection } from "@/lib/search-journey";
 
 function browserAllowsAnalytics() {
   try { return !hasAnalyticsDenial(document.cookie) && parseAnalyticsConsent(window.localStorage.getItem(analyticsConsentStorageKey)) === "granted"; }
@@ -19,7 +19,7 @@ type Recorder = {
   prepareHandoff: (product: "flight" | "hotel", resultId: string) => ProviderHandoffMetadataReader;
   interactionRequestId: (product: "flight" | "hotel", resultId: string, explicit?: string | null) => string | null;
   workflowDecision: (type: ClientJourneyDecisionType, requestId: string | null | undefined, detail?: {
-    sourcePage?: string; offerId?: string; filterGroup?: JourneyFilterGroup; sortMode?: JourneySortMode; sortChoice?: JourneySortChoice;
+    sourcePage?: string; offerId?: string; filterGroup?: JourneyFilterGroup; sortMode?: JourneySortMode; sortChoice?: JourneySortChoice; filterSelections?: JourneyFilterSelection[];
   }) => void;
 };
 const browserActionId = () => crypto.randomUUID();
@@ -99,7 +99,8 @@ export function JourneyEventsProvider({ children }: { children: ReactNode }) {
         ...(detail?.offerId ? { offerId: detail.offerId } : {}),
         ...(detail?.filterGroup ? { filterGroup: detail.filterGroup } : {}),
         ...(detail?.sortMode ? { sortMode: detail.sortMode } : {}),
-        ...(detail?.sortChoice ? { sortChoice: detail.sortChoice } : {}) });
+        ...(detail?.sortChoice ? { sortChoice: detail.sortChoice } : {}),
+        ...(detail?.filterSelections ? { filterSelections: detail.filterSelections } : {}) });
     },
     rememberDetailsContext(product, resultId, requestId) {
       if (!browserAllowsAnalytics()) return;
