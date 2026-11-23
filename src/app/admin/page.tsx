@@ -1,3 +1,4 @@
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import { redirect } from "next/navigation";
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import { AdminOverviewDashboard, AdminOverviewSecondary, SearchPerformanceSummary } from "@/components/admin/AdminOverviewDashboard";
@@ -25,7 +26,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const access = await requireAdminApiSession();
   if ("response" in access && access.response) redirect("/dashboard");
 
-  const reporting = resolveOverviewRange(await searchParams);
+  const reporting = resolveOverviewRange(await searchParams, new Date(), await getAdminTimeZone());
   const query = new URLSearchParams({ from: reporting.from.toISOString(), to: reporting.to.toISOString() });
   const [overview, system, activity, platform, incidents] = await Promise.all([
     getAdminOverview(query),
@@ -50,7 +51,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </div>
           {reporting.invalidCustom ? (
             <p role="alert" className="mb-3 text-xs text-rose-800">
-              Choose valid UTC dates within a 90-day range. Showing today (UTC).
+              Choose valid local dates within a 90-day range. Showing today in your time zone.
             </p>
           ) : null}
           <div className="mb-3 grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
