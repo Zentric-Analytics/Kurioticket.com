@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { readKayakOffer, type StoredKayakOffer } from "@/components/results/kayakOfferStorage";
+import { useResultsReturnIntent } from "@/components/results/useResultsReturnIntent";
 
 export function KayakSandboxDetails({id}:{id:string}) {
   const [stored,setStored]=useState<StoredKayakOffer|null|undefined>(undefined);
@@ -12,10 +13,13 @@ export function KayakSandboxDetails({id}:{id:string}) {
     queueMicrotask(()=>{ if (active) setStored(readKayakOffer(sessionStorage,id)); });
     return ()=>{ active=false; };
   },[id]);
+  const flightResultsHref = stored?.vertical === "flights" ? stored.resultsHref ?? "" : "";
+  useResultsReturnIntent("flight", flightResultsHref);
   if (stored === undefined) return <p role="status">Loading result details…</p>;
   if (!stored) return <div className="rounded-xl border bg-white p-6"><h1 className="text-2xl font-bold">Result details are no longer available</h1><p className="mt-2">Return to the search results and open this offer again.</p><Link className="mt-4 inline-block text-[#004BB8] underline" href="/">Start a new search</Link></div>;
   const {offer,vertical}=stored;
   return <article className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    {flightResultsHref ? <Link href={flightResultsHref} className="inline-flex min-h-10 items-center text-sm font-semibold text-[#004BB8] underline">Back to flight results</Link> : null}
     <p className="text-sm font-semibold text-amber-800">KAYAK sandbox</p>
     <div><p className="text-sm uppercase text-slate-500">{vertical.slice(0,-1)} result</p><h1 className="text-3xl font-bold">{offer.title}</h1><p className="mt-2">{offer.description}</p></div>
     {offer.images?.length ? <div className="grid gap-3 sm:grid-cols-2">{offer.images.map((image,index)=><div key={image.url} className="relative aspect-[16/10] overflow-hidden rounded-xl bg-slate-100"><Image src={image.url} alt={image.alt} fill priority={index===0} className="object-cover" /></div>)}</div> : null}
