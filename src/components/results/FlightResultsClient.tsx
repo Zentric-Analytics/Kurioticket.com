@@ -2789,7 +2789,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setBackgroundRefreshing(false);
     setFiltersReadySearchKey(null);
     setMainInventoryRetryGeneration((generation) => generation + 1);
-  }, []);
+    // Explicit Search again revalidates both suppliers. Browser Back never
+    // invokes either of these provider requests.
+    if (!guidedMode && kayak?.vertical === "flights") kayak.retry?.();
+  }, [guidedMode, kayak]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 639px)");
