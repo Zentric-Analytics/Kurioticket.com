@@ -1015,10 +1015,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [restoredFlightView, setRestoredFlightView] = useState<FlightResultsReturnView | null>(null);
   // The return view freezes KAYAK's original offers instead of letting a
   // separate provider fetch replace the rows while mobile results remount.
-  const displayedKayakOffers = restoredFlightView?.kayakOffers ??
-    (kayak?.vertical === "flights" ? kayak.offers : []);
-  const displayedKayakCriteria = restoredFlightView?.kayakCriteria ??
-    (kayak?.vertical === "flights" ? kayak.criteria : {});
+  const displayedKayakOffers = useMemo(
+    () => restoredFlightView?.kayakOffers ?? (kayak?.vertical === "flights" ? kayak.offers : []),
+    [restoredFlightView, kayak],
+  );
+  const displayedKayakCriteria = useMemo(
+    () => restoredFlightView?.kayakCriteria ?? (kayak?.vertical === "flights" ? kayak.criteria : {}),
+    [restoredFlightView, kayak],
+  );
   const results = useMemo(() => guidedMode ? providerResults : [
     ...providerResults,
     ...displayedKayakOffers.map(offer => kayakFlightCardModel(offer, displayedKayakCriteria))
