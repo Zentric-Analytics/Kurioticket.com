@@ -7,6 +7,8 @@ export type SearchScopedEvent = {
   stage: "SEARCH_COMPLETED" | "RESULTS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_HANDOFF_STARTED";
   occurredAt: string;
   provider: string | null;
+  /** Verified handoff details only; no unverified offer selection or destination URL. */
+  handoff: { route: string | null; price: string | null; currency: string | null } | null;
 };
 
 export type SearchScopedActivityResult =
@@ -35,7 +37,7 @@ const searchSelect = {
 
 const eventSelect = {
   id: true, type: true, product: true, provider: true, createdAt: true, redirectLogId: true,
-  redirectLog: { select: { provider: true } },
+  redirectLog: { select: { provider: true, route: true, price: true, currency: true } },
 } satisfies Prisma.JourneyEventSelect;
 
 type SearchRecord = Prisma.SearchHistoryGetPayload<{ select: typeof searchSelect }>;
@@ -175,6 +177,13 @@ export function createAdminSearchScopedActivityReader(deps: Dependencies) {
           stage: event.type,
           occurredAt: event.createdAt.toISOString(),
           provider: event.provider?.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 100) || null,
+          handoff: event.type === "PROVIDER_HANDOFF_STARTED" && event.redirectLog
+            ? {
+                route: event.redirectLog.route?.replace(/[\\u0000-\\u001f\\u007f]/g, " ").trim().slice(0, 160) || null,
+                price: event.redirectLog.price === null ? null : String(event.redirectLog.price),
+                currency: /^[A-Z]{3}$/.test(event.redirectLog.currency) ? event.redirectLog.currency : null,
+              }
+            : null,
         }));
       const last = page.at(-1);
       return { status: "ok", data: {
