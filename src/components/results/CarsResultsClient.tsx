@@ -73,7 +73,7 @@ import type {
 } from "@/lib/cars/types";
 import type { CarLocationSuggestion } from "@/lib/cars/carLocationSuggestions";
 import { serializeCarLocationTarget } from "@/lib/cars/carSearchLocationTarget";
-import { carFilterGroups, carQuickFilterGroupIds, type CarFilterGroup } from "@/lib/cars/carFilterPresentation";
+import { carFilterGroups, carQuickFilterGroupIds, carJourneyFilterSelections, type CarFilterGroup } from "@/lib/cars/carFilterPresentation";
 import { getSelectedCarFiltersSignature } from "@/lib/cars/carFilterSelection";
 import { formatCarsCompactTimeRange, toTimeValue, validateCarsForm } from "@/lib/cars/carsSearchUtils";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
@@ -2188,7 +2188,9 @@ export function CarsResultsExperience({
       mobileFilterDrawerInitialFiltersRef.current !==
       getSelectedCarFiltersSignature(selectedCarFiltersRef.current);
     if (filtersChanged) {
-      journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", requestId, { filterGroup: "all" });
+      journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", requestId, {
+        filterGroup: "all", filterSelections: carJourneyFilterSelections(selectedCarFiltersRef.current),
+      });
       startFilterResultsTransition();
     }
     setFiltersOpen(false);
@@ -3217,7 +3219,10 @@ export function CarsResultsExperience({
               style={{ paddingBottom: "max(12px, calc(env(safe-area-inset-bottom, 0px) - 12px))" }}
             >
               <button type="button" onClick={() => { if (quickFilterGroupId === "sort") setQuickSortDraft("recommended"); else setQuickFilterDraft([]); }} className="h-11 w-[32%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-sm font-semibold text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">Reset</button>
-              <button type="button" onClick={() => { startFilterResultsTransition(); if (quickFilterGroupId === "sort") { if (sort !== quickSortDraft) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", requestId, { sortMode: normalizeJourneySortMode(quickSortDraft), sortChoice: normalizeJourneySortChoice(quickSortDraft) }); setSort(quickSortDraft); } else { journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", requestId, { filterGroup: "other" }); setSelectedCarFilters((current) => { const next = { ...current }; if (quickFilterDraft.length) next[quickFilterGroupId] = [...quickFilterDraft]; else delete next[quickFilterGroupId]; return next; }); } closeQuickFilter(); }} className="h-11 w-[32%] shrink-0 rounded-lg bg-[#004BB8] px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2">
+              <button type="button" onClick={() => { startFilterResultsTransition(); if (quickFilterGroupId === "sort") { if (sort !== quickSortDraft) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", requestId, { sortMode: normalizeJourneySortMode(quickSortDraft), sortChoice: normalizeJourneySortChoice(quickSortDraft) }); setSort(quickSortDraft); } else { journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", requestId, {
+                filterGroup: "other",
+                filterSelections: carJourneyFilterSelections({ ...selectedCarFilters, [quickFilterGroupId ?? ""]: quickFilterDraft }),
+              }); setSelectedCarFilters((current) => { const next = { ...current }; if (quickFilterDraft.length) next[quickFilterGroupId] = [...quickFilterDraft]; else delete next[quickFilterGroupId]; return next; }); } closeQuickFilter(); }} className="h-11 w-[32%] shrink-0 rounded-lg bg-[#004BB8] px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2">
                 Apply
               </button>
             </footer>
