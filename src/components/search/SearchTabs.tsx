@@ -40,6 +40,7 @@ import { PackagesIcon } from "@/components/icons/PackagesIcon";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { clearResultsReturn } from "@/lib/results/resultsReturnIntent";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
@@ -2133,6 +2134,7 @@ export function SearchTabs({
     }
 
     setIsFlightSubmitting(true);
+    clearResultsReturn("flight");
     startRouteProgress();
     router.push(href);
   };
