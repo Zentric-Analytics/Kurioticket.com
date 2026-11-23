@@ -82,7 +82,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     const sql = adminIdentityPageSql({
       query: q, role, status, showUsers, showGuests,
       showOperationalGuests: showGuests, withOperationalSummary: true,
-      environment, sort, date, from, to, now,
+      environment, sort, date, from, to, now, timeZone,
       limit: Math.max(1, countBeforeOperational), offset: 0, allIdentities: true,
     });
     const fetched: AdminIdentityDirectoryRow[] = sql ? await db.$queryRaw<AdminIdentityDirectoryRow[]>(sql) : [];
