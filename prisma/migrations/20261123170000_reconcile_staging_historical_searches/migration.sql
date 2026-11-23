@@ -71,7 +71,8 @@ batches AS (
     COUNT(DISTINCT s.type)::int AS products,
     EXTRACT(EPOCH FROM MAX(s."createdAt")-MIN(s."createdAt")) AS span
   FROM "SearchHistory" s
-  WHERE s."createdAt" >= TIMESTAMPTZ '2026-11-16T14:27:53Z'
+  WHERE current_database() = 'kurioticket_web_staging'
+    AND s."createdAt" >= TIMESTAMPTZ '2026-11-16T14:27:53Z'
     AND s."createdAt" < TIMESTAMPTZ '2026-11-23T14:27:53Z'
     AND s.query->>'environment' = 'staging'
     AND s.query->>'applicationSource' = 'UNKNOWN'
@@ -108,8 +109,76 @@ SET "countAsSearch" = (r.rn = 1),
             'countingRule','ONE_PARENT_SEARCH_PER_NEARBY_BATCH'))
 FROM ranked r
 WHERE s.id = r.id
+  AND current_database() = 'kurioticket_web_staging'
   AND s."countAsSearch" = TRUE
   AND s.query->>'applicationSource' = 'UNKNOWN';
 
--- Exact, timestamp-correlated singleton search corrections are appended below.
+-- Unambiguous one-to-one matches: single recorded HOTEL search with exactly
+-- one Googlebot POST in the +/-2.5-second request-log correlation window.
+-- These searches ran and remain counted once; only source attribution changes.
+WITH singleton_evidence (search_id, old_source, crawler, recorded_at) AS (
+  VALUES
+    ('cmwjm1hpy003329gk988o4m7u', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-16T18:42:03.382Z'),
+    ('cmwjmxy2b001r2ak4g4ft4u4d', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-16T19:07:17.555Z'),
+    ('cmwjp3kcn000c1skq0x4sxq7c', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-16T20:07:38.951Z'),
+    ('cmwk7woma000k2ak9t29tzy8t', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-17T04:54:10.594Z'),
+    ('cmwkl9hkc00022ambgll7jg0t', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-17T11:08:02.988Z'),
+    ('cmwknp37r000l2ahz31a19r7g', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-17T12:16:10.119Z'),
+    ('cmwkohj4a000r2ahzllerj2hw', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-17T12:38:17.098Z'),
+    ('cmwkpajv6000x2dhc8980j9ca', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-17T13:00:51.09Z'),
+    ('cmwlb91qn003d1sjgmk4hnx1a', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-17T23:15:32.495Z'),
+    ('cmwlb9gkp003g1sjg83fvvodz', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-17T23:15:51.721Z'),
+    ('cmwlbw59j003j1sjguqpn1w4i', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-17T23:33:30.151Z'),
+    ('cmwlcwkbs004r1sjg80vtv8s0', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-18T00:01:49.289Z'),
+    ('cmwlhtqvw00721sjgeknm80pe', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-18T02:19:35.9Z'),
+    ('cmwlkp2kc00891sjg4bghndjk', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-18T03:39:56.604Z'),
+    ('cmwlkt5xs008c1sjgnpuehfad', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-18T03:43:07.6Z'),
+    ('cmwlvsh2900022aj5utmtk1p5', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-18T08:50:31.137Z'),
+    ('cmwn9sawf00022cjhvb476drv', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T08:10:03.951Z'),
+    ('cmwnf38p500022akwdnx4bnbx', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T10:38:32.393Z'),
+    ('cmwnfgu0f00022aju0vg0aaa9', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T10:49:06.543Z'),
+    ('cmwng4yuz00072aju9l2etdi9', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T11:07:52.571Z'),
+    ('cmwngxk27000a2ajutbrotdam', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T11:30:06.415Z'),
+    ('cmwnhux0a000g2aju52due29v', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T11:56:02.842Z'),
+    ('cmwni9aca000j2ajuv8fvw530', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T12:07:13.306Z'),
+    ('cmwnitnri000n2ajufoleipdl', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T12:23:03.822Z'),
+    ('cmwnvjrcd001l29kamugubn2q', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T18:19:16.909Z'),
+    ('cmwnvjyhc001o29kaezy9n57z', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T18:19:26.16Z'),
+    ('cmwo0k63q002l2aklhcwn4a2j', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T20:39:34.118Z'),
+    ('cmwo0lgi9002o2akllf0obbv8', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T20:40:34.257Z'),
+    ('cmwo0lrtx002r2aklgaj29423', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T20:40:48.933Z'),
+    ('cmwo0m4ft002u2akl232t7pyj', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T20:41:05.273Z'),
+    ('cmwo0o5o8002x2aklze4x540m', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T20:42:40.184Z'),
+    ('cmwo0vubl00302akldifsxj64', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T20:48:38.721Z'),
+    ('cmwo1vlz900372aklun849gqv', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T21:16:27.525Z'),
+    ('cmwo2b471003a2aklk4t5tm65', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T21:28:30.973Z'),
+    ('cmwo2r8pv005l2akl5ijrj33a', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T21:41:03.331Z'),
+    ('cmwo4eygd007w2aklu0puvnvj', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T22:27:29.389Z'),
+    ('cmwo4xfoj008n2aklb71f691s', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T22:41:51.523Z'),
+    ('cmwo540p8008q2aklmzlaq8o9', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T22:46:58.7Z'),
+    ('cmwo572oc008t2aklm3cynwl2', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T22:49:21.228Z'),
+    ('cmwo6j7g400a02aklngrmit3l', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T23:26:46.9Z'),
+    ('cmwo787zq00b72aklp22sjhsg', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-19T23:46:14.006Z'),
+    ('cmwo90dqz00fn2aklbeypq657', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-20T00:36:07.451Z'),
+    ('cmwomwcvu00j72akl7gy7uavb', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-20T07:04:54.33Z'),
+    ('cmwooh4yv00jm2akl04x7pen3', 'UNKNOWN', 'GOOGLEBOT', TIMESTAMPTZ '2026-11-20T07:49:03.463Z')
+)
+UPDATE "SearchHistory" s
+SET query = s.query || jsonb_build_object('applicationSource','BOT',
+      'identifiedCrawler',e.crawler, 'crawlerEvidence','DECLARED_USER_AGENT',
+      'historicalSearchReconciliation',jsonb_build_object(
+        'version','20261123-v1','originalApplicationSource',e.old_source,
+        'observedClient',e.crawler, 'sourceEvidence','EXACT_POST_LOG_MATCH',
+        'countingRule','ONE_SEARCH_ROW_PRESERVED'))
+FROM singleton_evidence e
+WHERE current_database() = 'kurioticket_web_staging'
+  AND s.id = e.search_id
+  AND s."createdAt" = e.recorded_at
+  AND s."createdAt" >= TIMESTAMPTZ '2026-11-16T14:27:53Z'
+  AND s."createdAt" < TIMESTAMPTZ '2026-11-23T14:27:53Z'
+  AND s.query->>'environment' = 'staging'
+  AND s.query->>'applicationSource' = e.old_source
+  AND s.type::text = 'HOTEL'
+  AND s."countAsSearch" = TRUE;
+
 COMMIT;
