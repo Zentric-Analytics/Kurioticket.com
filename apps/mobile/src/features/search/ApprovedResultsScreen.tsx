@@ -1917,8 +1917,10 @@ const HotelCard = memo(function HotelCard({
           },
         } : {}),
     });
-    journeyEvents.offerSelected(requestId, result.id, result.provider, "/hotel-results");
     if (result.searchPolicy.action.kind === "provider") {
+      // A direct provider action is a selection; opening internal hotel
+      // details is only a view and must not inflate selected-offer counts.
+      journeyEvents.offerSelected(requestId, result.id, result.provider, "/hotel-results");
       void Linking.openURL(result.searchPolicy.action.href);
       return;
     }
