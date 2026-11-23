@@ -1,6 +1,7 @@
 "use client";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+import { useResultsReturnIntent } from "@/components/results/useResultsReturnIntent";
 
 import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -380,6 +381,7 @@ export function HotelDetailsClient({
   });
 
   const resultsHref = buildHotelDetailsResultsHref(searchContext);
+  useResultsReturnIntent("hotel", mode === "guided" ? "" : resultsHref);
   const backToResultsText =
     t("hotelResults.backToResults") || "Back to Hotels results";
 

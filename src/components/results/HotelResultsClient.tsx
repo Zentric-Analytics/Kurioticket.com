@@ -36,6 +36,7 @@ import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { MobileHotelPriceText } from "./MobileHotelPriceText";
 import { saveMobileHotelResultsState, takeMobileHotelResultsState } from "@/lib/hotels/mobileHotelResultsState";
+import { takeResultsReturn } from "@/lib/results/resultsReturnIntent";
 import { createMobileHotelBudget } from "@/lib/hotels/mobileHotelBudget";
 import type { ExchangeRates } from "@/lib/currency/exchangeRates";
 import { compareHotelsByAvailablePrice, getComparableHotelTotalUsd, hasHotelPrice } from "@/lib/hotels/hotelResultAvailability";
@@ -580,17 +581,36 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }, [filtersOpen]);
 
   const returnStateRef = useRef<{ key: string; value: ReturnType<typeof takeMobileHotelResultsState> } | null>(null);
+  const returnIntentRef = useRef<{ key: string; returning: boolean } | null>(null);
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
     const pendingReturn = !guided ? takeMobileHotelResultsState(bodySearchKey) : null;
+    if (returnIntentRef.current?.key !== bodySearchKey) {
+      returnIntentRef.current = { key: bodySearchKey, returning: !guided && takeResultsReturn("hotel", window.location.href) };
+    }
+    const returning = returnIntentRef.current.returning && retryKey === 0;
     if (pendingReturn || returnStateRef.current?.key !== bodySearchKey) {
       // A retained route can be reactivated more than once for the same search.
       // Prefer the latest departure state while retaining it for effect replay.
       returnStateRef.current = { key: bodySearchKey, value: pendingReturn };
     }
     const restored = retryKey === 0 ? returnStateRef.current.value : null;
-    const snapshot = restored ? readHotelReturnSnapshot(bodySearchKey) : null;
+    const snapshot = (restored || returning) && retryKey === 0 ? readHotelReturnSnapshot(bodySearchKey) : null;
+    if (returning && !snapshot) {
+      // Returning is never a new search. Require explicit re-query once the
+      // existing in-tab provider snapshot is unavailable or has expired.
+      const timer = window.setTimeout(() => {
+        if (!active) return;
+        setResults([]);
+        setVisibleFiltered([]);
+        setJourneyResponse(null);
+        setError("Your previous hotel results have expired. Search again to check current prices.");
+        setCompletedSearchKey(bodySearchKey);
+        setLoading(false);
+      }, 0);
+      return () => { active = false; window.clearTimeout(timer); controller.abort(); };
+    }
     let timedOut = false;
     const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, 60_000);
     const request = snapshot ? Promise.resolve(snapshot) : fetch("/api/hotels/search", {

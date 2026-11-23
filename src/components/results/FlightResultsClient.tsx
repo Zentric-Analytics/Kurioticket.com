@@ -128,6 +128,8 @@ import {
   readFlightResultsSessionSnapshotForRefresh,
   writeFlightResultsSessionSnapshot,
 } from "@/lib/flights/flightResultsSessionCache";
+import { takeResultsReturn } from "@/lib/results/resultsReturnIntent";
+import { takeResultsScroll } from "@/lib/results/resultsReturnScroll";
 import { isFlightResultsPreparing } from "@/components/results/flightResultsReadiness";
 import {
   readSavedItemIds,
@@ -1020,6 +1022,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   >(null);
   const [mainInventoryRetryGeneration, setMainInventoryRetryGeneration] = useState(0);
   const userInitiatedRetryRef = useRef(false);
+  const returnIntentRef = useRef<{ searchKey: string; returning: boolean } | null>(null);
   const loadingFocusRef = useRef<HTMLDivElement | null>(null);
   const resultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const mobileResultsPageTopRef = useRef<HTMLDivElement | null>(null);
@@ -2636,17 +2639,33 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     let controller: AbortController | null = null;
     const searchKey = buildFlightResultsSearchKey(body);
     activeFlightSearchKeyRef.current = searchKey;
+    // Keep the consumed marker across React StrictMode effect replay.
+    if (returnIntentRef.current?.searchKey !== searchKey) {
+      returnIntentRef.current = { searchKey, returning: !guidedMode && takeResultsReturn("flight", window.location.href) };
+    }
 
     const timer = window.setTimeout(() => {
       if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
       setFiltersReadySearchKey(null);
 
-      const shouldBypassSnapshot = userInitiatedRetryRef.current && guidedMode;
+      const shouldBypassSnapshot = userInitiatedRetryRef.current;
       const snapshotState = shouldBypassSnapshot
         ? null
         : readFlightResultsSessionSnapshotForRefresh(searchKey);
       const snapshot = snapshotState?.snapshot;
       const refreshingStaleSnapshot = Boolean(snapshot && !snapshotState?.isFresh);
+      if (!shouldBypassSnapshot && returnIntentRef.current?.returning && !snapshotState?.isFresh) {
+        // Returning is not a new search. Expired provider quotes require an
+        // explicit customer refresh before they can become actionable again.
+        mainInventoryFreshness.current = { fetchedAt: 0 };
+        mainInventoryReadyRef.current = true;
+        setResults([]);
+        setJourneyResponse(null);
+        setBackgroundRefreshing(false);
+        setLoading(false);
+        setError("Your previous flight results have expired. Search again to check current prices.");
+        return;
+      }
       setJourneyResponse(snapshot && !refreshingStaleSnapshot ? { searchKey, requestId: journeyRequestId(snapshot.requestId) } : null);
       if (snapshot) {
         if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
@@ -3908,6 +3927,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     currentSearchKey: currentFlightSearchKey,
     filtersReadySearchKey,
   }) || (!guidedMode && kayak?.vertical === "flights" && kayak.status === "loading");
+
+  useEffect(() => {
+    if (!returnIntentRef.current?.returning || userInitiatedRetryRef.current || loading || error || results.length === 0) return;
+    const y = takeResultsScroll("flight");
+    if (y === null) return;
+    // Restore after the old result list has mounted, not on the details page.
+    const frame = window.requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, error, results.length]);
 
   useEffect(() => {
     if (!resultsUiPreparing) clearSearchResultsLoadingSession("flight", currentFlightSearchKey);
@@ -7494,7 +7522,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 className="hidden sm:block"
               >
               {error && results.length === 0 ? (
-                <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger">{error}</div>
+                <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger"><p>{error}</p><button type="button" onClick={retryMainInventorySearch} className="focus-ring mt-3 rounded-lg border border-[#004BB8] bg-white px-4 py-2 text-sm font-semibold text-[#004BB8]">Search again</button></div>
               ) : filterApplying ? (
                 <div className="space-y-3">
                   <div role="status" aria-live="polite" className="sr-only">

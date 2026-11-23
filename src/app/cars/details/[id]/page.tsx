@@ -38,7 +38,12 @@ export default async function CarDetailsPage({ params, searchParams }: { params:
         ? { dropoffLocationTarget: pickupLocationTarget }
         : {}),
   };
-  const resultsHref = `/cars/results?${carSearchUrlParams(search)}`;
+  const returnParams = new URLSearchParams(carSearchUrlParams(search));
+  const returnFilters = value(query.filters);
+  const returnSort = value(query.sort);
+  if (/^[a-zA-Z0-9:,_-]{1,1024}$/.test(returnFilters)) returnParams.set("filters", returnFilters);
+  if (["recommended", "lowestTotal", "topRated"].includes(returnSort)) returnParams.set("sort", returnSort);
+  const resultsHref = `/cars/results?${returnParams.toString()}`;
   const requestHeaders = await headers();
   const request = new Request("https://kurioticket.invalid/cars/details", { headers: requestHeaders });
   const car = await getCarDetails(id, search, {

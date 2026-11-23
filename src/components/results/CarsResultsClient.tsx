@@ -5,6 +5,7 @@ import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakCarCardModel } from "./kayakCardModels";
 import { groupKayakCarResults } from "@/lib/cars/carResults";
 import { resultActionHref } from "@/lib/travel/resultAction";
+import { rememberResultsScroll } from "@/lib/results/resultsReturnScroll";
 
 import {
   useCallback,
@@ -1833,6 +1834,12 @@ export function CarsResultsClient({
 
       <div
         ref={resultsGridRef}
+        onClickCapture={event => {
+          const target = event.target;
+          if (!(target instanceof Element)) return;
+          const link = target.closest('a[href*="/cars/details/"]');
+          if (link) rememberResultsScroll("car", window.scrollY);
+        }}
         data-cars-results-scroll-region
         data-cars-results-hotel-column
         className="page-shell max-sm:w-[calc(100%_-_28px)] pb-6 pt-0 sm:pt-6 lg:mt-0 lg:max-w-[928px] lg:rounded-2xl lg:border lg:border-[#E1E6EA] lg:bg-white lg:px-5 lg:pb-7 lg:pt-7 lg:shadow-[0_2px_8px_rgba(25,32,36,0.04)]"
@@ -2023,6 +2030,10 @@ export function CarsResultsExperience({
           next[group] = [...(next[group] ?? []), option];
       });
       setSelectedCarFilters(next);
+      const requestedSort = new URLSearchParams(window.location.search).get("sort");
+      if (requestedSort === "recommended" || requestedSort === "lowestTotal" || requestedSort === "topRated") {
+        setSort(requestedSort);
+      }
       filterUrlReadyRef.current = true;
     };
     readUrlFilters();
@@ -2035,8 +2046,9 @@ export function CarsResultsExperience({
     const url = new URL(window.location.href);
     const value = Object.entries(selectedCarFilters).flatMap(([group, options]) => options.map((option) => `${group}:${option}`)).join(",");
     if (value) url.searchParams.set("filters", value); else url.searchParams.delete("filters");
+    if (sort !== "recommended") url.searchParams.set("sort", sort); else url.searchParams.delete("sort");
     window.history.replaceState(window.history.state, "", url);
-  }, [selectedCarFilters]);
+  }, [selectedCarFilters, sort]);
   const guidedPlanning = presentation === "guided-planning";
   const carSortOptions: { value: CarSort; label: string }[] = guidedPlanning
     ? [
@@ -2969,7 +2981,16 @@ export function CarsResultsExperience({
                       requestId={requestId}
                       badge={desktopBadges.get(car.id)}
                       mobileBadge={badges.get(car.id) ?? null}
-                      detailsHref={detailsHrefForCar(car)}
+                      detailsHref={(() => {
+                        const href = detailsHrefForCar(car);
+                        if (!href?.startsWith("/cars/details/")) return href;
+                        const url = new URL(href, "https://kurioticket.invalid");
+                        const selection = Object.entries(selectedCarFilters)
+                          .flatMap(([group, options]) => options.map(option => group + ":" + option)).join(",");
+                        if (selection) url.searchParams.set("filters", selection);
+                        if (sort !== "recommended") url.searchParams.set("sort", sort);
+                        return url.pathname + url.search;
+                      })()}
                       selectedDealOfferId={selectedDealOfferIds[car.id]}
                       onDealOfferSelected={selectCompareDealOffer}
                       onSelect={
