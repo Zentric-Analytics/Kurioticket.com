@@ -4,7 +4,7 @@ export const clientJourneyDecisionTypes = ["SEARCH_EDIT_APPLIED", "SEARCH_FILTER
 export type ClientJourneyDecisionType = (typeof clientJourneyDecisionTypes)[number];
 export const journeyFilterGroups = ["all", "price", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "transmission", "other"] as const;
 export type JourneyFilterGroup = (typeof journeyFilterGroups)[number];
-export const journeyFilterSelectionGroups = ["price", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "transmission", "locations", "propertyTypes", "meals", "accessibility", "travellerFeatures", "bedTypes", "cancellation", "seats", "bags", "fuelPolicy", "mileagePolicy", "pickupLocationType"] as const;
+export const journeyFilterSelectionGroups = ["price", "pricePerDay", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "vehicleType", "transmission", "locations", "propertyTypes", "meals", "accessibility", "travellerFeatures", "bedTypes", "cancellation", "seats", "bags", "fuelPolicy", "mileagePolicy", "pickupLocationType"] as const;
 export type JourneyFilterSelectionGroup = (typeof journeyFilterSelectionGroups)[number];
 /** Only UI-chosen option identifiers, never customer-entered search text. */
 export type JourneyFilterSelection = { group: JourneyFilterSelectionGroup; option: string };
