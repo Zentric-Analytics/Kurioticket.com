@@ -104,8 +104,8 @@ export class JourneyEventCoordinator {
   }
 
   /** Opening a result is not choosing an offer. */
-  flightDetailsViewed(requestId: string | undefined, offerId: string, provider?: string) {
-    return this.enqueue("FLIGHT_DETAILS_VIEWED", requestId, "/flight-results", offerId, provider, true);
+  flightDetailsViewed(requestId: string | undefined, offerId: string, provider?: string, observedResult?: JourneyObservedResult) {
+    return this.enqueue("FLIGHT_DETAILS_VIEWED", requestId, "/flight-results", offerId, provider, true, { observedResult });
   }
 
   /** Explicit change to the fare choice, not an automatic initial selection. */
