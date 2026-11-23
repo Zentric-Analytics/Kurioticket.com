@@ -38,7 +38,8 @@ test("Activity summary counts filter-wide records instead of paginated timeline 
   assert.match(reader, /tx\.searchHistory\.count\(\{ where: searchWhere \}\)/);
   assert.match(reader, /tx\.redirectLog\.count\(\{ where: handoffWhere \}\)/);
   assert.match(reader, /tx\.searchJourney\.count\(/);
-  assert.match(reader, /events: \{ some: validEvents \}/);
+  assert.match(reader, /events: \{ some: funnelEvents \}/);
+  assert.match(reader, /AND: \[validEvents, \{ type: \{ in: \[/);
   assert.match(reader, /Prisma\.TransactionIsolationLevel\.RepeatableRead/);
   assert.match(reader, /canonicalForVisitor\(visitorId\)/);
   assert.match(reader, /visitorIds\.map\(visitorId => canonicalForVisitor\(visitorId\)\)/);
