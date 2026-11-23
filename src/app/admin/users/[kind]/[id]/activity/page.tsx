@@ -1,3 +1,4 @@
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -34,10 +35,6 @@ const tabs = [
 ] as const;
 // Keep the UTC instant, but use a compact, unambiguous header label so
 // each date stays on one line beside the workspace sidebar at desktop zoom.
-const format = (at: Date) => new Intl.DateTimeFormat("en-GB", {
-  day: "numeric", month: "short", year: "numeric",
-  hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC",
-}).format(at);
 // One common desktop grid: guest/customer identity spans two fifths, while
 // First seen/Joined, Last seen and Events each occupy one fifth.
 const activityColumns = "grid min-w-0 w-full gap-y-4 lg:grid-cols-5 lg:gap-y-0";
@@ -64,8 +61,7 @@ function safeDirectoryHref(raw: RawQuery) {
   return "/admin/users" + (safe.size ? "?" + safe.toString() : "");
 }
 function HeaderTime({ at }: { at: Date }) {
-  const label = format(at);
-  return <time dateTime={at.toISOString()} title={label + " UTC"}>{label}</time>;
+  return <AdminLocalDateTime value={at} />;
 }
 function Fact({ label, children, className = "", testId }: {
   label: string; children: React.ReactNode; className?: string; testId?: string;
