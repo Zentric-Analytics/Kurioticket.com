@@ -112,6 +112,10 @@ const isPublicIp = (value: string) => {
 
 const firstPublicIp = (value: string | null) => splitHeaderValues(value).map(isPublicIp).find(Boolean) || null;
 
+/** Enforce public routable IPs for search-level network observations. */
+export const publicVisitorIp = (value: string | null): string | null =>
+  value ? isPublicIp(value) : null;
+
 export const extractVisitorIp = (headers: Pick<Headers, "get">): string | null =>
   firstPublicIp(headers.get("cf-connecting-ip")) ||
   firstPublicIp(headers.get("x-real-ip")) ||
@@ -215,7 +219,12 @@ const logLookupFailure = ({
   });
 };
 
-export const resolveIpinfoLiteCountryContext = async (visitorIp?: string | null): Promise<CountryContext | null> => {
+/** Resolve a country using the exact IP supplied for a request.
+ * Strict callers disable the legacy /me fallback so the origin server's country
+ * can never be mistaken for the search user's country. */
+export const resolveIpinfoLiteCountryContext = async (
+  visitorIp?: string | null, options: { allowMeFallback?: boolean } = {},
+): Promise<CountryContext | null> => {
   const token = process.env.IPINFO_TOKEN?.trim();
   const hasVisitorIp = Boolean(visitorIp);
   const initialMode: IpinfoLiteEndpointMode = visitorIp ? "ip" : "me";
@@ -242,7 +251,7 @@ export const resolveIpinfoLiteCountryContext = async (visitorIp?: string | null)
       return initialResult.context;
     }
 
-    if (visitorIp && initialResult.type === "non_ok_status" && initialResult.status === 403) {
+    if (options.allowMeFallback !== false && visitorIp && initialResult.type === "non_ok_status" && initialResult.status === 403) {
       logFallback({
         reason: "ip_lookup_forbidden_retrying_me",
         status: initialResult.status,

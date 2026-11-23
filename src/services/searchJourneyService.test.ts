@@ -24,7 +24,7 @@ type History = { id: string; visitorId: string | null; userId: string | null; re
 type Journey = { id: string; visitorId: string; startedAt: Date; lastActivityAt: Date };
 type Event = { journeyId: string; eventKey: string; type: string; searchHistoryId: string | null; redirectLogId: string | null; provider: string | null };
 
-function fixture() {
+function fixture(countryLookup?: (ip: string) => Promise<string | null>) {
   const visitors: Visitor[] = [];
   const histories: History[] = [];
   const journeys: Journey[] = [];
@@ -131,7 +131,7 @@ function fixture() {
     histories.push(row);
     return row;
   }
-  return { service: createSearchJourneyService(() => db as unknown as SearchJourneyDatabase, () => currentTime),
+  return { service: createSearchJourneyService(() => db as unknown as SearchJourneyDatabase, () => currentTime, countryLookup),
     visitor, search, visitors, histories, journeys, events,
     setTime: (value: Date) => { currentTime = value; }, onLock: (value: () => void) => { onLock = value; } };
 }
@@ -224,6 +224,54 @@ test("retries do not extend sessions and a reused UUID cannot claim a different 
   assert.deepEqual(await f.service.recordClientJourneyEvent({ ...event, requestId: f.search(visitor.id).requestId }), { accepted: false });
   assert.deepEqual(await f.service.recordClientJourneyEvent({ ...event, eventId: randomUUID(), type: "OFFER_SELECTED" }), { accepted: true });
   assert.equal(f.journeys.length, 2);
+});
+
+test("search IP is committed before country enrichment; the exact record gains only verified country", async () => {
+  let calls = 0;
+  let stateAtLookup: unknown;
+  let f!: ReturnType<typeof fixture>;
+  f = fixture(async ip => {
+    calls++;
+    assert.equal(ip, "8.8.8.8");
+    assert.equal(f.histories.length, 1, "save original search before geolocation lookup");
+    assert.equal(f.events.length, 1, "search milestone exists before enrichment");
+    stateAtLookup = structuredClone(f.histories[0].query);
+    return "US";
+  });
+  const visitor = f.visitor();
+  const query = { environment: "staging", destination: "ACC", searchNetwork: { ipAddress: "8.8.8.8", countryCode: null } };
+  const history: SearchHistoryInput = {
+    visitorId: visitor.id, requestId: randomUUID(), type: "FLIGHT", query,
+    resultCount: 125, latencyMs: 2200, status: "SUCCESS",
+  };
+  assert.ok(await f.service.recordSearchHistory(history));
+  assert.equal(calls, 1);
+  assert.deepEqual((stateAtLookup as {searchNetwork: unknown}).searchNetwork, query.searchNetwork);
+  assert.equal((stateAtLookup as {destination: string}).destination, "ACC");
+  assert.deepEqual((f.histories[0].query as {searchNetwork: unknown}).searchNetwork,
+    { ipAddress: "8.8.8.8", countryCode: "US" });
+  assert.equal((f.histories[0].query as {destination:string}).destination, "ACC");
+  assert.equal(f.events.filter(event => event.type === "SEARCH_COMPLETED").length, 1);
+  await f.service.recordSearchHistory(history);
+  assert.equal(calls, 1, "a completed search with a country must not be looked up again");
+});
+
+test("an exact country from the trusted edge is retained without a lookup", async () => {
+  const f = fixture(async () => { throw new Error("must not use IPinfo when Cloudflare country exists"); });
+  const query = { searchNetwork: { ipAddress: "8.8.8.8", countryCode: "NG" }, destination: "ACC" };
+  assert.ok(await f.service.recordSearchHistory({
+    requestId: randomUUID(), type: "FLIGHT", query, resultCount: 1, latencyMs: 1, status: "SUCCESS",
+  }));
+  assert.deepEqual((f.histories[0].query as {searchNetwork: unknown}).searchNetwork, query.searchNetwork);
+});
+
+test("a failed country lookup leaves the original search and network observation intact", async () => {
+  const f = fixture(async () => { throw new Error("provider down"); });
+  const query = { searchNetwork: { ipAddress: "8.8.8.8", countryCode: null } };
+  assert.ok(await f.service.recordSearchHistory({
+    requestId: randomUUID(), type: "FLIGHT", query, resultCount: 1, latencyMs: 1, status: "SUCCESS",
+  }));
+  assert.deepEqual((f.histories[0].query as {searchNetwork: unknown}).searchNetwork, query.searchNetwork);
 });
 
 test("progressive first-batch history accepts early clicks and completes once without regressing later", async () => {

@@ -1,5 +1,6 @@
 import { isIP } from "node:net";
 import { isIsoCountryCode, normalizeCountryCode } from "@/lib/geo/context";
+import { publicVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
 
 /** Capture only a trusted ingress observation at search time. Never infer a
  * search IP/country from account sessions, a destination, or untrusted XFF. */
@@ -9,7 +10,7 @@ export function searchNetworkObservation(request: Request, trustedEdge = process
   if (!trustedEdge) return {};
   const ip = request.headers.get("cf-connecting-ip")?.trim() ?? "";
   const country = normalizeCountryCode(request.headers.get("cf-ipcountry"));
-  const ipAddress = isIP(ip) ? ip : null;
+  const ipAddress = publicVisitorIp(ip);
   const countryCode = country && isIsoCountryCode(country) ? country : null;
   if (!ipAddress && !countryCode) return {};
   return { searchNetwork: { ipAddress, countryCode } };
@@ -31,4 +32,36 @@ export function recordedSearchNetwork(query: unknown): SearchNetworkObservation 
   const country = typeof record.countryCode === "string" ? normalizeCountryCode(record.countryCode) : undefined;
   const countryCode = country && isIsoCountryCode(country) ? country : null;
   return { ipAddress, countryCode };
+}
+
+type SearchCountryLookup = (ip: string) => Promise<string | null>;
+
+/** Enrich only a verified search-time public IP, never the current user's
+ * account location or this application's server location. Called by the
+ * optional history writer after the search response has been prepared.
+ * The injected lookup allows fully offline, deterministic tests. */
+export async function completeSearchNetworkObservation(
+  query: Record<string, unknown>,
+  countryLookup: SearchCountryLookup = async ip => {
+    // The existing IPinfo integration is optional. Missing credentials should
+    // not cause repeated network attempts or noisy request logging.
+    if (!process.env.IPINFO_TOKEN?.trim()) return null;
+    return (await resolveIpinfoLiteCountryContext(ip, { allowMeFallback: false }))?.countryCode ?? null;
+  },
+): Promise<Record<string, unknown>> {
+  const observed = recordedSearchNetwork(query);
+  if (!observed.ipAddress || observed.countryCode || publicVisitorIp(observed.ipAddress) !== observed.ipAddress) {
+    return query;
+  }
+  try {
+    const lookedUp = normalizeCountryCode(await countryLookup(observed.ipAddress));
+    if (!isIsoCountryCode(lookedUp)) return query;
+    return {
+      ...query,
+      searchNetwork: { ipAddress: observed.ipAddress, countryCode: lookedUp },
+    };
+  } catch {
+    // Optional geolocation is never allowed to suppress a legitimate search.
+    return query;
+  }
 }
