@@ -74,12 +74,12 @@ export function CarInventoryLoader({ values, fallback }: {
     return () => { active = false; window.clearTimeout(timeout); controller.abort(); };
   }, [values, attempt]);
   useEffect(() => {
-    if (!returnIntentRef.current?.returning || !results?.length || expiredReturn) return;
+    if (!returnIntentRef.current?.returning || attempt > 0 || !results?.length || expiredReturn) return;
     const y = takeResultsScroll("car");
     if (y === null) return;
     const frame = window.requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" }));
     return () => window.cancelAnimationFrame(frame);
-  }, [results, expiredReturn]);
+  }, [results, expiredReturn, attempt]);
   // A results-view event is emitted only for a visible, successful inventory
   // response with its actual server request ID. Consent and ownership checks
   // remain with the shared sender and the server; failed/empty searches do not
