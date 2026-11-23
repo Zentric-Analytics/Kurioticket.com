@@ -2030,6 +2030,10 @@ export function CarsResultsExperience({
           next[group] = [...(next[group] ?? []), option];
       });
       setSelectedCarFilters(next);
+      const requestedSort = new URLSearchParams(window.location.search).get("sort");
+      if (requestedSort === "recommended" || requestedSort === "lowestTotal" || requestedSort === "topRated") {
+        setSort(requestedSort);
+      }
       filterUrlReadyRef.current = true;
     };
     readUrlFilters();
@@ -2042,8 +2046,9 @@ export function CarsResultsExperience({
     const url = new URL(window.location.href);
     const value = Object.entries(selectedCarFilters).flatMap(([group, options]) => options.map((option) => `${group}:${option}`)).join(",");
     if (value) url.searchParams.set("filters", value); else url.searchParams.delete("filters");
+    if (sort !== "recommended") url.searchParams.set("sort", sort); else url.searchParams.delete("sort");
     window.history.replaceState(window.history.state, "", url);
-  }, [selectedCarFilters]);
+  }, [selectedCarFilters, sort]);
   const guidedPlanning = presentation === "guided-planning";
   const carSortOptions: { value: CarSort; label: string }[] = guidedPlanning
     ? [
@@ -2976,7 +2981,16 @@ export function CarsResultsExperience({
                       requestId={requestId}
                       badge={desktopBadges.get(car.id)}
                       mobileBadge={badges.get(car.id) ?? null}
-                      detailsHref={detailsHrefForCar(car)}
+                      detailsHref={(() => {
+                        const href = detailsHrefForCar(car);
+                        if (!href?.startsWith("/cars/details/")) return href;
+                        const url = new URL(href, "https://kurioticket.invalid");
+                        const selection = Object.entries(selectedCarFilters)
+                          .flatMap(([group, options]) => options.map(option => group + ":" + option)).join(",");
+                        if (selection) url.searchParams.set("filters", selection);
+                        if (sort !== "recommended") url.searchParams.set("sort", sort);
+                        return url.pathname + url.search;
+                      })()}
                       selectedDealOfferId={selectedDealOfferIds[car.id]}
                       onDealOfferSelected={selectCompareDealOffer}
                       onSelect={
