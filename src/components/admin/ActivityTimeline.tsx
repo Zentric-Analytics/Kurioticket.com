@@ -46,8 +46,8 @@ function ProductIcon({ product }: { product: string | null | undefined }) {
 }
 function EventIcon({ stage }: { stage: ActivityRow["stage"] }) {
   if (stage === "SEARCH_COMPLETED") return <Search size={15} aria-hidden="true" />;
-  if (stage === "RESULTS_VIEWED") return <ListChecks size={15} aria-hidden="true" />;
-  if (stage === "OFFER_SELECTED") return <MousePointerClick size={15} aria-hidden="true" />;
+  if (stage === "RESULTS_VIEWED" || stage === "FLIGHT_DETAILS_VIEWED") return <ListChecks size={15} aria-hidden="true" />;
+  if (stage === "OFFER_SELECTED" || stage === "PROVIDER_DEAL_SELECTED") return <MousePointerClick size={15} aria-hidden="true" />;
   if (stage === "PROVIDER_HANDOFF_STARTED") return <ExternalLink size={15} aria-hidden="true" />;
   return <CircleDot size={15} aria-hidden="true" />;
 }
