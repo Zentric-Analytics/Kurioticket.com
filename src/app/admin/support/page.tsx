@@ -1,3 +1,4 @@
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
@@ -118,12 +119,12 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                             </span>
                           </td>
                           <td data-label="Last updated" className="px-3 py-1.5 align-middle">
-                            <time dateTime={updatedAt.toISOString()} className="block whitespace-nowrap text-[13px] font-medium text-[#374151]">
-                              {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(updatedAt)}
+                            <div className="block whitespace-nowrap text-[13px] font-medium text-[#374151]">
+                              <AdminLocalDateTime value={updatedAt} style="date" />
                               <span className="mt-0.5 block text-[12px] font-normal text-[#64748B]">
-                                {new Intl.DateTimeFormat("en", { timeStyle: "short" }).format(updatedAt)}
+                                <AdminLocalDateTime value={updatedAt} style="time" />
                               </span>
-                            </time>
+                            </div>
                           </td>
                           <td data-label="Action" className="whitespace-nowrap px-3 py-1.5 align-middle">
                             <Link
