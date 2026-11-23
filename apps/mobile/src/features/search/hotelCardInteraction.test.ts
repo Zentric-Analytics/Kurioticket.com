@@ -23,7 +23,7 @@ test("hotel card surface and View hotel share one navigation action", () => {
 });
 
 test("hotel utility and gallery controls do not trigger the card navigation", () => {
-  assert.match(card, /event\.stopPropagation\(\); void canonical\.toggleHotel\(result, params\)/);
+  assert.match(card, /event\.stopPropagation\(\); void canonical\.toggleHotel\(result, params, requestId\)/);
   assert.match(card, /event\.stopPropagation\(\); shareHotel\(\)/);
   assert.match(card, /event\.stopPropagation\(\);setActiveImage\(index=>\(index-1\+usableGallery\.length\)%usableGallery\.length\)/);
   assert.match(card, /event\.stopPropagation\(\);setActiveImage\(index=>\(index\+1\)%usableGallery\.length\)/);
