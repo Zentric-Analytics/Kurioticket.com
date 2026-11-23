@@ -173,6 +173,9 @@ async function readNewTicketNotifications(now: Date): Promise<AdminAlertCandidat
     where: { createdAt: { gt: new Date(now.getTime() - ACK_WINDOW_MS), lte: now } },
     select: { id: true, subject: true, createdAt: true },
     orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+  }).catch((error) => {
+    console.error("[admin-alerts:new-support-tickets]", error);
+    return [];
   });
   return tickets.map(ticket => ({
     key: `support.ticket.created.${ticket.id}`,

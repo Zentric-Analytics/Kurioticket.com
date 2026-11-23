@@ -18,6 +18,7 @@ function harness() {
   const audit: AuditRow[] = [];
   let reads = 0;
   const state = {
+    ticketReadFails: false,
     tickets: [] as { id: string; createdAt: Date; subject: string }[],
     databaseConnected: true,
     cmsAvailable: true,
@@ -32,7 +33,10 @@ function harness() {
   };
   const tx = {
     supportTicket: { findMany: async ({ where }: { where: { createdAt: { gt: Date; lte: Date } } }) =>
-      state.tickets.filter(ticket => ticket.createdAt > where.createdAt.gt && ticket.createdAt <= where.createdAt.lte) },
+      {
+        if (state.ticketReadFails) throw new Error("Ticket lookup unavailable");
+        return state.tickets.filter(ticket => ticket.createdAt > where.createdAt.gt && ticket.createdAt <= where.createdAt.lte);
+      } },
     $executeRaw: async () => 1,
     adminAuditLog: {
       findFirst: async ({ where }: Lookup) => audit.filter(row => row.action === where.action && row.targetType === where.targetType && row.targetId === where.targetId).at(-1) ?? null,
@@ -144,4 +148,12 @@ test("the bell counts each new ticket once alongside urgent escalation", async (
   assert.equal((await h.api.getAdminAlertSummary("admin-a", now)).unreadCount, 6);
   assert.equal((await h.api.getAdminAlertSnapshot(undefined, now)).activeCount, 2);
   assert.equal((await h.api.getAdminAlertSummary("admin-a", new Date(+now + 86400000))).activeCount, 2);
+});
+
+test("a failed ticket query leaves other bell alerts available", async () => {
+  const h = harness();
+  h.state.ticketReadFails = true;
+  const panel = await h.api.getAdminAlertSnapshot("admin-a", now, { includeTicketNotifications: true });
+  assert.deepEqual(Array.from(panel.alerts, alert => alert.source), ["SUPPORT", "USERS"]);
+  assert.equal((await h.api.getAdminAlertSummary("admin-a", now)).unreadCount, 2);
 });
