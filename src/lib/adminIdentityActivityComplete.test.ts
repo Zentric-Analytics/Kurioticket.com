@@ -382,5 +382,6 @@ test("registered account with 150 eligible links checks only 6 event-bearing vis
   });
   assert.deepEqual(scenario.candidateQueries[0].AND[1].journeys.some.events.some.type.in, [
     "SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED",
+    "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED",
   ]);
 });
