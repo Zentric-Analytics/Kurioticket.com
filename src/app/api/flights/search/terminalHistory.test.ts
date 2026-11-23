@@ -10,7 +10,7 @@ import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
 const requestId = "78e1de9e-6dfe-494f-9fdb-83726d83bf64";
 type History = { requestId: string; type: string; status: string; userId: string | null; visitorId: string | null; resultCount: number; query: unknown; latencyMs: number };
 
-function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; operationalGuest?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string; withOffers?: boolean; rateLimited?: boolean; crawlerBlocked?: boolean; applicationSource?: "WEB" | "IOS" | "ANDROID" | "UNKNOWN" } = {}) {
+function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; operationalGuest?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string; withOffers?: boolean; rateLimited?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT"; applicationSource?: "WEB" | "IOS" | "ANDROID" | "UNKNOWN" } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: History[] = [];
   const providerCalls: Array<{ metadata: Record<string, unknown>; status: string }> = [];
@@ -61,8 +61,7 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
         ? { userId: null, visitorId: null, ...attribution }
         : { userId: "verified-account", visitorId: "consented-visitor", ...attribution };
     } },
-    "@/lib/searchCrawlerGate": { blockVerifiedCrawlerSearch: async () => options.crawlerBlocked
-      ? Response.json({ code: "CRAWLER_SEARCH_BLOCKED" }, { status: 403 }) : null },
+    "@/lib/searchCrawlerGate": { identifyVerifiedCrawlerSearch: async () => options.verifiedCrawler ?? null },
     "@/lib/kayak-client-ip": { getKayakClientIp: () => "192.0.2.1" },
     "./providerDiagnostics": { logNativeFlightProviderDiagnostics: () => undefined },
     "@/services/travel/kayakSandbox": { isKayakSandboxEnabled: () => false },
@@ -258,18 +257,44 @@ test("nearby and primary flight requests share the rate limit and schedule no wo
 });
 
 for (const product of ["flight", "hotel"] as const) {
-  test(`${product} rejects a verified crawler before provider calls and customer analytics`, async () => {
-    const fixture = routeFixture(product, { crawlerBlocked: true });
+  test(`${product} lets verified crawler execute one BOT search without any customer activity`, async () => {
+    const fixture = routeFixture(product, {
+      verifiedCrawler: "GOOGLEBOT", available: true, withOffers: true,
+      operationalGuest: true,
+    });
     const response = await fixture.post({ "user-agent": "Googlebot/2.1" });
-    assert.equal(response.status, 403);
-    assert.equal(fixture.providerCriteria.length, 0);
-    assert.equal(fixture.lookups(), 0);
-    assert.deepEqual(fixture.histories, []);
-    assert.deepEqual(fixture.providerCalls, []);
-    assert.deepEqual(fixture.analyticsEvents, []);
-    assert.deepEqual(fixture.deferred, []);
+    assert.equal(response.status, 200, "a verified bot search is not blocked");
+    assert.equal(response.headers.get("X-Synthetic-Operational-Session"), null);
     if (product === "flight") {
-      assert.equal((await fixture.postNearby(2)).status, 403, "automatic fare lookups also reject verified crawlers");
+      for (let day = 2; day <= 10; day++) {
+        assert.equal((await fixture.postNearby(day)).status, 200);
+      }
     }
+    await Promise.all(fixture.deferred.map(run => run()));
+    assert.equal(fixture.histories.length, 1, "one main search plus nine nearby fares is one BOT search");
+    const history = fixture.histories[0] as History & { applicationSource: string };
+    assert.equal(history.applicationSource, "BOT");
+    assert.equal(history.userId, null);
+    assert.equal(history.visitorId, null);
+    assert.equal((history.query as Record<string, unknown>).verifiedCrawler, "GOOGLEBOT");
+    assert.equal((history.query as Record<string, unknown>).operationalSessionId, undefined);
+    assert.equal(fixture.lookups(), 0, "bots never enter the user identity pipeline");
+    assert.deepEqual(fixture.analyticsEvents, [], "bot searches are not human engagement events");
+    assert.equal(fixture.providerCalls.length, product === "flight" ? 10 : 1);
+    assert.ok(fixture.providerCalls.every(call => call.metadata.applicationSource === "BOT"));
   });
 }
+
+test("failed verified bot flight searches are counted once, but rate-limited requests are not", async () => {
+  const failed = routeFixture("flight", { verifiedCrawler: "BINGBOT" });
+  assert.equal((await failed.post()).status, 503);
+  await Promise.all(failed.deferred.map(run => run()));
+  assert.equal(failed.histories.length, 1);
+  assert.equal((failed.histories[0] as History & { applicationSource: string }).applicationSource, "BOT");
+  assert.equal(failed.histories[0].status, "FAILED");
+  const rateLimited = routeFixture("flight", { verifiedCrawler: "GOOGLEBOT", rateLimited: true });
+  assert.equal((await rateLimited.post()).status, 429);
+  assert.equal((await rateLimited.postNearby(2)).status, 429);
+  assert.deepEqual(rateLimited.histories, []);
+  assert.deepEqual(rateLimited.deferred, []);
+});
