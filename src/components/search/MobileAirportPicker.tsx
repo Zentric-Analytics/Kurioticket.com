@@ -317,7 +317,7 @@ export function MobileAirportPicker({
                 {list.map((airport, index) => (
                   <MobileAirportOptionRow
                     id={`${listboxId}-option-${index}`}
-                    key={airport.code}
+                    key={`${airport.code}-${airport.airport}-${index}`}
                     airport={airport}
                     selected={highlightedIndex === index || draft?.code === airport.code}
                     locale={locale}
