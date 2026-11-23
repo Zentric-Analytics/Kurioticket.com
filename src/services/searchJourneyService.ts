@@ -9,6 +9,7 @@ import {
   type JourneyEventReceipt,
   type JourneyFilterGroup,
   type JourneySortMode,
+  type JourneySortChoice,
 } from "@/lib/search-journey";
 import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
@@ -42,6 +43,7 @@ export type ClientJourneyEventInput = ApplicationAttribution & {
   offerId?: string;
   filterGroup?: JourneyFilterGroup;
   sortMode?: JourneySortMode;
+  sortChoice?: JourneySortChoice;
 };
 export type SearchHistoryInput = ApplicationAttribution & {
   userId?: string | null;
@@ -223,7 +225,8 @@ export function createSearchJourneyService(
           metadata: { ...applicationMetadata(input), ...(input.sourcePage ? { sourcePage: input.sourcePage } : {}),
             ...(input.offerId ? { resultId: input.offerId } : {}),
             ...(input.filterGroup ? { filterGroup: input.filterGroup } : {}),
-            ...(input.sortMode ? { sortMode: input.sortMode } : {}) },
+            ...(input.sortMode ? { sortMode: input.sortMode } : {}),
+            ...(input.sortChoice ? { sortChoice: input.sortChoice } : {}) },
         }, now());
         return { accepted: Boolean(result) };
       });
