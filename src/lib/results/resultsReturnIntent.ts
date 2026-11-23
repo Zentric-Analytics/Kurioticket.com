@@ -8,6 +8,10 @@ const PATHS: Record<ResultsProduct, string> = {
   flight: "/flights/results", hotel: "/hotels/results", car: "/cars/results",
 };
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+function browserStorage(): StorageLike | null {
+  if (typeof window === "undefined") return null;
+  try { return window.sessionStorage; } catch { return null; }
+}
 
 export function isResultsHref(product: ResultsProduct, href: string, base: string) {
   try {
@@ -18,7 +22,7 @@ export function isResultsHref(product: ResultsProduct, href: string, base: strin
 
 export function markResultsReturn(
   product: ResultsProduct, href: string,
-  storage: StorageLike | null = typeof window === "undefined" ? null : window.sessionStorage,
+  storage: StorageLike | null = browserStorage(),
   now = Date.now(), base = typeof window === "undefined" ? "https://kurioticket.invalid" : window.location.href,
 ) {
   if (!storage || !isResultsHref(product, href, base)) return;
@@ -33,7 +37,7 @@ export function markResultsReturn(
 
 export function takeResultsReturn(
   product: ResultsProduct, href: string,
-  storage: StorageLike | null = typeof window === "undefined" ? null : window.sessionStorage,
+  storage: StorageLike | null = browserStorage(),
   now = Date.now(), base = typeof window === "undefined" ? "https://kurioticket.invalid" : window.location.href,
 ): boolean {
   if (!storage || !isResultsHref(product, href, base)) return false;
