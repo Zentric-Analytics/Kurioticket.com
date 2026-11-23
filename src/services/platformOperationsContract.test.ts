@@ -111,12 +111,14 @@ test("Overview search activity observes exact bounds in the deployment and disti
     "server-only": {},
     "@/lib/prisma": { getOptionalPrisma: () => ({ $queryRaw: async (sql: TemplateStringsArray, ...params: unknown[]) => {
       assert.match(sql.join("?"), /FROM "SearchHistory"[\s\S]*"createdAt" >= \? AND "createdAt" < \?/);
-      assert.doesNotMatch(sql.join("?"), /RedirectLog|ApiProviderLog/);
-      assert.deepEqual(params, [from, to, "staging"]);
+      assert.match(sql.join("?"), /UNION ALL[\s\S]*FROM "ApiProviderLog"/);
+      assert.match(sql.join("?"), /service = 'crawler-blocked-search'/);
+      assert.deepEqual(params, [from, to, "staging", from, to, "staging"]);
       if (state === "unavailable") throw new Error("database down");
-      return state === "empty" ? [] : [
+      return state === "empty" ? [{ kind: "crawlerBlocks", source: "CRAWLER", status: "DISABLED", count: 0, latency: 0 }] : [
         { kind: "searches", source: "WEB", status: "SUCCESS", count: 3, latency: 0 },
         { kind: "searches", source: null, status: "FAILED", count: 2, latency: 0 },
+        { kind: "crawlerBlocks", source: "CRAWLER", status: "DISABLED", count: 7, latency: 0 },
       ];
     } }) },
     "@/lib/stagingSafety": { getPublicEnvironment: () => "staging" },
@@ -130,6 +132,7 @@ test("Overview search activity observes exact bounds in the deployment and disti
   const exports: { readPlatformSearchActivity: (from: Date, to: Date) => Promise<{
     window: { from: string; to: string };
     searches: ReturnType<typeof partitionOperationalGroups>["searches"] | null;
+    verifiedBotAttempts: number | null;
   }> } = {} as never;
   runInNewContext(ts.transpileModule(readFileSync("src/services/platformOperationsService.ts", "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -141,11 +144,16 @@ test("Overview search activity observes exact bounds in the deployment and disti
   assert.equal(result.searches?.combined.total, 5);
   assert.equal(result.searches?.applications.WEB.total, 3);
   assert.equal(result.searches?.applications.UNKNOWN.total, 2);
+  assert.equal(result.verifiedBotAttempts, 7, "Bots excludes unverified human searches");
 
   state = "empty";
-  assert.equal((await exports.readPlatformSearchActivity(from, to)).searches?.combined.total, 0);
+  const empty = await exports.readPlatformSearchActivity(from, to);
+  assert.equal(empty.searches?.combined.total, 0);
+  assert.equal(empty.verifiedBotAttempts, 0);
   state = "unavailable";
-  assert.equal((await exports.readPlatformSearchActivity(from, to)).searches, null);
+  const unavailable = await exports.readPlatformSearchActivity(from, to);
+  assert.equal(unavailable.searches, null);
+  assert.equal(unavailable.verifiedBotAttempts, null);
 });
 
 test("job projections require coherent persisted completion evidence and never turn RUNNING into failure", () => {

@@ -6,7 +6,9 @@ import type { readPlatformSearchActivity } from "@/services/platformOperationsSe
 export function PlatformOverviewSummary({ data }: {
   data: Awaited<ReturnType<typeof readPlatformSearchActivity>>;
 }) {
-  const { searches, window } = data;
+  const { searches, window, verifiedBotAttempts } = data;
+  const displayedPlatforms = platformOptions.filter(option => option.value !== "UNKNOWN");
+  const unverifiedSearches = searches?.applications.UNKNOWN.total ?? 0;
 
   return (
     <section aria-labelledby="platform-overview-title" className="h-full min-w-0 rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
@@ -23,7 +25,7 @@ export function PlatformOverviewSummary({ data }: {
         <div role="region" aria-label="Platform search activity by application" tabIndex={0}
           className="mt-3 w-full min-w-0 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
           <dl className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 min-[90rem]:grid-cols-5">
-            {platformOptions.map(option => (
+            {displayedPlatforms.map(option => (
               <div key={option.value} className="flex min-h-[72px] min-w-0 flex-col justify-center rounded-lg bg-slate-50 p-3">
                 <dt>
                   <Link href={searchInvestigationHref(window, option.value)} prefetch={false}
@@ -36,7 +38,22 @@ export function PlatformOverviewSummary({ data }: {
                 </dd>
               </div>
             ))}
+            <div className="flex min-h-[72px] min-w-0 flex-col justify-center rounded-lg bg-slate-50 p-3">
+              <dt className="text-xs font-medium text-slate-600">Bots<span className="sr-only"> (verified search crawler attempts blocked before provider execution)</span></dt>
+              <dd className="mt-1 text-lg font-semibold leading-6 tabular-nums text-slate-950">
+                {verifiedBotAttempts === null ? "Unavailable" : verifiedBotAttempts.toLocaleString()}
+              </dd>
+            </div>
           </dl>
+          {unverifiedSearches > 0 ? (
+            <p className="mt-2 text-xs leading-5 text-slate-600">
+              <Link href={searchInvestigationHref(window, "UNKNOWN")} prefetch={false}
+                className="focus-ring font-medium text-indigo-700 hover:underline">
+                {unverifiedSearches.toLocaleString()} unverified platform search{unverifiedSearches === 1 ? "" : "es"}
+              </Link>
+              {" "}included in All Platforms, but not in Bots. Investigate missing source verification.
+            </p>
+          ) : null}
         </div>
       ) : (
         <p role="status" className="mt-4 text-sm text-slate-600">
