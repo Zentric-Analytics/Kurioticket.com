@@ -1,3 +1,4 @@
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -80,7 +81,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
   const raw = await searchParams;
   const now = new Date();
   const environment = getPublicEnvironment();
-  const requested = identityJourneyHistoryQuery(kind, id, raw, now, environment);
+  const requested = identityJourneyHistoryQuery(kind, id, raw, now, environment, await getAdminTimeZone());
   const incomingReturn = decodeActivityJourneyReturn(raw.activityReturn);
   // Navigation context can never switch the selected identity.
   const backHref = incomingReturn && (
