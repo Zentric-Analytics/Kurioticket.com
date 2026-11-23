@@ -3926,7 +3926,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }) || (!guidedMode && kayak?.vertical === "flights" && kayak.status === "loading");
 
   useEffect(() => {
-    if (!returnIntentRef.current?.returning || loading || error || results.length === 0) return;
+    if (!returnIntentRef.current?.returning || userInitiatedRetryRef.current || loading || error || results.length === 0) return;
     const y = takeResultsScroll("flight");
     if (y === null) return;
     // Restore after the old result list has mounted, not on the details page.
