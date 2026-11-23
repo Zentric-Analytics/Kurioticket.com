@@ -19,7 +19,7 @@ export function isResultsHref(product: ResultsProduct, href: string, base: strin
 export function markResultsReturn(
   product: ResultsProduct, href: string,
   storage: StorageLike | null = typeof window === "undefined" ? null : window.sessionStorage,
-  now = Date.now(), base = "https://kurioticket.invalid",
+  now = Date.now(), base = typeof window === "undefined" ? "https://kurioticket.invalid" : window.location.href,
 ) {
   if (!storage || !isResultsHref(product, href, base)) return;
   try {
@@ -34,7 +34,7 @@ export function markResultsReturn(
 export function takeResultsReturn(
   product: ResultsProduct, href: string,
   storage: StorageLike | null = typeof window === "undefined" ? null : window.sessionStorage,
-  now = Date.now(), base = "https://kurioticket.invalid",
+  now = Date.now(), base = typeof window === "undefined" ? "https://kurioticket.invalid" : window.location.href,
 ): boolean {
   if (!storage || !isResultsHref(product, href, base)) return false;
   let raw: string | null = null;
