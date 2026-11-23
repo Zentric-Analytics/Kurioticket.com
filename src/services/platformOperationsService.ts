@@ -21,7 +21,7 @@ export async function readPlatformSearchActivity(from: Date, to: Date) {
           status::text, COUNT(*) AS count, 0 AS latency
         FROM "SearchHistory"
         WHERE "createdAt" >= ${from} AND "createdAt" < ${to}
-          AND query->>'environment' = ${environment}
+          AND query->>'environment' = ${environment} AND "countAsSearch" = TRUE
         GROUP BY 1, 2, 3
       `;
       searches = partitionOperationalGroups(rows).searches;
@@ -45,7 +45,7 @@ export async function readPlatformOperations(hours = 24, period: "today" | "roll
     const [rows, runs] = await db.$transaction(async tx => Promise.all([
       tx.$queryRaw<OperationalGroup[]>`
         SELECT 'searches' AS kind, query->>'applicationSource' AS source, status::text, COUNT(*) AS count, COALESCE(SUM("latencyMs"),0) AS latency, COUNT("latencyMs") AS "latencyCount"
-        FROM "SearchHistory" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND query->>'environment' = ${environment} GROUP BY 1,2,3
+        FROM "SearchHistory" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND query->>'environment' = ${environment} AND "countAsSearch" = TRUE GROUP BY 1,2,3
         UNION ALL
         SELECT 'handoffs', metadata->>'applicationSource', 'SUCCESS', COUNT(*), 0, 0
         FROM "RedirectLog" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND metadata->>'environment' = ${environment} GROUP BY 1,2,3
