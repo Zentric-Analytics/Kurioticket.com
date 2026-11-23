@@ -39,7 +39,7 @@ test("journey date presets are passed to detail and single-ended historical boun
 });
 
 test("custom dates are editable and preset selection does not submit stale bounds", () => {
-  assert.match(controls, /<AdminCalendarInput mode="datetime-local"/);
+  assert.match(controls, /<AdminCalendarInput timeZone="local" mode="datetime-local"/);
   assert.match(controls, /name="from"/);
   assert.match(controls, /name="to"/);
   assert.match(controls, /\{custom \? \(/);
@@ -48,7 +48,7 @@ test("custom dates are editable and preset selection does not submit stale bound
 });
 
 test("equal custom local endpoints block native form submission", () => {
-  assert.match(controls, /<AdminCalendarInput mode="datetime-local"/);
+  assert.match(controls, /<AdminCalendarInput timeZone="local" mode="datetime-local"/);
   assert.match(controls, /adminOffsetZonedDateTime\(from, 1, timeZone\)/);
   assert.match(controls, /adminOffsetZonedDateTime\(to, -1, timeZone\)/);
   assert.match(controls, /Date\.parse\(startIso\) < Date\.parse\(endIso\)/);
@@ -75,7 +75,7 @@ test("Journeys directory shares Users styling without modifying consent-aware da
   assert.match(list, /Only eligible consented journeys are included/);
   assert.match(datesView, /<SearchMonitorSelect label="Date range"/);
   assert.match(datesView, /appearance="fare" align="end"/);
-  assert.match(datesView, /<AdminCalendarInput mode="datetime-local"/);
+  assert.match(datesView, /<AdminCalendarInput timeZone="local" mode="datetime-local"/);
   assert.match(history, /aria-label="Journey event history"/);
   assert.match(history, /events\.map\(\(event, index\) =>/);
   assert.match(history, /Step \{index \+ 1\}/);
