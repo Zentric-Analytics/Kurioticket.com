@@ -136,11 +136,11 @@ test("one descriptive View action belongs to the journey heading rather than its
 
 test("known product and search-outcome labels are readable without rewriting identifiers or source data", () => {
   const cases = [
-    ["FLIGHT", "FLIGHT · JFK → MIA · PARTIAL", "Flight · JFK → MIA · Partial"],
+    ["FLIGHT", "FLIGHT · JFK → MIA · PARTIAL", "Flight · JFK → MIA · Partial provider coverage"],
     ["HOTEL", "HOTEL · New York, NY · SUCCESS", "Hotel · New York, NY · Success"],
     ["CAR", "CAR · LAX → SFO · FAILED", "Car · LAX → SFO · Failed"],
     ["PACKAGE", "PACKAGE · ABV → ACC · SUCCESS", "Package · ABV → ACC · Success"],
-    ["HOTEL", "Hotel · FLIGHT · SUCCESS · PARTIAL", "Hotel · FLIGHT · SUCCESS · Partial"],
+    ["HOTEL", "Hotel · FLIGHT · SUCCESS · PARTIAL", "Hotel · FLIGHT · SUCCESS · Partial provider coverage"],
   ];
   for (const [product, detail, expected] of cases) {
     const row: ActivityRow = { id: "s-format", at, product, detail, stage: "SEARCH_COMPLETED", label: "Search completed" };
@@ -164,7 +164,7 @@ test("repeated searches on the same route remain individually visible with their
   assert.equal((html.match(/data-activity-id=/g) || []).length, 4);
   for (const row of rows) {
     const markup = eventMarkup(html, row.id);
-    assert.match(markup, /Flight · JFK → MIA · Partial/);
+    assert.match(markup, /Flight · JFK → MIA · Partial provider coverage/);
     assert.match(markup, new RegExp(row.at.toISOString().replaceAll(".", "\\.")));
   }
   assert.doesNotMatch(html, /Show all|Hide all|Open search|Open journey|Not linked to a journey/);
