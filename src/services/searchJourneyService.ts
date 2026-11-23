@@ -10,6 +10,7 @@ import {
   type JourneyFilterGroup,
   type JourneySortMode,
   type JourneySortChoice,
+  type JourneyFilterSelection,
 } from "@/lib/search-journey";
 import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
@@ -44,6 +45,7 @@ export type ClientJourneyEventInput = ApplicationAttribution & {
   filterGroup?: JourneyFilterGroup;
   sortMode?: JourneySortMode;
   sortChoice?: JourneySortChoice;
+  filterSelections?: JourneyFilterSelection[];
 };
 export type SearchHistoryInput = ApplicationAttribution & {
   userId?: string | null;
@@ -226,7 +228,8 @@ export function createSearchJourneyService(
             ...(input.offerId ? { resultId: input.offerId } : {}),
             ...(input.filterGroup ? { filterGroup: input.filterGroup } : {}),
             ...(input.sortMode ? { sortMode: input.sortMode } : {}),
-            ...(input.sortChoice ? { sortChoice: input.sortChoice } : {}) },
+            ...(input.sortChoice ? { sortChoice: input.sortChoice } : {}),
+            ...(input.filterSelections ? { filterSelections: input.filterSelections } : {}) },
         }, now());
         return { accepted: Boolean(result) };
       });
