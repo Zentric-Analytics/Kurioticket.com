@@ -18,18 +18,37 @@ test("native Flights exposes the exact three trip selector labels in order", () 
   assert.match(labels, /"one-way": "One-way"/);
   assert.match(labels, /"multi-city": "Multi-city"/);
   assert.doesNotMatch(labels, /"Round trip"|"One way"|"One way-trip"|"Multi-city trip"/);
-  assert.match(panel, /value: "multi-city", label: FLIGHT_TRIP_TYPE_LABELS\["multi-city"\], disabled: true, accessibilityHint: "Multi-city search is coming soon"/);
+  assert.match(panel, /value: "multi-city", label: FLIGHT_TRIP_TYPE_LABELS\["multi-city"\] }/);
+  assert.doesNotMatch(panel, /Multi-city search is coming soon/);
 });
 
-test("multi-city is display-only and defensively cannot change the Flight form", () => {
+test("multi-city is a real selectable Flight trip type", () => {
   const panel = read("FlightSearchPanel.tsx");
   const model = read("flightSearchModel.ts");
 
-  assert.match(panel, /type FlightTripSelectorValue = FlightForm\["tripType"\] \| "multi-city"/);
-  assert.match(panel, /if \(tripType === "multi-city"\) return;/);
-  assert.match(model, /export type FlightTripType = "round-trip" \| "one-way";/);
-  assert.match(model, /FLIGHT_TRIP_TYPES: FlightTripType\[\] = \["round-trip", "one-way"\]/);
-  assert.doesNotMatch(model, /"multi-city"/);
+  assert.doesNotMatch(panel, /if \(tripType === "multi-city"\) return/);
+  assert.match(model, /export type FlightTripType = "round-trip" \| "one-way" \| "multi-city"/);
+  assert.match(model, /FLIGHT_TRIP_TYPES: FlightTripType\[\] = \["round-trip", "one-way", "multi-city"\]/);
+});
+
+test("results modal uses underline tabs while dedicated edit keeps filled tabs", () => {
+  const panel = read("FlightSearchPanel.tsx");
+
+  assert.match(panel, /appearance=\{editAppearance && !usesStructuredCards \? "filled" : "default"\}/);
+  assert.match(panel, /showBaseline=\{!usesStructuredCards\}/);
+});
+
+test("Home uses text-only selection while other default selectors retain underlines", () => {
+  const primitives = read("FlowPrimitives.tsx");
+  assert.match(primitives, /showBaseline = true/);
+  assert.match(primitives, /showBaseline\?: boolean/);
+  assert.match(primitives, /const homeTabs = useHomePresentation\(\) && appearance === "default"/);
+  assert.match(primitives, /\(!showBaseline \|\| homeTabs\) && styles\.segmentsWithoutBaseline/);
+  assert.match(primitives, /selected && !homeTabs && \(appearance === "filled"/);
+  assert.match(primitives, /homeTabs && \{ color: selected \? ft\.colors\.textPrimary : ft\.colors\.textSecondary, fontWeight: selected \? "700" : "400" \}/);
+  assert.match(primitives, /homeSegmentText: \{ fontSize: 14, lineHeight: 20 \}/);
+  assert.match(primitives, /segmentsWithoutBaseline: \{ borderBottomWidth: 0 \}/);
+  assert.match(primitives, /segmentActive: \{ borderBottomColor: flowColors\.blue, borderBottomWidth: 2 \}/);
 });
 
 test("Segments keeps one horizontal row and disables options accessibly without changing enabled defaults", () => {

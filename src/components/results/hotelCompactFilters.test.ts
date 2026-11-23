@@ -9,42 +9,43 @@ const hotelSource = readFileSync(
   "utf8",
 );
 
-const compactBranch = hotelSource.match(
-  /if \(layout === "compact"\) \{([\s\S]*?)\n  return \(\n    <div\n      className=\{cn\(/,
-)?.[1];
+const compactStart = hotelSource.indexOf('if (layout === "compact") {');
+const compactEnd = hotelSource.indexOf("\n  return (", compactStart + 1);
+const compactBranch = compactStart >= 0 && compactEnd > compactStart
+  ? hotelSource.slice(compactStart, compactEnd)
+  : "";
 
 assert.ok(compactBranch, "the compact Hotel filter branch should be present");
 
-test("compact Hotel filters use the Flights panel and header contract", () => {
-  assert.match(compactBranch, /desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-\[#D8E1EC\] bg-\[#EEF3F8\]/);
-  assert.match(compactBranch, /desktop-filter-sidebar__header shrink-0 border-b border-\[#D8E1EC\]\/80 bg-\[#EEF3F8\] px-3\.5 py-2\.5/);
-  assert.match(compactBranch, /<SlidersHorizontal[\s\S]*?size=\{15\}[\s\S]*?strokeWidth=\{2\.25\}[\s\S]*?aria-hidden="true"/);
-  assert.match(compactBranch, /t\("hotelResults\.filterBy"\)/);
-  assert.doesNotMatch(compactBranch, /rounded-\[1\.15rem\]/);
-  assert.doesNotMatch(compactBranch, /ring-slate-950/);
+test("compact Hotel filters use a desktop-native panel without a duplicate title", () => {
+  assert.match(compactBranch, /desktop-filter-sidebar flex min-h-0 flex-1 flex-col overflow-hidden bg-white/);
+  assert.match(compactBranch, /htmlFor="hotel-property-search-compact"/);
+  assert.doesNotMatch(compactBranch, /desktop-filter-sidebar__title|hotelResults\.filterBy|<SlidersHorizontal/);
+  assert.doesNotMatch(compactBranch, /bg-\[#EEF3F8\]|rounded-2xl/);
   assert.match(compactBranch, /min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain/);
 });
 
 test("compact Hotel active-filter controls retain their behavior", () => {
-  assert.match(compactBranch, /activeFilterCount > 0/);
+  assert.match(hotelSource, /activeFilterCount > 0/);
   assert.match(
     compactBranch,
-    /t\("activeFilterCount"\)\.replace\(\s*"\{\{count\}\}",\s*String\(activeFilterCount\),?\s*\)/,
+    /value=\{propertyNameQuery\} onChange=\{\(event\) => setPropertyNameQuery\(event\.target\.value\)\}/,
   );
-  assert.match(compactBranch, /onClick=\{onClear\}[\s\S]*?Clear all/);
+  assert.match(hotelSource, /onClick=\{resetFilters\}[\s\S]*?t\("clearAll"\)/);
+  assert.match(compactBranch, /aria-label="Clear property search" onClick=\{\(\) => setPropertyNameQuery\(""\)\}/);
 });
 
 test("compact Hotel sections retain their order and conditional visibility", () => {
   const expectedOrder = [
     'id: "price"',
+    'id: "travellerFeatures"',
     'id: "rating"',
     'id: "locations"',
     'id: "propertyTypes"',
+    'id: "facilities"',
+    'id: "accessibility"',
     'id: "roomTypes"',
     'id: "bedTypes"',
-    'id: "meals"',
-    'id: "cancellationPolicies"',
-    'id: "facilities"',
   ];
   let previousIndex = -1;
   for (const id of expectedOrder) {
@@ -53,7 +54,7 @@ test("compact Hotel sections retain their order and conditional visibility", () 
     previousIndex = index;
   }
   assert.match(hotelSource, /section\.id !== "price" \|\| hasPricedResults/);
-  assert.match(hotelSource, /section\.id !== "meals" \|\| options\.meals\.length > 0/);
+  assert.match(hotelSource, /section\.id !== "facilities" \|\| options\.facilities\.length > 0/);
   assert.match(hotelSource, /<PriceFilterControl/);
   assert.match(hotelSource, /<StarRatingFilterControl/);
   assert.match(hotelSource, /<CheckboxFilterOptions layout="compact"/);
@@ -76,20 +77,18 @@ test("compact Hotel accordion matches the Flights interaction contract", () => {
   assert.match(hotelSource, /min-w-5 rounded-full bg-\[#E2EAF3\]/);
 });
 
-test("Hotel sticky compact-filter placement contract remains intact", () => {
-  assert.match(hotelSource, /desktopCompactFilterTopOffset = 116/);
-  assert.match(hotelSource, /desktopCompactFilterBottomGap = 16/);
-  assert.match(hotelSource, /viewportHeight: window\.innerHeight/);
-  assert.match(hotelSource, /maxHeight: desktopCompactFilterMaxHeight/g);
+test("Hotel sticky popular filters complement the full desktop panel", () => {
+  assert.match(hotelSource, /ref=\{desktopFilterPanelRef\}/);
+  assert.match(hotelSource, /!guided && showStickyHotelFilters/);
+  assert.match(hotelSource, /<StickyHotelPopularFilters/);
   assert.equal(
     compactBranch.match(/overflow-y-auto/g)?.length,
     1,
     "the compact Hotel accordion body should be the only vertical scroll owner",
   );
-  assert.match(hotelSource, /shouldShowDesktopCompactFilter\(\{/);
-  assert.match(hotelSource, /calculateCompactFilterPlacement\(\{/);
-  assert.match(hotelSource, /desktopCompactFilterPlacement === "fixed"/);
-  assert.match(hotelSource, /desktopCompactFilterPlacement === "docked"/);
+  assert.match(hotelSource, /<HotelFilters layout="desktop"/);
+  assert.match(hotelSource, /toggleFilter=\{toggleFilter\}/);
+  assert.match(hotelSource, /toggleRating=\{toggleHotelClass\}/);
 });
 
 test("compact Hotel maximum height reserves its viewport offsets", () => {

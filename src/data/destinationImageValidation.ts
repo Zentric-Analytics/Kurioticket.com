@@ -18,8 +18,10 @@ const blockedImageUrlFragments = [
   "&random",
 ];
 
+const approvedLocalImage = /^\/images\/staging-remediation\/(?:phoenix|honolulu|puerto-vallarta|dallas|dubai|lisbon|mombasa|accra|madrid|istanbul|bangkok|san-jose)\.webp$/;
+const parseImage = (image: string) => new URL(image, (approvedLocalImage.test(image) || image === "/images/premium/homepage/destinations/kurioticket-homepage-destination-paris-eiffel-tower-buildings-001.jpg") ? "https://kurioticket.com" : undefined);
 const getImageIdentity = (imageUrl: string) => {
-  const parsed = new URL(imageUrl);
+  const parsed = parseImage(imageUrl);
   return `${parsed.hostname}${parsed.pathname}`;
 };
 
@@ -35,7 +37,7 @@ export function validateDestinationImages(
       throw new Error(`${catalogName}: ${item.id} is missing an image URL.`);
     }
 
-    const parsed = new URL(item.image);
+    const parsed = parseImage(item.image);
     const lowerUrl = item.image.toLowerCase();
 
     if (parsed.protocol !== "https:") {

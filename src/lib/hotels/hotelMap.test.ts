@@ -115,12 +115,33 @@ test("Street View requires both a Google key and valid coordinates", () => {
   );
 });
 
-test("directions preserve exact property coordinates when an address exists", () => {
+test("directions prefer the identified hotel and canonical address", () => {
   assert.equal(
     buildHotelAddress(parkPlaza),
     "200 Westminster Bridge Rd, Lambeth, London SE1 7UT, United Kingdom",
   );
-  const directionsUrl = buildHotelDirectionsUrl(parkPlaza);
+  const directionsUrl = buildHotelDirectionsUrl({
+    hotelName: "Hôtel Park Plaza, Westminster",
+    propertyDetails: parkPlaza,
+  });
+  assert.ok(directionsUrl);
+  assert.equal(
+    new URL(directionsUrl).searchParams.get("destination"),
+    "Hôtel Park Plaza, Westminster, 200 Westminster Bridge Rd, Lambeth, London SE1 7UT, United Kingdom",
+  );
+  assert.match(directionsUrl, /destination=H%C3%B4tel\+Park\+Plaza%2C\+Westminster/);
+});
+
+test("directions fall back to coordinates when address metadata is unavailable", () => {
+  const directionsUrl = buildHotelDirectionsUrl({
+    hotelName: "",
+    propertyDetails: {
+      ...parkPlaza,
+      streetAddress: " ",
+      city: "",
+      country: "",
+    },
+  });
   assert.ok(directionsUrl);
   assert.equal(
     new URL(directionsUrl).searchParams.get("destination"),
@@ -128,15 +149,19 @@ test("directions preserve exact property coordinates when an address exists", ()
   );
 });
 
-test("directions fall back to an address when coordinates are invalid", () => {
-  const directionsUrl = buildHotelDirectionsUrl({
-    ...parkPlaza,
-    latitude: Number.NaN,
-    longitude: Number.NaN,
-  });
-  assert.ok(directionsUrl);
+test("directions return null without a usable address or valid coordinates", () => {
   assert.equal(
-    new URL(directionsUrl).searchParams.get("destination"),
-    "200 Westminster Bridge Rd, Lambeth, London SE1 7UT, United Kingdom",
+    buildHotelDirectionsUrl({
+      hotelName: "",
+      propertyDetails: {
+        ...parkPlaza,
+        streetAddress: "",
+        city: " ",
+        country: "",
+        latitude: Number.NaN,
+        longitude: Number.POSITIVE_INFINITY,
+      },
+    }),
+    null,
   );
 });

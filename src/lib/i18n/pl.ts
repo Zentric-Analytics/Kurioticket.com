@@ -2,8 +2,12 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "Ostatnio",
   ...en,
+  multiCity: "Wiele miast",
+  "deals.results.package.view.hotel": "Zobacz wyniki hoteli",
+  "accountDashboard.recently": "Ostatnio",
+  "accountDashboard.hub.savedRecent": "Zapisane i ostatnie",
+  "accountMenu.savedRecent.label": "Zapisane i ostatnie",
   "deals.mobileTravelersTitle": "Podróżni",
   "mobileTravelerCabin.title": "Podróżni i klasa kabiny",
   "mobileTravelerCabin.adultDescription": "18 lat i więcej",
@@ -178,7 +182,7 @@ export const translations: TranslationDictionary = {
     "Kontroluj, jak Kurioticket personalizuje Twoje rekomendacje.",
   "accountDashboard.preferences.customization.personalizeSearches":
     "Używaj moich wyszukiwań do personalizacji rekomendacji",
-  "accountDashboard.preferences.customization.personalizedTravelPakiety":
+  "accountDashboard.preferences.customization.personalizedTravelDeals":
     "Pokazuj spersonalizowane oferty podróży",
   "accountDashboard.preferences.customization.rememberRecentSearches":
     "Zapamiętuj moje ostatnie wyszukiwania",
@@ -1681,6 +1685,7 @@ export const translations: TranslationDictionary = {
   displayEstimateConvertedFromProviderPrice: "{{formatted}}. Szacunkowa cena wyświetlania przeliczona z {{providerPrice}}. Ostateczna cena dostawcy może się różnić.",
   convertedDisplayEstimateProviderPrice: "Szacunkowa cena wyświetlania po przeliczeniu. Cena u dostawcy: {{providerPrice}}. Ostateczna cena dostawcy może się różnić.",
   viewFlight: "Zobacz lot",
+  viewDeal: "Zobacz ofertę",
   flightCardProviderHandoff: "Ostateczna cena, dostępność, rezerwacja i zasady taryfy są potwierdzane przez dostawcę.",
   flightCardProviderHandoffConverted: "Ostateczna cena, dostępność, rezerwacja i zasady taryfy są potwierdzane przez dostawcę. Ostateczna waluta dostawcy może różnić się od wybranej waluty wyświetlania.",
   flightDetailsLoading: "Ładowanie szczegółów lotu...",
@@ -1711,6 +1716,7 @@ export const translations: TranslationDictionary = {
   providerComparisonIntro: "Kurioticket może porównać oferty różnych dostawców.",
   providerNormalizedItineraryPrefix: "Szczegóły wylotu i powrotu są wyświetlane na podstawie danych planu podróży ujednoliconych przez dostawcę.",
   checkProvider: "Sprawdź u dostawcy",
+  notSuppliedByProvider: "Nie podano przez dostawcę",
   carryOnIncluded: "bagaż podręczny w cenie",
   flightLeg: "Odcinek lotu",
   layover: "Przesiadka",
@@ -2294,4 +2300,6 @@ export const translations: TranslationDictionary = {
   "deals.guided.handoff.refreshTitle": "One or more options need fresh results",
   "deals.guided.handoff.refreshBody": "Return to trip review and refresh the expired option before opening a handoff step.",
   flightSearchDestinationPlaceholderShort: 'Dokąd?',
+  "legal.privacy.sections.data-we-collect.paragraph3": "Aby zapewnić niezawodność usługi i reagować na incydenty, mierzymy niedawną aktywność w witrynie i aplikacjach. Wykorzystujemy krótkotrwałe dane uwierzytelniające sesji, informacje o platformie, czas ostatniej aktywności oraz — w przypadku zalogowania — odniesienie do sesji konta. Sygnały te służą do zliczania aktywnych sesji i eliminowania wielokrotnego zliczania zalogowanych kont. Pomiar ten jest niezależny od opcjonalnej analityki.",
+  "legal.cookiePolicy.sections.use.paragraph3": "Operacyjne monitorowanie obecności online wykorzystuje krótkotrwałe, podpisane dane uwierzytelniające przechowywane w pamięci strony, a nie osobny plik cookie ani wpis w pamięci przeglądarki. W obsługiwanych przeglądarkach dane te są współdzielone przez aktywne karty tego samego pochodzenia i wygasają po zakończeniu sesji strony; zachowane rekordy operacyjne wygasają w krótkim, ruchomym okresie retencji.",
 };

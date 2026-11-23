@@ -1,11 +1,26 @@
+import { jsxOpening } from "../../../test-support/sourceStructure";
+import { componentBundle, withComponentBrowser } from "../../../test-support/componentBrowser";
+import ts from "typescript";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { adminNavigation } from "@/lib/adminNavigation";
-import { filterProviderStatuses, normalizeProductFilter, productFilters } from "@/lib/adminProviderFilters";
+import { getProviderOutcomeWidths } from "@/lib/adminProviderVisuals";
+import { providerHandoffFiltersHref, providerHandoffHistoryFilterHref, shouldAcceptHandoffFilterResponse } from "@/lib/adminProviderHandoffFilterUrl";
+import { filterProviderOperationalStatuses, filterProviderStatuses, normalizeProductFilter, productFilters } from "@/lib/adminProviderFilters";
+import type { ProviderOperationalStatus, ProviderOperationalServiceStatus } from "@/services/providerOperationalStatusCore";
 
 const providersPage = readFileSync("src/app/admin/providers/page.tsx", "utf8");
+const referralPage = readFileSync("src/app/admin/referral-attribution/page.tsx", "utf8");
+const inlineUnlinkedPanel = readFileSync("src/components/admin/ReferralUnlinkedHandoffs.tsx", "utf8");
+const referralWindowFilter = readFileSync("src/components/admin/ReferralWindowFilter.tsx", "utf8");
+const handoffFilters = readFileSync("src/components/admin/ProviderHandoffFilters.tsx", "utf8");
+const handoffsPage = readFileSync("src/app/admin/redirects/page.tsx", "utf8");
+const handoffDetailPage = readFileSync("src/app/admin/redirects/[id]/page.tsx", "utf8");
+const adminShell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
+const directoryTable = readFileSync("src/components/admin/ProviderDirectoryTable.tsx", "utf8");
+const retestButton = readFileSync("src/components/admin/ProviderRetestButton.tsx", "utf8");
 const providerFiltersSource = readFileSync("src/lib/adminProviderFilters.ts", "utf8");
 const flightsPage = readFileSync("src/app/admin/flights/page.tsx", "utf8");
 const hotelsPage = readFileSync("src/app/admin/hotels/page.tsx", "utf8");
@@ -14,7 +29,7 @@ const providersApi = readFileSync("src/app/api/admin/providers/route.ts", "utf8"
 const providerRetestApi = readFileSync("src/app/api/admin/providers/duffel/retest/route.ts", "utf8");
 const overviewPage = readFileSync("src/app/admin/page.tsx", "utf8");
 const systemPage = readFileSync("src/app/admin/system/page.tsx", "utf8");
-const settingsPage = readFileSync("src/app/admin/settings/page.tsx", "utf8");
+const settingsPage = readFileSync("src/app/admin/settings/layout.tsx", "utf8");
 
 type TestProvider = Parameters<typeof filterProviderStatuses>[0][number];
 
@@ -38,48 +53,124 @@ test("providers page filters provider sections by product query", () => {
   assert.deepEqual(filterProviderStatuses(providerStatuses, "cars").map((item) => item.product), ["Cars"]);
 });
 
-test("provider filter helpers remain available while the restored page shows all providers", () => {
+test("provider filter helpers drive the providers page", () => {
   assert.deepEqual(productFilters.map((filter) => filter.key), ["all", "flights", "hotels", "cars"]);
   assert.match(providerFiltersSource, /href: "\/admin\/providers\?product=flights"/);
   assert.match(providerFiltersSource, /href: "\/admin\/providers\?product=hotels"/);
   assert.match(providerFiltersSource, /href: "\/admin\/providers\?product=cars"/);
+  assert.match(providersPage, /normalizeProductFilter/);
+  assert.match(providersPage, /filterProviderStatuses/);
+  assert.match(providersPage, /productFilters\.map/);
   assert.match(providersPage, /getProviderStatuses\(\)/);
-  assert.match(providersPage, /<AdminProviderStatusCard key=\{provider\.product\} \{\.\.\.provider\} \/>/);
+  assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours, undefined, monitoringRange \?\? undefined\)/);
+  assert.match(providersPage, /All providers/);
+  assert.match(providersPage, /filterProviderOperationalStatuses/);
 });
 
-test("providers page preserves truthful provider data and the active retest control", () => {
-  assert.match(providersPage, /Provider health retest/);
-  assert.match(providersPage, /<ProviderRetestButton \/>/);
-  assert.match(providersPage, /Retesting records real provider health/);
-  assert.match(providersPage, /Cars pending unless configured/);
-  assert.match(providersPage, /Secrets hidden/);
+test("provider details preserve booking, readiness and audited Duffel retest", async () => {
+  assert.match(providersPage, /<ProviderDirectoryTable rows=\{directoryRows\} \/>/);
+  assert.match(providersPage, /canRetestDuffel: integration\.id === "duffel"/);
+  assert.match(directoryTable, /<ProviderRetestButton provider="duffel" \/>/);
+  assert.match(directoryTable, /<ProviderRetestButton provider="kayak-sandbox" \/>/);
+  assert.match(directoryTable, /row\.canRetestDuffel/);
+  assert.match(directoryTable, /sm:grid-cols-2 lg:grid-cols-4/);
+  assert.doesNotMatch(directoryTable, /xl:grid-cols-4/);
+  assert.doesNotMatch(directoryTable, /A retest makes a real Duffel health request/);
+  assert.match(directoryTable, /row\.detail\.configured/);
+  assert.match(directoryTable, /row\.detail\.booking/);
+  assert.match(directoryTable, /row\.detail\.note/);
+  assert.match(directoryTable, /row\.detail\.lastFailure/);
+  assert.match(providerRetestApi, /writeAdminAuditLog/);
+  assert.match(retestButton, /router\.refresh\(\)/);
+  assert.match(retestButton, /catch/);
+  assert.match(retestButton, /finally/);
+  assert.doesNotMatch(retestButton, /window\.location\.reload/);
+  assert.doesNotMatch(providersPage, /Provider health checks/);
+  // The current directory owns these controls; exercise both real client paths.
+  assert.match(providerRetestApi, /requireAdminApiSession/);
+  assert.match(providerRetestApi, /checkDuffelHealth\(\)/);
+  const kayakApi = readFileSync("src/app/api/admin/providers/kayak/retest/route.ts", "utf8");
+  assert.match(kayakApi, /requireAdminApiSession/);
+  assert.match(kayakApi, /writeAdminAuditLog/);
+  assert.match(providersPage, /configured: integration\.configured \? "Configured" : "Not configured"/);
+  assert.match(providersPage, /booking: integration\.bookingEnabled/);
+  assert.match(providersPage, /note: integration\.note/);
+  const bundle = componentBundle({ retest: "src/components/admin/ProviderRetestButton.tsx" }, {
+    "next/navigation": "exports.useRouter=()=>({refresh:()=>window.refreshes++});",
+  });
+  await withComponentBrowser(bundle, `const React=require('react'),{createRoot}=require('react-dom/client'),{flushSync}=require('react-dom'),{ProviderRetestButton}=require('retest');
+    const root=createRoot(document.getElementById('root'));window.requests=[];window.refreshes=0;window.reply='success';
+    window.fetch=async(url,options)=>{window.requests.push({url,...options});if(window.reply==='network')throw Error('controlled network failure');return {ok:window.reply==='success',json:async()=>window.reply==='success'?{message:'Controlled health result'}:{error:'Admin access required.'}}};
+    window.mount=provider=>{window.requests=[];window.refreshes=0;window.reply='success';flushSync(()=>root.render(React.createElement(ProviderRetestButton,{key:provider,provider})))};window.mount('duffel');`, async page => {
+    for (const [provider, label, endpoint] of [
+      ["duffel", "Duffel", "/api/admin/providers/duffel/retest"],
+      ["kayak-sandbox", "KAYAK", "/api/admin/providers/kayak/retest"],
+    ]) {
+      await page.evaluate(provider => (window as unknown as { mount(p: string): void }).mount(provider), provider);
+      await page.getByRole("button", { name: "Retest " + label, exact: true }).click();
+      await page.getByRole("status").getByText("Controlled health result", { exact: true }).waitFor();
+      assert.deepEqual(await page.evaluate("window.requests"), [{ url: endpoint, method: "POST", credentials: "same-origin", cache: "no-store" }]);
+      assert.equal(await page.evaluate("window.refreshes"), 1);
+      await page.evaluate("window.reply='forbidden'");
+      await page.getByRole("button", { name: "Retest " + label, exact: true }).click();
+      await page.getByRole("status").getByText("Admin access required.", { exact: true }).waitFor();
+      assert.equal(await page.evaluate("window.refreshes"), 1);
+      await page.evaluate("window.reply='network'");
+      await page.getByRole("button", { name: "Retest " + label, exact: true }).click();
+      await page.getByRole("status").getByText("Unable to reach the health-check service. Please try again.", { exact: true }).waitFor();
+      assert.equal(await page.getByRole("button", { name: "Retest " + label, exact: true }).isEnabled(), true);
+      assert.equal(await page.evaluate("window.refreshes"), 1);
+    }
+  });
 });
 
-test("admin navigation restores Providers and the original product destinations", () => {
+test("admin navigation keeps Providers and product destinations without a duplicate Flights workspace", () => {
   assert.equal(adminNavigation.some((item) => item.href === "/admin/providers" && item.label === "Providers"), true);
-  assert.equal(adminNavigation.some((item) => item.href === "/admin/flights" && item.label === "Flights"), true);
+  assert.equal(adminNavigation.some((item) => item.href === "/admin/homepage-fares" && item.label === "Homepage Fares"), true);
+  assert.equal(adminNavigation.some((item) => item.href === "/admin/flights"), false);
   assert.equal(adminNavigation.some((item) => item.href === "/admin/hotels" && item.label === "Hotels"), true);
   assert.equal(adminNavigation.some((item) => item.href === "/admin/cars" && item.label === "Cars"), true);
 });
 
-test("product pages retain truthful metasearch readiness views", () => {
-  assert.match(flightsPage, /title="Flight Search Readiness"/);
-  assert.match(hotelsPage, /title="Hotel Search Readiness"/);
-  assert.match(carsPage, /title="Car Search Readiness"/);
-  for (const source of [flightsPage, hotelsPage, carsPage]) assert.match(source, /AdminProviderStatusCard/);
-  for (const source of [flightsPage, hotelsPage, carsPage]) {
-    assert.match(source, /provider-owned/i);
+test("Providers owns flight provider health while the legacy Flights route redirects to Search Activity", () => {
+  assert.match(flightsPage, /redirect\("\/admin\/searches\/activity\?product=FLIGHT"\)/);
+  assert.doesNotMatch(flightsPage, /AdminProviderStatusCard|Flight provider health|Provider exceptions|getFlightOperationsSnapshot/);
+  assert.match(hotelsPage, /title="Hotel Operations"/);
+  assert.match(carsPage, /title="Car Operations"/);
+  for (const [source, title] of [[hotelsPage, "Hotel Operations"], [carsPage, "Car Operations"]]) {
+    const pages = jsxOpening(source, "AdminPageShell");
+    assert.equal(pages.length, 1);
+    assert.ok(pages[0].attributes.properties.some(property => property.getText().includes('title="' + title + '"')));
+    assert.match(source, /telemetry unavailable/);
+    assert.match(source, /No zero values were invented/);
+  }
+  // Hotel and Car Operations now own their own provider-health sections,
+  // rather than reusing the older generic readiness card.
+  assert.match(providersPage, /getProviderIntegrationStatuses/);
+  assert.match(providersPage, /getProviderOperationalStatuses/);
+  for (const source of [hotelsPage, carsPage]) {
+    assert.match(source, /getProviderIntegrationStatuses/);
+    assert.match(source, /providerHealth\.find/);
+    assert.match(source, /OperationsSection/);
+    assert.match(source, /<ProductSearchRecordsPanel product=/);
+    assert.doesNotMatch(source, /ProductSearchJumpLink|View hotel searches|View car searches/);
+    assert.doesNotMatch(source, /\/admin\/searches\/|\/admin\/journeys/);
+    assert.doesNotMatch(source, /AdminSectionCard|AdminMetricCard|operations\.recentSearches/);
     assert.doesNotMatch(source, /Booking not live|production booking workflow|booking actions/i);
   }
 });
 
 test("provider APIs, retest API, and unrelated admin pages are not edited by provider page consolidation", () => {
-  assert.match(providersApi, /return NextResponse\.json\(\{ active: \{ duffel: await getDuffelAdminHealth\(\) \}, paused: pausedProviderRows \}\)/);
+  assert.match(providersApi, /getProviderOperationalStatuses/);
   assert.match(providerRetestApi, /checkDuffelHealth\(\)/);
   assert.match(providerRetestApi, /writeAdminAuditLog/);
   assert.match(overviewPage, /Operations Dashboard/);
-  assert.match(systemPage, /Safe operational status only/);
-  assert.match(settingsPage, /AdminPageShell title="Settings"/);
+  assert.match(systemPage, /hideHeader/);
+  const shells = jsxOpening(settingsPage, "AdminPageShell");
+  assert.equal(shells.length, 1, "Settings has one page shell");
+  const title = shells[0].attributes.properties.find(attribute => ts.isJsxAttribute(attribute) && attribute.name.getText() === "title");
+  assert.ok(title && ts.isJsxAttribute(title) && title.initializer && ts.isStringLiteral(title.initializer));
+  assert.equal(title.initializer.text, "Settings");
 });
 
 function provider(product: TestProvider["product"], providerName: string): TestProvider {
@@ -95,3 +186,494 @@ function provider(product: TestProvider["product"], providerName: string): TestP
     notes: `${product} provider notes`,
   };
 }
+
+
+test("provider health sections prioritize attention and use a flat compact layout", () => {
+  const positions = [
+    "Providers requiring attention",
+    "All providers",
+    "Operational performance",
+    "Search service breakdown",
+  ].map(section => providersPage.indexOf(section));
+  assert.ok(positions.every(position => position >= 0));
+  assert.deepEqual([...positions].sort((a, b) => a - b), positions);
+  assert.match(providersPage, /getProviderIntegrationStatuses/);
+  assert.match(providersPage, /<h1 className="sr-only">Providers<\/h1>/);
+  assert.doesNotMatch(providersPage, /Monitor provider availability, search reliability/);
+  assert.doesNotMatch(providersPage, /<header>/);
+  assert.doesNotMatch(providersPage, /AdminSectionCard/);
+  assert.match(providersPage, /<ProviderDirectoryTable rows=/);
+  assert.match(providersPage, /aria-labelledby="service-breakdown-heading"/);
+});
+
+test("Provider Health range sits to the right of product tabs, not beside attention warnings", () => {
+  const attention = providersPage.indexOf('aria-labelledby="provider-attention"');
+  const directory = providersPage.indexOf('aria-labelledby="provider-directory"');
+  const tabs = providersPage.indexOf('aria-label="Filter providers by product"');
+  const range = providersPage.indexOf('<ProviderHealthWindowFilter product={filter}');
+  const table = providersPage.indexOf('<ProviderDirectoryTable rows={directoryRows}');
+  assert.ok(attention >= 0 && attention < directory && directory < tabs && tabs < range && range < table);
+  assert.equal((providersPage.match(/<ProviderHealthWindowFilter product=\{filter\}/g) || []).length, 1);
+  assert.match(providersPage, /data-testid="provider-product-range-row"/);
+  assert.match(providersPage, /mt-2 flex min-w-0 flex-wrap items-center justify-between/);
+});
+
+test("provider attention uses a single dropdown and safely bounded date selection", () => {
+  assert.match(providersPage, /parseProviderHealthRange\(raw, monitoringNow\)/);
+  assert.match(providersPage, /ProviderHealthWindowFilter/);
+  assert.match(providersPage, /providerHealthRangeHref\(item\.key, monitoringRange, monitoringHours, monitoringPeriod\)/);
+  assert.doesNotMatch(providersPage, /Provider health signals \(historical\)/);
+  assert.doesNotMatch(providersPage, /Historical outcomes in this window do not necessarily represent an active incident/);
+  assert.match(providersPage, /Providers requiring attention/);
+  assert.doesNotMatch(providersPage, /Review provider searches/);
+  assert.doesNotMatch(providersPage, /Investigate provider searches/);
+  assert.doesNotMatch(providersPage, /Current environment<\/span>/);
+  assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours, undefined, monitoringRange \?\? undefined\)/);
+});
+
+test("provider issue link expands inline and cannot jump to the bottom", () => {
+  assert.match(providersPage, /<details className="group py-2\.5">/);
+  assert.match(providersPage, /View details ›/);
+  assert.match(providersPage, /Hide details ‹/);
+  assert.match(providersPage, /service\.failureReasons/);
+  assert.match(providersPage, /<ActivityTime value=\{provider\.lastFailureAt\}/);
+  assert.match(providersPage, /unscopedTimingProviders\.has\(provider\.id\)/);
+  assert.match(providersPage, /Not recorded in /);
+  assert.match(providersPage, /Not available for this service/);
+  assert.doesNotMatch(providersPage, /href=\{"#provider-operation-" \+ provider\.id\}/);
+});
+
+test("directory rows are compact and disclose secondary diagnostics on request", () => {
+  assert.match(directoryTable, /aria-expanded=\{open\}/);
+  assert.match(directoryTable, /aria-controls=\{"provider-details-" \+ row\.id\}/);
+  assert.match(directoryTable, /hidden=\{!open\}/);
+  assert.match(directoryTable, /row\.shortLabel/);
+  assert.match(directoryTable, /row\.lastActivity/);
+  assert.doesNotMatch(directoryTable, /Credentials: Yes/);
+  assert.doesNotMatch(directoryTable, /Booking: Not live yet/);
+  assert.match(providersPage, /shortLabel: "Internal catalogue"/);
+  assert.match(providersPage, /shortLabel: null/);
+  assert.match(directoryTable, /Not externally monitored|row\.lastActivity/);
+});
+
+test("performance visualization preserves call counts, an attempted-calls hint and aligned service diagnostics", () => {
+  assert.match(providersPage, /Disabled calls are not counted as attempts\./);
+  assert.match(providersPage, /<Info size=\{13\}/);
+  assert.doesNotMatch(providersPage, /Recorded external provider calls in the current environment/);
+  assert.doesNotMatch(providersPage, /Product filtering uses service-specific counts/);
+  assert.doesNotMatch(providersPage, /Last success: <ActivityTime/);
+  assert.doesNotMatch(providersPage, /Last failure: <ActivityTime/);
+  assert.match(providersPage, /Failure reason/);
+  assert.match(providersPage, /numberHeadingClass/);
+  assert.match(providersPage, /service\.disabledCalls\.toLocaleString\(\)/);
+  assert.match(providersPage, /service\.failureRatePct === null \? "No attempts"/);
+  assert.match(providersPage, /getProviderOutcomeWidths\(provider\)/);
+  assert.match(providersPage, /aria-label="Provider call outcome comparison"/);
+  assert.match(providersPage, /segments\.successPct/);
+  assert.match(providersPage, /segments\.failurePct/);
+  assert.match(providersPage, /segments\.degradedPct/);
+  assert.match(providersPage, /segments\.hasAttempts/);
+  assert.match(providersPage, /provider\.averageLatencyMs/);
+  assert.match(providersPage, /provider\.attemptedCalls\.toLocaleString/);
+  assert.match(providersPage, /provider\.degradedCalls\.toLocaleString/);
+  assert.doesNotMatch(providersPage, /<table className="w-full min-w-\[790px\]/);
+});
+
+test("attention uses state-dependent incident accents without inserting cards", () => {
+  assert.match(providersPage, /border-l-\[3px\]/);
+  assert.match(providersPage, /"border-rose-500" : "border-amber-500"/);
+  assert.match(providersPage, /<ul className="mt-3 space-y-2">/);
+  assert.match(providersPage, /border-t border-\[#E7ECF5\] pt-3/);
+  assert.doesNotMatch(providersPage, /AdminSectionCard/);
+  assert.match(providersPage, /<ProviderDirectoryTable rows=\{directoryRows\} \/>/);
+  assert.match(providersPage, /mt-6 border-t border-\[#E7ECF5\] pt-4 text-\[12px\]/);
+});
+
+test("provider outcome bars reconcile attempted calls without treating disabled calls as successes", () => {
+  assert.deepEqual(getProviderOutcomeWidths({
+    attemptedCalls: 20, successCalls: 12, failedCalls: 5, degradedCalls: 3,
+  }), {
+    hasAttempts: true, successPct: 60, failurePct: 25, degradedPct: 15,
+  });
+  assert.deepEqual(getProviderOutcomeWidths({
+    attemptedCalls: 0, successCalls: 0, failedCalls: 0, degradedCalls: 0,
+  }), {
+    hasAttempts: false, successPct: 0, failurePct: 0, degradedPct: 0,
+  });
+  assert.deepEqual(getProviderOutcomeWidths({
+    attemptedCalls: 10000, successCalls: 9999, failedCalls: 1, degradedCalls: 0,
+  }), {
+    hasAttempts: true, successPct: 99.99, failurePct: 0.01, degradedPct: 0,
+  });
+  assert.throws(() => getProviderOutcomeWidths({
+    attemptedCalls: 20, successCalls: 20, failedCalls: 1, degradedCalls: 0,
+  }), /must reconcile/);
+});
+
+
+test("Task 1: incident details show compact facts and aligned per-service diagnostics", () => {
+  assert.match(providersPage, /grid max-w-\[980px\] gap-x-5 gap-y-3 sm:grid-cols-3/);
+  assert.match(providersPage, /<ActivityTime value=\{provider\.lastFailureAt\}/);
+  assert.match(providersPage, /<ActivityTime value=\{provider\.lastSuccessAt\}/);
+  assert.match(providersPage, /aria-label=\{"Service diagnostics for " \+ provider\.provider\}/);
+  assert.match(providersPage, /<table className="w-full min-w-\[760px\] table-fixed/);
+  for (const column of ["Service", "Status", "Attempts", "Failed", "Main failure reason"]) {
+    assert.ok(providersPage.includes(">" + column + "</th>"), "Missing incident diagnostic column: " + column);
+  }
+  assert.match(providersPage, /service\.failureReasons\.map\(reason =>/);
+  assert.match(providersPage, /service\.attemptedCalls === 0 \? "No attempts"/);
+  assert.match(providersPage, /border-l-\[3px\]/);
+  assert.match(providersPage, /<details className="group py-2\.5">/);
+});
+
+test("Task 2: breakdown reasons are stacked with aligned counts, not comma-joined sentences", () => {
+  assert.match(providersPage, /aria-label=\{"Failure reasons for " \+ provider\.provider/);
+  assert.match(providersPage, /<ul aria-label=\{"Failure reasons for "/);
+  assert.match(providersPage, /<li key=\{reason\.code\}/);
+  assert.match(providersPage, /reason\.calls\.toLocaleString\(\)/);
+  assert.match(providersPage, /justify-between gap-3/);
+  assert.match(providersPage, /service\.failureReasons\.length \? \(/);
+  assert.match(providersPage, /: "—"/);
+  assert.match(providersPage, /aria-labelledby="service-breakdown-heading"/);
+});
+
+test("Task 3: referral attribution uses compact preset auto-apply and white metric summaries", () => {
+  assert.match(referralPage, /requireAdminApiSession\(\)/);
+  assert.match(referralPage, /parseAttributionDays\(daysValue === "today" \? null : daysValue\)/);
+  assert.match(referralPage, /getReferralAttributionSummary\(days, environment, period\)/);
+  assert.match(referralPage, /<ReferralWindowFilter days=\{days\} embedded=\{false\} period=\{period\} \/>/);
+  assert.match(referralWindowFilter, /router\.replace\(target, \{ scroll: false \}\)/);
+  assert.match(referralWindowFilter, /name="days"/);
+  assert.match(referralWindowFilter, /name="view" value="attribution"/);
+  for (const window of ["today","7","30"]) {
+    assert.match(referralWindowFilter, new RegExp('value: "' + window + '"'));
+  }
+  assert.match(referralPage, /summary\.dataAvailable \? summary\.handoffs\.total\.toLocaleString\(\) : "—"/);
+  assert.match(referralPage, /Linked to search/);
+  assert.match(referralPage, /Not linked to search/);
+  assert.match(referralPage, /Data state/);
+  assert.match(referralPage, /lg:grid-cols-4/);
+  assert.match(referralPage, /lg:grid-cols-2/);
+  assert.match(referralPage, /grid grid-cols-2 gap-x-4 gap-y-4/);
+  assert.match(inlineUnlinkedPanel, /aria-labelledby="unlinked-handoffs"/);
+  assert.match(referralPage, /<ReferralUnlinkedHandoffs/);
+  assert.match(referralPage, /unlinkedCount={summary.handoffs.notLinkedToSearch}/);
+  assert.match(referralPage, /providers={summary.providers.map\(item => item.provider\)}/);
+  assert.doesNotMatch(referralPage, /href=\{referralHandoffHref/);
+  assert.match(inlineUnlinkedPanel, /referralUnlinkedRecordsParams/);
+  assert.match(inlineUnlinkedPanel, /fetch\("\/api\/admin\/provider-handoffs\?" \+ params.toString\(\)/);
+  assert.doesNotMatch(inlineUnlinkedPanel, /aria-expanded=\{expanded\}|hidden=\{!expanded\}/);
+  assert.match(inlineUnlinkedPanel, /aria-label="Unlinked provider handoff records"/);
+  assert.match(inlineUnlinkedPanel, /aria-label="Unlinked handoff pagination"/);
+  assert.match(inlineUnlinkedPanel, /setSelectedId\(current => current === handoff.id/);
+  assert.match(inlineUnlinkedPanel, /credentials: "include"/);
+  assert.match(inlineUnlinkedPanel, /cache: "no-store"/);
+  assert.doesNotMatch(inlineUnlinkedPanel, /\/admin\/redirects|\/admin\/searches|router\.push|router\.replace/);
+  assert.match(referralPage, /not confirmed bookings or payments/);
+  assert.match(referralPage, /table className="w-full table-fixed text-\[13px\]"/);
+  assert.doesNotMatch(referralPage, /AdminMetricCard|AdminFilterBar|AdminDataTable|AdminStatusBadge/);
+});
+
+test("Task 3: standalone handoffs preserve filters, records and next-cursor behavior", () => {
+  assert.match(handoffsPage, /adminOperationalReads\.handoffs\.list\(params\)/);
+  assert.match(handoffsPage, /if \(embedded\) return \(/);
+  assert.match(handoffsPage, /<AdminDataTable/); // Original embedded Search Activity variant remains.
+  assert.match(handoffsPage, /<ProviderHandoffFilters/);
+  assert.match(handoffFilters, /aria-label="Filter provider handoffs"/);
+  assert.match(handoffsPage, /aria-label="Provider handoff records"/);
+  // The standalone Handoffs directory must remain a ten-column table rather
+  // than switching to stacked labeled cards at desktop widths.
+  assert.match(handoffsPage, /className="admin-handoff-records mt-3/);
+  assert.match(handoffsPage, /w-full min-w-0 table-fixed/);
+  assert.doesNotMatch(handoffsPage, /min-w-\[1320px\]|overflow-x-auto/);
+  assert.match(handoffsPage, /<colgroup>/);
+  assert.match(handoffsPage, /px-1.5 py-3 text-left font-medium first:pl-0/);
+  assert.match(handoffsPage, /data-handoff-compact/);
+  assert.match(handoffsPage, /adminHandoffRoutePreview\(handoff.route\)/);
+  assert.match(handoffsPage, /title=\{handoff.route \|\| undefined\}/);
+  const responsiveCss = readFileSync("src/app/globals.css", "utf8");
+  assert.match(responsiveCss, /\.admin-handoff-records tbody > tr \{/);
+  assert.match(responsiveCss, /display: table-row;/);
+  assert.doesNotMatch(responsiveCss.slice(responsiveCss.indexOf("/* Keep Provider Handoffs as"), responsiveCss.indexOf("/* Display ten characters")), /grid-template-columns: repeat\(3/);
+  assert.match(responsiveCss, /\.admin-handoff-records td \[data-handoff-route-preview\]/);
+  for (const field of ["product", "identity", "correlation", "provider", "environment"]) {
+    assert.match(handoffsPage, new RegExp('name="' + field + '"'));
+  }
+  for (const field of ["userId", "visitorId", "from", "to"]) {
+    assert.match(handoffsPage, new RegExp('name="' + field + '"'));
+  }
+  for (const label of ["Created", "Product", "Provider", "Route / property", "Price", "Source", "Destination", "Identity", "Search link", "Action"]) {
+    assert.ok(handoffsPage.includes('"' + label + '"'), "Missing handoff column " + label);
+  }
+  assert.match(handoffsPage, /handoff\.identity\.userId \|\| handoff\.identity\.visitorId/);
+  assert.match(handoffsPage, /handoff\.searchCorrelation\.kind === "exact"/);
+  assert.match(handoffsPage, /handoffDetailHref\(handoff\.id, handoff\.environment, scopedRaw\)/);
+  assert.match(handoffsPage, /handoffNextPageHref\(scopedRaw, result\.data\.nextCursor\)/);
+  assert.match(handoffsPage, /handoffPreviousPageHref\(scopedRaw\)/);
+  assert.match(handoffsPage, /result\.status === "invalid"/);
+});
+
+test("Task 3: handoff detail groups every field without tiles or losing verification meaning", () => {
+  assert.match(handoffDetailPage, /adminOperationalReads\.handoffs\.detail\(id, query\)/);
+  assert.match(handoffDetailPage, /notFound\(\)/);
+  assert.match(handoffDetailPage, /Handoff overview/);
+  assert.match(handoffDetailPage, /Referral information/);
+  assert.match(handoffDetailPage, /Identity &amp; correlation/);
+  assert.ok(handoffDetailPage.indexOf('aria-labelledby="handoff-identity"') < handoffDetailPage.indexOf('aria-labelledby="handoff-overview"'));
+  assert.ok(handoffDetailPage.indexOf('aria-labelledby="handoff-overview"') < handoffDetailPage.indexOf('aria-labelledby="handoff-referral"'));
+  assert.match(handoffDetailPage, /md:grid-cols-3/);
+  assert.match(handoffDetailPage, /"HOTEL" \? "Property" : "Route"/);
+  for (const label of ["Provider", "Product", "Created", "Price",
+    "Source page", "Destination domain", "Environment", "Handoff ID",
+    "Identity", "Search correlation", "Search history ID", "User ID", "Visitor ID"]) {
+    assert.ok(handoffDetailPage.includes('label="' + label + '"'), "Missing detail field " + label);
+  }
+  assert.doesNotMatch(handoffDetailPage, /Outbound referral recorded; booking and payment are not confirmed/);
+  assert.match(handoffDetailPage, /searchCorrelation\.kind === "exact"/);
+  assert.doesNotMatch(handoffDetailPage, /AdminSectionCard|bg-slate-50|rounded-xl/);
+  assert.match(adminShell, /providerReportingWorkspace/);
+  assert.match(adminShell, /providersWorkspace \|\| providerReportingWorkspace/);
+});
+
+test("Referral date filter stays available without duplicate Providers tabs", () => {
+  assert.match(providersPage, /attribution \? \(/);
+  assert.doesNotMatch(providersPage, /<nav aria-label="Provider reporting sections"/);
+  assert.match(providersPage, /<header className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-\[#D8E1EC\] pb-4 pt-1">/);
+  assert.match(providersPage, /<h1 className="text-\[20px\] font-semibold leading-7 tracking-\[-0\.02em\] text-\[#020617\]">\s*Referral Attribution\s*<\/h1>/);
+  assert.match(providersPage, /<ReferralWindowFilter days=\{attributionDays \?\? DEFAULT_ATTRIBUTION_DAYS\} period=\{attributionPeriod\} embedded \/>/);
+  assert.match(referralPage, /\) : null\}/);
+  assert.doesNotMatch(referralPage, /<h1 className="sr-only">Referral Attribution<\/h1>/);
+  assert.doesNotMatch(providersPage, /attributionEnvironment === "production"/);
+  assert.doesNotMatch(referralPage, /summary\.environment === "production"/);
+  assert.match(referralPage, /\{!embedded \? \(/);
+  assert.doesNotMatch(referralPage, /day window/);
+  assert.doesNotMatch(referralWindowFilter, /Reporting window/);
+  assert.match(referralWindowFilter, /<SearchMonitorSelect label="Date range" name="days"/);
+  assert.match(referralWindowFilter, /appearance="plain" align="end"/);
+  assert.match(referralWindowFilter, /router\.replace\(target, \{ scroll: false \}\)/);
+  assert.match(referralWindowFilter, /name="view" value="attribution"/);
+  assert.match(referralWindowFilter, /<noscript>/);
+  assert.match(referralWindowFilter, /Last " \+ days \+ " days \(legacy\)"/);
+});
+
+test("Provider Handoffs uses a compact Apply-only filter row without an environment selector", () => {
+  assert.doesNotMatch(handoffsPage, /Recorded outbound referrals only/);
+  assert.doesNotMatch(handoffsPage, /<SearchWorkspaceBackLink href="\/admin\/providers\?view=attribution"/);
+  assert.match(handoffsPage, /handoffDetailHref\(handoff\.id, handoff\.environment, scopedRaw\)/);
+  assert.match(handoffsPage, /<ProviderHandoffFilters/);
+  assert.match(handoffsPage, /buildHandoffProviderOptions\(getProviderIntegrationStatuses\(\)/);
+  assert.match(handoffFilters, /<form[\s\S]*action="\/admin\/redirects"[\s\S]*method="get"/);
+  assert.match(handoffFilters, /<h1[\s\S]*Provider Handoffs[\s\S]*<\/h1>/);
+  assert.match(handoffFilters, /<AdminOperationalDateRangeFields/);
+  assert.match(readFileSync("src/components/admin/AdminOperationalDateRangeFields.tsx", "utf8"), /<SearchMonitorSelect label="Date range" name="range"/);
+  // Product options must match the backend FLIGHT/HOTEL/CAR handoff contract.
+  for (const [value, label] of [["", "All products"], ["FLIGHT", "Flights"], ["HOTEL", "Hotels"], ["CAR", "Cars"]]) {
+    assert.ok(handoffFilters.includes(`{ value: "${value}", label: "${label}" }`));
+  }
+  for (const field of ["Provider", "Product", "Identity", "Search link"]) {
+    assert.match(handoffFilters, new RegExp('<SearchMonitorSelect label="' + field + '"'));
+  }
+  assert.match(handoffFilters, /data-testid="provider-handoffs-filter-row"/);
+  assert.ok(handoffFilters.indexOf('data-testid="provider-handoffs-filter-row"') < handoffFilters.indexOf('testId="provider-handoffs-date-range"'));
+  assert.ok(handoffFilters.indexOf('testId="provider-handoffs-date-range"') < handoffFilters.indexOf('<SearchMonitorSelect label="Provider"'));
+  assert.match(handoffFilters, /lg:grid-cols-\[repeat\(5,minmax\(0,1fr\)\)_120px\]/);
+  assert.match(handoffFilters, /sm:grid-cols-2 md:grid-cols-3/);
+  assert.match(handoffFilters, /testId="provider-handoffs-date-range"/);
+  for (const heading of ["Date range", "Provider", "Product", "Identity", "Search link"]) {
+    assert.doesNotMatch(handoffFilters, new RegExp(`>\\s*${heading}<\\/span>`));
+  }
+  assert.equal((handoffFilters.match(/truncateLabel/g) || []).length, 4);
+  assert.match(handoffFilters, /appearance="fare"/);
+  assert.match(handoffFilters, /Apply filters/);
+  assert.doesNotMatch(handoffFilters, /Search by provider|Current environment|label="Environment"|router\.replace|setTimeout/);
+  assert.match(handoffsPage, /if \(embedded\) return \(/);
+  assert.match(handoffsPage, /<AdminFilterBar action=\{embedded/);
+});
+
+test("Task 8 keeps filters and deep-linked date/identity scope correctly across changes", () => {
+  const initial = {
+    product: "HOTEL", identity: "guest", correlation: "unavailable",
+    provider: "  KAYAK sandbox  ", environment: "staging",
+  };
+  const scope = {
+    userId: "user_123", visitorId: "guest_123",
+    from: "2026-10-01", to: "2026-11-03",
+  };
+  const normal = new URL(providerHandoffFiltersHref(initial, scope), "https://internal.example");
+  assert.equal(normal.pathname, "/admin/redirects");
+  for (const [key, value] of Object.entries({
+    userId: "user_123", visitorId: "guest_123",
+    from: "2026-10-01", to: "2026-11-03",
+    product: "HOTEL", identity: "guest", correlation: "unavailable",
+    provider: "KAYAK sandbox", environment: "staging",
+  })) assert.equal(normal.searchParams.get(key), value);
+  assert.equal(normal.searchParams.has("cursor"), false);
+  const changedIdentity = new URL(providerHandoffFiltersHref({ ...initial, identity: "unattributed" },
+    scope, true), "https://internal.example");
+  assert.equal(changedIdentity.searchParams.has("userId"), false);
+  assert.equal(changedIdentity.searchParams.has("visitorId"), false);
+  assert.equal(changedIdentity.searchParams.get("from"), "2026-10-01");
+  assert.equal(changedIdentity.searchParams.get("to"), "2026-11-03");
+  assert.equal(changedIdentity.searchParams.get("product"), "HOTEL");
+  assert.equal(changedIdentity.searchParams.get("identity"), "unattributed");
+});
+
+test("Legacy handoff filter helper still rejects stale provider drafts", () => {
+  const scope = { userId: "", visitorId: "", from: "", to: "" };
+  const base = {
+    product: "", identity: "all", correlation: "",
+    provider: "KAYAK", environment: "",
+  };
+  const latest = providerHandoffFiltersHref({ ...base, provider: "KAYAK sandbox" }, scope);
+  assert.equal(shouldAcceptHandoffFilterResponse(base, scope, latest, "KAYAK sandbox"), false);
+  assert.equal(shouldAcceptHandoffFilterResponse(base, scope,
+    providerHandoffFiltersHref(base, scope), "KAYAK sandbox"), false);
+  assert.equal(shouldAcceptHandoffFilterResponse({ ...base, provider: "KAYAK sandbox" },
+    scope, latest, "KAYAK sandbox"), true);
+  assert.equal(shouldAcceptHandoffFilterResponse(base, scope, latest,
+    "KAYAK sandbox", true), true); // Deliberate browser Back/Forward.
+  assert.match(handoffFilters, /action="\/admin\/redirects"/);
+  assert.doesNotMatch(handoffFilters, /onValueChange=\{value => update|router\.replace/);
+});
+
+test("Handoff identity unscoping stays active during subsequent rapid changes", () => {
+  assert.match(handoffFilters, /clearFieldNamesOnChange=\{\["userId", "visitorId"\]\}/);
+  assert.match(handoffFilters, /name="userId"/);
+  assert.match(handoffFilters, /name="visitorId"/);
+  const scope = { userId: "account_1", visitorId: "visitor_1",
+    from: "2026-10-20", to: "2026-11-03" };
+  const identityChanged = {
+    product: "HOTEL", identity: "guest", correlation: "",
+    provider: "", environment: "staging",
+  };
+  for (const product of ["FLIGHT", "HOTEL"]) {
+    const target = new URL(providerHandoffFiltersHref({ ...identityChanged, product },
+      scope, true), "https://internal.example");
+    assert.equal(target.searchParams.has("userId"), false);
+    assert.equal(target.searchParams.has("visitorId"), false);
+    assert.equal(target.searchParams.get("identity"), "guest");
+    assert.equal(target.searchParams.get("from"), scope.from);
+    assert.equal(target.searchParams.get("to"), scope.to);
+  }
+});
+
+test("No-script referral date selection submits exactly one days field", () => {
+  const enhanced = referralWindowFilter.indexOf("<SearchMonitorSelect");
+  const noScript = referralWindowFilter.indexOf("<noscript>");
+  const fallback = referralWindowFilter.indexOf("<form action=", noScript);
+  assert.ok(enhanced >= 0 && noScript > enhanced && fallback > noScript);
+  assert.match(referralWindowFilter, /<select id="referral-window-fallback" name="days"/);
+  assert.match(referralWindowFilter, /referral-window-enhanced \{ display: none !important; \}/);
+  assert.match(referralWindowFilter, /<button type="submit"/);
+});
+
+test("Handoff browser history only bypasses the stale-response guard for real filter changes", () => {
+  const original = {
+    product: "HOTEL", identity: "guest", correlation: "unavailable",
+    provider: "KAYAK", environment: "staging",
+  };
+  const scope = {
+    userId: "", visitorId: "", from: "2026-10-01", to: "2026-11-03",
+  };
+  const currentHref = providerHandoffFiltersHref(original, scope);
+  const cursorOnly = currentHref + "&cursor=next-record&limit=50";
+  assert.equal(providerHandoffHistoryFilterHref(new URL(cursorOnly, "https://internal.example").search),
+    currentHref);
+  assert.notEqual(providerHandoffHistoryFilterHref("?product=FLIGHT&identity=guest"),
+    currentHref);
+  // Pagination keeps the same materialized date scope and original filters.
+  assert.match(handoffsPage, /withHandoffDateScope\(raw, now\)/);
+  assert.match(handoffsPage, /handoffNextPageHref\(scopedRaw, result\.data\.nextCursor\)/);
+  assert.match(handoffsPage, /handoffPreviousPageHref\(scopedRaw\)/);
+  assert.equal(shouldAcceptHandoffFilterResponse(original, scope,
+    currentHref, "KAYAK sandbox", false), false);
+});
+
+test("Tasks 9–10 simplify only the handoff detail header and move back navigation left", () => {
+  assert.match(handoffDetailPage, /<h1 className="sr-only">Provider handoff detail<\/h1>/);
+  assert.match(handoffDetailPage, /<ArrowLeft size=\{16\}/);
+  assert.match(handoffDetailPage, /<Link href=\{backHref\}/);
+  assert.match(handoffDetailPage, /Back to handoffs/);
+  assert.ok(handoffDetailPage.indexOf("Back to handoffs") < handoffDetailPage.indexOf("Handoff overview"));
+  assert.doesNotMatch(handoffDetailPage, /justify-between gap-3 border-b/);
+  assert.match(handoffDetailPage, /Referral information/);
+  assert.doesNotMatch(handoffDetailPage, /Outbound referral recorded; booking and payment are not confirmed/);
+  assert.match(handoffDetailPage, /<Field label="User ID"/);
+  assert.match(handoffDetailPage, /<Field label="Visitor ID"/);
+});
+
+test("product filtering retains truthful timing metrics for a single-service provider", () => {
+  const flight: ProviderOperationalServiceStatus = {
+    service: "flight-search",
+    operationalState: "HEALTHY",
+    totalCalls: 2,
+    attemptedCalls: 2,
+    successCalls: 2,
+    degradedCalls: 0,
+    failedCalls: 0,
+    disabledCalls: 0,
+    failureRatePct: 0,
+    failureReasons: [],
+  };
+  const duffel: ProviderOperationalStatus = {
+    id: "duffel",
+    provider: "Duffel",
+    readinessState: "READY",
+    operationalState: "HEALTHY",
+    windowHours: 24,
+    totalCalls: 2,
+    attemptedCalls: 2,
+    successCalls: 2,
+    degradedCalls: 0,
+    failedCalls: 0,
+    disabledCalls: 0,
+    failureRatePct: 0,
+    serviceBreakdown: [flight],
+    averageLatencyMs: 1500,
+    lastActivityAt: "2026-11-02T08:00:00.000Z",
+    lastSuccessAt: "2026-11-02T08:00:00.000Z",
+    lastFailureAt: null,
+    lastAdverseAt: null,
+  };
+  const selected = filterProviderOperationalStatuses([duffel], "flights");
+  assert.equal(selected.length, 1);
+  assert.equal(selected[0].averageLatencyMs, 1500);
+  assert.equal(selected[0].lastActivityAt, duffel.lastActivityAt);
+  assert.equal(selected[0].lastSuccessAt, duffel.lastSuccessAt);
+  assert.equal(filterProviderOperationalStatuses([duffel], "hotels").length, 0);
+
+  // Combined timings cannot honestly be attributed to one service.
+  const kayak: ProviderOperationalStatus = {
+    ...duffel,
+    id: "kayak-sandbox",
+    provider: "KAYAK sandbox",
+    serviceBreakdown: [
+      flight,
+      {...flight, service: "hotel-search", attemptedCalls: 3, successCalls: 3, totalCalls: 3},
+      {...flight, service: "car-search", attemptedCalls: 0, successCalls: 0, totalCalls: 0, failureRatePct: null},
+    ],
+    attemptedCalls: 5,
+    successCalls: 5,
+    totalCalls: 5,
+  };
+  const kayakFlights = filterProviderOperationalStatuses([kayak], "flights")[0];
+  assert.equal(kayakFlights.attemptedCalls, 2);
+  assert.equal(kayakFlights.averageLatencyMs, null);
+  assert.equal(kayakFlights.lastActivityAt, null);
+  assert.equal(kayakFlights.lastSuccessAt, null);
+});
+
+test("provider workflow drilldowns preserve attribution scope and leave Search Activity navigation intact", () => {
+  assert.doesNotMatch(referralPage, /provider: item\.provider, product: item\.product/);
+  assert.doesNotMatch(referralPage, /sourcePage: item\.sourcePage/);
+  assert.match(referralPage, /<ReferralUnlinkedHandoffs/);
+  assert.match(inlineUnlinkedPanel, /referralUnlinkedRecordsParams/);
+  assert.match(handoffsPage, /sourcePage: one\(scopedRaw.sourcePage\)/);
+  assert.match(handoffsPage, /handoffDetailHref\(handoff.id, handoff.environment, scopedRaw\)/);
+  assert.match(handoffDetailPage, /handoffReturnHref\(raw\)/);
+  assert.match(handoffDetailPage, /encodeURIComponent\(result.data.searchCorrelation.searchHistoryId\)/);
+  assert.doesNotMatch(providersPage, /Investigate provider searches/);
+  assert.match(directoryTable, /Integration readiness/);
+  assert.match(directoryTable, /Search health/);
+  assert.doesNotMatch(directoryTable, /row\.investigateHref/);
+});

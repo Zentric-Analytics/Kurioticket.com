@@ -4,6 +4,8 @@ export type MobileExploreDestination = {
   country: string;
   countryCode: string;
   primaryAirportCode: string;
+  latitude: number;
+  longitude: number;
   airportCodes: string[];
   airportNames: string[];
   searchAliases: string[];
@@ -44,6 +46,8 @@ function parseDestination(value: unknown): MobileExploreDestination | null {
     typeof value.country !== "string" || !value.country ||
     typeof value.countryCode !== "string" || !value.countryCode ||
     typeof value.primaryAirportCode !== "string" || !value.primaryAirportCode ||
+    typeof value.latitude !== "number" || !Number.isFinite(value.latitude) || value.latitude < -90 || value.latitude > 90 ||
+    typeof value.longitude !== "number" || !Number.isFinite(value.longitude) || value.longitude < -180 || value.longitude > 180 ||
     !isStringArray(value.airportCodes) || !value.airportCodes.length ||
     !isStringArray(value.airportNames) || !value.airportNames.length ||
     !isStringArray(value.searchAliases) ||
@@ -61,6 +65,8 @@ function parseDestination(value: unknown): MobileExploreDestination | null {
     country: value.country,
     countryCode: value.countryCode,
     primaryAirportCode: value.primaryAirportCode,
+    latitude: value.latitude,
+    longitude: value.longitude,
     airportCodes: value.airportCodes,
     airportNames: value.airportNames,
     searchAliases: value.searchAliases,

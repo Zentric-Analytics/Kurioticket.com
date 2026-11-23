@@ -1,24 +1,338 @@
-import { useCallback,useEffect,useRef,useState,type ReactNode } from "react";
-import { Alert,KeyboardAvoidingView,Linking,Platform,Pressable,ScrollView,StyleSheet,Switch,Text,TextInput,View } from "react-native";
-import { router } from "expo-router"; import { SafeAreaView } from "react-native-safe-area-context";
-import { travelApi,TravelApiError,type SecurityEvent,type SecurityOverview,type SecuritySession } from "../../api/travelApi";
-import { clearSession,readSession } from "../../storage/sessionStorage"; import { useAppTheme } from "../../theme/AppTheme"; import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
-const WEB="https://kurioticket.com/dashboard/security";
-const copy={
- "en-us":{title:"Security",loading:"Loading security settings…",loadError:"Unable to load security settings.",retry:"Try again",signIn:"Sign in",signInSecurity:"Sign-in security",password:"Password",configured:"Configured",notConfigured:"Not configured",current:"Current password",next:"New password",confirm:"Confirm new password",show:"Show password",hide:"Hide password",change:"Change password",changing:"Changing…",passwordRules:"Use at least 8 characters and choose a different password.",passwordInvalid:"Check that passwords match, contain at least 8 characters, and differ from the current password.",passwordSuccess:"Password changed. Other devices were signed out.",oauth:"This account does not have a password. Use password reset to create one.",reset:"Email password reset link",resetSent:"If the account can receive reset email, instructions were sent.",twoFactor:"Two-factor authentication",enabled:"Enabled",disabled:"Disabled",passkeys:"Passkeys",web:"Manage securely on the web",devices:"Devices",yourDevices:"Your devices",currentDevice:"Current device",lastActive:"Last active",remove:"Remove device",removeTitle:"Remove this device?",removeBody:"This device will need to sign in again.",cancel:"Cancel",removeFailed:"Unable to remove this device.",signOutAll:"Sign out everywhere",signOutTitle:"Sign out everywhere?",signOutBody:"Every web and mobile session, including this device, will be ended.",signOutFailed:"Unable to sign out every device. Try again.",notifications:"Security notifications",alerts:"Security email alerts",alertsHelp:"Receive important email about account security.",saving:"Saving…",saved:"Saved",saveFailed:"Unable to save. Your previous setting is unchanged.",activity:"Security activity",empty:"No recent security activity.",account:"Account",deleteAccount:"Delete account",openFailed:"Unable to open the secure web experience.",unknown:"Security update"},
- "es-es":{title:"Seguridad",loading:"Cargando configuración de seguridad…",loadError:"No se pudo cargar la configuración de seguridad.",retry:"Intentar de nuevo",signIn:"Iniciar sesión",signInSecurity:"Seguridad de acceso",password:"Contraseña",configured:"Configurada",notConfigured:"No configurada",current:"Contraseña actual",next:"Nueva contraseña",confirm:"Confirmar nueva contraseña",show:"Mostrar contraseña",hide:"Ocultar contraseña",change:"Cambiar contraseña",changing:"Cambiando…",passwordRules:"Usa al menos 8 caracteres y elige una contraseña diferente.",passwordInvalid:"Comprueba que coincidan, tengan al menos 8 caracteres y sean diferentes de la actual.",passwordSuccess:"Contraseña cambiada. Se cerraron las otras sesiones.",oauth:"Esta cuenta no tiene contraseña. Usa el restablecimiento para crear una.",reset:"Enviar enlace de restablecimiento",resetSent:"Si la cuenta puede recibir el correo, se enviaron instrucciones.",twoFactor:"Autenticación en dos pasos",enabled:"Activada",disabled:"Desactivada",passkeys:"Llaves de acceso",web:"Gestionar de forma segura en la web",devices:"Dispositivos",yourDevices:"Tus dispositivos",currentDevice:"Dispositivo actual",lastActive:"Última actividad",remove:"Eliminar dispositivo",removeTitle:"¿Eliminar este dispositivo?",removeBody:"Este dispositivo tendrá que iniciar sesión de nuevo.",cancel:"Cancelar",removeFailed:"No se pudo eliminar el dispositivo.",signOutAll:"Cerrar sesión en todas partes",signOutTitle:"¿Cerrar sesión en todas partes?",signOutBody:"Finalizarán todas las sesiones web y móviles, incluida esta.",signOutFailed:"No se pudo cerrar sesión en todos los dispositivos. Inténtalo de nuevo.",notifications:"Notificaciones de seguridad",alerts:"Alertas de seguridad por correo",alertsHelp:"Recibe correos importantes sobre la seguridad de la cuenta.",saving:"Guardando…",saved:"Guardado",saveFailed:"No se pudo guardar. Se mantiene la opción anterior.",activity:"Actividad de seguridad",empty:"No hay actividad de seguridad reciente.",account:"Cuenta",deleteAccount:"Eliminar cuenta",openFailed:"No se pudo abrir la experiencia web segura.",unknown:"Actualización de seguridad"}
-} as const;
-const eventLabels:Record<string,{en:string;es:string}>={PASSWORD_CHANGED:{en:"Password changed",es:"Contraseña cambiada"},SIGN_IN:{en:"Signed in",es:"Inicio de sesión"},MOBILE_SESSION_CREATED:{en:"Mobile session started",es:"Sesión móvil iniciada"},SESSION_REVOKED:{en:"Device removed",es:"Dispositivo eliminado"},ALL_SESSIONS_REVOKED:{en:"Signed out everywhere",es:"Sesión cerrada en todas partes"}};
-export function SecurityScreen(){const {theme}=useAppTheme();const {locale}=useMobileLocalization();const c=copy[locale];const [overview,setOverview]=useState<SecurityOverview|null>(null);const [sessions,setSessions]=useState<SecuritySession[]>([]);const [events,setEvents]=useState<SecurityEvent[]>([]);const [loading,setLoading]=useState(true);const [error,setError]=useState("");const [message,setMessage]=useState("");const [passwords,setPasswords]=useState({currentPassword:"",newPassword:"",confirmPassword:""});const [visible,setVisible]=useState(false);const [submitting,setSubmitting]=useState(false);const [saving,setSaving]=useState(false);const preferenceRequest=useRef(0);
- const unauth=useCallback(async(e:unknown)=>{if(e instanceof TravelApiError&&e.status===401){await clearSession();router.replace({pathname:"/(tabs)/profile/sign-in",params:{returnTo:"/security"}});return true}return false},[]);
- const load=useCallback(async()=>{setLoading(true);setError("");try{if(!await readSession()){router.replace({pathname:"/(tabs)/profile/sign-in",params:{returnTo:"/security"}});return}const [o,s,a]=await Promise.all([travelApi.securityOverview(),travelApi.securitySessions(),travelApi.securityActivity()]);setOverview(o.overview);setSessions(s.sessions);setEvents(a.events)}catch(e){if(!await unauth(e))setError(c.loadError)}finally{setLoading(false)}},[c.loadError,unauth]);useEffect(()=>{void load()},[load]);
- const web=()=>void Linking.canOpenURL(WEB).then(ok=>ok?Linking.openURL(WEB):Promise.reject()).catch(()=>setError(c.openFailed));
- const change=async()=>{if(submitting)return;if(passwords.newPassword.length<8||passwords.newPassword!==passwords.confirmPassword||passwords.currentPassword===passwords.newPassword){setError(c.passwordInvalid);return}setSubmitting(true);setError("");try{await travelApi.changePassword(passwords);setPasswords({currentPassword:"",newPassword:"",confirmPassword:""});setMessage(c.passwordSuccess);await load()}catch(e){if(!await unauth(e))setError(e instanceof TravelApiError?e.message:c.loadError)}finally{setSubmitting(false)}};
- const toggle=async(value:boolean)=>{if(!overview)return;const previous=overview.securityEmailAlerts;const id=++preferenceRequest.current;setOverview({...overview,securityEmailAlerts:value});setSaving(true);setMessage("");try{const r=await travelApi.updateSecurityPreference(value);if(id===preferenceRequest.current){setOverview(v=>v?{...v,securityEmailAlerts:r.preferences.securityEmailAlerts}:v);setMessage(c.saved)}}catch(e){if(id===preferenceRequest.current){setOverview(v=>v?{...v,securityEmailAlerts:previous}:v);if(!await unauth(e))setError(c.saveFailed)}}finally{if(id===preferenceRequest.current)setSaving(false)}};
- const remove=(item:SecuritySession)=>Alert.alert(c.removeTitle,c.removeBody,[{text:c.cancel,style:"cancel"},{text:c.remove,style:"destructive",onPress:()=>void travelApi.revokeSecuritySession(item.id).then(()=>load()).catch(()=>setError(c.removeFailed))}]);
- const all=()=>Alert.alert(c.signOutTitle,c.signOutBody,[{text:c.cancel,style:"cancel"},{text:c.signOutAll,style:"destructive",onPress:()=>void travelApi.revokeAllSecuritySessions().then(async()=>{await clearSession();router.replace("/(tabs)/profile/sign-in")}).catch(()=>setError(c.signOutFailed))}]);
- const field=(key:keyof typeof passwords,label:string)=><TextInput accessibilityLabel={label} secureTextEntry={!visible} value={passwords[key]} onChangeText={value=>setPasswords(v=>({...v,[key]:value}))} placeholder={label} placeholderTextColor={theme.muted} autoCapitalize="none" style={[styles.input,{color:theme.text,borderColor:theme.border,backgroundColor:theme.surface}]}/>;
- const row=(label:string,detail:string)=><Pressable accessibilityRole="link" accessibilityLabel={`${label}. ${c.web}`} onPress={web} style={[styles.row,{borderColor:theme.border}]}><View><Text style={[styles.bold,{color:theme.text}]}>{label}</Text><Text style={{color:theme.muted}}>{detail}</Text></View><Text style={styles.link}>{c.web}</Text></Pressable>;
- return <SafeAreaView style={[styles.safe,{backgroundColor:theme.background}]}><KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==="ios"?"padding":undefined}><ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled"><Text accessibilityRole="header" style={[styles.title,{color:theme.text}]}>{c.title}</Text>{loading?<Text style={{color:theme.muted}}>{c.loading}</Text>:null}{error?<View><Text accessibilityRole="alert" style={styles.error}>{error}</Text><Pressable accessibilityRole="button" onPress={()=>void load()}><Text style={styles.link}>{c.retry}</Text></Pressable></View>:null}{message?<Text accessibilityRole="alert" style={styles.success}>{message}</Text>:null}{overview?<><Section title={c.signInSecurity}>{<View><Text style={[styles.bold,{color:theme.text}]}>{c.password}: {overview.hasPassword?c.configured:c.notConfigured}</Text>{overview.hasPassword?<View style={styles.form}>{field("currentPassword",c.current)}{field("newPassword",c.next)}{field("confirmPassword",c.confirm)}<Pressable accessibilityRole="button" accessibilityLabel={visible?c.hide:c.show} onPress={()=>setVisible(v=>!v)}><Text style={styles.link}>{visible?c.hide:c.show}</Text></Pressable><Text style={{color:theme.muted}}>{c.passwordRules}</Text><Button label={submitting?c.changing:c.change} disabled={submitting} onPress={()=>void change()}/></View>:<View><Text style={{color:theme.muted}}>{c.oauth}</Text><Button label={c.reset} onPress={()=>void travelApi.requestAccountPasswordReset().then(()=>setMessage(c.resetSent)).catch(e=>void unauth(e))}/></View>}{row(c.twoFactor,overview.twoFactorEnabled?c.enabled:c.disabled)}{row(c.passkeys,c.web)}</View>}</Section><Section title={c.devices}><Text style={[styles.bold,{color:theme.text}]}>{c.yourDevices}</Text>{sessions.map(item=><View key={item.id} style={[styles.device,{borderColor:theme.border}]}><Text style={[styles.bold,{color:theme.text}]}>{item.deviceLabel}{item.isCurrent?` — ${c.currentDevice}`:""}</Text><Text style={{color:theme.muted}}>{item.client} · {item.browser} · {item.os}</Text>{item.maskedIp?<Text style={{color:theme.muted}}>{item.maskedIp}</Text>:null}<Text style={{color:theme.muted}}>{c.lastActive}: {new Intl.DateTimeFormat(locale==="es-es"?"es-ES":"en-US",{dateStyle:"medium",timeStyle:"short"}).format(new Date(item.lastSeenAt))}</Text>{!item.isCurrent?<Pressable accessibilityRole="button" onPress={()=>remove(item)}><Text style={styles.danger}>{c.remove}</Text></Pressable>:null}</View>)}<Button destructive label={c.signOutAll} onPress={all}/></Section><Section title={c.notifications}><View style={styles.switch}><View style={{flex:1}}><Text style={[styles.bold,{color:theme.text}]}>{c.alerts}</Text><Text style={{color:theme.muted}}>{c.alertsHelp}</Text></View><Switch accessibilityLabel={c.alerts} accessibilityState={{busy:saving}} value={overview.securityEmailAlerts} onValueChange={value=>void toggle(value)}/></View>{saving?<Text style={{color:theme.muted}}>{c.saving}</Text>:null}</Section><Section title={c.activity}>{events.length?events.map(event=><View key={event.id} style={styles.event}><Text style={[styles.bold,{color:theme.text}]}>{eventLabels[event.type]?.[locale==="es-es"?"es":"en"]||c.unknown}</Text><Text style={{color:theme.muted}}>{new Intl.DateTimeFormat(locale==="es-es"?"es-ES":"en-US",{dateStyle:"medium",timeStyle:"short"}).format(new Date(event.occurredAt))}</Text></View>):<Text style={{color:theme.muted}}>{c.empty}</Text>}</Section><Section title={c.account}>{row(c.deleteAccount,c.web)}</Section></>:null}</ScrollView></KeyboardAvoidingView></SafeAreaView>}
-function Section({title,children}:{title:string;children:ReactNode}){return <View style={styles.section}><Text accessibilityRole="header" style={styles.sectionTitle}>{title}</Text>{children}</View>};function Button({label,onPress,disabled=false,destructive=false}:{label:string;onPress:()=>void;disabled?:boolean;destructive?:boolean}){return <Pressable accessibilityRole="button" accessibilityState={{disabled,busy:disabled}} disabled={disabled} onPress={onPress} style={[styles.button,destructive&&styles.destructive]}><Text style={styles.buttonText}>{label}</Text></Pressable>}
-const styles=StyleSheet.create({safe:{flex:1},scroll:{padding:18,paddingBottom:42,gap:16},title:{fontSize:30,lineHeight:38,fontWeight:"800"},section:{gap:12,padding:14,borderRadius:14,backgroundColor:"rgba(127,127,127,.08)"},sectionTitle:{fontSize:16,fontWeight:"800",color:"#1769E0"},bold:{fontSize:14,fontWeight:"700"},form:{gap:10,marginTop:10},input:{minHeight:48,borderWidth:1,borderRadius:10,paddingHorizontal:12,fontSize:15},button:{minHeight:48,borderRadius:10,backgroundColor:"#1769E0",alignItems:"center",justifyContent:"center",paddingHorizontal:12,marginTop:8},destructive:{backgroundColor:"#B42318"},buttonText:{color:"white",fontWeight:"800"},row:{gap:8,paddingVertical:12,borderTopWidth:StyleSheet.hairlineWidth},link:{color:"#1769E0",fontWeight:"700",paddingVertical:6},error:{color:"#B42318",fontWeight:"600"},success:{color:"#067647",fontWeight:"600"},device:{borderTopWidth:StyleSheet.hairlineWidth,paddingVertical:10,gap:4},danger:{color:"#B42318",fontWeight:"700",paddingVertical:10},switch:{flexDirection:"row",alignItems:"center",gap:12},event:{paddingVertical:8}});
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  AccessibilityInfo,
+  ActivityIndicator,
+  Animated,
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from "react-native";
+import { router } from "expo-router";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { Check, Monitor, MoreHorizontal, Smartphone } from "lucide-react-native";
+import { travelApi, TravelApiError, type AccountDeletionRequest, type SecurityOverview, type SecuritySession, type TwoFactorSetup, type MobilePasskey } from "../../api/travelApi";
+import { clearSession, readSession } from "../../storage/sessionStorage";
+import { useAppTheme } from "../../theme/AppTheme";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
+import { formatSecurityDate, securityCopy, type SecurityCopy } from "./securityLocalization";
+import { PasswordResetFlow, passwordResetNavigationCopy } from "./PasswordResetFlow";
+import { PasswordChangeFlow } from "./PasswordChangeFlow";
+import { PasskeysManager, type PasskeysManagerHandle } from "./PasskeysManager";
+import { TwoFactorEnabledFlow } from "./TwoFactorEnabledFlow";
+import { TwoFactorSetupFlow } from "./TwoFactorSetupFlow";
+import { FlowIcon } from "../flow/FlowIcon";
+import { flowColors } from "../flow/flowStyles";
+import { signInHref } from "../auth/signInIntent";
+import { PageContentState } from "../../components/PageContentState";
+
+function shortFeedbackMessage(message: string) {
+  const firstSentence = message.match(/^.*?[.!?。！？](?=\s|$)/u)?.[0] ?? message;
+  return firstSentence.trim().replace(/[.!?。！？]+$/u, "");
+}
+
+export function SecurityScreen() {
+  const { theme } = useAppTheme();
+  const { locale } = useMobileLocalization();
+  const c = securityCopy[locale];
+  const resetCopy = passwordResetNavigationCopy(locale);
+  const [overview, setOverview] = useState<SecurityOverview | null>(null);
+  const [sessions, setSessions] = useState<SecuritySession[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [landingError, setLandingError] = useState("");
+  const [landingMessage, setLandingMessage] = useState("");
+  const [devicesError, setDevicesError] = useState("");
+  const [devicesSuccess, setDevicesSuccess] = useState("");
+  const [devicesSuccessSequence, setDevicesSuccessSequence] = useState(0);
+  const [twoFactorError, setTwoFactorError] = useState("");
+  const [deletionError, setDeletionError] = useState("");
+  const [passkeysError, setPasskeysError] = useState("");
+  const [passkeys, setPasskeys] = useState<MobilePasskey[]>([]);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [passwordMode, setPasswordMode] = useState<"change" | "reset">("change");
+  const [devicesOpen, setDevicesOpen] = useState(false);
+  const [managedSession, setManagedSession] = useState<SecuritySession | null>(null);
+  const [twoFactorOpen, setTwoFactorOpen] = useState(false);
+  const [deletionOpen, setDeletionOpen] = useState(false);
+  const [passkeysOpen, setPasskeysOpen] = useState(false);
+  const [setup, setSetup] = useState<TwoFactorSetup | null>(null);
+  const [authenticatorCode, setAuthenticatorCode] = useState("");
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [deletion, setDeletion] = useState<AccountDeletionRequest | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [preferenceFeedback, setPreferenceFeedback] = useState("");
+  const [preferenceFeedbackIsError, setPreferenceFeedbackIsError] = useState(false);
+  const preferenceRequest = useRef(0);
+  const preferenceFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const devicesRequest = useRef(0);
+  const devicesSuccessTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const twoFactorRequest = useRef(0);
+  const deletionRequest = useRef(0);
+  const passkeysRequest = useRef(0);
+  const passkeysManager = useRef<PasskeysManagerHandle>(null);
+  const clearPasskeysError = useCallback(() => setPasskeysError(""), []);
+
+  const unauth = useCallback(async (e: unknown) => {
+    if (e instanceof TravelApiError && e.status === 401) {
+      await clearSession();
+      router.replace(signInHref("/security"));
+      return true;
+    }
+    return false;
+  }, []);
+  const load = useCallback(async ({ showLandingFeedback = true, showLoading = true }: { showLandingFeedback?: boolean; showLoading?: boolean } = {}) => {
+    if (showLoading) setLoading(true); if (showLandingFeedback) setLandingError("");
+    try {
+      if (!await readSession()) { router.replace(signInHref("/security")); return; }
+      const [o, s] = await Promise.all([travelApi.securityOverview(), travelApi.securitySessions()]);
+      setOverview(o.overview); setSessions(s.sessions);
+    } catch (e) { if (!await unauth(e) && showLandingFeedback) setLandingError(c.loadError); } finally { if (showLoading) setLoading(false); }
+  }, [c.loadError, unauth]);
+  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    if (!landingMessage) return;
+    const timer = setTimeout(() => setLandingMessage(""), 2000);
+    return () => clearTimeout(timer);
+  }, [landingMessage]);
+  useEffect(() => () => {
+    preferenceRequest.current += 1;
+    if (preferenceFeedbackTimer.current) clearTimeout(preferenceFeedbackTimer.current);
+  }, []);
+
+  const openPassword = () => { setPasswordMode(overview?.hasPassword ? "change" : "reset"); setPasswordOpen(true); };
+  const closePassword = () => { setPasswordOpen(false); setPasswordMode("change"); };
+  const clearDevicesSuccess = useCallback(() => { if (devicesSuccessTimer.current) clearTimeout(devicesSuccessTimer.current); devicesSuccessTimer.current = null; setDevicesSuccess(""); }, []);
+  const showDevicesSuccess = useCallback((message: string) => {
+    if (devicesSuccessTimer.current) clearTimeout(devicesSuccessTimer.current);
+    setDevicesSuccess(message);
+    setDevicesSuccessSequence(current => current + 1);
+    AccessibilityInfo.announceForAccessibility(message);
+    devicesSuccessTimer.current = setTimeout(() => { devicesSuccessTimer.current = null; setDevicesSuccess(""); }, 1000);
+  }, []);
+  useEffect(() => () => { if (devicesSuccessTimer.current) clearTimeout(devicesSuccessTimer.current); }, []);
+  const openDevices = () => { devicesRequest.current += 1; clearDevicesSuccess(); setDevicesError(""); setDevicesOpen(true); };
+  const closeDevices = () => { devicesRequest.current += 1; clearDevicesSuccess(); setDevicesOpen(false); setManagedSession(null); setDevicesError(""); };
+  const clearTwoFactorState = () => { setSetup(null); setAuthenticatorCode(""); setRecoveryCodes([]); setTwoFactorError(""); };
+  const openTwoFactor = () => { twoFactorRequest.current += 1; clearTwoFactorState(); setTwoFactorOpen(true); };
+  const closeTwoFactor = () => { twoFactorRequest.current += 1; clearTwoFactorState(); setTwoFactorOpen(false); };
+  const closeDeletion = () => { deletionRequest.current += 1; setDeletionOpen(false); setDeletionError(""); };
+  const loadPasskeys = async (request = passkeysRequest.current) => { try { const result=await travelApi.passkeys(); if(request===passkeysRequest.current)setPasskeys(result.passkeys); } catch(e) { if(!await unauth(e)&&request===passkeysRequest.current)setPasskeysError(e instanceof TravelApiError&&e.status>0&&e.status<500&&e.code!=="invalid-response"?e.message:c.passkeysLoadError); } };
+  const openPasskeys = () => { const request=++passkeysRequest.current;setPasskeysError("");setPasskeysOpen(true);void loadPasskeys(request); };
+  const closePasskeys = () => { passkeysRequest.current+=1;setPasskeysOpen(false);setPasskeysError(""); };
+
+  const toggle = async (value: boolean) => {
+    if (!overview) return;
+    const previous = overview.securityEmailAlerts; const id = ++preferenceRequest.current;
+    if (preferenceFeedbackTimer.current) clearTimeout(preferenceFeedbackTimer.current);
+    preferenceFeedbackTimer.current = null;
+    setOverview({ ...overview, securityEmailAlerts: value }); setSaving(true); setPreferenceFeedbackIsError(false); setPreferenceFeedback(c.saving);
+    try {
+      const r = await travelApi.updateSecurityPreference(value);
+      if (id === preferenceRequest.current) {
+        setOverview((v) => v ? { ...v, securityEmailAlerts: r.preferences.securityEmailAlerts } : v);
+        setSaving(false); setPreferenceFeedback(c.saved); AccessibilityInfo.announceForAccessibility(c.saved);
+        preferenceFeedbackTimer.current = setTimeout(() => {
+          if (id === preferenceRequest.current) setPreferenceFeedback("");
+          preferenceFeedbackTimer.current = null;
+        }, 1000);
+      }
+    } catch (e) {
+      const unauthorized = await unauth(e);
+      if (id === preferenceRequest.current) {
+        setOverview((v) => v ? { ...v, securityEmailAlerts: previous } : v); setSaving(false);
+        if (!unauthorized) { setPreferenceFeedbackIsError(true); setPreferenceFeedback(c.saveFailed); }
+      }
+    }
+  };
+  const remove = (item: SecuritySession) => { const request = devicesRequest.current; Alert.alert(c.removeTitle, c.removeBody, [{ text: c.cancel, style: "cancel" }, { text: c.removeSession, style: "destructive", onPress: () => void travelApi.revokeSecuritySession(item.id).then(() => { setSessions(current => current.filter(session => session.id !== item.id)); setManagedSession(current => current?.id === item.id ? null : current); if (request === devicesRequest.current) { setDevicesError(""); showDevicesSuccess(c.sessionRemoved); } void load({ showLandingFeedback: false, showLoading: false }); }).catch(async (e) => { if (!await unauth(e) && request === devicesRequest.current) setDevicesError(c.removeFailed); }) }]); };
+  const signOutOthers = () => { const request=devicesRequest.current;Alert.alert(c.signOutOthersTitle,c.signOutOthersBody,[{text:c.cancel,style:"cancel"},{text:c.signOutOthersConfirm,style:"destructive",onPress:()=>void travelApi.revokeOtherSecuritySessions().then(()=>{setSessions(current=>current.filter(item=>item.isCurrent));if(request===devicesRequest.current){setManagedSession(null);setDevicesError("");showDevicesSuccess(c.signedOutOtherDevices);}else{setManagedSession(current=>current?.isCurrent?current:null);}void load({showLandingFeedback:false,showLoading:false});}).catch(async(e)=>{if(!await unauth(e)&&request===devicesRequest.current)setDevicesError(c.signOutOthersFailed);})}]); };
+  const all = () => Alert.alert(c.signOutTitle, c.signOutBody, [{ text: c.cancel, style: "cancel" }, { text: c.signOutAll, style: "destructive", onPress: () => void travelApi.revokeAllSecuritySessions().then(async () => { await clearSession(); router.replace(signInHref("/(tabs)/profile")); }).catch(async (e) => { if (!await unauth(e)) setLandingError(c.signOutFailed); }) }]);
+  const startTwoFactor = async () => { if (submitting) return; const request = twoFactorRequest.current; setSubmitting(true); setTwoFactorError(""); try { const result = await travelApi.startTwoFactorSetup(); if (request === twoFactorRequest.current) setSetup(result.setup); } catch(e) { if(!await unauth(e) && request === twoFactorRequest.current)setTwoFactorError(e instanceof TravelApiError?e.message:c.twoFactorError); } finally { setSubmitting(false); } };
+  const confirmTwoFactor = async () => { if(submitting)return;if(!/^\d{6}$/.test(authenticatorCode)){setTwoFactorError(c.codeInvalid);return;}const request=twoFactorRequest.current;setSubmitting(true);setTwoFactorError("");try{const result=await travelApi.confirmTwoFactor(authenticatorCode);if(request===twoFactorRequest.current){Keyboard.dismiss();setRecoveryCodes(result.recoveryCodes);setSetup(null);setAuthenticatorCode("");AccessibilityInfo.announceForAccessibility(c.recoveryHelp);}await load({showLandingFeedback:false,showLoading:false});}catch(e){if(!await unauth(e)&&request===twoFactorRequest.current)setTwoFactorError(e instanceof TravelApiError?e.message:c.twoFactorError);}finally{setSubmitting(false);} };
+  const openDeletion = async () => { const request=++deletionRequest.current;setDeletionError("");setDeletionOpen(true);try{const result=await travelApi.getDeletionRequest();if(request===deletionRequest.current)setDeletion(result.request);}catch(e){if(!await unauth(e)&&request===deletionRequest.current)setDeletionError(e instanceof TravelApiError?e.message:c.deletionError);} };
+  const requestDeletion = () => { const request=deletionRequest.current; Alert.alert(c.deletionConfirmTitle,c.deletionConfirmBody,[{text:c.cancel,style:"cancel"},{text:c.deleteAccount,style:"destructive",onPress:()=>void (async()=>{if(submitting)return;setSubmitting(true);setDeletionError("");try{const result=await travelApi.requestDeletion();if(request===deletionRequest.current)setDeletion(result.request);}catch(e){if(!await unauth(e)&&request===deletionRequest.current)setDeletionError(e instanceof TravelApiError?e.message:c.deletionError);}finally{setSubmitting(false);}})()}]); };
+  const reactivate = async () => { if(submitting)return;const request=deletionRequest.current;setSubmitting(true);setDeletionError("");try{await clearSession();setDeletion(null);closeDeletion();router.replace(signInHref("/security"));}catch(e){if(request===deletionRequest.current)setDeletionError(e instanceof TravelApiError?e.message:c.deletionError);}finally{setSubmitting(false);} };
+  const date = (value: string) => formatSecurityDate(value, locale);
+  const currentSession = sessions.find(item => item.isCurrent === true);
+  const otherSessions = sessions.filter(item => item.isCurrent === false).sort((a,b) => new Date(b.lastSeenAt).getTime()-new Date(a.lastSeenAt).getTime());
+  const twoFactorSetupFlow = <TwoFactorSetupFlow
+    active={twoFactorOpen && (!Boolean(overview?.twoFactorEnabled) || recoveryCodes.length > 0)}
+    copy={c}
+    setup={setup}
+    recoveryCodes={recoveryCodes}
+    authenticatorCode={authenticatorCode}
+    error={setup ? twoFactorError : ""}
+    submitting={submitting}
+    onStart={() => void startTwoFactor()}
+    onCodeChange={(value) => { setAuthenticatorCode(value); setTwoFactorError(""); }}
+    onConfirm={() => void confirmTwoFactor()}
+    onClose={closeTwoFactor}
+  />;
+  const sessionSheet = <BottomSheet visible={Boolean(managedSession)} dismissLabel={c.close} onDismiss={() => setManagedSession(null)}>
+    <Text style={[styles.sheetTitle, { color: theme.text }]}>{managedSession ? sessionPresentation(managedSession,c).label : c.sessionDetails}</Text>
+    {managedSession ? <><Text style={[styles.rowDetail,{color:theme.muted}]}>{sessionPresentation(managedSession,c).details}</Text>{managedSession.maskedIp?<Text style={[styles.rowDetail,{color:theme.muted}]}>{managedSession.maskedIp}</Text>:null}<Text style={[styles.rowDetail,{color:theme.muted}]}>{managedSession.isCurrent?`${c.currentDevice} · ${c.activeNow}`:`${c.lastActive} ${date(managedSession.lastSeenAt)}`}</Text></> : null}
+    {managedSession && !managedSession.isCurrent?<Pressable accessibilityRole="button" onPress={() => { const item=managedSession;setManagedSession(null);remove(item); }} style={styles.sheetAction}><Text style={styles.danger}>{c.removeSession}</Text></Pressable>:null}
+  </BottomSheet>;
+
+  return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}>
+    <Header title={c.title} backLabel={c.back} onBack={() => router.back()} />
+    {loading && !overview ? <PageContentState state="loading" pageName="security settings" /> : !overview && landingError ? <PageContentState state="error" pageName="security settings" onRetry={() => void load()} /> : <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <Text style={[styles.intro, { color: theme.muted }]}>{c.intro}</Text>
+      <Feedback error={landingError} message="" retry={c.retry} onRetry={load} />
+      {overview ? <>
+        <View style={styles.landingBlocks}>
+          <SecurityBlock label={c.password} description={c.passwordHelp} accessibilityValue={overview.hasPassword ? c.configured : c.notConfigured} onPress={openPassword} />
+          <SecurityBlock label={c.twoFactor} description={c.twoFactorHelp} status={overview.twoFactorEnabled ? c.enabled : undefined} accessibilityValue={overview.twoFactorEnabled ? c.enabled : c.disabled} onPress={openTwoFactor} />
+          <SecurityBlock label={c.passkeys} description={c.passkeysHelp} onPress={openPasskeys} />
+          <SecurityBlock label={c.activeSessions} description={c.activeSessionsHelp} onPress={openDevices} />
+          <View style={[styles.notificationRow, { borderBottomColor: theme.border }]}><View style={styles.rowCopy}><Text style={[styles.rowLabel, { color: theme.text }]}>{c.notifications}</Text><Text style={[styles.rowDetail, { color: theme.muted }]}>{c.alertsHelp}</Text><View style={styles.preferenceFeedbackSlot}>{preferenceFeedback ? <Text accessibilityRole={preferenceFeedbackIsError ? "alert" : undefined} accessibilityLiveRegion="polite" style={[styles.saving, { color: preferenceFeedbackIsError ? flowColors.red : theme.muted }]}>{preferenceFeedback}</Text> : null}</View></View><Switch accessibilityLabel={`${c.notifications}. ${c.alertsHelp}`} accessibilityRole="switch" accessibilityState={{ checked: overview.securityEmailAlerts, busy: saving }} value={overview.securityEmailAlerts} onValueChange={(value) => void toggle(value)} /></View>
+          <SecurityBlock label={c.signOutAll} description={c.signOutAllHelp} destructive chevron={false} onPress={all} />
+        </View>
+        <Pressable accessibilityRole="button" accessibilityLabel={c.deleteAccount} onPress={() => void openDeletion()} style={({ pressed }) => [styles.deleteButton, { borderColor: flowColors.red }, pressed && styles.pressed]}><Text style={styles.deleteButtonText}>{c.deleteAccount}</Text></Pressable>
+      </> : null}
+    </ScrollView>}
+    <FloatingNotice message={landingMessage} />
+
+    <ScreenModal visible={passkeysOpen} title={c.passkeys} closeLabel={c.close} avoidKeyboard onClose={() => { if (!passkeysManager.current?.cancelInternal()) closePasskeys(); }}>
+      <Text style={[styles.passkeysIntro,{color:theme.muted}]}>{c.passkeysHelp}</Text>
+      <PasskeysManager
+        ref={passkeysManager}
+        active={passkeysOpen}
+        passkeys={passkeys}
+        loadError={passkeysError}
+        hasPassword={Boolean(overview?.hasPassword)}
+        twoFactorEnabled={Boolean(overview?.twoFactorEnabled)}
+        onReload={() => loadPasskeys()}
+        onUnauthorized={unauth}
+        onClearLoadError={clearPasskeysError}
+      />
+    </ScreenModal>
+    <ScreenModal visible={passwordOpen} title={passwordMode === "reset" ? resetCopy.title : c.change} closeLabel={c.close} onClose={closePassword}>
+      {overview?.hasPassword && passwordMode === "change" ? (
+        <PasswordChangeFlow
+          active={passwordOpen && passwordMode === "change"}
+          copy={c}
+          recoveryLabel={resetCopy.entry}
+          recoveryHelp={resetCopy.entryHelp}
+          onRecovery={() => setPasswordMode("reset")}
+          onUnauthorized={unauth}
+          onSuccess={async () => {
+            closePassword();
+            setLandingMessage(shortFeedbackMessage(c.passwordSuccess));
+            await load({ showLandingFeedback: false, showLoading: false });
+          }}
+        />
+      ) : (
+        <PasswordResetFlow active={passwordOpen && passwordMode === "reset"} copy={c} onUnauthorized={unauth} onSuccess={async () => { closePassword(); await load({ showLandingFeedback: false, showLoading: false }); }} />
+      )}
+    </ScreenModal>
+    <ScreenModal visible={devicesOpen} title={c.activeSessions} closeLabel={c.close} onClose={closeDevices} onRequestClose={() => managedSession ? setManagedSession(null) : closeDevices()} overlay={<><SessionSuccessNotice message={devicesSuccess} sequence={devicesSuccessSequence} />{sessionSheet}</>}>
+      <View style={styles.devicesContent}>
+        <Text style={[styles.devicesIntro, { color: theme.muted }]}>{c.devicesHelp}</Text>
+        {devicesError ? <Text accessibilityRole="alert" style={styles.error}>{devicesError}</Text> : null}
+        {currentSession ? <><Text style={[styles.sectionHeading,{color:theme.muted}]}>{c.thisDevice}</Text><SessionRow item={currentSession} copy={c} date={date(currentSession.lastSeenAt)} onManage={setManagedSession}/></> : null}
+        {otherSessions.length ? <><Text style={[styles.sectionHeading,{color:theme.muted}]}>{c.otherSessions}</Text>{otherSessions.map(item=><SessionRow key={item.id} item={item} copy={c} date={date(item.lastSeenAt)} onManage={setManagedSession}/>)}<Pressable accessibilityRole="button" onPress={signOutOthers} style={({pressed})=>[styles.signOutOthers,pressed&&styles.pressed]}><Text style={styles.danger}>{c.signOutOthers}</Text></Pressable></> : null}
+        {!sessions.length ? <View style={[styles.devicesEmpty, { borderColor: theme.border, backgroundColor: theme.surface }]}><Smartphone size={22} color={theme.muted}/><Text style={[styles.rowLabel, { color: theme.text }]}>{c.noActiveSessions}</Text><Text style={[styles.rowDetail, { color: theme.muted, textAlign: "center" }]}>{c.noActiveSessionsHelp}</Text></View> : null}
+      </View>
+    </ScreenModal>
+    <ScreenModal visible={twoFactorOpen} title={c.twoFactor} closeLabel={c.close} onClose={closeTwoFactor} avoidKeyboard>
+      {!setup && !recoveryCodes.length && !overview?.twoFactorEnabled ? <Feedback error={twoFactorError} message="" /> : null}
+      {overview?.twoFactorEnabled ? (
+        recoveryCodes.length ? twoFactorSetupFlow : <TwoFactorEnabledFlow active={twoFactorOpen && Boolean(overview?.twoFactorEnabled)} hasPassword={Boolean(overview?.hasPassword)} copy={c} onUnauthorized={unauth} onDisabled={async () => { closeTwoFactor(); await load({showLandingFeedback:false,showLoading:false}); }} />
+      ) : twoFactorSetupFlow}
+    </ScreenModal>
+    <ScreenModal visible={deletionOpen} title={c.deleteAccount} closeLabel={c.close} onClose={closeDeletion}>
+      <Feedback error={deletionError} message=""/><Text style={{color:theme.muted}}>{c.deletionHelp}</Text>
+      {deletion ? <View style={styles.form}><Text style={[styles.rowLabel,{color:theme.text}]}>{c.pendingDeletion}: {deletion.status}</Text><Text style={{color:theme.muted}}>{c.scheduledDate}: {date(deletion.deletionScheduledAt)}</Text>{deletion.canReactivate?<Button label={c.keepAccount} disabled={submitting} onPress={()=>void reactivate()}/>:null}</View> : <Pressable accessibilityRole="button" onPress={requestDeletion} style={({pressed})=>[styles.deleteButton,{borderColor:flowColors.red},pressed&&styles.pressed]}><Text style={styles.deleteButtonText}>{c.requestDeletion}</Text></Pressable>}
+    </ScreenModal>
+  </SafeAreaView>;
+}
+
+function Header({ title, backLabel, onBack, close = false }: { title: string; backLabel: string; onBack: () => void; close?: boolean }) { const { theme } = useAppTheme(); return <View style={[styles.header, { borderBottomColor: theme.border }]}><Pressable accessibilityRole="button" accessibilityLabel={backLabel} onPress={onBack} style={styles.iconButton}><FlowIcon name={close ? "close" : "back"} color={theme.icon} /></Pressable><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>{title}</Text><View style={styles.iconButton} /></View>; }
+function ScreenModal({ visible, title, closeLabel, onClose, children, avoidKeyboard = false, overlay, onRequestClose }: { visible: boolean; title: string; closeLabel: string; onClose: () => void; children: ReactNode; avoidKeyboard?: boolean; overlay?: ReactNode; onRequestClose?: () => void }) { const { theme } = useAppTheme(); const insets = useSafeAreaInsets(); const push = useRef(new Animated.Value(24)).current; useEffect(() => { if (visible) { push.setValue(24); Animated.timing(push, { toValue: 0, duration: 220, useNativeDriver: true }).start(); } }, [push, visible]); const content = <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.modalContent}>{children}</ScrollView>; return <Modal animationType="none" presentationStyle="overFullScreen" transparent visible={visible} onRequestClose={onRequestClose ?? onClose}><Animated.View accessibilityViewIsModal style={[styles.safe, { backgroundColor: theme.background, paddingTop: insets.top, paddingBottom: insets.bottom, transform: [{ translateX: push }] }]}><Header title={title} backLabel={closeLabel} onBack={onClose} close />{avoidKeyboard ? <KeyboardAvoidingView style={styles.keyboardViewport} behavior={Platform.OS === "ios" ? "padding" : "height"}>{content}</KeyboardAvoidingView> : content}{overlay}</Animated.View></Modal>; }
+function SecurityBlock({ label, description, onPress, accessibilityValue, status, destructive = false, chevron = true }: { label: string; description: string; onPress: () => void; accessibilityValue?: string; status?: string; destructive?: boolean; chevron?: boolean }) { const { theme } = useAppTheme(); return <Pressable accessibilityRole="button" accessibilityLabel={`${label}. ${description}`} accessibilityValue={accessibilityValue ? { text: accessibilityValue } : undefined} onPress={onPress} style={({ pressed }) => [styles.securityBlock, { borderBottomColor: theme.border }, pressed && styles.pressed]}><View style={styles.rowCopy}><View style={styles.rowHeading}><Text style={[styles.rowLabel, { color: destructive ? flowColors.red : theme.text }]}>{label}</Text>{status ? <Text style={styles.status}>{status}</Text> : null}</View><Text style={[styles.rowDetail, { color: theme.muted }]}>{description}</Text></View>{chevron ? <FlowIcon name="chevron" color={theme.muted} size={18} /> : null}</Pressable>; }
+export function sessionDetails(item: SecuritySession, copy: SecurityCopy) {
+  const known = (value: string | null | undefined) => value?.trim() && !/^unknown(?: platform)?$/i.test(value.trim()) ? value.trim() : null;
+  if (item.client.toUpperCase() === "MOBILE") {
+    const platform = item.platform?.toLowerCase() === "ios" ? copy.iphone : item.platform?.toLowerCase() === "android" ? copy.android : null;
+    return [platform, copy.kurioticketApp].filter(Boolean).join(" · ");
+  }
+  return [known(item.browser), known(item.os)].filter(Boolean).join(" · ");
+}
+export function sessionPresentation(item: SecuritySession, copy: SecurityCopy) {
+  const mobile=item.client.toUpperCase()==="MOBILE";
+  const platform=item.platform?.toLowerCase();
+  const label=mobile?(platform==="ios"?copy.iphone:platform==="android"?copy.android:copy.mobileDevice):(item.browser?.trim()&&!/^unknown/i.test(item.browser)?item.browser:copy.webBrowser);
+  return {label,details:mobile?copy.kurioticketApp:sessionDetails(item,copy)};
+}
+function SessionRow({item,copy,date,onManage}:{item:SecuritySession;copy:SecurityCopy;date:string;onManage:(item:SecuritySession)=>void}) { const {theme}=useAppTheme();const mobile=item.client.toUpperCase()==="MOBILE";const presentation=sessionPresentation(item,copy);const activity=item.isCurrent?copy.activeNow:`${copy.lastActive} ${date}`;const accessibilityLabel=`${presentation.label}. ${item.isCurrent?`${copy.currentDevice}. `:""}${activity}. ${copy.opensSessionDetails}.`;return <View style={[styles.device,{borderColor:theme.border,backgroundColor:theme.surface}]}><Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} onPress={()=>onManage(item)} style={({pressed})=>[styles.deviceMain,pressed&&styles.pressed]}>{mobile?<Smartphone size={20} color={theme.icon}/>:<Monitor size={20} color={theme.icon}/>}<View style={styles.deviceCopy}><View style={styles.deviceHeading}><Text numberOfLines={1} style={[styles.rowLabel,{color:theme.text}]}>{presentation.label}</Text>{item.isCurrent?<Text style={styles.current}>{copy.currentDevice}</Text>:null}</View>{presentation.details?<Text numberOfLines={1} style={[styles.rowDetail,{color:theme.muted}]}>{presentation.details}</Text>:null}<Text style={[styles.deviceMeta,{color:theme.muted}]}>{activity}</Text></View></Pressable>{!item.isCurrent?<Pressable accessibilityRole="button" accessibilityLabel={`${copy.manageSession}: ${presentation.label}`} hitSlop={6} onPress={()=>onManage(item)} style={({pressed})=>[styles.manageSession,pressed&&styles.pressed]}><MoreHorizontal size={22} color={theme.icon}/></Pressable>:null}</View>;}
+function BottomSheet({visible,onDismiss,dismissLabel,children}:{visible:boolean;onDismiss:()=>void;dismissLabel:string;children:ReactNode}){const{theme}=useAppTheme();if(!visible)return null;return <View style={styles.sheetLayer}><Pressable accessibilityRole="button" accessibilityLabel={dismissLabel} style={styles.scrim} onPress={onDismiss}><Pressable accessibilityViewIsModal style={[styles.sheet,{backgroundColor:theme.surface}]} onPress={event=>event.stopPropagation()}>{children}</Pressable></Pressable></View>;}
+function Feedback({ error, message, retry, onRetry }: { error: string; message: string; retry?: string; onRetry?: () => Promise<void> }) {
+  const opacity = useRef(new Animated.Value(error || message ? 1 : 0)).current;
+  const [displayed, setDisplayed] = useState(error || message);
+  const current = error || message;
+  useEffect(() => {
+    opacity.stopAnimation();
+    if (current) {
+      setDisplayed(current);
+      Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }).start();
+      return;
+    }
+    Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }).start(({ finished }) => { if (finished) setDisplayed(""); });
+  }, [current, opacity]);
+  return <View style={styles.feedbackSlot}><Animated.Text accessibilityRole="alert" style={[error ? styles.error : styles.success, { opacity }]}>{displayed || " "}</Animated.Text>{error && retry && onRetry ? <Pressable accessibilityRole="button" onPress={() => void onRetry()} style={styles.textAction}><Text style={styles.link}>{retry}</Text></Pressable> : null}</View>;
+}
+function FloatingNotice({ message }: { message: string }) {
+  const { theme } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(-8)).current;
+  const [displayed, setDisplayed] = useState(message);
+  useEffect(() => {
+    opacity.stopAnimation(); translateY.stopAnimation();
+    if (message) {
+      setDisplayed(message); opacity.setValue(0); translateY.setValue(-8);
+      Animated.parallel([
+        Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }),
+        Animated.timing(translateY, { toValue: 0, duration: 180, useNativeDriver: true }),
+      ]).start();
+      return;
+    }
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: -8, duration: 180, useNativeDriver: true }),
+    ]).start(({ finished }) => { if (finished) setDisplayed(""); });
+  }, [message, opacity, translateY]);
+  if (!displayed) return null;
+  return <Animated.View pointerEvents="none" style={[styles.toastPosition, { top: insets.top + 64, opacity, transform: [{ translateY }] }]}><View style={[styles.toast, { backgroundColor: theme.surface, borderColor: theme.border }]}><Text accessibilityLiveRegion="polite" style={styles.toastText}>{displayed}</Text></View></Animated.View>;
+}
+function SessionSuccessNotice({ message, sequence }: { message: string; sequence: number }) {
+  const { theme } = useAppTheme();
+  const opacity = useRef(new Animated.Value(0)).current;
+  const [displayed, setDisplayed] = useState(message);
+  const successColor = theme.dark ? "#6CE9A6" : "#067647";
+  useEffect(() => {
+    opacity.stopAnimation();
+    if (message) {
+      setDisplayed(message); opacity.setValue(0);
+      Animated.timing(opacity, { toValue: 1, duration: 140, useNativeDriver: true }).start();
+      return;
+    }
+    Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }).start(({ finished }) => { if (finished) setDisplayed(""); });
+  }, [message, opacity, sequence]);
+  if (!displayed) return null;
+  return <Animated.View pointerEvents="none" style={[styles.sessionNoticePosition, { opacity }]}><View style={[styles.sessionNotice, { backgroundColor: theme.surface, borderColor: theme.border }]}><Check size={15} strokeWidth={2.5} color={successColor}/><Text style={[styles.sessionNoticeText,{color:successColor}]}>{displayed}</Text></View></Animated.View>;
+}
+function Button({ label, onPress, disabled = false, loading = false }: { label: string; onPress: () => void; disabled?: boolean; loading?: boolean }) { const inactive = disabled || loading; return <Pressable accessibilityRole="button" accessibilityState={{ disabled: inactive, busy: loading }} disabled={inactive} onPress={onPress} style={({ pressed }) => [styles.button, inactive && styles.disabledButton, pressed && styles.pressed]}><View style={styles.buttonContent}><Text style={styles.buttonText}>{label}</Text>{loading ? <ActivityIndicator size="small" color="white" /> : null}</View></Pressable>; }
+
+const styles = StyleSheet.create({
+  safe: { flex: 1 }, keyboardViewport: { flex: 1 }, header: { minHeight: 56, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 8 }, iconButton: { width: 48, height: 48, alignItems: "center", justifyContent: "center" }, title: { flex: 1, textAlign: "center", fontSize: 18, lineHeight: 24, fontWeight: "800" }, scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 48 }, intro: { fontSize: 15, lineHeight: 22, marginBottom: 18 }, passkeysIntro: { fontSize: 15, lineHeight: 22 }, landingBlocks: {}, securityBlock: { minHeight: 88, flexDirection: "row", alignItems: "center", gap: 16, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 18 }, rowCopy: { flex: 1, gap: 7 }, rowHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }, rowLabel: { flexShrink: 1, fontSize: 16, lineHeight: 22, fontWeight: "700" }, status: { color: "#067647", fontSize: 14, fontWeight: "700" }, rowDetail: { fontSize: 14, lineHeight: 20 }, notificationRow: { minHeight: 88, flexDirection: "row", alignItems: "center", gap: 16, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 18 }, preferenceFeedbackSlot: { minHeight: 15, justifyContent: "center" }, saving: { fontSize: 12 }, deleteButton: { minHeight: 50, borderRadius: 10, borderWidth: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, marginTop: 32 }, deleteButtonText: { color: flowColors.red, fontSize: 16, fontWeight: "800" }, modalContent: { padding: 20, paddingBottom: 48, gap: 16 }, form: { gap: 12 }, feedbackSlot: { minHeight: 20, justifyContent: "center" }, resetAlternative: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 8, paddingTop: 12, gap: 2 }, textAction: { minHeight: 44, alignSelf: "flex-start", justifyContent: "center" }, link: { color: "#1769E0", fontWeight: "700" }, button: { minHeight: 50, borderRadius: 10, backgroundColor: "#1769E0", alignItems: "center", justifyContent: "center", paddingHorizontal: 16, marginTop: 4 }, buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }, disabledButton: { opacity: 0.55 }, buttonText: { color: "white", fontWeight: "800" }, error: { color: "#B42318", fontWeight: "600", lineHeight: 20 }, success: { color: "#067647", fontWeight: "600", lineHeight: 20 }, toastPosition: { position: "absolute", left: 16, right: 16, alignItems: "center", zIndex: 20 }, toast: { maxWidth: 560, borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12 }, toastText: { color: "#067647", fontWeight: "700", textAlign: "center" }, sessionNoticePosition: { position: "absolute", top: "52%", left: 20, right: 20, zIndex: 20, alignItems: "center" }, sessionNotice: { maxWidth: "90%", flexDirection: "row", alignItems: "center", gap: 7, borderWidth: StyleSheet.hairlineWidth, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 }, sessionNoticeText: { flexShrink: 1, fontSize: 13, lineHeight: 18, fontWeight: "700" }, devicesContent: { gap: 10 }, devicesIntro: { fontSize: 15, lineHeight: 22, marginBottom: 2 }, sectionHeading: { marginTop: 6, fontSize: 12, lineHeight: 17, fontWeight: "800", textTransform: "uppercase" }, device: { minHeight: 86, flexDirection: "row", alignItems: "stretch", borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, overflow: "hidden" }, deviceMain: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 14, paddingRight: 6 }, deviceCopy: { flex: 1, minWidth: 0, gap: 3 }, deviceHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }, deviceMeta: { fontSize: 12, lineHeight: 17 }, current: { color: "#1769E0", backgroundColor: "#EAF2FF", borderRadius: 999, overflow: "hidden", paddingHorizontal: 8, paddingVertical: 3, fontSize: 11, fontWeight: "700" }, manageSession: { width: 48, minHeight: 48, alignSelf: "stretch", alignItems: "center", justifyContent: "flex-start", paddingTop: 8 }, signOutOthers: { minHeight: 48, justifyContent: "center", alignItems: "center", marginTop: 4 }, devicesEmpty: { alignItems: "center", gap: 6, borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, padding: 18 }, sheetLayer: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, zIndex: 40 }, scrim: { flex: 1, backgroundColor: "rgba(0,0,0,0.34)", justifyContent: "flex-end" }, sheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 32, gap: 8 }, sheetTitle: { fontSize: 18, lineHeight: 24, fontWeight: "800" }, sheetAction: { minHeight: 48, justifyContent: "center", marginTop: 8 }, danger: { color: "#B42318", fontWeight: "700" }, pressed: { opacity: 0.65 },
+});

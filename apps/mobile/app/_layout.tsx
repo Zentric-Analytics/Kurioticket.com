@@ -1,4 +1,14 @@
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
+import { useFonts } from "expo-font";
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+  Inter_900Black,
+} from "@expo-google-fonts/inter";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as Updates from "expo-updates";
 import { AppThemeProvider, useAppTheme } from "../src/theme/AppTheme";
@@ -9,9 +19,24 @@ import { AppState, View } from "react-native";
 import { FeatureAvailabilityProvider } from "../src/features/availability/FeatureAvailability";
 import { MobileLocalizationProvider } from "../src/localization/MobileLocalizationProvider";
 import { createForegroundUpdateHandler, ensureLatestUpdate } from "../src/updates/ensureLatestUpdate";
+import { startVisitorIdentity } from "../src/features/privacy/visitorIdentity";
+import { useNativePresence } from "../src/features/privacy/useNativePresence";
+import { MobileRecoveryBoundary } from "../src/features/auth/MobileRecoveryBoundary";
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
+  const pathname = usePathname();
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+    Inter_900Black,
+  });
   useEffect(() => { console.info(buildStartupLog(getRuntimeDiagnostics())); }, []);
+  useEffect(() => startVisitorIdentity(), []);
   useEffect(() => {
     const handleAppStateChange = createForegroundUpdateHandler(
       () => ensureLatestUpdate(Updates),
@@ -20,15 +45,27 @@ export default function RootLayout() {
     const subscription = AppState.addEventListener("change", handleAppStateChange);
     return () => subscription.remove();
   }, []);
+  useEffect(() => {
+    if (fontError && __DEV__) console.warn("Inter fonts failed to load; continuing with system fonts.");
+  }, [fontError]);
+  useEffect(() => {
+    if ((!fontsLoaded && !fontError) || pathname === "/") return;
+    const frame = requestAnimationFrame(() => void SplashScreen.hideAsync().catch(() => undefined));
+    return () => cancelAnimationFrame(frame);
+  }, [fontError, fontsLoaded, pathname]);
+
+  if (!fontsLoaded && !fontError) return null;
+
   return <AppThemeProvider><MobileLocalizationProvider><FeatureAvailabilityProvider><ThemedRootLayout /></FeatureAvailabilityProvider></MobileLocalizationProvider></AppThemeProvider>;
 }
 
 function ThemedRootLayout() {
   const { theme } = useAppTheme();
+  useNativePresence();
   return (
     <View style={{ flex: 1 }}>
       <StatusBar style={theme.dark ? "light" : "dark"} backgroundColor={theme.background} />
-      <Stack
+      <MobileRecoveryBoundary><Stack
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: theme.background },
@@ -40,7 +77,9 @@ function ThemedRootLayout() {
         <Stack.Screen name="home" />
         <Stack.Screen name="welcome" />
         <Stack.Screen name="connection-status" />
-      </Stack>
+        <Stack.Screen name="hotel-results" options={{ gestureEnabled: true }} />
+        <Stack.Screen name="flight-details" options={{ animation: "ios_from_right", gestureEnabled: true }} />
+      </Stack></MobileRecoveryBoundary>
     </View>
   );
 }

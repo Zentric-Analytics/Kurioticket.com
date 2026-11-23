@@ -25,6 +25,7 @@ const plan = (patch: Partial<DealsTripPlanV2> = {}): DealsTripPlanV2 => ({
     searchKey: "f",
     tripType: "round-trip",
     phase: "confirmed",
+    fareBrand: { brandOptionKey: "flight-brand-v1:a", fareBrandName: "Flex", cabinClass: "economy" },
     outbound: offer.legs[0],
     return: offer.legs[1],
     fare: { fareKey: offer.fareKey, cabinClass: offer.cabinClass },

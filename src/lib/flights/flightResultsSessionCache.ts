@@ -1,3 +1,4 @@
+import { hasDisplayOnlyInventory, containsSandboxInventory } from "@/shared/presentation/sandboxInventory";
 import type { FlightSearchLeg, PublicFlightResult } from "@/lib/types";
 
 export const FLIGHT_RESULTS_SESSION_CACHE_KEY =
@@ -11,6 +12,12 @@ export type FlightResultsSessionSnapshot = {
   validUntil: number;
   results: PublicFlightResult[];
   warnings: string[];
+  requestId?: string;
+};
+
+export type FlightResultsSessionSnapshotState = {
+  snapshot: FlightResultsSessionSnapshot;
+  isFresh: boolean;
 };
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -72,11 +79,11 @@ function removeSnapshot(storage: StorageLike) {
   }
 }
 
-export function readFlightResultsSessionSnapshot(
+export function readFlightResultsSessionSnapshotForRefresh(
   searchKey: string,
   storage: StorageLike | null = browserSessionStorage(),
   now = Date.now(),
-): FlightResultsSessionSnapshot | null {
+): FlightResultsSessionSnapshotState | null {
   if (!storage) return null;
 
   let serialized: string | null;
@@ -89,6 +96,7 @@ export function readFlightResultsSessionSnapshot(
 
   try {
     const value = JSON.parse(serialized) as Partial<FlightResultsSessionSnapshot>;
+    if (hasDisplayOnlyInventory(value) || containsSandboxInventory(value)) { removeSnapshot(storage); return null; }
     const valid =
       value !== null &&
       typeof value === "object" &&
@@ -109,17 +117,34 @@ export function readFlightResultsSessionSnapshot(
       return null;
     }
 
-    if (now >= value.validUntil! || now - value.savedAt! >= FLIGHT_RESULTS_SESSION_CACHE_TTL_MS) {
+    if (now - value.savedAt! >= FLIGHT_RESULTS_SESSION_CACHE_TTL_MS) {
       removeSnapshot(storage);
       return null;
     }
 
     if (value.searchKey !== searchKey) return null;
-    return value as FlightResultsSessionSnapshot;
+    return {
+      snapshot: value as FlightResultsSessionSnapshot,
+      isFresh: now < value.validUntil!,
+    };
   } catch {
     removeSnapshot(storage);
     return null;
   }
+}
+
+export function readFlightResultsSessionSnapshot(
+  searchKey: string,
+  storage: StorageLike | null = browserSessionStorage(),
+  now = Date.now(),
+): FlightResultsSessionSnapshot | null {
+  const state = readFlightResultsSessionSnapshotForRefresh(searchKey, storage, now);
+  if (!state) return null;
+  if (!state.isFresh) {
+    if (storage) removeSnapshot(storage);
+    return null;
+  }
+  return state.snapshot;
 }
 
 export function writeFlightResultsSessionSnapshot(
@@ -129,8 +154,12 @@ export function writeFlightResultsSessionSnapshot(
   resultsCacheValidUntil: number,
   storage: StorageLike | null = browserSessionStorage(),
   now = Date.now(),
+  requestId?: string,
 ): void {
   if (!storage) return;
+  const hadSandbox = hasDisplayOnlyInventory(results);
+  results = results.filter(result=>!hasDisplayOnlyInventory(result));
+  if (hadSandbox && !results.length) { removeSnapshot(storage); return; }
   if (!Number.isFinite(resultsCacheValidUntil) || resultsCacheValidUntil <= now) {
     removeSnapshot(storage);
     return;
@@ -151,6 +180,7 @@ export function writeFlightResultsSessionSnapshot(
       validUntil: Math.min(now + FLIGHT_RESULTS_SESSION_CACHE_TTL_MS, resultsCacheValidUntil),
       results: publicResults,
       warnings: [...warnings],
+      ...(requestId ? { requestId } : {}),
     };
     storage.setItem(FLIGHT_RESULTS_SESSION_CACHE_KEY, JSON.stringify(snapshot));
   } catch {

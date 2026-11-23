@@ -1,76 +1,36 @@
-import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import test from "node:test";
-
-const screen = readFileSync(
-  resolve("src/features/search/ApprovedResultsScreen.tsx"),
-  "utf8",
-);
-const flightLayout = screen.slice(
-  screen.indexOf('{product === "flight" ? ('),
-  screen.indexOf(') : (\n        <>', screen.indexOf('{product === "flight" ? (')),
-);
-
-test("flight results naturally scroll the date strip into a sticky filter rail", () => {
-  assert.match(flightLayout, /stickyHeaderIndices=\{\[1\]\}/);
-  assert.match(
-    flightLayout,
-    /<View>\{dateStrip\}<\/View>[\s\S]*?<View style=\{\[s0\.stickyFilterSurface, \{ backgroundColor: theme\.background \}\]\}>\{filterRail\}<\/View>[\s\S]*?<View style=\{s0\.body\}>\{resultContent\}<\/View>/,
-  );
-  assert.doesNotMatch(flightLayout, /onScroll=|scrollEventThrottle=/);
-  assert.doesNotMatch(screen, /dateHeaderCollapsed|dateHeaderProgress|Animated\.timing\(dateHeaderProgress/);
+import assert from "node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";
+const s=readFileSync("src/features/search/ApprovedResultsScreen.tsx","utf8");
+test("Flight dates scroll naturally beneath the header-owned rail",()=>{const h=s.slice(s.indexOf("function FlightResultsHeader"),s.indexOf("function HotelResultsHeader"));const l=s.slice(s.indexOf("<Animated.SectionList"),s.indexOf(") : (",s.indexOf("<Animated.SectionList")));assert.match(h,/accessibilityLabel="Flight result filters"[\s\S]*\{filterRail\}/);assert.doesNotMatch(l,/renderSectionHeader|stickySectionHeadersEnabled|\{filterRail\}/);});
+test("Track Price and count are ordinary virtualized list content",()=>{const x=s.slice(s.indexOf("renderItem={({ item, index })"),s.indexOf("ListEmptyComponent"));assert.match(x,/flightResultsIntro[\s\S]*PriceAlert[\s\S]*FlightResultsSummaryRow[\s\S]*FlightCard/);});
+test("Flight list clears the native safe area",()=>assert.match(s,/s0\.flightResultsContent,[\s\S]*paddingBottom: Math\.max\(insets\.bottom \+ 16, 16\)/));
+test("date changes reset the native Results list to its beginning like mobile web navigation",()=>{
+  const x=s.slice(s.indexOf("const selectNearbyDate"),s.indexOf("const flightDateStrip = ("));
+  assert.match(x,/router\.setParams\(/);
+  assert.match(x,/scrollToFlightResultsBeginning\(false\)/);
 });
-
-test("date and filter rails retain their horizontal interactions", () => {
-  const dateStrip = readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8");
-
-  assert.match(dateStrip, /export function DateStrip[\s\S]*?<ScrollView\s+horizontal/);
-  assert.match(dateStrip, /onPress=\{\(\) => onSelect\(iso\)\}/);
-  assert.match(screen, /const filterRail = \([\s\S]*?<ScrollView\s+horizontal[\s\S]*?openFlightFilters\("all"\)/);
-  for (const label of ["Filters", "Stops", "Airlines", "Times"]) {
-    assert.match(screen, new RegExp(`"${label}"`));
-  }
+test("committed sort, filter, and clear actions share one Results-start reset",()=>{
+  assert.match(s,/const scrollToFlightResultsBeginning = useCallback\(\(animated = true\)/);
+  assert.match(s,/const clearFlightFilters = useCallback\([\s\S]*setFilters\(emptyFlightFilters\(\)\);[\s\S]*scrollToFlightResultsBeginning\(\)/);
+  assert.match(s,/const clearFlightQuickFilterAndReset = useCallback\([\s\S]*clearFlightQuickFilterGroup[\s\S]*scrollToFlightResultsBeginning\(\)/);
+  assert.match(s,/const completeFullFlightFilters = useCallback\([\s\S]*setFilterOpen\(false\);[\s\S]*scrollToFlightResultsBeginning\(\)/);
+  assert.match(s,/<FlightSortSheet[^>]*onApply=\{\(next\) => \{ setSort\(next\); setSortOpen\(false\); scrollToFlightResultsBeginning\(\); \}\}/);
+  assert.match(s,/clearGroup=\{clearFlightQuickFilterAndReset\}/);
 });
+test("Hotel results use one continuous virtualized list with bounded result reveals", () => {
+  const x = s.slice(s.indexOf("<SectionList", s.indexOf("<HotelResultsHeader")), s.indexOf("{product === \"flight\" ? (", s.indexOf("<HotelResultsHeader")));
+  assert.match(x, /ref=\{hotelResultsListRef\}/);
+  assert.match(x, /sections=\{\[\{ data: hotelResultsListData \}\]\}/);
+  assert.match(x, /keyExtractor=\{\(item\) => typeof item === "string" \? item : item\.id\}/);
+  assert.doesNotMatch(x, /renderSectionHeader/);
+  assert.match(x, /initialNumToRender=\{HOTEL_RESULTS_REVEAL_COUNT \+ 2\}/);
+  assert.match(x, /maxToRenderPerBatch=\{HOTEL_RESULTS_REVEAL_COUNT\}/);
+  assert.match(x, /updateCellsBatchingPeriod=\{HOTEL_RESULTS_BATCH_PERIOD\}/);
+  assert.match(x, /windowSize=\{HOTEL_RESULTS_RENDER_WINDOW\}/);
+  assert.match(x, /removeClippedSubviews=\{false\}/);
 
-test("flight dates use full resolved fares in wider, single-line tiles", () => {
-  const dateStrip = readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8");
-
-  assert.match(screen, /flightDisplayPrices\.get\(result\.id\)/);
-  assert.match(screen, /date: departureDate,[\s\S]*?formatted: displayed\.formatted,[\s\S]*?accessibilityLabel: displayed\.formatted/);
-  assert.match(dateStrip, /const price = priceByDate\[iso\]/);
-  assert.doesNotMatch(screen, /formatDateStripPrice/);
-  assert.match(dateStrip, /flightResults && s\.flightDate/);
-  assert.match(dateStrip, /flightDate: \{[\s\S]*?minWidth: 90,[\s\S]*?maxWidth: 112/);
-  assert.match(dateStrip, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit/);
-  assert.match(dateStrip, /flightDate: \{[\s\S]*?height: 60/);
-  assert.match(dateStrip, /\{hasPrice \|\| flightResults \? \(/);
-  assert.match(dateStrip, /: ""\}/);
-  assert.doesNotMatch(dateStrip, /ellipsizeMode="clip"/);
-});
-
-test("hotel results retain their non-sticky header and separate result scroll", () => {
-  const hotelLayout = screen.slice(
-    screen.indexOf(') : (\n        <>', screen.indexOf('{product === "flight" ? (')),
-    screen.indexOf("<FlightFilterModal", screen.indexOf(') : (\n        <>')),
-  );
-
-  assert.match(hotelLayout, /\{dateStrip\}/);
-  assert.match(hotelLayout, /\{filterRail\}/);
-  assert.match(hotelLayout, /<ScrollView[^>]*contentContainerStyle=\{s0\.body\}[^>]*>\{resultContent\}<\/ScrollView>/);
-  assert.doesNotMatch(hotelLayout, /stickyHeaderIndices/);
-});
-
-test("Flight Results removes bell work without changing the shared notification implementation", () => {
-  const topBar = readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8");
-  const unreadHook = readFileSync(
-    resolve("src/features/notifications/useUnreadNotifications.ts"),
-    "utf8",
-  );
-
-  assert.doesNotMatch(screen, /router\.push\("\/notifications"\)|useUnreadNotifications/);
-  assert.match(topBar, /accessibilityLabel="Notifications"/);
-  assert.match(topBar, /hasUnreadNotifications \? <View/);
-  assert.match(unreadHook, /useFocusEffect/);
-  assert.match(unreadHook, /travelApi\.notificationUnreadCount/);
+  const data = s.slice(s.indexOf("const hotelResultsListData"), s.indexOf("const hotelCurrencyPending"));
+  assert.match(data, /data\.push\(HOTEL_RESULTS_SUMMARY_ITEM, \.\.\.\(sorted as HotelResult\[\]\)\.slice\(0, hotelScrolling\.limit\)\)/);
+  assert.match(data, /\[product, sorted, status, hotelScrolling\.limit\]/);
+  assert.match(x, /onEndReached=\{hotelScrolling\.revealMore\}/);
+  assert.doesNotMatch(s, /HotelResultsPagination|paginateHotelResults|HOTEL_RESULTS_PAGE_SIZE|clampedHotelPage|hotelPage|setHotelPage|changeHotelPage/);
 });

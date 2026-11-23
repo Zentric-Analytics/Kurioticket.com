@@ -1,28 +1,57 @@
 import { getApiBaseUrl } from "../config/apiUrl";
-import { readSession } from "../storage/sessionStorage";
+import { readSession, subscribeSession } from "../storage/sessionStorage";
 import { Platform } from "react-native";
+import type { CanonicalLocation } from "@/lib/locations/types";
+import Constants from "expo-constants";
+import { randomUUID } from "expo-crypto";
+import type { PublicHotelProviderDetails } from "../../../../src/lib/hotels/hotelProviderDetails";
 import type { NormalizedCarResult } from "../../../../src/lib/cars/types";
-import type { PublicFlightResult, PublicHotelResult } from "../../../../src/lib/types";
+import type { PublicFlightResult, PublicHotelPropertyDetails, PublicHotelResult } from "../../../../src/lib/types";
+import type { HotelRoomOption } from "../../../../src/lib/hotels/hotelRoomOptions";
 import type { ContractResult, TravelSearchResponse } from "../../../../src/lib/travel/searchContract";
+import type { FlightDetailsResponse } from "../../../../src/lib/flights/flightDetailsContract";
 import { parseMobileExploreCatalogue, type MobileExploreCatalogue } from "./exploreCatalogueContract";
-import { responseByteLength } from "../features/search/flightSearchDiagnostics";
+import { logFlightSearchCheckpoint } from "../features/search/flightSearchDiagnostics";
+import { visitorIdentity } from "../features/privacy/visitorIdentity";
+import type { JourneyEvent, JourneyEventResponse } from "../features/privacy/journeyEventCoordinator";
+import { rememberJourneyResponseContext } from "../features/privacy/journeyResponseContext";
+import { createProviderHandoffMetadata, type ProviderHandoffMetadataReader } from "../../../../src/lib/providerHandoffClient";
 
 export class TravelApiError extends Error {
   constructor(message: string, public status = 0, public code: "cancelled" | "timeout" | "configuration" | "validation" | "rate-limit" | "unavailable" | "server" | "network" | "invalid-response" = "network", public details?: Record<string, unknown>) { super(message); }
 }
 
 export type FlightResult = ContractResult<PublicFlightResult>;
+export type MobileFlightDetailsResponse = FlightDetailsResponse;
+export type FlightRedirectResponse = { url: string };
 export type HotelResult = ContractResult<PublicHotelResult>;
+export type HotelSearchResponse = TravelSearchResponse<PublicHotelResult> & {
+  warningCategory?: "provider_unavailable" | string;
+  nextCursor?: string | null;
+  progressive?: boolean;
+  completed?: boolean;
+  estimatedTotal?: number;
+};
+export type MobileHotelDetailsResponse = { hotel: PublicHotelResult; propertyDetails: PublicHotelPropertyDetails | null; locationDetails?: PublicHotelPropertyDetails | null; providerDetails?: PublicHotelProviderDetails | null; propertyOffers?: Array<{ hotel: PublicHotelResult; providerDetails: PublicHotelProviderDetails | null }>; roomOptions: HotelRoomOption[]; relatedHotels: PublicHotelResult[]; relatedHotelsHasMore?: boolean };
+export type MobileHotelDetailsRequest = { id: string; destination: string; checkIn: string; checkOut: string; guests: number; rooms: number };
 export type CarResult = ContractResult<NormalizedCarResult>;
-export type MobileTrip = { id: string; providerConfirmationCode: string; providerName: string; tripType: string; status: "upcoming" | "past" | "cancelled"; origin: string | null; destination: string; departureDate: string; returnDate: string | null; travelerCount: number; currency: string; totalAmount: number | null; providerAction: { url: string; label: string; external: true } | null };
+export type PackageComponent = { status: "success" | "empty" | "unavailable"; results: (FlightResult | HotelResult | CarResult)[]; warnings: string[]; source: string; requestId: string };
+export type PackageSearchResponse = { mode: string; status: "success" | "partial" | "empty" | "unavailable"; components: Partial<Record<"flight" | "hotel" | "car", PackageComponent>>; packageOffers: unknown[] };
+export type MobileTrip = { id: string; providerConfirmationCode: string; providerName: string; tripType: string; status: "upcoming" | "past" | "cancelled"; origin: string | null; destination: string; departureDate: string; returnDate: string | null; travelerCount: number; currency: string; totalAmount: number | null; providerAction: { url: string; label: string; external: true } | null; providerConfirmed: boolean; providerConfirmedAt: string | null };
+export type MobileFlightStatus =
+  | { dataAvailable: false; providerName: string }
+  | { dataAvailable: true; providerName: string; status: "scheduled" | "delayed" | "departed" | "arrived" | "cancelled" | "unknown"; flight: { flightNumber: string; carrierCode: string; originAirport: string; destinationAirport: string; scheduledDepartureAt: string; scheduledArrivalAt: string | null }; timing: { estimatedDepartureAt: string | null; actualDepartureAt: string | null; estimatedArrivalAt: string | null; actualArrivalAt: string | null }; lastUpdatedAt: string; freshness: "current" | "stale" };
 export type MobileProfile = { fullName?: string | null; phoneNumber?: string | null; phoneCountryCode?: string | null; dateOfBirth?: string | null; gender?: string | null; nationality?: string | null; address?: string | null };
 export type MobilePriceAlertStatus = "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRED";
-export type MobilePriceAlert = { id: string; type: "FLIGHT" | "HOTEL"; origin: string | null; destination: string; targetPrice: string | null; currency: string | null; status: MobilePriceAlertStatus; createdAt: string; updatedAt: string; lastSeenPrice: string | null; lastCheckedAt: string | null; query: Record<string, unknown> };
-export type CreateFlightPriceAlert = { type: "FLIGHT"; origin: string; destination: string; targetPrice: number; currency: string; query: Record<string, unknown> };
+export type MobilePriceAlert = { id: string; type: "FLIGHT" | "HOTEL" | "CAR"; origin: string | null; destination: string; targetPrice: string | null; mode?: "AUTOMATIC" | "TARGET"; currency: string | null; status: MobilePriceAlertStatus; createdAt: string; updatedAt: string; lastSeenPrice: string | null; lastCheckedAt: string | null; query: Record<string, unknown> };
+export type CreateFlightPriceAlert = { type: "FLIGHT"; origin: string; destination: string; currency: string; query: Record<string, unknown> } & ({ mode: "AUTOMATIC"; baselinePrice: number } | { mode?: "TARGET"; targetPrice: number });
+export type CreateHotelPriceAlert = { type: "HOTEL"; destination: string; targetPrice: number; mode: "TARGET"; currency: string; query: Record<string, unknown> };
+export type CreateCarPriceAlert = { type: "CAR"; origin: string; destination: string; currency: string; query: Record<string, unknown> } & ({ mode: "AUTOMATIC"; baselinePrice: number } | { mode: "TARGET"; targetPrice: number });
 export type CurrencyRates = { base: string; rates: Record<string, number>; fetchedAt: string; source: string; stale?: boolean };
 export type MobileLocation = { source: "ipinfo-lite" | "fallback"; countryCode: string | null; country: string | null; continentCode: string | null; continent: string | null; ipDetected: boolean };
 export type MobileNotificationType = "PRICE_ALERT" | "SUPPORT_UPDATE" | "ACCOUNT_UPDATE" | "SECURITY_UPDATE" | "SYSTEM" | "TRAVEL_INSIGHT";
-export type MobileNotification = { id: string; type: MobileNotificationType; title: string; body: string; actionPath: "/price-alerts" | "/saved" | "/settings" | "/personal-information" | "/support" | null; metadata: Record<string, unknown> | null; readAt: string | null; createdAt: string };
+export type MobileNotificationActionPath = "/price-alerts" | "/saved" | "/settings" | "/personal-information" | "/security" | "/support";
+export type MobileNotification = { id: string; type: MobileNotificationType; title: string; body: string; actionPath: MobileNotificationActionPath | null; metadata: Record<string, unknown> | null; readAt: string | null; createdAt: string };
 export type MobileNotificationPage = { items: MobileNotification[]; nextCursor: string | null };
 export type CustomizationPreferences = { locale: string; currency: string; region: string; personalizeRecommendations: boolean };
 export type SupportCategory = "search-help" | "price-alerts" | "redirect" | "account";
@@ -30,17 +59,32 @@ export type SupportTicketInput = { email: string; subject: string; category: Sup
 export type EmailPreferences = { receiveOptionalEmails: boolean; priceAlerts: boolean; travelInspiration: boolean; productUpdates: boolean; dealsRecommendations: boolean };
 export type TravelPreferences = { homeAirport: string; preferredAirlines: string[]; notificationPreferences: { emailUpdates: boolean; priceAlertEmails: boolean; travelInspirationEmails: boolean } };
 export type TravelPreferencesPatch = Partial<Pick<TravelPreferences, "homeAirport" | "preferredAirlines">>;
-export type MobileSavedItem = { id: string; type: "flight" | "hotel" | "search"; [key: string]: unknown };
-export type CreateMobileSavedItem = { type: "flight" | "hotel" | "search"; [key: string]: unknown };
-export type MobileRecentSearch = { id: string; type: "flight" | "hotel"; label: string; subtitle: string; href: string; params: unknown; createdAt: string; updatedAt: string };
+export type MobileSavedItem = { id: string; type: "flight" | "hotel" | "car" | "search"; [key: string]: unknown };
+export type CreateMobileSavedItem = { type: "flight" | "hotel" | "car" | "search"; [key: string]: unknown };
+export type MobileRecentSearch = { id: string; type: "flight" | "hotel" | "car" | "package"; label: string; subtitle: string; href: string; params: unknown; createdAt: string; updatedAt: string };
 export type CreateMobileRecentSearch = Omit<MobileRecentSearch, "createdAt" | "updatedAt">;
 export type FeatureAvailability = { flightSearch: boolean; hotelSearch: boolean; carSearch: boolean; deals: boolean; priceAlerts: boolean };
+export type MobilePasskey = { id:string; name:string; createdAt:string; lastUsedAt:string|null; deviceType:string|null; backedUp:boolean|null; label:string };
+export type PasskeyRegistrationOptions = Record<string, unknown>;
 export type SecurityOverview = { hasPassword: boolean; twoFactorEnabled: boolean; securityEmailAlerts: boolean };
-export type SecuritySession = { id:string; client:string; platform:string|null; deviceLabel:string; browser:string; os:string; maskedIp:string|null; lastSeenAt:string; isCurrent:boolean };
-export type SecurityEvent = { id:string; type:string; occurredAt:string; deviceLabel:string|null };
-export type HotelDestinationKind = "city" | "district" | "landmark" | "airport-area";
-export type HotelDestinationSuggestion = { id: string; name: string; country: string; countryCode: string; region?: string; kind: HotelDestinationKind; searchValue: string; aliases?: string[] };
-export const FLIGHT_SEARCH_REQUEST_TIMEOUT_MS = 14_000;
+export type SecuritySession = { id:string; client:string; platform:string|null; deviceLabel:string; browser:string|null; os:string|null; maskedIp:string|null; lastSeenAt:string; isCurrent:boolean };
+export type TwoFactorSetup = { otpauthUri:string; manualSetupKey:string; expiresAt:string };
+export type TwoFactorStatus = { enabled:boolean; method:string|null; enabledAt:string|null; disabledAt:string|null; recoveryCodesRemaining:number };
+export type AccountDeletionRequest = { id:string; status:string; requestedAt:string; deletionScheduledAt:string; cancelledAt:string|null; completedAt:string|null; canReactivate:boolean };
+export type HotelDestinationKind = "city" | "district" | "landmark" | "airport-area" | "custom";
+export type HotelDestinationSuggestion = {
+  id: string;
+  name: string;
+  country: string;
+  countryCode: string;
+  region?: string;
+  kind: HotelDestinationKind;
+  searchValue: string;
+  aliases?: string[];
+  canonical?: CanonicalLocation;
+};
+/** Allows the shared server orchestrator to finish polling slower providers. */
+export const METASEARCH_REQUEST_TIMEOUT_MS = 35_000;
 
 function apiErrorMessage(data: Record<string, unknown>) {
   if (typeof data.error === "string") return data.error;
@@ -55,11 +99,44 @@ function apiErrorMessage(data: Record<string, unknown>) {
   return "Kurioticket could not complete this request.";
 }
 
-async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string } = {}) {
+// Ephemeral operational search continuity; never persisted as analytics tracking.
+let operationalSearchCredential: string | null = null;
+let operationalSearchActor: string | null = null;
+const operationalPaths = new Set(["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive", "/api/redirect"]);
+/** Identify the real Android application and transport, never a browser. */
+export function carSearchClientHeaders(platform: string, version?: string): Record<string, string> {
+  if (platform !== "android" || !version || !/^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(version)) return {};
+  return { "User-Agent": `KurioticketMobile/${version} (Android; Native) OkHttp` };
+}
+const operationalCredentialPattern = /^v1\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)\.[A-Za-z0-9_-]{43}$/;
+let accountEpoch = 0;
+let observedSessionToken: string | null | undefined;
+subscribeSession?.(session => {
+  const token = session?.token ?? null;
+  if (token !== observedSessionToken) accountEpoch++;
+  observedSessionToken = token;
+});
+
+async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string; sandboxDisplay?: boolean; visitorContext?: number; body?: () => unknown; expectedUserId?: string } = {}) {
   const requestStartedAt = Date.now();
   const base = getApiBaseUrl(Platform.OS, __DEV__);
   if (!base.ok) throw new TravelApiError(base.message, 0, "configuration");
   const session = await readSession().catch(() => null);
+  const actor = session?.user?.id ?? null;
+  if (observedSessionToken === undefined) observedSessionToken = session?.token ?? null;
+  const epoch = accountEpoch;
+  if (options.expectedUserId && actor !== options.expectedUserId) throw new TravelApiError("Account changed. Refresh before trying again.", 0, "cancelled");
+  if (operationalSearchActor !== actor) {
+    operationalSearchCredential = null;
+    operationalSearchActor = actor;
+  }
+  const visitorHeaders = await visitorIdentity.headers(path, session).catch(() => ({}));
+  const requestVisitorContext = "x-kt-visitor" in visitorHeaders ? visitorIdentity.trackingContext() : null;
+  // Session/storage work may have changed consent or account ownership since an
+  // optional event was queued. Never send it under the replacement identity.
+  if (options.signal?.aborted || (options.visitorContext !== undefined && visitorIdentity.trackingContext() !== options.visitorContext)) {
+    throw new TravelApiError("Request cancelled.", 0, "cancelled");
+  }
   const controller = new AbortController();
   const onAbort = () => controller.abort("cancelled");
   options.signal?.addEventListener("abort", onAbort, { once: true });
@@ -67,23 +144,56 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   try {
     const response = await fetch(`${base.baseUrl}${path}`, {
       ...init,
+      ...(options.body ? { body: JSON.stringify(options.body()) } : {}),
       signal: controller.signal,
       headers: {
+        ...(options.sandboxDisplay ? {"x-sandbox-results-policy":"1"} : {}),
         Accept: "application/json",
         "Content-Type": "application/json",
+        ...((path === "/api/cars/search" || (/^https:\/\/(?:www\.)?kurioticket\.com$/.test(base.baseUrl) && ["/api/flights/search","/api/hotels/search","/api/mobile/v1/hotels/progressive"].includes(path))) ? carSearchClientHeaders(Platform.OS, Constants.expoConfig?.version) : {}),
         "X-Mobile-Platform": Platform.OS,
+        ...(Constants.expoConfig?.version ? { "X-Mobile-App-Version": Constants.expoConfig.version } : {}),
         ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
+        ...visitorHeaders,
+        ...(operationalPaths.has(path) && operationalSearchCredential ? { "X-Kt-Search-Session": operationalSearchCredential } : {}),
         ...(options.requestId ? { "X-Search-Request-Id": options.requestId } : {}),
         ...init.headers,
       },
     });
-    const textStartedAt = performance.now();
-    const raw = await response.text();
-    const textDecodeMs = performance.now() - textStartedAt;
-    let data: Record<string, unknown>;
-    const parseStartedAt = performance.now();
-    try { data = raw ? JSON.parse(raw) as Record<string, unknown> : {}; } catch { throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-response"); }
-    const jsonParseMs = performance.now() - parseStartedAt;
+    if (operationalPaths.has(path) && (session?.user?.id ?? null) === operationalSearchActor) {
+      const credential = response.headers.get("X-Kt-Search-Session");
+      if (credential && operationalCredentialPattern.test(credential)) operationalSearchCredential = credential;
+    }
+    if (path === "/api/flights/search") {
+      logFlightSearchCheckpoint("flight-search:response-received", {
+        requestId: options.requestId,
+        responseBytes: response.headers.get("content-length"),
+        elapsedMs: Date.now() - requestStartedAt,
+        platform: Platform.OS,
+      });
+    }
+    const jsonStartedAt = performance.now();
+    let parsed: unknown;
+    try {
+      parsed = await response.json();
+    } catch {
+      throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-response");
+    }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-response");
+    }
+    const data = parsed as Record<string, unknown>;
+    const accountOwned = /^\/api\/mobile\/v1\/(?:saved|recent-searches|price-alerts|trips|travel-preferences|customization-preferences|email-preferences|notifications|security)(?:[/?]|$)/.test(path);
+    if ((accountOwned || options.expectedUserId) && epoch !== accountEpoch) throw new TravelApiError("Account changed. Discarding the previous response.", 0, "cancelled");
+    const responseJsonMs = performance.now() - jsonStartedAt;
+    if (path === "/api/flights/search") {
+      logFlightSearchCheckpoint("flight-search:parsed", {
+        requestId: options.requestId,
+        resultCount: Array.isArray(data.results) ? data.results.length : undefined,
+        elapsedMs: Date.now() - requestStartedAt,
+        platform: Platform.OS,
+      });
+    }
     if (!response.ok) {
       const code = response.status === 400 ? "validation" : response.status === 429 ? "rate-limit" : response.status === 503 ? "unavailable" : response.status >= 500 ? "server" : "network";
       throw new TravelApiError(apiErrorMessage(data), response.status, code, data);
@@ -94,11 +204,14 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
       console.info("[flight-search:mobile-performance]", {
         requestId: options.requestId,
         mobileRoundTripMs,
-        responseBytes: responseByteLength(raw),
-        textDecodeMs,
-        jsonParseMs,
+        responseBytes: response.headers.get("content-length"),
+        responseJsonMs,
+        resultCount: Array.isArray(data.results) ? data.results.length : undefined,
         server: data.performance,
       });
+    }
+    if (["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive"].includes(path)) {
+      rememberJourneyResponseContext(data, requestVisitorContext);
     }
     return data as T;
   } catch (error) {
@@ -109,6 +222,17 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
     }
     throw new TravelApiError("The search service could not be reached. Check your connection and try again.", 0, "network");
   } finally { clearTimeout(timeout); options.signal?.removeEventListener("abort", onAbort); }
+}
+
+type RedirectOptions = { signal?: AbortSignal; sourcePage?: string; handoff?: ProviderHandoffMetadataReader };
+
+function providerRedirect(id: string, type: "flight" | "hotel", options: RedirectOptions = {}) {
+  const handoff = options.handoff ?? createProviderHandoffMetadata(() => null, randomUUID);
+  return request<FlightRedirectResponse>("/api/redirect", { method: "POST" }, {
+    signal: options.signal,
+    // Resolve correlation after the transport restores/synchronizes its identity.
+    body: () => ({ id, type, sourcePage: options.sourcePage ?? `native_${type}_details`, ...handoff() }),
+  });
 }
 
 async function fetchExploreCatalogue(): Promise<MobileExploreCatalogue> {
@@ -122,47 +246,77 @@ async function fetchExploreCatalogue(): Promise<MobileExploreCatalogue> {
 
 export const travelApi = {
   featureAvailability: () => request<FeatureAvailability>("/api/feature-availability"),
-  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: FLIGHT_SEARCH_REQUEST_TIMEOUT_MS }),
-  searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicHotelResult>>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, options),
+  homepageContent: (market: string, locale: string) => request<unknown>(`/api/content/homepage?market=${encodeURIComponent(market)}&locale=${encodeURIComponent(locale)}`),
+  faqContent: (locale: string) => request<unknown>(`/api/content/faqs?locale=${encodeURIComponent(locale)}`),
+  journeyEvent: (body: JourneyEvent, options: { signal: AbortSignal; visitorContext: number }) => request<JourneyEventResponse>("/api/journey/events", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: 4000 }),
+  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  flightDetails: (id: string, options: { signal?: AbortSignal } = {}) => request<FlightDetailsResponse>(`/api/flights/details?id=${encodeURIComponent(id)}`, {}, options),
+  flightRedirect: (id: string, options: RedirectOptions = {}) => providerRedirect(id, "flight", options),
+  searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<HotelSearchResponse>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  searchHotelsProgressive: (body: Record<string, unknown>, cursor: string | null, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<HotelSearchResponse>("/api/mobile/v1/hotels/progressive", { method: "POST", body: JSON.stringify(cursor ? { cursor } : { search: body }) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  hotelRedirect: (id: string, options: RedirectOptions = {}) => providerRedirect(id, "hotel", options),
+  hotelDetails: (input: MobileHotelDetailsRequest, options: { signal?: AbortSignal } = {}) => {
+    const params = new URLSearchParams({ id: input.id, destination: input.destination, checkIn: input.checkIn, checkOut: input.checkOut, guests: String(input.guests), rooms: String(input.rooms), relatedLimit: "12" });
+    return request<MobileHotelDetailsResponse>(`/api/hotels/details?${params.toString()}`, {}, options);
+  },
   searchHotelDestinations: (query: string, options: { signal?: AbortSignal; countryCode?: string; locale?: string; limit?: number } = {}) => {
     const params = new URLSearchParams({ q: query.trim(), limit: String(options.limit ?? 8) });
     if (options.countryCode) params.set("countryCode", options.countryCode);
     if (options.locale) params.set("locale", options.locale);
     return request<{ suggestions?: HotelDestinationSuggestion[] }>(`/api/hotels/destinations?${params.toString()}`, {}, { signal: options.signal });
   },
-  searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, options),
+  searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  searchPackages: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<PackageSearchResponse>("/api/packages/search", { method: "POST", body: JSON.stringify(body) }, options),
   trips: (status?: "upcoming" | "past" | "cancelled") => request<{ trips: MobileTrip[]; summary: Record<string, number> }>(`/api/mobile/v1/trips${status ? `?status=${status}` : ""}`),
+  flightStatus: (tripId: string) => request<MobileFlightStatus>(`/api/mobile/v1/trips/${encodeURIComponent(tripId)}/flight-status`),
   profile: () => request<{ profile: MobileProfile | null; user: { id: string; email: string; name?: string | null } }>("/api/mobile/v1/profile"),
   securityOverview: () => request<{ overview: SecurityOverview }>("/api/mobile/v1/security/overview"),
+  passkeys: () => request<{passkeys:MobilePasskey[]}>("/api/mobile/v1/security/passkeys"),
+  passkeyReauth: (body:{action?:"send-email-code"|"verify";purpose:"setup"|"removal";code?:string;password?:string}) => request<{ok?:true;method:string;purpose:string;reauthToken?:string;expiresAt?:string}>("/api/mobile/v1/security/passkeys/reauth",{method:"POST",body:JSON.stringify(body)}),
+  passkeyRegistrationOptions: (reauthToken:string) => request<{options:PasskeyRegistrationOptions}>("/api/mobile/v1/security/passkeys/register/options",{method:"POST",body:JSON.stringify({reauthToken})}),
+  verifyPasskeyRegistration: (body:{name:string;response:Record<string,unknown>}) => request<{ok:true}>("/api/mobile/v1/security/passkeys/register/verify",{method:"POST",body:JSON.stringify(body)}),
+  renamePasskey: (id:string,name:string) => request<{ok:true}>(`/api/mobile/v1/security/passkeys/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({name})}),
+  removePasskey: (id:string,reauthToken:string) => request<{ok:true}>(`/api/mobile/v1/security/passkeys/${encodeURIComponent(id)}`,{method:"DELETE",body:JSON.stringify({reauthToken})}),
   updateSecurityPreference: (securityEmailAlerts:boolean) => request<{preferences:{securityEmailAlerts:boolean}}>("/api/mobile/v1/security/preferences",{method:"PATCH",body:JSON.stringify({securityEmailAlerts})}),
   changePassword: (body:{currentPassword:string;newPassword:string;confirmPassword:string}) => request<{success:true}>("/api/mobile/v1/security/password",{method:"PATCH",body:JSON.stringify(body)}),
   requestAccountPasswordReset: () => request<{ok:true}>("/api/mobile/v1/security/password",{method:"POST"}),
   securitySessions: () => request<{sessions:SecuritySession[]}>("/api/mobile/v1/security/sessions"),
   revokeSecuritySession: (sessionId:string) => request<{success:true}>("/api/mobile/v1/security/sessions/revoke",{method:"PATCH",body:JSON.stringify({sessionId})}),
   revokeAllSecuritySessions: () => request<{success:true}>("/api/mobile/v1/security/sessions/revoke-all",{method:"POST"}),
-  securityActivity: () => request<{events:SecurityEvent[]}>("/api/mobile/v1/security/activity"),
+  revokeOtherSecuritySessions: () => request<{success:true}>("/api/mobile/v1/security/sessions/revoke-others",{method:"POST"}),
+  startTwoFactorSetup: () => request<{setup:TwoFactorSetup}>("/api/mobile/v1/security/two-factor/setup",{method:"POST"}),
+  confirmTwoFactor: (code:string) => request<{ok:true;twoFactor:TwoFactorStatus;recoveryCodes:string[]}>("/api/mobile/v1/security/two-factor/confirm",{method:"POST",body:JSON.stringify({code})}),
+  disableTwoFactor: (verification:{code?:string;password?:string}) => request<{ok:true;twoFactor:TwoFactorStatus}>("/api/mobile/v1/security/two-factor/disable",{method:"POST",body:JSON.stringify(verification)}),
+  getDeletionRequest: () => request<{request:AccountDeletionRequest|null}>("/api/mobile/v1/security/deletion-request"),
+  requestDeletion: () => request<{request:AccountDeletionRequest;created:boolean}>("/api/mobile/v1/security/deletion-request",{method:"POST",body:JSON.stringify({confirmed:true})}),
+  reactivateDeletion: () => request<{success:true;request:{id:string;status:string;cancelledAt:string|null}}>("/api/mobile/v1/security/deletion-request/reactivate",{method:"POST",body:JSON.stringify({confirmed:true})}),
   updateProfile: (profile: MobileProfile) => request<{ profile: MobileProfile }>("/api/mobile/v1/profile", { method: "PATCH", body: JSON.stringify(profile) }),
-  customizationPreferences: () => request<{ hasPreferences: boolean; preferences: CustomizationPreferences }>("/api/mobile/v1/customization-preferences"),
-  updateCustomizationPreferences: (preferences: Partial<CustomizationPreferences>) => request<{ preferences: CustomizationPreferences }>("/api/mobile/v1/customization-preferences", { method: "PATCH", body: JSON.stringify(preferences) }),
+  requestCurrentEmailCode: () => request<{ cooldownSeconds: number; resendLimitReached?: boolean }>("/api/mobile/v1/email-change/current-request", { method: "POST", body: JSON.stringify({}) }),
+  verifyCurrentEmailCode: (code: string) => request<{ ownershipProof: string }>("/api/mobile/v1/email-change/current-confirm", { method: "POST", body: JSON.stringify({ code }) }),
+  requestEmailChange: (newEmail: string, ownershipProof: string) => request<{ cooldownSeconds: number; resendLimitReached?: boolean }>("/api/mobile/v1/email-change/request", { method: "POST", body: JSON.stringify({ newEmail, ownershipProof }) }),
+  confirmEmailChange: (newEmail: string, code: string, ownershipProof: string) => request<{ email: string; userId: string }>("/api/mobile/v1/email-change/confirm", { method: "POST", body: JSON.stringify({ newEmail, code, ownershipProof }) }),
+  customizationPreferences: (expectedUserId?: string) => request<{ hasPreferences: boolean; preferences: CustomizationPreferences }>("/api/mobile/v1/customization-preferences", {}, { expectedUserId }),
+  updateCustomizationPreferences: (preferences: Partial<CustomizationPreferences> & { initializeIfAbsent?: boolean }, expectedUserId?: string) => request<{ preferences: CustomizationPreferences }>("/api/mobile/v1/customization-preferences", { method: "PATCH", body: JSON.stringify(preferences) }, { expectedUserId }),
   createSupportTicket: (input: SupportTicketInput) => request<{ ticket: { id: string; subject: string } }>("/api/mobile/v1/support/tickets", { method: "POST", body: JSON.stringify(input) }),
   emailPreferences: () => request<{ hasPreferences: boolean; preferences: EmailPreferences }>("/api/mobile/v1/email-preferences"),
   updateEmailPreferences: (preferences: EmailPreferences) => request<{ preferences: EmailPreferences }>("/api/mobile/v1/email-preferences", { method: "PATCH", body: JSON.stringify(preferences) }),
   travelPreferences: () => request<{ hasPreferences: boolean; preferences: TravelPreferences }>("/api/mobile/v1/travel-preferences"),
   updateTravelPreferences: (preferences: TravelPreferencesPatch) => request<{ preferences: TravelPreferences }>("/api/mobile/v1/travel-preferences", { method: "PATCH", body: JSON.stringify(preferences) }),
-  savedItems: () => request<{ items: MobileSavedItem[]; summary: Record<string, number> }>("/api/mobile/v1/saved"),
-  createSavedItem: (input: CreateMobileSavedItem) => request<{ item: MobileSavedItem }>("/api/mobile/v1/saved", { method: "POST", body: JSON.stringify(input) }),
-  deleteSavedItem: (type: MobileSavedItem["type"], id: string) => request<{ success: true }>("/api/mobile/v1/saved", { method: "DELETE", body: JSON.stringify({ type, id }) }),
+  savedItems: (expectedUserId?: string) => request<{ items: MobileSavedItem[]; summary: Record<string, number> }>("/api/mobile/v1/saved", {}, { expectedUserId }),
+  createSavedItem: (input: CreateMobileSavedItem, expectedUserId?: string) => request<{ item: MobileSavedItem }>("/api/mobile/v1/saved", { method: "POST", body: JSON.stringify(input) }, { expectedUserId }),
+  deleteSavedItem: (type: MobileSavedItem["type"], id: string, expectedUserId?: string) => request<{ success: true }>("/api/mobile/v1/saved", { method: "DELETE", body: JSON.stringify({ type, id }) }, { expectedUserId }),
   recentSearches: () => request<{ items: MobileRecentSearch[] }>("/api/mobile/v1/recent-searches"),
   createRecentSearch: (input: CreateMobileRecentSearch) => request<{ item: MobileRecentSearch }>("/api/mobile/v1/recent-searches", { method: "POST", body: JSON.stringify(input) }),
   deleteRecentSearch: (id: string) => request<{ success: true }>("/api/mobile/v1/recent-searches", { method: "DELETE", body: JSON.stringify({ id }) }),
   clearRecentSearches: () => request<{ success: true }>("/api/mobile/v1/recent-searches?clear=all", { method: "DELETE" }),
   priceAlerts: () => request<{ alerts: MobilePriceAlert[] }>("/api/mobile/v1/price-alerts"),
-  createPriceAlert: (body: CreateFlightPriceAlert) => request<{ alert: MobilePriceAlert }>("/api/mobile/v1/price-alerts", { method: "POST", body: JSON.stringify(body) }),
+  createPriceAlert: (body: CreateFlightPriceAlert | CreateHotelPriceAlert | CreateCarPriceAlert) => request<{ alert: MobilePriceAlert }>("/api/mobile/v1/price-alerts", { method: "POST", body: JSON.stringify(body) }),
   updatePriceAlertStatus: (id: string, status: "ACTIVE" | "PAUSED") => request<{ alert: MobilePriceAlert }>(`/api/mobile/v1/price-alerts/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ status }) }),
   deletePriceAlert: (id: string) => request<{ deleted: true; id: string }>(`/api/mobile/v1/price-alerts/${encodeURIComponent(id)}`, { method: "DELETE" }),
   notifications: (cursor?: string) => request<MobileNotificationPage>(`/api/mobile/v1/notifications${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`),
   notificationUnreadCount: () => request<{ count: number }>("/api/mobile/v1/notifications/unread-count"),
   markNotificationRead: (id: string) => request<{ notification: MobileNotification; changed: boolean }>(`/api/mobile/v1/notifications/${encodeURIComponent(id)}`, { method: "PATCH" }),
+  deleteNotification: (id: string) => request<{ deleted: true; changed: boolean }>(`/api/mobile/v1/notifications/${encodeURIComponent(id)}`, { method: "DELETE" }),
   markAllNotificationsRead: () => request<{ updated: number }>("/api/mobile/v1/notifications", { method: "PATCH" }),
   location: () => request<MobileLocation>("/api/location"),
   currencyRates: () => request<CurrencyRates>("/api/currency/rates"),

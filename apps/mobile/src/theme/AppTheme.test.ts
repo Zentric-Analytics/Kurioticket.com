@@ -16,6 +16,8 @@ test("settings switch is enabled, controlled, and persisted through theme contex
   const provider = readFileSync("src/theme/AppTheme.tsx", "utf8");
   assert.match(settings, /value=\{darkMode\}/);
   assert.match(settings, /onValueChange=\{/);
+  assert.match(settings, /<View style=\{styles\.trailingControl\}><Switch/);
+  assert.match(settings, /trailingControl: \{ flexShrink: 0, alignItems: "flex-end", justifyContent: "center" \}/);
   assert.doesNotMatch(settings, /Dark mode, unavailable/);
   assert.match(provider, /readDarkMode\(\)/);
   assert.match(provider, /writeDarkMode\(enabled\)/);

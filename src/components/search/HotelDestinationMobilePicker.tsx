@@ -5,8 +5,8 @@ import { Building2, MapPin, X } from "lucide-react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import {
-  getLocalizedHotelDestinationCityName,
-  getLocalizedHotelDestinationDetail,
+  getHotelDestinationPrimaryLabel,
+  getHotelDestinationSupportingLabel,
   type HotelDestinationSuggestion,
 } from "@/data/hotelDestinations";
 import { deriveRecentHotelDestinations, readRecentSearches } from "@/lib/recent-searches";
@@ -15,10 +15,11 @@ import { cn } from "@/lib/utils";
 
 export type { HotelDestinationSuggestion };
 
-type HotelDestinationsApiResponse = { suggestions?: HotelDestinationSuggestion[] };
+type HotelDestinationsApiResponse = { suggestions?: HotelDestinationSuggestion[]; recovery?: { message?: string } };
 
 type Props = {
   open: boolean;
+  appearance?: "default" | "app";
   value: string;
   titleId: string;
   inputId: string;
@@ -26,20 +27,21 @@ type Props = {
   selectedCountryHint?: string;
   detectedCountryHint?: string;
   onChange: (value: string) => void;
+  onSelect?: (suggestion: HotelDestinationSuggestion) => void;
   onClose: () => void;
   onClear?: () => void;
 };
 
-function MobileHotelDestinationRow({ option, selected, locale, onSelect }: {
-  option: HotelDestinationSuggestion; selected: boolean; locale: string; onSelect: () => void;
+function MobileHotelDestinationRow({ option, selected, locale, onSelect, id }: {
+  option: HotelDestinationSuggestion; selected: boolean; locale: string; onSelect: () => void; id: string;
 }) {
-  const name = getLocalizedHotelDestinationCityName(option.name, locale);
-  const detail = getLocalizedHotelDestinationDetail(option, locale) || option.country;
+  const name = getHotelDestinationPrimaryLabel(option, locale);
+  const detail = getHotelDestinationSupportingLabel(option, locale);
   return (
-    <button type="button" aria-pressed={selected} aria-label={`${name}, ${detail}`} onClick={onSelect}
-      className={cn("focus-ring flex min-h-[88px] w-full items-center gap-3 px-4 text-start transition-colors hover:bg-slate-50", selected && "bg-blue-50/70")}>
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-        <Building2 aria-hidden="true" className="h-[22px] w-[22px]" />
+    <button id={id} type="button" role="option" aria-selected={selected} aria-label={`${name}, ${detail}`} onClick={onSelect}
+      className={cn("focus-ring flex min-h-[72px] w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-slate-50", selected && "bg-blue-50/70")}>
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100/80 text-slate-500">
+        <Building2 aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
       </span>
       <span className="min-w-0"><span className="block truncate text-[16px] font-bold text-slate-950">{name}</span>
         <span className="mt-1 block truncate text-[13px] font-medium text-slate-600">{detail}</span></span>
@@ -47,7 +49,7 @@ function MobileHotelDestinationRow({ option, selected, locale, onSelect }: {
   );
 }
 
-export function HotelDestinationMobilePicker({ open, value, titleId, inputId, launcherRef, selectedCountryHint = "", detectedCountryHint = "", onChange, onClose }: Props) {
+export function HotelDestinationMobilePicker({ appearance, open, value, titleId, inputId, launcherRef, selectedCountryHint = "", detectedCountryHint = "", onChange, onSelect, onClose }: Props) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const inputRef = useRef<HTMLInputElement>(null);
@@ -55,15 +57,21 @@ export function HotelDestinationMobilePicker({ open, value, titleId, inputId, la
   const [draftValue, setDraftValue] = useState(value);
   const [suggestions, setSuggestions] = useState<HotelDestinationSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [recoveryMessage, setRecoveryMessage] = useState("");
   const recents = useMemo(() => open ? deriveRecentHotelDestinations(readRecentSearches(), 3) : [], [open]);
   const trimmed = query.trim();
 
+  /* Opening the retained sheet intentionally synchronizes its draft state. */
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!open) return;
-    setQuery(value); setDraftValue(value); setSuggestions([]);
-    const frame = requestAnimationFrame(() =>
-      inputRef.current?.focus({ preventScroll: true }),
-    );
+    setQuery(value); setDraftValue(value); setSuggestions([]); setHighlightedIndex(-1); setRecoveryMessage("");
+    const frame = requestAnimationFrame(() => {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        inputRef.current.focus({ preventScroll: true });
+      }
+    });
     return () => cancelAnimationFrame(frame);
   }, [open, value]);
 
@@ -78,32 +86,43 @@ export function HotelDestinationMobilePicker({ open, value, titleId, inputId, la
         if (hint) params.set("countryCode", hint);
         const response = await fetch(`/api/hotels/destinations?${params}`, { signal: controller.signal, cache: "no-store" });
         const payload = response.ok ? await response.json() as HotelDestinationsApiResponse : {};
-        setSuggestions(Array.isArray(payload.suggestions) ? payload.suggestions.slice(0, 8) : []);
+        setSuggestions(Array.isArray(payload.suggestions) ? payload.suggestions.slice(0, 8) : []); setHighlightedIndex(-1); setRecoveryMessage(typeof payload.recovery?.message === "string" ? payload.recovery.message : "");
       } catch { if (!controller.signal.aborted) setSuggestions([]); }
       finally { if (!controller.signal.aborted) setLoading(false); }
     }, 180);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [open, trimmed, selectedCountryHint, detectedCountryHint]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
-  const choose = (option: HotelDestinationSuggestion) => { setDraftValue(option.searchValue); setQuery(option.searchValue); };
   const clearDraft = () => { setQuery(""); setDraftValue(""); setSuggestions([]); requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true })); };
   const rows = trimmed ? suggestions : recents;
+  const listboxId = `${inputId}-listbox`;
+  const statusId = `${inputId}-status`;
+  const activeId = highlightedIndex >= 0 && rows[highlightedIndex] ? `${listboxId}-option-${highlightedIndex}` : undefined;
 
-  return <HotelMobilePickerShell open={open} title={t("chooseDestination")} titleId={titleId} launcherRef={launcherRef}
-    onClose={onClose} showCancelAction={false} contentClassName="bg-[#fcfdfe] px-4 py-6"
-    footer={(requestClose) => <button type="button" disabled={!draftValue.trim()} onClick={() => { onChange(draftValue.trim()); requestClose(); }}
-      className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-bold text-white disabled:cursor-not-allowed">{t("done")}</button>}>
+  return <HotelMobilePickerShell appearance={appearance} open={open} title={t("chooseDestination")} titleId={titleId} launcherRef={launcherRef}
+    onClose={onClose} showCancelAction={false} contentClassName="bg-[#fcfdfe] px-4 py-6">
+    {(requestClose) => <>
     <div className="mx-auto w-full max-w-xl">
       <label htmlFor={inputId} className="mb-4 block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">{t("hotelSearchDestinationLabel")}</label>
       <div className="relative"><MapPin aria-hidden="true" className="absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-600" />
-        <input ref={inputRef} id={inputId} value={query} onChange={(e) => { setQuery(e.target.value); setDraftValue(""); }} aria-label={t("hotelSearchDestinationPlaceholder")}
+        <input ref={inputRef} id={inputId} value={query} onChange={(e) => { setQuery(e.target.value); setDraftValue(""); setHighlightedIndex(-1); }} aria-label={t("hotelSearchDestinationPlaceholder")}
+          role="combobox" aria-autocomplete="list" aria-expanded={rows.length > 0} aria-controls={listboxId} aria-activedescendant={activeId} aria-describedby={statusId}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") { event.preventDefault(); requestClose(); return; }
+            if (event.key === "ArrowDown" && rows.length) { event.preventDefault(); setHighlightedIndex((current) => Math.min(rows.length - 1, current + 1)); return; }
+            if (event.key === "ArrowUp" && rows.length) { event.preventDefault(); setHighlightedIndex((current) => current <= 0 ? rows.length - 1 : current - 1); return; }
+            if (event.key === "Enter" && highlightedIndex >= 0 && rows[highlightedIndex]) { event.preventDefault(); onChange(rows[highlightedIndex].searchValue); onSelect?.(rows[highlightedIndex]); requestClose(); }
+          }}
           placeholder={t("hotelSearchDestinationPlaceholder")} className="h-[52px] w-full rounded-[10px] border border-slate-300 bg-white ps-12 pe-12 text-[15px] font-medium text-slate-950 outline-none placeholder:text-slate-500 focus:border-[#075ee8] focus:ring-1 focus:ring-[#075ee8]/20" />
         <button type="button" onClick={clearDraft} aria-label={t("clearDestination")} className="focus-ring absolute end-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-slate-500"><X aria-hidden="true" className="h-[18px] w-[18px]" /></button>
       </div>
       {!trimmed && recents.length ? <h3 className="mb-4 mt-8 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">{t("recentSearches")}</h3> : null}
-      {loading ? <p className="py-8 text-center text-sm text-slate-500">{t("findingDestinations")}</p> : rows.length ?
-        <div className={cn("overflow-hidden rounded-xl border border-slate-200 bg-white divide-y divide-slate-200", trimmed && "mt-5")}>{rows.map(option => <MobileHotelDestinationRow key={option.id} option={option} locale={locale} selected={draftValue === option.searchValue} onSelect={() => choose(option)} />)}</div>
-        : trimmed ? <p className="py-8 text-center text-sm text-slate-500">{t("noMatchingDestinationsYet")}</p> : null}
+      <p id={statusId} role="status" aria-live="polite" className={loading || (trimmed && !rows.length) ? "py-8 text-center text-sm text-slate-500" : "sr-only"}>{loading ? t("findingDestinations") : trimmed && !rows.length ? `${t("noMatchingDestinationsYet")} ${recoveryMessage || t("hotelSearchDestinationPlaceholder")}` : rows.length ? `${rows.length} ${t("hotelSearchDestinationLabel")}` : ""}</p>
+      {!loading && rows.length ?
+        <div id={listboxId} role="listbox" aria-label={t("hotelSearchDestinationLabel")} className={cn("overflow-hidden rounded-xl border border-slate-200 bg-white divide-y divide-slate-200", trimmed && "mt-5")}>{rows.map((option, index) => <MobileHotelDestinationRow key={option.id} id={`${listboxId}-option-${index}`} option={option} locale={locale} selected={highlightedIndex === index || draftValue === option.searchValue} onSelect={() => { onChange(option.searchValue); onSelect?.(option); requestClose(); }} />)}</div>
+        : null}
     </div>
+    </>}
   </HotelMobilePickerShell>;
 }

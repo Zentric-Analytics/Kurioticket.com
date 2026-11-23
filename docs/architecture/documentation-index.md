@@ -29,6 +29,7 @@
 | `22-current-system-status.md` | Current delivery status summary | Authoritative | `README.md` |
 | `23-delivery-architecture-freeze.md` | Freeze policy and change-control | Authoritative | `README.md` |
 | `24-platform-baseline.md` | Platform-wide baseline snapshot | Authoritative | `README.md` |
+| `25-discovery-intent-and-canonical-search.md` | Discovery intent and canonical search ownership | Authoritative | `README.md` |
 | `authoritative-travel-pipelines.md` | Legacy migration context | Historical | Archive context only |
 | `hotelbeds-removal-inventory.md` | Legacy migration evidence | Historical | Archive context only |
 | `diagrams/*.mmd` | Visual architecture diagrams | Supporting | `diagrams` files |

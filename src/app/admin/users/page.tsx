@@ -1,201 +1,132 @@
-import {
-  AdminPageShell,
-  EmptyState,
-  StatusPill,
-} from "@/components/admin/AdminPageShell";
-import { UserStatusActions } from "@/components/admin/UserStatusActions";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getPublicEnvironment } from "@/lib/stagingSafety";
+import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminIdentityTable";
+import { AdminUsersToolbar } from "@/components/admin/AdminUsersToolbar";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
-import { getAdminEmails } from "@/lib/env";
+import { adminIdentityPageSql, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityDirectoryRow } from "@/lib/adminIdentityDirectory";
 
 export const metadata = { title: "Admin Users" };
-
-type PageProps = {
-  searchParams?: Promise<{ q?: string; role?: string; status?: string }>;
-};
-
+type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; tab?: string; identity?: string; activity?: string; page?: string; sort?: string; date?: string; from?: string; to?: string }> };
+// Keep each SQL query bounded; fetch all matches in chunks for a continuous directory.
 export default async function AdminUsersPage({ searchParams }: PageProps) {
-  const session = await requireAdminSession("/admin/users");
+  await requireAdminSession("/admin/users");
   const params = await searchParams;
-  const q = params?.q?.trim() || "";
-  const requestedRole = params?.role || "ALL";
-  const role = ["ALL", "USER", "SUPPORT", "ADMIN"].includes(requestedRole)
-    ? requestedRole
-    : "ALL";
-  const status = params?.status || "ALL";
+  const q = (params?.q || "").trim().slice(0, 120);
+  const prismaQuery = escapePrismaContainsQuery(q);
+  const role = ["ALL", "USER", "SUPPORT", "ADMIN"].includes(params?.role || "") ? params!.role! : "ALL";
+  const status = ["ALL", "ACTIVE", "SUSPENDED", "DELETED", "PENDING_DELETION"].includes(params?.status || "") ? params!.status! : "ALL";
+  // New shareable URLs use tab=; preserve older identity= bookmarks.
+  const selectedTab = params?.tab ?? params?.identity;
+  const tab: "ALL" | "REGISTERED" | "GUEST" =
+    selectedTab === "REGISTERED" || selectedTab === "GUEST" ? selectedTab : "ALL";
+  const sort = parseAdminIdentitySort(params?.sort);
+  const requestedDate = parseAdminIdentityDate(params?.date);
+  const custom = validAdminIdentityCustomDates(params?.from, params?.to);
+  const date = requestedDate === "custom" && !custom ? "today" : requestedDate;
+  const from = date === "custom" ? params?.from : undefined;
+  const to = date === "custom" ? params?.to : undefined;
+  const now = new Date();
+  const bounds = adminIdentityDateBounds(date, now, from, to);
+  const dateWhere = bounds ? { gte: bounds.from, ...(bounds.to ? { lt: bounds.to } : {}) } : undefined;
+  // Existing bookmarked drawer URLs remain functional; only the presentation changes.
+  const legacy = /^(user|guest):([a-z0-9_-]{6,80})$/i.exec(params?.activity || "");
+  if (legacy) {
+    const directory = new URLSearchParams({
+      ...(q ? { q } : {}), role, status, tab, sort, date, ...(from && to ? {from,to} : {}),
+      ...(params?.page && /^\d{1,7}$/.test(params.page) ? { page: params.page } : {}),
+    }).toString();
+    redirect("/admin/users/" + legacy[1].toLowerCase() + "/" + encodeURIComponent(legacy[2])
+      + "/activity?directory=" + encodeURIComponent(directory));
+  }
   const where = {
-    ...(q
-      ? {
-          OR: [
-            { email: { contains: q, mode: "insensitive" as const } },
-            { name: { contains: q, mode: "insensitive" as const } },
-          ],
-        }
-      : {}),
+    ...(dateWhere ? { createdAt: dateWhere } : {}),
+    ...(q ? { OR: [{ email: { contains: prismaQuery, mode: "insensitive" as const } }, { name: { contains: prismaQuery, mode: "insensitive" as const } }, { id: { contains: prismaQuery, mode: "insensitive" as const } }] } : {}),
     ...(role !== "ALL" ? { role: role as never } : {}),
     ...(status !== "ALL" ? { status: status as never } : {}),
   };
-  const users = await withOptionalDb((db) => db.user.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    take: 100,
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      status: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  }), []);
-  const adminEmails = new Set(getAdminEmails());
-  const sortedUsers = [...users].sort((a, b) => {
-    const aProtected = a.email
-      ? adminEmails.has(a.email.toLowerCase().trim())
-      : false;
-    const bProtected = b.email
-      ? adminEmails.has(b.email.toLowerCase().trim())
-      : false;
-
-    if (aProtected !== bProtected) {
-      return aProtected ? -1 : 1;
-    }
-
-    return 0;
-  });
-
+  // The existing User model remains the authority for registered accounts.
+  // Guests remain distinct records and only consent-eligible, unlinked guests are listed.
+  const guestWhere = { ...(dateWhere ? { firstSeenAt: dateWhere } : {}), consentStatus: "GRANTED" as const, trackingDisabledAt: null, currentUserId: null, identityLinks: { none: {} }, ...(q ? { id: { contains: prismaQuery, mode: "insensitive" as const } } : {}) };
+  const showUsers = tab !== "GUEST";
+  // Role/status are account-only filters. Guest identities never have either.
+  const guestsEligibleForFilters = role === "ALL" && status === "ALL";
+  const showGuests = tab !== "REGISTERED" && guestsEligibleForFilters;
+  const environment = getPublicEnvironment();
+  // Operational sessions are not accounts or analytics visitor identities.
+  // A single identity query supplies the operational guest cohort, timestamps,
+  // and total. Account and consented visitor counts remain independent of tab.
+  const result = await withOptionalDb<{ rows: IdentityRow[]; registeredCount: number; guestCount: number } | null>(async db => {
+    const [registeredCount, consentedGuestCount] = await Promise.all([
+      db.user.count({ where }),
+      guestsEligibleForFilters ? db.visitor.count({ where: guestWhere }) : Promise.resolve(0),
+    ]);
+    const countBeforeOperational = (showUsers ? registeredCount : 0) + (showGuests ? consentedGuestCount : 0);
+    const sql = adminIdentityPageSql({
+      query: q, role, status, showUsers, showGuests,
+      showOperationalGuests: showGuests, withOperationalSummary: guestsEligibleForFilters,
+      environment, sort, date, from, to, now,
+      limit: Math.max(1, countBeforeOperational), offset: 0, allIdentities: true,
+    });
+    const fetched: AdminIdentityDirectoryRow[] = sql ? await db.$queryRaw<AdminIdentityDirectoryRow[]>(sql) : [];
+    const operationalGuestCount = Number(fetched[0]?.operationalGuestCount ?? BigInt(0));
+    const identities = fetched.filter((item): item is AdminIdentityDirectoryRow & { kind: "user" | "guest"; id: string } =>
+      item.kind !== null && item.id !== null);
+    const userIds = identities.filter(item => item.kind === "user").map(item => item.id);
+    const guestIds = identities.filter(item => item.kind === "guest").map(item => item.id);
+    const [users, guests] = await Promise.all([
+      userIds.length ? db.user.findMany({
+        where: { ...where, id: { in: userIds } },
+        select: { id: true, name: true, email: true, role: true, status: true, createdAt: true },
+      }) : Promise.resolve([]),
+      guestIds.length ? db.visitor.findMany({
+        where: { ...guestWhere, id: { in: guestIds } },
+        select: { id: true, firstSeenAt: true, lastSeenAt: true },
+      }) : Promise.resolve([]),
+    ]);
+    const userMap = new Map(users.map(user => [user.id, user]));
+    const guestMap = new Map([
+      ...identities.filter(item => item.kind === "guest" && item.firstSeenAt && item.lastSeenAt)
+        .map(item => [item.id, { id: item.id, firstSeenAt: item.firstSeenAt!, lastSeenAt: item.lastSeenAt! }] as const),
+      ...guests.map(guest => [guest.id, guest] as const),
+    ]);
+    const rows = identities.flatMap<IdentityRow>(identity => {
+      if (identity.kind === "user") {
+        const record = userMap.get(identity.id);
+        return record ? [{ kind: "user" as const, record }] : [];
+      }
+      const record = guestMap.get(identity.id);
+      return record ? [{ kind: "guest" as const, record }] : [];
+    });
+    return { rows, registeredCount, guestCount: consentedGuestCount + operationalGuestCount };
+  }, null);
+  const link = "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date, ...(from && to ? {from,to} : {}) }).toString();
+  if (result === null) {
+    return (
+      <div className="w-full min-w-0 bg-white text-[#020617]">
+        <h1 className="sr-only">Users</h1>
+        <section role="status" aria-label="Users directory unavailable"
+          className="border-y border-[#D8E1EC] px-3 py-8 sm:px-4">
+          <h2 className="text-[15px] font-semibold">Users directory unavailable</h2>
+          <p className="mt-2 max-w-[760px] text-[13px] leading-5 text-[#475569]">
+            The identity directory could not be read. User and guest counts and records are unavailable;
+            an empty directory is not assumed.
+          </p>
+          <Link href={link} className="mt-4 inline-flex h-9 items-center rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]">
+            Retry directory
+          </Link>
+        </section>
+      </div>
+    );
+  }
   return (
-    <AdminPageShell
-      title="Users"
-      description="View users, filter account status and role, and safely suspend, reactivate, or soft-delete accounts."
-    >
-      <Card className="p-4">
-        <form
-          className="grid gap-3 md:grid-cols-[1fr_160px_180px_auto]"
-          action="/admin/users"
-        >
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="Search by email or name"
-            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
-          />
-          <select
-            name="role"
-            defaultValue={role}
-            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
-          >
-            <option value="ALL">All roles</option>
-            <option value="USER">User</option>
-            <option value="SUPPORT">Support</option>
-            <option value="ADMIN">Admin</option>
-          </select>
-          <select
-            name="status"
-            defaultValue={status}
-            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
-          >
-            <option value="ALL">All statuses</option>
-            <option value="ACTIVE">Active</option>
-            <option value="SUSPENDED">Suspended</option>
-            <option value="DELETED">Deleted</option>
-          </select>
-          <Button type="submit">Filter</Button>
-        </form>
-      </Card>
-      {sortedUsers.length === 0 ? (
-        <div className="mt-4">
-          <EmptyState message="No users match these filters." />
-        </div>
-      ) : (
-        <Card className="mt-4 overflow-x-auto p-0">
-          <table className="w-full min-w-[1000px] text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-muted">
-              <tr>
-                <th className="p-3">User ID</th>
-                <th className="p-3">Name</th>
-                <th className="p-3">Email</th>
-                <th className="p-3">Role</th>
-                <th className="p-3">Status</th>
-                <th className="p-3">Created</th>
-                <th className="p-3">Updated</th>
-                <th className="p-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedUsers.map((user) => {
-                const isProtectedAdmin = user.email
-                  ? adminEmails.has(user.email.toLowerCase().trim())
-                  : false;
-
-                return (
-                  <tr
-                    key={user.id}
-                    className="border-t border-border align-top"
-                  >
-                    <td className="p-3 font-mono text-xs text-muted">
-                      {user.id}
-                    </td>
-                    <td className="p-3 font-semibold text-navy">
-                      {user.name || "—"}
-                    </td>
-                    <td className="p-3">{user.email || "—"}</td>
-                    <td className="p-3">
-                      <div className="grid gap-1">
-                        <StatusPill
-                          tone={user.role === "ADMIN" ? "good" : "neutral"}
-                        >
-                          {user.role}
-                        </StatusPill>
-                        {isProtectedAdmin ? (
-                          <span className="text-xs font-semibold text-muted">
-                            Protected admin
-                          </span>
-                        ) : null}
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      <StatusPill
-                        tone={
-                          user.status === "ACTIVE"
-                            ? "good"
-                            : user.status === "SUSPENDED"
-                              ? "warn"
-                              : "bad"
-                        }
-                      >
-                        {user.status}
-                      </StatusPill>
-                    </td>
-                    <td className="p-3">{formatDate(user.createdAt)}</td>
-                    <td className="p-3">{formatDate(user.updatedAt)}</td>
-                    <td className="p-3">
-                      <UserStatusActions
-                        userId={user.id}
-                        email={user.email}
-                        role={user.role}
-                        status={user.status}
-                        isSelf={user.id === session.user.id}
-                        isProtectedAdmin={isProtectedAdmin}
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </Card>
-      )}
-    </AdminPageShell>
+    <div className="w-full min-w-0 bg-white">
+      <h1 className="sr-only">Users</h1>
+      <AdminUsersToolbar query={q} role={role} status={status} tab={tab} sort={sort} date={date} from={from || ""} to={to || ""}
+        registeredCount={result.registeredCount} guestCount={result.guestCount} pageHref={link}>
+        <AdminIdentityTable rows={result.rows} pageHref={link} sort={sort} />
+      </AdminUsersToolbar>
+    </div>
   );
-}
-
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
 }

@@ -1,5 +1,12 @@
+import {
+  getRentalLocationClock,
+  locationTargetTimeZone,
+} from "@/shared/cars/rentalLocationClock";
+
 export type CarsFormValues = {
   pickupLocation: string;
+  /** Serialized canonical location selected from Cars discovery. */
+  pickupLocationTarget?: string;
   pickupDate: string;
   pickupTime: string;
   dropoffDate: string;
@@ -7,6 +14,8 @@ export type CarsFormValues = {
   driverAge: string;
   returnToDifferentLocation: boolean;
   dropoffLocation: string;
+  /** Serialized canonical return location selected from Cars discovery. */
+  dropoffLocationTarget?: string;
 };
 
 export type CarsFormErrors = Partial<
@@ -55,6 +64,36 @@ export const toIsoDate = (date: Date) => {
 
   return `${year}-${month}-${day}`;
 };
+
+export const toTimeValue = (date: Date) =>
+  `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+
+const formatCarsCompactTimeValue = (value: string) => {
+  const trimmed = value.trim();
+  const match = /^(\d{1,2}):(\d{2})$/.exec(trimmed);
+  if (!match) return trimmed;
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (
+    !Number.isInteger(hour) ||
+    !Number.isInteger(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return trimmed;
+  }
+
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+};
+
+export const formatCarsCompactTimeRange = (
+  pickupTime: string,
+  returnTime: string,
+) =>
+  `${formatCarsCompactTimeValue(pickupTime)} - ${formatCarsCompactTimeValue(returnTime)}`;
 
 export const formatDisplayDate = (isoDate: string, locale?: string) => {
   if (!isoDate) {
@@ -190,23 +229,38 @@ export const getInitialValues = (
     marker: getSearchParam(params, "returnToDifferentLocation"),
   });
 
+  const pickupLocationTarget = getSearchParam(params, "pickupLocationTarget");
+  const dropoffLocationTarget = getSearchParam(params, "dropoffLocationTarget");
+
   return {
     pickupLocation,
+    ...(pickupLocationTarget ? { pickupLocationTarget } : {}),
     pickupDate: getSearchParam(params, "pickupDate"),
-    pickupTime: getSearchParam(params, "pickupTime") || "10:00",
+    pickupTime: getSearchParam(params, "pickupTime"),
     dropoffDate: getSearchParam(params, "dropoffDate"),
-    dropoffTime: getSearchParam(params, "dropoffTime") || "10:00",
+    dropoffTime: getSearchParam(params, "dropoffTime"),
     driverAge: normalizeDriverAge(getSearchParam(params, "driverAge")),
     returnToDifferentLocation: differentDropoff,
     dropoffLocation: differentDropoff ? dropoffLocation : "",
+    ...(differentDropoff && dropoffLocationTarget
+      ? { dropoffLocationTarget }
+      : {}),
   };
 };
 
 export const validateCarsForm = (
   values: CarsFormValues,
   todayIso: string,
+  currentLocalTime?: string,
+  now = new Date(),
 ): CarsFormErrors => {
   const errors: CarsFormErrors = {};
+  const rentalClock = getRentalLocationClock(
+    now,
+    locationTargetTimeZone(values.pickupLocationTarget),
+  );
+  const effectiveTodayIso = rentalClock?.date ?? todayIso;
+  const effectiveCurrentTime = rentalClock?.time ?? currentLocalTime;
   const pickupLocation = values.pickupLocation.trim();
   const dropoffLocation = values.dropoffLocation.trim();
   const driverAge = Number.parseInt(values.driverAge, 10);
@@ -218,17 +272,24 @@ export const validateCarsForm = (
 
   if (!values.pickupDate) {
     errors.pickupDate = "carsSearch.error.pickupDateRequired";
-  } else if (values.pickupDate < todayIso) {
+  } else if (values.pickupDate < effectiveTodayIso) {
     errors.pickupDate = "carsSearch.error.pickupDatePast";
   }
 
   if (!values.pickupTime) {
     errors.pickupTime = "carsSearch.error.pickupTimeRequired";
+  } else if (
+    effectiveCurrentTime &&
+    /^\d{2}:\d{2}$/.test(effectiveCurrentTime) &&
+    values.pickupDate === effectiveTodayIso &&
+    values.pickupTime <= effectiveCurrentTime
+  ) {
+    errors.pickupTime = "carsSearch.error.pickupTimePast";
   }
 
   if (!values.dropoffDate) {
     errors.dropoffDate = "carsSearch.error.dropoffDateRequired";
-  } else if (values.dropoffDate < todayIso) {
+  } else if (values.dropoffDate < effectiveTodayIso) {
     errors.dropoffDate = "carsSearch.error.dropoffDatePast";
   }
 

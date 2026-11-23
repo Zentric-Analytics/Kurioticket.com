@@ -1,0 +1,80 @@
+{
+  "mergeCommit": "9bd206394d48fb5f8e0b59c23e025fce6506d2e6",
+  "applicationTree": "87124a7b6a03d08c94dd8467fa126a1699e20dc8",
+  "sourcePin": "9a13ec28e9d0dd0177fb94f6ed3f9057a0c017c3",
+  "rollbackCommit": "a93f31d85e13aed40e872086335961a76350f69c",
+  "conflictsResolved": 52,
+  "remainingConflicts": 0,
+  "tests": {
+    "web": 5225,
+    "native": 2403,
+    "focusedWeb": 582,
+    "dependencyAndNativeBoundary": 25
+  },
+  "localPreviewFingerprints": {
+    "ios": "27981e57481f1ff4f79037bb8b38ad5f1ccd7739",
+    "android": "7cf9b5771cae58bd5eda70aedd0856616c7b6910"
+  },
+  "evidence": [
+    {
+      "name": "reconcile-9a13-focused-final.log",
+      "sha256": "ea21e9e66fd0771f0fea42161075ab615e46647a226e6df1e0c03a353ee2144d"
+    },
+    {
+      "name": "reconcile-9a13-web-regression-final.log",
+      "sha256": "e0da47c0f250a5d344516b81d9c7e3614b9bafcf829cbd3c155ae9beefe5bfdb"
+    },
+    {
+      "name": "reconcile-9a13-native-regression-final.log",
+      "sha256": "a2cc945bf6b0c2df3c131851e100f2efa45b9ed8c64c6dc6be901d5a0cc51aaa"
+    },
+    {
+      "name": "reconcile-9a13-web-build.log",
+      "sha256": "39f7a36f1c807daa8e1451dcd6dde9463d6058e953157a3f9d533cb6bb565895"
+    },
+    {
+      "name": "reconcile-9a13-lint-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "reconcile-9a13-native-install-final.log",
+      "sha256": "7918536f6c19d202871d9324f49f7d3d2593040e4cb764bf94f9c2b4027db70f"
+    },
+    {
+      "name": "reconcile-9a13-native-dependency-tree-final.json",
+      "sha256": "0922e8015b12f9f8f352d5b31b3c7f984b7b6b673cc9fa4e2177caba40d84d66"
+    },
+    {
+      "name": "reconcile-9a13-native-typecheck-final.log",
+      "sha256": "06f985aa8431bc9cd8dcb8b38d2fa49294de3878b7cdf606d9f37b2e0fa7657b"
+    },
+    {
+      "name": "reconcile-9a13-native-boundaries-final.log",
+      "sha256": "4b09b60ff630f26313de343995a725152a73f57ba63b33df1b0771ad3eede65f"
+    },
+    {
+      "name": "reconcile-9a13-native-policy.log",
+      "sha256": "f3a8064294681a2c1dc18ef24339a7e40ed3391ce2bd653c8dfbb59ed89cb1a8"
+    },
+    {
+      "name": "reconcile-9a13-root-dependency-tree.json",
+      "sha256": "2ef7990ba62404a8ad7a13ab1ebd6aa15e615feaa641db5257866e26bcf8585e"
+    },
+    {
+      "name": "reconcile-9a13-root-audit.json",
+      "sha256": "c94e0024c16e34d91d956696f34c951908d0d32fc60c634228412090185441eb"
+    },
+    {
+      "name": "reconcile-9a13-native-audit-final.json",
+      "sha256": "0202326d53d982177fd95a9c8b5f620123d5020465781d0691419895b2ce1a32"
+    },
+    {
+      "name": "reconcile-9a13-export-ios.log",
+      "sha256": "aac962861c3cca6b50b0c52a6d96aa6526e17b7f26a8a455ca051484584aa800"
+    },
+    {
+      "name": "reconcile-9a13-export-android.log",
+      "sha256": "6f202f45d55aa06ca1f843ce76a94081ebf7a7ac56011d8e0731786985eaec03"
+    }
+  ]
+}

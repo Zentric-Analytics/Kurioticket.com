@@ -17,6 +17,7 @@ services:
         - apps/mobile/release-policy.json
         - apps/mobile/package.json
         - apps/mobile/package-lock.json
+        - apps/mobile/vendor/decode-uri-component/**
         - package.json
         - package-lock.json
         - render.yaml
@@ -153,6 +154,8 @@ services:
         sync: false
       - key: PRICE_ALERTS_CRON_SECRET
         sync: false
+      - key: ACCOUNT_DELETION_CRON_SECRET
+        sync: false
       # Return production to exact `live` when an approved Cars provider is connected.
 
   - type: web
@@ -161,7 +164,7 @@ services:
     plan: free
     branch: dev
     # Preview delivery is owned exclusively by kurioticket-preview-release.
-    autoDeploy: false
+    autoDeployTrigger: off
     buildCommand: npm ci && npm run build
     startCommand: npm run start
     preDeployCommand: npm run db:deploy:render
@@ -202,6 +205,8 @@ services:
       - key: HOMEPAGE_FARES_CRON_SECRET
         sync: false
       - key: PRICE_ALERTS_CRON_SECRET
+        sync: false
+      - key: ACCOUNT_DELETION_CRON_SECRET
         sync: false
 
 databases:

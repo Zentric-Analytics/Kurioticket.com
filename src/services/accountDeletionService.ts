@@ -1,9 +1,12 @@
 import { addDays } from "date-fns";
 import { getAdminEmails } from "@/lib/env";
 import { getPrisma } from "@/lib/prisma";
+import { lockVisitorAccount } from "@/services/visitorActivityIdentity";
 import { sendTransactionalEmail, accountDeletionCancelledEmail, accountDeletionRequestAdminEmail, accountDeletionRequestEmail } from "@/services/emailService";
 import { createSupportTicket } from "@/services/supportService";
 import { recordAccountEventSafely } from "@/services/accountNotificationService";
+import { readWebDeletionRecoverySession } from "@/lib/web-deletion-recovery";
+import { readMobileDeletionRecovery } from "@/lib/mobile-deletion-recovery";
 
 const GRACE_DAYS = 7;
 
@@ -45,7 +48,7 @@ export async function requestAccountDeletion(input: { userId: string; email: str
   });
   const { request } = mutation;
 
-  await recordAccountEventSafely({ userId: input.userId, email: null, eventKey: `account-deletion:${request.id}:requested`, type: "ACCOUNT_UPDATE", title: "Account deletion requested", body: "Your Kurioticket account deletion request was received. You can reactivate during the grace period.", actionPath: "/settings", metadata: { deletionRequestId: request.id, status: "PENDING" } });
+  await recordAccountEventSafely({ userId: input.userId, email: null, eventKey: `account-deletion:${request.id}:requested`, type: "ACCOUNT_UPDATE", title: "Account deletion requested", body: "Your Kurioticket account deletion request was received. You can reactivate during the grace period.", actionPath: "/security", metadata: { deletionRequestId: request.id, status: "PENDING" } });
 
   await sendTransactionalEmail({
     to: input.email,
@@ -62,26 +65,78 @@ export async function requestAccountDeletion(input: { userId: string; email: str
   return { request, created: true };
 }
 
-export async function reactivateAccount(userId: string, email: string) {
+export async function reactivateAccount(userId: string, email: string, webSessionId?: string, mobileRecovery?: { sessionId: string; tokenHash: string }) {
+  if (webSessionId === undefined && !mobileRecovery) throw new Error("RecoveryAuthorizationRequired");
   const db = getPrisma();
-  const request = await getCurrentDeletionRequest(userId);
-  if (!request) throw new Error("NoPendingRequest");
-  if (request.deletionScheduledAt <= new Date()) throw new Error("GracePeriodExpired");
 
   const updated = await db.$transaction(async (tx) => {
+    const account = await lockVisitorAccount(tx, userId);
+    if (!account) throw new Error("NoPendingRequest");
+
+    const request = await tx.accountDeletionRequest.findFirst({
+      where: {
+        userId,
+        status: { in: ["PENDING", "READY_FOR_REVIEW"] },
+        cancelledAt: null,
+        completedAt: null,
+      },
+      orderBy: { requestedAt: "desc" },
+    });
+    if (!request) throw new Error("NoPendingRequest");
+
+    await tx.$queryRaw`SELECT "id" FROM "AccountDeletionRequest" WHERE "id" = ${request.id} FOR UPDATE`;
+    const lockedRequest = await tx.accountDeletionRequest.findUnique({ where: { id: request.id } });
+    if (!lockedRequest || !["PENDING", "READY_FOR_REVIEW"].includes(lockedRequest.status) || lockedRequest.cancelledAt || lockedRequest.completedAt || lockedRequest.userId !== userId) {
+      throw new Error("NoPendingRequest");
+    }
+    const now = new Date(); // Evaluate the deadline after waiting for locks.
+    if (lockedRequest.deletionScheduledAt.getTime() <= now.getTime()) {
+      throw new Error("GracePeriodExpired");
+    }
+    if (account.status !== "PENDING_DELETION") throw new Error("AccountUnavailable");
+
+    if (webSessionId !== undefined) {
+      await tx.$queryRaw`SELECT "id" FROM "AccountSession" WHERE "id" = ${webSessionId} AND "userId" = ${userId} FOR UPDATE`;
+      const recovery = await readWebDeletionRecoverySession(userId, webSessionId, tx, new Date());
+      if (!recovery || recovery.user.email !== email) throw new Error("RecoveryAuthorizationRequired");
+    } else if (mobileRecovery) {
+      await tx.$queryRaw`SELECT "id" FROM "AccountSession" WHERE "id" = ${mobileRecovery.sessionId} AND "userId" = ${userId} FOR UPDATE`;
+      const recovery = await readMobileDeletionRecovery(mobileRecovery.sessionId, userId, tx, new Date());
+      if (!recovery || !mobileRecovery.tokenHash || recovery.session.tokenHash !== mobileRecovery.tokenHash || recovery.session.user.email !== email) throw new Error("RecoveryAuthorizationRequired");
+    }
+
     await tx.user.update({ where: { id: userId }, data: { status: "ACTIVE" } });
     return tx.accountDeletionRequest.update({
-      where: { id: request.id },
-      data: { status: "CANCELLED", cancelledAt: new Date(), cancellationMetadata: { source: "self-service-reactivation" } },
+      where: { id: lockedRequest.id },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: now,
+        cancellationMetadata: { source: "self-service-reactivation" },
+      },
     });
   });
-  await recordAccountEventSafely({ userId, email: null, eventKey: `account-deletion:${request.id}:cancelled`, type: "ACCOUNT_UPDATE", title: "Account deletion cancelled", body: "Your Kurioticket account deletion request was cancelled and your account is active.", actionPath: "/settings", metadata: { deletionRequestId: request.id, status: "CANCELLED" } });
+
+  await recordAccountEventSafely({
+    userId,
+    email: null,
+    eventKey: `account-deletion:${updated.id}:cancelled`,
+    type: "ACCOUNT_UPDATE",
+    title: "Account deletion cancelled",
+    body: "Your Kurioticket account deletion request was cancelled and your account is active.",
+    actionPath: "/security",
+    metadata: { deletionRequestId: updated.id, status: "CANCELLED" },
+  });
   await sendTransactionalEmail({
     to: email,
     subject: "Kurioticket account deletion request cancelled",
     html: accountDeletionCancelledEmail(),
-    idempotencyKey: `account-deletion-cancelled-${request.id}`,
-  }).catch((error) => console.error("[account-deletion:cancel-email-failed]", { requestId: request.id, message: error instanceof Error ? error.message : "email_failed" }));
+    idempotencyKey: `account-deletion-cancelled-${updated.id}`,
+  }).catch((error) =>
+    console.error("[account-deletion:cancel-email-failed]", {
+      requestId: updated.id,
+      message: error instanceof Error ? error.message : "email_failed",
+    }),
+  );
   return updated;
 }
 

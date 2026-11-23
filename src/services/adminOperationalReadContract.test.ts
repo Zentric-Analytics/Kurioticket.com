@@ -1,0 +1,65 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  encodeAdminOperationalCursor,
+  parseAdminDeletionQuery,
+  parseAdminHandoffQuery,
+  parseAdminSearchQuery,
+  parseAdminSupportQuery,
+} from "./adminOperationalReadContract";
+
+test("search cursor is bound to its original filters", () => {
+  const first = parseAdminSearchQuery(new URLSearchParams("product=FLIGHT&identity=guest&provider=Duffel"), "staging");
+  assert.equal(first.status, "ok");
+  if (first.status !== "ok") return;
+  const cursor = encodeAdminOperationalCursor("searches", first.data.scope, { at: "2026-10-22T10:00:00.000Z", id: "search_123" });
+  const same = parseAdminSearchQuery(new URLSearchParams(`product=FLIGHT&identity=guest&provider=Duffel&cursor=${cursor}`), "staging");
+  assert.equal(same.status, "ok");
+  const changed = parseAdminSearchQuery(new URLSearchParams(`product=HOTEL&identity=guest&provider=Duffel&cursor=${cursor}`), "staging");
+  assert.equal(changed.status, "invalid");
+});
+
+test("operational query validation rejects repeated, unknown and contradictory filters", () => {
+  assert.equal(parseAdminSupportQuery(new URLSearchParams("status=OPEN&status=CLOSED")).status, "invalid");
+  assert.equal(parseAdminDeletionQuery(new URLSearchParams("wat=1")).status, "invalid");
+  assert.equal(parseAdminSearchQuery(new URLSearchParams("identity=guest&userId=user_123"), "staging").status, "invalid");
+  assert.equal(parseAdminHandoffQuery(new URLSearchParams("identity=unattributed&visitorId=visitor_123"), "staging").status, "invalid");
+});
+
+test("environment defaults and explicit date bounds are normalized", () => {
+  const search = parseAdminSearchQuery(new URLSearchParams("from=2026-10-01T00:00:00%2B01:00&to=2026-10-02T00:00:00Z"), "staging");
+  assert.equal(search.status, "ok");
+  if (search.status === "ok") {
+    assert.equal(search.data.scope.environment, "staging");
+    assert.equal(search.data.scope.from, "2026-09-30T23:00:00.000Z");
+  }
+  assert.equal(parseAdminHandoffQuery(new URLSearchParams("environment=production"), "staging").status, "ok");
+  assert.equal(parseAdminSupportQuery(new URLSearchParams("from=2026-10-03T00:00:00Z&to=2026-10-02T00:00:00Z")).status, "invalid");
+});
+
+test("support activity pagination uses version two and invalidates old creation-time cursors", () => {
+  const parsed = parseAdminSupportQuery(new URLSearchParams("status=OPEN"));
+  assert.equal(parsed.status, "ok");
+  if (parsed.status !== "ok") return;
+  const token = encodeAdminOperationalCursor("support", parsed.data.scope, { at: "2026-10-29T09:00:00.000Z", id: "ticket_123" });
+  assert.equal(parseAdminSupportQuery(new URLSearchParams("status=OPEN&cursor=" + encodeURIComponent(token))).status, "ok");
+  const old = Buffer.from(JSON.stringify({ v: 1, kind: "support", scope: JSON.stringify(parsed.data.scope), at: "2026-10-29T09:00:00.000Z", id: "ticket_123" })).toString("base64url");
+  assert.equal(parseAdminSupportQuery(new URLSearchParams("status=OPEN&cursor=" + encodeURIComponent(old))).status, "invalid");
+});
+
+test("handoff source-page scope accepts normalized paths and rejects external URLs", () => {
+  const good = parseAdminHandoffQuery(new URLSearchParams("sourcePage=%2Fhotel_details&product=HOTEL"), "staging");
+  assert.equal(good.status, "ok");
+  if (good.status === "ok") assert.equal(good.data.scope.sourcePage, "/hotel_details");
+  for (const value of ["https://example.com/hotel_details", "//evil", "/hotels?private=1", "/hotel#fragment"]) {
+    const params = new URLSearchParams({ sourcePage: value });
+    assert.equal(parseAdminHandoffQuery(params, "staging").status, "invalid");
+  }
+});
+
+test("Cars handoff filtering accepts CAR and rejects unsupported products", () => {
+  const cars = parseAdminHandoffQuery(new URLSearchParams("product=CAR"), "staging");
+  assert.equal(cars.status, "ok");
+  if (cars.status === "ok") assert.equal(cars.data.scope.product, "CAR");
+  assert.equal(parseAdminHandoffQuery(new URLSearchParams("product=PACKAGE"), "staging").status, "invalid");
+});

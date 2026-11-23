@@ -9,7 +9,8 @@ import { GitHubClient, RenderClient } from "./remote-clients.mjs";
 const values = Object.fromEntries(process.argv.slice(2).reduce((pairs, value, index, args) => value.startsWith("--") ? [...pairs, [value.slice(2), args[index + 1]]] : pairs, []));
 const platform = values.platform;
 const sourceSha = values.sha;
-if (!['ios', 'android'].includes(platform) || !/^[0-9a-f]{40}$/.test(sourceSha ?? "")) throw new Error("Usage: npm run preview-release:recover-native -- --platform <ios|android> --sha <current-dev-sha>");
+const artifactBackfill = values["artifact-backfill"] === "true";
+if (!['ios', 'android'].includes(platform) || !/^[0-9a-f]{40}$/.test(sourceSha ?? "") || (artifactBackfill && platform !== "android")) throw new Error("Usage: npm run preview-release:recover-native -- --platform <ios|android> --sha <current-dev-sha> [--artifact-backfill true]");
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const config = requirePreviewEnvironment();
@@ -21,6 +22,6 @@ try {
   }
   const github = new GitHubClient({ readToken: config.githubReadToken, statusToken: config.githubStatusToken, repository: config.repository });
   const orchestrator = new PreviewOrchestrator({ config, ledger, github, render: new RenderClient({ apiKey: config.renderApiKey, serviceId: config.renderServiceId }) });
-  const result = await orchestrator.recoverCanonicalNativeBuild({ sourceSha, platform });
+  const result = await orchestrator.recoverCanonicalNativeBuild({ sourceSha, platform, artifactBackfill });
   console.log(JSON.stringify({ event: "canonical-native-recovery-complete", platform, sourceSha, ...result }));
 } finally { await ledger.close(); }

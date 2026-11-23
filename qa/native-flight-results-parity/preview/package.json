@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "description": "Isolated QA renderer; not a supported application web target",
+  "scripts": {"build":"node build.mjs","serve":"node server.mjs","capture":"node capture.mjs"},
+  "dependencies": {"react":"19.1.0","react-dom":"19.1.0","react-native-web":"0.21.2","esbuild":"0.25.12"}
+}

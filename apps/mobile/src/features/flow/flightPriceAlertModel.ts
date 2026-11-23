@@ -9,7 +9,7 @@ export type CanonicalCabin = "economy" | "premium-economy" | "business" | "first
 export function flightAlertPresentation(product: "flight" | "hotel" | "car", hasPlan: boolean, results: FlightResult[]) {
   const liveResults = product === "flight" ? results.filter((result) => result.searchPolicy.source === "duffel" && result.searchPolicy.bookable) : [];
   const currencies = availableFlightAlertCurrencies(liveResults);
-  return { visible: product === "flight" && hasPlan, liveResults, currencies, enabled: currencies.length > 0 };
+  return { visible: product === "flight" && hasPlan, liveResults, currencies, enabled: Boolean(selectAutomaticFlightBaseline(liveResults)) };
 }
 
 export function availableFlightAlertCurrencies(results: FlightResult[]) {
@@ -33,7 +33,7 @@ export function buildFlightPriceAlertPayload(plan: SearchPlan, targetPrice: numb
   const normalizedCurrency = currency.trim().toUpperCase();
   if (!supported.has(normalizedCurrency)) throw new Error("Unsupported alert currency.");
   return {
-    type: "FLIGHT" as const,
+    type: "FLIGHT" as const, mode: "TARGET" as const,
     origin: String(query.origin), destination: String(query.destination), targetPrice, currency: normalizedCurrency,
     query: {
       tripType: query.tripType as "round-trip" | "one-way", origin: String(query.origin), destination: String(query.destination),
@@ -41,6 +41,23 @@ export function buildFlightPriceAlertPayload(plan: SearchPlan, targetPrice: numb
       adults, children, infants, travelers: adults + children + infants, cabinClass, currency: normalizedCurrency,
     },
   };
+}
+
+export function selectAutomaticFlightBaseline(results: FlightResult[], preferredCurrency?: unknown) {
+  const live = results.filter((result) => result.searchPolicy.source === "duffel" && result.searchPolicy.bookable
+    && Number.isFinite(result.price) && result.price > 0 && supported.has(result.currency.trim().toUpperCase()));
+  const preferred = String(preferredCurrency ?? "").trim().toUpperCase();
+  const currency = live.find((result) => result.currency.trim().toUpperCase() === preferred)?.currency ?? live[0]?.currency;
+  if (!currency) return undefined;
+  const normalized = currency.trim().toUpperCase();
+  return live.filter((result) => result.currency.trim().toUpperCase() === normalized)
+    .reduce<FlightResult | undefined>((lowest, result) => !lowest || result.price < lowest.price ? result : lowest, undefined);
+}
+
+export function buildAutomaticFlightPriceAlertPayload(plan: SearchPlan, baselinePrice: number, currency: string) {
+  const target = buildFlightPriceAlertPayload(plan, 1, currency);
+  if (!Number.isFinite(baselinePrice) || baselinePrice <= 0) throw new Error("A valid live flight price is required.");
+  return { ...target, targetPrice: undefined, mode: "AUTOMATIC" as const, baselinePrice };
 }
 
 const canonicalText = (value: unknown) => String(value ?? "").trim().toLowerCase();
@@ -59,5 +76,26 @@ export function flightPriceAlertMatchesPlan(alert: MobilePriceAlert, plan: Searc
 
 export function matchingFlightPriceAlert(alerts: MobilePriceAlert[], plan: SearchPlan) {
   const matches = alerts.filter((alert) => flightPriceAlertMatchesPlan(alert, plan));
-  return matches.find(({ status }) => status === "ACTIVE") ?? matches.find(({ status }) => status === "PAUSED");
+  return matches.find((alert) => alert.mode === "TARGET" && alert.status === "ACTIVE")
+    ?? matches.find((alert) => alert.mode === "AUTOMATIC" && alert.status === "ACTIVE")
+    ?? matches.find((alert) => alert.mode === "TARGET" && alert.status === "PAUSED")
+    ?? matches.find((alert) => alert.mode === "AUTOMATIC" && alert.status === "PAUSED");
+}
+
+/** The switch represents every active alert for this search, including legacy modes. */
+export async function pauseActiveFlightPriceAlerts(
+  alerts: MobilePriceAlert[],
+  plan: SearchPlan,
+  pause: (id: string) => Promise<MobilePriceAlert>,
+) {
+  const active = alerts.filter((alert) => alert.status === "ACTIVE" && flightPriceAlertMatchesPlan(alert, plan));
+  const outcomes = await Promise.allSettled(active.map(async (alert) => {
+    const paused = await pause(alert.id);
+    if (paused.id !== alert.id || paused.status !== "PAUSED") throw new Error("Flight price alert was not paused.");
+    return paused;
+  }));
+  const failure = outcomes.find((outcome) => outcome.status === "rejected");
+  if (failure?.status === "rejected") throw failure.reason;
+  const updates = new Map(outcomes.flatMap((outcome) => outcome.status === "fulfilled" ? [[outcome.value.id, outcome.value] as const] : []));
+  return alerts.map((alert) => updates.get(alert.id) ?? alert);
 }

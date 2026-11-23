@@ -2,8 +2,8 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "Recentemente",
   ...en,
+  "accountDashboard.recently": "Recentemente",
   "deals.mobileTravelersTitle": "Viaggiatori",
   "mobileTravelerCabin.title": "Viaggiatori e cabina",
   "mobileTravelerCabin.adultDescription": "18 anni e oltre",
@@ -153,6 +153,7 @@ export const translations: TranslationDictionary = {
   mobileTravelHeading: "Viaggi",
   mobilePreferencesHeading: "Preferenze",
   viewDetails: "Vedi dettagli",
+  seeDetails: "Vedi dettagli",
   tryAgain: "Riprova",
   manage: "Gestisci",
   deleteAccount: "Elimina account",
@@ -634,7 +635,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.personalization.title": "Personalizzazione",
   "accountDashboard.preferences.customization.personalization.description": "Controlla come Kurioticket personalizza i tuoi consigli.",
   "accountDashboard.preferences.customization.personalizeSearches": "Usa le mie ricerche per personalizzare i consigli",
-  "accountDashboard.preferences.customization.personalizedTravelPacchetti": "Mostra offerte di viaggio personalizzate",
+  "accountDashboard.preferences.customization.personalizedTravelDeals": "Mostra offerte di viaggio personalizzate",
   "accountDashboard.preferences.customization.rememberRecentSearches": "Ricorda le mie ricerche recenti",
   "accountDashboard.preferences.customization.communicationStyle.title": "Stile di comunicazione",
   "accountDashboard.preferences.customization.communicationStyle.description": "Scegli come vuoi che Kurioticket comunichi con te.",
@@ -1853,6 +1854,7 @@ export const translations: TranslationDictionary = {
   convertedDisplayEstimateProviderPrice:
     "Stima visualizzata convertita. Prezzo del fornitore: {{providerPrice}}. Il prezzo finale del fornitore può variare.",
   viewFlight: "Vedi volo",
+  viewDeal: "Vedi offerta",
   flightCardProviderHandoff:
     "Prezzo finale, disponibilità, prenotazione e regole tariffarie sono confermati dal fornitore.",
   flightCardProviderHandoffConverted:
@@ -1902,6 +1904,7 @@ export const translations: TranslationDictionary = {
   itinerary: "Itinerario",
   leg: "Tratta",
   checkProvider: "Verifica con il fornitore",
+  notSuppliedByProvider: "Non fornito dal fornitore",
   carryOnIncluded: "bagaglio a mano incluso",
   flightLeg: "Tratta del volo",
   layover: "Scalo",

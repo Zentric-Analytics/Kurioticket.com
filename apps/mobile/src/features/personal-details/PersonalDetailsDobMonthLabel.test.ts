@@ -22,6 +22,9 @@ test("DOB month edit field shows a readable month name while preserving numeric 
   );
   assert.match(
     screen,
-    /patch\("dateOfBirth", `\$\{next\.year\}-\$\{next\.month\}-\$\{next\.day\}`\)/,
+    /const candidate = `\$\{next\.year\}-\$\{next\.month\}-\$\{next\.day\}`/,
   );
+  assert.match(screen, /clampPersonalDetailsDateOfBirth\(candidate\)/);
+  assert.match(screen, /patch\("dateOfBirth", candidate\)/);
+  assert.match(screen, /patch\("dateOfBirth", clamped\)/);
 });

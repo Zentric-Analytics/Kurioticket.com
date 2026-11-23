@@ -1,13 +1,22 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { variableInitializer } from "@/lib/testing/sourceContract";
 
 const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 const pageSource = readFileSync(
   new URL("../../app/cars/results/page.tsx", import.meta.url),
+  "utf8",
+);
+const scrollLockSource = readFileSync(
+  new URL("../../lib/search/mobileResultsScrollLock.ts", import.meta.url),
+  "utf8",
+);
+const sheetSource = readFileSync(
+  new URL("../search/MobileResultsEditSheet.tsx", import.meta.url),
   "utf8",
 );
 
@@ -17,17 +26,15 @@ const openDrawer = source.slice(
 );
 const closeDrawer = source.slice(
   source.indexOf("const cancelMobileSearchDrawer"),
-  source.indexOf(
-    "useLayoutEffect",
-    source.indexOf("const cancelMobileSearchDrawer"),
-  ),
+  source.indexOf("const requestMobileSearchDrawerClose"),
 );
-const scrollLifecycle = source.slice(
-  source.indexOf(
-    "useLayoutEffect",
-    source.indexOf("const cancelMobileSearchDrawer"),
-  ),
-  source.indexOf("const renderMobileControlsRow"),
+const focusLifecycleStart = source.indexOf(
+  'useEffect(() => {\n    if (mobileSearchOpen) return;',
+  source.indexOf("const submitMobileSearch"),
+);
+const focusLifecycle = source.slice(
+  focusLifecycleStart,
+  source.indexOf("}, [mobileSearchOpen]);", focusLifecycleStart) + "}, [mobileSearchOpen]);".length,
 );
 
 test("opening mobile Edit Search snapshots every mutable Cars search value", () => {
@@ -35,10 +42,7 @@ test("opening mobile Edit Search snapshots every mutable Cars search value", () 
     openDrawer,
     /mobileSearchLauncherRef\.current = launcher \?\? null/,
   );
-  assert.match(
-    openDrawer,
-    /mobileSearchScrollLockRef\.current \?\?= lockBodyScroll\(\)/,
-  );
+  assert.doesNotMatch(openDrawer, /acquireMobileResultsScrollLock/);
 
   for (const field of [
     "pickupLocation",
@@ -65,66 +69,76 @@ test("cancel restores the snapshot while mobile Search uses submit semantics", (
     source,
     /mobileSearchSnapshotRef\.current = null;[\s\S]*?mobileSearchLauncherRef\.current = null;[\s\S]*?setMobileSearchOpen\(false\)/,
   );
-  assert.match(source, /onClick=\{\(\) => cancelMobileSearchDrawer\(\)\}/);
+  assert.match(source, /onClose=\{requestMobileSearchDrawerClose\}/);
+  const closeRequest = variableInitializer(source, "requestMobileSearchDrawerClose");
+  assert.match(closeRequest, /prefers-reduced-motion: reduce/);
+  assert.match(closeRequest, /cancelMobileSearchDrawer\(\)/);
+  assert.match(closeRequest, /window\.setTimeout\([\s\S]*cancelMobileSearchDrawer\(\)/);
 });
 
 test("a committed Results navigation remounts client state for the new search", () => {
   assert.match(
     pageSource,
-    /<CarsResultsClient\s+key=\{searchIdentity\}\s+values=\{values\}/,
+    /<CarInventoryLoader\s+key=\{searchIdentity\}\s+values=\{values\}/,
+  );
+  const loader = readFileSync(new URL("./CarInventoryLoader.tsx", import.meta.url), "utf8");
+  assert.match(loader, /<CarsResultsClient values=\{values\} initialResults=\{results\}/);
+});
+
+test("mobile Edit Search delegates one fixed-body lock to the shared sheet without manual scroll ownership", () => {
+  assert.doesNotMatch(source, /mobileSearchScrollLockRef/);
+  const start = source.indexOf("<MobileResultsEditSheet");
+  const end = source.indexOf("</MobileResultsEditSheet>", start);
+  const sheet = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.match(sheet, /appearance="carsResultsEdit"/);
+  assert.match(sheet, /\n\s*freezeBodyPosition\n/);
+  assert.doesNotMatch(sheet, /freezeBodyPosition=\{false\}|backdropClassName|safe-area-inset-top/);
+  assert.match(
+    sheetSource,
+    /acquireMobileResultsScrollLock\(\{\s*freezeBodyPosition,\s*\}\)/,
+  );
+  assert.match(
+    scrollLockSource,
+    /freezeBodyPosition = true[\s\S]*if \(freezeBodyPosition\)[\s\S]*body\.style\.position = "fixed"/,
+  );
+  assert.match(
+    scrollLockSource,
+    /shouldRestoreScroll =\s*restoreScrollOnFinalRelease && fixedBodyPositionForActiveLock/,
+  );
+  assert.doesNotMatch(openDrawer, /acquireMobileResultsScrollLock/);
+  assert.doesNotMatch(closeDrawer, /window\.scrollTo|releaseMobileSearchScrollLock/);
+  assert.match(
+    source,
+    /openMobileSearchDrawer\(\s*event\.currentTarget,\s*getOverlayActivationModality\(event\),?\s*\)/,
   );
 });
 
-test("mobile search restores saved Results scroll and the actual launcher without scrolling", () => {
-  const scrollLock = source.slice(
-    source.indexOf("function lockBodyScroll"),
-    source.indexOf("function isSafelyFocusableElement"),
-  );
-
+test("closing Edit Search restores keyboard launcher focus without owning scroll restoration", () => {
   assert.match(
-    scrollLifecycle,
-    /mobileSearchScrollLockRef\.current\?\.restore\(\)/,
+    focusLifecycle,
+    /if \(mobileSearchOpen\) return;[\s\S]*?restoreOverlayLauncherFocus\([\s\S]*?mobileSearchLauncherRef\.current,[\s\S]*?mobileSearchModalityRef\.current/,
   );
-  assert.match(
-    scrollLock,
-    /restoreScroll = true[\s\S]*restoreScroll && window\.scrollY !== scrollY[\s\S]*window\.scrollTo\(0, scrollY\)/,
+  assert.doesNotMatch(
+    focusLifecycle,
+    /acquireMobileResultsScrollLock|window\.scrollTo/,
   );
-  assert.match(scrollLock, /bodyElement\.style\.overflow = "hidden"/);
-  assert.match(scrollLock, /rootElement\.style\.overflow = "hidden"/);
-  assert.match(scrollLock, /overscrollBehavior = "none"/);
-  assert.match(scrollLock, /if \(restored\) return;[\s\S]*restored = true/);
-  assert.doesNotMatch(scrollLock, /style\.position = "fixed"/);
-  assert.doesNotMatch(scrollLock, /style\.top = `-\$\{scrollY\}px`/);
-  assert.doesNotMatch(scrollLock, /behavior: "smooth"/);
-  assert.match(scrollLifecycle, /isSafelyFocusableElement\(launcher\)/);
-  assert.match(scrollLifecycle, /launcher\.focus\(\{ preventScroll: true \}\)/);
-  assert.match(source, /openMobileSearchDrawer\(event\.currentTarget\)/);
 });
 
-test("cancel stabilizes Results before closing the editor and restoring focus", () => {
+test("cancel restores draft state without imperatively changing Results scroll", () => {
   const restoreSnapshotIndex = closeDrawer.indexOf(
     "setDriverAge(snapshot.driverAge)",
   );
-  const releaseIndex = closeDrawer.indexOf("releaseMobileSearchScrollLock();");
   const closeIndex = closeDrawer.indexOf("setMobileSearchOpen(false)");
-  const focusIndex = scrollLifecycle.indexOf(
-    "launcher.focus({ preventScroll: true })",
-  );
 
   assert.ok(restoreSnapshotIndex >= 0);
-  assert.ok(restoreSnapshotIndex < releaseIndex);
-  assert.ok(releaseIndex < closeIndex);
-  assert.ok(focusIndex >= 0);
+  assert.ok(restoreSnapshotIndex < closeIndex);
+  assert.doesNotMatch(closeDrawer, /window\.scrollTo|scrollTop|scrollIntoView/);
+  assert.doesNotMatch(focusLifecycle, /mobileSearchScrollLockRef/);
 });
 
-test("nested picker Done remains draft state that the editor X can cancel", () => {
+test("nested picker Done remains draft state", () => {
   assert.match(source, /onCommit=\{\(nextPickupDate, nextDropoffDate\) =>/);
   assert.match(source, /onCommit=\{\(nextPickupTime, nextDropoffTime\) =>/);
   assert.match(source, /onCommit=\{setDriverAge\}/);
-  assert.doesNotMatch(
-    source.match(
-      /<MobileDatePickerDialog[\s\S]*?<div\n        className=\{cn\(/,
-    )?.[0] ?? "",
-    /cancelMobileSearchDrawer/,
-  );
 });

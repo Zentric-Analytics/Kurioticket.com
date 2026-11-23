@@ -85,13 +85,14 @@ export function AdminSidebar({ items }: { items: AdminNavDefinition[] }) {
 
 export function AdminNavItem({ item }: { item: AdminNavDefinition }) {
   const pathname = usePathname();
-  const active = item.href === "/admin" ? pathname === item.href : pathname.startsWith(item.href);
+  const active = item.href === "/admin" ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const child = Boolean(item.parentHref);
   const Icon = item.icon;
 
   return (
     <Link
       href={item.href}
-      className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition lg:w-full ${
+      className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition lg:w-full ${child ? "lg:ml-5 lg:w-[calc(100%-1.25rem)] lg:border-l lg:border-slate-200 lg:rounded-l-none lg:pl-3" : ""} ${
         active
           ? "bg-indigo-50 text-indigo-800 ring-1 ring-indigo-100"
           : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
@@ -178,7 +179,7 @@ function AdminProfileMenu({
           <p className="truncate text-xs font-medium text-slate-500">{adminEmail || "No email available"}</p>
         </div>
         <ProfileLink href="/admin/settings" label="Admin settings" icon={Settings} />
-        <ProfileLink href="/admin/logs" label="Audit logs" icon={ShieldCheck} />
+        <ProfileLink href="/admin/logs" label="Audit Logs" icon={ShieldCheck} />
         <ProfileLink href="/" label="Switch to public site" icon={Building2} />
         <ProfileLink href="/api/auth/signout" label="Logout" icon={LogOut} />
       </div>
@@ -200,18 +201,23 @@ export function AdminPageShell({
   eyebrow = "Admin operations",
   description,
   actions,
+  hideHeader = false,
   children,
 }: {
   title: string;
   eyebrow?: string;
   description?: string;
   actions?: React.ReactNode;
+  /** Hide the visible heading only for layouts that start directly with their first section. */
+  hideHeader?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-7xl">
-      <AdminPageHeader eyebrow={eyebrow} title={title} description={description} actions={actions} />
-      <div className="mt-6">{children}</div>
+    <div className="w-full min-w-0">
+      {hideHeader
+        ? <h1 className="sr-only">{title}</h1>
+        : <AdminPageHeader eyebrow={eyebrow} title={title} description={description} actions={actions} />}
+      <div className={hideHeader ? "" : "mt-6"}>{children}</div>
     </div>
   );
 }

@@ -1,0 +1,63 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+const source = (path: string) => readFileSync(path, "utf8");
+
+test("Notifications belongs to the Settings sidebar without duplicate global Alerts navigation", () => {
+  const nav = source("src/lib/adminNavigation.ts");
+  const settingsNav = source("src/components/admin/AdminSettingsNavigation.tsx");
+  assert.doesNotMatch(nav, /href: "\/admin\/notifications"/);
+  assert.match(settingsNav, /href: "\/admin\/settings\/notifications"/);
+});
+test("System removes general Alerts shortcuts and circular configuration investigation", () => {
+  const page = source("src/app/admin/system/page.tsx");
+  assert.doesNotMatch(page, /View operational alerts|Open Alerts|\/admin\/notifications|\/admin\/settings/);
+  assert.match(page, /Issues Requiring Attention/);
+  assert.doesNotMatch(page, /<Link|href:|actionLabel:/);
+  assert.match(page, /Provider credentials absent/);
+  assert.match(page, /Email configuration incomplete/);
+  assert.doesNotMatch(page, /id: "providers"|Open Providers/);
+  assert.match(page, /Managed in deployment configuration/);
+});
+test("System diagnostic subpages use the System sidebar without redundant return links", () => {
+  const nav = source("src/lib/adminNavigation.ts");
+  for (const [path, href] of [
+    ["src/app/admin/system/cms-health/page.tsx", "/admin/system/cms-health"],
+    ["src/app/admin/email-delivery/page.tsx", "/admin/email-delivery"],
+  ]) {
+    const page = source(path);
+    assert.doesNotMatch(page, /href="\/admin\/system"|Back to System|ArrowLeft size=\{14\}/);
+    assert.doesNotMatch(page, /actions=\{|View audit logs|href="\/admin\/logs"/);
+    assert.ok(nav.includes(`href: "${href}", parentHref: "/admin/system"`));
+  }
+  const alerts = source("src/app/admin/notifications/page.tsx");
+  assert.doesNotMatch(alerts, /actions=\{|Back to System|View audit logs|href="\/admin\/logs"|href="\/admin\/system"/);
+  const settings = source("src/app/admin/settings/recent-changes/page.tsx");
+  assert.doesNotMatch(settings, /actions=\{|Back to System|href="\/admin\/system"/);
+  assert.match(settings, /<form action=\{fullHistoryPath\} method="get" aria-label="Settings history filters"/);
+  assert.match(settings, /<SettingsHistoryRow key=\{item\.id\} item=\{item\}/);
+  assert.doesNotMatch(settings, /View full history|Show recent records/);
+  assert.doesNotMatch(settings, /href="\/admin\/logs|\/admin\/logs\?/);
+});
+test("Settings retains feature controls without owning flight fare operations", () => {
+  const page = source("src/components/admin/SettingsFeatureSection.tsx");
+  assert.doesNotMatch(page, /linkLabel|View system status|View admin configuration status/);
+  assert.match(page, /FeatureControlsPanel/);
+  assert.doesNotMatch(page, /Homepage Fare Operations|href="\/admin\/homepage-fares"/);
+  assert.match(page, /canControlProduction/);
+});
+test("useful actions, access guards, emergency checks and the global bell remain intact", () => {
+  assert.match(source("src/app/admin/system/cms-health/page.tsx"), /CmsScopeHealthRow/);
+  assert.match(source("src/components/admin/CmsScopeHealthRow.tsx"), /CmsScopeHardeningActions/);
+  assert.match(source("src/app/admin/email-delivery/page.tsx"), /EmailDeliveryTestButton enabled=\{sendingReady\}/);
+  const alerts = source("src/app/admin/settings/notifications/page.tsx");
+  const legacy = source("src/app/admin/notifications/page.tsx");
+  assert.match(alerts, /requireAdminSession\("\/admin\/settings\/notifications"\)/);
+  assert.match(alerts, /isProtectedAdminEmail/);
+  assert.match(alerts, /getCurrentDatabaseOutageAdminToken/);
+  assert.match(alerts, /AdminAlertAcknowledgeButton/);
+  assert.match(alerts, /alertSourceHref\(alert\.actionHref\)/);
+  assert.match(legacy, /redirect\("\/admin\/settings\/notifications"\)/);
+  assert.match(source("src/components/admin/AdminHorizontalShell.tsx"), /<AdminNotificationsPanel/);
+  assert.match(source("src/components/admin/AdminNotificationsPanel.tsx"), /unreadCount/);
+});

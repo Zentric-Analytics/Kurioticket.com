@@ -1,3 +1,4 @@
+import { Text } from "./HomePresentation";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -5,57 +6,47 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from "react-native";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
+import { usePublishedHome } from "./usePublishedContent";
 import { flowColors, useFlowTheme } from "../flow/flowStyles";
 import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
 import { popularDestinationStayNavigation } from "./homepageCardNavigation";
+import {
+  popularStayCardLayout,
+  POPULAR_STAY_LAYOUT,
+} from "./popularStayCardLayout";
 
-export { popularDestinationStays } from "./PopularDestinationStaysData";
-import { popularDestinationStays } from "./PopularDestinationStaysData";
+export { POPULAR_STAY_LAYOUT } from "./popularStayCardLayout";
 
-// src/app/page.tsx DestinationCard at the mobile breakpoint: 17.25rem wide,
-// an 18rem image region, and a 4.5rem footer region.
-export const POPULAR_STAY_LAYOUT = {
-  cardWidth: 276,
-  minCardWidth: 260,
-  maxCardWidth: 292,
-  viewportReveal: 99,
-  imageHeight: 288,
-  ctaHeight: 72,
-  gap: 16,
-  radius: 16,
-  sideInset: 16,
-  nextCardVisible: 67,
-} as const;
+import {
+  resolvePopularDestinationStay,
+} from "./PopularDestinationStaysData";
 
 const { ctaHeight: CTA_HEIGHT } = POPULAR_STAY_LAYOUT;
 
-export function PopularDestinationStays() {
+export function PopularDestinationStays({
+  compactTopSpacing = false,
+}: {
+  compactTopSpacing?: boolean;
+}) {
   const ft = useFlowTheme();
   const { width } = useWindowDimensions();
-  const cardWidth = Math.min(
-    POPULAR_STAY_LAYOUT.maxCardWidth,
-    Math.max(
-      POPULAR_STAY_LAYOUT.minCardWidth,
-      width - POPULAR_STAY_LAYOUT.viewportReveal,
-    ),
-  );
-  const imageHeight =
-    cardWidth *
-    (POPULAR_STAY_LAYOUT.imageHeight / POPULAR_STAY_LAYOUT.cardWidth);
+  const { width: cardWidth, imageHeight } = popularStayCardLayout(width);
   const { savedIds, toggle } = useSavedDestinations();
+  const published = usePublishedHome();
+  const popularDestinationStays = published.data?.destinations.items.slice(0, 8) ?? [];
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(
     () => new Set(),
   );
+  if (!popularDestinationStays.length) return null;
   return (
     <View
       collapsable={false}
       testID="popular-destination-stays"
-      style={styles.section}
+      style={[styles.section, compactTopSpacing && styles.compactTopSpacing]}
     >
       <Text
         accessibilityRole="header"
@@ -73,7 +64,15 @@ export function PopularDestinationStays() {
         contentContainerStyle={styles.carousel}
       >
         {popularDestinationStays.map((destination) => {
-          const saved = savedIds.has(destination.id);
+          const canonicalDestination = resolvePopularDestinationStay(destination);
+          if (__DEV__ && !canonicalDestination) {
+            console.warn(
+              `[Popular destination stays] Could not resolve ${destination.id} (${destination.city}) to an Explore destination`,
+            );
+          }
+          const saved = canonicalDestination
+            ? savedIds.has(canonicalDestination.id)
+            : false;
           const imageFailed = failedImageIds.has(destination.id);
           return (
             <Pressable
@@ -134,10 +133,13 @@ export function PopularDestinationStays() {
                 />
                 <AndroidFavoriteButton
                   saved={saved}
+                  variant="webParity"
                   label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
                   onPress={(event) => {
                     event.stopPropagation();
-                    toggle(destination.id);
+                    if (canonicalDestination) {
+                      toggle(canonicalDestination.id);
+                    }
                   }}
                   style={styles.heart}
                 />
@@ -196,10 +198,11 @@ export function PopularDestinationStays() {
 
 const styles = StyleSheet.create({
   section: { gap: 24, marginTop: 4 },
+  compactTopSpacing: { marginTop: -4 },
   heading: {
-    fontSize: 21,
-    lineHeight: 27,
-    fontWeight: "800",
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: "700",
   },
   carousel: {
     gap: POPULAR_STAY_LAYOUT.gap,
@@ -245,9 +248,9 @@ const styles = StyleSheet.create({
   },
   city: {
     color: flowColors.white,
-    fontSize: 20,
-    lineHeight: 25,
-    fontWeight: "900",
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: "700",
     letterSpacing: -0.25,
     textShadowColor: "rgba(15, 23, 42, 0.55)",
     textShadowOffset: { width: 0, height: 2 },
@@ -255,9 +258,9 @@ const styles = StyleSheet.create({
   },
   country: {
     color: flowColors.white,
-    fontSize: 14,
-    lineHeight: 19,
-    fontWeight: "600",
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "500",
     opacity: 0.95,
     textShadowColor: "rgba(15, 23, 42, 0.55)",
     textShadowOffset: { width: 0, height: 2 },
@@ -285,8 +288,8 @@ const styles = StyleSheet.create({
   },
   ctaPressed: { transform: [{ scale: 0.98 }] },
   ctaText: {
-    fontSize: 15,
+    fontSize: 13,
     lineHeight: 18,
-    fontWeight: "700",
+    fontWeight: "600",
   },
 });

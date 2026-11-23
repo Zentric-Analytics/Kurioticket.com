@@ -12,6 +12,26 @@ export type SavedHotelApiItem = {
   createdAt: string;
 };
 
+export type SavedCarApiItem = {
+  type: "car";
+  id: string;
+  resultId?: string;
+  provider: string;
+  modelName: string;
+  categoryLabel: string;
+  pickupLocation: string;
+  dropoffLocation: string;
+  pickupDate: string;
+  pickupTime: string;
+  dropoffDate: string;
+  dropoffTime: string;
+  driverAge: string;
+  totalPrice: number;
+  currency: string;
+  payload: unknown;
+  createdAt: string;
+};
+
 export type SavedDiscoveryApiItem = {
   type: "search";
   id: string;
@@ -53,6 +73,42 @@ export type SavedHotelApiResult = {
   item?: SavedHotelApiItem;
   error?: string;
 };
+
+export type SavedCarApiResult = Omit<SavedHotelApiResult, "items" | "item"> & {
+  items?: SavedCarApiItem[];
+  item?: SavedCarApiItem;
+};
+
+export async function fetchBackendSavedCars(signal?: AbortSignal): Promise<SavedCarApiResult> {
+  try {
+    const response = await fetch("/api/dashboard/saved?type=car", { method: "GET", headers: { Accept: "application/json" }, signal });
+    const payload = await readJson(response);
+    if (!response.ok) return { ok: false, status: response.status, error: getError(payload, "Unable to load saved cars.") };
+    const items = payload && typeof payload === "object" && "items" in payload && Array.isArray(payload.items)
+      ? payload.items.filter((item): item is SavedCarApiItem => Boolean(item && typeof item === "object" && "type" in item && item.type === "car" && "id" in item && typeof item.id === "string")) : [];
+    return { ok: true, status: response.status, items };
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    return { ok: false, status: 0, error: "Unable to load saved cars." };
+  }
+}
+
+export async function saveBackendCar(input: Omit<SavedCarApiItem, "type" | "id" | "createdAt">): Promise<SavedCarApiResult> {
+  try {
+    const response = await fetch("/api/dashboard/saved", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ type: "car", ...input }) });
+    const payload = await readJson(response);
+    if (!response.ok) return { ok: false, status: response.status, duplicate: response.status === 409, error: getError(payload, "Unable to save car.") };
+    return { ok: true, status: response.status, item: payload && typeof payload === "object" && "item" in payload ? payload.item as SavedCarApiItem : undefined };
+  } catch { return { ok: false, status: 0, error: "Unable to save car." }; }
+}
+
+export async function deleteBackendCar(id: string): Promise<SavedCarApiResult> {
+  try {
+    const response = await fetch("/api/dashboard/saved", { method: "DELETE", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ type: "car", id }) });
+    const payload = await readJson(response);
+    return response.ok ? { ok: true, status: response.status } : { ok: false, status: response.status, error: getError(payload, "Unable to delete saved car.") };
+  } catch { return { ok: false, status: 0, error: "Unable to delete saved car." }; }
+}
 
 export type SavedSearchApiResult = {
   ok: boolean;

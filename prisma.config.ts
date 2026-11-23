@@ -2,6 +2,7 @@
 // npm install --save-dev prisma dotenv
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
+import { productionMigrationUrl } from "./scripts/production-migration-controls.mjs";
 
 const databaseUrl =
   process.env["DATABASE_URL"] ||
@@ -15,6 +16,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: databaseUrl,
+    url: productionMigrationUrl(databaseUrl),
   },
 });

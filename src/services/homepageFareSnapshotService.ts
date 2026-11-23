@@ -12,7 +12,7 @@ import {
 } from "@/data/homeDiscovery";
 import { popularDestinationsByMarket } from "@/data/marketHomeContent";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
-import { getOptionalPrisma } from "@/lib/prisma";
+import { DatabaseUnavailableError, getOptionalPrisma } from "@/lib/prisma";
 import { PUBLIC_HOMEPAGE_FARE_TTL_MS } from "@/lib/homepageFareDisplay";
 import type {
   FlightSearchParams,
@@ -20,6 +20,8 @@ import type {
   ProviderResult,
 } from "@/lib/types";
 import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
+import { getPublishedFlightRoutes } from "@/services/publicCmsContentService";
+import { withHomepageFareRefreshLock } from "@/services/homepageFareRefreshLock";
 
 const AIRPORT_OR_CITY_CODE_PATTERN = /^[A-Z]{3}$/;
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
@@ -184,6 +186,7 @@ export type HomepageFareRefreshBudget = {
 };
 
 export type HomepageFareSnapshotStatusResponse = {
+  dataAvailable: boolean;
   routes: HomepageFareSnapshotStatusRoute[];
   summary: HomepageFareSnapshotStatusSummary;
   health: HomepageFareSnapshotHealth;
@@ -210,6 +213,8 @@ export type HomepageFareSnapshotStatusResponse = {
   unavailableByMarket: Record<string, number>;
   skippedCooldownByMarket: Record<string, number>;
   replacementCandidatesUsedByMarket: Record<string, number>;
+  marketsNeedingAnotherRun: HomepageFareMarketNextRunNeed[];
+  underfillCauseByMarket: Record<string, HomepageFareUnderfillCause>;
   lastRefreshAt?: string;
   cronConfigured: boolean;
   nextExpectedCronRefresh?: string;
@@ -818,7 +823,12 @@ function getGlobalHomepageFareReadinessStatus(
 ): HomepageFareGlobalReadinessStatus {
   const requiredTargets = HOMEPAGE_FARE_REFRESH_MARKETS
     .map((market) => marketTargets[market])
-    .filter((target): target is HomepageFareMarketTarget => Boolean(target));
+    .filter(
+      (target): target is HomepageFareMarketTarget =>
+        Boolean(target) &&
+        target.marketVisibility === "country" &&
+        target.popularVisibleTarget + target.discoveryVisibleTarget > 0,
+    );
 
   if (!requiredTargets.length) return "not_ready";
   if (requiredTargets.every((target) => target.targetMet)) return "ready";
@@ -842,6 +852,27 @@ function buildHomepageFareMarketReadinessSummary(
     market,
     ...marketTargets[market],
   })).filter((target) => Boolean(target.marketCode)) as HomepageFareMarketReadinessSummary[];
+}
+
+function buildHomepageFareStatusUnderfillMetadata(
+  marketTargets: Record<string, HomepageFareMarketTarget>,
+) {
+  const underfillCauseByMarket = Object.fromEntries(
+    Object.entries(marketTargets).map(([market, target]) => [
+      market,
+      target.targetMet ? "none" : "underfilled",
+    ]),
+  ) as Record<string, HomepageFareUnderfillCause>;
+
+  const marketsNeedingAnotherRun = Object.entries(marketTargets).map(
+    ([market, target]) => ({
+      market,
+      needed: !target.targetMet,
+      reason: underfillCauseByMarket[market] ?? "underfilled",
+    }),
+  );
+
+  return { underfillCauseByMarket, marketsNeedingAnotherRun };
 }
 
 
@@ -1185,7 +1216,7 @@ function classifyHomepageFareMarketReadinessStatus({
   return "underfilled";
 }
 
-export async function refreshPhase3AHomepageFareSnapshots({
+async function runPhase3AHomepageFareRefresh({
   scope = "all-phase-3a",
   dateStrategy = getHomepageFareDateStrategy(),
 }: {
@@ -1527,6 +1558,16 @@ export async function refreshPhase3AHomepageFareSnapshots({
   updateHomepageFareUnderfillExecutionMetadata(counts);
 
   return counts;
+}
+
+
+export async function refreshPhase3AHomepageFareSnapshots(
+  input: {
+    scope?: HomepageFareRefreshScope;
+    dateStrategy?: HomepageFareDateStrategy;
+  } = {},
+): Promise<HomepageFareRefreshCounts> {
+  return withHomepageFareRefreshLock(() => runPhase3AHomepageFareRefresh(input));
 }
 
 
@@ -2628,7 +2669,24 @@ export async function readHomepageDiscoveryFareCards({
   const normalizedCurrency =
     normalizeHomepageFareCurrency(currency) ?? DEFAULT_CURRENCY;
   const requestedRegionCode = normalizeHomepageDiscoveryRegionCode(regionCode);
-  const requestedCandidates = getHomeDiscoveryFareCandidates(requestedRegionCode);
+  const publishedFlightRoutes = await getPublishedFlightRoutes(requestedRegionCode);
+  const requestedCandidates = publishedFlightRoutes.items.map<HomeDiscoveryFareCandidate>(
+    (route, index) => ({
+      id: route.id,
+      regionCode: requestedRegionCode,
+      title: route.title,
+      originCity: route.originCity,
+      originCode: route.originCode,
+      destinationCity: route.destinationCity,
+      destinationCode: route.destinationCode,
+      routeNote: route.routeNote,
+      image: route.image,
+      imageAlt: route.imageAlt,
+      priority: index + 1,
+      enabled: true,
+    }),
+  );
+  const isCmsManaged = publishedFlightRoutes.source === "cms";
   const isNonUsRegion = requestedRegionCode !== DEFAULT_HOME_DISCOVERY_REGION;
 
   if (requested <= 0) {
@@ -2647,15 +2705,15 @@ export async function readHomepageDiscoveryFareCards({
     });
   }
 
-  const regionalCandidates = getRegionalHomeDiscoveryFareCandidates(
-    requestedRegionCode,
-  );
+  const regionalCandidates = isCmsManaged
+    ? []
+    : getRegionalHomeDiscoveryFareCandidates(requestedRegionCode);
   const shouldTryRegionalFallback =
     regionalCandidates.length > 0 &&
     !areSameCandidateSets(requestedCandidates, regionalCandidates);
-  const globalCandidates = getMarketScopedGlobalHomeDiscoveryFareCandidates(
-    requestedRegionCode,
-  );
+  const globalCandidates = isCmsManaged
+    ? []
+    : getMarketScopedGlobalHomeDiscoveryFareCandidates(requestedRegionCode);
   const shouldTryGlobalFallback =
     globalCandidates.length > 0 &&
     !areSameCandidateSets(requestedCandidates, globalCandidates) &&
@@ -2990,6 +3048,8 @@ export async function readHomepageFareSnapshotStatus({
     .map((route) => normalizeRoute(route))
     .filter((route): route is HomepageFareRoute => Boolean(route));
   const summary = createEmptyHomepageFareSnapshotStatusSummary();
+  const db = getOptionalPrisma();
+  let dataAvailable = Boolean(db);
 
   if (!eligibleRoutes.length) {
     const refreshBudget = getHomepageFareSmartRefreshBudget();
@@ -3003,8 +3063,11 @@ export async function readHomepageFareSnapshotStatus({
       refreshBudget,
       marketTargets,
     );
+    const { underfillCauseByMarket, marketsNeedingAnotherRun } =
+      buildHomepageFareStatusUnderfillMetadata(marketTargets);
 
     return {
+      dataAvailable,
       routes: [],
       summary,
       health: displayReadiness,
@@ -3040,6 +3103,8 @@ export async function readHomepageFareSnapshotStatus({
       unavailableByMarket: createEmptyRefreshMarketCounts(),
       skippedCooldownByMarket: createEmptyRefreshMarketCounts(),
       replacementCandidatesUsedByMarket: createEmptyRefreshMarketCounts(),
+      marketsNeedingAnotherRun,
+      underfillCauseByMarket,
       cronConfigured: Boolean(process.env.HOMEPAGE_FARES_CRON_SECRET),
       nextExpectedCronRefresh: process.env.HOMEPAGE_FARES_CRON_SCHEDULE_NOTE,
     };
@@ -3053,7 +3118,6 @@ export async function readHomepageFareSnapshotStatus({
       currency: normalizedCurrency,
     }),
   );
-  const db = getOptionalPrisma();
   const snapshotsByKey = new Map<string, HomepageFareSnapshotRecord>();
 
   if (db) {
@@ -3080,6 +3144,7 @@ export async function readHomepageFareSnapshotStatus({
         snapshotsByKey.set(snapshot.snapshotKey, snapshot);
       }
     } catch (error) {
+      dataAvailable = false;
       console.error("[homepage-fare-snapshots:status]", error);
     }
   }
@@ -3185,8 +3250,11 @@ export async function readHomepageFareSnapshotStatus({
   const underfilledMarkets = Object.entries(marketTargets)
     .filter(([, target]) => !target.targetMet)
     .map(([market, target]) => ({ market, ...target }));
+  const { underfillCauseByMarket, marketsNeedingAnotherRun } =
+    buildHomepageFareStatusUnderfillMetadata(marketTargets);
 
   return {
+    dataAvailable,
     routes: statusRoutes,
     summary,
     health: displayReadiness,
@@ -3211,10 +3279,12 @@ export async function readHomepageFareSnapshotStatus({
     candidatePoolSizeByMarket,
     routeAttemptsByMarket: emptyMarketCounts,
     providerCallsByMarket: emptyMarketCounts,
-    failedByMarket: emptyMarketCounts,
-    unavailableByMarket: emptyMarketCounts,
+    failedByMarket,
+    unavailableByMarket,
     skippedCooldownByMarket: emptyMarketCounts,
     replacementCandidatesUsedByMarket,
+    marketsNeedingAnotherRun,
+    underfillCauseByMarket,
     lastRefreshAt,
     cronConfigured: Boolean(process.env.HOMEPAGE_FARES_CRON_SECRET),
     nextExpectedCronRefresh: process.env.HOMEPAGE_FARES_CRON_SCHEDULE_NOTE,
@@ -3546,7 +3616,6 @@ function classifyHomepageFareDisplayReadiness(
   );
   const publicFreshTarget =
     budget.popularVisibleTarget + budget.discoverVisibleTarget;
-  const visibleFresh = popularFresh + discoverDisplayedFresh;
   const globalReadinessStatus = marketTargets
     ? getGlobalHomepageFareReadinessStatus(marketTargets)
     : "not_ready";
@@ -3555,8 +3624,7 @@ function classifyHomepageFareDisplayReadiness(
     return {
       status: "healthy",
       label: "Global homepage ready",
-      message:
-        "Every configured homepage market has enough fresh provider-backed fares to fill visible homepage pricing slots.",
+      message: "All public markets meet homepage fare targets.",
       globalReadinessStatus,
       popularFresh,
       popularTarget: budget.popularVisibleTarget,
@@ -3568,14 +3636,12 @@ function classifyHomepageFareDisplayReadiness(
     };
   }
 
-  if (globalReadinessStatus === "partial" || visibleFresh > 0) {
+  if (globalReadinessStatus === "partial") {
     return {
       status: "warning",
       label: "Global homepage partially ready",
-      message:
-        "At least one market has fresh provider-backed homepage fares, but market coverage is incomplete.",
-      globalReadinessStatus:
-        globalReadinessStatus === "not_ready" ? "partial" : globalReadinessStatus,
+      message: "Some public markets have usable fares; coverage is incomplete.",
+      globalReadinessStatus,
       popularFresh,
       popularTarget: budget.popularVisibleTarget,
       discoverFresh,
@@ -3589,8 +3655,7 @@ function classifyHomepageFareDisplayReadiness(
   return {
     status: "attention",
     label: "Global homepage not ready",
-    message:
-      "Fresh provider-backed fares are not available for configured homepage markets yet.",
+    message: "No fresh provider-backed fares available.",
     globalReadinessStatus,
     popularFresh,
     popularTarget: budget.popularVisibleTarget,
@@ -3980,6 +4045,10 @@ export function buildSafeHomepageFareRefreshErrorResponse(
 }
 
 function getSafeHomepageFareRefreshFailureReason(error: unknown) {
+  if (error instanceof DatabaseUnavailableError) {
+    return "Database is unavailable or misconfigured. Check DATABASE_URL and database connectivity.";
+  }
+
   if (isPrismaInitializationLikeError(error)) {
     return "Database is unavailable or misconfigured. Check DATABASE_URL and database connectivity.";
   }
@@ -4027,4 +4096,7 @@ export const __homepageFareCoverageTest = {
   hasHomepageFareDateFallbackPayload,
   isExactProviderResultForHomepageFareSnapshot,
   updateHomepageFareUnderfillExecutionMetadata,
+  getGlobalHomepageFareReadinessStatus,
+  classifyHomepageFareDisplayReadiness,
+  buildHomepageFareStatusUnderfillMetadata,
 };

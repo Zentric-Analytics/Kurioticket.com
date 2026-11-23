@@ -1,0 +1,91 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
+import { buildStaticCarResults } from "./staticCarResults";
+import { searchCars } from "./carAggregator";
+
+const search: LocationBoundCarSearchParams = {
+  pickupLocation: "London (LHR)", dropoffLocation: "London (LHR)",
+  pickupDate: "2099-10-12", pickupTime: "10:00",
+  dropoffDate: "2099-10-15", dropoffTime: "10:00", driverAge: "30",
+};
+
+const kayakResult = (): NormalizedCarResult => ({
+  ...buildStaticCarResults(search)[0],
+  id: "kayak-sandbox:provider-car:0",
+  inventorySource: "kayak-sandbox",
+  offers: [],
+});
+
+test("successful KAYAK cars merge unchanged and persist through both details caches", async () => {
+  const persisted: Array<{ kind: string; ids: string[] }> = [];
+  const providerCar = kayakResult();
+  const result = await searchCars(search, { dependencies: {
+    searchKayak: async () => ({ provider: "KAYAK sandbox", status: "success", results: [providerCar], latencyMs: 4 }),
+    rememberResults: async (_vertical, rows) => { persisted.push({ kind: "exact", ids: rows.map((row) => row.id) }); },
+    rememberCohort: async (rows) => { persisted.push({ kind: "cohort", ids: rows.map((row) => row.id) }); },
+  }});
+
+  assert.equal(result.results.filter((row) => row.id === providerCar.id).length, 1);
+  assert.equal(result.results.at(-1)?.id, providerCar.id);
+  assert.deepEqual(persisted, [
+    { kind: "exact", ids: [providerCar.id] },
+    { kind: "cohort", ids: [providerCar.id] },
+  ]);
+  assert.deepEqual(result.results, [providerCar]);
+  assert.equal(result.results.some((row) => row.inventorySource === "kurioticket-static-cars"), false);
+  assert.deepEqual(result.warnings, []);
+  assert.equal(result.providerStatuses.length, 1);
+  assert.equal(result.providerStatuses[0].provider, "KAYAK sandbox");
+  assert.equal(result.providerStatuses[0].status, "success");
+});
+
+test("a failed provider call does not fabricate replacement rental availability", async () => {
+  let persisted = 0;
+  const result = await searchCars(search, { dependencies: {
+    searchKayak: async () => ({ provider: "KAYAK sandbox", status: "failed", results: [], latencyMs: 8, errorCategory: "network", errorReason: "provider_network_error" }),
+    rememberResults: async (_vertical, rows) => { persisted += rows.length; },
+    rememberCohort: async (rows) => { persisted += rows.length; },
+  }});
+
+  assert.deepEqual(result.results, []);
+  assert.equal(result.status, "unavailable");
+  assert.equal(persisted, 0);
+  assert.equal(result.warnings.length, 1);
+  assert.equal(result.results.length, 0);
+  assert.equal(result.providerStatuses[0].status, "failed");
+  assert.equal(result.providerStatuses[0].errorReason, "provider_network_error");
+});
+
+for (const status of ["success", "skipped"] as const) {
+  test(status + " with zero provider cars never fabricates offers", async () => {
+    const result = await searchCars(search, { dependencies: {
+      searchKayak: async () => ({ provider: "KAYAK sandbox", status, results: [], latencyMs: 1 }),
+      rememberResults: async (_vertical, rows) => { assert.deepEqual(rows, []); },
+      rememberCohort: async (rows) => { assert.deepEqual(rows, []); },
+    } });
+    assert.deepEqual(result.results, []);
+  });
+}
+
+
+test("unsupported KAYAK coverage remains a disabled provider observation", async () => {
+  const result = await searchCars(search, { dependencies: {
+    searchKayak: async () => ({
+      provider: "KAYAK sandbox",
+      status: "skipped",
+      results: [],
+      latencyMs: 3,
+      error: "No verified provider binding for this location.",
+      errorCategory: "unsupported_location",
+      errorReason: "unsupported_location",
+    }),
+    rememberResults: async (_vertical, rows) => { assert.deepEqual(rows, []); },
+    rememberCohort: async (rows) => { assert.deepEqual(rows, []); },
+  } });
+
+  assert.equal(result.unsupported, true);
+  assert.equal(result.providerStatuses.length, 1);
+  assert.equal(result.providerStatuses[0].status, "skipped");
+  assert.equal(result.providerStatuses[0].errorReason, "unsupported_location");
+});

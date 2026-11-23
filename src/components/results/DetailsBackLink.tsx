@@ -5,18 +5,20 @@ import { LinkButton } from "@/components/ui/Button";
 type DetailsBackLinkProps = {
   href: string;
   children: ReactNode;
+  className?: string;
 };
 
 export function DetailsBackLink({
   href,
   children,
+  className = "",
 }: DetailsBackLinkProps) {
   return (
     <LinkButton
       href={href}
       variant="ghost"
       size="sm"
-      className="-ms-2 w-fit px-2 text-slate-700 hover:text-navy"
+      className={`-ms-2 w-fit px-2 text-slate-700 hover:text-navy ${className}`}
     >
       <ArrowLeft
         className="h-4 w-4 shrink-0"

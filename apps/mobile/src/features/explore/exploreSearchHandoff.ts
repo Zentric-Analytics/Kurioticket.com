@@ -1,5 +1,15 @@
 import type { Href } from "expo-router";
 import { getDefaultHomepageRouteCardDepartureDate } from "../home/homepageCardNavigation";
+import { fetchHomepageDefaultOrigin, type HomepageDefaultAirport } from "../home/homepageDefaultOrigin";
+import { buildHotelExplorationSearch } from "../../../../../src/lib/hotels/hotelExplorationSearch";
+import { resolveHotelDiscoveryIntent } from "../../../../../src/lib/hotels/hotelDiscoveryIntent";
+
+export type ExploreFlightDestinationHandoff = {
+  id: string;
+  name: string;
+  primaryAirportCode: string;
+  airportCodes: readonly string[];
+};
 
 const normalizeAirportCode = (value: string) => {
   const normalized = value.trim().toUpperCase();
@@ -31,8 +41,46 @@ export function exploreFlightResultsNavigation(
   };
 }
 
-export function exploreHotelResultsNavigation(destinationName: string): Href | null {
-  const destination = destinationName.trim();
-  if (!destination) return null;
-  return { pathname: "/hotel-results", params: { destination } };
+export async function exploreFlightDestinationNavigation(
+  destination: ExploreFlightDestinationHandoff,
+  resolveDefaultOrigin: () => Promise<HomepageDefaultAirport | null> = fetchHomepageDefaultOrigin,
+): Promise<Href> {
+  let origin: HomepageDefaultAirport | null = null;
+  try {
+    origin = await resolveDefaultOrigin();
+  } catch {
+    // A destination remains searchable even when homepage-origin resolution fails.
+  }
+
+  const resultsRoute = origin
+    ? exploreFlightResultsNavigation(origin.code, destination.primaryAirportCode)
+    : null;
+  return resultsRoute ?? {
+    pathname: "/flights",
+    params: {
+      destinationId: destination.id,
+      destination: destination.name,
+      to: destination.primaryAirportCode,
+      airportCodes: destination.airportCodes.join(","),
+    },
+  };
+}
+
+export function exploreHotelSearchNavigation(
+  destination: { id: string; name: string },
+  source: "explore" | "saved-destination" = "explore",
+  now = new Date(),
+): Href | null {
+  const destinationName = destination.name.trim();
+  const destinationId = destination.id.trim();
+  if (!destinationName || !destinationId) return null;
+  if (source === "saved-destination") return { pathname: "/hotels", params: { destinationId, destination: destinationName, intentSource: source } };
+  const intent = resolveHotelDiscoveryIntent(destinationName, "explore");
+  const params = buildHotelExplorationSearch({
+    destination: intent?.destinationSearchValue ?? destinationName,
+    ...(intent ? { destinationId: intent.canonicalDestinationId } : {}),
+    source,
+    now,
+  });
+  return params ? { pathname: "/hotel-results", params } : null;
 }

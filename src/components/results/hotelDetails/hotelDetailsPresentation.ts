@@ -3,11 +3,41 @@ import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import type { PublicHotelResult } from "@/lib/types";
 
 export type HotelDetailsSearchContext = {
+  destinationId?: string;
   destination?: string;
   checkIn?: string;
   checkOut?: string;
   guests?: string;
+  adults?: string;
+  children?: string;
+  destinationLocation?: string;
   rooms?: string;
+  provider?: "kayak-sandbox";
+};
+
+export type HotelDetailsProviderOfferAction =
+  | { kind: "internal-room-flow" }
+  | { kind: "provider-handoff"; providerOfferId: string };
+
+/** Public Hotel Details offer identity. Provider destinations remain server-owned. */
+export type HotelDetailsProviderOffer = {
+  id: string;
+  providerName: string;
+  providerLogoUrl?: string;
+  amenities?: HotelAmenityPresentationItem[];
+  roomName?: string;
+  bedConfiguration?: string;
+  nightlyPrice: string;
+  nightlyPriceTitle?: string;
+  nightlyPriceAriaLabel?: string;
+  totalPrice?: string;
+  cancellationLabel?: string;
+  mealPlanLabel?: string;
+  paymentLabel?: string;
+  suppliedRateFacts?: Array<{ label: string; value: string }>;
+  taxesAndFeesLabel?: string;
+  checkedAt?: string;
+  action: HotelDetailsProviderOfferAction;
 };
 
 export function isSafeHotelDetailsHttpUrl(value?: string) {
@@ -73,8 +103,23 @@ export function buildHotelDetailsResultsHref(searchContext?: HotelDetailsSearchC
   const checkOutDate = parseHotelDetailsSearchDate(searchContext?.checkOut);
   const guestCount = parseHotelDetailsSearchCount(searchContext?.guests, 1, 12);
   const roomCount = parseHotelDetailsSearchCount(searchContext?.rooms, 1, 6);
-  if (!destination || destination.length > 120 || checkInDate === null || checkOutDate === null || checkOutDate.getTime() <= checkInDate.getTime() || guestCount === null || roomCount === null) return "/hotels/results";
-  const params = new URLSearchParams({ destination, checkIn: searchContext?.checkIn || "", checkOut: searchContext?.checkOut || "", guests: String(guestCount), rooms: String(roomCount) });
+  if (!destination || destination.length > 120 || checkInDate === null || checkOutDate === null || checkOutDate.getTime() <= checkInDate.getTime() || guestCount === null || roomCount === null) return destination ? `/hotels?${new URLSearchParams({ destination }).toString()}` : "/hotels";
+  const params = new URLSearchParams({
+    ...(searchContext?.destinationId
+      ? { destinationId: searchContext.destinationId }
+      : {}),
+    destination,
+    checkIn: searchContext?.checkIn || "",
+    checkOut: searchContext?.checkOut || "",
+    guests: String(guestCount),
+      ...(searchContext?.adults !== undefined ? { adults: searchContext.adults } : {}),
+      ...(searchContext?.children !== undefined ? { children: searchContext.children } : {}),
+      ...(searchContext?.destinationLocation ? { destinationLocation: searchContext.destinationLocation } : {}),
+    rooms: String(roomCount),
+    ...(searchContext?.provider === "kayak-sandbox"
+      ? { provider: "kayak-sandbox" }
+      : {}),
+  });
   return `/hotels/results?${params.toString()}`;
 }
 
@@ -163,7 +208,7 @@ export function getHotelDetailsCancellationText(value: string, t: (key: string) 
 }
 
 export function canUseHotelDetailsProviderLink(hotel: PublicHotelResult | null) {
-  if (!hotel || hotel.dataSource === "demo" || hotel.inventoryKind === "discovery" || !getHotelPriceDetails(hotel)) return false;
+  if (!hotel || (hotel.dataSource === "demo" && hotel.provider !== "KAYAK sandbox") || hotel.inventoryKind === "discovery" || !getHotelPriceDetails(hotel)) return false;
   const candidate = hotel.partnerRedirectUrl || hotel.bookingUrl;
   if (!candidate) return false;
   return isSafeHotelDetailsHttpUrl(candidate);

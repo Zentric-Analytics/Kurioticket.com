@@ -29,6 +29,7 @@ export async function PATCH(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid feature control request.", issues: parsed.error.flatten() }, { status: 400 });
   const email = auth.session.user.email?.trim().toLowerCase() || "";
   const environment = getRuntimeFeatureEnvironment();
+  if (parsed.data.key === "ALLOW_SANDBOX_RESULTS_IN_PRODUCTION" && environment !== "PRODUCTION") return NextResponse.json({error:"Production sandbox policy cannot be changed from staging."},{status:403});
   const authorizationError = validateFeatureControlMutationAuthorization(environment, email, parsed.data.reason);
   if (authorizationError) {
     if (authorizationError.status === 403) {
@@ -41,7 +42,7 @@ export async function PATCH(request: Request) {
   }
   try {
     const result = await mutateFeatureControl({ ...parsed.data, environment, actor: { id: auth.session.user.id, email, ipAddress: getRequestIp(request), userAgent: request.headers.get("user-agent") || undefined } });
-    return NextResponse.json({ changed: result.changed, key: parsed.data.key, environment, enabled: result.state.enabled });
+    return NextResponse.json({ changed: result.changed, key: parsed.data.key, environment, enabled: result.state.enabled, updatedAt: result.state.updatedAt.toISOString() });
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: "Invalid feature control request." }, { status: 400 });
     console.error("[feature-controls:mutation-failed]", { key: parsed.data.key, environment, errorName: error instanceof Error ? error.name : "unknown" });

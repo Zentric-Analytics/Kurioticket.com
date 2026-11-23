@@ -1,0 +1,168 @@
+import { jsxOpening } from "../../test-support/sourceStructure";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
+import * as jsxRuntime from "react/jsx-runtime";
+import type { ReactElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+
+import { getAdminHeaderGroups, isAdminNavItemActive } from "@/lib/adminNavigation";
+
+const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
+
+test("official logo stays beside Admin title at every width, never in the navigation row", () => {
+  assert.match(shell, /import \{ KurioticketLogo \} from/);
+  assert.match(shell, /Official Kurioticket mark stays in the top-left header beside the title at every width/);
+  assert.match(shell, /<Link href="\/admin" aria-label="Kurioticket Admin overview"/);
+  assert.match(shell, /<KurioticketLogo variant="mark" className="h-11 w-11"/);
+  assert.match(shell, /pl-2 pr-4 sm:pr-6 lg:pr-10/);
+  const navigation = shell.slice(shell.indexOf("function Navigation("), shell.indexOf("export function AdminHorizontalShell("));
+  assert.doesNotMatch(navigation, /KurioticketLogo/);
+  assert.equal((shell.match(/<KurioticketLogo\b/g) || []).length, 1);
+});
+
+test("selected workspaces use the public Hotel navbar palette and underline", () => {
+  assert.match(shell, /text-\[#021C2B\]\/85/);
+  assert.match(shell, /hover:bg-\[#004BB8\]\/5/);
+  assert.match(shell, /const underline = selected/);
+  assert.match(shell, /after:h-0\.5 after:rounded-full after:bg-\[#004BB8\]/);
+  assert.match(shell, /text-\[13px\] font-semibold/);
+  const document = ts.createSourceFile("AdminHorizontalShell.tsx", shell, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const headers: ts.JsxOpeningElement[] = [];
+  function visit(node: ts.Node) {
+    if (ts.isJsxOpeningElement(node) && node.tagName.getText(document) === "header") headers.push(node);
+    ts.forEachChild(node, visit);
+  }
+  visit(document);
+  assert.equal(headers.length, 1, "one admin header surface");
+  const className = headers[0].attributes.properties.find((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(document) === "className");
+  assert.ok(className && ts.isJsxAttribute(className) && className.initializer && ts.isStringLiteral(className.initializer));
+  assert.ok(className.initializer.text.split(/\s+/).includes("bg-white/95"));
+  const link = document.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === "HeaderNavLink");
+  assert.ok(link);
+  type Entry = ReturnType<typeof getAdminHeaderGroups>[number]["links"][number];
+  type LinkProps = { href: string; className: string; "aria-current"?: string; onClick: () => void };
+  const exports: { render?: (props: { entry: Entry; pathname: string; close: () => void }) => ReactElement<LinkProps> } = {};
+  runInNewContext(ts.transpileModule(`${link.getText(document)}; exports.render = HeaderNavLink;`, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText, {
+    exports, Link: "a", isAdminNavItemActive,
+    require: (name: string) => { assert.equal(name, "react/jsx-runtime"); return jsxRuntime; },
+  });
+  assert.ok(exports.render);
+  const entries = getAdminHeaderGroups("ADMIN", true).flatMap((group) => group.links);
+  for (const [href, pathname, active] of [
+    ["/admin", "/admin", true], ["/admin", "/admin/users", false],
+    ["/admin/users", "/admin/users/fixture", true], ["/admin/users", "/admin/settings", false],
+    ["/admin/searches/activity", "/admin/searches/fixture", true], ["/admin/providers", "/admin/hotels", true],
+    ["/admin/searches/activity", "/admin/journeys", false], ["/admin/searches/activity", "/admin/settings", false],
+  ] as const) {
+    const entry = entries.find(({ item }) => item.href === href);
+    assert.ok(entry);
+    let clicks = 0;
+    const element: ReactElement<LinkProps> = exports.render({ entry, pathname, close: () => { clicks += 1; } });
+    const classes: Set<string> = new Set(element.props.className.split(/\s+/));
+    assert.ok(classes.has("text-[#021C2B]/85"));
+    assert.equal(classes.has("after:bg-[#004BB8]"), active);
+    assert.equal(classes.has("after:h-0.5"), active);
+    const currentPage = pathname === href || pathname === href + "/";
+    assert.equal(element.props["aria-current"], currentPage ? "page" : undefined);
+    assert.equal(element.props.href, href);
+    element.props.onClick();
+    assert.equal(clicks, 1);
+    const html = renderToStaticMarkup(element);
+    assert.ok(html.includes(entry.item.label));
+    assert.equal(html.includes('aria-current="page"'), currentPage);
+  }
+  assert.equal(isAdminNavItemActive("/admin", "/admin"), true);
+  assert.equal(isAdminNavItemActive("/admin", "/admin/users"), false);
+});
+
+test("navigation keeps parent workspaces visible while child routes stay nested", () => {
+  assert.doesNotMatch(shell, /min-\[1100px\]:block|min-\[1100px\]:hidden/);
+  assert.match(shell, /flex w-max min-w-full flex-nowrap items-center/);
+  assert.match(shell, /overflow-x-auto overscroll-x-contain/);
+  assert.match(shell, /aria-label="Admin navigation links"/);
+  assert.doesNotMatch(shell, /mobileOpen|Open admin navigation|Close admin navigation|<Menu|<X /);
+  assert.doesNotMatch(shell, /createPortal/);
+  assert.match(shell, /Official Kurioticket mark stays in the top-left header beside the title at every width/);
+  const groups = getAdminHeaderGroups("ADMIN", true);
+  const entries = groups.flatMap(group => group.links);
+  assert.deepEqual(entries.map(({ item }) => item.label), ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Provider Management", "Content", "System", "Platform Health", "Settings"]);
+  const searches = entries.find(({ item }) => item.href === "/admin/searches/activity");
+  const providers = entries.find(({ item }) => item.href === "/admin/providers");
+  assert.deepEqual(searches?.children.map((item) => item.label), ["Provider Handoffs"]);
+  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.label), ["Visitor Journeys"]);
+  assert.deepEqual(providers?.children.map((item) => item.label), ["Homepage Fares", "Hotels", "Cars", "Referral Attribution"]);
+  // Current dev intentionally hides Admin navigation from support roles.
+  assert.deepEqual(getAdminHeaderGroups("SUPPORT"), []);
+});
+
+
+test("Settings uses the same full-white workspace surface as other flat admin workspaces", () => {
+  assert.match(shell, /const settingsWorkspace = pathname === "\/admin\/settings" \|\| pathname\.startsWith\("\/admin\/settings\/"\) \|\| pathname === "\/admin\/preview-testers";/);
+  assert.match(shell, /auditLogsWorkspace \|\| emailDeliveryWorkspace \|\| settingsWorkspace \|\| usersDirectory/);
+  assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
+});
+
+test("Hotel and Car Operations use the same full-white workspace as Homepage Fares", () => {
+  assert.match(shell, /const hotelCarsWorkspace = pathname === "\/admin\/hotels"/);
+  assert.match(shell, /pathname === "\/admin\/cars"/);
+  assert.match(shell, /providerReportingWorkspace \|\| hotelCarsWorkspace \|\| accountDeletionWorkspace/);
+  assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
+  assert.doesNotMatch(shell, /pathname\.startsWith\("\/admin\/hotels\/"\)/);
+  assert.doesNotMatch(shell, /pathname\.startsWith\("\/admin\/cars\/"\)/);
+});
+
+test("navbar search opens the dedicated global-search workspace", () => {
+  assert.equal(jsxOpening(shell, 'AdminWorkspaceSearchProvider').length, 1);
+  assert.equal(jsxOpening(shell, 'AdminSearchTrigger').length, 1);
+  assert.equal(jsxOpening(shell, 'AdminSearchHeader').length, 1);
+  assert.equal(jsxOpening(shell, 'AdminSearchContent').length, 1);
+  assert.doesNotMatch(shell, /Search navigation only|aria-label="Search admin pages"/);
+  assert.doesNotMatch(shell, /router\.push\("\/admin\/search"\)/);
+});
+
+test("global More sections dropdown is replaced with per-workspace navigation", () => {
+  assert.doesNotMatch(shell, /function MoreAdminSections/);
+  assert.doesNotMatch(shell, /getAdminMoreGroups/);
+  assert.match(shell, /function WorkspaceSidebar/);
+  assert.match(shell, /getAdminWorkspaceSections\(pathname, role\)/);
+  assert.match(shell, /<WorkspaceSidebar pathname=\{pathname\} role=\{role\}/);
+  assert.match(shell, /const providerAttribution = pathname === "\/admin\/providers"/);
+  assert.match(shell, /isAdminWorkspaceSectionActive\(pathname, link\.href\)/);
+});
+
+test("Platform Health uses its independent top-level workspace rather than a System sidebar entry", () => {
+  assert.match(shell, /const isStandalonePlatformHealth = pathname === "\/admin\/platform-health"/);
+  assert.match(shell, /!isOverview && !isSettings && !isStandalonePlatformHealth && role === "ADMIN"/);
+});
+
+test("new section navigation remains responsive and Team Access uses the Settings surface", () => {
+  assert.match(shell, /flex min-w-0 flex-wrap items-end gap-x-5 gap-y-1/);
+  assert.match(shell, /pathname === "\/admin\/preview-testers"/);
+  assert.match(shell, /overflow-x-auto overscroll-x-contain/);
+});
+
+test("top-level navbar fits standard desktop widths without wrapping or a menu toggle", () => {
+  assert.match(shell, /gap-2 whitespace-nowrap/);
+  assert.match(shell, /h-9 shrink-0 items-center gap-1\.5 whitespace-nowrap/);
+  assert.match(shell, /px-1\.5 text-\[13px\]/);
+  assert.match(shell, /<Icon size=\{13\}/);
+  assert.match(shell, /px-2 pb-2 pt-2 sm:px-3 lg:px-5/);
+  assert.match(shell, /groups=\{isOverview \? groups : overviewGroups\}/);
+  assert.doesNotMatch(shell, /flex-wrap items-center justify-start gap-x-5/);
+  assert.doesNotMatch(shell, /mobileOpen|aria-label=\{mobileOpen/);
+});
+
+test("profile dropdown contains only the three intended links while System retains Audit Logs", () => {
+  const menu = shell.slice(shell.indexOf("function AdminHeaderMenus("), shell.indexOf("export function AdminHorizontalShell("));
+  assert.ok(menu.length > 0, "Profile menu component should be present");
+  assert.match(menu, /href: "\/admin\/settings", label: "Admin settings"/);
+  assert.match(menu, /href: "\/", label: "Switch to public site"/);
+  assert.match(menu, /href: "\/api\/auth\/signout", label: "Logout"/);
+  assert.doesNotMatch(menu, /href: "\/admin\/logs"|label: "Audit Logs"|ShieldCheck/);
+  assert.equal((menu.match(/\{ href:/g) || []).length, 3);
+  const system = getAdminHeaderGroups("ADMIN").flatMap(group => group.links).find(entry => entry.item.href === "/admin/system");
+  assert.ok(system?.children.some(child => child.href === "/admin/logs"));
+});

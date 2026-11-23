@@ -73,6 +73,14 @@ test("price alert cards render route pricing status and check metadata", () => {
   }
 });
 
+test("legacy hotel alerts remain manageable from the account dashboard", () => {
+  assert.match(source, /alert\.status === "ACTIVE" \|\| alert\.status === "PAUSED"/);
+  assert.match(source, /"Pause alert" : "Resume alert"/);
+  assert.match(source, /fetch\(`\/api\/price-alerts\/\$\{encodeURIComponent\(alert\.id\)\}`/);
+  assert.match(source, /method: "PATCH"/);
+  assert.match(source, /setAlerts\(\(current\) => current\.map/);
+});
+
 test("price alerts dashboard keeps mobile and accessibility affordances", () => {
   assert.match(source, /sm:grid-cols-2/);
   assert.match(source, /break-words/);

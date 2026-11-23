@@ -1,0 +1,207 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+const client = readFileSync(
+  new URL("../CarDetailsClient.tsx", import.meta.url),
+  "utf8",
+).replace(/\s+/g, " ");
+const hero = readFileSync(
+  new URL("./CarDetailsHero.tsx", import.meta.url),
+  "utf8",
+).replace(/\s+/g, " ");
+const nav = readFileSync(
+  new URL("./CarDetailsSectionNav.tsx", import.meta.url),
+  "utf8",
+).replace(/\s+/g, " ");
+const css = readFileSync(
+  new URL("../../../app/globals.css", import.meta.url),
+  "utf8",
+).replace(/\s+/g, " ");
+
+test("mobile vehicle identity and specification typography mirrors native", () => {
+  assert.match(
+    client,
+    /text-\[22px\] font-extrabold leading-7 tracking-\[-0\.5px\] text-\[#071A48\]/,
+  );
+  assert.match(
+    client,
+    /text-sm font-semibold leading-5 tracking-normal text-\[#56658E\]/,
+  );
+  assert.match(
+    client,
+    /text-\[10px\] font-bold uppercase leading-\[14px\] tracking-\[\.14em\]/,
+  );
+  assert.match(
+    hero,
+    /text-xs font-semibold leading-\[18px\] text-slate-700/,
+  );
+});
+
+test("mobile tabs keep native responsive sizes and selected color independently from desktop", () => {
+  assert.match(
+    nav,
+    /car-details-native-tab-label[^"]*font-sans text-\[12px\] font-semibold leading-\[normal\] tracking-normal[^"]*min-\[390px\]:text-\[13px\]/,
+  );
+  assert.match(nav, /whitespace-nowrap/);
+  assert.match(nav, /text-\[#075EE8\]/);
+  assert.match(nav, /text-\[#475569\]/);
+  assert.match(nav, /absolute inset-x-2 bottom-0 h-0\.5 bg-\[#075EE8\]/);
+  assert.doesNotMatch(
+    nav,
+    /car-details-native-tab-label[^"]*lg:text-sm|car-details-native-tab-label[^"]*lg:font-bold/,
+  );
+});
+
+test("mobile tab labels own rendered size outside Tailwind so browser button font inheritance cannot enlarge them", () => {
+  assert.match(
+    css,
+    /\.car-details-native-tab-label \{[^}]*font-size: 12px;[^}]*line-height: normal;[^}]*font-weight: 600;/,
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 390px\) and \(max-width: 1023px\) \{ \.car-details-native-tab-label \{ font-size: 13px; \} \}/,
+  );
+  assert.match(css, /button, input, select, textarea \{ font: inherit; \}/);
+  assert.match(nav, /text-\[12px\][^"]*min-\[390px\]:text-\[13px\]/);
+});
+
+test("mobile tab strip binds the native static semibold face instead of the variable web face", () => {
+  assert.match(nav, /car-details-native-tab-label/);
+  assert.doesNotMatch(nav, /\[-webkit-text-size-adjust:none\]|\[text-size-adjust:none\]/);
+  assert.match(nav, /text-\[12px\][^"]*min-\[390px\]:text-\[13px\]/);
+  assert.match(css, /Kurioticket Inter Native Semibold/);
+  assert.match(css, /Inter_600SemiBold\.ttf/);
+  assert.match(css, /\.car-details-native-tab-label \{[^}]*font-synthesis: none;/);
+  assert.match(nav, /text-\[#075EE8\]/);
+  assert.match(nav, /text-\[#475569\]/);
+});
+
+test("mobile comparison typography retains the native compact hierarchy", () => {
+  assert.match(
+    client,
+    /car-details-desktop-section-heading-type hidden lg:block/,
+  );
+  assert.match(
+    client,
+    /text-\[11px\] font-medium leading-4 text-slate-600/,
+  );
+  assert.match(
+    client,
+    /text-\[10\.5px\] font-semibold leading-\[15px\]/,
+  );
+  assert.match(
+    client,
+    /text-\[19px\] font-semibold leading-\[22px\] tracking-\[-0\.015em\] text-\[#071A48\][^"]*tabular-nums/,
+  );
+  assert.match(
+    client,
+    /text-\[10px\] font-medium leading-\[13px\] text-\[#075EE8\]/,
+  );
+});
+
+test("pickup and return uses native timeline, copy, and requirement typography", () => {
+  assert.match(
+    client,
+    /car-details-desktop-section-heading-type hidden lg:block/,
+  );
+  assert.match(
+    client,
+    /text-\[15px\] font-bold leading-\[22px\] text-\[#071A48\][^"]*lg:text-\[16px\]/,
+  );
+  assert.match(
+    client,
+    /text-\[14px\] font-medium leading-5 text-\[#071A48\]/,
+  );
+  assert.match(
+    client,
+    /text-\[13px\] font-normal leading-5 text-\[#56658E\]/,
+  );
+  assert.match(client, /"Pick-up",[\s\S]*?copy\("carDetails\.pickup"\)/);
+  assert.match(client, /Pickup requirements/);
+  assert.match(
+    client,
+    /text-\[14px\] font-bold leading-5 text-\[#071A48\]/,
+  );
+  assert.match(
+    client,
+    /text-\[14px\] font-medium leading-5 text-\[#071A48\]/,
+  );
+  assert.match(
+    client,
+    /mt-4 hidden text-sm font-medium leading-5 lg:block/,
+  );
+  assert.match(
+    client,
+    /mt-2 hidden text-sm font-normal leading-5 lg:block/,
+  );
+});
+
+test("location identity, timeline, directions, and body typography mirror native", () => {
+  assert.match(
+    client,
+    /text-\[13px\] font-semibold leading-5 text-slate-800/,
+  );
+  assert.match(client, /text-xs leading-5 text-slate-500/);
+  assert.match(
+    client,
+    /text-sm font-bold text-\[#075EE8\][^"]*lg:text-blue/,
+  );
+  assert.match(
+    client,
+    /text-\[15px\] font-bold leading-\[22px\] text-\[#071A48\]/,
+  );
+  assert.match(
+    client,
+    /text-\[14px\] font-medium leading-5 text-\[#071A48\]/,
+  );
+  assert.match(
+    client,
+    /text-\[13px\] font-normal leading-5 text-\[#56658E\]/,
+  );
+  assert.match(
+    client,
+    /text-\[14px\] font-bold leading-5 text-\[#071A48\]/,
+  );
+  assert.match(
+    client,
+    /text-\[14px\] font-normal leading-5 text-\[#334155\]/,
+  );
+});
+
+test("mobile booking dock uses native typography and copy", () => {
+  const dock = client.slice(client.indexOf("function MobileBookingDock"));
+  assert.match(
+    dock,
+    /text-\[19px\] font-semibold leading-\[22px\] tracking-\[-0\.25px\] text-\[#071A48\][^"]*tabular-nums/,
+  );
+  assert.doesNotMatch(dock, /text-\[clamp\(/);
+  assert.match(
+    dock,
+    /text-\[11px\] font-semibold leading-4 text-\[#56658E\]/,
+  );
+  assert.match(dock, /Estimated rental total/);
+  assert.match(dock, /text-xs font-bold leading-4 text-white/);
+});
+
+test("Safari cannot inflate Cars Details mobile text beyond native sizes", () => {
+  assert.match(
+    css,
+    /@media \(max-width: 1023px\) \{ \[data-car-details-experience\] \{ -webkit-text-size-adjust: 100%; text-size-adjust: 100%; \}/,
+  );
+});
+
+test("desktop Cars tabs use the same compact semibold hierarchy as Flights", () => {
+  assert.match(
+    client,
+    /car-details-desktop-section-heading-type hidden lg:block lg:text-\[16px\] lg:font-semibold/,
+  );
+  assert.match(
+    nav,
+    /car-details-desktop-selected-info-type[^"]*min-h-\[46px\][^"]*border-b-2/,
+  );
+  assert.match(
+    css,
+    /\.car-details-desktop-selected-info-type \{[^}]*font-size: 14px;[^}]*line-height: 20px;[^}]*font-weight: 600;[^}]*font-variation-settings: "wght" 600;/,
+  );
+});

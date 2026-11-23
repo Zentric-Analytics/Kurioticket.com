@@ -1,0 +1,407 @@
+{
+  "scope": "Original local report/log identities only; contents excluded unless separately curated",
+  "sources": [
+    {
+      "relativePath": "outputs/Kurioticket-RESTORE-20261115-2230-PST-execution-record.txt",
+      "bytes": 3095,
+      "sha256": "f034a3cf1818982b35c802977248c11b14a68b542ea33db3bea5c519c261512d",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-browser-recovery-handoff.txt",
+      "bytes": 6447,
+      "sha256": "90f3447cc22d6ca5719ac28e312725e86c10fd3bacc52139b924fc4c54f8147f",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-browser-restored-readiness-report.txt",
+      "bytes": 3840,
+      "sha256": "50aff21d7fe4caf546b422d5c6716b530303ad7b4e236a933f0396248d6ce990",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-controlled-dev-deployment-approval-packet.txt",
+      "bytes": 4553,
+      "sha256": "804adbb9f07f6309a01c43790d16d7d56cd0df2abc6d8b920ee59b4d864944d0",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-existing-private-validation-route-report.txt",
+      "bytes": 9358,
+      "sha256": "9d8879e4d2d280f2037a39b617680906c5f9f4af46f62218c52f0177b3560e4b",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-existing-recovery-evidence-and-browser-access-report.txt",
+      "bytes": 6761,
+      "sha256": "107f3b35b498c9cfc147d0451227d07550875849bdded36156e4f07b2196ef3d",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-final-pre-restore-connection-checks.txt",
+      "bytes": 8172,
+      "sha256": "c72aa57efbc04ad21b5279aa82880a1d95427f5ed13360a7f3c0e2fa8c175424",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-final-restore-execution-window-plan.txt",
+      "bytes": 9286,
+      "sha256": "63cb78378a56485d1fc9be77023a1c5fde5a0e3981fd63f0aeed2a840f26f095",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-final-stabilization-blocker-resolution-report.txt",
+      "bytes": 77793,
+      "sha256": "80f431a53e6d5282aeff84565a8641af021701586f20e7aa4007ad24dec8693d",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-isolated-restore-preprovisioning-safety-report.txt",
+      "bytes": 4770,
+      "sha256": "cb6e7617eb2103ff067563f28e945908e149076fc4a8b201466a6ea8fc6caeaf",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-pre-restore-original-allowlist.json",
+      "bytes": 283,
+      "sha256": "32a3e00404f2a9975d96aca8413a3d49c53a19e30aee10e9168c670fc5e046e2",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-private-network-preflight-report.txt",
+      "bytes": 5502,
+      "sha256": "7ca5ede337b989ea735df1718523eba328015a1a97c667f20ddb8e3ece76a0f1",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-private-network-preflight-result.json",
+      "bytes": 374,
+      "sha256": "97373e8d74182a196be6092737dbf3a0053195b2f65376fa500637bc75b28a1f",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-private-preflight-command.txt",
+      "bytes": 2155,
+      "sha256": "3a8e7841cc41cc5fb2e85bbdc12d9c0587d273fa83955e575a9a93f0387f330c",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-restore-network-isolation-procedure-report.txt",
+      "bytes": 4491,
+      "sha256": "3c000b45ca74e334e0021505d40099c9dc737430c6c4143712466d24b3377afe",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stabilization-workflow.txt",
+      "bytes": 592,
+      "sha256": "5b72a25162ae2f44a42c4d0e28585c3b2a60a43be9a648b49c71d96342beb167",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage4-unit01-publication-report.txt",
+      "bytes": 12699,
+      "sha256": "598fec041dfd2f49fd330551327143b128552b38416f33631e841455c48a37e1",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage4-unit02-integration-assessment.txt",
+      "bytes": 55160,
+      "sha256": "dd2cd29a550ea3bd1a148395be6806b30707fa66718a08e9f19e113330fa4b9a",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage4-unit03-root-cause-repair-plan.txt",
+      "bytes": 109479,
+      "sha256": "8ae1b8f23f87693737e0642f3335f41568d65e142255a256b79b6d66b50cdd89",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage4-unit04-implementation-verification-report.txt",
+      "bytes": 30200,
+      "sha256": "2578b6c6a37fd6db3650c1f20116e3604732de69df1f1387f63e81241cc9d58d",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage4-unit05-final-verification-report.txt",
+      "bytes": 16187,
+      "sha256": "34c75411da763fe81bd2679d09b8b9edf5f31159d52ddc77e0e85b523fed1735",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage4-unit06-final-browser-acceptance-report.txt",
+      "bytes": 19772,
+      "sha256": "58ff05f92487caec99b679d431877c097b41c78d7f8dfee6c833dcb2a7cb3bb9",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage4-unit06-render-staging-investigation-addendum.txt",
+      "bytes": 18751,
+      "sha256": "4c062c67b2dcc9a35c254c7df9b52fca1c06699d711a69a9fc66f9ab91806fce",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-consolidated-final-integration-report.txt",
+      "bytes": 6295,
+      "sha256": "6945f1dac1774414f070687f6d2d92d6be1a49a2ac466479f881e43033e1fe12",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-consolidated-github-review-report.txt",
+      "bytes": 6191,
+      "sha256": "3bfda67078d465003f8d068ceb1c01967103a595f00e5f81282b24f27c2d7bb8",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-consolidated-release-readiness-report.txt",
+      "bytes": 12015,
+      "sha256": "dfb1091f0b31626162ecd7857db8fc5fd187ce314308fd11c9a8adccd6d35eaf",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-steps1-4-final-completion-report.txt",
+      "bytes": 6309,
+      "sha256": "c57eace8d508b5e89e0c7ead15afa11b079878eca3cee9e37ad0362ecf837b5c",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-unit01-integration-readiness-report.txt",
+      "bytes": 47302,
+      "sha256": "013d28f8f46f64f3a2d960d93fb6e8ac391b6bb56172ace651902176575351e6",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-unit02-final-integration-readiness-report.txt",
+      "bytes": 52981,
+      "sha256": "e3acfeb254cb7868395010b93db5bd0fa740add768c23951cc6214ce61e68459",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-unit03-final-reconciliation-report.txt",
+      "bytes": 47735,
+      "sha256": "7b025a0d273a11ae7bca1ba173c0af0b4fe1f84d5dfbd2ce3b6094dc93b4fae7",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-unit04-final-security-and-quality-report.txt",
+      "bytes": 38560,
+      "sha256": "fcecd5086dc65286548623d1927ed2e9238cb1f10107f1d09a55169835cf239b",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-unit05a-mobile-recovery-security-report.txt",
+      "bytes": 16419,
+      "sha256": "255d58fc1ef295bdb0e311f2520b45d841bb8b2ed8341422ce4c64f3403f4585",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-unit05b-restricted-mobile-recovery-report.txt",
+      "bytes": 12097,
+      "sha256": "d253484fe30ee908b7356d0d9e7d0855a02d9466ee27ceedb75398a4cb1d0a0b",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-unit06-controlled-final-integration-report.txt",
+      "bytes": 17485,
+      "sha256": "5ce3c8170094e5d16b0abde1b70ae6efc5236cef4346668126328864ae6ebf67",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-unit07-remote-dev-delta-assessment.txt",
+      "bytes": 43327,
+      "sha256": "e88da83a729bad5935cc9b2b8ebd2b8d0a3036ba804d333889c9158794600b6b",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-unit08-github-review-package.md",
+      "bytes": 11876,
+      "sha256": "b9f51d3e21c2be34d6722da86a87aa6ee70b03bceecd1d08fd5f69564a85a4be",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-unit08-release-safety-plan.md",
+      "bytes": 18240,
+      "sha256": "0fa6c019afa8a36e4ce51ec2dc8854e1f0ef247b9d9ef56f09820cec00cd5909",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/Kurioticket-stage5-unit08-review-preparation-report.txt",
+      "bytes": 14415,
+      "sha256": "ac08e6c5a5b24a0cbb6599bf1fc6c5acc951d51923b3fa7f575983fca9af4e59",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-final-reconciliation-report.txt",
+      "bytes": 7308,
+      "sha256": "03d1998f4c475f422b7add2a3aa84943c39c09139919e64d0d5d308c089002b7",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage2a-hotel-supplier-data-investigation.txt",
+      "bytes": 25082,
+      "sha256": "a0b31740026ea46a1ad87575adec656358517da05f35bccfe2630d08428857bb",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage2b-native-hotel-overview-fix-report.txt",
+      "bytes": 10590,
+      "sha256": "654200898dd3673fca8fc78943fd7c05bc6fb6ac17295026f12138700a4229a3",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage3a-batch2-selection-report.txt",
+      "bytes": 56869,
+      "sha256": "19b72ed795da5e79adee2af39852383942a573610393ac07fbb2c2410208e7fd",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage3a-batch3-report.txt",
+      "bytes": 10916,
+      "sha256": "8c43d4e489778eb4f11548898e06f56e1377ee0dcf9bd7935b3adeb33b6ccca7",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage3a-batch3a-report.txt",
+      "bytes": 14486,
+      "sha256": "e82c14cbcd62fb3f917d019139f933e0d05ca7fd6825690c0624eaeaf9bd5a4a",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage3a-batch4-report.txt",
+      "bytes": 14478,
+      "sha256": "b96e82f6284360fc23880c7dc348220fd0bc09214854bc724c1652e00720af02",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage3a-batch5-investigation-report.txt",
+      "bytes": 22194,
+      "sha256": "a4f9126966ad0e36a530403e69d5f54c34939c1dba3811df7e142e36631f23fe",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage3a-batch5a-report.txt",
+      "bytes": 12126,
+      "sha256": "55b59815b48e776891f5ef4bb35f1115689ceb0d0e44bc08e7b56af6ec9a87cd",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage3a-batch5b-report.txt",
+      "bytes": 6947,
+      "sha256": "47b6ee1db979ee3fc4900db50c16bb64cc25d8f4379e9c185a94964213265538",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage3a-batch5c-report.txt",
+      "bytes": 8492,
+      "sha256": "cb7de91586b506da2e21d8b6db90014b44a17564c4d509cb7c4d9b4a9c5435c6",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage3a-batch6-report.txt",
+      "bytes": 18609,
+      "sha256": "ec3c6252320f56e89c57a5392ba129be13596936b962f49160a5f61b0f0271ff",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage3a-batch6a-report.txt",
+      "bytes": 11409,
+      "sha256": "e03be6b737772ef647dc60423a403184f0d58749e88fc6d59b62aa0c527084f8",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage3a-batch7-report.txt",
+      "bytes": 15435,
+      "sha256": "39f33957490988e693c2cce803043fae4ee6d475f12749844591dde11b19edd9",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage3a-batch7a-report.txt",
+      "bytes": 13569,
+      "sha256": "f04fac9ae7335216da5fbdae37e60a21538aaf2dbb8968759161f084c036c2ae",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-stage3a-batch7b-report.txt",
+      "bytes": 12916,
+      "sha256": "dcec085704d414744cc1ebb9db12d7918d763b75921333b38d0468bd821fac66",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-web-debugging-stage1-report.txt",
+      "bytes": 8741,
+      "sha256": "0ea41d730237984f3050448a0effff5b050d99937eb40da1e02ba0309c956e51",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-web-debugging-stage2-behavior-report.txt",
+      "bytes": 94246,
+      "sha256": "1b3571618ad1d32b5d6600912e3898e1c4740541a00b35600f2b3412efd7a95d",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-web-debugging-stage3a-batch1-report.txt",
+      "bytes": 12969,
+      "sha256": "e42debb13b36b577243cc26a9204a0a1a668ee6c3b88fc43e380658099f2a514",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-web-debugging-stage3a-batch2-report.txt",
+      "bytes": 15889,
+      "sha256": "91f0dac641838ca025c6228e0bc4d4320701ca4ddb4ea18bb36e221768de06ec",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "outputs/P1-web-regression-failure-audit.txt",
+      "bytes": 67150,
+      "sha256": "2e4cb0a36969eb340a9b37f23ae892dbbb37b02a48032d20bfbe331095180ac0",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "work/final-blocker-resolution/baseline-sha256.json",
+      "bytes": 417017,
+      "sha256": "e86ba943f50bb45248211658a304a0a90f18fbb47c4417920f559936dd79b235",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "work/final-blocker-resolution/build-final.log",
+      "bytes": 12625,
+      "sha256": "9eec39ebab98ad88e2344a4a70c52f72dc9223797f44312cb8bdec9b08cca8a5",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "work/final-blocker-resolution/metro-final-exits.json",
+      "bytes": 35,
+      "sha256": "72e0d29b222b1d6a682ec1a43736fa235b8461811504339a0345df60927ea6be",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "work/final-blocker-resolution/native-exits.json",
+      "bytes": 42,
+      "sha256": "185fd968acefb8d71ea1524bcf5d6a4082a69c992857a3c8a4f1cd6f31ad7d2a",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "work/final-blocker-resolution/native-final.log",
+      "bytes": 206827,
+      "sha256": "458a1bf297fd3bcf1a07351078f41518c1684a99e8b095c1170544678d9275b1",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "work/final-blocker-resolution/validated-tree.json",
+      "bytes": 427225,
+      "sha256": "df828d7926c7e88f8edfb2b1590331662ddcdcfd25859fe4faa271d8376050d1",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "work/final-blocker-resolution/web-final.log",
+      "bytes": 551978,
+      "sha256": "9bd0c5d9219c7afe6837aba0a7ab6682291d539d15691d0abd504a1f009877a0",
+      "rawContentIncluded": false
+    },
+    {
+      "relativePath": "work/final-blocker-resolution/web-type-exits.json",
+      "bytes": 33,
+      "sha256": "9f2ba62cdfb6fc89f358293ff05edb7b0c18a79ad3ee9fb0c952f8e05c9bf92f",
+      "rawContentIncluded": false
+    }
+  ]
+}

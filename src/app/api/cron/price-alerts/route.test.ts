@@ -10,3 +10,11 @@ test("cron route authorization and safe aggregate response", () => {
   assert.match(source, /skippedByPreferences/);
   assert.doesNotMatch(source, /alertId|userId|email/);
 });
+
+test("hotel provider alerts refresh with the trusted cron request context", () => {
+  const route = readFileSync("src/app/api/cron/price-alerts/route.ts", "utf8");
+  const processor = readFileSync("src/services/priceAlertProcessor.ts", "utf8");
+  assert.match(route, /clientIp: getKayakClientIp\(request\)/);
+  assert.match(processor, /hotelId\.startsWith\("kayak-sandbox:"\) \? options\.kayak : undefined/);
+  assert.match(processor, /searchHotels\(search as HotelSearchParams, \{/);
+});

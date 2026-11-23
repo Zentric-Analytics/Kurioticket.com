@@ -23,7 +23,7 @@ type DealPromo = {
 const homepageDealPromos: readonly DealPromo[] = [
   {
     title: "Flight deals from top airlines",
-    description: "Discover limited-time fares and compare options instantly.",
+    description: "Search current fares from connected airlines and compare options.",
     buttonLabel: "Explore flight deals",
     icon: "flight",
     lightBackgroundColor: "#EAF2FF",

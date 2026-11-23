@@ -1,0 +1,309 @@
+import Link from "next/link";
+import {
+  Activity,
+  ArrowUpRight,
+  Database,
+  Headphones,
+  KeyRound,
+  Mail,
+  ShieldCheck,
+  Trash2,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+
+import { ActivityDataInfo } from "@/components/admin/ActivityDataInfo";
+import { AdminOverviewRangeSensitive } from "@/components/admin/AdminOverviewControls";
+import { OnlineUsersValue } from "@/components/admin/OnlineUsersValue";
+import { summarizeAttentionRequired, summarizePlatformIncidents } from "@/lib/adminAttentionRequired";
+import type { AdminAlertSnapshot } from "@/services/adminAlertService";
+import type { getAdminOverview } from "@/services/adminOverviewService";
+import type { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
+
+type OverviewData = Extract<Awaited<ReturnType<typeof getAdminOverview>>, { status: "ok" }>["data"];
+type SystemStatus = Awaited<ReturnType<typeof getSafeSystemStatus>>;
+type AuditActivity = Awaited<ReturnType<typeof getRecentAdminActivity>>;
+type Tone = "neutral" | "good" | "warn" | "bad" | "info";
+
+function count(value: number): string {
+  return value.toLocaleString("en-US");
+}
+
+function humanize(value: string): string {
+  return value.toLowerCase().split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
+}
+
+function Section({
+  title,
+  href,
+  children,
+  description,
+  action,
+  fill = false,
+}: {
+  title: string;
+  href: string;
+  children: React.ReactNode;
+  description?: string;
+  action?: React.ReactNode;
+  fill?: boolean;
+}) {
+  return (
+    <section aria-label={title} className={`min-w-0 rounded-xl border border-slate-200 bg-white p-3 sm:p-4${fill ? " h-full" : ""}`}>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="text-[15px] font-semibold tracking-tight text-slate-950">{title}</h2>
+          {description ? <p className="mt-0.5 text-xs leading-[18px] text-slate-600">{description}</p> : null}
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
+          {action}
+          <Link href={href} className="focus-ring inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:text-indigo-900 hover:underline" aria-label={"View " + title + " details"}>
+            View details <ArrowUpRight size={14} aria-hidden="true" />
+          </Link>
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function MiniMetric({
+  label,
+  value,
+  hint,
+  tone = "neutral",
+}: {
+  label: string;
+  value: number | string;
+  hint?: string;
+  tone?: Tone;
+}) {
+  const valueColors: Record<Tone, string> = {
+    neutral: "text-slate-950",
+    good: "text-emerald-800",
+    warn: "text-amber-800",
+    bad: "text-rose-800",
+    info: "text-indigo-800",
+  };
+  return (
+    <div className="min-w-0 rounded-lg bg-slate-50/75 px-3 py-2">
+      <p className="min-w-0 break-words text-[12px] font-medium leading-4 text-slate-600">{label}</p>
+      <p className={"mt-0.5 break-words text-xl font-semibold leading-6 tabular-nums tracking-tight " + valueColors[tone]}>
+        {typeof value === "number" ? count(value) : value}
+      </p>
+      {hint ? <p className="mt-0.5 text-[11px] leading-4 text-slate-600">{hint}</p> : null}
+    </div>
+  );
+}
+
+function SnapshotLink({ label, value, href, icon: Icon, hint, info }: {
+  label: string;
+  value: number | string | React.ReactElement;
+  href: string;
+  icon: LucideIcon;
+  hint?: string;
+  info?: React.ReactNode;
+}) {
+  const link = (
+    <Link href={href} className="focus-ring group flex h-full min-w-0 flex-col rounded-lg border border-slate-200 px-3 py-2 transition hover:border-indigo-300 hover:bg-indigo-50/30">
+      <div className="flex items-center justify-between gap-2">
+        <Icon size={17} className="text-indigo-700" aria-hidden="true" />
+        <ArrowUpRight size={14} className="text-slate-400 group-hover:text-indigo-700" aria-hidden="true" />
+      </div>
+      <p className="mt-1 min-w-0 break-words text-[12px] font-medium leading-4 text-slate-600">{label}</p>
+      <p className="mt-0.5 min-w-0 break-words text-[22px] font-semibold leading-[26px] tabular-nums tracking-tight text-slate-950">
+        {typeof value === "number" ? count(value) : value}
+      </p>
+      {hint ? <p className="mt-1 min-w-0 break-words text-[11px] leading-4 text-slate-600">{hint}</p> : null}
+    </Link>
+  );
+
+  return info ? (
+    <div className="relative min-w-0">
+      {link}
+      <div className="absolute right-8 top-1">{info}</div>
+    </div>
+  ) : link;
+}
+
+function AttentionLink({ label, value, href, icon: Icon, tone }: {
+  label: string;
+  value: number | string;
+  href: string;
+  icon: LucideIcon;
+  tone: Tone;
+}) {
+  const colored = typeof value === "number" && value > 0;
+  return (
+    <Link href={href} className="focus-ring group flex min-w-0 items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2 transition hover:border-indigo-300 hover:bg-slate-50">
+      <Icon size={18} className={colored && tone === "bad" ? "text-rose-700" : colored ? "text-amber-700" : "text-slate-500"} aria-hidden="true" />
+      <span className="min-w-0 flex-1 text-[13px] font-medium leading-5 text-slate-800">{label}</span>
+      <strong className={"text-lg font-semibold tabular-nums " + (colored && tone === "bad" ? "text-rose-800" : colored ? "text-amber-800" : "text-slate-900")}>{typeof value === "number" ? count(value) : value}</strong>
+      <ArrowUpRight size={14} className="shrink-0 text-slate-400 group-hover:text-indigo-700" aria-hidden="true" />
+    </Link>
+  );
+}
+
+function PlatformSummary({ system }: { system: SystemStatus }) {
+  const items = [
+    { label: "Database", icon: Database, value: system.databaseConnected ? "Connected" : system.databaseConfigured ? "Not connected" : "Not configured", good: system.databaseConnected },
+    { label: "Auth / session", icon: KeyRound, value: system.authConfigured && system.sessionConfigured ? "Configured, not tested" : "Not configured", good: false },
+    { label: "Email", icon: Mail, value: system.emailConfigured ? "Configured, not tested" : "Not configured", good: false },
+    { label: "Provider keys", icon: ShieldCheck, value: system.providerCredentialsPresent ? "Key present, not tested" : "No keys configured", good: false },
+  ] as const;
+  return (
+    <div className="grid gap-2 sm:grid-cols-2 min-[56.25rem]:grid-cols-4">
+      {items.map(({ label, icon: Icon, value, good }) => (
+        <div key={label} className="min-w-0 rounded-lg bg-slate-50/75 px-3 py-2">
+          <div className="flex items-center gap-2">
+            <Icon size={16} className="shrink-0 text-indigo-700" aria-hidden="true" />
+            <span className="text-[12px] font-medium text-slate-700">{label}</span>
+          </div>
+          <div className="mt-1 flex items-start gap-2">
+            <span aria-hidden="true" className={"mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full " + (good ? "bg-emerald-500" : "bg-slate-400")} />
+            <span className="min-w-0 break-words text-[12px] leading-[18px] text-slate-700">{value}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RecentActivity({ activity }: { activity: AuditActivity }) {
+  if (activity.status === "unavailable") {
+    return <p role="status" className="py-3 text-sm text-slate-600">Recent admin activity is unavailable.</p>;
+  }
+  const recent = activity.items.slice(0, 3);
+  if (recent.length === 0) {
+    return <p className="py-3 text-sm text-slate-600">No recorded admin actions yet.</p>;
+  }
+  return (
+    <ol className="divide-y divide-slate-200/90">
+      {recent.map((item) => (
+        <li key={item.id} className="flex min-w-0 flex-col gap-1 py-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold text-slate-900">{humanize(item.title)}{item.source === "system" ? " (System)" : ""}</p>
+            <p className="min-w-0 truncate text-[12px] leading-5 text-slate-600" title={item.detail}>{item.detail}</p>
+          </div>
+          <time className="shrink-0 text-[11px] text-slate-600">{item.timestamp}</time>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+export function AdminOverviewSecondary({ system, activity }: { system: SystemStatus; activity: AuditActivity }) {
+  return (
+    <div className="mt-3 grid gap-3">
+      <Section title="System Health" href="/admin/system">
+        <PlatformSummary system={system} />
+      </Section>
+      <Section title="Recent Admin Activity" href="/admin/logs">
+        <RecentActivity activity={activity} />
+      </Section>
+    </div>
+  );
+}
+
+
+export function SearchPerformanceSummary({ data }: { data: OverviewData }) {
+  return (
+    <Section title="Search Performance" href="/admin/searches/activity" fill>
+              <div className="grid grid-cols-2 gap-1.5">
+                <MiniMetric label="Total" value={data.journeys.operationalSearches.total} />
+                <MiniMetric label="Successful" value={data.journeys.operationalSearches.success} tone="good" />
+                <MiniMetric label="Failed" value={data.journeys.operationalSearches.failed} tone={data.journeys.operationalSearches.failed ? "bad" : "neutral"} />
+                <MiniMetric label="Partial" value={data.journeys.operationalSearches.partial} />
+              </div>
+            </Section>
+  );
+}
+
+export function AdminOverviewDashboard({ data, system, activity, incidents }: {
+  data: OverviewData;
+  system: SystemStatus;
+  activity: AuditActivity;
+  incidents: AdminAlertSnapshot | null;
+}) {
+  const stages = data.journeys.stages;
+  const attention = summarizeAttentionRequired(data);
+  const platformIssues = incidents ? summarizePlatformIncidents(incidents.alerts) : null;
+
+  return (
+    <div className="min-w-0 space-y-3">
+      <section aria-label="Operations Snapshot" className="min-w-0 space-y-3">
+        <h2 className="text-[16px] font-semibold tracking-tight text-slate-950">Operations Snapshot</h2>
+
+        {/* The two account totals sit beside Attention Required, not above it. */}
+        <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
+          <section aria-label="Attention Required" className="min-w-0 rounded-xl border border-slate-200 p-3 sm:p-4">
+            <h2 className="mb-2 text-[15px] font-semibold text-slate-950">Attention Required</h2>
+            <div className="grid gap-1.5">
+              <AttentionLink href="/admin/settings/notifications" label="Platform issues" value={platformIssues?.total ?? "Unknown"} icon={Activity} tone="bad" />
+              <AttentionLink href="/admin/providers" label="Provider health issues" value={attention.providerHealthIssues} icon={Activity} tone="bad" />
+              <AttentionLink href="/admin/support" label="Support needs action" value={attention.supportNeedsAction} icon={Headphones} tone="warn" />
+              <AttentionLink href="/admin/account-deletions" label="Deletion reviews" value={attention.deletionReviews} icon={Trash2} tone="warn" />
+            </div>
+          </section>
+          <div aria-label="Account snapshot" className="grid min-w-0 grid-cols-1 grid-rows-2 items-stretch gap-2">
+            <SnapshotLink href="/admin/users" label="Total accounts" value={data.users.total} icon={Users} hint="Current account records" />
+            <SnapshotLink href="/admin/users" label="Online Users" value={<OnlineUsersValue initial={data.onlinePresence} />} icon={Activity}
+              info={(
+                <ActivityDataInfo label="How Online Users are counted">
+                  Activity in the last {data.onlinePresence.windowSeconds} seconds on the website, Admin panel, Android, and iOS.
+                  Counts each verified account once across devices and each recognized guest session once.
+                  A person can have multiple guest sessions.
+                </ActivityDataInfo>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Customer activity and actual outbound provider handoffs share the snapshot row. */}
+        <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
+          <AdminOverviewRangeSensitive fill>
+            <Section title="Visitor Activity" href="/admin/journeys">
+              <div className="grid grid-cols-2 gap-1.5">
+                <MiniMetric label="Search events" value={stages.SEARCH_COMPLETED.events} />
+                <MiniMetric label="Results views" value={stages.RESULTS_VIEWED.events} />
+                <MiniMetric label="Offer selections" value={stages.OFFER_SELECTED.events} />
+                <MiniMetric label="Provider handoffs" value={stages.PROVIDER_HANDOFF_STARTED.events} />
+              </div>
+            </Section>
+          </AdminOverviewRangeSensitive>
+          <AdminOverviewRangeSensitive fill>
+            <Section title="Provider Handoffs" href="/admin/redirects">
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                <MiniMetric label="Recorded" value={data.journeys.operationalHandoffs.total} />
+                <MiniMetric label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
+                <MiniMetric label="Without visitor identity" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
+                <MiniMetric label="Flights" value={data.journeys.operationalHandoffs.flights} />
+                <MiniMetric label="Hotels" value={data.journeys.operationalHandoffs.hotels} />
+                <MiniMetric label="Cars" value={data.journeys.operationalHandoffs.cars} />
+              </div>
+            </Section>
+          </AdminOverviewRangeSensitive>
+        </div>
+
+        <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
+          <Section title="Support Workload" href="/admin/support">
+            <div className="grid grid-cols-3 gap-1.5">
+              <MiniMetric label="Open" value={data.support.open} />
+              <MiniMetric label="Waiting on team" value={data.support.waitingOnTeam} />
+              <MiniMetric label="Waiting on user" value={data.support.waitingOnUser} />
+            </div>
+          </Section>
+          <Section title="Deletion Workload" href="/admin/account-deletions">
+            <div className="grid grid-cols-3 gap-1.5">
+              <MiniMetric label="Pending" value={data.deletions.pending} />
+              <MiniMetric label="Ready for review" value={data.deletions.readyForReview} />
+              <MiniMetric label="Completed" value={data.deletions.completed} />
+            </div>
+          </Section>
+        </div>
+      </section>
+
+      <AdminOverviewSecondary system={system} activity={activity} />
+    </div>
+  );
+}

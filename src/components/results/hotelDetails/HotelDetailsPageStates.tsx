@@ -1,7 +1,9 @@
 import type React from "react";
-import { AlertTriangle } from "lucide-react";
-import { Button, LinkButton } from "@/components/ui/Button";
+import Link from "next/link";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { DetailsBackLink } from "@/components/results/DetailsBackLink";
 
 function SkeletonBlock({ className }: { className: string }) {
   return (
@@ -12,11 +14,75 @@ function SkeletonBlock({ className }: { className: string }) {
   );
 }
 
-export function HotelDetailsLoadingState({ loadingText, embedded = false, statusRef }: { loadingText: string; embedded?: boolean; statusRef?: React.RefObject<HTMLDivElement | null> }) {
+function DesktopHotelDetailsLoading({ resultsHref, backToResultsText }: { resultsHref: string; backToResultsText: string }) {
+  return (
+    <div className="hidden lg:block" data-hotel-loading-desktop>
+      <div className="pb-4 pt-1" data-hotel-loading-desktop-identity>
+        <SkeletonBlock className="h-8 w-64 max-w-full" />
+        <SkeletonBlock className="mt-2 h-4 w-72 max-w-full" />
+        <SkeletonBlock className="mt-2 h-6 w-36" />
+      </div>
+      <div className="relative grid aspect-[2.32/1] max-h-[440px] grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-xl bg-slate-100" data-hotel-loading-desktop-gallery>
+        <SkeletonBlock className="col-span-2 row-span-2 h-full w-full rounded-none" />
+        {Array.from({ length: 4 }, (_, index) => <SkeletonBlock key={index} className="h-full w-full rounded-none" />)}
+        <Link href={resultsHref} aria-label={backToResultsText} title={backToResultsText} className="absolute left-4 top-4 z-10 flex size-10 items-center justify-center rounded-full border border-[#d9dfe2] bg-white text-[#192024] shadow-[0_2px_8px_rgba(25,32,36,0.16)]" data-standalone-hotel-back-link>
+          <ArrowLeft className="size-5" aria-hidden="true" />
+        </Link>
+        <div className="absolute right-4 top-4 z-10 flex gap-2" aria-hidden="true">
+          <SkeletonBlock className="size-10 rounded-full bg-white" />
+          <SkeletonBlock className="size-10 rounded-full bg-white" />
+        </div>
+      </div>
+      <div className="mt-2 flex h-16 items-center gap-7 border-b border-[#d9dfe2]" data-hotel-loading-desktop-tabs>
+        <SkeletonBlock className="h-5 w-20" />
+        <SkeletonBlock className="h-5 w-12" />
+        <SkeletonBlock className="h-5 w-16" />
+      </div>
+      <div className="border-b border-[#d9dfe2] py-5" data-hotel-loading-desktop-overview>
+        <SkeletonBlock className="h-7 w-40" />
+        <SkeletonBlock className="mt-4 h-4 w-full" />
+        <SkeletonBlock className="mt-2 h-4 w-4/5" />
+      </div>
+      <div className="border-b border-[#d9dfe2] py-5" data-hotel-loading-desktop-amenities>
+        <SkeletonBlock className="h-7 w-52" />
+        <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2">
+          {Array.from({ length: 10 }, (_, index) => <SkeletonBlock key={index} className="h-5 w-4/5" />)}
+        </div>
+      </div>
+      <div className="border-b border-[#d9dfe2] py-5" data-hotel-loading-desktop-location>
+        <SkeletonBlock className="h-7 w-28" />
+        <SkeletonBlock className="mt-3 h-4 w-72 max-w-full" />
+        <SkeletonBlock className="mt-5 h-[216px] w-full rounded-lg" />
+      </div>
+      <div className="py-5" data-hotel-loading-desktop-rates>
+        <SkeletonBlock className="h-7 w-40" />
+        <SkeletonBlock className="mt-4 h-11 w-80 max-w-full rounded-lg" />
+        <SkeletonBlock className="mt-4 h-[108px] w-full rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+export function HotelDetailsLoadingState({
+  loadingText,
+  resultsHref = "/hotels/results",
+  backToResultsText = "Back to hotel results",
+  embedded = false,
+  statusRef,
+}: {
+  loadingText: string;
+  resultsHref?: string;
+  backToResultsText?: string;
+  embedded?: boolean;
+  statusRef?: React.RefObject<HTMLDivElement | null>;
+}) {
   const content = (
-      <section className="border-b border-border bg-white">
-        <div className="page-shell py-6 sm:py-8 lg:py-10">
-          <div
+    <section className="border-b border-border bg-white lg:border-0 lg:bg-[#F7F9FC]">
+      <div
+        className={embedded ? "mx-auto w-full max-w-[1400px] px-0 py-6 lg:px-7 lg:py-10" : "mx-auto w-full max-w-[1400px] px-0 py-6 lg:max-w-[1080px] lg:px-[30px] lg:py-2"}
+        data-hotel-details-state-shell
+      >
+        <div
           ref={statusRef}
           tabIndex={statusRef ? -1 : undefined}
           role="status"
@@ -24,24 +90,55 @@ export function HotelDetailsLoadingState({ loadingText, embedded = false, status
           className="sr-only"
         >
           {loadingText}
-          </div>
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
-          <Card className="min-w-0 space-y-4 p-4 sm:p-6 lg:col-span-2 lg:col-start-1 lg:row-start-1">
-            <SkeletonBlock className="h-9 w-36" />
-            <SkeletonBlock className="h-6 w-48" />
-            <SkeletonBlock className="h-10 w-3/4" />
-            <SkeletonBlock className="h-5 w-2/3" />
-          </Card>
-          <Card className="min-w-0 p-3 lg:col-start-1 lg:row-start-2">
-            <SkeletonBlock className="aspect-[16/10] w-full rounded-xl" />
-            <div className="mt-3 grid grid-cols-4 gap-2">
-              <SkeletonBlock className="h-16" />
-              <SkeletonBlock className="h-16" />
-              <SkeletonBlock className="h-16" />
-              <SkeletonBlock className="h-16" />
+        </div>
+        {!embedded ? <DesktopHotelDetailsLoading resultsHref={resultsHref} backToResultsText={backToResultsText} /> : null}
+        <div
+          className={embedded ? "grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_334px] lg:items-start lg:gap-7" : "grid min-w-0 grid-cols-1 gap-6 lg:hidden"}
+          data-hotel-loading-main-grid
+        >
+          <div
+            className="flex min-w-0 flex-col bg-white lg:block lg:rounded-[17px] lg:border lg:border-slate-200/80 lg:p-6"
+            data-hotel-loading-property-shell
+          >
+            <div
+              className="order-2 px-4 pb-2 pt-3 lg:order-none lg:mb-4 lg:px-0 lg:py-0"
+              data-hotel-loading-property-identity
+            >
+              <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+                <div
+                  className="min-w-0 space-y-1.5"
+                  data-hotel-loading-metadata
+                >
+                  <SkeletonBlock className="h-7 w-3/4 max-w-sm" />
+                  <SkeletonBlock className="h-5 w-48" />
+                  <SkeletonBlock className="h-5 w-36" />
+                  <SkeletonBlock className="h-5 w-full max-w-md" />
+                  <SkeletonBlock className="h-5 w-24" />
+                </div>
+                <div className="hidden gap-3 lg:flex" data-hotel-loading-actions>
+                  <SkeletonBlock className="size-11 lg:h-10 lg:w-24" />
+                  <SkeletonBlock className="size-11 lg:h-10 lg:w-24" />
+                </div>
+              </div>
             </div>
-          </Card>
-          <aside className="min-w-0 lg:col-start-2 lg:row-start-2 lg:row-span-2 lg:self-stretch">
+            <div className="relative order-1 lg:order-none lg:mx-0" data-hotel-loading-gallery>
+              <SkeletonBlock className="aspect-[6/5] min-h-[280px] max-h-[440px] w-full rounded-none lg:hidden" />
+              <SkeletonBlock className="hidden h-[300px] w-full rounded-[10px] lg:block" />
+              <div className="pointer-events-none absolute inset-x-0 top-3 flex items-center justify-between px-3 lg:hidden" data-hotel-loading-hero-actions>
+                <SkeletonBlock className="size-11 rounded-full bg-white/90" />
+                <SkeletonBlock className="h-11 w-[88px] rounded-full bg-white/90" />
+              </div>
+            </div>
+            <div
+              className="order-3 mx-4 mt-3 grid min-h-[52px] grid-cols-2 gap-px overflow-hidden rounded-[11px] border border-slate-200 p-2 sm:grid-cols-4 lg:order-none lg:mx-0 lg:grid-cols-5"
+              data-hotel-loading-amenities
+            >
+              {Array.from({ length: 5 }, (_, index) => (
+                <SkeletonBlock key={index} className="h-9 w-full" />
+              ))}
+            </div>
+          </div>
+          <aside className="hidden min-w-0 lg:block lg:self-stretch">
             <div className="lg:sticky lg:top-24">
               <Card variant="elevated" className="space-y-4 p-4 sm:p-5">
                 <SkeletonBlock className="h-4 w-40" />
@@ -56,7 +153,7 @@ export function HotelDetailsLoadingState({ loadingText, embedded = false, status
               </Card>
             </div>
           </aside>
-          <div className="min-w-0 space-y-4 lg:col-start-1 lg:row-start-3">
+          <div className="hidden min-w-0 space-y-4 lg:col-start-1 lg:block">
             {["room", "cancellation", "amenities"].map((section) => (
               <Card key={section} className="space-y-3 p-4 sm:p-5">
                 <SkeletonBlock className="h-6 w-40" />
@@ -65,11 +162,28 @@ export function HotelDetailsLoadingState({ loadingText, embedded = false, status
               </Card>
             ))}
           </div>
+        </div>
+      </div>
+      {!embedded ? (
+        <div
+          className="fixed inset-x-0 bottom-0 z-[90] border-t border-slate-200 bg-white px-3 pb-[calc(0.625rem+env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-6px_22px_rgba(15,23,42,0.12)] min-[390px]:px-4 min-[390px]:pt-3 lg:hidden"
+          data-hotel-loading-mobile-dock
+        >
+          <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_minmax(124px,42%)] items-center gap-2.5 min-[390px]:grid-cols-[minmax(0,1fr)_minmax(140px,0.82fr)] min-[390px]:gap-3">
+            <SkeletonBlock className="h-12 w-32 max-w-full" />
+            <SkeletonBlock className="h-12 w-full" />
           </div>
         </div>
-      </section>
+      ) : null}
+    </section>
   );
-  return embedded ? content : <main className="flex-1 bg-surface-muted/40" aria-busy="true">{content}</main>;
+  return embedded ? (
+    content
+  ) : (
+    <main className="flex-1 bg-white sm:bg-[#f8fafc] lg:bg-[#F7F9FC]" aria-busy="true">
+      {content}
+    </main>
+  );
 }
 
 type HotelDetailsUnavailableStateProps = {
@@ -99,9 +213,19 @@ export function HotelDetailsUnavailableState({
 }: HotelDetailsUnavailableStateProps) {
   const Heading = headingLevel;
   const content = (
-      <section className="border-b border-border bg-white">
-        <div className="page-shell py-6 sm:py-8 lg:py-10">
-          <div className="mx-auto max-w-3xl">
+    <section className="border-b border-border bg-white lg:bg-[#F7F9FC]">
+      <div
+        className="mx-auto w-full max-w-[1400px] px-0 py-6 sm:py-8 lg:px-7 lg:py-10"
+        data-hotel-details-state-shell
+      >
+        {!embedded && showBackLink ? (
+          <div className="mb-4 px-4 lg:px-0">
+            <DetailsBackLink href={resultsHref}>
+              {backToResultsText}
+            </DetailsBackLink>
+          </div>
+        ) : null}
+        <div className="mx-auto max-w-3xl">
           <Card variant="elevated" className="p-6 sm:p-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
               <AlertTriangle
@@ -109,24 +233,29 @@ export function HotelDetailsUnavailableState({
                 aria-hidden="true"
               />
               <div className="min-w-0 flex-1">
-                <Heading ref={headingRef} tabIndex={headingRef ? -1 : undefined} className="text-2xl font-bold text-navy">{title}</Heading>
+                <Heading
+                  ref={headingRef}
+                  tabIndex={headingRef ? -1 : undefined}
+                  className="text-2xl font-bold text-navy"
+                >
+                  {title}
+                </Heading>
                 <p className="mt-2 text-sm leading-6 text-muted">{body}</p>
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                   <Button type="button" onClick={onRetry}>
                     {retryText}
                   </Button>
-                  {showBackLink ? (
-                    <LinkButton href={resultsHref} variant="secondary">
-                      {backToResultsText}
-                    </LinkButton>
-                  ) : null}
                 </div>
               </div>
             </div>
           </Card>
-          </div>
         </div>
-      </section>
+      </div>
+    </section>
   );
-  return embedded ? content : <main className="flex-1 bg-surface-muted/40">{content}</main>;
+  return embedded ? (
+    content
+  ) : (
+    <main className="flex-1 bg-surface-muted/40">{content}</main>
+  );
 }

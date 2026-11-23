@@ -24,8 +24,7 @@ test("desktop scroll locking preserves the viewport coordinate", () => {
   assert.doesNotMatch(source, /scrollY/);
 });
 
-test("Hotel and Cars sticky search dialogs use the stable desktop lock", () => {
-  for (const clientSource of [hotelSource, carsSource]) {
-    assert.match(clientSource, /lockDesktopPageScroll\(\)/);
-  }
+test("Hotel and Cars desktop dialogs lock scrolling without freezing body position", () => {
+  assert.match(carsSource, /lockDesktopPageScroll\(\)/);
+  assert.match(hotelSource, /acquireMobileResultsScrollLock\(\{ freezeBodyPosition: false \}\)/);
 });

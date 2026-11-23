@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { decodeRegistrationOptions, defaultPasskeyName, passkeysSupported, serializeRegistrationCredential } from "@/lib/passkey-client";
 
 export function OnboardingSecurityForm() {
+  const router = useRouter();
   const [supported, setSupported] = useState(true);
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
-  const continueToApp = () => { window.location.href = "/"; };
+  const continueToApp = () => router.push("/");
 
   async function setupPasskey() {
     if (!passkeysSupported()) { setSupported(false); setStatus("This browser or device does not appear to support passkeys. You can continue now and add a passkey later from Security Settings."); return; }

@@ -1,10 +1,22 @@
 export type RouteValue = string | string[] | undefined;
 import { addCalendarDays, localDateFromIso, localIsoDate } from "./localDateModel";
 export { addCalendarDays, localDateFromIso, localIsoDate } from "./localDateModel";
-export type HotelForm = { destination: string; checkIn: string; checkOut: string; guests: number; rooms: number };
+import type { HotelDestinationSuggestion } from "../../api/travelApi";
+export type HotelForm = { destination: string; destinationLocation?: string; checkIn: string; checkOut: string; guests: number; rooms: number };
 export type HotelFormErrors = Partial<Record<keyof HotelForm, string>>;
 
 export const HOTEL_LIMITS = { guests: { min: 1, max: 12 }, rooms: { min: 1, max: 6 } } as const;
+export function isValidHotelOccupancy(guests: number, rooms: number) {
+  return (
+    Number.isInteger(guests)
+    && guests >= HOTEL_LIMITS.guests.min
+    && guests <= HOTEL_LIMITS.guests.max
+    && Number.isInteger(rooms)
+    && rooms >= HOTEL_LIMITS.rooms.min
+    && rooms <= HOTEL_LIMITS.rooms.max
+    && rooms <= guests
+  );
+}
 export const firstParam = (value: RouteValue) => (Array.isArray(value) ? value[0] : value) ?? "";
 export const defaultHotelDates = (today = new Date()) => {
   const todayIso = localIsoDate(today);
@@ -20,10 +32,11 @@ export function initializeHotelForm(params: Record<string, RouteValue>, today = 
   const validDates = Boolean(localDateFromIso(incomingCheckIn) && localDateFromIso(incomingCheckOut) && incomingCheckIn >= todayIso && incomingCheckOut > incomingCheckIn);
   const guests = integer(params.guests);
   const rooms = integer(params.rooms);
-  const validCounts = guests !== undefined && rooms !== undefined && guests >= HOTEL_LIMITS.guests.min && guests <= HOTEL_LIMITS.guests.max && rooms >= HOTEL_LIMITS.rooms.min && rooms <= HOTEL_LIMITS.rooms.max;
+  const validCounts = guests !== undefined && rooms !== undefined && isValidHotelOccupancy(guests, rooms);
   const hadInvalid = Boolean((incomingCheckIn || incomingCheckOut) && !validDates) || Boolean((firstParam(params.guests) || firstParam(params.rooms)) && !validCounts);
+  const destinationLocation = firstParam(params.destinationLocation);
   return {
-    form: { destination: firstParam(params.destination), ...(validDates ? { checkIn: incomingCheckIn, checkOut: incomingCheckOut } : defaults), guests: validCounts ? guests! : 2, rooms: validCounts ? rooms! : 1 },
+    form: { destination: firstParam(params.destination), ...(destinationLocation ? { destinationLocation } : {}), ...(validDates ? { checkIn: incomingCheckIn, checkOut: incomingCheckOut } : defaults), guests: validCounts ? guests! : 2, rooms: validCounts ? rooms! : 1 },
     notice: hadInvalid ? "Some search details were invalid, so safe defaults were used." : undefined,
   };
 }
@@ -33,8 +46,11 @@ export function validateHotelForm(form: HotelForm, today = new Date()): HotelFor
   if (!form.destination.trim()) errors.destination = "Enter a hotel destination.";
   if (!localDateFromIso(form.checkIn) || form.checkIn < localIsoDate(today)) errors.checkIn = "Choose a valid current or future check-in date.";
   if (!localDateFromIso(form.checkOut) || form.checkOut <= form.checkIn) errors.checkOut = "Choose a check-out date after check-in.";
-  if (!Number.isInteger(form.guests) || form.guests < HOTEL_LIMITS.guests.min || form.guests > HOTEL_LIMITS.guests.max) errors.guests = "Choose between 1 and 12 guests.";
-  if (!Number.isInteger(form.rooms) || form.rooms < HOTEL_LIMITS.rooms.min || form.rooms > HOTEL_LIMITS.rooms.max) errors.rooms = "Choose between 1 and 6 rooms.";
+  const validGuests = Number.isInteger(form.guests) && form.guests >= HOTEL_LIMITS.guests.min && form.guests <= HOTEL_LIMITS.guests.max;
+  const validRooms = Number.isInteger(form.rooms) && form.rooms >= HOTEL_LIMITS.rooms.min && form.rooms <= HOTEL_LIMITS.rooms.max;
+  if (!validGuests) errors.guests = "Choose between 1 and 12 guests.";
+  if (!validRooms) errors.rooms = "Choose between 1 and 6 rooms.";
+  if (validGuests && validRooms && !isValidHotelOccupancy(form.guests, form.rooms)) errors.rooms = "Choose no more rooms than guests.";
   return errors;
 }
 export const changeGuests = (form: HotelForm, delta: number): HotelForm => {
@@ -43,4 +59,25 @@ export const changeGuests = (form: HotelForm, delta: number): HotelForm => {
 };
 export const changeRooms = (form: HotelForm, delta: number): HotelForm => ({ ...form, rooms: Math.max(HOTEL_LIMITS.rooms.min, Math.min(HOTEL_LIMITS.rooms.max, form.rooms + delta)) });
 export const countLabel = (count: number, singular: string) => `${count} ${singular}${count === 1 ? "" : "s"}`;
-export const hotelSearchParams = (form: HotelForm) => ({ destination: form.destination.trim(), checkIn: form.checkIn, checkOut: form.checkOut, guests: String(form.guests), rooms: String(form.rooms) });
+export const hotelSearchParams = (form: HotelForm) => ({ destination: form.destination.trim(), ...(form.destinationLocation ? { destinationLocation: form.destinationLocation } : {}), checkIn: form.checkIn, checkOut: form.checkOut, guests: String(form.guests), rooms: String(form.rooms) });
+
+/** Clear stale provider destination IDs when replacing an edited Hotel Results search in place. */
+export function hotelSearchRouteParamPatch(next: Record<string, string | undefined>): Record<string, string | undefined> {
+  return { ...next, destinationId: undefined, destinationLocation: next.destinationLocation || undefined };
+}
+
+/** Keep the provider binding server-authenticated while carrying the selected place through native navigation. */
+export function hotelDestinationLocation(suggestion: HotelDestinationSuggestion, destination = suggestion.searchValue) {
+  const canonical = suggestion.canonical;
+  if (!canonical?.selectionToken || canonical.submittedValue.trim() !== destination.trim()) return undefined;
+  return JSON.stringify({
+    id: canonical.id,
+    kind: canonical.kind,
+    primaryLabel: canonical.primaryLabel || suggestion.name,
+    supportingLabel: canonical.supportingLabel || [suggestion.region, suggestion.country].filter(Boolean).join(", "),
+    submittedValue: canonical.submittedValue,
+    providerBindings: [],
+    verification: canonical.verification ?? "catalogue-only",
+    selectionToken: canonical.selectionToken,
+  });
+}

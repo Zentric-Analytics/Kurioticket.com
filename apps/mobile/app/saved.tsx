@@ -1,3 +1,6 @@
-import { SavedRecentScreen } from "../src/features/saved/SavedRecentScreen";
+import { SavedScreen } from "../src/features/saved/SavedScreen";
+import { ProfileThemeProvider } from "../src/theme/AppTheme";
 
-export default SavedRecentScreen;
+export default function ProfilePage() {
+  return <ProfileThemeProvider><SavedScreen /></ProfileThemeProvider>;
+}

@@ -81,7 +81,7 @@ describe("hero image quality source contracts", () => {
   it("aligns the 3rem mobile product row with the hero boundary without changing desktop", () => {
     assert.match(
       homepageSource,
-      /min-h-\[420px\].*sm:min-h-\[550px\].*lg:min-h-\[610px\]/,
+      /min-h-\[420px\].*sm:min-h-\[550px\].*lg:min-h-\[540px\]/,
     );
     assert.match(homepageSource, /data-testid="mobile-homepage-hero"/);
     assert.match(homepageSource, /top-\[calc\(100%-3rem\)\] z-30 sm:hidden/);

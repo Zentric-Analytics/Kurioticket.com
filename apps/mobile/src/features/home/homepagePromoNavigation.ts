@@ -1,22 +1,14 @@
-import { addCalendarDays, localIsoDate } from "../flow/localDateModel";
+import { buildHotelExplorationSearch } from "../../../../../src/lib/hotels/hotelExplorationSearch";
 
 export const HOMEPAGE_HOTEL_PROMO_DEFAULTS = {
   destination: "Tokyo",
-  guests: "2",
-  rooms: "1",
-  sort: "cheapest",
 } as const;
 
-export function buildHomepageHotelPromoRoute(today = new Date()) {
-  const todayIso = localIsoDate(today);
-
+export function buildHomepageHotelPromoRoute(now = new Date()) {
+  const params = buildHotelExplorationSearch({ destination: HOMEPAGE_HOTEL_PROMO_DEFAULTS.destination, source: "home-promo", now });
   return {
     pathname: "/hotel-results" as const,
-    params: {
-      ...HOMEPAGE_HOTEL_PROMO_DEFAULTS,
-      checkIn: addCalendarDays(todayIso, 28),
-      checkOut: addCalendarDays(todayIso, 35),
-    },
+    params: params!,
   };
 }
 

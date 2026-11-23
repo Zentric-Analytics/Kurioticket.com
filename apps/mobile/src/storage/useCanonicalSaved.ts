@@ -1,2 +1,43 @@
-import { useCallback,useEffect,useState } from "react";import { useFocusEffect } from "expo-router";import { readSession } from "./sessionStorage";import { savedRepositoryFor,type SavedSnapshot } from "./savedRepository";
-export function useCanonicalSaved(){const[userId,setUserId]=useState<string|null>(null);const[value,setValue]=useState<SavedSnapshot>({destinationIds:new Set(),flights:new Map(),items:[],loading:true,error:""});const auth=useCallback(()=>{void readSession().then(s=>setUserId(s?.user.id??null));},[]);useFocusEffect(auth);useEffect(()=>{if(!userId)return;const repo=savedRepositoryFor(userId);setValue(repo.snapshot());const unsub=repo.subscribe(setValue);void repo.refresh();return unsub;},[userId]);return{...value,toggleHotel:async(h:import("../api/travelApi").HotelResult,params:Record<string,unknown>)=>{if(userId)await savedRepositoryFor(userId).toggleHotel(h,params);},remove:async(type:"flight"|"hotel"|"search",id:string)=>{if(!userId)return;await savedRepositoryFor(userId).remove(type,id);}};}
+import { useCallback, useEffect, useState } from "react";
+import { useAccountRefresh } from "./useAccountRefresh";
+import { readSession } from "./sessionStorage";
+import { savedRepositoryFor, type SavedSnapshot } from "./savedRepository";
+import { favoriteAction } from "./favoriteAccess";
+import { showFavoriteSignInPrompt } from "./favoriteSignInPrompt";
+
+const emptySnapshot = (): SavedSnapshot => ({ destinationIds: new Set(), flights: new Map(), cars: new Map(), pendingFlightKeys: new Set(), items: [], loading: true, error: "" });
+
+export function useCanonicalSaved() {
+  const [userId, setUserId] = useState<string | null>(null);
+  const [owned, setOwned] = useState<{ userId: string | null; value: SavedSnapshot }>({ userId: null, value: emptySnapshot() });
+  const auth = useCallback(() => { void readSession().then((session) => { const id = session?.user.id ?? null; setUserId(id); if (id) void savedRepositoryFor(id).refresh(); }).catch(() => setUserId(null)); }, []);
+  useAccountRefresh(auth, () => { setUserId(null); setOwned({ userId: null, value: emptySnapshot() }); });
+  useEffect(() => {
+    if (!userId) { setOwned({ userId: null, value: emptySnapshot() }); return; }
+    const repo = savedRepositoryFor(userId);
+    setOwned({ userId, value: repo.snapshot() });
+    const unsubscribe = repo.subscribe((value) => setOwned({ userId, value }));
+    void repo.refresh();
+    return unsubscribe;
+  }, [userId]);
+  const value = owned.userId === userId ? owned.value : emptySnapshot();
+  return {
+    ...value,
+    toggleHotel: async (hotel: import("../api/travelApi").HotelResult, params: Record<string, unknown>) => {
+      if (favoriteAction(userId) === "sign-in" || !userId) {
+        showFavoriteSignInPrompt("/saved");
+        return;
+      }
+      await savedRepositoryFor(userId).toggleHotel(hotel, params);
+    },
+    toggleCar: async (car: import("../api/travelApi").CarResult, params: Record<string, unknown>) => {
+      if (favoriteAction(userId) === "sign-in" || !userId) {
+        showFavoriteSignInPrompt("/saved");
+        return;
+      }
+      await savedRepositoryFor(userId).toggleCar(car, params);
+    },
+    remove: async (type: "flight" | "hotel" | "car" | "search", id: string) => { if (userId) await savedRepositoryFor(userId).remove(type, id); },
+    refresh: async () => { if (userId) await savedRepositoryFor(userId).refresh(); },
+  };
+}

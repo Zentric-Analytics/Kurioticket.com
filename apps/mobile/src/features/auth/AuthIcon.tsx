@@ -1,6 +1,6 @@
 import Svg, { Circle, Path, Polyline } from "react-native-svg";
 
-export type IconName = "mail" | "user" | "back" | "send" | "lock" | "eye" | "eyeOff" | "userPlus" | "shield" | "check";
+export type IconName = "mail" | "user" | "back" | "send" | "lock" | "eye" | "eyeOff" | "userPlus" | "shield" | "check" | "key";
 export function AuthIcon({ name, color = "#075BE8", size = 24 }: { name: IconName; color?: string; size?: number }) {
   const p: Record<IconName, React.ReactNode> = {
     mail: <><Path d="M3 5h18v14H3z" /><Polyline points="3,6 12,13 21,6" /></>,
@@ -13,6 +13,7 @@ export function AuthIcon({ name, color = "#075BE8", size = 24 }: { name: IconNam
     userPlus: <><Circle cx="9" cy="8" r="4" /><Path d="M2 21c.7-4 3-6 7-6 2.2 0 4 .6 5.2 1.8M18 8v6M15 11h6" /></>,
     shield: <><Path d="M12 2 20 5v6c0 5-3.2 9-8 11-4.8-2-8-6-8-11V5z" /><Polyline points="8,12 11,15 16,9" /></>,
     check: <Polyline points="5,12 10,17 20,7" />,
+    key: <><Circle cx="8" cy="15" r="4" /><Path d="m11 12 9-9M16 7l3 3M14 9l2 2" /></>,
   };
   return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" accessibilityElementsHidden>{p[name]}</Svg>;
 }

@@ -1,5 +1,5 @@
-import { translations as enTranslations } from "@/lib/i18n/en";
-import { resolveMarket } from "@/lib/market/resolveMarket";
+import { translations as enTranslations } from "../lib/i18n/en";
+import { resolveMarket } from "../lib/market/resolveMarket";
 
 import { validateDestinationImages } from "./destinationImageValidation";
 
@@ -777,8 +777,8 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
       routeNote: "Winter sun route with Pacific beaches and old-town charm.",
       priceFromUsd: 289,
       image:
-        "https://images.unsplash.com/photo-1665039400840-b6b2a5786fef?auto=format&fit=crop&w=1200&q=90",
-      imageAlt: "Puerto Vallarta coastline and old town",
+        "/images/staging-remediation/puerto-vallarta.webp",
+      imageAlt: "Puerto Vallarta coastline with ocean and greenery",
     },
     {
       id: "ca-yyz-hnl",
@@ -1210,7 +1210,7 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
         enTranslations["homeDiscoveryRoute.us-sea-hnl.routeNote"],
       priceFromUsd: 267,
       image:
-        "https://images.pexels.com/photos/161902/hawaii-beach-sand-ocean-161902.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        "/images/staging-remediation/honolulu.webp",
       imageAlt:
         "Sunny Oahu beach with palms and clear Pacific water near Honolulu",
     },
@@ -1239,8 +1239,8 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
         enTranslations["homeDiscoveryRoute.us-den-phx.routeNote"],
       priceFromUsd: 117,
       image:
-        "https://images.unsplash.com/photo-1675264671526-7fb10698431b?auto=format&fit=crop&w=1200&q=90",
-      imageAlt: "Downtown Phoenix skyline with Camelback Mountain",
+        "/images/staging-remediation/phoenix.webp",
+      imageAlt: "Modern Phoenix skyscraper framed by trees at sunset",
     },
     {
       id: "us-iad-bna",
@@ -1819,6 +1819,49 @@ homeDiscoveryByRegion.BR = [
 ];
 
 
+const retiredDiscoveryImages: Record<string, { image: string; alt: string }> = {
+  "DFW": {
+    "image": "/images/staging-remediation/dallas.webp",
+    "alt": "Downtown Dallas skyline beneath a dramatic sky"
+  },
+  "DXB": {
+    "image": "/images/staging-remediation/dubai.webp",
+    "alt": "Burj Khalifa over the Dubai skyline"
+  },
+  "LIS": {
+    "image": "/images/staging-remediation/lisbon.webp",
+    "alt": "Lisbon rooftops and greenery"
+  },
+  "MBA": {
+    "image": "/images/staging-remediation/mombasa.webp",
+    "alt": "Traditional dhow on Mombasa coastal waters at sunrise"
+  },
+  "ACC": {
+    "image": "/images/staging-remediation/accra.webp",
+    "alt": "Kwame Nkrumah Memorial Park in Accra"
+  },
+  "MAD": {
+    "image": "/images/staging-remediation/madrid.webp",
+    "alt": "Madrid skyline and Palacio de Cibeles"
+  },
+  "IST": {
+    "image": "/images/staging-remediation/istanbul.webp",
+    "alt": "Yeni Cami mosque on the Istanbul skyline"
+  },
+  "BKK": {
+    "image": "/images/staging-remediation/bangkok.webp",
+    "alt": "Bangkok temples and modern skyline"
+  },
+  "SJO": {
+    "image": "/images/staging-remediation/san-jose.webp",
+    "alt": "Colorful street corner in San José, Costa Rica"
+  },
+  "CDG": {
+    "image": "/images/premium/homepage/destinations/kurioticket-homepage-destination-paris-eiffel-tower-buildings-001.jpg",
+    "alt": "Eiffel Tower framed by Paris apartment buildings"
+  }
+};
+
 function appendHomeDiscoveryRoutes(regionCode: string, items: HomeDiscoveryItem[]) {
   const existingItems = homeDiscoveryByRegion[regionCode] ?? [];
 
@@ -1826,7 +1869,8 @@ function appendHomeDiscoveryRoutes(regionCode: string, items: HomeDiscoveryItem[
     ...existingItems,
     ...items.map((item, index) => ({
       ...item,
-      image: addImageSignature(item.image, existingItems.length + index),
+      image: addImageSignature(item.image, existingItems.length + index, item.destinationCode),
+      imageAlt: cardImagePhotoIds[(existingItems.length + index) % cardImagePhotoIds.length] === 7536261 ? retiredDiscoveryImages[item.destinationCode]?.alt ?? item.imageAlt : item.imageAlt,
     })),
   ];
 }
@@ -1840,8 +1884,13 @@ const cardImagePhotoIds = [
   2403209, 3361480, 3155666, 347141, 358457, 460376, 7536262,
 ] as const;
 
-function addImageSignature(_image: string, index: number) {
+function addImageSignature(image: string, index: number, destinationCode: string) {
   const photoId = cardImagePhotoIds[index % cardImagePhotoIds.length];
+  if (photoId === 7536261) {
+    const replacement = retiredDiscoveryImages[destinationCode];
+    if (!replacement) throw new Error("A destination-specific replacement image is required.");
+    return replacement.image;
+  }
 
   return `https://images.pexels.com/photos/${photoId}/pexels-photo-${photoId}.jpeg?auto=compress&cs=tinysrgb&w=1200`;
 }
@@ -2838,6 +2887,10 @@ function getHomeDiscoveryRouteKey(originCode: string, destinationCode: string) {
   if (origin === destination) return null;
 
   return `${origin}-${destination}`;
+}
+
+export function getHomeDiscoveryContentMarketCode(regionCode?: string | null) {
+  return getHomeDiscoveryResolvedSourceCode(normalizeHomeDiscoveryRegionCode(regionCode));
 }
 
 function getHomeDiscoveryResolvedSourceCode(normalizedRegionCode: string) {

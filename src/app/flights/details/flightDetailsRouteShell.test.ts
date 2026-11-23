@@ -1,0 +1,104 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+const pagePath = "src/app/flights/details/[id]/page.tsx";
+const clientPath = "src/components/results/FlightDetailsClient.tsx";
+const detailsPath =
+  "src/components/results/flightDetails/StandaloneFlightDetails.tsx";
+const loadingPath = "src/app/flights/details/[id]/loading.tsx";
+const loadingShellPath = "src/components/results/flightDetails/FlightDetailsLoadingShell.tsx";
+
+test("Flight Details route provides a truthful accessible loading boundary", async () => {
+  const [loadingSource, shellSource, pageSource] = await Promise.all([
+    readFile(loadingPath, "utf8"),
+    readFile(loadingShellPath, "utf8"),
+    readFile(pagePath, "utf8"),
+  ]);
+  assert.match(loadingSource, /<FlightDetailsLoadingShell \/>/);
+  assert.match(shellSource, /role="status"/);
+  assert.match(shellSource, /<span className="sr-only">Loading flight details<\/span>/);
+  assert.match(shellSource, /env\(safe-area-inset-(?:top|bottom)\)/);
+  assert.match(shellSource, /hidden[^\n]*sm:block/);
+  assert.doesNotMatch(shellSource, /\$\d|Duffel|Expedia|American Airlines/);
+  assert.match(pageSource, /<FlightDetailsClient id=\{id\} \/>/);
+});
+
+test("Flight Details keeps only its global header with desktop display ownership", async () => {
+  const source = await readFile(pagePath, "utf8");
+
+  assert.match(
+    source,
+    /<div className="hidden lg:block" data-flight-details-desktop-header>[\s\S]*?<AppHeader[\s\S]*?<\/div>/,
+  );
+  assert.doesNotMatch(source, /import\s+\{\s*Footer\s*\}/);
+  assert.doesNotMatch(source, /<Footer\b/);
+  assert.doesNotMatch(source, /data-flight-details-desktop-footer/);
+  assert.match(
+    source,
+    /data-flight-details-mobile-edge-to-edge[\s\S]*?<FlightDetailsClient id=\{id\} \/>[\s\S]*?<\/div>/,
+  );
+  assert.doesNotMatch(
+    source,
+    /pt-\[env\(safe-area-inset-top\)\]/,
+  );
+
+  assert.doesNotMatch(
+    source,
+    /(?:opacity-0|invisible|translate-|fixed|absolute|-left-|window\.innerWidth|matchMedia|navigator\.userAgent)/,
+  );
+  assert.doesNotMatch(source, /["']use client["']/);
+});
+
+test("Flight Details keeps page-owned results navigation for every details state", async () => {
+  const [clientSource, detailsSource] = await Promise.all([
+    readFile(clientPath, "utf8"),
+    readFile(detailsPath, "utf8"),
+  ]);
+
+  assert.match(clientSource, /const resultsQuery = searchParams\.toString\(\)/);
+  assert.match(
+    clientSource,
+    /resultsQuery \? `\/flights\/results\?\$\{resultsQuery\}` : "\/flights\/results"/,
+  );
+  assert.match(
+    clientSource,
+    /<StandaloneFlightDetails id=\{id\} resultsHref=\{resultsHref\} \/>/,
+  );
+  assert.match(detailsSource, /<FlightDetailsSkeleton resultsHref=\{resultsHref\} \/>/);
+  assert.match(
+    detailsSource,
+    /<FlightDetailsUnavailable resultsHref=\{resultsHref\} message=\{error\} \/>/,
+  );
+  assert.match(detailsSource, /href=\{resultsHref\}[\s\S]*?Back to results/);
+});
+
+test("mobile Flight Details keeps the hero edge-to-edge while controls own the safe area", async () => {
+  const [pageSource, detailsSource] = await Promise.all([
+    readFile(pagePath, "utf8"),
+    readFile(detailsPath, "utf8"),
+  ]);
+
+  assert.match(pageSource, /data-flight-details-mobile-edge-to-edge/);
+  assert.doesNotMatch(pageSource, /pt-\[env\(safe-area-inset-top\)\]/);
+  assert.doesNotMatch(pageSource, /data-flight-details-mobile-safe-area/);
+  assert.doesNotMatch(pageSource, /(?:h-|min-h-|pt-)\[(?:44|47|59|60|64|70)px\]/);
+
+  assert.match(detailsSource, /return \(\s*<main[\s\S]*?Back to results/);
+  assert.match(
+    detailsSource,
+    /if \(!response && !error\) return <FlightDetailsSkeleton resultsHref=\{resultsHref\} \/>/,
+  );
+  assert.match(
+    detailsSource,
+    /if \(!available \|\| !selectedOffer \|\| error && !response\) return <FlightDetailsUnavailable resultsHref=\{resultsHref\} message=\{error\} \/>/,
+  );
+  assert.match(
+    detailsSource,
+    /function FlightDetailsSkeleton[\s\S]*?Back to results/,
+  );
+  assert.match(
+    detailsSource,
+    /function FlightDetailsUnavailable[\s\S]*?Back to results/,
+  );
+});

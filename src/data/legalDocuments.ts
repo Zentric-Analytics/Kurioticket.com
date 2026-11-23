@@ -9,6 +9,7 @@ import {
 
 const lastUpdated = "May 11, 2026";
 const legalNoticeLastUpdated = "June 28, 2026";
+const presencePolicyLastUpdated = "November 19, 2026";
 
 const legalMonthNames: Record<string, string> = {
   "01": "January",
@@ -100,7 +101,7 @@ export const legalDocuments: LegalDocument[] = [
     slug: "privacy-policy",
     title: enTranslations["legal.privacy.title"],
     summary: enTranslations["legal.privacy.summary"],
-    lastUpdated,
+    lastUpdated: presencePolicyLastUpdated,
     sections: [
       {
         id: "data-we-collect",
@@ -108,6 +109,7 @@ export const legalDocuments: LegalDocument[] = [
         paragraphs: [
           enTranslations["legal.privacy.sections.data-we-collect.paragraph1"],
           enTranslations["legal.privacy.sections.data-we-collect.paragraph2"],
+          enTranslations["legal.privacy.sections.data-we-collect.paragraph3"],
         ],
       },
       {
@@ -132,14 +134,15 @@ export const legalDocuments: LegalDocument[] = [
     slug: "cookie-policy",
     title: "Cookie Policy",
     summary: "How Kurioticket uses cookies and similar technologies for authentication, security, preferences, analytics, and performance.",
-    lastUpdated,
+    lastUpdated: presencePolicyLastUpdated,
     sections: [
       {
         id: "use",
         title: "How Cookies Are Used",
         paragraphs: [
           "Kurioticket may use cookies for authentication sessions, security, fraud prevention, preference storage, analytics, performance monitoring, and feature experiments.",
-          "Some cookies are necessary for login, dashboard access, support tickets, saved travel features, security, and preferences.",
+          "Some cookies are necessary for login, dashboard access, support tickets, saved travel features, security, and preferences. A short-lived operational search credential may be used for requested search-to-provider continuity independently of optional analytics consent. Necessary search and handoff records may be retained separately from that credential for troubleshooting, support and security in accordance with our retention policy.",
+          enTranslations["legal.cookiePolicy.sections.use.paragraph3"],
         ],
       },
       {
@@ -154,7 +157,7 @@ export const legalDocuments: LegalDocument[] = [
         id: "controls",
         title: "Controls",
         paragraphs: [
-          "You can control cookies through your browser settings. Blocking necessary cookies may prevent login, dashboards, saved items, preferences, and support tools from working correctly.",
+          "Essential cookies support requested functionality and security. Optional analytics requires your choice and can be enabled or disabled in Cookie preferences, available from the website footer. Blocking essential cookies in the browser may prevent login, dashboards, saved items, preferences, and support tools from working correctly.",
         ],
       },
     ],

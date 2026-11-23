@@ -7,24 +7,20 @@ import {
   HOMEPAGE_HOTEL_PROMO_DEFAULTS,
 } from "./homepagePromoNavigation";
 
-test("hotel promo reproduces the website results defaults without visiting the form", () => {
-  assert.deepEqual(buildHomepageHotelPromoRoute(new Date(2026, 7, 6, 12)), {
+test("hotel promo creates a complete direct exploratory search", () => {
+  assert.deepEqual(buildHomepageHotelPromoRoute(new Date("2030-01-01T00:00:00Z")), {
     pathname: "/hotel-results",
     params: {
       destination: "Tokyo",
-      checkIn: "2026-09-03",
-      checkOut: "2026-09-10",
+      checkIn: "2030-01-29",
+      checkOut: "2030-02-05",
       guests: "2",
       rooms: "1",
       sort: "cheapest",
+      intentSource: "home-promo",
     },
   });
-  assert.deepEqual(HOMEPAGE_HOTEL_PROMO_DEFAULTS, {
-    destination: "Tokyo",
-    guests: "2",
-    rooms: "1",
-    sort: "cheapest",
-  });
+  assert.deepEqual(HOMEPAGE_HOTEL_PROMO_DEFAULTS, { destination: "Tokyo" });
 });
 
 test("flight promo follows the website /deals contract without inventing search values", () => {
@@ -38,11 +34,12 @@ test("promo-only defaults cannot leak into either normal product form", () => {
   assert.doesNotMatch(flights, /HOMEPAGE_(?:HOTEL|FLIGHT)_PROMO/);
 });
 
-test("both platforms share one promo implementation and existing results loading UI", () => {
+test("both platforms share one promo implementation and canonical results loading UI", () => {
   const promo = readFileSync("src/features/home/HomepageDealPromos.tsx", "utf8");
-  const results = readFileSync("src/features/flow/TravelResultsScreen.tsx", "utf8");
+  const results = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
+  const route = readFileSync("src/features/flow/TravelResultsScreen.tsx", "utf8");
   assert.doesNotMatch(promo, /Platform\.OS|android|ios/i);
   assert.match(results, /status === "loading"/);
-  assert.match(results, /<ActivityIndicator/);
-  assert.match(results, /onPress=\{\(\) => router\.back\(\)\}/);
+  assert.match(results, /<NativeBrandedSearchLoading/);
+  assert.doesNotMatch(route, /ActivityIndicator|LegacyTravelResultsScreen/);
 });

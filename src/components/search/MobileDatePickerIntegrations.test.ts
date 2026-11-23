@@ -27,12 +27,13 @@ test("mobile date dialogs expose only the shared Done footer", () => {
   );
   assert.match(dialog, /onCommit\(draftStart, rangeRequired \? draftEnd : ""\)/);
   assert.doesNotMatch(dialog, />\s*Clear\s*</);
-  assert.doesNotMatch(dialog, /ChevronLeft|ChevronRight|previousMonth|nextMonth/);
+  assert.match(dialog, /Array\.from\(\{ length: monthCount \}/);
+  assert.doesNotMatch(dialog, /Previous month|Next month/);
 });
 
 test("desktop calendar implementations remain available beside mobile dialogs", () => {
   assert.match(sources[0][1], /CarsRentalDatePickerContent/);
-  assert.match(sources[2][1], /desktopPopoverClassName/);
+  assert.match(sources[2][1], /<HotelDesktopPopover[\s\S]*preferredWidth=\{570\}/);
   assert.match(sources[3][1], /DealsFlightDatesPopover/);
   assert.match(sources[4][1], /sm:block/);
 });

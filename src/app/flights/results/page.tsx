@@ -1,21 +1,31 @@
+import { ResultsAvailabilityNotice } from "@/components/results/ResultsAvailabilityNotice";
 import { Suspense } from "react";
+import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { redirect } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/AppHeader";
-import { Footer } from "@/components/layout/Footer";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { LocalizedLoadingLabel } from "@/components/layout/LocalizedLoadingLabel";
 import { FlightResultsClient } from "@/components/results/FlightResultsClient";
 import { getTranslations } from "@/lib/i18n";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 import { parseFlightLegParams } from "@/lib/flights/flightSearchJourney";
+import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
+import { adaptKayakFlightSearch } from "@/services/travel/kayakSearchAdapter";
+import { flightSearchSchema } from "@/lib/validation";
+import { KayakSandboxResults } from "@/components/results/KayakSandboxResults";
+import { notFound } from "next/navigation";
 
 type FlightResultsSearchParams = Promise<
   Record<string, string | string[] | undefined>
 >;
 
-export async function generateMetadata() {
+export async function generateMetadata({ searchParams }: { searchParams: FlightResultsSearchParams }) {
+  if (getParamValue(await searchParams, "provider") === "kayak-sandbox") {
+    return { title: "KAYAK sandbox flight results", robots: { index: false, follow: false } };
+  }
   const cookieStore = await cookies();
   const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
 
@@ -116,6 +126,16 @@ export default async function FlightResultsPage({
 }) {
   const params = await searchParams;
 
+  if (getParamValue(params, "provider") === "kayak-sandbox") {
+    if (!isKayakSandboxEnabled()) notFound();
+    const values = Object.fromEntries(Object.entries(params).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value]));
+    const parsed = flightSearchSchema.safeParse(values);
+    const adapted = parsed.success ? adaptKayakFlightSearch(parsed.data) : null;
+    return <><AppHeader /><ResultsAvailabilityNotice />{adapted?.supported
+      ? <KayakSandboxResults key={JSON.stringify(adapted.search)} search={adapted.search} />
+      : <main className="page-shell py-6"><h1>KAYAK sandbox search unavailable</h1><p>{adapted && !adapted.supported ? adapted.reason : "Check the flight search details."}</p><Link href="/flights">Edit flight search</Link></main>}</>;
+  }
+
   if (!hasValidFlightSearchParams(params)) {
     redirect("/flights");
   }
@@ -129,40 +149,48 @@ export default async function FlightResultsPage({
         flushMobileBottom
         hideDesktopTravelNav
         hideMobileCategoryTabs
-      />
-      <Suspense
-        fallback={
-          <ResultsFallback
-            title={t["flightResults.loading.title"]}
-            description={t["flightResults.loading.checkingAirlinesAndFares"]}
+        hideMobileResultsNavbarDivider
+        hotelDesktopBoundary
+        flightResultsDesktopSticky
+        mobileResultsTrailingActions
+        mobileResultsSearch={
+          <div
+            data-flight-results-mobile-nav-summary
+            className="flex h-12 w-full min-w-0 overflow-visible rounded-xl bg-[#F5F7FB] empty:hidden"
           />
         }
-      >
-        <FlightResultsClient />
-      </Suspense>
-      <Footer />
-    </>
-  );
-}
-
-function ResultsFallback({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <main className="min-h-[100svh] bg-white">
-      <BrandedLoading
-        variant="fullscreen"
-        visual="logoPulse"
-        showProgress={false}
-        className="min-h-[100svh] bg-transparent px-5"
-        contentClassName="max-w-md text-center"
-        title={title}
-        description={description}
+        mobileResultsFilters={
+          <div
+            data-flight-results-mobile-nav-filters
+            className="w-full overflow-hidden bg-white empty:hidden"
+          />
+        }
       />
-    </main>
+      <ResultsAvailabilityNotice />
+      <Suspense
+        fallback={
+          <>
+            <main className="page-shell min-h-[calc(100svh-5rem)] flex-1 py-6 sm:hidden">
+              <div className="rounded-3xl border border-indigo-100 bg-white p-5 text-sm font-semibold text-violet-700 shadow-sm">
+                <LocalizedLoadingLabel labelKey="flightResults.loading.title" />
+              </div>
+            </main>
+            <main className="hidden min-h-[calc(100svh-5rem)] bg-white sm:block">
+              <BrandedLoading
+                variant="fullscreen"
+                visual="logoPulse"
+                showProgress={false}
+                className="min-h-[calc(100svh-5rem)] bg-transparent px-5"
+                contentClassName="max-w-md text-center"
+                title={t["flightResults.loading.title"]}
+                description={t["flightResults.loading.checkingAirlinesAndFares"]}
+              />
+            </main>
+          </>
+        }
+      >
+        <FlightResultsClient externalResultsHeader />
+      </Suspense>
+    </>
   );
 }

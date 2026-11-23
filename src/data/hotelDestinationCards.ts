@@ -1,59 +1,21 @@
 import { translations as enTranslations } from "@/lib/i18n/en";
+import {
+  primaryHotelDestinationCards,
+  type SharedHotelDestinationCard,
+} from "@/shared/presentation/travelEntryPresentation";
 
-export type HotelDestinationCard = {
-  title: string;
-  subtitle: string;
-  destinationQuery: string;
-  image: string;
-  imageAlt: string;
-  linkLabel: string;
-};
+export type HotelDestinationCard = SharedHotelDestinationCard;
 
 export const hotelsHeroImage =
   "/images/premium/hotels/kurioticket-hotels-hero-bellboy-guest-arrival-lobby-001.jpg";
 
 export const hotelDestinationCards: HotelDestinationCard[] = [
-  {
-    title: enTranslations["hotelDestination.Tokyo.title"],
-    subtitle: enTranslations["hotelDestination.Tokyo.subtitle"],
-    destinationQuery: "Tokyo",
-    image:
-      "https://images.pexels.com/photos/31344755/pexels-photo-31344755.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "Tokyo skyline with dense high-rise buildings in daylight",
-    linkLabel: enTranslations["hotelDestination.Tokyo.linkLabel"],
-  },
-  {
-    title: enTranslations["hotelDestination.London.title"],
-    subtitle: enTranslations["hotelDestination.London.subtitle"],
-    destinationQuery: "London",
-    image:
-      "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "Tower Bridge and the River Thames in London under a blue sky",
-    linkLabel: enTranslations["hotelDestination.London.linkLabel"],
-  },
-  {
-    title: enTranslations["hotelDestination.Paris.title"],
-    subtitle: enTranslations["hotelDestination.Paris.subtitle"],
-    destinationQuery: "Paris",
-    image:
-      "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "Eiffel Tower and the Seine River in Paris at golden hour",
-    linkLabel: enTranslations["hotelDestination.Paris.linkLabel"],
-  },
-  {
-    title: enTranslations["hotelDestination.New York.title"],
-    subtitle: enTranslations["hotelDestination.New York.subtitle"],
-    destinationQuery: "New York",
-    image:
-      "https://images.pexels.com/photos/11182439/pexels-photo-11182439.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt:
-      "New York City skyline with One World Trade Center and waterfront",
-    linkLabel: enTranslations["hotelDestination.New York.linkLabel"],
-  },
+  ...primaryHotelDestinationCards,
 ];
 
 export const moreHotelDestinationCards: HotelDestinationCard[] = [
   {
+    canonicalDestinationId: "it-rome",
     title: enTranslations["hotelDestination.Rome.title"],
     subtitle: enTranslations["hotelDestination.Rome.subtitle"],
     destinationQuery: "Rome",
@@ -63,6 +25,7 @@ export const moreHotelDestinationCards: HotelDestinationCard[] = [
     linkLabel: enTranslations["hotelDestination.Rome.linkLabel"],
   },
   {
+    canonicalDestinationId: "ae-dubai",
     title: enTranslations["hotelDestination.Dubai.title"],
     subtitle: enTranslations["hotelDestination.Dubai.subtitle"],
     destinationQuery: "Dubai",
@@ -72,6 +35,7 @@ export const moreHotelDestinationCards: HotelDestinationCard[] = [
     linkLabel: enTranslations["hotelDestination.Dubai.linkLabel"],
   },
   {
+    canonicalDestinationId: "sg-singapore",
     title: enTranslations["hotelDestination.Singapore.title"],
     subtitle: enTranslations["hotelDestination.Singapore.subtitle"],
     destinationQuery: "Singapore",
@@ -81,6 +45,7 @@ export const moreHotelDestinationCards: HotelDestinationCard[] = [
     linkLabel: enTranslations["hotelDestination.Singapore.linkLabel"],
   },
   {
+    canonicalDestinationId: "es-barcelona",
     title: enTranslations["hotelDestination.Barcelona.title"],
     subtitle: enTranslations["hotelDestination.Barcelona.subtitle"],
     destinationQuery: "Barcelona",
@@ -93,6 +58,7 @@ export const moreHotelDestinationCards: HotelDestinationCard[] = [
 
 export const globalHotelDestinationCards: HotelDestinationCard[] = [
   {
+    canonicalDestinationId: "ca-toronto",
     title: enTranslations["hotelDestination.Toronto.title"],
     subtitle: enTranslations["hotelDestination.Toronto.subtitle"],
     destinationQuery: "Toronto",
@@ -102,6 +68,7 @@ export const globalHotelDestinationCards: HotelDestinationCard[] = [
     linkLabel: enTranslations["hotelDestination.Toronto.linkLabel"],
   },
   {
+    canonicalDestinationId: "nl-amsterdam",
     title: enTranslations["hotelDestination.Amsterdam.title"],
     subtitle: enTranslations["hotelDestination.Amsterdam.subtitle"],
     destinationQuery: "Amsterdam",
@@ -111,6 +78,7 @@ export const globalHotelDestinationCards: HotelDestinationCard[] = [
     linkLabel: enTranslations["hotelDestination.Amsterdam.linkLabel"],
   },
   {
+    canonicalDestinationId: "th-bangkok",
     title: enTranslations["hotelDestination.Bangkok.title"],
     subtitle: enTranslations["hotelDestination.Bangkok.subtitle"],
     destinationQuery: "Bangkok",
@@ -120,6 +88,7 @@ export const globalHotelDestinationCards: HotelDestinationCard[] = [
     linkLabel: enTranslations["hotelDestination.Bangkok.linkLabel"],
   },
   {
+    canonicalDestinationId: "mx-cancun",
     title: enTranslations["hotelDestination.Cancun.title"],
     subtitle: enTranslations["hotelDestination.Cancun.subtitle"],
     destinationQuery: "Cancun",
@@ -129,6 +98,7 @@ export const globalHotelDestinationCards: HotelDestinationCard[] = [
     linkLabel: enTranslations["hotelDestination.Cancun.linkLabel"],
   },
   {
+    canonicalDestinationId: "tr-istanbul",
     title: enTranslations["hotelDestination.Istanbul.title"],
     subtitle: enTranslations["hotelDestination.Istanbul.subtitle"],
     destinationQuery: "Istanbul",

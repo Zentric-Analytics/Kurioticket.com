@@ -27,6 +27,7 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
+import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
 import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
@@ -38,10 +39,10 @@ import {
   flightSearchFieldShellClassName,
   flightSearchFieldValueButtonClassName,
 } from "@/components/search/FlightSearchFieldPrimitives";
+import { formatTravelDateDisplay, formatTravelDateRangeDisplay } from "@/lib/dateFormatting/travelDateDisplay";
 import type { FlightSearchLeg } from "@/lib/types";
 import { appendFlightLegParams, parseFlightLegParams } from "@/lib/flights/flightSearchJourney";
 import {
-  formatFlightsDateSummary,
   formatFlightsMonthHeading,
   formatFlightsWeekdays,
   normalizeFlightsCalendarLocale,
@@ -50,6 +51,7 @@ import { Button } from "@/components/ui/Button";
 import {
   type AirportOption,
   formatAirportLabel,
+  getAirportByCode,
   getLocalizedAirportCountryName,
   getLocalizedCityName,
 } from "@/data/airports";
@@ -130,6 +132,36 @@ const normalizeCabinClass = (value: string): CabinClass => {
   return "economy";
 };
 
+const parseTravelerCount = (
+  value: string | null,
+  fallback: number,
+  min: number,
+  max: number,
+) => {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed)) return fallback;
+  return Math.min(max, Math.max(min, parsed));
+};
+
+const restoredTravelerCabinState = (params: URLSearchParams) => {
+  const adults = parseTravelerCount(params.get("adults"), 1, 1, 9);
+  const children = parseTravelerCount(
+    params.get("children"),
+    0,
+    0,
+    Math.max(0, 9 - adults),
+  );
+  const infants = parseTravelerCount(
+    params.get("infants"),
+    0,
+    0,
+    Math.max(0, Math.min(adults, 9 - adults - children)),
+  );
+  const cabinClass = normalizeCabinClass(params.get("cabinClass") ?? "economy");
+
+  return { adults, children, infants, cabinClass };
+};
+
 const parseIsoDate = (value: string) => {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
   const [year, month, day] = value.split("-").map(Number);
@@ -182,7 +214,7 @@ const buildMonthCells = (monthDate: Date) => {
 type StandaloneFlightSearchFormProps = {
   localizeCalendarLabels?: boolean;
   mobileHeroCard?: boolean;
-  presentation?: "default" | "main-flight-landing";
+  presentation?: "default" | "main-flight-landing" | "homepage-embedded";
 };
 
 export function StandaloneFlightSearchForm({
@@ -234,6 +266,8 @@ export function StandaloneFlightSearchForm({
   const { start: startRouteProgress } = useRouteProgress();
   const useMainFlightLandingMobilePresentation =
     presentation === "main-flight-landing";
+  const useHomepageEmbeddedPresentation =
+    presentation === "homepage-embedded";
   const defaultTripTypeOptions = [
     ["round-trip", t("roundTrip")],
     ["one-way", t("oneWay")],
@@ -275,6 +309,14 @@ export function StandaloneFlightSearchForm({
   const originCode = originState.code;
   const [destination, setDestination] = useState("");
   const [destinationCode, setDestinationCode] = useState("");
+  const desktopOriginLabel = useMemo(() => {
+    const airport = getAirportByCode(originCode);
+    return airport ? formatAirportLabel(airport, locale) : origin;
+  }, [locale, origin, originCode]);
+  const desktopDestinationLabel = useMemo(() => {
+    const airport = getAirportByCode(destinationCode);
+    return airport ? formatAirportLabel(airport, locale) : destination;
+  }, [destination, destinationCode, locale]);
   const [originOpen, setOriginOpen] = useState(false);
   const [destinationOpen, setDestinationOpen] = useState(false);
   const [activeMobilePicker, setActiveMobilePicker] =
@@ -305,16 +347,7 @@ export function StandaloneFlightSearchForm({
   const [multiCityAirportsValid, setMultiCityAirportsValid] = useState(false);
   /* URL restoration intentionally synchronizes client state after the server
      render, where the browser query string is not available. */
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("tripType") !== "multi-city") return;
-    const restored = parseFlightLegParams(params);
-    if (restored.length < 2) return;
-    setTripType("multi-city");
-    setMultiCityLegs(restored);
-  }, []);
-  /* eslint-enable react-hooks/set-state-in-effect */
+
   const [datesOpen, setDatesOpen] = useState(false);
   const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
     const now = new Date();
@@ -328,6 +361,27 @@ export function StandaloneFlightSearchForm({
   const [draftInfantCount, setDraftInfantCount] = useState(0);
   const [cabinClass, setCabinClass] = useState<CabinClass>("economy");
   const [draftCabinClass, setDraftCabinClass] = useState<CabinClass>("economy");
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tripType") !== "multi-city") return;
+    const restored = parseFlightLegParams(params);
+    if (restored.length < 2) return;
+
+    const restoredTravelers = restoredTravelerCabinState(params);
+
+    setTripType("multi-city");
+    setMultiCityLegs(restored);
+    setAdultCount(restoredTravelers.adults);
+    setChildCount(restoredTravelers.children);
+    setInfantCount(restoredTravelers.infants);
+    setDraftAdultCount(restoredTravelers.adults);
+    setDraftChildCount(restoredTravelers.children);
+    setDraftInfantCount(restoredTravelers.infants);
+    setCabinClass(restoredTravelers.cabinClass);
+    setDraftCabinClass(restoredTravelers.cabinClass);
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
   const [travelersOpen, setTravelersOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [homeAirportDefaultResolved, setHomeAirportDefaultResolved] =
@@ -369,18 +423,11 @@ export function StandaloneFlightSearchForm({
     : !origin.trim() || !destination.trim() || !isValidFlightDate(departureDate) || !isReturnRangeValid);
 
   const dateSummary = useMemo(() => {
-    const departureSummary = departureParsed
-      ? formatFlightsDateSummary(departureParsed, null, calendarLocale)
-      : "";
-    const returnSummary = returnParsed
-      ? formatFlightsDateSummary(returnParsed, null, calendarLocale)
-      : "";
-
-    if (!departureSummary) return t("travelDates");
-    if (tripType === "round-trip" && returnSummary)
-      return `${departureSummary} — ${returnSummary}`;
-    return departureSummary;
-  }, [calendarLocale, departureParsed, returnParsed, tripType, t]);
+    const summary = tripType === "round-trip"
+      ? formatTravelDateRangeDisplay(departureDate, returnDate, calendarLocale)
+      : formatTravelDateDisplay(departureDate, calendarLocale);
+    return summary ?? t("travelDates");
+  }, [calendarLocale, departureDate, returnDate, tripType, t]);
 
   const cabinClassLabel =
     cabinClass === "business"
@@ -1434,8 +1481,12 @@ export function StandaloneFlightSearchForm({
     <section
       ref={standaloneFormCardRef}
       className={cn(
-        "relative isolate z-[120] rounded-2xl border border-white/70 bg-white/92 p-3 shadow-[0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-slate-950/[0.05] backdrop-blur-xl sm:rounded-[1.5rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_16px_38px_rgba(15,23,42,0.10)] sm:backdrop-blur-none",
+        "relative isolate z-[120]",
+        useHomepageEmbeddedPresentation
+          ? "border-0 bg-transparent p-0 shadow-none ring-0 backdrop-blur-none sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
+          : "rounded-2xl border border-white/70 bg-white/92 p-3 shadow-[0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-slate-950/[0.05] backdrop-blur-xl sm:rounded-[1.5rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_16px_38px_rgba(15,23,42,0.10)] sm:backdrop-blur-none",
         mobileHeroCard &&
+          !useHomepageEmbeddedPresentation &&
           "border-white/85 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.38)] ring-slate-950/[0.06] sm:p-4",
       )}
     >
@@ -1456,7 +1507,8 @@ export function StandaloneFlightSearchForm({
           </div>
         ) : null}
 
-        {!useMainFlightLandingMobilePresentation ? (
+        {!useMainFlightLandingMobilePresentation &&
+        !useHomepageEmbeddedPresentation ? (
           <div
             className="hidden w-fit items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3 py-2 shadow-sm ring-1 ring-[#004BB8]/10 sm:flex"
             data-testid="desktop-flight-landing-identity"
@@ -1553,22 +1605,39 @@ export function StandaloneFlightSearchForm({
           ))}
         </div>
 
-        {tripType === "multi-city" ? <MultiCityFlightEditor legs={multiCityLegs} onChange={setMultiCityLegs} minimumDate={toIsoDate(todayLocal)} onAirportValidityChange={setMultiCityAirportsValid} /> : null}
+        {tripType === "multi-city" ? (
+          <MultiCityFlightEditor
+            legs={multiCityLegs}
+            onChange={setMultiCityLegs}
+            minimumDate={toIsoDate(todayLocal)}
+            presentation="landing"
+            onAirportValidityChange={setMultiCityAirportsValid}
+          />
+        ) : null}
 
-        <div className={cn("grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 lg:items-stretch lg:gap-0", tripType === "multi-city" ? "mt-3 sm:grid-cols-[minmax(164px,1fr)_136px]" : "lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px]")}>
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 lg:items-stretch lg:gap-0",
+            tripType === "multi-city"
+              ? "mt-3 sm:grid-cols-[minmax(164px,1fr)_136px] lg:grid-cols-[minmax(0,4.55fr)_minmax(164px,1.05fr)_136px] lg:overflow-visible lg:rounded-none lg:ring-0"
+              : "lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px]",
+          )}
+        >
           <div className={cn("grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 lg:bg-transparent", tripType === "multi-city" && "hidden")}>
             <FlightAirportFieldControl
               ref={originWrapRef}
               inputRef={originInputRef}
               label={t("origin")}
               value={origin}
+              desktopValue={desktopOriginLabel}
+              showDesktopSecondary={false}
               placeholder={t("cityOrAirport")}
               mobilePlaceholder={t("cityOrAirport")}
               useMainFlightLandingMobilePresentation={
                 useMainFlightLandingMobilePresentation
               }
               open={originOpen || activeMobilePicker === "origin"}
-              onMobileOpen={() => setActiveMobilePicker("origin")}
+              onMobileOpen={() => openMobilePickerWithKeyboard(() => setActiveMobilePicker("origin"), "standalone-flight-origin-mobile-search")}
               onDesktopFocus={openOriginDesktopPopover}
               onChange={(nextValue) => {
                 openOriginDesktopPopover();
@@ -1608,13 +1677,15 @@ export function StandaloneFlightSearchForm({
               inputRef={destinationInputRef}
               label={t("destination")}
               value={destination}
+              desktopValue={desktopDestinationLabel}
+              showDesktopSecondary={false}
               placeholder={t("cityOrAirport")}
               mobilePlaceholder={t("flightSearchDestinationPlaceholderShort")}
               useMainFlightLandingMobilePresentation={
                 useMainFlightLandingMobilePresentation
               }
               open={destinationOpen || activeMobilePicker === "destination"}
-              onMobileOpen={() => setActiveMobilePicker("destination")}
+              onMobileOpen={() => openMobilePickerWithKeyboard(() => setActiveMobilePicker("destination"), "standalone-flight-destination-mobile-search")}
               onDesktopFocus={openDestinationDesktopPopover}
               onChange={(nextValue) => {
                 openDestinationDesktopPopover();
@@ -1709,11 +1780,17 @@ export function StandaloneFlightSearchForm({
             ) : null}
           </div>
 
+          {tripType === "multi-city" ? (
+            <div aria-hidden="true" className="hidden lg:block" />
+          ) : null}
+
           <div
             ref={travelersWrapRef}
             className={cn(
               searchFieldShellClassName,
               travelersOpen && "sm:z-20",
+              tripType === "multi-city" &&
+                "lg:rounded-s-2xl lg:border lg:border-e-0 lg:border-slate-200 lg:bg-white",
             )}
           >
             <label className={searchFieldLabelClassName}>
@@ -1836,7 +1913,7 @@ export function StandaloneFlightSearchForm({
             titleId="standalone-flight-mobile-travelers-title"
             launcherRef={travelersLauncherRef}
             onClose={closeTravelersMobilePicker}
-            contentClassName="bg-[#fcfdfe] px-4 py-6"
+            contentClassName="bg-[#fcfdfe] px-4 py-4"
             headerVariant="close"
             pickerMarker="traveler-cabin"
             footer={(requestClose) => (
@@ -1847,7 +1924,7 @@ export function StandaloneFlightSearchForm({
                     applyTravelersDraft(false);
                     requestClose();
                   }}
-                  className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[17px] font-bold text-white"
+                  className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-semibold text-white"
                 >
                   {t("done")}
                 </button>
@@ -1857,8 +1934,7 @@ export function StandaloneFlightSearchForm({
             <MobileTravelerCabinPicker
               adults={draftAdultCount}
               // Traveler count is a domain prop, not React's nested-content API.
-              // eslint-disable-next-line react/no-children-prop
-              children={draftChildCount}
+              childCount={draftChildCount}
               infants={draftInfantCount}
               cabinClass={draftCabinClass}
               strings={{

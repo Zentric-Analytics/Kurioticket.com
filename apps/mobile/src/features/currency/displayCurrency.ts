@@ -1,10 +1,36 @@
 import { supportedRegions } from "../../../../../src/lib/region/supportedRegions";
+import { supportedCurrencies } from "../../config/supportedCurrencies";
 
 export type ExchangeRates = Record<string, number>;
+
+const canonicalCurrencySymbols: Readonly<Record<string, string>> = {
+  NGN: "₦",
+  USD: "$",
+  CAD: "$",
+  AUD: "$",
+  GBP: "£",
+  EUR: "€",
+  CNY: "¥",
+  EGP: "£",
+  GHS: "₵",
+  HKD: "$",
+  MXN: "$",
+  NZD: "$",
+  SGD: "$",
+};
 
 const regionCurrency = new Map(
   supportedRegions.map(({ code, currency }) => [code.toUpperCase(), currency]),
 );
+const marketCurrencySymbols = new Map(
+  supportedCurrencies.flatMap(({ code, symbol }) => symbol ? [[code.toUpperCase(), symbol] as const] : []),
+);
+
+// Keep aligned with src/lib/currency/formatCurrency.ts for Hotel web/native precision parity.
+const hotelZeroDecimalCurrencies = new Set([
+  "BIF", "CLP", "COP", "DJF", "GNF", "HUF", "IDR", "ISK", "JPY", "KMF", "KPW",
+  "KRW", "MGA", "PYG", "RWF", "UGX", "VND", "VUV", "XAF", "XOF", "XPF",
+]);
 
 export function currencyForCountry(countryCode?: string | null) {
   return countryCode ? regionCurrency.get(countryCode.trim().toUpperCase()) ?? null : null;
@@ -72,6 +98,7 @@ export type DisplayPrice = {
   amount: number;
   currency: string;
   formatted: string;
+  accessibilityLabel: string;
   providerAmount: number;
   providerCurrency: string;
   converted: boolean;
@@ -107,12 +134,154 @@ export function convertAmount(
 }
 
 export function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: currency.toUpperCase(),
-    currencyDisplay: "narrowSymbol",
-    maximumFractionDigits: 0,
-  }).format(amount);
+  const normalizedCurrency = currency.toUpperCase();
+  const number = formatCurrencyNumber(amount);
+  const sign = amount < 0 ? "-" : "";
+  const symbol = canonicalCurrencySymbols[normalizedCurrency]
+    ?? resolveIntlCurrencySymbol(normalizedCurrency);
+
+  return symbol
+    ? `${sign}${symbol}${number}`
+    : `${sign}${number} ${normalizedCurrency}`;
+}
+
+function formatCurrencyNumber(amount: number) {
+  try {
+    return new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 0,
+    }).format(Math.abs(amount));
+  } catch {
+    return Number.isFinite(amount) ? Math.round(Math.abs(amount)).toString() : String(Math.abs(amount));
+  }
+}
+
+function hotelMarketFractionDigits(currency: string) {
+  return hotelZeroDecimalCurrencies.has(currency.toUpperCase()) ? 0 : 2;
+}
+
+function formatMarketCurrencyNumber(amount: number, currency: string) {
+  const fractionDigits = hotelMarketFractionDigits(currency);
+  try {
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(Math.abs(amount));
+  } catch {
+    return Number.isFinite(amount)
+      ? Math.abs(amount).toFixed(fractionDigits)
+      : String(Math.abs(amount));
+  }
+}
+
+function resolveIntlCurrencySymbol(currency: string) {
+  try {
+    const formatter = new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+      currencyDisplay: "narrowSymbol",
+      maximumFractionDigits: 0,
+    });
+    const formatToParts = formatter.formatToParts;
+    if (typeof formatToParts !== "function") return null;
+
+    try {
+      const parts = formatToParts.call(formatter, 0);
+      if (!Array.isArray(parts)) return null;
+      const currencyToken = parts.find(({ type }) => type === "currency")?.value?.trim();
+      const hasNumericPart = parts.some(({ type }) => type === "integer" || type === "fraction");
+      if (!currencyToken || !hasNumericPart) return null;
+      if (currencyToken.includes("$")) return "$";
+      return /[A-Za-z]/.test(currencyToken) ? null : currencyToken;
+    } catch {
+      // Some Hermes versions expose formatToParts but cannot execute it.
+      return null;
+    }
+  } catch {
+    return null;
+  }
+}
+
+/** A conventional, market-distinct symbol for Hotel price presentation. */
+export function currencyMarketSymbol(currency: string) {
+  const normalizedCurrency = currency.trim().toUpperCase();
+  const intlSymbol = resolveIntlMarketCurrencySymbol(normalizedCurrency);
+  if (intlSymbol && intlSymbol.toUpperCase() !== normalizedCurrency) return intlSymbol;
+  return canonicalCurrencySymbols[normalizedCurrency]
+    ?? marketCurrencySymbols.get(normalizedCurrency)
+    ?? null;
+}
+
+function resolveIntlMarketCurrencySymbol(currency: string) {
+  try {
+    const formatter = new Intl.NumberFormat(undefined, {
+      style: "currency", currency, currencyDisplay: "narrowSymbol", maximumFractionDigits: 0,
+    });
+    if (typeof formatter.formatToParts !== "function") return null;
+    try {
+      const parts = formatter.formatToParts(0);
+      if (!Array.isArray(parts) || !parts.some(({ type }) => type === "integer" || type === "fraction")) return null;
+      return parts.find(({ type }) => type === "currency")?.value?.trim() || null;
+    } catch {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+}
+
+export function formatMarketCurrency(amount: number, currency: string) {
+  const normalizedCurrency = currency.trim().toUpperCase();
+  const symbol = currencyMarketSymbol(normalizedCurrency);
+  const sign = amount < 0 ? "-" : "";
+  return symbol
+    ? `${sign}${symbol}${formatMarketCurrencyNumber(amount, normalizedCurrency)}`
+    : `${sign}${formatMarketCurrencyNumber(amount, normalizedCurrency)} ${normalizedCurrency}`;
+}
+
+export function displayMarketPrice(
+  amount: number,
+  providerCurrency: string,
+  displayCurrency: string,
+  rates: ExchangeRates,
+): DisplayPrice {
+  const price = displayPrice(amount, providerCurrency, displayCurrency, rates);
+  return {
+    ...price,
+    formatted: formatMarketCurrency(price.amount, price.currency),
+    accessibilityLabel: hotelMarketCurrencyAccessibilityLabel(price.amount, price.currency),
+  };
+}
+
+function hotelMarketCurrencyAccessibilityLabel(amount: number, currency: string) {
+  const normalizedCurrency = currency.toUpperCase();
+  const fractionDigits = hotelMarketFractionDigits(normalizedCurrency);
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: normalizedCurrency,
+      currencyDisplay: "name",
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(amount);
+  } catch {
+    const readableAmount = Number.isFinite(amount) ? amount.toFixed(fractionDigits) : String(amount);
+    return `${readableAmount} ${normalizedCurrency}`;
+  }
+}
+
+export function currencyAccessibilityLabel(amount: number, currency: string) {
+  const normalizedCurrency = currency.toUpperCase();
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: normalizedCurrency,
+      currencyDisplay: "name",
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    const readableAmount = Number.isFinite(amount) ? Math.round(amount).toString() : String(amount);
+    return `${readableAmount} ${normalizedCurrency}`;
+  }
 }
 
 export function displayPrice(
@@ -130,6 +299,7 @@ export function displayPrice(
     amount: displayedAmount,
     currency,
     formatted: formatCurrency(displayedAmount, currency),
+    accessibilityLabel: currencyAccessibilityLabel(displayedAmount, currency),
     providerAmount: amount,
     providerCurrency: provider,
     converted,

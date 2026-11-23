@@ -1,134 +1,88 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-
+import { redirect } from "next/navigation";
+import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
+import { AdminOverviewDashboard, AdminOverviewSecondary, SearchPerformanceSummary } from "@/components/admin/AdminOverviewDashboard";
 import {
-  AdminActivityList,
-  AdminEmptyState,
-  AdminMetricCard,
-  AdminPageShell,
-  AdminProviderStatusCard,
-  AdminSectionCard,
-  AdminStatusBadge,
-} from "@/components/admin/AdminPageShell";
-import { adminNavigation } from "@/lib/adminNavigation";
-import {
-  getAdminMetrics,
-  getProviderStatuses,
-  getRecentAdminActivity,
-  getSafeSystemStatus,
-  getSearchHealth,
-} from "@/lib/admin-data";
+  AdminOverviewAutoRefresh,
+  AdminOverviewRangeSelect,
+  AdminOverviewRangeSensitive,
+  AdminOverviewRangeTransitionProvider,
+} from "@/components/admin/AdminOverviewControls";
+import { PlatformOverviewSummary } from "@/components/admin/PlatformOverviewSummary";
+import { requireAdminApiSession } from "@/lib/admin";
+import { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
+import { resolveOverviewRange } from "@/lib/adminOverviewRange";
+import { requireAdminSession } from "@/lib/auth-guards";
+import { getAdminOverview } from "@/services/adminOverviewService";
+import { getAdminAlertSnapshot } from "@/services/adminAlertService";
+import { readPlatformSearchActivity } from "@/services/platformOperationsService";
 
 export const metadata = { title: "Admin" };
 
-export default async function AdminPage() {
-  const [metrics, providers, system, searchHealth, activity] = await Promise.all([
-    getAdminMetrics(),
-    getProviderStatuses(),
+type PageProps = { searchParams?: Promise<{ range?: string | string[]; from?: string | string[]; to?: string | string[] }> };
+
+export default async function AdminPage({ searchParams }: PageProps) {
+  await requireAdminSession("/admin");
+  const access = await requireAdminApiSession();
+  if ("response" in access && access.response) redirect("/dashboard");
+
+  const reporting = resolveOverviewRange(await searchParams);
+  const query = new URLSearchParams({ from: reporting.from.toISOString(), to: reporting.to.toISOString() });
+  const [overview, system, activity, platform, incidents] = await Promise.all([
+    getAdminOverview(query),
     getSafeSystemStatus(),
-    getSearchHealth(),
     getRecentAdminActivity(),
+    readPlatformSearchActivity(reporting.from, reporting.to),
+    getAdminAlertSnapshot(undefined, new Date(), { forceRefreshCandidates: false }).catch(() => null),
   ]);
 
-  const modules = adminNavigation.filter((item) =>
-    ["/admin/users", "/admin/providers", "/admin/searches", "/admin/content", "/admin/support", "/admin/logs", "/admin/system", "/admin/settings"].includes(item.href),
-  );
-
   return (
-    <AdminPageShell
-      title="Operations Dashboard"
-      description="Manage Kurioticket operations, users, provider health, searches, support, and audit logs."
-    >
-      <section>
-        <h2 className="text-lg font-black text-slate-950">Operations Snapshot</h2>
-        <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-          <AdminMetricCard label="Total users" value={metrics.totalUsers} />
-          <AdminMetricCard label="Active users" value={metrics.activeUsers} tone="good" />
-          <AdminMetricCard label="Suspended users" value={metrics.suspendedUsers} tone="warn" />
-          <AdminMetricCard label="Admin users" value={metrics.adminUsers} tone="info" />
-          <AdminMetricCard label="Recent searches" value={metrics.recentSearches} hint="Last 7 days" />
-          <AdminMetricCard label="Recent admin actions" value={metrics.recentAdminActions} hint="Last 7 days" />
-        </div>
-      </section>
-
-      <section className="mt-8">
-        <h2 className="text-lg font-black text-slate-950">Provider Readiness</h2>
-        <div className="mt-3 grid gap-4 xl:grid-cols-3">
-          {providers.map((provider) => <AdminProviderStatusCard key={provider.product} {...provider} />)}
-        </div>
-      </section>
-
-      <section className="mt-8 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <div>
-          <h2 className="text-lg font-black text-slate-950">Search Health</h2>
-          <div className="mt-3">
-            {searchHealth.hasLogs ? (
-              <AdminSectionCard className="p-5">
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <AdminMetricCard label="Total recent searches" value={searchHealth.totalRecentSearches} />
-                  <AdminMetricCard label="No-result searches" value={searchHealth.noResultSearches} tone="warn" />
-                  <AdminMetricCard label="Failed searches" value={searchHealth.failedSearches} tone="bad" />
-                </div>
-                <div className="mt-5">
-                  <p className="text-sm font-black text-slate-950">Top products searched</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {searchHealth.topProducts.map((product) => (
-                      <AdminStatusBadge key={product.label} tone="info">{product.label}: {product.count}</AdminStatusBadge>
-                    ))}
-                  </div>
-                </div>
-              </AdminSectionCard>
+    <AdminPageShell title="Operations Dashboard" hideHeader>
+      <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
+        <AdminOverviewRangeTransitionProvider period={reporting.period}>
+          <AdminOverviewAutoRefresh />
+          <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+            <span className="self-start rounded-md bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-700">
+              {platform.environment === "staging" ? "Staging" : "Production"}
+            </span>
+            <div className="ml-auto min-w-0">
+              <AdminOverviewRangeSelect period={reporting.period} nowDate={reporting.today} />
+            </div>
+          </div>
+          {reporting.invalidCustom ? (
+            <p role="alert" className="mb-3 text-xs text-rose-800">
+              Choose valid UTC dates within a 90-day range. Showing today (UTC).
+            </p>
+          ) : null}
+          <div className="mb-3 grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
+            <AdminOverviewRangeSensitive fill>
+              <PlatformOverviewSummary data={platform} />
+            </AdminOverviewRangeSensitive>
+            {overview.status === "ok" ? (
+              <AdminOverviewRangeSensitive fill>
+                <SearchPerformanceSummary data={overview.data} />
+              </AdminOverviewRangeSensitive>
             ) : (
-              <AdminEmptyState title="Search analytics unavailable" message="Search analytics will appear after search logging records real user searches. No search counts are mocked." />
+              <section role="status" className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
+                <h2 className="text-[15px] font-semibold text-slate-950">Search Performance</h2>
+                <p className="mt-2 text-sm text-slate-600">Search performance is unavailable.</p>
+              </section>
             )}
           </div>
-        </div>
-
-        <div>
-          <h2 className="text-lg font-black text-slate-950">Platform Health</h2>
-          <AdminSectionCard className="mt-3 p-5">
-            <div className="grid gap-3">
-              <HealthRow label="Database" ok={system.databaseConnected} fallback={system.databaseConfigured ? "Configured, not connected" : "Not configured"} />
-              <HealthRow label="Auth/session" ok={system.authConfigured && system.sessionConfigured} fallback="Not fully configured" />
-              <HealthRow label="Email / Resend" ok={system.emailConfigured} fallback="Unavailable" />
-              <HealthRow label="Provider credentials" ok={system.providerCredentialsPresent} fallback="Not present" />
-            </div>
-          </AdminSectionCard>
-        </div>
-      </section>
-
-      <section className="mt-8 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-        <div>
-          <h2 className="text-lg font-black text-slate-950">Admin Activity</h2>
-          <div className="mt-3"><AdminActivityList items={activity} /></div>
-        </div>
-        <div>
-          <h2 className="text-lg font-black text-slate-950">Admin Modules</h2>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {modules.map((module) => (
-              <Link key={module.href} href={module.href} className="group rounded-2xl focus-ring">
-                <AdminSectionCard className="h-full p-4 transition group-hover:border-indigo-200 group-hover:shadow-md">
-                  <div className="flex items-start justify-between gap-3">
-                    <module.icon className="text-indigo-700" size={20} />
-                    <ArrowRight className="text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-indigo-700" size={16} />
-                  </div>
-                  <p className="mt-3 font-black text-slate-950">{module.label}</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">Open {module.label.toLowerCase()} operations.</p>
-                </AdminSectionCard>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+          {overview.status === "ok" ? (
+            <AdminOverviewDashboard data={overview.data} system={system} activity={activity} incidents={incidents} />
+          ) : (
+            <>
+              <section role="status" className="border-b border-slate-200/90 py-5">
+                <h2 className="text-base font-bold text-slate-950">Operational summary unavailable</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  The canonical admin overview could not be loaded. No fallback or mocked operational totals are shown.
+                </p>
+              </section>
+              <AdminOverviewSecondary system={system} activity={activity} />
+            </>
+          )}
+        </AdminOverviewRangeTransitionProvider>
+      </AdminSectionCard>
     </AdminPageShell>
-  );
-}
-
-function HealthRow({ label, ok, fallback }: { label: string; ok: boolean; fallback: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3 text-sm">
-      <span className="font-semibold text-slate-600">{label}</span>
-      <AdminStatusBadge tone={ok ? "good" : "neutral"}>{ok ? "Available" : fallback}</AdminStatusBadge>
-    </div>
   );
 }

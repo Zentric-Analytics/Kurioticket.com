@@ -397,8 +397,8 @@ test("responsive calculations support narrow phones and tab clearance", () => {
 test("Explore discovery ends at the final card without duplicating tab-bar clearance", () => {
   const source = screen();
   assert.doesNotMatch(source, /EXPLORE_BOTTOM_SPACING|bottomPadding/);
-  assert.match(source, /contentContainerStyle={s\.discoveryContent}/);
-  assert.doesNotMatch(source, /discoveryContent[^\n]*paddingBottom/);
+  assert.match(source, /contentContainerStyle=\{\[s\.discoveryContent, \{ paddingBottom: trailingSpace \}\]\}/);
+  assert.match(source, /listTrailingSpace = toggleHeight \+ VIEW_TOGGLE_BOTTOM \+ VIEW_TOGGLE_CLEARANCE/);
   assert.match(source, /index === REGION_DISCOVERY\.length - 1 && s\.finalRegionSection/);
   assert.match(source, /finalRegionSection: \{ marginBottom: 0 \}/);
   assert.doesNotMatch(source, /ListFooterComponent|exploreBottomPadding\(65, insets\.bottom\)/);
@@ -443,13 +443,15 @@ test("Explore defaults to deterministic region discovery instead of Popular", ()
 
 test("region preview geometry matches the wide Kayak carousel proportions responsively", () => {
   const source = screen();
-  assert.match(source, /REGION_PREVIEW_CARD_WIDTH_RATIO = 0\.928/);
-  assert.doesNotMatch(source, /REGION_PREVIEW_CARD_WIDTH_RATIO = 0\.84/);
-  assert.match(source, /REGION_PREVIEW_INSET_RATIO = 0\.024/);
-  assert.match(source, /REGION_PREVIEW_GAP_RATIO = 0\.024/);
-  assert.match(source, /REGION_PREVIEW_ASPECT_RATIO = 2\.13/);
-  assert.match(source, /REGION_PREVIEW_IMAGE_ASPECT_RATIO = 3\.21/);
-  assert.match(source, /REGION_PREVIEW_IMAGE_HEIGHT_SCALE = 1\.12/);
+  const layout = readFileSync("src/features/explore/regionPreviewLayout.ts", "utf8");
+  assert.match(layout, /REGION_PREVIEW_CARD_WIDTH_RATIO = 0\.928/);
+  assert.doesNotMatch(layout, /REGION_PREVIEW_CARD_WIDTH_RATIO = 0\.84/);
+  assert.match(layout, /REGION_PREVIEW_INSET_RATIO = 0\.024/);
+  assert.match(layout, /REGION_PREVIEW_GAP_RATIO = 0\.024/);
+  assert.match(layout, /REGION_PREVIEW_ASPECT_RATIO = 2\.13/);
+  assert.match(layout, /REGION_PREVIEW_IMAGE_ASPECT_RATIO = 3\.21/);
+  assert.match(layout, /REGION_PREVIEW_IMAGE_HEIGHT_SCALE = 1\.12/);
+  assert.match(source, /regionPreviewCardLayout\(windowWidth\)/);
 
   for (const windowWidth of [320, 390, 430, 768]) {
     const cardWidth = windowWidth * 0.928;
@@ -663,8 +665,13 @@ test("details handoffs preserve genuine shared airport data", () => {
     airportCodes: destination.airportCodes,
   });
   const details = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
-  assert.match(details, /destinationId: destination\.id, destination: destination\.name, to: handoff\.primaryAirportCode, airportCodes: handoff\.airportCodes\.join/);
-  assert.match(details, /destinationId: destination\.id, destination: destination\.name/);
+  const flightHandoff = readFileSync("src/features/explore/exploreSearchHandoff.ts", "utf8");
+  assert.match(details, /id: destination\.id/);
+  assert.match(details, /name: destination\.name/);
+  assert.match(details, /primaryAirportCode: handoff\.primaryAirportCode/);
+  assert.match(details, /airportCodes: handoff\.airportCodes/);
+  assert.match(flightHandoff, /destinationId: destination\.id/);
+  assert.match(flightHandoff, /destination: destination\.name/);
   assert.match(details, /Destination not found/);
   assert.match(details, /useSavedDestinations\(\)/);
 });

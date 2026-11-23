@@ -1,60 +1,44 @@
-export const popularDestinationStays = [
-  {
-    id: "ng-dubai",
-    city: "Dubai",
-    country: "United Arab Emirates",
-    image: {
-      uri: "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    },
-  },
-  {
-    id: "ng-london",
-    city: "London",
-    country: "United Kingdom",
-    image: {
-      uri: "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    },
-  },
-  {
-    id: "ng-johannesburg",
-    city: "Johannesburg",
-    country: "South Africa",
-    image: {
-      // Keep the web image bytes and crop, but version this native-only URL so
-      // React Native does not reuse the stale response cached under the old URI.
-      uri: "https://images.unsplash.com/photo-1604633193983-5ad0f0f9d4f8?auto=format&fit=crop&w=1600&q=90&v=2",
-    },
-  },
-  {
-    id: "ng-accra",
-    city: "Accra",
-    country: "Ghana",
-    image: {
-      uri: "https://images.unsplash.com/photo-1509099836639-18ba1795216d?auto=format&fit=crop&w=1600&q=90",
-    },
-  },
-  {
-    id: "ng-nairobi",
-    city: "Nairobi",
-    country: "Kenya",
-    image: {
-      uri: "https://images.unsplash.com/photo-1611348586804-61bf6c080437?auto=format&fit=crop&w=1600&q=90",
-    },
-  },
-  {
-    id: "ng-istanbul",
-    city: "Istanbul",
-    country: "Türkiye",
-    image: {
-      uri: "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=1600&q=90",
-    },
-  },
-  {
-    id: "ng-paris",
-    city: "Paris",
-    country: "France",
-    image: {
-      uri: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1600&q=90",
-    },
-  },
-] as const;
+import { getMarketplaceHomeMerchandising } from "../../../../../src/shared/home/homeMerchandising";
+import { destinationById } from "../explore/destinationCatalogue";
+
+const SAVED_DESTINATION_ID_BY_HOTEL_DESTINATION_ID: Readonly<Record<string, string>> = {
+  "br-rio": "br-rio-de-janeiro",
+};
+
+export type PopularDestinationStay = {
+  id: string;
+  city: string;
+  country: string;
+  canonicalDestinationId: string;
+  destinationSearchValue: string;
+  savedDestinationId?: string;
+  image: { uri: string };
+  imageAlt: string;
+};
+
+export function getPopularDestinationStays(marketCountryCode: string, assetOrigin: string): readonly PopularDestinationStay[] {
+  return getMarketplaceHomeMerchandising(marketCountryCode).hotelDestinations.map((destination) => {
+    const savedDestinationId = SAVED_DESTINATION_ID_BY_HOTEL_DESTINATION_ID[destination.canonicalDestinationId]
+      ?? destination.canonicalDestinationId;
+    const savedDestination = destinationById.get(savedDestinationId);
+    return {
+      id: destination.id, city: destination.city, country: destination.country,
+      canonicalDestinationId: destination.canonicalDestinationId,
+      destinationSearchValue: destination.destinationSearchValue,
+      ...(savedDestination ? { savedDestinationId: savedDestination.id } : {}),
+      image: { uri: absoluteAssetUrl(destination.image, assetOrigin) }, imageAlt: destination.imageAlt,
+    };
+  });
+}
+
+/** Resolve favorites through the canonical identity carried by the displayed card. */
+export function resolvePopularDestinationStay(destination: { savedDestinationId?: string }) {
+  return destination.savedDestinationId
+    ? destinationById.get(destination.savedDestinationId)
+    : undefined;
+}
+
+function absoluteAssetUrl(value: string, assetOrigin: string) {
+  if (/^https?:\/\//i.test(value)) return value;
+  return `${assetOrigin.replace(/\/$/, "")}/${value.replace(/^\//, "")}`;
+}

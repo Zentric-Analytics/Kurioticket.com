@@ -368,9 +368,11 @@ test("confirmation enforces fare, itinerary identities, and fresh provider time"
     { returnItineraryKey: "wrong" },
     { offerExpiresAt: at },
   ]) {
+    const malformedOffer = { ...offer, validatedAt: at - 1 };
+    for (const [key, value] of Object.entries(patch)) Reflect.set(malformedOffer, key, value);
     const result = apply(plan, search, {
       type: "FLIGHT_REVALIDATION_SUCCEEDED",
-      offer: { ...offer, ...patch, validatedAt: at - 1 },
+      offer: malformedOffer,
     });
     assert.equal(result.ok, false);
   }
@@ -576,7 +578,7 @@ test("inventory events reject stale product search keys before idempotency", () 
 test("late Hotel and Car results are rejected after their searches reconcile", () => {
   for (const [product, patch] of [
     ["hotel", { hotelRooms: 2 }],
-    ["car", { carDriverAge: 45 }],
+    ["car", { carDriverAge: "45" }],
   ] as const) {
     const searchA = makeSearch({ mode: "hotel-car" });
     let plan = createDealsTripPlanV2(searchA, 10_000);

@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - dev
+      - main
     types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
@@ -15,6 +16,133 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  travel-parity:
+    name: Travel platform parity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout proposed merge
+        uses: actions/checkout@v5
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/mobile/package-lock.json
+      - name: Install web/server dependencies
+        run: npm ci
+      - name: Install Chromium for mounted provider component contracts
+        run: npx playwright install --with-deps chromium
+      - name: Validate Render web build
+        run: npm run build
+      - name: Validate privacy consent behind the reverse proxy
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/lib/visitor-identity.test.ts");
+          await import("./src/lib/visitor-identity-route.test.ts");
+          await import("./src/lib/analyticsConsentClient.test.ts");
+          await import("./src/app/api/journey/events/handler.test.ts");'
+      - name: Validate visitor lifecycle and provider handoff recording
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/services/visitorIdentityCore.test.ts");
+          await import("./src/services/analyticsService.test.ts");
+          await import("./src/services/searchJourneyService.test.ts");
+          await import("./src/services/providerHandoffStore.test.ts");
+          await import("./src/services/providerHandoffActivity.test.ts");
+          await import("./src/lib/providerHandoffClient.test.ts");
+          await import("./src/app/api/flights/search/terminalHistory.test.ts");'
+      - name: Validate admin operational read contracts
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/services/adminOperationalReadContract.test.ts");
+          await import("./src/services/adminOperationalReadCore.test.ts");'
+      - name: Validate Platform Health refresh and investigation UI contracts
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/lib/platformHealthRefresh.test.ts");
+          await import("./src/components/admin/PlatformHealthRefresh.test.ts");
+          await import("./src/components/admin/PlatformHealthAttention.test.ts");
+          await import("./src/components/admin/PlatformHealthDashboard.test.ts");'
+
+      - name: Validate provider-bound Confirmed Trips and delivery history
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/app/api/internal/partner-confirmations/route.test.ts");
+          await import("./src/services/partnerConfirmationDeliveryService.test.ts");
+          await import("./src/services/partnerBookingConfirmation.test.ts");
+          await import("./src/app/admin/confirmed-trips/page.test.ts");'
+      - name: Validate account deletion lifecycle contract
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/app/api/internal/cron/account-deletion-review/route.test.ts");'
+      - name: Validate Admin Overview metrics and presence
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/services/adminOverviewMetrics.test.ts");
+          await import("./src/lib/website-presence.test.ts");
+          await import("./src/lib/onlinePresenceRoute.test.ts");
+          await import("./src/lib/websiteOnlinePresenceClient.test.ts");
+          await import("./src/app/admin/page.test.ts");'
+      - name: Validate admin handoff hardening contracts
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/services/adminAuditReadContract.test.ts");
+          await import("./src/services/providerOperationalStatus.test.ts");'
+      - name: Validate Providers monitoring layout contracts
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/app/admin/providers/page.test.ts");
+          await import("./src/app/admin/hotels/page.test.ts");
+          await import("./src/app/admin/cars/page.test.ts");
+          await import("./src/services/adminProductSearchRecordsCore.test.ts");
+          await import("./src/components/admin/ProductSearchRecordsPanel.test.ts");
+          await import("./src/lib/adminSearchWorkspace.test.ts");
+          await import("./src/lib/adminHandoffDateRange.test.ts");'
+      - name: Validate Support queue filters and loading contracts
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/components/admin/AdminSupportToolbar.manual.test.ts");
+          await import("./src/components/admin/AdminSupportQueueLoading.test.ts");'
+      - name: Validate admin CMS contracts and interactions
+        run: npm run test:cms
+
+      - name: Install native dependencies
+        run: npm --prefix apps/mobile ci
+      - name: Validate semantic web, iOS, and Android travel parity
+        run: npm run travel:parity
+
   validate-mobile-preview:
     name: Validate mobile preview
     runs-on: ubuntu-latest
@@ -54,6 +182,12 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: apps/mobile/package-lock.json
+
+      # Native notice fixtures deliberately use one root React/server-renderer pair.
+      # Install that declared toolchain rather than mixing it with native React.
+      - name: Install root component-test dependencies
+        if: steps.changes.outputs.mobile_relevant == 'true'
+        run: npm ci
 
       - name: Install mobile dependencies
         if: steps.changes.outputs.mobile_relevant == 'true'

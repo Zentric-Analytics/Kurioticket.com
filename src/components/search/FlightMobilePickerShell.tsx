@@ -5,6 +5,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -34,9 +35,21 @@ type FlightMobilePickerShellProps = {
   contentClassName?: string;
   contentLayout?: "scroll" | "contained";
   pickerMarker?: "flight-date" | "traveler-cabin";
-  headerVariant?: "navigation" | "close";
+  headerVariant?: "navigation" | "close" | "close-right";
   showCancelAction?: boolean;
   showBackLabel?: boolean;
+  showBackAction?: boolean;
+  backIcon?: ReactNode;
+  /** The containing native dialog owns focus containment and document locking. */
+  withinDialog?: boolean;
+  presentation?: "default" | "carsResultsEdit" | "carsMain";
+  surfaceVariant?: "default" | "white";
+  /**
+   * Cars Main keyboard pickers can size their inner interactive viewport to
+   * iOS Safari's visual viewport. The outer opaque shell intentionally stays
+   * full-screen so browser-chrome/keyboard transitions never expose the page.
+   */
+  followVisualViewport?: boolean;
 };
 
 type ScrollLockSnapshot = {
@@ -156,14 +169,36 @@ export function FlightMobilePickerShell({
   headerVariant = "navigation",
   showCancelAction = true,
   showBackLabel = true,
+  showBackAction = true,
+  backIcon,
+  withinDialog = false,
+  presentation = "default",
+  surfaceVariant = "default",
+  followVisualViewport = false,
 }: FlightMobilePickerShellProps) {
+  const carsResultsEdit = presentation === "carsResultsEdit";
+  const carsMain = presentation === "carsMain";
+  const carsMainVisualViewport = carsMain && followVisualViewport;
+  const whiteSurface = surfaceVariant === "white";
   const { t } = useLocale();
   const [isClosing, setIsClosing] = useState(false);
+  const [carsMainViewportStyle, setCarsMainViewportStyle] =
+    useState<CSSProperties>();
   const closeInteractionRef = useRef<"keyboard" | "pointer">("pointer");
   const closePromiseRef = useRef<Promise<void> | null>(null);
   const shellRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
   const scrollLockSnapshotRef = useRef<ScrollLockSnapshot | null>(null);
   const portalElement = typeof document === "undefined" ? null : document.body;
+  // The native modal owns initial focus, keyboard containment and background
+  // inertness. Nested pickers keep their existing parent dialog as sole owner.
+  useEffect(() => {
+    if (!open || withinDialog || !window.matchMedia("(max-width: 639px)").matches) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    dialog.showModal();
+    return () => { if (dialog.open) dialog.close(); };
+  }, [open, withinDialog]);
 
   const restorePagePosition = useCallback(() => {
     if (typeof window === "undefined") return null;
@@ -204,6 +239,8 @@ export function FlightMobilePickerShell({
 
   const restoreLauncherFocus = useCallback(
     (launcherElement: HTMLElement | null | undefined) => {
+      // Release native inertness before restoring a launcher outside the modal.
+      if (dialogRef.current?.open) dialogRef.current.close();
       launcherElement?.focus({ preventScroll: true });
     },
     [],
@@ -256,7 +293,41 @@ export function FlightMobilePickerShell({
   }, [open]);
 
   useEffect(() => {
-    if (!open || typeof window === "undefined") return;
+    if (
+      !open ||
+      !carsMainVisualViewport ||
+      typeof window === "undefined"
+    ) {
+      return;
+    }
+
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    let frame = 0;
+    const syncViewport = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        setCarsMainViewportStyle({
+          top: `${viewport.offsetTop}px`,
+          bottom: "auto",
+          height: `${viewport.height}px`,
+        });
+      });
+    };
+
+    syncViewport();
+    viewport.addEventListener("resize", syncViewport, { passive: true });
+    viewport.addEventListener("scroll", syncViewport, { passive: true });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      viewport.removeEventListener("resize", syncViewport);
+      viewport.removeEventListener("scroll", syncViewport);
+    };
+  }, [carsMainVisualViewport, open]);
+
+  useEffect(() => {
+    if (!open || withinDialog || typeof window === "undefined") return;
 
     const mobileQuery = window.matchMedia("(max-width: 639px)");
     if (!mobileQuery.matches) return;
@@ -348,7 +419,7 @@ export function FlightMobilePickerShell({
         restoreLauncherFocus(launcherElement);
       }
     };
-  }, [launcherRef, open, restoreLauncherFocus, restorePagePosition]);
+  }, [launcherRef, open, withinDialog, restoreLauncherFocus, restorePagePosition]);
 
   if (!open || !portalElement) return null;
 
@@ -364,7 +435,8 @@ export function FlightMobilePickerShell({
         footer(requestClose)
       : footer;
 
-  return createPortal(
+  const DialogSurface = withinDialog ? "div" : "dialog";
+  const content = (
     <div
       ref={shellRef}
       data-flight-mobile-picker-shell
@@ -375,28 +447,63 @@ export function FlightMobilePickerShell({
         pickerMarker === "traveler-cabin" ? "true" : undefined
       }
       data-closing={isClosing ? "true" : undefined}
-      className="fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white sm:hidden"
+      data-cars-results-edit-picker={carsResultsEdit ? "true" : undefined}
+      data-cars-main-picker={carsMain ? "true" : undefined}
+      className={cn(
+        "fixed inset-0 z-[2147483647] w-screen max-w-full overflow-hidden bg-white sm:hidden",
+        carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]",
+      )}
     >
-      <div
+      <DialogSurface
+        ref={(element: HTMLDivElement | HTMLDialogElement | null) => {
+          dialogRef.current = element instanceof HTMLDialogElement ? element : null;
+        }}
         id={dialogId}
         role="dialog"
+        tabIndex={withinDialog ? undefined : -1}
         aria-modal="true"
         aria-labelledby={titleId}
+        onCancel={(event) => {
+          event.preventDefault();
+          closeInteractionRef.current = "keyboard";
+          requestClose();
+        }}
         onKeyDown={(event) => {
+          if (!withinDialog && event.key === "Tab") {
+            const dialog = event.currentTarget;
+            const controls = Array.from(dialog.querySelectorAll<HTMLElement>(
+              'a[href],button,input,select,textarea,[tabindex],[contenteditable="true"]',
+            )).filter(element => element.tabIndex >= 0 && !element.matches(":disabled") &&
+              !element.closest("[inert]") && element.getClientRects().length > 0);
+            const first = controls[0];
+            const last = controls[controls.length - 1];
+            if (!first || (event.shiftKey ? document.activeElement === first : document.activeElement === last) ||
+              document.activeElement === dialog) {
+              event.preventDefault();
+              (event.shiftKey ? last : first)?.focus({ preventScroll: true });
+              if (!first) dialog.focus({ preventScroll: true });
+            }
+          }
           if (event.key === "Escape") {
+            event.preventDefault();
             closeInteractionRef.current = "keyboard";
             event.stopPropagation();
             requestClose();
           }
         }}
+        style={carsMainVisualViewport ? carsMainViewportStyle : undefined}
         className={cn(
           "fixed inset-0 flex h-[100dvh] min-h-0 w-screen max-w-full flex-col overflow-hidden bg-white pt-[env(safe-area-inset-top)]",
+          !withinDialog && "m-0 max-h-none border-0 p-0",
+          carsMain && "absolute h-full",
+          carsMainVisualViewport && "bottom-auto",
+          carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]",
           className,
         )}
       >
-        <div className="shrink-0 border-b border-slate-200/80 bg-white px-4">
-          <div data-mobile-picker-header={headerVariant} className="mx-auto grid min-h-[62px] w-full max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-2">
-            {headerVariant === "close" ? (
+        <div className={cn("shrink-0 border-b border-slate-200/80 bg-white px-4", carsResultsEdit && "border-b-0 px-2", carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]")}>
+          <div data-mobile-picker-header={headerVariant} className={cn("mx-auto grid min-h-[62px] w-full max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-2", carsResultsEdit && "min-h-[56px]")}>
+            {!showBackAction || headerVariant === "close-right" ? <span aria-hidden="true" /> : headerVariant === "close" ? (
               <button type="button" aria-label={t.cancel} onClick={requestClose} disabled={isClosing} className="focus-ring inline-flex h-11 w-11 items-center justify-center justify-self-start rounded-full text-slate-950 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60">
                 <X className="h-6 w-6" aria-hidden="true" />
               </button>
@@ -408,17 +515,21 @@ export function FlightMobilePickerShell({
                 disabled={isClosing}
                 className="focus-ring inline-flex min-h-10 items-center justify-self-start gap-2 rounded-full px-2 py-2 text-[15px] font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60"
               >
-                <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-                {showBackLabel ? t.back : null}
+                {carsResultsEdit ? <X className="h-[22px] w-[22px]" aria-hidden="true" /> : backIcon ?? <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />}
+                {!carsResultsEdit && showBackLabel ? t.back : null}
               </button>
             )}
             <h2
               id={titleId}
-              className="max-w-[52vw] truncate text-[17px] font-bold text-slate-950"
+              className={cn("max-w-[52vw] truncate text-[17px] font-bold text-slate-950", carsResultsEdit && "font-semibold leading-6")}
             >
               {title}
             </h2>
-            {headerVariant === "close" ? <span aria-hidden="true" /> : showCancelAction ? (
+            {headerVariant === "close-right" ? (
+              <button type="button" aria-label={t.cancel} onClick={requestClose} disabled={isClosing} className="focus-ring inline-flex h-11 w-11 items-center justify-center justify-self-end rounded-full text-slate-950 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60">
+                <X className="h-6 w-6" aria-hidden="true" />
+              </button>
+            ) : headerVariant === "close" ? <span aria-hidden="true" /> : showCancelAction ? (
               <button
                 type="button"
                 onClick={requestClose}
@@ -442,8 +553,9 @@ export function FlightMobilePickerShell({
           data-content-layout={contentLayout}
           className={cn(
             "min-h-0 flex-1 overflow-x-hidden bg-slate-50 px-4 py-4",
+            carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]",
             contentLayout === "scroll"
-              ? "touch-pan-y overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]"
+              ? "touch-pan-y overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]"
               : "flex touch-auto flex-col overflow-y-hidden",
             contentClassName,
           )}
@@ -452,12 +564,12 @@ export function FlightMobilePickerShell({
         </div>
 
         {renderedFooter ? (
-          <div className="shrink-0 border-t border-slate-200/80 bg-white px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className={cn("shrink-0 border-t border-slate-200/80 bg-white px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]", carsResultsEdit && "border-t-0 pt-2", carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]")}>
             <div className="mx-auto w-full max-w-xl">{renderedFooter}</div>
           </div>
         ) : null}
-      </div>
-    </div>,
-    portalElement,
+      </DialogSurface>
+    </div>
   );
+  return withinDialog ? content : createPortal(content, portalElement);
 }

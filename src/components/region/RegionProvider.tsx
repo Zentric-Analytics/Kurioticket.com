@@ -66,11 +66,15 @@ const findSupportedCurrency = (currency: string | null | undefined) => {
 export function RegionProvider({
   initialMode,
   detectedMode,
+  initialModeIsExplicit = false,
+  initialCurrency,
   children,
 }: {
   initialMode: string;
   detectedMode?: string | null;
-  children: ReactNode;
+  initialModeIsExplicit?: boolean;
+  initialCurrency?: string;
+  children?: ReactNode;
 }) {
   const detectedOption = useMemo(
     () => findSupportedRegion(detectedMode) ?? null,
@@ -83,21 +87,37 @@ export function RegionProvider({
   );
 
   const [regionState, setRegionState] = useState(() => {
-    const storedMode = getStoredRegion();
-    const storedOption = findSupportedRegion(storedMode);
-    const selectedRegion = storedOption ?? detectedOption ?? initialOption ?? fallbackRegion;
-    const storedCurrency = findSupportedCurrency(getStoredCurrency());
-    const seededCurrency = (storedCurrency ?? selectedRegion.currency ?? fallbackCurrency) as CurrencyCode;
+    // First browser render must match the server, which cannot read local storage.
+    const selectedRegion = initialModeIsExplicit ? initialOption : detectedOption ?? initialOption ?? fallbackRegion;
+    const explicitCurrency = findSupportedCurrency(initialCurrency);
+    const seededCurrency = explicitCurrency ?? (selectedRegion.currency ?? fallbackCurrency) as CurrencyCode;
 
     return {
       currency: seededCurrency,
-      hasExplicitCurrency: Boolean(storedCurrency),
-      hasUserSelectedRegion: Boolean(storedOption),
-      selectedMode: storedOption?.code as RegionCode | undefined,
+      hasExplicitCurrency: Boolean(explicitCurrency),
+      hasUserSelectedRegion: initialModeIsExplicit,
+      selectedMode: initialModeIsExplicit ? initialOption.code as RegionCode : undefined,
     };
   });
 
   const { selectedMode, hasUserSelectedRegion, hasExplicitCurrency, currency } = regionState;
+
+  useEffect(() => {
+    const storedOption = findSupportedRegion(getStoredRegion());
+    const storedCurrency = findSupportedCurrency(getStoredCurrency());
+    if (!storedOption && !storedCurrency) return;
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      setRegionState((current) => ({
+        currency: current.hasExplicitCurrency ? current.currency : storedCurrency ?? (storedOption?.currency as CurrencyCode | undefined) ?? current.currency,
+        hasExplicitCurrency: current.hasExplicitCurrency || Boolean(storedCurrency),
+        hasUserSelectedRegion: current.hasUserSelectedRegion || Boolean(storedOption),
+        selectedMode: current.hasUserSelectedRegion ? current.selectedMode : storedOption?.code as RegionCode | undefined,
+      }));
+    });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     if (!detectedOption) return;

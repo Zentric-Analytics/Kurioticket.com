@@ -1,24 +1,31 @@
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
+import { getRuntimeEnvironment } from "../../config/environment";
 import { useAppTheme } from "../../theme/AppTheme";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { FlowIcon } from "../flow/FlowIcon";
-import { flowColors } from "../flow/flowStyles";
-import type { ProfileSection } from "./profileModel";
-import { getApiBaseUrl } from "../../config/apiUrl";
+import type { ProfileDestination, ProfileSection } from "./profileModel";
+import { navigateProfileDestination, openPreviewLegalBrowser } from "./profileNavigation";
 
-async function openExternal(path: "/terms" | "/privacy", label: string) {
-  try { const base = getApiBaseUrl(); if (!base.ok) throw new Error("configuration"); const url = new URL(path, `${base.baseUrl}/`).toString(); if (!await Linking.canOpenURL(url)) throw new Error("unsupported"); await Linking.openURL(url); }
-  catch { Alert.alert(`Unable to open ${label}`, "Check your connection and try again."); }
+async function openPreviewBrowser(url: string) {
+  const WebBrowser = await import("expo-web-browser");
+  return openPreviewLegalBrowser(url, Platform.OS, WebBrowser);
+}
+
+async function openProfileDestination(destination: ProfileDestination) {
+  await navigateProfileDestination(destination, getRuntimeEnvironment(), {
+    push: (href) => router.push(href),
+    openBrowser: openPreviewBrowser,
+  });
 }
 
 export function ProfileCardSection({ section }: { section: ProfileSection }) {
   const { theme } = useAppTheme(); const { t } = useMobileLocalization();
-  return <View accessibilityRole="summary" style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-    <View style={[styles.heading, { borderBottomColor: theme.border }]}><Text accessibilityRole="header" style={[styles.headingText, { color: theme.text }]}>{t(section.title)}</Text></View>
-    {section.items.map((item, index) => { const label = t(item.label); const destination = item.destination; const external = destination.kind === "external"; return <Pressable key={item.label} accessibilityRole="button" accessibilityLabel={label} accessibilityHint={external ? t("externalLinkHint") : undefined} onPress={() => destination.kind === "external" ? void openExternal(destination.href, label) : router.push(destination.href)} style={({ pressed }) => [styles.row, index < section.items.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border }, pressed && styles.pressed]}>
-      <View style={styles.icon}><FlowIcon name={item.icon} color={flowColors.blue} size={24} /></View><Text style={[styles.label, { color: theme.text }]}>{label}</Text><FlowIcon name={external ? "external" : "chevron"} color={theme.muted} size={18} />
+  return <View accessibilityRole="summary" style={[styles.card, { backgroundColor: theme.dark ? theme.surface : "#FAFAFA", borderColor: theme.dark ? theme.border : "#EEEEEE" }]}>
+    <View style={[styles.heading, { borderBottomColor: theme.dark ? theme.border : "#EEEEEE" }]}><Text accessibilityRole="header" style={[styles.headingText, { color: theme.dark ? theme.text : "#1A1A1A" }]}>{t(section.title)}</Text></View>
+    {section.items.map((item, index) => { const label = t(item.label); const destination = item.destination; return <Pressable key={item.label} accessibilityRole="button" accessibilityLabel={label} onPress={() => { void openProfileDestination(destination); }} style={({ pressed }) => [styles.row, index < section.items.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.dark ? theme.border : "#EEEEEE" }, pressed && styles.pressed]}>
+      <View style={styles.icon}><FlowIcon strokeWidth={1.3} name={item.icon} color={theme.dark ? theme.icon : "#1A1A1A"} size={24} /></View><Text style={[styles.label, { color: theme.dark ? theme.text : "#1A1A1A" }]}>{label}</Text><FlowIcon strokeWidth={1.3} name="chevron" color={theme.dark ? theme.muted : "#A2A2A2"} size={18} />
     </Pressable>; })}
   </View>;
 }
-const styles = StyleSheet.create({ card: { borderWidth: 1, borderRadius: 14, overflow: "hidden", shadowColor: "#18305B", shadowOpacity: .06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 }, heading: { minHeight: 48, justifyContent: "center", paddingHorizontal: 14, borderBottomWidth: StyleSheet.hairlineWidth }, headingText: { fontSize: 16, lineHeight: 22, fontWeight: "800" }, row: { minHeight: 58, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 10 }, icon: { width: 30, alignItems: "flex-start" }, label: { flex: 1, minWidth: 0, fontSize: 13, lineHeight: 18, fontWeight: "700" }, pressed: { opacity: .7 } });
+const styles = StyleSheet.create({ card: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, overflow: "hidden" }, heading: { minHeight: 44, justifyContent: "center", paddingHorizontal: 15, borderBottomWidth: StyleSheet.hairlineWidth }, headingText: { fontSize: 15, lineHeight: 20, fontWeight: "700" }, row: { minHeight: 54, paddingHorizontal: 15, flexDirection: "row", alignItems: "center", gap: 10 }, icon: { width: 28, alignItems: "flex-start" }, label: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 20, fontWeight: "500" }, pressed: { opacity: .7 } });

@@ -89,7 +89,7 @@ test("deeply projects injected capabilities and drops poisoned runtime fields", 
         partnerRedirectUrl: "https://secret.example/redirect",
       },
     },
-  } satisfies FlightProviderCapabilities;
+  };
 
   const result = getFlightProviderCapabilities("Synthetic", [poisonedProvider]);
 

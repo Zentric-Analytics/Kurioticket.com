@@ -1,3 +1,4 @@
+import { isProviderHotelResult } from "@/services/travel/hotelInventorySource";
 import { getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type { NormalizedCarResult } from "@/lib/cars/types";
 import { convertCurrencyAmount, type ExchangeRates } from "@/lib/currency/exchangeRates";
@@ -30,8 +31,8 @@ function safeInternalDetail(action: TravelResultAction, product: "flights" | "ho
 }
 const liveBookable = (item: { searchPolicy: ContractResult<object>["searchPolicy"] }) => item.searchPolicy.bookable && item.searchPolicy.action.enabled;
 export const isDealsFlightEligible = (item: ContractResult<PublicFlightResult>) => Boolean(item.id.trim() && Number.isFinite(item.price) && item.price > 0 && item.currency?.trim() && liveBookable(item) && safeInternalDetail(item.searchPolicy.action, "flights", item.id));
-export const isDealsHotelEligible = (item: ContractResult<PublicHotelResult>) => Boolean(item.id.trim() && Number.isFinite(item.totalPrice) && item.totalPrice! > 0 && item.currency?.trim() && item.searchPolicy.source === "kurioticket-static-hotels" && !item.searchPolicy.bookable && safeInternalDetail(item.searchPolicy.action, "hotels", item.id));
-export const isDealsCarEligible = (item: ContractResult<NormalizedCarResult>) => { const offer = getPrimaryCarOffer(item); return Boolean(item.id.trim() && offer && Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && offer.currency.trim() && !item.searchPolicy.bookable && safeInternalDetail(item.searchPolicy.action, "cars", item.id)); };
+export const isDealsHotelEligible = (item: ContractResult<PublicHotelResult>) => Boolean(item.id.trim() && Number.isFinite(item.totalPrice) && item.totalPrice! > 0 && item.currency?.trim() && isProviderHotelResult(item) && (item.searchPolicy.source === "kayak-sandbox" || item.searchPolicy.source === "metasearch") && !item.searchPolicy.bookable && safeInternalDetail(item.searchPolicy.action, "hotels", item.id));
+export const isDealsCarEligible = (item: ContractResult<NormalizedCarResult>) => { const offer = getPrimaryCarOffer(item); return Boolean(item.inventorySource === "kayak-sandbox" && item.id.trim() && offer && Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && offer.currency.trim() && !item.searchPolicy.bookable && safeInternalDetail(item.searchPolicy.action, "cars", item.id)); };
 
 const asc = (a: number | null | undefined, b: number | null | undefined) => (a ?? Number.POSITIVE_INFINITY) - (b ?? Number.POSITIVE_INFINITY);
 const desc = (a: number | null | undefined, b: number | null | undefined) => (b ?? Number.NEGATIVE_INFINITY) - (a ?? Number.NEGATIVE_INFINITY);
@@ -67,8 +68,9 @@ export function buildDealsPackageCandidates({ mode, flights, hotels, cars, displ
     if(flight) raw.push(["flight",flight.price,flight.currency,flight.provider]); if(hotel) raw.push(["hotel",hotel.totalPrice!,hotel.currency!,hotel.provider]);
     if(car){const offer=getPrimaryCarOffer(car)!; raw.push(["car",offer.totalPrice,offer.currency,offer.bookingProviderName||car.rentalCompanyName]);}
     const priceBreakdown=raw.map(([product,sourceAmount,sourceCurrency,provider])=>({product,sourceAmount,sourceCurrency,provider,displayAmount:convertCurrencyAmount(sourceAmount,sourceCurrency,currency,rates)}));
-    const estimatedTotal=priceBreakdown.every(p=>p.displayAmount!==null)?priceBreakdown.reduce((sum,p)=>sum+p.displayAmount!,0):null;
-    output.push({id,mode,strategy,bookingFlow:"separate-providers",badgeKey:`deals.results.package.${strategy}.badge`,reasonKey:`deals.results.package.${strategy}.reason`,flight,hotel,car,priceBreakdown,estimatedTotal,displayCurrency:currency,providerCount:new Set(priceBreakdown.map(p=>p.provider.trim().toLowerCase()).filter(Boolean)).size,anchor:needs.hotel?"hotel":"flight"});
+    // Independent component prices are never summed into a package price. A
+    // combined total belongs only to a real provider-backed bundle offer.
+    output.push({id,mode,strategy,bookingFlow:"separate-providers",badgeKey:`deals.results.package.${strategy}.badge`,reasonKey:`deals.results.package.${strategy}.reason`,flight,hotel,car,priceBreakdown,estimatedTotal:null,displayCurrency:currency,providerCount:new Set(priceBreakdown.map(p=>p.provider.trim().toLowerCase()).filter(Boolean)).size,anchor:needs.hotel?"hotel":"flight"});
   };
   add("recommended",needs.flight?fr[0].result:undefined,needs.hotel?hr[0].result:undefined,needs.car?cr[0].result:undefined);
   const lowestConvertible=(!needs.flight||fl[0].displayPrice!==null)&&(!needs.hotel||hl[0].displayPrice!==null)&&(!needs.car||cl[0].displayPrice!==null);

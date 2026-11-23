@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
 import { adminSupportReplySchema, adminSupportStatusSchema } from "@/lib/validation";
 import { addAdminSupportReply, SupportTicketNotFoundError, updateSupportTicketStatus } from "@/services/supportService";
+import { adminOperationalReadResponse } from "@/services/adminOperationalReadHttp";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,9 @@ type AdminSessionResult = Awaited<ReturnType<typeof requireAdminApiSession>>;
 
 type AdminSupportMutationDependencies = {
   requireAdmin: typeof requireAdminApiSession;
-  writeAuditLog: typeof writeAdminAuditLog;
+  writeAuditLog: (
+    input: Parameters<typeof writeAdminAuditLog>[0],
+  ) => Promise<unknown>;
 };
 
 let dependenciesForTesting: AdminSupportMutationDependencies | null = null;
@@ -23,6 +26,12 @@ function getDependencies() {
 function getAdminSession(result: AdminSessionResult) {
   if ("response" in result && result.response) return { response: result.response };
   return { session: result.session };
+}
+
+export async function GET(_request: NextRequest, context: RouteContext) {
+  const { adminOperationalReads } = await import("@/services/adminOperationalReadService");
+  const { id } = await context.params;
+  return adminOperationalReadResponse(await adminOperationalReads.support.detail(id));
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
@@ -44,11 +53,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
       targetType: "SupportTicket",
       targetId: result.ticket.id,
       targetEmail: result.ticket.email,
-      metadata: { messageId: result.message.id, status: result.ticket.status },
+      metadata: { messageId: result.message.id, status: result.ticket.status, emailStatus: result.emailStatus },
       request,
     });
 
-    return NextResponse.json({ message: result.message }, { status: 201 });
+    return NextResponse.json({ message: result.message, emailStatus: result.emailStatus }, { status: 201 });
   } catch (error) {
     if (error instanceof SupportTicketNotFoundError) return NextResponse.json({ error: "Support ticket not found." }, { status: 404 });
     console.error("[admin-support:reply] Failed to add reply", error);

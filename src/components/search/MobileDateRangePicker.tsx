@@ -23,7 +23,11 @@ const addMonths = (date: Date, offset: number) =>
 
 const monthCells = (month: Date) => {
   const first = startOfMonth(month);
-  const firstCell = new Date(first.getFullYear(), first.getMonth(), 1 - first.getDay());
+  const firstCell = new Date(
+    first.getFullYear(),
+    first.getMonth(),
+    1 - first.getDay(),
+  );
   return Array.from({ length: 42 }, (_, index) => {
     const date = new Date(firstCell);
     date.setDate(firstCell.getDate() + index);
@@ -40,6 +44,7 @@ export type MobileDateRangePickerLabels = {
 };
 
 type MobileDateRangePickerProps = {
+  appearance?: "default" | "carsResultsEdit" | "carsMain";
   startDate: string;
   endDate: string;
   firstMonth: Date;
@@ -53,6 +58,7 @@ type MobileDateRangePickerProps = {
 };
 
 export function MobileDateRangePicker({
+  appearance = "default",
   startDate,
   endDate,
   firstMonth,
@@ -64,11 +70,19 @@ export function MobileDateRangePicker({
   onSelectDate,
   selectedMonthRef,
 }: MobileDateRangePickerProps) {
+  const carsResultsEdit = appearance === "carsResultsEdit";
+  const carsMain = appearance === "carsMain";
+  const compactCars = carsResultsEdit || carsMain;
   const start = parseIsoDate(startDate);
   const end = parseIsoDate(endDate);
   const todayIso = toIsoDate(new Date());
   const fullDateFormatter = useMemo(
-    () => new Intl.DateTimeFormat(locale, { month: "long", day: "numeric", year: "numeric" }),
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }),
     [locale],
   );
   const monthFormatter = useMemo(
@@ -84,13 +98,19 @@ export function MobileDateRangePicker({
 
   return (
     <div className="mx-auto w-full max-w-xl">
-      <h3 className="mb-4 text-[18px] font-bold tracking-tight text-slate-950">
-        {labels.selectDates}
-      </h3>
+      {!compactCars ? (
+        <h3 className="mb-4 text-[18px] font-bold tracking-tight text-slate-950">
+          {labels.selectDates}
+        </h3>
+      ) : null}
       <div
         data-mobile-date-calendar-card
         data-month-count={months.length}
-        className="overflow-hidden rounded-[11px] border border-slate-200 bg-white"
+        data-scroll-direction={compactCars ? "vertical" : undefined}
+        className={cn(
+          "overflow-hidden rounded-[11px] border border-slate-200 bg-white",
+          compactCars && "rounded-none border-0 bg-transparent",
+        )}
       >
         {months.map((month, monthIndex) => {
           const monthKey = `${month.getFullYear()}-${month.getMonth()}`;
@@ -101,14 +121,25 @@ export function MobileDateRangePicker({
               data-mobile-calendar-month={monthKey}
               aria-label={monthFormatter.format(month)}
               className={cn(
-                "px-3 pb-4 pt-5 sm:px-4",
+                compactCars ? "px-0 pb-4 pt-3" : "px-3 pb-4 pt-5 sm:px-4",
                 monthIndex > 0 && "border-t border-slate-200/70",
               )}
             >
-              <h4 className="mb-3 text-center text-[17px] font-bold tracking-tight text-slate-950">
+              <h4
+                className={cn(
+                  "mb-3 text-center text-[17px] font-bold tracking-tight text-slate-950",
+                  compactCars &&
+                    "text-[16px] font-semibold leading-5 tracking-normal",
+                )}
+              >
                 {monthFormatter.format(month)}
               </h4>
-              <div className="grid grid-cols-7 text-center text-[12px] font-semibold text-slate-500">
+              <div
+                className={cn(
+                  "grid grid-cols-7 text-center text-[12px] font-semibold text-slate-500",
+                  compactCars && "text-[10px] font-medium leading-[14px]",
+                )}
+              >
                 {weekdays.map((weekday, index) => (
                   <span key={`${weekday}-${index}`} className="py-2">
                     {weekday}
@@ -119,22 +150,47 @@ export function MobileDateRangePicker({
                 {monthCells(month).map(({ date, currentMonth }) => {
                   const iso = toIsoDate(date);
                   if (!currentMonth) {
-                    return <span key={`blank-${iso}`} data-adjacent-month-placeholder aria-hidden="true" className="h-[54px]" />;
+                    return (
+                      <span
+                        key={`blank-${iso}`}
+                        data-adjacent-month-placeholder
+                        aria-hidden="true"
+                        className={compactCars ? "h-11" : "h-[54px]"}
+                      />
+                    );
                   }
 
                   const disabled = isDateDisabled(date);
                   const isStart = iso === startDate;
                   const isEnd = iso === endDate;
-                  const inRange = Boolean(start && end && date > start && date < end);
-                  const hasRange = Boolean(start && end && startDate !== endDate);
+                  const inRange = Boolean(
+                    start && end && date > start && date < end,
+                  );
+                  const hasRange = Boolean(
+                    start && end && startDate !== endDate,
+                  );
                   const fullDate = fullDateFormatter.format(date);
-                  const endpoint = isStart ? labels.start : isEnd ? labels.end : "";
+                  const endpoint = isStart
+                    ? labels.start
+                    : isEnd
+                      ? labels.end
+                      : "";
                   const ariaLabel = endpoint
                     ? `${fullDate}, ${endpoint}`
                     : `${labels.selectDatePrefix} ${fullDate}`;
 
                   return (
-                    <div key={iso} className="relative h-[54px] min-w-0" data-mobile-calendar-day={iso} data-range-start={isStart || undefined} data-range-end={isEnd || undefined} data-in-range={inRange || undefined}>
+                    <div
+                      key={iso}
+                      className={cn(
+                        "relative h-[54px] min-w-0",
+                        compactCars && "h-11",
+                      )}
+                      data-mobile-calendar-day={iso}
+                      data-range-start={isStart || undefined}
+                      data-range-end={isEnd || undefined}
+                      data-in-range={inRange || undefined}
+                    >
                       {hasRange && (isStart || isEnd || inRange) ? (
                         <span
                           aria-hidden="true"
@@ -156,15 +212,27 @@ export function MobileDateRangePicker({
                         onClick={() => onSelectDate(date)}
                         className={cn(
                           "focus-ring relative z-10 mx-auto flex h-9 w-9 items-center justify-center rounded-full text-[15px] font-medium transition-colors disabled:cursor-not-allowed",
-                          disabled ? "text-slate-300" : "text-slate-900 hover:bg-blue-50 hover:text-[#075ee8]",
-                          iso === todayIso && !disabled && !isStart && !isEnd && "ring-1 ring-inset ring-[#075ee8]/20",
-                          isStart && "bg-[#075ee8] font-semibold text-white hover:bg-[#075ee8] hover:text-white",
-                          isEnd && "border-[1.5px] border-[#075ee8] bg-white font-semibold text-[#075ee8] hover:bg-white",
+                          compactCars &&
+                            "h-8 w-8 rounded-lg text-xs font-normal leading-4",
+                          disabled
+                            ? "text-slate-300"
+                            : "text-slate-900 hover:bg-blue-50 hover:text-[#075ee8]",
+                          iso === todayIso &&
+                            !disabled &&
+                            !isStart &&
+                            !isEnd &&
+                            "ring-1 ring-inset ring-[#075ee8]/20",
+                          isStart &&
+                            "bg-[#075ee8] font-semibold text-white hover:bg-[#075ee8] hover:text-white",
+                          isEnd &&
+                            (compactCars
+                              ? "bg-[#075ee8] font-semibold text-white hover:bg-[#075ee8] hover:text-white"
+                              : "border-[1.5px] border-[#075ee8] bg-white font-semibold text-[#075ee8] hover:bg-white"),
                         )}
                       >
                         {date.getDate()}
                       </button>
-                      {endpoint ? (
+                      {endpoint && !compactCars ? (
                         <span className="relative z-10 mt-0.5 block text-center text-[10px] font-semibold leading-3 text-[#075ee8]">
                           {endpoint}
                         </span>
@@ -182,6 +250,10 @@ export function MobileDateRangePicker({
 }
 
 type MobileDatePickerDialogProps = {
+  headerVariant?: "navigation" | "close" | "close-right";
+  showBackAction?: boolean;
+  withinDialog?: boolean;
+  presentation?: "default" | "carsResultsEdit" | "carsMain";
   open: boolean;
   title: string;
   titleId: string;
@@ -201,6 +273,9 @@ type MobileDatePickerDialogProps = {
 };
 
 export function MobileDatePickerDialog({
+  headerVariant,
+  showBackAction,
+  withinDialog,
   open,
   title,
   titleId,
@@ -217,6 +292,7 @@ export function MobileDatePickerDialog({
   isDateDisabled,
   onCommit,
   onClose,
+  presentation = "default",
 }: MobileDatePickerDialogProps) {
   const [draftStart, setDraftStart] = useState(startDate);
   const [draftEnd, setDraftEnd] = useState(endDate);
@@ -276,15 +352,23 @@ export function MobileDatePickerDialog({
 
   return (
     <FlightMobilePickerShell
+      headerVariant={headerVariant}
+      showBackAction={showBackAction}
+      withinDialog={withinDialog}
       open={open}
       title={title}
       titleId={titleId}
       dialogId={dialogId}
       launcherRef={launcherRef}
       onClose={onClose}
+      presentation={presentation}
       pickerMarker="flight-date"
       showCancelAction={false}
-      contentClassName="bg-[#fcfdfe] px-4 py-4"
+      contentClassName={cn(
+        "bg-[#fcfdfe] px-4 py-4",
+        presentation === "carsResultsEdit" && "bg-[#F5F7FB] px-4 py-3",
+        presentation === "carsMain" && "bg-white px-4 py-3",
+      )}
       footer={(requestClose) => (
         <button
           type="button"
@@ -293,13 +377,20 @@ export function MobileDatePickerDialog({
             onCommit(draftStart, rangeRequired ? draftEnd : "");
             requestClose();
           }}
-          className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-semibold text-white transition-colors hover:bg-[#004bb8] disabled:cursor-not-allowed disabled:bg-[#075ee8] disabled:text-white disabled:opacity-100"
+          className={cn(
+            "focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-semibold text-white transition-colors hover:bg-[#004bb8] disabled:cursor-not-allowed disabled:bg-[#075ee8] disabled:text-white disabled:opacity-100",
+            presentation === "carsResultsEdit" &&
+              "h-12 rounded-[10px] text-[15px]",
+            presentation === "carsMain" &&
+              "h-12 rounded-[10px] text-[15px]",
+          )}
         >
           {labels.done}
         </button>
       )}
     >
       <MobileDateRangePicker
+        appearance={presentation}
         startDate={draftStart}
         endDate={draftEnd}
         firstMonth={visibleFirstMonth}

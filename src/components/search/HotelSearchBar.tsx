@@ -1,4 +1,5 @@
 "use client";
+import { readHotelDestinationSelection, writeHotelDestinationSelection } from "@/lib/hotels/destinationSelection";
 
 import {
   type FormEvent,
@@ -14,26 +15,32 @@ import {
   BedDouble,
   Calendar,
   ChevronDown,
+  ChevronRight,
+  LoaderCircle,
   MapPin,
   Minus,
   PencilLine,
   Plus,
+  Search,
   SlidersHorizontal,
   UserRound,
 } from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { HotelMobileResultsSummary } from "@/components/results/HotelMobileResultsSummary";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
+import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
 import { HotelDesktopPopover } from "@/components/search/HotelDesktopPopover";
 import { MessageBanner } from "@/components/ui/MessageBanner";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { MobileHotelGuestsRoomsPicker } from "@/components/search/MobileHotelGuestsRoomsPicker";
+import appPickerStyles from "./HotelAppPickers.module.css";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { useRegion } from "@/components/region/RegionProvider";
 import {
-  getLocalizedHotelDestinationCityName,
-  getLocalizedHotelDestinationDetail,
+  getHotelDestinationPrimaryLabel,
+  getHotelDestinationSupportingLabel,
   normalizeHotelDestinationSearchValue,
   type HotelDestinationSuggestion,
 } from "@/data/hotelDestinations";
@@ -43,13 +50,18 @@ import {
   useHotelDestinationAutocomplete,
 } from "@/components/search/useHotelDestinationAutocomplete";
 import { translations as enTranslations } from "@/lib/i18n/en";
-import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
+import { formatTravelDateDisplay, formatTravelDateRangeDisplay } from "@/lib/dateFormatting/travelDateDisplay";
+import {
+  formatCompactHotelDateRange,
+  normalizeHotelCalendarLocale,
+} from "@/lib/hotelsDateFormatting";
 import {
   buildHotelRecentSearch,
   syncBackendRecentSearch,
   upsertRecentSearch,
 } from "@/lib/recent-searches";
 import { cn } from "@/lib/utils";
+import { getHotelLocationFieldDisplay } from "@/lib/search/hotelLocationFieldDisplay";
 
 const parseIsoDate = (value: string) => {
   if (!value) return null;
@@ -125,18 +137,6 @@ const formatWeekdays = (locale: string) => {
   );
 };
 
-const formatShortDate = (value: string, locale: string) => {
-  if (!value) return "";
-
-  const [year, month, day] = value.split("-").map(Number);
-  if (!year || !month || !day) return "";
-
-  return new Intl.DateTimeFormat(locale, {
-    month: "short",
-    day: "numeric",
-  }).format(new Date(year, month - 1, day));
-};
-
 const clampCount = (value: string, min: number, max: number) => {
   const parsed = Number.parseInt(value, 10);
   if (Number.isNaN(parsed)) return min;
@@ -160,23 +160,29 @@ const formatHotelSearchTemplate = (
   );
 
 type HotelSearchDraft = {
+  destinationId?: string;
   destination: string;
   checkIn: string;
   checkOut: string;
   guests: number;
+  adults?: number;
+  children?: number;
   rooms: number;
 };
 
 export type HotelSearchBarProps = {
-  desktopPresentation?: "inline" | "sticky-dialog";
+  desktopPresentation?: "inline" | "sticky-dialog" | "results-flat";
   initialDesktopSection?: "destination" | "dates" | "guests" | null;
   submitOnDesktopOpen?: boolean;
   idPrefix?: string;
   onSubmitComplete?: () => void;
   initialDestination?: string;
+  initialDestinationId?: string;
   initialCheckIn?: string;
   initialCheckOut?: string;
   initialGuests?: string | number;
+  initialAdults?: string | number;
+  initialChildren?: string | number;
   initialRooms?: string | number;
   initialSort?: string | null;
   introLabel?: string;
@@ -184,11 +190,13 @@ export type HotelSearchBarProps = {
   errorRole?: "alert" | "status";
   compact?: boolean;
   mobileLayout?: "default" | "controls" | "drawer";
+  mobileResultsSheet?: boolean;
   mobileLandingPresentation?: boolean;
   onOpenFilters?: () => void;
   onOpenMobileSearch?: () => void;
   onCloseMobileSearch?: () => void;
   onMobileDraftChange?: (draft: HotelSearchDraft) => void;
+  onMobileNestedLayerChange?: (open: boolean) => void;
   onDesktopDraftChange?: (draft: HotelSearchDraft) => void;
   onSubmitStart?: () => void;
   className?: string;
@@ -196,12 +204,15 @@ export type HotelSearchBarProps = {
 };
 
 export function HotelSearchBar({
+  initialAdults,
+  initialChildren,
   desktopPresentation = "inline",
   initialDesktopSection = null,
   submitOnDesktopOpen = false,
   idPrefix = "hotel-search",
   onSubmitComplete,
   initialDestination = "",
+  initialDestinationId,
   initialCheckIn = "",
   initialCheckOut = "",
   initialGuests = 1,
@@ -212,11 +223,13 @@ export function HotelSearchBar({
   errorRole,
   compact = false,
   mobileLayout = "default",
+  mobileResultsSheet = false,
   mobileLandingPresentation = false,
   onOpenFilters,
   onOpenMobileSearch,
   onCloseMobileSearch,
   onMobileDraftChange,
+  onMobileNestedLayerChange,
   onDesktopDraftChange,
   onSubmitStart,
   className,
@@ -242,15 +255,28 @@ export function HotelSearchBar({
     detectedCountryCode,
     hasUserSelectedRegion,
   } = useRegion();
-  const [destination, setDestination] = useState(initialDestination);
+  const [destination, setDestination] = useState(() => {
+    const urlDestination = searchParams.get("destination") || "";
+    const selected = readHotelDestinationSelection(searchParams.get("destinationLocation"), urlDestination);
+    const initial = initialDestination || urlDestination;
+    return selected && normalizeHotelDestinationSearchValue(initial) === normalizeHotelDestinationSearchValue(urlDestination)
+      ? selected.submittedValue : initial;
+  });
+  const [destinationId, setDestinationId] = useState(
+    initialDestinationId ?? searchParams.get("destinationId") ?? "",
+  );
+  const destinationDisplay = getHotelLocationFieldDisplay(destination, locale);
+  const [selectedDestination, setSelectedDestination] = useState<HotelDestinationSuggestion>();
   const [checkIn, setCheckIn] = useState(initialCheckIn);
   const [checkOut, setCheckOut] = useState(initialCheckOut);
   const [hotelAdultCount, setHotelAdultCount] = useState(() =>
-    normalizeGuestCount(initialGuests),
+    normalizeGuestCount(initialAdults ?? searchParams.get("adults") ?? (normalizeGuestCount(initialGuests) - Number(initialChildren ?? searchParams.get("children") ?? 0))),
   );
-  const [hotelChildCount, setHotelChildCount] = useState(0);
+  const [hotelChildCount, setHotelChildCount] = useState(() => clampCount(String(initialChildren ?? searchParams.get("children") ?? 0), 0, 11));
   const [rooms, setRooms] = useState(String(initialRooms || "1"));
-  const [hotelPetFriendly, setHotelPetFriendly] = useState(false);
+  const [hotelPetFriendly, setHotelPetFriendly] = useState(
+    () => searchParams.get("petFriendly") === "true",
+  );
   const [draftHotelAdults, setDraftHotelAdults] = useState(1);
   const [draftHotelChildren, setDraftHotelChildren] = useState(0);
   const [draftHotelRooms, setDraftHotelRooms] = useState(1);
@@ -258,19 +284,33 @@ export function HotelSearchBar({
   const [error, setError] = useState("");
   const [datesOpen, setDatesOpen] = useState(false);
   const [guestsRoomsOpen, setGuestsRoomsOpen] = useState(false);
-  useEffect(() => {
-    if (!guestsRoomsOpen) return;
-    setDraftHotelAdults(hotelAdultCount);
-    setDraftHotelChildren(hotelChildCount);
-    setDraftHotelRooms(clampCount(rooms, 1, 6));
-    setDraftHotelPetFriendly(hotelPetFriendly);
-  }, [guestsRoomsOpen]);
+  const [previousGuestsRoomsOpen, setPreviousGuestsRoomsOpen] = useState(guestsRoomsOpen);
+  if (previousGuestsRoomsOpen !== guestsRoomsOpen) {
+    setPreviousGuestsRoomsOpen(guestsRoomsOpen);
+    if (guestsRoomsOpen) {
+      setDraftHotelAdults(hotelAdultCount);
+      setDraftHotelChildren(hotelChildCount);
+      setDraftHotelRooms(clampCount(rooms, 1, 6));
+      setDraftHotelPetFriendly(hotelPetFriendly);
+    }
+  }
   const [internalMobileSearchOpen, setInternalMobileSearchOpen] =
     useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const destinationInputRef = useRef<HTMLInputElement>(null);
   const [destinationMobilePickerOpen, setDestinationMobilePickerOpen] =
     useState(false);
+  useEffect(() => {
+    onMobileNestedLayerChange?.(
+      destinationMobilePickerOpen || datesOpen || guestsRoomsOpen,
+    );
+    return () => onMobileNestedLayerChange?.(false);
+  }, [
+    datesOpen,
+    destinationMobilePickerOpen,
+    guestsRoomsOpen,
+    onMobileNestedLayerChange,
+  ]);
   const destinationMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const datesMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const guestsRoomsMobileLauncherRef = useRef<HTMLButtonElement>(null);
@@ -315,21 +355,9 @@ export function HotelSearchBar({
   );
 
   const dateSummary = useMemo(() => {
-    const formattedCheckIn = formatShortDate(checkIn, calendarLocale);
-    const formattedCheckOut = formatShortDate(checkOut, calendarLocale);
-
-    if (!formattedCheckIn) {
-      return t("hotelSearchDatePlaceholder");
-    }
-
-    if (formattedCheckOut) {
-      return formatHotelSearchTemplate(t("hotelSearch.dateRange"), {
-        checkIn: formattedCheckIn,
-        checkOut: formattedCheckOut,
-      });
-    }
-
-    return formattedCheckIn;
+    const range = formatTravelDateRangeDisplay(checkIn, checkOut, calendarLocale);
+    if (range) return range;
+    return formatTravelDateDisplay(checkIn, calendarLocale) ?? t("hotelSearchDatePlaceholder");
   }, [calendarLocale, checkIn, checkOut, t]);
 
   const totalHotelGuests = hotelAdultCount + hotelChildCount;
@@ -366,15 +394,16 @@ export function HotelSearchBar({
   const resultsSearchSummary = useMemo(
     () =>
       formatHotelSearchTemplate(t("hotelSearch.resultsSummary"), {
-        dates: dateSummary,
+        dates:
+          formatCompactHotelDateRange(checkIn, checkOut, calendarLocale) ??
+          dateSummary,
         summary: guestsRoomsSummary,
       }),
-    [dateSummary, guestsRoomsSummary, t],
+    [calendarLocale, checkIn, checkOut, dateSummary, guestsRoomsSummary, t],
   );
 
   const checkInParsed = parseIsoDate(checkIn);
   const checkOutParsed = parseIsoDate(checkOut);
-  const normalizedRooms = String(clampCount(rooms, 1, 6));
   const selectedCountryHint = hasUserSelectedRegion
     ? selectedCountryCode ?? selectedOption.code
     : "";
@@ -383,6 +412,7 @@ export function HotelSearchBar({
     handleKeyDown: handleDestinationAutocompleteKeyDown,
     highlight: destinationHighlight,
     loading: destinationSuggestionsLoading,
+    recoveryMessage: destinationSuggestionsRecovery,
     open: destinationSuggestionsOpen,
     select: commitDestinationSuggestion,
     setHighlight: setDestinationHighlight,
@@ -422,16 +452,19 @@ export function HotelSearchBar({
         guestsRoomsMobileLauncherRef.current?.focus({ preventScroll: true });
       }
     });
-  }, [desktopPresentation, initialDesktopSection, submitOnDesktopOpen]);
+  }, [desktopPresentation, initialDesktopSection, submitOnDesktopOpen, setDestinationSuggestionsOpen]);
 
   useEffect(() => {
     if (!compact || mobileLayout === "default") return;
 
     onMobileDraftChange?.({
+      destinationId: destinationId || undefined,
       destination,
       checkIn,
       checkOut,
       guests: Math.max(1, Math.min(12, totalHotelGuests)),
+      adults: hotelAdultCount,
+      children: hotelChildCount,
       rooms: clampCount(rooms, 1, 6),
     });
   }, [
@@ -439,8 +472,11 @@ export function HotelSearchBar({
     checkOut,
     compact,
     destination,
+    destinationId,
     mobileLayout,
     onMobileDraftChange,
+    hotelAdultCount,
+    hotelChildCount,
     rooms,
     totalHotelGuests,
   ]);
@@ -451,10 +487,13 @@ export function HotelSearchBar({
     }
 
     onDesktopDraftChange({
+      destinationId: destinationId || undefined,
       destination,
       checkIn,
       checkOut,
       guests: Math.max(1, Math.min(12, totalHotelGuests)),
+      adults: hotelAdultCount,
+      children: hotelChildCount,
       rooms: clampCount(rooms, 1, 6),
     });
   }, [
@@ -462,8 +501,11 @@ export function HotelSearchBar({
     checkOut,
     compact,
     destination,
+    destinationId,
     mobileLayout,
     onDesktopDraftChange,
+    hotelAdultCount,
+    hotelChildCount,
     rooms,
     totalHotelGuests,
   ]);
@@ -540,7 +582,7 @@ export function HotelSearchBar({
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [datesOpen, destinationSuggestionsOpen, guestsRoomsOpen]);
+  }, [datesOpen, destinationSuggestionsOpen, guestsRoomsOpen, setDestinationSuggestionsOpen]);
 
   useEffect(() => {
     const releaseExistingLock = () => {
@@ -615,7 +657,9 @@ export function HotelSearchBar({
   }, [mobileLayout, mobileSearchOpen]);
 
   const selectDestinationSuggestion = (suggestion: HotelDestinationSuggestion) => {
+    setSelectedDestination(suggestion);
     setDestination(commitDestinationSuggestion(suggestion));
+    setDestinationId(suggestion.id);
     setError("");
     window.requestAnimationFrame(() =>
       destinationInputRef.current?.focus({ preventScroll: true }),
@@ -783,19 +827,43 @@ export function HotelSearchBar({
       return;
     }
 
-    const searchDestination =
-      normalizeHotelDestinationSearchValue(trimmedDestination);
+    // Retain the selected geography; a city-only display label is not a search identity.
+    const searchDestination = trimmedDestination;
 
     const params = new URLSearchParams({
       destination: searchDestination,
       checkIn,
       checkOut,
       guests: String(normalizedGuests),
+      adults: String(hotelAdultCount),
+      children: String(hotelChildCount),
       rooms: String(normalizedRooms),
     });
 
+    if (destinationId) {
+      params.set("destinationId", destinationId);
+    }
+    const retainedLocation = readHotelDestinationSelection(searchParams.get("destinationLocation"), trimmedDestination);
+    if (retainedLocation) {
+      params.set("destination", trimmedDestination);
+      params.set("destinationLocation", JSON.stringify(retainedLocation));
+    }
+    if (selectedDestination?.searchValue.trim() === trimmedDestination) {
+      params.set("destination", trimmedDestination);
+      writeHotelDestinationSelection(params, selectedDestination, trimmedDestination);
+    }
+
+    if (hotelPetFriendly) {
+      params.set("petFriendly", "true");
+    }
+
     if (initialSort) {
       params.set("sort", initialSort);
+    }
+
+    const providerMode = searchParams.get("provider");
+    if (providerMode === "kayak-sandbox") {
+      params.set("provider", providerMode);
     }
 
     const nextUrl = `/hotels/results?${params.toString()}`;
@@ -803,10 +871,23 @@ export function HotelSearchBar({
     setRooms(String(normalizedRooms));
     setError("");
     closeHotelSearchPopovers();
+    const currentParams = new URLSearchParams(searchParams.toString());
+    const submittedParams = new URLSearchParams(params);
+    currentParams.sort();
+    submittedParams.sort();
+    if (pathname === "/hotels/results" && currentParams.toString() === submittedParams.toString()) {
+      setIsSubmitting(false);
+      if (mobileLayout === "drawer") {
+        closeMobileSearchPanel();
+      }
+      onSubmitComplete?.();
+      return;
+    }
+
     setIsSubmitting(true);
     onSubmitStart?.();
 
-    if (!mobileSearchOpen) {
+    if (mobileLayout === "drawer") {
       closeMobileSearchPanel();
     }
 
@@ -822,10 +903,13 @@ export function HotelSearchBar({
     startRouteProgress();
     try {
       const recentSearch = buildHotelRecentSearch({
+        destinationId: destinationId || undefined,
         destination: searchDestination,
         checkIn,
         checkOut,
         guests: normalizedGuests,
+        adults: hotelAdultCount,
+        children: hotelChildCount,
         rooms: normalizedRooms,
       });
       if (sessionStatus === "authenticated") {
@@ -841,6 +925,9 @@ export function HotelSearchBar({
   };
 
   const isStickyDialog = desktopPresentation === "sticky-dialog";
+  const isResultsFlat = desktopPresentation === "results-flat";
+  const isNavbarResultsSearch = isResultsFlat && idPrefix === "hotel-results-nav-search";
+  const ResultsDestinationIcon = isNavbarResultsSearch ? BedDouble : MapPin;
   const fieldClassName = cn(
     "relative rounded-xl border border-slate-300 bg-white transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25",
     isStickyDialog
@@ -849,9 +936,13 @@ export function HotelSearchBar({
         ? cn(
             "min-h-[56px] px-3 py-2 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
             mobileSearchOpen &&
-              "min-h-[74px] rounded-3xl border-slate-200 px-4 py-3.5 shadow-sm shadow-slate-900/[0.03] sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:px-3 sm:py-1.5 sm:shadow-none lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200",
+              cn(
+                "min-h-[60px] rounded-none border-0 px-4 py-2.5 shadow-none sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:px-3 sm:py-1.5 sm:shadow-none lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200",
+                mobileResultsSheet && "min-h-16 rounded-[14px] border-[#D8E1EC] px-4 py-2 shadow-none hover:border-slate-400 hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25",
+              ),
           )
         : "min-h-[54px] px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
+    isResultsFlat && "lg:bg-white",
   );
   const valueControlClassName = cn(
     "focus-ring w-full rounded-md border-0 bg-transparent px-0 outline-none transition-colors",
@@ -872,22 +963,33 @@ export function HotelSearchBar({
         ? cn(
             "text-[10px] leading-4 tracking-[0.08em] text-slate-600 sm:mb-1 sm:text-xs sm:tracking-wide sm:text-slate-600",
             mobileSearchOpen &&
-              "mb-1.5 text-[0.68rem] font-black tracking-[0.16em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600",
+              cn(
+                "mb-1.5 text-[0.68rem] font-black tracking-[0.16em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600",
+                mobileResultsSheet && "mb-0.5 text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500",
+              ),
           )
         : "mb-1 text-xs leading-4 tracking-wide text-slate-600",
   );
 
   return (
     <section
+      data-hotel-results-edit-card={isResultsFlat ? "" : undefined}
       className={cn(
         "mx-auto w-full",
         compact ? "max-w-full sm:max-w-5xl" : "max-w-[1040px] space-y-3",
         className,
       )}
     >
-      {compact ? (
-        <div className={cn("sm:hidden", mobileSearchOpen && "hidden")}>
-          {onOpenFilters ? (
+      {compact && !mobileResultsSheet ? (
+        <div
+          inert={mobileSearchOpen ? true : undefined}
+          aria-hidden={mobileSearchOpen ? true : undefined}
+          className={cn(
+            "sm:hidden",
+            mobileSearchOpen && "pointer-events-none",
+          )}
+        >
+          {onOpenFilters && mobileLayout !== "controls" ? (
             <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
               <button
                 type="button"
@@ -926,11 +1028,19 @@ export function HotelSearchBar({
                 </span>
               </button>
             </div>
+          ) : mobileLayout === "controls" ? (
+            <HotelMobileResultsSummary
+              destination={destination.trim() || t("destination")}
+              summary={resultsSearchSummary}
+              ariaLabel={t("editHotelSearch")}
+              onClick={openMobileSearchPanel}
+              className="relative z-10"
+            />
           ) : (
             <button
               type="button"
               onClick={openMobileSearchPanel}
-              className="focus-ring w-full rounded-xl border border-[#004BB8]/12 bg-white px-4 py-4 text-start shadow-[0_12px_26px_rgba(15,23,42,0.10)] transition hover:border-[#004BB8]/20 focus-visible:border-[#004BB8]"
+              className="focus-ring w-full touch-manipulation rounded-xl border border-[#004BB8]/12 bg-white px-4 py-4 text-start shadow-[0_12px_26px_rgba(15,23,42,0.10)] transition [-webkit-tap-highlight-color:transparent] hover:border-[#004BB8]/20 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
             >
               <span className="block truncate text-sm font-semibold text-slate-950">
                 {mobileSearchSummary}
@@ -938,11 +1048,11 @@ export function HotelSearchBar({
             </button>
           )}
         </div>
-      ) : (
+      ) : !compact ? (
         <p className="px-1 text-sm font-medium text-slate-600">
           {hotelSearchIntroLabel}
         </p>
-      )}
+      ) : null}
       <form
         onSubmit={handleSubmit}
         ref={setSearchPanelRef}
@@ -954,10 +1064,11 @@ export function HotelSearchBar({
                 : "fixed inset-0 z-[10000] flex h-[100dvh] min-h-0 w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:hidden"
               : "hidden sm:block sm:space-y-2"
             : "space-y-4",
+          mobileResultsSheet && "bg-transparent",
         )}
         noValidate
       >
-        {compact ? (
+        {compact && !mobileResultsSheet ? (
           <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))] sm:hidden">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-base font-bold tracking-tight text-slate-950">
@@ -976,6 +1087,7 @@ export function HotelSearchBar({
         ) : null}
         <div
           ref={mobileSearchContentRef}
+          data-hotel-results-edit-frame={isResultsFlat ? "" : undefined}
           className={cn(
             "overflow-visible",
             isStickyDialog
@@ -984,9 +1096,10 @@ export function HotelSearchBar({
                 ? cn(
                     "rounded-xl border border-slate-300 bg-slate-50 p-2 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:rounded-[1.35rem] sm:border-slate-200/90 sm:bg-white sm:p-1.5 sm:shadow-[0_16px_36px_-24px_rgba(15,23,42,0.32)] sm:ring-1 sm:ring-slate-950/[0.02] lg:p-1",
                     mobileSearchOpen &&
-                      "min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-none border-0 bg-slate-50 px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-none",
+                      cn("min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-none border-0 bg-slate-50 px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-none", mobileResultsSheet && "overflow-visible bg-transparent p-0 pb-0"),
                   )
                 : "rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
+            isResultsFlat && "lg:rounded-xl lg:border-[#CFD9E5] lg:bg-white lg:p-0 lg:shadow-[0_6px_20px_-13px_rgba(20,32,51,0.28)] lg:ring-0",
           )}
         >
           {!compact && desktopIdentityLabel ? (
@@ -1030,24 +1143,41 @@ export function HotelSearchBar({
                 : "grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:gap-0",
               !isStickyDialog && compact
                 ? cn(
-                    "lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]",
+                    isResultsFlat
+                      ? "lg:grid-cols-[minmax(0,1fr)_260px_180px_52px]"
+                      : "lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]",
                     mobileSearchOpen &&
-                      "mx-auto flex w-full max-w-xl flex-col gap-3 sm:grid sm:max-w-none sm:gap-1.5 lg:gap-0",
+                      (mobileResultsSheet
+                        ? "mx-auto flex w-full max-w-xl flex-col gap-0 overflow-visible bg-transparent sm:flex sm:max-w-none"
+                        : "mx-auto flex w-full max-w-xl flex-col gap-0 overflow-hidden rounded-[14px] border border-slate-200 bg-white divide-y divide-slate-200 sm:grid sm:max-w-none sm:gap-1.5 lg:gap-0"),
                   )
                 : !isStickyDialog
                   ? "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_104px]"
                   : undefined,
             )}
           >
+            <div
+              data-hotel-results-edit-fields={
+                mobileResultsSheet ? "" : undefined
+              }
+              className={mobileResultsSheet ? "flex flex-col gap-2" : "contents"}
+            >
             <label
               ref={destinationWrapperRef}
+              data-hotel-results-edit-field={isResultsFlat ? "destination" : undefined}
+              data-hotel-mobile-edit-row={
+                mobileResultsSheet ? "destination" : undefined
+              }
               className={cn(
                 fieldClassName,
                 "lg:rounded-s-xl",
                 shouldShowDestinationSuggestions && "z-[1000]",
+                mobileResultsSheet &&
+                  "min-h-16 rounded-[12px] border border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25",
               )}
             >
-              <span className={fieldLabelClassName}>
+              {isResultsFlat ? <ResultsDestinationIcon data-hotel-results-edit-leading-icon="" aria-hidden="true" className="hidden lg:block" /> : null}
+              <span data-hotel-results-edit-label={isResultsFlat ? "" : undefined} className={cn(fieldLabelClassName, mobileResultsSheet && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
                 {t("hotelSearchDestinationLabel")}
               </span>
               <span className="relative block">
@@ -1055,34 +1185,52 @@ export function HotelSearchBar({
                   ref={destinationMobileLauncherRef}
                   type="button"
                   onClick={() => {
-                    setDestinationMobilePickerOpen(true);
-                    setDestinationSuggestionsOpen(false);
-                    setDatesOpen(false);
-                    setGuestsRoomsOpen(false);
+                    openMobilePickerWithKeyboard(() => {
+                      setDestinationMobilePickerOpen(true);
+                      setDestinationSuggestionsOpen(false);
+                      setDatesOpen(false);
+                      setGuestsRoomsOpen(false);
+                    }, `${idPrefix}-mobile-destination-input`);
                   }}
                   aria-haspopup="dialog"
                   aria-expanded={destinationMobilePickerOpen}
                   aria-label={t("chooseHotelDestination")}
+                  data-hotel-mobile-edit-chevron={
+                    mobileResultsSheet ? "false" : undefined
+                  }
                   className={cn(
                     valueControlClassName,
                     "flex items-center gap-2 text-start sm:hidden",
                     !mobileLandingPresentation && "justify-between pe-2",
+                    mobileResultsSheet &&
+                      "mt-0.5 h-auto min-h-6 justify-start gap-0 pe-0 text-[16px] font-medium leading-5 text-slate-900",
                   )}
                 >
-                  {mobileLandingPresentation ? (
-                    <span className="flex min-w-0 items-center gap-2">
+                  {mobileLandingPresentation || mobileResultsSheet ? (
+                    <span
+                      data-hotel-destination-value={
+                        mobileResultsSheet ? "" : undefined
+                      }
+                      className={cn(
+                        "flex min-w-0 items-center gap-2",
+                        mobileResultsSheet && "gap-2.5",
+                      )}
+                    >
                       <MapPin
                         aria-hidden="true"
-                        className="h-4 w-4 shrink-0 text-slate-500"
+                        className={cn(
+                          "h-4 w-4 shrink-0 text-slate-700",
+                          mobileResultsSheet && "h-[18px] w-[18px]",
+                        )}
                       />
                       <span
                         className={cn(
-                          "truncate",
+                          "min-w-0",
                           !destination.trim() && "text-slate-400",
                         )}
                       >
-                        {destination.trim() ||
-                          t("hotelSearchDestinationPlaceholder")}
+                        <span className="block truncate">{destinationDisplay.primary || t("hotelSearchDestinationPlaceholder")}</span>
+                        {destinationDisplay.secondary ? <span className="block truncate text-xs font-medium leading-4 text-slate-600">{destinationDisplay.secondary}</span> : null}
                       </span>
                     </span>
                   ) : (
@@ -1107,15 +1255,18 @@ export function HotelSearchBar({
                   )}
                 </button>
                 <MapPin
+                  data-hotel-results-edit-inline-icon={isResultsFlat ? "" : undefined}
                   aria-hidden="true"
                   className="pointer-events-none absolute start-0 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-slate-500 sm:block"
                 />
                 <input
+                  data-hotel-results-edit-value={isResultsFlat ? "" : undefined}
                   ref={destinationInputRef}
                   type="text"
                   value={destination}
                   onChange={(event) => {
                     setDestination(event.target.value);
+                    setDestinationId("");
                     setDestinationSuggestionsOpen(true);
                     setDestinationHighlight(0);
                     setError("");
@@ -1140,6 +1291,7 @@ export function HotelSearchBar({
                   className={cn(
                     valueControlClassName,
                     "placeholder:text-slate-400 max-sm:hidden sm:ps-6 focus:!shadow-none focus-visible:!shadow-none",
+                    isResultsFlat && "lg:ps-0",
                   )}
                   required
                 />
@@ -1154,7 +1306,7 @@ export function HotelSearchBar({
                   id={`${idPrefix}-destination-suggestions`}
                   role="listbox"
                   ariaLabel={t("hotelDestinationSuggestions")}
-                  className="p-1.5"
+                  className={cn("p-1.5", isResultsFlat && "font-sans text-[#192024]")}
                 >
                   {destinationSuggestionsLoading ? (
                     <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
@@ -1163,15 +1315,8 @@ export function HotelSearchBar({
                   ) : visibleDestinationSuggestions.length ? (
                     visibleDestinationSuggestions.map((suggestion, index) => {
                       const isActive = destinationHighlight === index;
-                      const detail = getLocalizedHotelDestinationDetail(
-                        suggestion,
-                        locale,
-                      );
-                      const localizedName =
-                        getLocalizedHotelDestinationCityName(
-                          suggestion.name,
-                          locale,
-                        );
+                      const detail = getHotelDestinationSupportingLabel(suggestion, locale);
+                      const localizedName = getHotelDestinationPrimaryLabel(suggestion, locale);
 
                       return (
                         <button
@@ -1206,7 +1351,7 @@ export function HotelSearchBar({
                     })
                   ) : (
                     <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
-                      {t("noMatchingDestinationsYet")}
+                      {destinationSuggestionsRecovery || t("noMatchingDestinationsYet")}
                     </div>
                   )}
                 </HotelDesktopPopover>
@@ -1215,28 +1360,65 @@ export function HotelSearchBar({
 
             <div
               ref={datesWrapperRef}
-              className={cn(fieldClassName, datesOpen && "z-[1000]")}
+              data-hotel-results-edit-field={isResultsFlat ? "dates" : undefined}
+              data-hotel-mobile-edit-row={
+                mobileResultsSheet ? "dates" : undefined
+              }
+              className={cn(
+                fieldClassName,
+                datesOpen && "z-[1000]",
+                mobileResultsSheet &&
+                  "min-h-16 rounded-[12px] border border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25",
+              )}
             >
-              <span className={fieldLabelClassName}>
+              {isResultsFlat ? <Calendar data-hotel-results-edit-leading-icon="" aria-hidden="true" className="hidden lg:block" /> : null}
+              <span data-hotel-results-edit-label={isResultsFlat ? "" : undefined} className={cn(fieldLabelClassName, mobileResultsSheet && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
                 {t("hotelSearchTravelDatesLabel")}
               </span>
               <button
+                data-hotel-results-nav-date={isNavbarResultsSearch ? "" : undefined}
+                data-hotel-results-edit-value={isResultsFlat ? "" : undefined}
                 ref={datesMobileLauncherRef}
                 type="button"
                 onClick={handleToggleDates}
                 aria-expanded={datesOpen}
                 aria-haspopup="dialog"
                 aria-label={t("chooseTravelDates")}
+                data-hotel-mobile-edit-chevron={
+                  mobileResultsSheet ? "true" : undefined
+                }
                 className={cn(
                   valueControlClassName,
                   "flex items-center gap-1.5 text-start",
+                  mobileResultsSheet &&
+                    "mt-0.5 grid h-auto min-h-6 grid-cols-[20px_minmax(0,1fr)_16px] items-center gap-2 text-[16px] font-medium leading-5 text-slate-900",
                 )}
               >
-                <Calendar
-                  size={16}
-                  className="shrink-0 text-slate-500"
-                />
-                <span className="truncate">{dateSummary}</span>
+                {isNavbarResultsSearch ? (
+                  <>
+                    <span data-hotel-results-nav-date-part="">
+                      <Calendar aria-hidden="true" />
+                      <span className="truncate">{checkInParsed?.toLocaleDateString(calendarLocale, { month: "short", day: "numeric" }) ?? t("deals.handoff.checkIn")}</span>
+                    </span>
+                    <span data-hotel-results-nav-date-part="">
+                      <Calendar aria-hidden="true" />
+                      <span className="truncate">{checkOutParsed?.toLocaleDateString(calendarLocale, { month: "short", day: "numeric" }) ?? t("deals.handoff.checkOut")}</span>
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Calendar
+                      data-hotel-results-edit-inline-icon={isResultsFlat ? "" : undefined}
+                      aria-hidden="true"
+                      className={cn(
+                        "h-4 w-4 shrink-0 text-slate-700",
+                        mobileResultsSheet && "h-[18px] w-[18px]",
+                      )}
+                    />
+                    <span className="truncate">{mobileResultsSheet || isResultsFlat ? formatCompactHotelDateRange(checkIn, checkOut, calendarLocale) ?? dateSummary : dateSummary}</span>
+                  </>
+                )}
+                {mobileResultsSheet ? <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" /> : null}
               </button>
               {datesOpen ? (
                 <HotelDesktopPopover
@@ -1245,7 +1427,7 @@ export function HotelSearchBar({
                   preferredWidth={570}
                   desiredHeight={isStickyDialog ? 360 : 420}
                   onClose={() => setDatesOpen(false)}
-                  className={isStickyDialog ? "overflow-hidden p-2" : "p-3"}
+                  className={cn(isStickyDialog ? "overflow-hidden p-2" : "p-3", isResultsFlat && "font-sans text-[#192024]")}
                 >
                   <p className={cn("text-sm font-semibold text-slate-900", isStickyDialog ? "mb-1.5" : "mb-2.5")}>
                     {t("chooseTravelDates")}
@@ -1379,190 +1561,264 @@ export function HotelSearchBar({
 
             <div
               ref={guestsRoomsWrapperRef}
-              className={cn(fieldClassName, guestsRoomsOpen && "z-[1000]")}
+              data-hotel-results-edit-field={isResultsFlat ? "guests" : undefined}
+              data-hotel-mobile-edit-row={
+                mobileResultsSheet ? "guests" : undefined
+              }
+              className={cn(
+                fieldClassName,
+                guestsRoomsOpen && "z-[1000]",
+                mobileResultsSheet &&
+                  "min-h-16 rounded-[12px] border border-[#D8E1EC] bg-white px-4 py-2 shadow-[0_2px_8px_rgba(15,23,42,0.035)] hover:bg-slate-50 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25",
+              )}
             >
-              <span className={fieldLabelClassName}>
+              {isResultsFlat ? <UserRound data-hotel-results-edit-leading-icon="" aria-hidden="true" className="hidden lg:block" /> : null}
+              <span data-hotel-results-edit-label={isResultsFlat ? "" : undefined} className={cn(fieldLabelClassName, mobileResultsSheet && "mb-1 text-[11px] font-bold leading-4 text-[#64748B]")}>
                 {t("hotelSearchGuestsLabel")}
               </span>
               <button
+                data-hotel-results-edit-value={isResultsFlat ? "" : undefined}
                 ref={guestsRoomsMobileLauncherRef}
                 type="button"
                 onClick={handleToggleGuestsRooms}
                 aria-expanded={guestsRoomsOpen}
                 aria-haspopup="dialog"
                 aria-label={t("chooseGuestsAndRooms")}
+                data-hotel-mobile-edit-chevron={
+                  mobileResultsSheet ? "true" : undefined
+                }
                 className={cn(
                   valueControlClassName,
                   "flex items-center justify-between gap-1.5 text-start",
+                  mobileResultsSheet &&
+                    "mt-0.5 grid h-auto min-h-6 grid-cols-[20px_minmax(0,1fr)_16px] items-center gap-2 text-[16px] font-medium leading-5 text-slate-900",
                 )}
               >
-                <span className="flex min-w-0 items-center gap-2">
+                <span className={cn("flex min-w-0 items-center gap-2", mobileResultsSheet && "contents")}>
                   <UserRound
+                    data-hotel-results-edit-inline-icon={isResultsFlat ? "" : undefined}
                     aria-hidden="true"
                     className={cn(
-                      "h-4 w-4 shrink-0 text-slate-500",
-                      !mobileLandingPresentation && "max-sm:hidden",
+                      "h-4 w-4 shrink-0 text-slate-700",
+                      mobileResultsSheet && "h-[18px] w-[18px]",
+                      !mobileLandingPresentation && !mobileResultsSheet && "max-sm:hidden",
                     )}
                   />
                   <span className="truncate">{guestsRoomsSummary}</span>
                 </span>
-                <ChevronDown
-                  size={16}
-                  className={`shrink-0 text-slate-500 transition-transform ${
-                    guestsRoomsOpen ? "rotate-180" : ""
-                  }`}
-                />
+                {mobileResultsSheet ? (
+                  <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />
+                ) : (
+                  <ChevronDown
+                    data-hotel-results-edit-chevron={isResultsFlat ? "" : undefined}
+                    size={16}
+                    className={`shrink-0 text-slate-500 transition-transform ${
+                      guestsRoomsOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                )}
               </button>
               {guestsRoomsOpen ? (
                 <HotelDesktopPopover
                   open={guestsRoomsOpen}
                   launcherRef={guestsRoomsMobileLauncherRef}
                   preferredWidth={360}
-                  desiredHeight={356}
+                  desiredHeight={420}
                   align="end"
                   onClose={() => setGuestsRoomsOpen(false)}
-                  className="rounded-2xl border-slate-200 p-0 shadow-[0_24px_64px_-18px_rgba(15,23,42,0.28)]"
+                  className={cn(
+                    "rounded-2xl border-slate-200 p-0 shadow-[0_24px_64px_-18px_rgba(15,23,42,0.28)]",
+                    isResultsFlat && "font-sans text-[#192024]",
+                  )}
                 >
-                  <div className="border-b border-slate-200 px-4 py-3.5">
+                  <div className="px-4 py-3.5 text-center">
                     <h2 className="text-base font-bold tracking-[-0.01em] text-slate-950">
                       {t("hotelGuestsRooms.mobileTitle")}
                     </h2>
                   </div>
-                  <div className="divide-y divide-slate-200 px-4">
-                    {[
-                      {
-                        key: "adults",
-                        label: t("adults"),
-                        description: t("hotelGuests.adultDescription"),
-                        value: hotelAdultCount,
-                        min: 1,
-                        max: 12 - hotelChildCount,
-                        onDecrement: () =>
-                          setHotelAdultCount((prev) => Math.max(1, prev - 1)),
-                        onIncrement: () =>
-                          setHotelAdultCount((prev) =>
-                            Math.min(12 - hotelChildCount, prev + 1),
-                          ),
-                      },
-                      {
-                        key: "children",
-                        label: t("children"),
-                        description: t("hotelGuests.childDescription"),
-                        value: hotelChildCount,
-                        min: 0,
-                        max: 12 - hotelAdultCount,
-                        onDecrement: () =>
-                          setHotelChildCount((prev) => Math.max(0, prev - 1)),
-                        onIncrement: () =>
-                          setHotelChildCount((prev) =>
-                            Math.min(12 - hotelAdultCount, prev + 1),
-                          ),
-                      },
-                      {
-                        key: "rooms",
-                        label: t("rooms"),
-                        description: t("hotelGuests.roomDescription"),
-                        value: clampCount(rooms, 1, 6),
-                        min: 1,
-                        max: 6,
-                        onDecrement: () =>
-                          setRooms((prev) =>
-                            String(Math.max(1, clampCount(prev, 1, 6) - 1)),
-                          ),
-                        onIncrement: () =>
-                          setRooms((prev) =>
-                            String(Math.min(6, clampCount(prev, 1, 6) + 1)),
-                          ),
-                      },
-                    ].map((row) => {
-                      const canDecrement = row.value > row.min;
-                      const canIncrement = row.value < row.max;
+                  <div className="px-4 py-3">
+                    <section aria-labelledby={`${idPrefix}-desktop-guests-heading`}>
+                      <h3 id={`${idPrefix}-desktop-guests-heading`} className="mb-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                        {t("guests")}
+                      </h3>
+                      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        {[
+                          {
+                            key: "adults",
+                            label: t("adults"),
+                            description: t("hotelGuests.adultDescription"),
+                            value: hotelAdultCount,
+                            min: 1,
+                            max: 12 - hotelChildCount,
+                            onDecrement: () =>
+                              setHotelAdultCount((prev) => Math.max(1, prev - 1)),
+                            onIncrement: () =>
+                              setHotelAdultCount((prev) =>
+                                Math.min(12 - hotelChildCount, prev + 1),
+                              ),
+                          },
+                          {
+                            key: "children",
+                            label: t("children"),
+                            description: t("hotelGuests.childDescription"),
+                            value: hotelChildCount,
+                            min: 0,
+                            max: 12 - hotelAdultCount,
+                            onDecrement: () =>
+                              setHotelChildCount((prev) => Math.max(0, prev - 1)),
+                            onIncrement: () =>
+                              setHotelChildCount((prev) =>
+                                Math.min(12 - hotelAdultCount, prev + 1),
+                              ),
+                          },
+                        ].map((row, index) => {
+                          const canDecrement = row.value > row.min;
+                          const canIncrement = row.value < row.max;
 
-                      return (
-                        <div
-                          key={row.key}
-                          className="flex min-h-[70px] items-center justify-between gap-3 py-2.5"
-                        >
+                          return (
+                            <div
+                              key={row.key}
+                              className={cn(
+                                "flex min-h-[68px] items-center justify-between gap-3 px-3.5 py-2.5",
+                                index > 0 && "border-t border-slate-200",
+                              )}
+                            >
+                              <span className="min-w-0">
+                                <span className="block text-sm font-semibold text-slate-950">
+                                  {row.label}
+                                </span>
+                                <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                                  {row.description}
+                                </span>
+                              </span>
+                              <div className="flex shrink-0 items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={row.onDecrement}
+                                  disabled={!canDecrement}
+                                  aria-label={`${t("decrease")} ${row.label}`}
+                                  className="focus-ring inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 transition-colors hover:border-[#004BB8] hover:bg-blue-50 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-white"
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </button>
+                                <span className="min-w-7 text-center text-sm font-semibold tabular-nums text-slate-950">
+                                  {row.value}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={row.onIncrement}
+                                  disabled={!canIncrement}
+                                  aria-label={`${t("increase")} ${row.label}`}
+                                  className="focus-ring inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 transition-colors hover:border-[#004BB8] hover:bg-blue-50 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-white"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section aria-labelledby={`${idPrefix}-desktop-rooms-heading`} className="mt-3">
+                      <h3 id={`${idPrefix}-desktop-rooms-heading`} className="mb-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                        {t("rooms")}
+                      </h3>
+                      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <div className="flex min-h-[68px] items-center justify-between gap-3 px-3.5 py-2.5">
                           <span className="min-w-0">
-                            <span className="block text-sm font-bold text-slate-950">
-                              {row.label}
+                            <span className="block text-sm font-semibold text-slate-950">
+                              {t("rooms")}
                             </span>
-                            <span className="mt-0.5 block text-xs font-medium text-slate-500">
-                              {row.description}
+                            <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                              {t("hotelGuests.roomDescription")}
                             </span>
                           </span>
                           <div className="flex shrink-0 items-center gap-2">
                             <button
                               type="button"
-                              onClick={row.onDecrement}
-                              disabled={!canDecrement}
-                              aria-label={`${t("decrease")} ${row.label}`}
+                              onClick={() =>
+                                setRooms((prev) =>
+                                  String(Math.max(1, clampCount(prev, 1, 6) - 1)),
+                                )
+                              }
+                              disabled={clampCount(rooms, 1, 6) <= 1}
+                              aria-label={`${t("decrease")} ${t("rooms")}`}
                               className="focus-ring inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 transition-colors hover:border-[#004BB8] hover:bg-blue-50 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-white"
                             >
                               <Minus className="h-4 w-4" />
                             </button>
-                            <span className="min-w-7 text-center text-base font-bold tabular-nums text-slate-950">
-                              {row.value}
+                            <span className="min-w-7 text-center text-sm font-semibold tabular-nums text-slate-950">
+                              {clampCount(rooms, 1, 6)}
                             </span>
                             <button
                               type="button"
-                              onClick={row.onIncrement}
-                              disabled={!canIncrement}
-                              aria-label={`${t("increase")} ${row.label}`}
+                              onClick={() =>
+                                setRooms((prev) =>
+                                  String(Math.min(6, clampCount(prev, 1, 6) + 1)),
+                                )
+                              }
+                              disabled={clampCount(rooms, 1, 6) >= 6}
+                              aria-label={`${t("increase")} ${t("rooms")}`}
                               className="focus-ring inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 transition-colors hover:border-[#004BB8] hover:bg-blue-50 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-white"
                             >
                               <Plus className="h-4 w-4" />
                             </button>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                  {!mobileSearchOpen ? (
-                    <div className="border-t border-slate-200 bg-slate-50/70 px-4 py-3">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-900">
-                            {t("petFriendly")}
-                          </p>
-                          <p className="mt-0.5 text-xs leading-5 text-slate-500">
-                            {t("onlyShowPetFriendlyStays")}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={hotelPetFriendly}
-                          aria-label={t("togglePetFriendlyStays")}
-                          onClick={() => setHotelPetFriendly((prev) => !prev)}
-                          className={`focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
-                            hotelPetFriendly
-                              ? "border-[#004BB8] bg-[#004BB8]"
-                              : "border-slate-300 bg-slate-200"
-                          }`}
-                        >
-                          <span
-                            className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-sm transition-transform ${
-                              hotelPetFriendly
-                                ? "translate-x-5"
-                                : "translate-x-0.5"
-                            }`}
-                          />
-                        </button>
+
+                        {!mobileSearchOpen ? (
+                          <div className="flex min-h-[68px] items-center justify-between gap-4 border-t border-slate-200 px-3.5 py-2.5">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-slate-950">
+                                {t("petFriendly")}
+                              </p>
+                              <p className="mt-0.5 text-xs font-normal leading-5 text-slate-500">
+                                {t("onlyShowPetFriendlyStays")}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              role="switch"
+                              aria-checked={hotelPetFriendly}
+                              aria-label={t("togglePetFriendlyStays")}
+                              onClick={() => setHotelPetFriendly((prev) => !prev)}
+                              className={`focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
+                                hotelPetFriendly
+                                  ? "border-[#004BB8] bg-[#004BB8]"
+                                  : "border-slate-300 bg-slate-200"
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-sm transition-transform ${
+                                  hotelPetFriendly
+                                    ? "translate-x-5"
+                                    : "translate-x-0.5"
+                                }`}
+                              />
+                            </button>
+                          </div>
+                        ) : null}
                       </div>
-                    </div>
-                  ) : null}
+                    </section>
+                  </div>
                 </HotelDesktopPopover>
               ) : null}
             </div>
+            </div>
 
             <div
+              data-hotel-results-edit-action-cell={isResultsFlat ? "" : undefined}
+              data-hotel-mobile-edit-search-action={
+                mobileResultsSheet ? "" : undefined
+              }
               className={cn(
                 "sm:col-span-2 lg:col-span-1 lg:self-stretch",
                 compact ? "sm:min-h-[54px]" : "lg:min-h-[54px]",
               )}
             >
               <button
+                data-hotel-results-edit-action={isResultsFlat ? "" : undefined}
                 type="submit"
                 className={cn(
                   isStickyDialog
@@ -1573,8 +1829,12 @@ export function HotelSearchBar({
                   !isStickyDialog && compact
                     ? cn(
                         "h-[54px] shadow-lg sm:min-h-[54px] lg:min-w-[112px] lg:rounded-s-none",
+                        isResultsFlat && "lg:min-w-0 lg:shadow-none",
                         mobileSearchOpen &&
-                          "mt-1 h-[52px] rounded-2xl text-base sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-s-none",
+                          cn(
+                            "mt-3 h-12 rounded-[11px] text-[15px] sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-s-none",
+                            mobileResultsSheet && "mt-[13px] h-12 rounded-[10px] text-[15px] font-semibold shadow-none active:bg-[#003f9c]",
+                          ),
                       )
                     : !isStickyDialog
                       ? "h-12 lg:min-h-[54px] lg:rounded-none"
@@ -1582,12 +1842,14 @@ export function HotelSearchBar({
                 )}
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
+                aria-label={isResultsFlat ? (isSubmitting ? t("searchingHotels") : t("search")) : undefined}
               >
-                {isSubmitting
-                  ? t("searchingHotels")
-                  : compact
-                    ? t("search")
-                    : t("searchHotels")}
+                {isResultsFlat ? (
+                  <>
+                    <span className="lg:hidden">{isSubmitting ? t("searchingHotels") : t("search")}</span>
+                    {isSubmitting ? <LoaderCircle aria-hidden="true" className="mx-auto hidden h-5 w-5 animate-spin lg:block" /> : <Search aria-hidden="true" className="mx-auto hidden h-5 w-5 lg:block" />}
+                  </>
+                ) : isSubmitting ? t("searchingHotels") : compact ? t("search") : t("searchHotels")}
               </button>
             </div>
           </div>
@@ -1601,6 +1863,7 @@ export function HotelSearchBar({
       </form>
 
       <HotelDestinationMobilePicker
+        appearance={mobileResultsSheet ? "app" : undefined}
         open={destinationMobilePickerOpen}
         value={destination}
         titleId={`${idPrefix}-mobile-destination-title`}
@@ -1613,10 +1876,13 @@ export function HotelSearchBar({
           setDestinationSuggestionsOpen(false);
           setError("");
         }}
+        onSelect={(suggestion) => { setDestinationId(suggestion.id); setSelectedDestination(suggestion); }}
         onClose={() => setDestinationMobilePickerOpen(false)}
       />
 
       <MobileDatePickerDialog
+        showBackAction
+        headerVariant={mobileResultsSheet ? "close-right" : undefined}
         open={datesOpen}
         title={t("chooseTravelDates")}
         titleId={`${idPrefix}-mobile-dates-title`}
@@ -1644,14 +1910,21 @@ export function HotelSearchBar({
       />
 
       <HotelMobilePickerShell
+        showBackAction
+        headerVariant={mobileResultsSheet ? "close-right" : undefined}
+        appearance={mobileResultsSheet ? "app" : undefined}
         open={guestsRoomsOpen}
         title={t("hotelGuestsRooms.mobileTitle")}
         titleId={`${idPrefix}-mobile-guests-title`}
+        className={mobileResultsSheet ? appPickerStyles.guestShell : undefined}
         launcherRef={guestsRoomsMobileLauncherRef}
         onClose={() => setGuestsRoomsOpen(false)}
         showCancelAction={false}
         showBackLabel={false}
-        contentClassName="bg-[#fcfdfe] px-4 py-6"
+        contentClassName={cn(
+          "bg-[#fcfdfe] px-4",
+          mobileResultsSheet ? "py-4" : "py-6",
+        )}
         footer={(requestClose) => (
             <button type="button" onClick={() => {
               setHotelAdultCount(draftHotelAdults);
@@ -1659,14 +1932,14 @@ export function HotelSearchBar({
               setRooms(String(draftHotelRooms));
               setHotelPetFriendly(draftHotelPetFriendly);
               requestClose();
-            }} className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[17px] font-bold text-white">
+            }} className={mobileResultsSheet ? cn(appPickerStyles.primary, appPickerStyles.guestDone) : "focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[17px] font-bold text-white"}>
               {t("done")}
             </button>
         )}
       >
-        <MobileHotelGuestsRoomsPicker adults={draftHotelAdults} children={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} density={mobileLandingPresentation ? "compact" : undefined}
+        <div className={mobileResultsSheet ? appPickerStyles.guests : undefined}><MobileHotelGuestsRoomsPicker adults={draftHotelAdults} childCount={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} density={mobileLandingPresentation || mobileResultsSheet ? "compact" : undefined}
           onAdultsChange={setDraftHotelAdults} onChildrenChange={setDraftHotelChildren} onRoomsChange={setDraftHotelRooms} onPetFriendlyChange={setDraftHotelPetFriendly}
-          strings={{ guests: t("guests"), adults: t("adults"), adultDescription: t("hotelGuests.adultDescription") || "Ages 18+", children: t("children"), childDescription: t("hotelGuests.childDescription") || "Ages 0–17", rooms: t("rooms"), roomDescription: t("hotelGuests.roomDescription") || "Separate rooms", petFriendly: t("petFriendly"), petDescription: t("onlyShowPetFriendlyStays"), decrease: (label) => `Decrease ${label}`, increase: (label) => `Increase ${label}` }} />
+          strings={{ guests: t("guests"), adults: t("adults"), adultDescription: t("hotelGuests.adultDescription") || "Ages 18+", children: t("children"), childDescription: t("hotelGuests.childDescription") || "Ages 0–17", rooms: t("rooms"), roomDescription: t("hotelGuests.roomDescription") || "Separate rooms", petFriendly: t("petFriendly"), petDescription: t("onlyShowPetFriendlyStays"), decrease: (label) => `Decrease ${label}`, increase: (label) => `Increase ${label}` }} /></div>
       </HotelMobilePickerShell>
     </section>
   );

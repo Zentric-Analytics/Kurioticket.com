@@ -95,7 +95,7 @@ test("active user ID, Prisma dependency, and body are passed to PATCH", async ()
   const fixture = createDependencies(async () => ({
     user: { id: "active-user", status: "ACTIVE" },
   }));
-  const payload = { locale: "es-es", currency: "EUR" };
+  const payload = { locale: "fr", currency: "EUR" };
   const response = await createCustomizationHandlers(
     fixture.dependencies,
   ).PATCH(request(payload));

@@ -1,150 +1,169 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
-import { AdminDataTable, AdminEmptyState, AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import { AdminDeletionFilters } from "@/components/admin/AdminDeletionFilters";
 import { formatDateTime } from "@/lib/admin-data";
-import { withOptionalDb } from "@/lib/prisma";
+import { resolveAdminQueueWindow } from "@/lib/adminQueueDateRange";
+import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const metadata = { title: "Admin Account Deletions" };
 
-type AccountDeletionFilter = "open" | "pending" | "cancelled" | "ready" | "completed" | "all";
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+type RawFilters = Record<string, string | string[] | undefined>;
 
-type DeletionRequestStatus = "PENDING" | "CANCELLED" | "READY_FOR_REVIEW" | "COMPLETED";
-
-const FILTERS: Array<{ key: AccountDeletionFilter; label: string; statuses?: DeletionRequestStatus[] }> = [
-  { key: "open", label: "Pending + review", statuses: ["PENDING", "READY_FOR_REVIEW"] },
-  { key: "pending", label: "Pending", statuses: ["PENDING"] },
-  { key: "cancelled", label: "Cancelled / Reactivated", statuses: ["CANCELLED"] },
-  { key: "ready", label: "Ready for review", statuses: ["READY_FOR_REVIEW"] },
-  { key: "completed", label: "Completed", statuses: ["COMPLETED"] },
-  { key: "all", label: "All" },
-];
-
-const statusPriority: Record<DeletionRequestStatus, number> = {
-  READY_FOR_REVIEW: 0,
-  PENDING: 1,
-  CANCELLED: 2,
-  COMPLETED: 3,
+const statusPresentation: Record<string, { label: string; dot: string; text: string }> = {
+  PENDING: { label: "Pending", dot: "bg-amber-400", text: "text-[#6B4A10]" },
+  READY_FOR_REVIEW: { label: "Ready for review", dot: "bg-orange-500", text: "text-[#92400E]" },
+  CANCELLED: { label: "Cancelled", dot: "bg-slate-400", text: "text-[#64748B]" },
+  COMPLETED: { label: "Completed", dot: "bg-emerald-500", text: "text-emerald-700" },
 };
 
-function getFilter(value: string | string[] | undefined): AccountDeletionFilter {
-  const filter = Array.isArray(value) ? value[0] : value;
-  return FILTERS.some((item) => item.key === filter) ? (filter as AccountDeletionFilter) : "open";
-}
-
-function getStatusLabel(status: DeletionRequestStatus, userStatus: string) {
-  if (status === "CANCELLED") return userStatus === "ACTIVE" ? "Reactivated" : "Cancelled";
-  if (status === "READY_FOR_REVIEW") return "Ready for review";
-  return status.charAt(0) + status.slice(1).toLowerCase();
-}
-
-function getStatusTone(status: DeletionRequestStatus) {
-  if (status === "PENDING") return "warn";
-  if (status === "CANCELLED") return "good";
-  if (status === "READY_FOR_REVIEW") return "bad";
-  return "neutral";
-}
-
-function getCancellationDetail(metadata: unknown) {
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return null;
-  const source = "source" in metadata && typeof metadata.source === "string" ? metadata.source : null;
-  return source ? `Cancellation source: ${source.replaceAll("-", " ")}` : null;
-}
-
-export default async function AdminAccountDeletionsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const activeFilter = getFilter((await searchParams).status);
-  const requests = await withOptionalDb(
-    (db) => db.accountDeletionRequest.findMany({
-      orderBy: [{ requestedAt: "desc" }],
-      take: 200,
-      include: { user: { select: { email: true, role: true, status: true } } },
-    }),
-    [],
-  );
-
-  const sortedRequests = [...requests].sort((a, b) => {
-    const priorityDifference = statusPriority[a.status] - statusPriority[b.status];
-    if (priorityDifference !== 0) return priorityDifference;
-    return b.requestedAt.getTime() - a.requestedAt.getTime();
-  });
-  const filterDefinition = FILTERS.find((filter) => filter.key === activeFilter);
-  const visibleRequests = filterDefinition?.statuses
-    ? sortedRequests.filter((request) => filterDefinition.statuses?.includes(request.status))
-    : sortedRequests;
-  const counts = FILTERS.reduce<Record<AccountDeletionFilter, number>>((acc, filter) => {
-    acc[filter.key] = filter.statuses ? requests.filter((request) => filter.statuses?.includes(request.status)).length : requests.length;
-    return acc;
-  }, { open: 0, pending: 0, cancelled: 0, ready: 0, completed: 0, all: 0 });
+export default async function AdminAccountDeletionsPage({ searchParams }: { searchParams: SearchParams }) {
+  const raw = await searchParams;
+  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) });
+  const applied = { ...raw, from: window.from || undefined, to: window.to || undefined };
+  const params = toParams(applied);
+  if (!params.has("limit")) params.set("limit", "50");
+  const result = await adminOperationalReads.deletions.list(params);
 
   return (
-    <AdminPageShell title="Account deletion requests" description="Review the full account deletion lifecycle, including pending, cancelled/reactivated, ready-for-review, and completed requests.">
-      {requests.length === 0 ? <AdminEmptyState title="No deletion requests" message="Account deletion requests will appear here after users submit them." /> : (
-        <div className="space-y-4">
-          <AdminSectionCard className="p-3">
-            <div className="flex flex-wrap gap-2" aria-label="Account deletion request filters">
-              {FILTERS.map((filter) => {
-                const active = filter.key === activeFilter;
-                return (
-                  <Link
-                    key={filter.key}
-                    href={filter.key === "open" ? "/admin/account-deletions" : `/admin/account-deletions?status=${filter.key}`}
-                    className={`rounded-full px-3 py-2 text-xs font-black transition ${
-                      active ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-950"
-                    }`}
-                    aria-current={active ? "page" : undefined}
-                  >
-                    {filter.label} <span className="opacity-75">({counts[filter.key]})</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </AdminSectionCard>
-
-          {visibleRequests.length === 0 ? (
-            <AdminEmptyState title="No requests in this view" message="Try another status filter to review other deletion request lifecycle states." />
+    <AdminPageShell title="Account deletion requests" hideHeader>
+      <section aria-label="Account deletion requests" className="mx-auto w-full max-w-[1500px] min-w-0 text-[#374151]">
+        <h1 className="mb-4 text-[20px] font-semibold leading-7 text-[#020617]">Deletion Requests</h1>
+        <AdminDeletionFilters query={one(raw.q)} status={one(raw.status)} limit={one(raw.limit)} range={window.range} from={window.from} to={window.to}>
+        {result.status === "ok" ? (
+          result.data.items.length === 0 ? (
+            <QueueState title="No deletion requests" message="No account deletion requests match the selected filters." />
           ) : (
-            <AdminDataTable
-              columns={["Email", "User status", "Request status", "Requested", "Scheduled", "Cancelled / reactivated", "Completed", "Support / admin refs", "Notes", "Action"]}
-              rows={visibleRequests.map((request) => {
-                const cancellationDetail = getCancellationDetail(request.cancellationMetadata);
-                return {
-                  id: request.id,
-                  cells: [
-                    <span key="email" className="font-black text-slate-950">{request.email || request.user.email}</span>,
-                    <div key="user-status" className="space-y-1">
-                      <AdminStatusBadge tone={request.user.status === "ACTIVE" ? "good" : request.user.status === "PENDING_DELETION" ? "warn" : "neutral"}>{request.user.status}</AdminStatusBadge>
-                      <p className="text-xs font-semibold text-slate-500">Role: {request.user.role}</p>
-                    </div>,
-                    <div key="request-status" className="space-y-1">
-                      <AdminStatusBadge tone={getStatusTone(request.status)}>{getStatusLabel(request.status, request.user.status)}</AdminStatusBadge>
-                      {request.status === "CANCELLED" ? <p className="text-xs font-semibold text-emerald-700">Deletion request is no longer pending.</p> : null}
-                    </div>,
-                    formatDateTime(request.requestedAt),
-                    formatDateTime(request.deletionScheduledAt),
-                    request.cancelledAt ? formatDateTime(request.cancelledAt) : "—",
-                    request.completedAt ? formatDateTime(request.completedAt) : "—",
-                    <div key="refs" className="space-y-1 text-xs font-semibold text-slate-600">
-                      <p>Ticket: {request.supportTicketId || "—"}</p>
-                      <p>Admin ref: {request.adminNotificationId || "—"}</p>
-                    </div>,
-                    <div key="notes" className="max-w-xs space-y-1 text-xs leading-5 text-slate-600">
-                      {request.reviewNotes ? <p>{request.reviewNotes}</p> : null}
-                      {cancellationDetail ? <p>{cancellationDetail}</p> : null}
-                      {!request.reviewNotes && !cancellationDetail ? "—" : null}
-                    </div>,
-                    <Link key="action" href={`/admin/account-deletions/${request.id}`} className="inline-flex rounded-xl bg-indigo-700 px-3 py-2 text-xs font-black text-white transition hover:bg-indigo-800">
-                      Manage
-                    </Link>,
-                  ],
-                };
-              })}
-            />
-          )}
-        </div>
-      )}
+            <>
+              <div className="admin-responsive-records min-w-0 overflow-x-auto" role="region" aria-label="Account deletion request records" tabIndex={0}>
+                <table className="w-full min-w-[1080px] table-fixed text-left text-[13px]">
+                  <caption className="sr-only">Account deletion requests, lifecycle dates, linked references and management actions</caption>
+                  <colgroup>
+                    <col className="w-[23%]" />
+                    <col className="w-[14%]" />
+                    <col className="w-[13%]" />
+                    <col className="w-[13%]" />
+                    <col className="w-[15%]" />
+                    <col className="w-[14%]" />
+                    <col className="w-[8%]" />
+                  </colgroup>
+                  <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
+                    <tr>
+                      {["Account", "Request status", "Requested", "Scheduled", "Resolution", "References / notes", "Action"].map(label => (
+                        <th key={label} scope="col" className="px-3 py-3 font-medium uppercase">{label}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E7ECF5]">
+                    {result.data.items.map(request => {
+                      const status = statusPresentation[request.status] ?? {
+                        label: request.status.replaceAll("_", " "),
+                        dot: "bg-slate-400",
+                        text: "text-[#475569]",
+                      };
+                      const accountEmail = request.email || request.user.email || "—";
+                      return (
+                        <tr key={request.id}
+                          className="group min-h-[64px] align-middle text-[13px] transition-colors hover:bg-[#F8FAFC] focus-within:bg-[#F8FAFC]">
+                          <td data-label="Account" className="min-w-0 px-3 py-3 align-middle">
+                            <Link href={"/admin/account-deletions/" + request.id}
+                              className="block break-words font-semibold text-[#111827] hover:text-[#004BB8] hover:underline focus-visible:outline-[#004BB8]">
+                              {accountEmail}
+                            </Link>
+                            <p className="mt-1 break-words text-[12px] text-[#64748B]">{request.user.name || request.userId}</p>
+                            <p className="mt-0.5 text-[11px] text-[#64748B]">{request.user.role} · {request.user.status}</p>
+                          </td>
+                          <td data-label="Request status" className="px-3 py-3 align-middle">
+                            <span className={"inline-flex items-center gap-1.5 font-medium " + status.text}>
+                              <span aria-hidden="true" className={"h-1.5 w-1.5 shrink-0 rounded-full " + status.dot} />
+                              {status.label}
+                            </span>
+                          </td>
+                          <td data-label="Requested" className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums text-[#475569]">
+                            {formatDateTime(new Date(request.requestedAt))}
+                          </td>
+                          <td data-label="Scheduled" className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums text-[#475569]">
+                            {formatDateTime(new Date(request.deletionScheduledAt))}
+                          </td>
+                          <td data-label="Resolution" className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums">
+                            {request.cancelledAt ? (
+                              <p><span className="block text-[#64748B]">Cancelled</span>{formatDateTime(new Date(request.cancelledAt))}</p>
+                            ) : null}
+                            {request.completedAt ? (
+                              <p className={request.cancelledAt ? "mt-2" : ""}>
+                                <span className="block text-[#64748B]">Completed</span>{formatDateTime(new Date(request.completedAt))}
+                              </p>
+                            ) : null}
+                            {!request.cancelledAt && !request.completedAt ? "—" : null}
+                          </td>
+                          <td data-label="References / notes" className="min-w-0 px-3 py-3 align-middle text-[12px] leading-5 text-[#475569]">
+                            <p className="truncate" title={request.supportTicketId || undefined}>
+                              <span className="text-[#64748B]">Ticket: </span>{request.supportTicketId || "—"}
+                            </p>
+                            <p className="truncate" title={request.adminReference || undefined}>
+                              <span className="text-[#64748B]">Admin: </span>{request.adminReference || "—"}
+                            </p>
+                            <p><span className="text-[#64748B]">Review notes: </span>{request.hasReviewNotes ? "Recorded" : "—"}</p>
+                          </td>
+                          <td data-label="Action" className="whitespace-nowrap px-3 py-3 align-middle">
+                            <Link href={"/admin/account-deletions/" + request.id}
+                              aria-label={"View deletion request for " + accountEmail}
+                              className="inline-flex h-9 items-center gap-1 whitespace-nowrap text-[13px] font-medium text-[#004BB8] underline-offset-4 hover:underline focus-visible:outline-[#004BB8]">
+                              View <ChevronRight size={15} aria-hidden="true" />
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {result.data.nextCursor ? (
+                <nav aria-label="Deletion request pagination"
+                  className="flex justify-end border-b border-[#E7ECF5] px-3 py-3">
+                  <Link href={cursorHref(applied, result.data.nextCursor) + "&range=" + window.range}
+                    className="text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-[#004BB8]">
+                    Next page
+                  </Link>
+                </nav>
+              ) : null}
+            </>
+          )
+        ) : (
+          <QueueState
+            title={result.status === "invalid" ? "Invalid deletion filters" : result.status === "forbidden" ? "Admin access required" : "Deletion queue unavailable"}
+            message={"issues" in result ? result.issues.map(issue => issue.field + ": " + issue.message).join(" ") : "The deletion reader could not return queue data. An unavailable read is not shown as an empty queue."}
+          />
+        )}
+        </AdminDeletionFilters>
+      </section>
     </AdminPageShell>
   );
+}
+
+function QueueState({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="border-b border-[#E5E7EB] px-2 py-10 text-center">
+      <p className="text-[14px] font-semibold text-[#111827]">{title}</p>
+      <p className="mt-1 text-[12px] text-[#64748B]">{message}</p>
+    </div>
+  );
+}
+
+function one(value: string | string[] | undefined) { return typeof value === "string" ? value : ""; }
+function toParams(raw: RawFilters) {
+  const params = new URLSearchParams();
+  for (const key of ["status", "q", "limit", "from", "to", "cursor"] as const) {
+    const value = one(raw[key]);
+    if (value) params.set(key, value);
+  }
+  return params;
+}
+function cursorHref(raw: RawFilters, cursor: string) {
+  const params = toParams(raw);
+  params.set("cursor", cursor);
+  params.set("limit", one(raw.limit) || "50");
+  return "/admin/account-deletions?" + params.toString();
 }

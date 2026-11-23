@@ -4,17 +4,22 @@ import type { InputJsonValue } from "@prisma/client/runtime/client";
 import { getPrisma } from "@/lib/prisma";
 import type { SearchType as PrismaSearchType } from "@/generated/prisma/enums";
 
-const MAX_RECENT_SEARCHES = 5;
+export const MAX_RECENT_SEARCHES = 10;
+export const RECENT_SEARCH_RETENTION_DAYS = 90;
 
 const recentSearchTypeToPrisma = {
   flight: "FLIGHT",
   hotel: "HOTEL",
-} as const satisfies Record<"flight" | "hotel", PrismaSearchType>;
+  car: "CAR",
+  package: "PACKAGE",
+} as const satisfies Record<"flight" | "hotel" | "car" | "package", PrismaSearchType>;
 
 const prismaSearchTypeToPublic = {
   FLIGHT: "flight",
   HOTEL: "hotel",
-} as const satisfies Record<PrismaSearchType, "flight" | "hotel">;
+  CAR: "car",
+  PACKAGE: "package",
+} as const satisfies Record<PrismaSearchType, "flight" | "hotel" | "car" | "package">;
 
 const nonNegativeIntegerSchema = z.number().int().min(0);
 const positiveIntegerSchema = z.number().int().min(1);
@@ -49,9 +54,40 @@ const recentHotelParamsSchema = z.object({
   rooms: positiveIntegerSchema,
 });
 
+const recentCarParamsSchema = z.object({
+  pickupLocation: z.string().trim().min(1).max(256),
+  dropoffLocation: z.string().trim().min(1).max(256),
+  pickupDate: z.string().trim().min(1).max(32),
+  pickupTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+  dropoffDate: z.string().trim().min(1).max(32),
+  dropoffTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+  driverAge: z.union([z.literal("18-70"), z.string().regex(/^\d{2}$/), z.number().int().min(18).max(70)]),
+  unverifiedLocation: z.boolean().optional(),
+});
+
+const recentNativePackageParamsSchema = z.object({
+  mode: z.enum(["hotel-flight", "flight-car", "hotel-car", "hotel-flight-car"]),
+  origin: z.string().max(256), originCode: z.string().max(8), destination: z.string().min(1).max(256), destinationCode: z.string().max(8),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  adults: positiveIntegerSchema, children: nonNegativeIntegerSchema, infants: nonNegativeIntegerSchema, rooms: positiveIntegerSchema,
+  petFriendly: z.boolean(),
+  cabin: z.enum(["economy", "premium-economy", "business", "first"]),
+  carPickupLocation: z.string().max(256), carPickupDate: z.string().max(32), carReturnDate: z.string().max(32), carPickupTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/), carReturnTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/), carDriverAge: z.number().int().min(18).max(70),
+  stayDestinationLinked: z.boolean(), stayDatesLinked: z.boolean(), carPickupLinked: z.boolean(), carDatesLinked: z.boolean(),
+});
+const recentWebPackageParamsSchema = z.object({
+  mode: z.enum(["hotel-flight", "flight-car", "hotel-car", "hotel-flight-car"]),
+  sharedDestination: z.string().min(1).max(256),
+  sharedTravelStartDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  sharedTravelEndDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+}).passthrough();
+const recentPackageParamsSchema = z.union([recentNativePackageParamsSchema, recentWebPackageParamsSchema]);
+
 const recentSearchResultPathByType = {
   flight: "/flights/results",
   hotel: "/hotels/results",
+  car: "/cars/results",
+  package: "/packages/results",
 } as const;
 
 function isInternalResultHrefForType(
@@ -79,6 +115,14 @@ export const recentSearchInputSchema = z
       type: z.literal("hotel"),
       params: recentHotelParamsSchema,
     }),
+    recentSearchBaseInputSchema.extend({
+      type: z.literal("car"),
+      params: recentCarParamsSchema,
+    }),
+    recentSearchBaseInputSchema.extend({
+      type: z.literal("package"),
+      params: recentPackageParamsSchema,
+    }),
   ])
   .superRefine((input, context) => {
     if (isInternalResultHrefForType(input.href, input.type)) return;
@@ -98,7 +142,7 @@ export type RecentSearchInput = z.infer<typeof recentSearchInputSchema>;
 
 export type PublicRecentSearch = {
   id: string;
-  type: "flight" | "hotel";
+  type: "flight" | "hotel" | "car" | "package";
   createdAt: string;
   updatedAt: string;
   label: string;
@@ -142,8 +186,9 @@ export async function listUserRecentSearches(
   userId: string,
 ): Promise<PublicRecentSearch[]> {
   const prisma = getPrisma();
+  const retainedAfter = new Date(Date.now() - RECENT_SEARCH_RETENTION_DAYS * 24 * 60 * 60 * 1000);
   const searches = await prisma.recentSearch.findMany({
-    where: { userId },
+    where: { userId, updatedAt: { gte: retainedAfter } },
     orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     take: MAX_RECENT_SEARCHES,
     select: recentSearchSelect,

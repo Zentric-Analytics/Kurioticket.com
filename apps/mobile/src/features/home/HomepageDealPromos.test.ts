@@ -13,7 +13,7 @@ test("both homepage deal cards render their complete promotional copy", () => {
   assert.match(promo, /Flight deals from top airlines/);
   assert.match(
     promo,
-    /Discover limited-time fares and compare options instantly\./,
+    /Search current fares from connected airlines and compare options\./,
   );
   assert.match(promo, /Explore flight deals/);
   assert.match(promo, /Hotel savings worldwide/);
@@ -22,6 +22,10 @@ test("both homepage deal cards render their complete promotional copy", () => {
     /Browse stays from boutique hotels to global chains with price transparency\./,
   );
   assert.match(promo, /Explore hotel deals/);
+});
+
+test("deal merchandising does not invent price, discount, or urgency claims", () => {
+  assert.doesNotMatch(promo, /limited-time|% off|discount|only \d|save \$/i);
 });
 
 test("light-mode homepage promo colors remain unchanged", () => {
@@ -97,13 +101,9 @@ test("deal cards reuse vector icons and navigate through shared handlers", () =>
   assert.doesNotMatch(promo, /require\(|\.(?:png|jpe?g|gif|webp)/i);
 });
 
-test("promos follow adventure discovery for every home session", () => {
-  const adventure = home.indexOf("<HomepageAdventureDiscovery />");
-  const promos = home.indexOf("<HomepageDealPromos />");
-
-  assert.ok(adventure !== -1 && adventure < promos);
-  assert.equal(home.match(/<HomepageDealPromos \/>/g)?.length, 1);
-  assert.doesNotMatch(home, /isAuthenticated\s*\?[^:]*HomepageDealPromos/s);
+test("native homepage omits both promotional deal cards", () => {
+  assert.doesNotMatch(home, /HomepageDealPromos|Flight deals from top airlines|Hotel savings worldwide/);
+  assert.match(home, /<HomepageAdventureDiscovery \/>\s*<RegionalDestinationRoutes \/>/);
 });
 
 test("promos remain homepage-only and no third planning section is added", () => {

@@ -44,3 +44,71 @@ test("Preview tester migration is additive and has no destructive statements", (
   assert.doesNotMatch(migration, /\b(DROP\s+(TABLE|COLUMN|TYPE)|TRUNCATE|DELETE\s+FROM|UPDATE\s+\S+\s+SET)\b/i);
   assert.doesNotMatch(migration, /ON DELETE CASCADE/i);
 });
+
+const registry = readFileSync("src/components/admin/PreviewTesterRegistry.tsx", "utf8");
+
+test("Team Access uses compact expandable member records without hiding administrative actions off-screen", () => {
+  assert.match(registry, /aria-label="Team members"/);
+  assert.match(registry, /<details key=\{tester.id\}/);
+  assert.match(registry, /<summary className=/);
+  assert.match(registry, /Edit member access/);
+  assert.match(registry, /EffectiveAccess roles=\{tester.roles\}/);
+  assert.match(registry, /actorTimestamp\(tester.approvedByAdmin, tester.approvedAt\)/);
+  assert.match(registry, /actorTimestamp\(tester.suspendedByAdmin, tester.suspendedAt\)/);
+  assert.match(registry, /actorTimestamp\(tester.revokedByAdmin, tester.revokedAt\)/);
+  assert.doesNotMatch(registry, /min-w-\[1500px\]|overflow-x-auto rounded-xl/);
+  for (const action of ["reactivate", "suspend", "revoke"]) {
+    assert.ok(registry.includes('change(tester.id, tester.updatedAt, "' + action + '")'), action);
+  }
+});
+
+test("Team Access retains role editing, audited server API actions and confirmation gates", () => {
+  assert.match(registry, /<form action=\{add\}/);
+  assert.match(registry, /<form action=\{update\}/);
+  assert.match(registry, /role-\$\{role\}/);
+  assert.match(registry, /formData.get\("expiresAt"\)/);
+  assert.match(readFileSync("src/components/admin/TeamAccessExpiryPicker.tsx", "utf8"), /name="expiresAt"/);
+  assert.match(registry, /name="reason"/);
+  assert.match(registry, /name="updatedAt"/);
+  assert.match(registry, /Save roles/);
+  assert.match(registry, /Add team member/);
+  assert.match(registry, /window.confirm/);
+  assert.match(mutationApi, /writeAdminAuditLog/);
+  assert.match(mutationApi, /sessionVersion: \{ increment: 1 \}/);
+});
+
+test("Team Access uses a compact horizontal Add form and the same UTC picker for Edit", () => {
+  const picker = readFileSync("src/components/admin/TeamAccessExpiryPicker.tsx", "utf8");
+  const utc = readFileSync("src/lib/teamAccessExpiration.ts", "utf8");
+  assert.ok(registry.includes("lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,1fr)]"));
+  assert.ok(registry.includes("sm:col-span-2 lg:col-span-1"));
+  assert.ok(registry.includes('TeamAccessExpiryPicker id="team-add-expiry"'));
+  assert.ok(registry.includes("TeamAccessExpiryPicker id={"));
+  assert.ok(registry.includes("overflow-visible rounded-xl"));
+  assert.doesNotMatch(registry, /type="datetime-local"/);
+  assert.ok(picker.includes('name="expiresAt" value={value}'));
+  assert.ok(picker.includes('aria-haspopup="dialog"'));
+  for (const text of ["Choose access expiration in UTC", "Clear", "Cancel", "Apply"]) {
+    assert.ok(picker.includes(text), text);
+  }
+  assert.match(utc, /toISOString/);
+});
+
+test("Team Access keeps the Add button aligned to the right of Approval reason and wired to submit", () => {
+  const region = registry.slice(registry.indexOf('data-testid="team-access-approval-actions"'), registry.indexOf('</form>'));
+  assert.match(region, /sm:grid-cols-\[minmax\(0,1fr\)_auto\]/);
+  assert.match(region, /sm:col-span-2/);
+  assert.match(region, /lg:col-span-3/);
+  assert.match(region, /id="team-add-reason" name="reason"/);
+  assert.match(region, /h-10 w-full min-w-0 rounded-lg border/);
+  assert.match(region, /<Button type="submit" size="sm" className="h-10 w-full shrink-0 whitespace-nowrap px-4 sm:w-auto">Add team member<\/Button>/);
+  assert.ok(region.indexOf('id="team-add-reason"') < region.indexOf('<Button type="submit"'));
+  assert.match(registry, /<form action=\{add\}/);
+  assert.match(registry, /formData.get\("reason"\)/);
+});
+
+test("Team Access audit timestamps never depend on the browser timezone during hydration", () => {
+  assert.ok(registry.includes("formatUtcAuditTimestamp(tester.updatedAt)"));
+  assert.ok(registry.includes("formatUtcAuditTimestamp(timestamp)"));
+  assert.equal(registry.includes("toLocaleString("), false);
+});

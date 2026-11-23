@@ -1,10 +1,10 @@
+import { Text, useHomePresentation } from "../home/HomePresentation";
 import { useState, type ReactNode } from "react";
 import {
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 import { router } from "expo-router";
@@ -69,11 +69,22 @@ export function ScreenHeader({
   );
 }
 
+export function PickerSheetHeader({ title, onClose, closeLabel }: { title: string; onClose: () => void; closeLabel?: string }) {
+  const ft = useFlowTheme();
+  return <View style={styles.pickerSheetHeader}>
+    <Text accessibilityRole="header" style={[ft.styles.title, styles.pickerSheetTitle]}>{title}</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel={closeLabel ?? `Close ${title}`} accessibilityHint="Discards uncommitted changes" onPress={onClose} style={({ pressed }) => [ft.styles.iconButton, pressed && ft.styles.pressed]}>
+      <FlowIcon name="close" size={22} color={ft.colors.icon}/>
+    </Pressable>
+  </View>;
+}
+
 export function Segments<T extends string>({
   value,
   options,
   onChange,
   appearance = "default",
+  showBaseline = true,
 }: {
   value: T;
   options: readonly {
@@ -85,12 +96,14 @@ export function Segments<T extends string>({
   }[];
   onChange: (value: T) => void;
   appearance?: "default" | "filled";
+  showBaseline?: boolean;
 }) {
   const ft = useFlowTheme();
+  const homeTabs = useHomePresentation() && appearance === "default";
   return (
     <View
       accessibilityRole="tablist"
-      style={[styles.segments, { borderBottomColor: ft.colors.border }]}
+      style={[styles.segments, (!showBaseline || homeTabs) && styles.segmentsWithoutBaseline, { borderBottomColor: ft.colors.border }]}
     >
       {options.map((item) => {
         const selected = !item.disabled && value === item.value;
@@ -106,7 +119,7 @@ export function Segments<T extends string>({
               styles.segment,
               appearance === "filled" && styles.filledSegment,
               appearance === "filled" && item.disabled && styles.disabledSegment,
-              selected && (appearance === "filled" ? styles.filledSegmentActive : styles.segmentActive),
+              selected && !homeTabs && (appearance === "filled" ? styles.filledSegmentActive : styles.segmentActive),
               pressed && !item.disabled && ft.styles.pressed,
             ]}
           >
@@ -121,7 +134,9 @@ export function Segments<T extends string>({
               style={[
                 styles.segmentText,
                 { color: item.disabled ? ft.colors.secondaryText : ft.colors.text },
-                selected && (appearance === "filled" ? styles.filledSegmentTextActive : styles.segmentTextActive),
+                selected && !homeTabs && (appearance === "filled" ? styles.filledSegmentTextActive : styles.segmentTextActive),
+                homeTabs && styles.homeSegmentText,
+                homeTabs && { color: selected ? ft.colors.textPrimary : ft.colors.textSecondary, fontWeight: selected ? "700" : "400" },
               ]}
             >
               {item.label}
@@ -200,6 +215,9 @@ export function CompactSearchField({
   onPress,
   trailing,
   valueNumberOfLines = 1,
+  metaNumberOfLines,
+  appearance = "default",
+  modalCardDivider = false,
 }: {
   label: string;
   value: string;
@@ -209,6 +227,9 @@ export function CompactSearchField({
   onPress: () => void;
   trailing?: ReactNode;
   valueNumberOfLines?: number;
+  metaNumberOfLines?: number;
+  appearance?: "default" | "resultsEdit" | "resultsModalCard";
+  modalCardDivider?: boolean;
 }) {
   const ft = useFlowTheme();
   return (
@@ -218,18 +239,21 @@ export function CompactSearchField({
       onPress={onPress}
       style={({ pressed }) => [
         styles.compactField,
+        appearance === "resultsEdit" && styles.resultsEditCompactField,
         { backgroundColor: ft.colors.input, borderBottomColor: ft.colors.border },
+        appearance === "resultsEdit" && { backgroundColor: "transparent" },
+        appearance === "resultsModalCard" && { backgroundColor: "transparent", borderBottomWidth: modalCardDivider ? 1 : 0 },
         pressed && ft.styles.pressed,
       ]}
     >
-      <Text style={[styles.compactLabel, { color: ft.colors.secondaryText }]}>
+      <Text style={[styles.compactLabel, appearance === "resultsEdit" && styles.resultsEditCompactLabel, { color: ft.colors.secondaryText }]}>
         {label.toUpperCase()}
       </Text>
       <View style={styles.compactValueRow}>
         <FlowIcon name={icon} size={18} color={ft.colors.icon} />
         <View style={styles.compactTextColumn}>
-          <Text numberOfLines={valueNumberOfLines} style={[styles.compactValue, { color: muted ? ft.colors.placeholder : ft.colors.text }]}>{value}</Text>
-          {meta ? <Text style={[styles.compactMeta, { color: ft.colors.secondaryText }]}>{meta}</Text> : null}
+          <Text numberOfLines={valueNumberOfLines} style={[styles.compactValue, appearance === "resultsEdit" && styles.resultsEditCompactValue, { color: muted ? ft.colors.placeholder : ft.colors.text }]}>{value}</Text>
+          {meta ? <Text numberOfLines={metaNumberOfLines} style={[styles.compactMeta, { color: ft.colors.secondaryText }]}>{meta}</Text> : null}
         </View>
         {trailing ?? <FlowIcon name="chevron" size={16} color={ft.colors.icon} />}
       </View>
@@ -296,11 +320,15 @@ export function PrimaryButton({
   onPress,
   icon = "search",
   disabled = false,
+  size = "default",
+  appearance = "default",
 }: {
   label: string;
   onPress: () => void;
   icon?: FlowIconName | null;
   disabled?: boolean;
+  size?: "default" | "compact";
+  appearance?: "default" | "resultsEdit";
 }) {
   const ft = useFlowTheme();
   return (
@@ -310,10 +338,10 @@ export function PrimaryButton({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [ft.styles.primary, disabled && { opacity: 0.6 }, pressed && ft.styles.pressed]}
+      style={({ pressed }) => [ft.styles.primary, size === "compact" && styles.compactPrimary, appearance === "resultsEdit" && styles.resultsEditPrimary, disabled && { opacity: 0.6 }, pressed && ft.styles.pressed]}
     >
       {icon ? <FlowIcon name={icon} color="white" /> : null}
-      <Text style={ft.styles.primaryText}>{label}</Text>
+      <Text style={[ft.styles.primaryText, size === "compact" && styles.compactPrimaryText, appearance === "resultsEdit" && styles.resultsEditPrimaryText]}>{label}</Text>
     </Pressable>
   );
 }
@@ -334,6 +362,12 @@ export function UnavailableNotice({ text }: { text: string }) {
 }
 
 const styles = StyleSheet.create({
+  compactPrimary: { minHeight: 46 },
+  compactPrimaryText: { fontSize: 14 },
+  resultsEditPrimary: { minHeight: 52, borderRadius: 12 },
+  resultsEditPrimaryText: { fontSize: 16, fontWeight: "600" },
+  pickerSheetHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  pickerSheetTitle: { flex: 1, minWidth: 0 },
   centerTitle: {
     position: "absolute",
     left: 60,
@@ -347,6 +381,7 @@ const styles = StyleSheet.create({
     borderBottomColor: flowColors.border,
     borderBottomWidth: 1,
   },
+  segmentsWithoutBaseline: { borderBottomWidth: 0 },
   segment: {
     flex: 1,
     minHeight: 50,
@@ -366,6 +401,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
   },
+  homeSegmentText: { fontSize: 14, lineHeight: 20 },
   segmentTextActive: { color: flowColors.blue, fontWeight: "800" },
   field: {
     minHeight: 68,
@@ -379,10 +415,13 @@ const styles = StyleSheet.create({
   },
   grow: { flex: 1 },
   compactField: { minHeight: 66, paddingHorizontal: 12, paddingVertical: 9, borderBottomWidth: 1, justifyContent: "center", gap: 4 },
+  resultsEditCompactField: { minHeight: 72, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0 },
   compactLabel: { fontSize: 10, fontWeight: "800", letterSpacing: 0.5 },
+  resultsEditCompactLabel: { fontSize: 11, lineHeight: 15, fontWeight: "700", letterSpacing: 1.1 },
   compactValueRow: { flexDirection: "row", alignItems: "center", gap: 9 },
   compactTextColumn: { flex: 1, minWidth: 0 },
   compactValue: { fontSize: 15, fontWeight: "600", flexShrink: 1 },
+  resultsEditCompactValue: { fontSize: 16, lineHeight: 20, fontWeight: "600" },
   compactMeta: { fontSize: 12, lineHeight: 17, marginTop: 1 },
   overlay: {
     flex: 1,

@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   buildHotelGalleryCandidates,
   getAdjacentHotelGalleryIndex,
+  getHotelGalleryMosaicIndices,
   getHotelGalleryPhotoPosition,
   getHotelGallerySwipeDirection,
   resolveHotelGalleryIndex,
@@ -13,6 +14,36 @@ const a = "https://example.com/a.jpg";
 const b = "https://example.com/b.jpg";
 const c = "https://example.com/c.jpg";
 const fallback = CURATED_HOTEL_FALLBACK_IMAGES[0]?.url ?? "";
+
+test("next and previous controls advance and restore the mosaic image and counter", () => {
+  const candidates = [a, b, c];
+  const usableIndices = [0, 1, 2];
+  const failedUrls = new Set<string>();
+
+  const nextIndex = getAdjacentHotelGalleryIndex(
+    candidates,
+    failedUrls,
+    0,
+    1,
+  );
+  assert.equal(getHotelGalleryMosaicIndices(usableIndices, nextIndex)[0], 1);
+  assert.deepEqual(getHotelGalleryPhotoPosition(usableIndices, nextIndex), {
+    current: 2,
+    total: 3,
+  });
+
+  const previousIndex = getAdjacentHotelGalleryIndex(
+    candidates,
+    failedUrls,
+    nextIndex,
+    -1,
+  );
+  assert.equal(getHotelGalleryMosaicIndices(usableIndices, previousIndex)[0], 0);
+  assert.deepEqual(getHotelGalleryPhotoPosition(usableIndices, previousIndex), {
+    current: 1,
+    total: 3,
+  });
+});
 
 test("buildHotelGalleryCandidates preserves valid imageUrls order", () => {
   assert.deepEqual(buildHotelGalleryCandidates([a, b, c], undefined), [

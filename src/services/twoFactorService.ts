@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import type { AuthenticationAssurance } from "@/generated/prisma/enums";
 import { getPrisma } from "@/lib/prisma";
 
 const method = "TOTP";
@@ -95,6 +96,16 @@ export async function disableTwoFactor(userId: string) {
     where: { userId },
     create: { userId, twoFactorEnabled: false, twoFactorMethod: null, twoFactorSecretEncrypted: null, twoFactorLastUsedStep: null, recoveryCodesHash: null, twoFactorDisabledAt: now },
     update: { twoFactorEnabled: false, twoFactorMethod: null, twoFactorSecretEncrypted: null, twoFactorLastUsedStep: null, recoveryCodesHash: null, twoFactorDisabledAt: now },
+  });
+}
+
+export async function disableTwoFactorForSession(input: { userId: string; accountSessionId: string; assuranceLevel: AuthenticationAssurance }) {
+  const now = new Date();
+  return getPrisma().$transaction(async tx => {
+    await tx.userSecuritySettings.update({ where: { userId: input.userId }, data: { twoFactorEnabled: false, twoFactorMethod: null, twoFactorSecretEncrypted: null, twoFactorLastUsedStep: null, recoveryCodesHash: null, twoFactorDisabledAt: now } });
+    await tx.accountSession.update({ where: { id: input.accountSessionId }, data: { reauthenticatedAt: now } });
+    await tx.accountSession.updateMany({ where: { userId: input.userId, id: { not: input.accountSessionId }, revokedAt: null }, data: { revokedAt: now, revokeReason: "two_factor_disabled_other_device" } });
+    return tx.securityEvent.create({ data: { userId: input.userId, accountSessionId: input.accountSessionId, type: "TWO_FACTOR_DISABLED", assuranceLevel: input.assuranceLevel } });
   });
 }
 

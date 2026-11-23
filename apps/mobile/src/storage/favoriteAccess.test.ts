@@ -10,11 +10,28 @@ test("guest favorite attempts require sign-in and authenticated attempts toggle"
   assert.equal(favoriteAction("stable-user-id"), "toggle");
 });
 
+test("flight favorites resolve an unknown session before choosing save or sign-in", () => {
+  const hook = source("src/storage/useSavedFlights.ts");
+  assert.match(hook, /useState<string \| null \| undefined>\(undefined\)/);
+  assert.match(hook, /if \(resolvedUserId === undefined\) \{[\s\S]*?await readSession\(\)[\s\S]*?setUserId\(resolvedUserId\)/);
+  assert.match(hook, /favoriteAction\(resolvedUserId\) === "sign-in"[\s\S]*?showFavoriteSignInPrompt\("\/saved"\)/);
+  assert.match(hook, /await savedRepositoryFor\(resolvedUserId\)\.toggleFlight/);
+  assert.doesNotMatch(hook, /toggleFlight\([\s\S]*?catch\(\(\) => undefined\)/);
+});
+
+test("server-rejected favorite sessions are cleared and use sign-in recovery instead of the generic failure", () => {
+  const hook = source("src/storage/useSavedFlights.ts");
+  assert.match(hook, /error instanceof TravelApiError && error\.status === 401/);
+  assert.match(hook, /await clearSession\(\)[\s\S]*?setUserId\(null\)[\s\S]*?showFavoriteSignInPrompt\("\/saved"\)[\s\S]*?return/);
+  assert.match(hook, /error\.status === 400[\s\S]*?operation[\s\S]*?status: error\.status[\s\S]*?code: error\.code/);
+});
+
 test("favorite prompt offers dismissal and the existing sign-in flow", () => {
   const hook = source("src/storage/useSavedDestinations.ts");
-  assert.match(hook, /Sign in to save favorites/);
-  assert.match(hook, /Not now/);
-  assert.match(hook, /\(tabs\)\/profile\/sign-in/);
+  const prompt = source("src/storage/favoriteSignInPrompt.ts");
+  assert.match(prompt, /Sign in to save favorites/);
+  assert.match(prompt, /Not now/);
+  assert.match(prompt, /router\.push\(signInHref\(returnTo\)\)/);
   assert.match(hook, /favoriteAction\(userId\).*showFavoriteSignInPrompt\("\/saved"\).*return/s);
 });
 

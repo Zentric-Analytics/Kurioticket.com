@@ -1,0 +1,97 @@
+name: Production release readiness
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-release-readiness-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Production web candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - run: npx --no-install playwright install --with-deps chromium
+      - run: npx --no-install next typegen
+      - run: npx --no-install tsc --noEmit --incremental false
+      - run: npm run lint
+      - name: Build without production credentials or database access
+        env:
+          NEXT_PUBLIC_APP_URL: https://kurioticket.com
+          DATABASE_URL: postgresql://unused:unused@127.0.0.1:1/unused
+        run: npm run build
+      - run: npm test -- --test-concurrency=4
+      - run: node --test scripts/production-release-readiness.test.mjs
+
+  native-config:
+    name: Production native packaging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      APP_VARIANT: production
+      APP_BUILD_MODE: release
+      EXPO_PUBLIC_API_BASE_URL: https://kurioticket.com
+    defaults:
+      run: { working-directory: apps/mobile }
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - run: npm ci
+      - name: Select public production OAuth identity
+        run: node -e "const p=require('./release-policy.json');require('fs').appendFileSync(process.env.GITHUB_ENV,'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID='+p.production.googleIosClientId+'\n')"
+      - run: npm run release:validate
+      - run: npm run test:release-pipeline
+      - run: npm run verify:ios-icon
+      - run: npx --no-install expo config --type public --json > "$RUNNER_TEMP/production-public.json"
+      - run: npx --no-install expo config --type prebuild --json > "$RUNNER_TEMP/production-prebuild.json"
+      - run: npx --no-install expo export --platform all --max-workers 2 --output-dir "$RUNNER_TEMP/production-export"
+
+  postgres18:
+    name: Production PostgreSQL 18 compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kurioticket_release_ci
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kurioticket_release_ci?schema=public
+      NEXT_PUBLIC_APP_URL: https://kurioticket.com
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - run: node --test scripts/production-migration-controls.test.mjs
+      - run: node scripts/verify-production-migration-timeouts.mjs
+        env: { KURIOTICKET_SYNTHETIC_PG18: "1" }
+      - run: npx --no-install prisma validate
+      - run: npm run check:migration-timestamps
+      - run: npx --no-install prisma migrate deploy
+      - run: node scripts/validate-four-system-upgrade.mjs
+      - run: node scripts/verify-issue4-security-upgrade.mjs
+      - run: node scripts/verify-issue5-my-trips-upgrade.mjs
+      - run: node scripts/verify-production-schema.mjs
+      - run: npx --no-install prisma migrate status

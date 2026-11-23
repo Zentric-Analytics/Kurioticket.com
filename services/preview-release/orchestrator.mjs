@@ -1,23 +1,72 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
+import { planPlatformOta } from "./platform-ota.mjs";
 import { PREVIEW_IDENTITY, assertPreviewIdentity } from "./config.mjs";
-import { reconcileBuilds, reconcileSubmissionHistory } from "./eas-state.mjs";
+import { reconcileBuilds, reconcileSubmissionHistory, inspectHistoricalAndroidBuilds } from "./eas-state.mjs";
 import { exactChangeSet, exactCheckout, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, nativeFingerprints, prepareCheckout } from "./remote-clients.mjs";
 import { canonicalPreviewOtaRemoteIdentity, inspectPreviewUpdateHistory, waitForStaging } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
+
+const OTA_RUNTIME_CONTEXT_VERSION = "native-platform-v1";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { unexpectedBuilds, validateAdoptableBuild, validateAdoptableIosSubmission } from "./native-ownership.mjs";
 
 export class PreviewOrchestrator {
+  historicalReportTimes = new Map();
+
+  async reportHistoricalAndroidReservation(action, eas) {
+    const key = action.identity_key;
+    const now = Date.now();
+    if (now - (this.historicalReportTimes.get(key) ?? -Infinity) < 30 * 60_000) return;
+    // Set before awaiting, so errors and overlapping calls also observe cooldown.
+    if (this.historicalReportTimes.size >= 100) this.historicalReportTimes.clear();
+    this.historicalReportTimes.set(key, now);
+    let report = { outcome: "INSUFFICIENT_EVIDENCE", candidates: [] };
+    try {
+      const history = await eas.historicalAndroidHistory(action);
+      report = inspectHistoricalAndroidBuilds(history.builds, action, history.projectId);
+    } catch { /* Never log raw provider errors, tokens or artifact URLs. */ }
+    console.log(JSON.stringify({ event: "historical-android-reservation-report", actionId: action.id,
+      sourceSha: action.source_sha, ...report, decision: "WAIT_FOR_DURABLE_OWNER", reportOnly: true }));
+  }
   constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), appleFactory = () => new AppStoreConnectClient(config.appStoreConnect), checkoutFactory = exactCheckout, changeSetFactory = exactChangeSet, prepareCheckoutFactory = prepareCheckout, identityFactory = resolvedIdentity, fingerprintsFactory = (directory) => nativeFingerprints(directory, { expoToken: config.expoToken }), stagingWait = waitForStaging, sleep = delay }) {
     this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.appleFactory = appleFactory; this.checkoutFactory = checkoutFactory; this.changeSetFactory = changeSetFactory; this.prepareCheckoutFactory = prepareCheckoutFactory; this.identityFactory = identityFactory; this.fingerprintsFactory = fingerprintsFactory; this.stagingWait = stagingWait; this.sleep = sleep;
+  }
+
+  async withExactCurrentNativeContext({ sourceSha, platform, expectedFingerprint }, operation) {
+    const platformLabel = platform === "ios" ? "iOS" : platform === "android" ? "Android" : null;
+    if (!platformLabel) throw new Error("Current native recovery platform is invalid.");
+    if (!/^[0-9a-f]{40}$/.test(String(sourceSha ?? ""))) throw new Error("Current native recovery source SHA is malformed.");
+    if (!/^[0-9a-f]{40}$/.test(String(expectedFingerprint ?? ""))) throw new Error("Current native recovery fingerprint is malformed.");
+    if (typeof operation !== "function") throw new Error("Current native recovery operation is missing.");
+    const assertCurrentDev = async () => {
+      if (await this.github.latestDevSha() !== sourceSha) {
+        throw new Error("Current dev changed during native recovery verification; replacement build is blocked.");
+      }
+    };
+    await assertCurrentDev();
+
+    const checkout = await this.checkoutFactory({ repository: this.config.repository, token: this.config.githubReadToken, sha: sourceSha });
+    try {
+      await this.prepareCheckoutFactory(checkout.directory, { allowRootScriptDrift: true });
+      assertPreviewIdentity(await this.identityFactory(checkout.directory));
+      const fingerprints = await this.fingerprintsFactory(checkout.directory);
+      if (fingerprints[platform] !== expectedFingerprint) {
+        throw new Error(`Current dev ${platformLabel} fingerprint no longer matches the abandoned reservation; replacement build is blocked.`);
+      }
+      await assertCurrentDev();
+      const eas = this.easFactory(join(checkout.directory, "apps/mobile"));
+      return await operation({ directory: checkout.directory, eas, fingerprint: fingerprints[platform], assertCurrentDev });
+    } finally {
+      await checkout.cleanup();
+    }
   }
 
   async cycle() {
     const decision = await this.deriveDecision();
     console.log(JSON.stringify({ event: "PREVIEW_DECISION", ...decision.trace }));
     if (decision.noChange) return { state: "NO_CHANGE", sourceSha: decision.sourceSha };
-    const { sourceSha, previous, deliveredNative, pendingNative, iosNativeBackfill, iosDistributionPending } = decision;
+    const { sourceSha, previous, deliveredNative, pendingNative, pendingOta, iosNativeBackfill, iosDistributionPending } = decision;
     const claim = { sourceSha, previousSha: previous?.source_sha ?? null, workerId: this.config.workerId, leaseMs: this.config.leaseMs, mode: this.config.mode };
     const record = iosNativeBackfill
       ? await this.ledger.claimIosNativeBackfill({ ...claim, identityKey: `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview` })
@@ -25,13 +74,15 @@ export class PreviewOrchestrator {
         ? await this.ledger.claimIosDistribution(claim)
       : pendingNative.length
         ? await this.ledger.claimNativeDrift(claim)
+      : pendingOta.length && previous?.source_sha === sourceSha
+        ? await this.ledger.claimOtaGap(claim)
       : await this.ledger.claim(claim);
     if (!record) return { state: "LOCKED_OR_COMPLETE", sourceSha };
     const lease = maintainLease({ ledger: this.ledger, sourceSha, workerId: this.config.workerId, leaseMs: this.config.leaseMs, maxDurationMs: this.config.cycleDeadlineMs });
     try {
       await this.github.report(sourceSha, "pending", `Preview release ${this.config.mode} evaluation started`);
       if (iosDistributionPending) return await this.reconcileIosDistribution(record, lease);
-      return await this.process(record, iosNativeBackfill ? null : previous, lease, deliveredNative, pendingNative);
+      return await this.process(record, iosNativeBackfill ? null : previous, lease, deliveredNative, pendingNative, pendingOta);
     } catch (error) {
       const safe = redact(error instanceof Error ? error.message : String(error));
       await this.ledger.transition(sourceSha, this.config.workerId, [record.state, "VALIDATING", "PLANNED", "DELIVERING"], "FAILED", { failure_reason: safe, recovery_action: "Retry the same ledger record after correcting the reported cause." }).catch(() => {});
@@ -99,33 +150,43 @@ export class PreviewOrchestrator {
     return { action, submission };
   }
 
-  async recoverCanonicalNativeBuild({ sourceSha, platform }) {
+  async recoverCanonicalNativeBuild({ sourceSha, platform, artifactBackfill = false }) {
     if (!['ios', 'android'].includes(platform)) throw new Error("Canonical recovery platform is invalid.");
     if (await this.github.latestDevSha() !== sourceSha) throw new Error("Canonical recovery is restricted to the exact current dev SHA.");
     const release = await this.ledger.releaseBySha(sourceSha);
-    let plannedFingerprint = release?.evidence?.fingerprints?.[platform];
+    const plannedFingerprint = release?.evidence?.fingerprints?.[platform];
     if (!plannedFingerprint) throw new Error(`Release ${sourceSha} has no durable ${platform} fingerprint.`);
-    const rejected = await this.ledger.rejectedNativeOwnershipIncidents({ platform, sourceSha });
-    if (!rejected.length) throw new Error(`Canonical ${platform} replacement requires a rejected ownership incident.`);
 
     const checkout = await this.checkoutFactory({ repository: this.config.repository, token: this.config.githubReadToken, sha: sourceSha });
     try {
       await this.prepareCheckoutFactory(checkout.directory, { allowRootScriptDrift: true });
       assertPreviewIdentity(await this.identityFactory(checkout.directory));
       const currentFingerprints = await this.fingerprintsFactory(checkout.directory);
-      if (currentFingerprints[platform] !== plannedFingerprint) {
-        await this.ledger.correctPlannedNativeFingerprint({ platform, sourceSha, expectedFingerprint: plannedFingerprint, canonicalFingerprint: currentFingerprints[platform] });
-        console.warn(JSON.stringify({ event: "canonical-native-fingerprint-corrected", platform, sourceSha, previousFingerprint: plannedFingerprint, canonicalFingerprint: currentFingerprints[platform], cause: "planning-did-not-load-eas-preview-environment" }));
-        plannedFingerprint = currentFingerprints[platform];
+      if (currentFingerprints[platform] !== plannedFingerprint) throw new Error(`Canonical ${platform} recovery fingerprint no longer matches the exact current dev release plan.`);
+
+      if (artifactBackfill) {
+        if (platform !== "android") throw new Error("Artifact-availability backfill is Android-only.");
+        const identityKey = nativeBuildIdentityKey(platform, plannedFingerprint);
+        const existing = await this.ledger.getAction("ANDROID_BUILD", identityKey);
+        const delivered = await this.ledger.currentDeliveredNative("android");
+        if (!existing?.remote_id || delivered?.native_build_id !== existing.remote_id || delivered?.native_fingerprint !== plannedFingerprint) {
+          throw new Error("Android artifact backfill requires the exact currently delivered canonical build identity.");
+        }
+        try {
+          await this.easFactory(join(checkout.directory, "apps/mobile")).viewBuild(existing.remote_id);
+          throw new Error("Canonical Android artifact is still retrievable; backfill is forbidden.");
+        } catch (error) {
+          if (!(error instanceof EasRemoteObjectUnavailableError)) throw error;
+          await this.ledger.markRemoteObjectUnavailable({ kind: "ANDROID_BUILD", identityKey, remoteId: existing.remote_id, reason: error.message });
+        }
       }
 
-      const identityKey = nativeBuildIdentityKey(platform, plannedFingerprint);
-      const reservation = await this.ledger.reserveNativeBuild({ sourceSha, platform, identityKey });
+      const reservation = await this.ledger.reserveNativeBuildRecovery({ sourceSha, platform, fingerprint: plannedFingerprint, allowUnavailableDelivered: artifactBackfill });
       let action = reservation.action;
       const eas = this.easFactory(join(checkout.directory, "apps/mobile"));
       if (!action.remote_id) {
         const created = platform === "ios" ? await eas.createIosBuild() : await eas.createAndroidBuild();
-        action = await this.ledger.recordAction({ sourceSha, kind: platform === "ios" ? "IOS_BUILD" : "ANDROID_BUILD", identityKey, remoteId: created.id, state: "CREATED", evidence: { ...created, nativeFingerprint: plannedFingerprint, nativeArtifactSourceSha: sourceSha, latestCompatibleSourceSha: sourceSha, ownershipSource: "CANONICAL_INCIDENT_REPLACEMENT", rejectedIncidentBuildIds: rejected.map(({ build_id }) => build_id) } });
+        action = await this.ledger.recordAction({ sourceSha, kind: platform === "ios" ? "IOS_BUILD" : "ANDROID_BUILD", identityKey: action.identity_key, remoteId: created.id, state: "CREATED", evidence: { ...created, nativeFingerprint: plannedFingerprint, nativeArtifactSourceSha: sourceSha, latestCompatibleSourceSha: sourceSha, ownershipSource: "OWNER_AUTHORIZED_TERMINAL_REPLACEMENT", recoveryAttempt: action.evidence?.recoveryAttempt } });
         console.log(JSON.stringify({ event: "canonical-native-replacement-created", platform, sourceSha, fingerprint: plannedFingerprint, buildId: created.id }));
       }
       const lease = { checkpoint: async () => {} };
@@ -143,6 +204,7 @@ export class PreviewOrchestrator {
   async deriveDecision() {
     const currentDevSha = await retry(() => this.github.latestDevSha(), { attempts: 4, sleep: this.sleep });
     let previous = await this.ledger.lastSuccessful();
+    const pendingOta = typeof this.ledger.pendingPlatformOta === "function" ? await this.ledger.pendingPlatformOta() : [];
     if (previous?.source_sha !== currentDevSha
       && typeof this.ledger.completedCurrentDevProgressionCandidate === "function"
       && typeof this.ledger.reconcileCompletedCurrentDevProgression === "function") {
@@ -165,6 +227,12 @@ export class PreviewOrchestrator {
       ? await this.ledger.releaseBySha(currentDevSha)
       : previous?.source_sha === currentDevSha ? previous : null;
     const currentFingerprints = currentRecord?.evidence?.fingerprints ?? null;
+    const nativeBuildRecovery = {};
+    if (currentFingerprints && typeof this.ledger.nativeRecoveryState === "function") {
+      for (const platform of ["ios", "android"]) {
+        if (currentFingerprints[platform]) nativeBuildRecovery[platform] = await this.ledger.nativeRecoveryState({ platform, fingerprint: currentFingerprints[platform] });
+      }
+    }
     const deliveredChangeTargets = previous?.source_sha === currentDevSha
       ? await this.nativeChangeTargets(currentDevSha, deliveredNative)
       : [];
@@ -177,16 +245,16 @@ export class PreviewOrchestrator {
     // outrank delayed historical side effects. Historical distribution recovery
     // is selected only when current dev is fully evaluated against both canonical
     // delivered-platform pointers.
-    const currentDevHasPriority = currentDevNeedsEvaluation || pendingNative.length > 0;
+    const currentDevHasPriority = currentDevNeedsEvaluation || pendingNative.length > 0 || pendingOta.length > 0;
     const sourceSha = this.config.iosNativeBackfillSha ?? (!currentDevHasPriority ? pendingDistribution?.source_sha : null) ?? currentDevSha;
     if (sourceSha !== currentDevSha) await this.github.compare(sourceSha, currentDevSha);
     const iosNativeBackfill = Boolean(this.config.iosNativeBackfillSha);
     const iosDistributionPending = !iosNativeBackfill && (pendingDistribution?.source_sha === sourceSha || (typeof this.ledger.requiresIosDistribution === "function" && await this.ledger.requiresIosDistribution(sourceSha)));
-    const noChange = previous?.source_sha === sourceSha && !iosNativeBackfill && !pendingNative.length && !iosDistributionPending;
-    const selectedOperation = noChange ? "NO_CHANGE" : iosDistributionPending ? "IOS_DISTRIBUTION_RECONCILIATION" : pendingNative.length ? "CURRENT_NATIVE_RECONCILIATION" : "CURRENT_RELEASE_EVALUATION";
+    const noChange = previous?.source_sha === sourceSha && !iosNativeBackfill && !pendingNative.length && !pendingOta.length && !iosDistributionPending;
+    const selectedOperation = noChange ? "NO_CHANGE" : iosDistributionPending ? "IOS_DISTRIBUTION_RECONCILIATION" : pendingNative.length ? "CURRENT_NATIVE_RECONCILIATION" : pendingOta.length && previous?.source_sha === sourceSha ? "CURRENT_OTA_RECONCILIATION" : "CURRENT_RELEASE_EVALUATION";
     const claimEligibility = !noChange && typeof this.ledger.claimEligibility === "function" ? await this.ledger.claimEligibility(sourceSha, selectedOperation) : null;
     return {
-      sourceSha, previous, deliveredNative, pendingNative, iosNativeBackfill, iosDistributionPending, noChange,
+      sourceSha, previous, deliveredNative, pendingNative, pendingOta, iosNativeBackfill, iosDistributionPending, noChange,
       trace: {
         currentDevSha,
         ordinaryProgressionSha: previous?.source_sha ?? null,
@@ -199,9 +267,11 @@ export class PreviewOrchestrator {
         androidBuildNumber: deliveredNative.android?.buildNumber ?? null,
         androidFingerprint: deliveredNative.android?.fingerprint ?? null,
         currentFingerprints,
+        nativeBuildRecovery,
         sourceRangeNativeTargets: deliveredChangeTargets,
         fingerprintNativeTargets: nativeDriftTargets(currentFingerprints, deliveredNative),
         requiredNativeTargets: pendingNative,
+        pendingOtaPlatforms: pendingOta,
         pendingHistoricalDistributionSha: pendingDistribution?.source_sha ?? null,
         selectedSourceSha: sourceSha,
         selectedOperation,
@@ -210,7 +280,7 @@ export class PreviewOrchestrator {
     };
   }
 
-  async process(record, previous, lease, deliveredNative = null, requiredNativeTargets = []) {
+  async process(record, previous, lease, deliveredNative = null, requiredNativeTargets = [], pendingOta = []) {
     const sha = record.source_sha;
     await this.ledger.transition(sha, this.config.workerId, [record.state], "VALIDATING", { validation_state: "IN_PROGRESS" });
     const checkout = await this.checkoutFactory({ repository: this.config.repository, token: this.config.githubReadToken, sha });
@@ -227,12 +297,8 @@ export class PreviewOrchestrator {
       await lease.checkpoint();
       const nativeBaselines = deliveredNative ?? await this.deliveredNativeBaselines();
       classification = enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative: nativeBaselines, requiredNativeTargets });
-      if (classification.classification.includes("OTA")) {
-        const prior = previous?.evidence?.fingerprints;
-        if (!prior || prior.ios !== fingerprints.ios || prior.android !== fingerprints.android) {
-          classification = { ...classification, classification: classification.classification.replace("OTA", "ANDROID_NATIVE+IOS_NATIVE"), reason: prior ? "native-fingerprint-changed" : "native-fingerprint-baseline-missing" };
-        }
-      }
+      const otaPlan = planPlatformOta({ classification, fingerprints, deliveredNative: nativeBaselines, previous, pendingOta });
+      classification = otaPlan.classification;
       const planned = await this.ledger.transition(sha, this.config.workerId, ["VALIDATING"], "PLANNED", { classification: classification.classification, validation_state: "PASSED", evidence: { files, identity, fingerprints } });
       if (this.config.mode === "dry-run" || classification.classification === "NO_DELIVERY") {
         const complete = await this.ledger.transition(sha, this.config.workerId, [planned.state], "COMPLETE", { evidence: { files, identity, fingerprints, plan: classification, submissionPerformed: false } });
@@ -240,19 +306,19 @@ export class PreviewOrchestrator {
         return complete;
       }
       await this.ledger.transition(sha, this.config.workerId, [planned.state], "DELIVERING");
-      const evidence = { files, identity, fingerprints, classification };
+      const evidence = { files, identity, fingerprints, classification, pendingOtaPlatforms: otaPlan.pendingOtaPlatforms };
       const deliveries = {};
       if (classification.classification.includes("WEB")) deliveries.web = () => this.deliverWeb(sha, lease);
-      if (classification.classification.includes("OTA")) deliveries.ota = () => this.deliverOta(sha, checkout.directory, lease, ["ios", "android"], fingerprints);
+      if (otaPlan.otaPlatforms.length) deliveries.ota = () => this.deliverOta(sha, checkout.directory, lease, otaPlan.otaPlatforms, fingerprints);
       if (classification.classification.includes("IOS_NATIVE")) deliveries.ios = () => this.deliverIos(sha, checkout.directory, lease, fingerprints.ios);
       if (classification.classification.includes("ANDROID_NATIVE")) deliveries.android = () => this.deliverAndroid(sha, checkout.directory, lease, fingerprints.android);
-      const deliveryResults = await runDeliveries(deliveries);
+      const { results: deliveryResults, failures: deliveryFailures } = await settleDeliveries(deliveries);
       Object.assign(evidence, deliveryResults);
       const coalescedPlatforms = ["ios", "android"].filter((platform) => {
         const result = deliveryResults[platform];
         return result?.nativeArtifactSourceSha && result.nativeArtifactSourceSha !== sha;
       });
-      if (!classification.classification.includes("OTA") && coalescedPlatforms.length) {
+      if (coalescedPlatforms.length) {
         const coalescedOtaPlatforms = [];
         const coalescedNoDeliveryPlatforms = [];
         const coalescedOverlayEvidence = {};
@@ -285,11 +351,20 @@ export class PreviewOrchestrator {
           else coalescedNoDeliveryPlatforms.push(platform);
         }
         if (coalescedOtaPlatforms.length) {
-          evidence.ota = await this.deliverOta(sha, checkout.directory, lease, coalescedOtaPlatforms, fingerprints);
+          const overlay = await this.deliverOta(sha, checkout.directory, lease, coalescedOtaPlatforms, fingerprints);
+          evidence.ota = { ...overlay, updates: [...(evidence.ota?.updates ?? []), ...(overlay.updates ?? [])] };
           evidence.coalescedOtaPlatforms = coalescedOtaPlatforms;
         }
         if (coalescedNoDeliveryPlatforms.length) evidence.coalescedNoDeliveryPlatforms = coalescedNoDeliveryPlatforms;
         evidence.coalescedOverlayEvidence = coalescedOverlayEvidence;
+      }
+      if (deliveryFailures.length) {
+        evidence.platformFailures = Object.fromEntries(deliveryFailures.map(({ target, error }) => [target, {
+          state: "RECOVERY_REQUIRED",
+          reason: redact(error instanceof Error ? error.message : String(error)),
+        }]));
+        if (typeof this.ledger.recordDeliveryEvidence === "function") await this.ledger.recordDeliveryEvidence({ sourceSha: sha, workerId: this.config.workerId, evidence });
+        throwDeliveryFailures(deliveryFailures);
       }
       const complete = await this.ledger.transition(sha, this.config.workerId, ["DELIVERING"], "COMPLETE", { evidence });
       await this.github.report(sha, "success", `Preview delivery complete: ${classification.classification}`);
@@ -366,20 +441,25 @@ export class PreviewOrchestrator {
       return { ...complete, distribution };
   }
 
+  async createOwnedWebDeploy(sha, options = {}) {
+    await this.render.getService();
+    return this.render.createDeploy(sha, options);
+  }
+
   async deliverWeb(sha, lease) {
     await lease.checkpoint();
     const recorded = await this.ledger.getAction("WEB", sha);
     const remoteMatches = recorded?.remote_id ? [] : await this.render.findDeploysBySha(sha);
     let deploy = recorded?.remote_id
       ? await this.render.getDeploy(recorded.remote_id)
-      : remoteMatches[0] ?? await this.render.createDeploy(sha);
+      : remoteMatches[0] ?? await this.createOwnedWebDeploy(sha);
     if (!deploy?.id || (recorded?.remote_id && deploy.id !== recorded.remote_id)) throw new Error("Recorded Render deployment identity is malformed or mismatched.");
     const initialStatus = String(deploy.status ?? "CREATED").toUpperCase();
     if (["BUILD_FAILED", "UPDATE_FAILED", "CANCELED", "DEACTIVATED"].includes(initialStatus)) {
       await this.ledger.recordAction({ sourceSha: sha, kind: "WEB", identityKey: sha, remoteId: deploy.id, state: initialStatus, evidence: deploy });
       await lease.checkpoint();
       const existingReplacements = (await this.render.findDeploysBySha(sha)).filter(({ id }) => id !== deploy.id);
-      const replacement = existingReplacements[0] ?? await this.render.createDeploy(sha, { excludeIds: [deploy.id] });
+      const replacement = existingReplacements[0] ?? await this.createOwnedWebDeploy(sha, { excludeIds: [deploy.id] });
       if (!replacement?.id || replacement.id === deploy.id) throw new Error("Replacement Render deployment identity is malformed or unchanged.");
       await this.ledger.replaceTerminalAction({ sourceSha: sha, kind: "WEB", identityKey: sha, expectedRemoteId: deploy.id, remoteId: replacement.id, state: replacement.status ?? "CREATED", evidence: replacement });
       deploy = replacement;
@@ -406,49 +486,110 @@ export class PreviewOrchestrator {
   async deliverOta(sha, cwd, lease, platforms = ["ios", "android"], runtimeByPlatform = null) {
     const eas = this.easFactory(join(cwd, "apps/mobile"));
     const runtimes = Object.fromEntries(platforms.map((platform) => [platform, runtimeByPlatform?.[platform] ?? PREVIEW_IDENTITY.runtime]));
-    const identityKey = `${sha}:${platforms.map((platform) => `${platform}=${runtimes[platform]}`).join(",")}:${PREVIEW_IDENTITY.channel}`;
+    // A release owns one OTA action even when native reconciliation later asks
+    // for a platform-only overlay. Keep the durable identity independent of the
+    // requested subset so the per-SHA ledger constraint and replay agree.
+    const identityKey = `${sha}:${PREVIEW_IDENTITY.channel}`;
     const recorded = typeof this.ledger.getAction === "function" ? await this.ledger.getAction("OTA", identityKey) : null;
-    if (recorded?.state === "RUNTIME_MISMATCH") {
+    const recordedEvidence = parseActionEvidence(recorded?.evidence);
+    const providerVerifiedPlatforms = new Set(
+      Array.isArray(recordedEvidence?.providerVerifiedPlatforms)
+        ? recordedEvidence.providerVerifiedPlatforms.filter((platform) => platform === "ios" || platform === "android")
+        : [],
+    );
+    const correctingLegacyMismatch = recorded?.state === "RUNTIME_MISMATCH" && recordedEvidence?.runtimeContextVersion !== OTA_RUNTIME_CONTEXT_VERSION;
+    if (recorded?.state === "RUNTIME_MISMATCH" && !correctingLegacyMismatch) {
       throw new Error(`EAS Update runtime mismatch is already recorded for ${sha}; automatic republication is blocked.`);
     }
     const history = await eas.listUpdates();
-    const updates = [];
+    const recordedUpdates = Array.isArray(recordedEvidence?.updates) ? recordedEvidence.updates : [];
     const updatesByPlatform = {};
+    for (const update of recordedUpdates) {
+      for (const platform of Array.isArray(update?.platforms) ? update.platforms : []) {
+        if (platform === "ios" || platform === "android") (updatesByPlatform[platform] ??= []).push(update);
+      }
+    }
     for (const platform of platforms) {
       const expectedRuntime = runtimeByPlatform?.[platform] ?? PREVIEW_IDENTITY.runtime;
       const replay = inspectPreviewUpdateHistory(history, sha, platform, expectedRuntime);
       if (replay.matchingUpdates > 1) throw new Error(`EAS update history contains conflicting exact-SHA ${platform} groups.`);
       if (replay.alreadyPublished) {
-        const replayed = history.filter((entry) => entry.message.includes(sha) && entry.platforms.includes(platform));
-        updates.push(...replayed);
+        const replayed = history.filter((entry) => entry.message.includes(sha) && entry.runtimeVersion === expectedRuntime && entry.platforms.includes(platform));
+        const previouslyRecorded = updatesByPlatform[platform];
+        if (previouslyRecorded?.length
+          && canonicalPreviewOtaRemoteIdentity({ [platform]: previouslyRecorded }) !== canonicalPreviewOtaRemoteIdentity({ [platform]: replayed })) {
+          throw new Error(`Conflicting remote identity in EAS update history for OTA:${identityKey}:${platform}.`);
+        }
         updatesByPlatform[platform] = replayed;
+        providerVerifiedPlatforms.add(platform);
         continue;
       }
       await lease.checkpoint();
       const message = `Automatic Preview ${platform === "ios" ? "iOS" : "Android"} OTA for ${sha}; audit run 0`;
       let published;
       try {
-        published = await eas.publishUpdate(message, platform, expectedRuntime);
+        published = await eas.publishUpdate(message, platform, expectedRuntime, sha);
       } catch (error) {
+        if (correctingLegacyMismatch) {
+          await this.ledger.recordAction({
+            sourceSha: sha, kind: "OTA", identityKey, remoteId: recorded.remote_id, state: "RUNTIME_MISMATCH",
+            evidence: {
+              ...recordedEvidence, runtimeContextVersion: OTA_RUNTIME_CONTEXT_VERSION,
+              correctivePublication: "FAILED", correctiveFailureType: error?.name ?? "Error",
+            },
+          });
+          throw error;
+        }
         if (!(error instanceof EasUpdateRuntimeMismatchError)) throw error;
-        const mutatedUpdates = [...updates, ...error.updates];
+        const retainedUpdates = Object.values(updatesByPlatform).flat();
+        const mutatedUpdates = [...retainedUpdates, ...error.updates];
         const mismatchUpdatesByPlatform = { ...updatesByPlatform, [platform]: error.updates };
         await this.ledger.recordAction({
           sourceSha: sha,
           kind: "OTA",
           identityKey,
-          remoteId: canonicalPreviewOtaRemoteIdentity(mismatchUpdatesByPlatform),
+          remoteId: recorded?.remote_id ?? canonicalPreviewOtaRemoteIdentity(mismatchUpdatesByPlatform),
           state: "RUNTIME_MISMATCH",
-          evidence: { updates: mutatedUpdates, mismatchPlatform: error.platform, expectedRuntime: error.expectedRuntime },
+          evidence: { updates: mutatedUpdates, mismatchPlatform: error.platform, expectedRuntime: error.expectedRuntime, runtimeContextVersion: OTA_RUNTIME_CONTEXT_VERSION },
         });
         throw error;
       }
-      updates.push(...published);
       updatesByPlatform[platform] = published;
+      providerVerifiedPlatforms.add(platform);
     }
+    const updates = Object.values(updatesByPlatform).flat();
     const ids = updates.map((entry) => entry.id ?? entry.group);
-    await this.ledger.recordAction({ sourceSha: sha, kind: "OTA", identityKey, remoteId: canonicalPreviewOtaRemoteIdentity(updatesByPlatform), state: "PUBLISHED", evidence: updates });
-    return { updateIds: ids, runtimes, channel: PREVIEW_IDENTITY.channel };
+    const correctedRemoteId = canonicalPreviewOtaRemoteIdentity(updatesByPlatform);
+    const evidence = {
+      updates,
+      runtimeContextVersion: OTA_RUNTIME_CONTEXT_VERSION,
+      providerVerifiedPlatforms: [...providerVerifiedPlatforms].sort(),
+    };
+    if (correctingLegacyMismatch) {
+      if (!recorded.remote_id || typeof this.ledger.replaceTerminalAction !== "function") {
+        throw new Error("Legacy OTA runtime correction requires atomic durable identity replacement.");
+      }
+      if (correctedRemoteId === recorded.remote_id) {
+        throw new Error("Legacy OTA runtime correction did not produce a distinct durable remote identity.");
+      }
+      await this.ledger.replaceTerminalAction({
+        sourceSha: sha, kind: "OTA", identityKey, expectedRemoteId: recorded.remote_id,
+        remoteId: correctedRemoteId, state: "PUBLISHED",
+        evidence: {
+          ...evidence,
+          replacementReason: "corrected-native-platform-runtime-context",
+          previousRemoteId: recorded.remote_id,
+          previousState: recorded.state,
+          previousEvidence: recordedEvidence,
+        },
+      });
+    } else {
+      // One OTA ledger action can accumulate platform-specific update groups
+      // across reconciliation passes. Its original remote id is the durable
+      // action identity; the complete, evolving group set lives in evidence.
+      await this.ledger.recordAction({ sourceSha: sha, kind: "OTA", identityKey, remoteId: recorded?.remote_id ?? correctedRemoteId, state: "PUBLISHED", evidence });
+    }
+    return { updateIds: ids, updates, runtimes, channel: PREVIEW_IDENTITY.channel };
   }
 
   async deliverIos(sha, cwd, lease, fingerprint) {
@@ -458,46 +599,43 @@ export class PreviewOrchestrator {
       ? await this.ledger.reserveNativeBuild({ sourceSha: sha, platform: "ios", identityKey: buildIdentityKey })
       : null;
     let recordedBuildAction = reservation?.action ?? await this.ledger.getAction("IOS_BUILD", buildIdentityKey);
+    let selectedExistingOwner = Boolean(recordedBuildAction) && reservation?.created !== true;
+    if (recordedBuildAction && isTerminalNativeAction(recordedBuildAction) && typeof this.ledger.latestNativeBuildRecovery === "function") {
+      const recovery = await this.ledger.latestNativeBuildRecovery({ platform: "ios", fingerprint });
+      if (recovery) { recordedBuildAction = recovery; selectedExistingOwner = true; }
+    }
+    const recordedBuildIdentityKey = recordedBuildAction?.identity_key ?? buildIdentityKey;
     const artifactSourceSha = recordedBuildAction?.source_sha ?? sha;
     console.log(JSON.stringify({ event: reservation?.created ? "native-build-created" : recordedBuildAction ? "native-build-coalesced" : "native-build-reconciled", platform: "ios", sourceSha: sha, nativeArtifactSourceSha: artifactSourceSha, fingerprint, buildId: recordedBuildAction?.remote_id ?? null }));
-    if (recordedBuildAction && !recordedBuildAction.remote_id && artifactSourceSha !== sha) {
-      for (let attempt = 0; attempt < 120 && !recordedBuildAction.remote_id; attempt += 1) {
-        await lease.checkpoint();
-        await this.sleep(1_000);
-        recordedBuildAction = await this.ledger.getAction("IOS_BUILD", buildIdentityKey);
-      }
-      if (!recordedBuildAction?.remote_id) throw new Error("Equivalent iOS native build reservation has not published its durable EAS build ID yet.");
+    if (selectedExistingOwner) {
+      recordedBuildAction = await waitForOwnedNativeRemoteId({
+        action: recordedBuildAction, platform: "ios", ledger: this.ledger, lease, sleep: this.sleep,
+      });
     }
     let decision;
     if (recordedBuildAction?.remote_id) {
       decision = reconcileBuilds([await eas.viewBuild(recordedBuildAction.remote_id)], artifactSourceSha, "ios", fingerprint ?? PREVIEW_IDENTITY.runtime);
       if (!["ACTIVE_MATCH", "FINISHED_MATCH"].includes(decision.decision)) {
-        throw new Error(`Persisted iOS build ${recordedBuildAction.remote_id} failed identity reconciliation: ${decision.decision}.`);
+        if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) throw new Error(`Persisted iOS build requires explicit owner-authorized recovery: ${decision.decision}.`);
+        throw new Error(`Persisted iOS build failed identity reconciliation: ${decision.decision}.`);
       }
     } else {
       decision = reconcileBuilds(await eas.listIosBuilds(artifactSourceSha), artifactSourceSha, "ios", fingerprint ?? PREVIEW_IDENTITY.runtime);
     }
     if (["CONFLICT", "MALFORMED_RESPONSE"].includes(decision.decision)) throw new Error(`EAS iOS reconciliation failed closed: ${decision.decision}.`);
-    if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) {
-      await lease.checkpoint();
-      const replacement = await eas.createIosBuild();
-      if (recordedBuildAction?.remote_id && typeof this.ledger.replaceTerminalAction === "function") {
-        await this.ledger.replaceTerminalAction({ sourceSha: artifactSourceSha, kind: "IOS_BUILD", identityKey: buildIdentityKey, expectedRemoteId: recordedBuildAction.remote_id, remoteId: replacement.id, state: "CREATED", evidence: replacement });
-      }
-      decision = { decision: "CREATED", build: replacement };
-    }
+    if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) throw new Error(`iOS native delivery requires explicit owner-authorized recovery: ${decision.decision}.`);
     let build = decision.build;
     if (decision.decision === "NONE") {
       await lease.checkpoint();
       build = await eas.createIosBuild();
       decision = { decision: "CREATED", build };
     }
-    await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "IOS_BUILD", identityKey: buildIdentityKey, remoteId: build.id, state: decision.decision, evidence: { ...build, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
+    await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "IOS_BUILD", identityKey: recordedBuildIdentityKey, remoteId: build.id, state: decision.decision, evidence: { ...build, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
     for (let attempt = 0; attempt < 240; attempt += 1) {
       await lease.checkpoint();
       const current = await eas.viewBuild(build.id);
       const status = String(current.status ?? "").toUpperCase();
-      await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "IOS_BUILD", identityKey: buildIdentityKey, remoteId: build.id, state: status, evidence: { ...current, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
+      await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "IOS_BUILD", identityKey: recordedBuildIdentityKey, remoteId: build.id, state: status, evidence: { ...current, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
       if (status === "FINISHED") {
         const submission = reconcileSubmissionHistory(await eas.listIosSubmissions(), build.id);
         if (["CONFLICT", "UNKNOWN", "FAILED"].includes(submission.state)) throw new Error(`TestFlight auto-submit state is ${submission.state}; no duplicate recovery submission was attempted.`);
@@ -557,40 +695,37 @@ export class PreviewOrchestrator {
       ? await this.ledger.reserveNativeBuild({ sourceSha: sha, platform: "android", identityKey })
       : null;
     let recordedBuildAction = reservation?.action ?? await this.ledger.getAction("ANDROID_BUILD", identityKey);
+    let selectedExistingOwner = Boolean(recordedBuildAction) && reservation?.created !== true;
+    if (recordedBuildAction && isTerminalNativeAction(recordedBuildAction) && typeof this.ledger.latestNativeBuildRecovery === "function") {
+      const recovery = await this.ledger.latestNativeBuildRecovery({ platform: "android", fingerprint });
+      if (recovery) { recordedBuildAction = recovery; selectedExistingOwner = true; }
+    }
+    const recordedBuildIdentityKey = recordedBuildAction?.identity_key ?? identityKey;
     const artifactSourceSha = recordedBuildAction?.source_sha ?? sha;
     console.log(JSON.stringify({ event: reservation?.created ? "native-build-created" : recordedBuildAction ? "native-build-coalesced" : "native-build-reconciled", platform: "android", sourceSha: sha, nativeArtifactSourceSha: artifactSourceSha, fingerprint, buildId: recordedBuildAction?.remote_id ?? null }));
-    if (recordedBuildAction && !recordedBuildAction.remote_id && artifactSourceSha !== sha) {
-      for (let attempt = 0; attempt < 120 && !recordedBuildAction.remote_id; attempt += 1) {
-        await lease.checkpoint();
-        await this.sleep(1_000);
-        recordedBuildAction = await this.ledger.getAction("ANDROID_BUILD", identityKey);
-      }
-      if (!recordedBuildAction?.remote_id) throw new Error("Equivalent Android native build reservation has not published its durable EAS build ID yet.");
+    if (selectedExistingOwner) {
+      recordedBuildAction = await waitForOwnedNativeRemoteId({
+        action: recordedBuildAction, platform: "android", ledger: this.ledger, lease, sleep: this.sleep,
+        reportPending: (action) => this.reportHistoricalAndroidReservation(action, eas),
+      });
     }
     let decision = recordedBuildAction?.remote_id
       ? reconcileBuilds([await eas.viewBuild(recordedBuildAction.remote_id)], artifactSourceSha, "android", fingerprint ?? PREVIEW_IDENTITY.runtime)
       : reconcileBuilds(await eas.listAndroidBuilds(artifactSourceSha), artifactSourceSha, "android", fingerprint ?? PREVIEW_IDENTITY.runtime);
     if (["CONFLICT", "MALFORMED_RESPONSE"].includes(decision.decision)) throw new Error(`EAS Android reconciliation failed closed: ${decision.decision}.`);
-    if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) {
-      await lease.checkpoint();
-      const replacement = await eas.createAndroidBuild();
-      if (recordedBuildAction?.remote_id && typeof this.ledger.replaceTerminalAction === "function") {
-        await this.ledger.replaceTerminalAction({ sourceSha: artifactSourceSha, kind: "ANDROID_BUILD", identityKey, expectedRemoteId: recordedBuildAction.remote_id, remoteId: replacement.id, state: "CREATED", evidence: replacement });
-      }
-      decision = { decision: "CREATED", build: replacement };
-    }
+    if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) throw new Error(`Android native delivery requires explicit owner-authorized recovery: ${decision.decision}.`);
     let build = decision.build;
     if (decision.decision === "NONE") {
       await lease.checkpoint();
       build = await eas.createAndroidBuild();
       decision = { decision: "CREATED", build };
     }
-    await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "ANDROID_BUILD", identityKey, remoteId: build.id, state: decision.decision, evidence: { ...build, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
+    await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "ANDROID_BUILD", identityKey: recordedBuildIdentityKey, remoteId: build.id, state: decision.decision, evidence: { ...build, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
     for (let attempt = 0; attempt < 240; attempt += 1) {
       await lease.checkpoint();
       const current = await eas.viewBuild(build.id);
       const status = String(current.status ?? "").toUpperCase();
-      await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "ANDROID_BUILD", identityKey, remoteId: build.id, state: status, evidence: { ...current, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
+      await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "ANDROID_BUILD", identityKey: recordedBuildIdentityKey, remoteId: build.id, state: status, evidence: { ...current, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
       if (status === "FINISHED") {
         if (typeof this.ledger.advanceDeliveredNative === "function") await this.ledger.advanceDeliveredNative({ platform: "android", sourceSha: artifactSourceSha, fingerprint, buildId: build.id, appVersion: current.appVersion, buildNumber: current.appBuildVersion });
         return { buildId: build.id, buildNumber: current.appBuildVersion, status, nativeArtifactSourceSha: artifactSourceSha, nativeFingerprint: fingerprint };
@@ -626,8 +761,45 @@ async function resolvedIdentity(root) {
 }
 
 export async function runDeliveries(deliveries) {
+  const { results, failures } = await settleDeliveries(deliveries);
+  if (failures.length) throwDeliveryFailures(failures);
+  return results;
+}
+
+export async function waitForOwnedNativeRemoteId({ action, platform, ledger, lease, sleep, attempts = 120, reportPending }) {
+  if (!action || action.remote_id) return action;
+  if (!['ios', 'android'].includes(platform)) throw new Error("Owned native build platform is invalid.");
+  if (!action.identity_key) throw new Error(`Owned ${platform} native build action has no durable identity.`);
+  const kind = platform === "ios" ? "IOS_BUILD" : "ANDROID_BUILD";
+  const identityKey = action.identity_key;
+  console.log(JSON.stringify({
+    event: "native-build-remote-id-pending", platform, sourceSha: action.source_sha ?? null,
+    selectedActionIdentity: identityKey, remoteIdPresent: false, decision: "WAIT_FOR_DURABLE_OWNER",
+  }));
+  let refreshed = action;
+  for (let attempt = 0; attempt < attempts && !refreshed?.remote_id; attempt += 1) {
+    await lease.checkpoint();
+    await sleep(1_000);
+    refreshed = await ledger.getAction(kind, identityKey);
+    if (refreshed && refreshed.identity_key !== identityKey) {
+      throw new Error(`Owned ${platform} native build identity changed during remote-ID publication.`);
+    }
+  }
+  if (!refreshed?.remote_id) {
+    if (platform === "android" && refreshed) await reportPending?.(refreshed);
+    throw new Error(`Owned ${platform} native build action has not published its durable EAS build ID yet; automatic build creation is blocked.`);
+  }
+  return refreshed;
+}
+
+function parseActionEvidence(evidence) {
+  if (!evidence || typeof evidence === "object") return evidence ?? null;
+  try { return JSON.parse(evidence); } catch { return null; }
+}
+
+export async function settleDeliveries(deliveries) {
   const entries = Object.entries(deliveries);
-  if (!entries.length) return {};
+  if (!entries.length) return { results: {}, failures: [] };
   const settled = await Promise.allSettled(entries.map(([, deliver]) => Promise.resolve().then(deliver)));
   const results = {};
   const failures = [];
@@ -637,12 +809,17 @@ export async function runDeliveries(deliveries) {
     if (outcome.status === "fulfilled") results[target] = outcome.value;
     else failures.push({ target, error: outcome.reason });
   }
+  return { results, failures };
+}
+
+function throwDeliveryFailures(failures) {
   if (failures.length === 1) throw failures[0].error;
-  if (failures.length > 1) {
-    const details = failures.map(({ target, error }) => `${target}: ${error instanceof Error ? error.message : String(error)}`).join("; ");
-    throw new AggregateError(failures.map(({ error }) => error), `Parallel delivery failed for ${failures.map(({ target }) => target).join(", ")}: ${details}`);
-  }
-  return results;
+  const details = failures.map(({ target, error }) => `${target}: ${error instanceof Error ? error.message : String(error)}`).join("; ");
+  throw new AggregateError(failures.map(({ error }) => error), `Parallel delivery failed for ${failures.map(({ target }) => target).join(", ")}: ${details}`);
+}
+
+function isTerminalNativeAction(action) {
+  return ["ERRORED", "FAILED", "CANCELED", "CANCELLED", "REMOTE_OBJECT_UNAVAILABLE"].includes(String(action?.state ?? "").toUpperCase());
 }
 
 export const runNativeDeliveries = runDeliveries;

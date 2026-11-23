@@ -1,16 +1,53 @@
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import type { PasskeyAssertion, PasskeyAuthenticationOptions } from "./authApi";
+import { NativePasskeyUsernameField, isNativePasskeyUsernameFieldAvailable } from "../passkeys/NativePasskeyUsernameField";
 import { AuthIcon } from "./AuthIcon";
-import { AuthButton, authColors, ErrorText, Field, FormHeading, FormShell, SecurityMessage } from "./AuthPrimitives";
+import { AuthButton, authColors, ErrorText, Field, FormHeading, FormShell, SecurityMessage, StatusText } from "./AuthPrimitives";
 import { formatCountdown, isValidEmail, sanitizeCode } from "./authUtils";
 import { scheduleAuthCompletion } from "./authCompletion";
+import { isPreviewPasskeySignIn } from "./authApi";
+import { emailFieldError, type PasskeyDiagnostic } from "./passkeyFieldRecovery";
 
-export function EmailScreen({ initialEmail, onBack, onContinue, loading, error }: { initialEmail: string; onBack: () => void; onContinue: (email: string) => void; loading: boolean; error?: string }) {
+export function EmailScreen({ initialEmail, passkeyOptions, onPasskey, onPasskeyDiagnostic, onCredentialInteraction, onCredentialReady, onCredentialFocus, onBack, onContinue, loading, error }: { initialEmail: string; passkeyOptions?: PasskeyAuthenticationOptions | null; onPasskey: (assertion: PasskeyAssertion) => void; onPasskeyDiagnostic?: (event: PasskeyDiagnostic) => void; onCredentialInteraction?: () => void; onCredentialReady?: () => Promise<void> | void; onCredentialFocus?: () => void; onBack: () => void; onContinue: (email: string) => void; loading: boolean; error?: string }) {
   const [email, setEmail] = useState(initialEmail);
   const [touched, setTouched] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [credentialFocused, setCredentialFocused] = useState(false);
+  const legacyInput = useRef<TextInput>(null);
   const valid = isValidEmail(email);
+  const nativePasskeyField = isNativePasskeyUsernameFieldAvailable();
+  const previewNative = nativePasskeyField && isPreviewPasskeySignIn();
+  const fieldError = emailFieldError(email, touched, previewNative, submitted);
+  useEffect(() => {
+    if (nativePasskeyField) return;
+    let cancelled = false;
+    void Promise.resolve(onCredentialReady?.()).finally(() => {
+      if (!cancelled) legacyInput.current?.focus();
+    });
+    return () => { cancelled = true; };
+  }, [nativePasskeyField, onCredentialReady]);
   return <FormShell onBack={onBack}><FormHeading icon="mail" title="Enter your email" body={"We’ll send you a secure link or code to\nsign in or create your account."} />
-    <Field autoFocus label="Email address" placeholder="you@example.com" value={email} onChangeText={setEmail} onBlur={() => setTouched(true)} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" returnKeyType="go" onSubmitEditing={() => valid && onContinue(email)} error={touched && !valid ? "Enter a valid email address." : undefined} />
+    {nativePasskeyField ? <View style={styles.credentialWrap}>
+      <Text style={styles.credentialLabel}>Email address</Text>
+      <View onTouchStart={previewNative ? onCredentialInteraction : undefined} style={[styles.credentialBox, credentialFocused && styles.credentialFocused, fieldError && styles.credentialError]}>
+        <NativePasskeyUsernameField
+          style={styles.nativeCredentialInput}
+          value={email}
+          placeholder="you@example.com"
+          enabled={!loading}
+          rpId={passkeyOptions?.rpId}
+          challenge={passkeyOptions?.challenge}
+          onChangeText={setEmail}
+          onFocus={() => setCredentialFocused(true)}
+          onBlur={() => { setCredentialFocused(false); if (!previewNative || email.trim()) setTouched(true); }}
+          onSubmit={() => { if (previewNative) { setTouched(true); setSubmitted(true); } if (valid && !loading) onContinue(email); }}
+          onPasskey={onPasskey}
+          onDiagnostic={previewNative ? onPasskeyDiagnostic : undefined}
+        />
+      </View>
+      <Text accessibilityLiveRegion="polite" style={styles.credentialErrorText}>{fieldError || " "}</Text>
+    </View> : <Field inputRef={legacyInput} label="Email address" placeholder="you@example.com" value={email} onChangeText={setEmail} onFocus={onCredentialFocus} onBlur={() => setTouched(true)} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" returnKeyType="go" onSubmitEditing={() => valid && !loading && onContinue(email)} error={fieldError} />}
     <ErrorText>{error}</ErrorText><AuthButton label="Continue" onPress={() => onContinue(email)} loading={loading} disabled={!valid} />
     <Text style={styles.legal}>By continuing, you agree to our <Text style={styles.link}>Terms of Service</Text> and <Text style={styles.link}>Privacy Policy</Text></Text>
   </FormShell>;
@@ -33,11 +70,37 @@ export function VerificationScreen({ email, onBack, onVerify, onResend, onDiffer
   </FormShell>;
 }
 
-export function PasswordScreen({ onBack, onSubmit, onForgot, loading, error }: { onBack: () => void; onSubmit: (password: string) => void; onForgot: () => void; loading: boolean; error?: string }) {
+export function PasswordScreen({ onBack, onSubmit, onForgot, loading, error, notice }: { onBack: () => void; onSubmit: (password: string) => void; onForgot: () => void; loading: boolean; error?: string; notice?: string }) {
   const [password, setPassword] = useState(""); const [visible, setVisible] = useState(false);
   return <FormShell onBack={onBack}><FormHeading icon="lock" title="Welcome back!" body="Enter your password to continue." />
     <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry={!visible} autoComplete="current-password" textContentType="password" returnKeyType="go" onSubmitEditing={() => password && onSubmit(password)} right={<Pressable accessibilityRole="button" accessibilityLabel={visible ? "Hide password" : "Show password"} hitSlop={10} onPress={() => setVisible(!visible)}><AuthIcon name={visible ? "eyeOff" : "eye"} color={authColors.navy} size={21} /></Pressable>} />
-    <Pressable accessibilityRole="button" onPress={onForgot} style={styles.forgot}><Text style={styles.action}>Forgot password?</Text></Pressable><ErrorText>{error}</ErrorText><AuthButton label="Sign in" onPress={() => onSubmit(password)} loading={loading} disabled={!password} /><SecurityMessage />
+    <Pressable accessibilityRole="button" onPress={onForgot} style={styles.forgot}><Text style={styles.action}>Forgot password?</Text></Pressable><StatusText success={Boolean(notice)}>{notice || error}</StatusText><AuthButton label="Sign in" onPress={() => onSubmit(password)} loading={loading} disabled={!password} /><SecurityMessage />
+  </FormShell>;
+}
+
+export function ForgotPasswordScreen({ email, onBack, onReset, onResend, loading, error }: { email: string; onBack: () => void; onReset: (input: { code: string; newPassword: string; confirmPassword: string }) => void; onResend: () => void; loading: boolean; error?: string }) {
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [visible, setVisible] = useState(false);
+  const [localError, setLocalError] = useState("");
+  const submit = () => {
+    if (!/^\d{6}$/.test(code)) { setLocalError("Enter the 6-digit verification code."); return; }
+    if (newPassword.length < 8) { setLocalError("Your new password must contain at least 8 characters."); return; }
+    if (newPassword !== confirmPassword) { setLocalError("Passwords do not match."); return; }
+    setLocalError("");
+    onReset({ code, newPassword, confirmPassword });
+  };
+  const edit = (setter: (value: string) => void) => (value: string) => { setter(value); setLocalError(""); };
+  return <FormShell onBack={onBack}><FormHeading icon="lock" title="Reset your password" body={<>Enter the 6-digit code sent to{"\n"}<Text style={styles.email}>{email}</Text></>} />
+    <Field autoFocus label="Verification code" value={code} onChangeText={(value) => { setCode(sanitizeCode(value)); setLocalError(""); }} keyboardType="number-pad" autoComplete="one-time-code" textContentType="oneTimeCode" maxLength={6} />
+    <Field label="New password" value={newPassword} onChangeText={edit(setNewPassword)} secureTextEntry={!visible} autoComplete="new-password" textContentType="newPassword" right={<Pressable accessibilityRole="button" accessibilityLabel={visible ? "Hide password" : "Show password"} hitSlop={10} onPress={() => setVisible(!visible)}><AuthIcon name={visible ? "eyeOff" : "eye"} color={authColors.navy} size={21} /></Pressable>} />
+    <Field label="Confirm new password" value={confirmPassword} onChangeText={edit(setConfirmPassword)} secureTextEntry={!visible} autoComplete="new-password" textContentType="newPassword" returnKeyType="go" onSubmitEditing={submit} />
+    <Text style={styles.muted}>Use at least 8 characters and choose a different password.</Text>
+    <ErrorText>{localError || error}</ErrorText>
+    <AuthButton label="Reset password" onPress={submit} loading={loading} />
+    <Pressable accessibilityRole="button" disabled={loading} onPress={onResend} style={styles.centerAction}><Text style={styles.action}>Resend verification code</Text></Pressable>
+    <SecurityMessage />
   </FormShell>;
 }
 
@@ -70,9 +133,10 @@ export function SuccessScreen({ onDone }: { onDone: () => void }) {
 }
 const styles = StyleSheet.create({
   legal: { color: authColors.text, fontSize: 12, lineHeight: 18, textAlign: "center", marginTop: 12 }, link: { color: authColors.blue, textDecorationLine: "underline" }, email: { color: authColors.navy, fontWeight: "800" },
+  credentialWrap: { gap: 6 }, credentialLabel: { color: authColors.navy, fontSize: 14, fontWeight: "700" }, credentialBox: { height: 54, borderWidth: 1, borderColor: authColors.border, borderRadius: 10, paddingHorizontal: 14, overflow: "hidden" }, credentialFocused: { borderColor: authColors.blue, borderWidth: 2 }, credentialError: { borderColor: authColors.danger }, nativeCredentialInput: { flex: 1 }, credentialErrorText: { minHeight: 17, color: authColors.danger, fontSize: 12 },
   codeRow: { height: 58, flexDirection: "row", justifyContent: "center", gap: 8, position: "relative" }, codeBox: { width: 45, height: 52, borderWidth: 1, borderColor: authColors.border, borderRadius: 8, alignItems: "center", justifyContent: "center" },
   codeFocused: { borderColor: authColors.blue, borderWidth: 2 }, codeDigit: { color: authColors.navy, fontSize: 22, fontWeight: "700" }, hiddenInput: { position: "absolute", opacity: 0, width: 1, height: 1 },
-  resend: { alignItems: "center", gap: 11, marginTop: 14 }, muted: { color: authColors.text, fontSize: 14 }, action: { color: authColors.blue, fontSize: 14, fontWeight: "600" }, forgot: { alignSelf: "flex-end", marginTop: -8 },
+  resend: { alignItems: "center", gap: 11, marginTop: 14 }, muted: { color: authColors.text, fontSize: 14 }, action: { color: authColors.blue, fontSize: 14, fontWeight: "600" }, centerAction: { alignSelf: "center", minHeight: 44, justifyContent: "center" }, forgot: { alignSelf: "flex-end", marginTop: -8 },
   success: { flex: 1, backgroundColor: "white", justifyContent: "center", alignItems: "center", padding: 28 }, successCircle: { width: 106, height: 106, borderRadius: 53, backgroundColor: "#10BF78", alignItems: "center", justifyContent: "center", shadowColor: "#10BF78", shadowOpacity: .2, shadowRadius: 15 },
   successTitle: { color: authColors.navy, fontSize: 28, fontWeight: "800", marginTop: 28 }, successBody: { color: authColors.text, fontSize: 16, lineHeight: 23, textAlign: "center", marginTop: 6 }, progress: { width: 190, height: 3, backgroundColor: "#E5EAF1", marginVertical: 38 }, progressFill: { width: "82%", height: 3, backgroundColor: authColors.blue },
 });

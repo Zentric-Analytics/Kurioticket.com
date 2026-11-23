@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { requireAdminApiSession } from "@/lib/admin";
+import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
+import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getEmailDeliveryHealthSnapshot } from "@/services/emailDeliveryService";
 import { sendTransactionalEmail } from "@/services/emailService";
 
@@ -25,7 +26,7 @@ export async function GET() {
   });
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   const auth = await requireAdminApiSession();
   if (auth.response) return auth.response;
 
@@ -35,9 +36,30 @@ export async function POST() {
   }
 
   try {
-    const result = await sendTransactionalEmail({
+    checkAuthRateLimit({
+      action: "admin-email-delivery-test",
+      email,
+      request,
+      limit: 5,
+      windowMs: 15 * 60_000,
+    });
+  } catch (error) {
+    if (error instanceof AuthRateLimitError) {
+      return NextResponse.json(
+        { error: "Too many test emails. Try again later." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(error.retryAfterSeconds) },
+        },
+      );
+    }
+    throw error;
+  }
+
+  try {
+    await sendTransactionalEmail({
       to: email,
-      subject: "Kurioticket production email test",
+      subject: "Kurioticket transactional email test",
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
           <h1 style="font-size:22px">Kurioticket email test</h1>
@@ -50,7 +72,16 @@ export async function POST() {
       metadata: { source: "admin-email-health" },
     });
 
-    return NextResponse.json({ ok: true, providerMessageId: result.id });
+    await writeAdminAuditLog({
+      adminUserId: auth.session.user.id,
+      adminEmail: auth.session.user.email,
+      action: "EMAIL_DELIVERY_TEST_SENT",
+      targetType: "EmailDelivery",
+      metadata: { template: "admin_test" },
+      request,
+    });
+
+    return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[admin:email-health:test-failed]", error);
     return NextResponse.json({ error: "Unable to send test email." }, { status: 503 });

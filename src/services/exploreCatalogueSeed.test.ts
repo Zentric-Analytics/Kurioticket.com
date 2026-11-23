@@ -53,6 +53,8 @@ test("Explore live catalogue seed carries search, editorial and publish-safe def
   for (const destination of seed.destinations) {
     assert.ok(destination.airportCodes.length > 0, destination.id);
     assert.ok(destination.airportNames.length > 0, destination.id);
+    assert.ok(Number.isFinite(destination.sourceProvenance.coordinates.latitude), destination.id);
+    assert.ok(Number.isFinite(destination.sourceProvenance.coordinates.longitude), destination.id);
     assert.equal(destination.published, true);
     assert.equal(destination.imageUrl, null);
     assert.ok(destination.summary?.trim(), destination.id);

@@ -1,9 +1,19 @@
-import type { FlightFareTerm, FlightLeg, FlightSearchLeg, PublicFlightResult, TripType } from "@/lib/types";
+import type { CabinClass, FlightFareTerm, FlightLeg, FlightSearchLeg, PublicFlightResult, TripType } from "@/lib/types";
 
 export type FlightDetailsOffer = Omit<
   PublicFlightResult,
   "bookingUrl" | "partnerRedirectUrl"
 >;
+
+export type FlightDetailsDeal = {
+  key: string;
+  offerId: string;
+  providerName: string;
+  providerLogoUrl?: string;
+  price: number;
+  currency: string;
+  offer: FlightDetailsOffer;
+};
 
 export type FlightDetailsFareChoice = {
   key: string;
@@ -12,6 +22,7 @@ export type FlightDetailsFareChoice = {
   distinguishingTerms: FlightFareTerm[];
   selectedOffer: boolean;
   handoff: FlightDetailsHandoff;
+  deals: FlightDetailsDeal[];
 };
 
 export type FlightDetailsHandoff =
@@ -33,6 +44,7 @@ export type FlightDetailsSuccess = {
     children: number;
     infants: number;
     travelers: number;
+    cabinClass: CabinClass;
   };
 };
 
@@ -70,7 +82,7 @@ export function flightDetailsRouteLabel(
     return route;
   }
 
-  return `${cleanRouteLocation(fallbackOrigin)} to ${cleanRouteLocation(fallbackDestination)}`;
+  return `${cleanRouteLocation(fallbackOrigin)} → ${cleanRouteLocation(fallbackDestination)}`;
 }
 
 function cleanRouteLocation(value: string) {

@@ -6,6 +6,8 @@ const picker = readFileSync("src/components/search/MobileTravelerCabinPicker.tsx
 const shell = readFileSync("src/components/search/FlightMobilePickerShell.tsx", "utf8");
 const homepage = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
 const standalone = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
+const drawer = readFileSync("src/components/search/FlightEditSearchDrawer.tsx", "utf8");
+const details = readFileSync("src/components/results/flightDetails/StandaloneFlightDetails.tsx", "utf8");
 
 test("shared picker preserves approved traveler order, descriptions, and icon system", () => {
   assert.ok(picker.indexOf('key: "adults"') < picker.indexOf('key: "children"'));
@@ -47,31 +49,22 @@ test("tip and accessible counters follow the approved contract", () => {
   assert.match(picker, /aria-live="polite"/);
 });
 
-test("shared picker protects the moderate mobile size contract", () => {
-  assert.match(picker, /min-h-\[82px\]/);
-  assert.match(picker, /h-10 w-10 shrink-0/);
-  assert.match(picker, /icon: <UserRound className="h-\[22px\] w-\[22px\]"/);
-  assert.match(picker, /icon: <ChildOutlineIcon className="h-\[22px\] w-\[22px\]"/);
-  assert.match(picker, /icon: <Baby className="h-\[22px\] w-\[22px\]"/);
-  assert.match(picker, /text-\[14px\] font-bold/);
-  assert.match(picker, /text-\[12px\][^\n]*leading-\[16px\]/);
+test("shared picker uses one canonical moderate density with accessible controls", () => {
+  assert.doesNotMatch(picker, /density\?:|const compact/);
+  assert.match(picker, /min-h-\[70px\]/);
+  assert.match(picker, /h-9 w-9 shrink-0/);
+  assert.match(picker, /h-\[19px\] w-\[19px\]/);
+  assert.match(picker, /text-\[13px\] font-bold/);
+  assert.match(picker, /text-\[11px\] font-medium leading-\[15px\]/);
   assert.match(picker, /inline-flex h-11 w-11 items-center/);
   assert.match(picker, /inline-flex h-9 w-9 items-center/);
-  assert.match(picker, /<Minus className="h-4 w-4"/);
-  assert.match(picker, /<Plus className="h-4 w-4"/);
-  assert.match(picker, /min-w-7 text-center text-\[15px\]/);
-  assert.match(picker, /grid h-\[86px\] grid-cols-3/);
-  assert.match(picker, /<Armchair className="h-\[23px\] w-\[23px\]"/);
-  assert.match(picker, /end-2 top-2 flex h-\[21px\] w-\[21px\]/);
-  assert.match(picker, /flex h-10 w-10 shrink-0/);
-  assert.match(picker, /<Lightbulb className="h-5 w-5"/);
-  assert.match(picker, /bg-\[#eff6ff\] p-3/);
-
-  assert.doesNotMatch(picker, /min-h-\[106px\]/);
-  assert.doesNotMatch(picker, /h-14 w-14/);
-  assert.doesNotMatch(picker, /h-8 w-8/);
-  assert.doesNotMatch(picker, /h-\[118px\]/);
-  assert.doesNotMatch(picker, /h-12 w-12/);
+  assert.match(picker, /text-\[14px\] font-bold tabular-nums/);
+  assert.match(picker, /grid h-\[72px\] grid-cols-3/);
+  assert.match(picker, /Armchair className="h-\[19px\] w-\[19px\]"/);
+  assert.match(picker, /mt-3 flex items-center gap-2.*p-2\.5/);
+  assert.match(picker, /h-\[34px\] w-\[34px\] shrink-0/);
+  assert.match(picker, /Lightbulb className="h-\[18px\] w-\[18px\]"/);
+  assert.match(picker, /text-\[12px\] font-medium/);
 });
 
 test("traveler icons and enabled counters use restrained Kurioticket blue", () => {
@@ -82,8 +75,8 @@ test("traveler icons and enabled counters use restrained Kurioticket blue", () =
 });
 
 test("cabin segments own overlapping borders while the clipped parent has no competing outline", () => {
-  assert.match(picker, /grid h-\[86px\] grid-cols-3 overflow-hidden rounded-\[10px\] bg-white/);
-  assert.doesNotMatch(picker, /grid h-\[86px\] grid-cols-3[^\n"]*border border-slate-200/);
+  assert.match(picker, /grid h-\[72px\] grid-cols-3 overflow-hidden rounded-\[10px\] bg-white/);
+  assert.doesNotMatch(picker, /grid h-\[72px\] grid-cols-3[^\n"]*border border-slate-200/);
   assert.match(picker, /gap-1\.5 border border-slate-200 bg-white px-1/);
   assert.match(picker, /index > 0 && "-ms-px"/);
   assert.doesNotMatch(picker, /border-s border-slate-200/);
@@ -121,9 +114,16 @@ test("shell supports both navigation and close-only centered headers", () => {
 test("homepage and standalone mobile pickers share draft-only presentation and Done commit", () => {
   for (const source of [homepage, standalone]) {
     assert.match(source, /<MobileTravelerCabinPicker/);
+    assert.doesNotMatch(source, /<MobileTravelerCabinPicker[^>]*density=/);
+    assert.match(source, /contentClassName="bg-\[#fcfdfe\] px-4 py-4"/);
     assert.match(source, /headerVariant="close"/);
     assert.match(source, /pickerMarker="traveler-cabin"/);
     assert.match(source, /applyTravelersDraft\(false\)/);
     assert.match(source, /onClose=\{(?:cancelTravelersDraft|closeTravelersMobilePicker)\}/);
   }
+  assert.match(drawer, /<MobileTravelerCabinPicker/);
+  assert.doesNotMatch(drawer, /travelerPickerDensity|<MobileTravelerCabinPicker[^>]*density=/);
+  // Details intentionally returns to results for search changes; it owns no competing editor.
+  assert.doesNotMatch(details, /<FlightEditSearchDrawer|<MobileTravelerCabinPicker/);
+  assert.doesNotMatch(details, /travelerPickerDensity|density=/);
 });

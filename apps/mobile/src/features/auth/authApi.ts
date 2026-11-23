@@ -1,19 +1,44 @@
+import Constants from "expo-constants";
+import { Platform } from "react-native";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { clearSession, readSession, writeSession } from "../../storage/sessionStorage";
+import { completePreviewPasskeySignIn, isIOSPreviewPasskeyEnabled, safePasskeyFailureDetails, type PasskeyDiagnosticStage } from "./previewPasskeySignIn";
 
-type AuthResult = { session: { token: string; expires: string }; user: { id: string; email: string; name?: string | null } } | { requiresTwoFactor: true; challengeToken: string; expiresAt: string };
+export const isPreviewPasskeySignIn = () => isIOSPreviewPasskeyEnabled(Platform.OS, Constants.expoConfig?.extra?.environment?.isPreview);
+export function tracePreviewPasskey(stage: PasskeyDiagnosticStage, error?: unknown) {
+  if (!isPreviewPasskeySignIn()) return;
+  // No assertion bytes, credential IDs, user data, tokens or raw error messages.
+  console.info("[passkey-sign-in]", { stage, ...(error instanceof AuthApiError ? safePasskeyFailureDetails(error.status, error.code) : {}) });
+}
+
+export type PasskeyAuthenticationOptions = { challenge: string; rpId: string; timeout: number; userVerification: "required" };
+export type PasskeyAssertion = import("../passkeys/nativePasskeys").NormalizedPasskeyAssertion;
+
+type AuthResult = { session: { token: string; expires: string; recovery?: { deadline: string } }; user: { id: string; email: string; name?: string | null } } | { requiresTwoFactor: true; challengeToken: string; expiresAt: string };
 
 export class AuthApiError extends Error {
   constructor(message: string, public status = 0, public code = "") { super(message); }
 }
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}, externalSignal?: AbortSignal): Promise<T> {
   const base = getApiBaseUrl();
   if (!base.ok) throw new AuthApiError(base.message);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12000);
+  const abort = () => controller.abort();
+  externalSignal?.addEventListener("abort", abort, { once: true });
+  if (externalSignal?.aborted) controller.abort();
+  const timer = setTimeout(abort, 12000);
   try {
     const response = await fetch(`${base.baseUrl}/api/mobile/v1/auth/${path}`, {
-      ...options, signal: controller.signal, headers: { Accept: "application/json", "Content-Type": "application/json", ...options.headers },
+      ...options,
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-Mobile-Platform": Platform.OS,
+        "X-Mobile-Recovery-Protocol": "1",
+        ...(Constants.expoConfig?.version ? { "X-Mobile-App-Version": Constants.expoConfig.version } : {}),
+        ...options.headers,
+      },
     });
     const json = await response.json().catch(() => ({})) as { error?: string; code?: string };
     if (!response.ok) throw new AuthApiError(json.error || "Something went wrong. Please try again.", response.status, json.code || "");
@@ -21,9 +46,39 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   } catch (error) {
     if (error instanceof AuthApiError) throw error;
     throw new AuthApiError("Check your connection and try again.");
-  } finally { clearTimeout(timer); }
+  } finally { clearTimeout(timer); externalSignal?.removeEventListener("abort", abort); }
 }
 export const authApi = {
+  recoveryStatus: async () => {
+    const session = await readSession();
+    if (!session) throw new AuthApiError("Recovery sign-in expired. Sign in again.", 401);
+    return request<{ recovery?: { deadline: string }; expires: string }>("session", { headers: { Authorization: `Bearer ${session.token}` } });
+  },
+  passkeyOptions: (signal?: AbortSignal) => request<{ options: PasskeyAuthenticationOptions }>("passkey/options", { method: "POST", body: "{}" }, signal),
+  passkeyVerify: async (assertion: PasskeyAssertion, signal?: AbortSignal) => {
+    if (isPreviewPasskeySignIn()) {
+      return completePreviewPasskeySignIn(assertion, {
+        trace: tracePreviewPasskey,
+        verify: (normalized) => request("passkey/verify", { method: "POST", body: JSON.stringify(normalized) }, signal),
+        persist: async (result) => {
+          if (signal?.aborted) throw new AuthApiError("Passkey sign-in cancelled.", 0, "ABORTED");
+          await writeSession({ ...result.session, user: result.user });
+          if (signal?.aborted) {
+            await clearSession();
+            throw new AuthApiError("Passkey sign-in cancelled.", 0, "ABORTED");
+          }
+        },
+      });
+    }
+    const result = await request<{ session: { token: string; expires: string }; user: { id: string; email: string; name?: string | null } }>("passkey/verify", { method: "POST", body: JSON.stringify(assertion) }, signal);
+    if (signal?.aborted) throw new AuthApiError("Passkey sign-in cancelled.", 0, "ABORTED");
+    await writeSession({ ...result.session, user: result.user });
+    if (signal?.aborted) {
+      await clearSession();
+      throw new AuthApiError("Passkey sign-in cancelled.", 0, "ABORTED");
+    }
+    return result;
+  },
   requestCode: (email: string) => request<{ cooldownSeconds: number }>("request-code", { method: "POST", body: JSON.stringify({ email }) }),
   verifyCode: (email: string, code: string) => request<{ accountType: "existing" | "new"; verificationToken: string }>("verify-code", { method: "POST", body: JSON.stringify({ email, code }) }),
   password: async (email: string, password: string) => {
@@ -42,7 +97,8 @@ export const authApi = {
     const result = await request<{ session: { token: string; expires: string }; user: { id: string; email: string; name?: string | null } }>("two-factor", { method: "POST", body: JSON.stringify({ challengeToken, code }) });
     await writeSession({ ...result.session, user: result.user }); return result;
   },
-  forgotPassword: (email: string) => request<{ ok: true }>("forgot-password", { method: "POST", body: JSON.stringify({ email }) }),
+  sendForgotPasswordCode: (email: string, verificationToken: string) => request<{ ok: true; expiresInMinutes: number }>("forgot-password", { method: "POST", body: JSON.stringify({ action: "send-code", email, verificationToken }) }),
+  resetForgotPassword: (input: { email: string; code: string; newPassword: string; confirmPassword: string }) => request<{ success: true }>("forgot-password", { method: "POST", body: JSON.stringify({ action: "reset", ...input }) }),
   logout: async () => {
     const session = await readSession();
     try { if (session) await request<{ ok: true }>("logout", { method: "POST", headers: { Authorization: `Bearer ${session.token}` } }); }
@@ -53,7 +109,8 @@ export async function restoreAuthenticatedSession() {
   const session = await readSession();
   if (!session) return false;
   try {
-    await request("session", { headers: { Authorization: `Bearer ${session.token}` } });
+    const result = await request<{ recovery?: { deadline: string } }>("session", { headers: { Authorization: `Bearer ${session.token}` } });
+    if (result.recovery) { await writeSession({ ...session, recovery: result.recovery }); return false; }
     return true;
   } catch { await clearSession(); return false; }
 }

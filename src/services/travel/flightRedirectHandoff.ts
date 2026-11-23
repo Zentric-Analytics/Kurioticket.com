@@ -5,6 +5,7 @@ import {
 } from "./flightOfferRevalidation";
 import { resolveFlightHandoff, type FlightHandoff } from "./flightHandoff";
 import { deriveFlightSearchFromOffer } from "./standaloneFlightDetails";
+import { isFlightProviderOfferUsableAt } from "./flightOfferInventory";
 
 export type FlightRedirectHandoffOutcome =
   | { status: "ready"; offer: NormalizedFlightResult; handoff: FlightHandoff }
@@ -19,6 +20,12 @@ export async function revalidateFlightRedirectHandoff({
   now?: number;
   refresh?: RefreshExactFlightOffer;
 }): Promise<FlightRedirectHandoffOutcome> {
+  if (cachedOffer.provider === "KAYAK sandbox") {
+    const handoff = isFlightProviderOfferUsableAt(cachedOffer, now)
+      ? resolveFlightHandoff(cachedOffer)
+      : null;
+    return handoff ? { status: "ready", offer: cachedOffer, handoff } : { status: "unavailable" };
+  }
   const search = deriveFlightSearchFromOffer(cachedOffer);
   if (!search) return { status: "unavailable" };
   const refreshed = await refresh({ cachedOffer, search, now });
@@ -29,4 +36,3 @@ export async function revalidateFlightRedirectHandoff({
     ? { status: "ready", offer: refreshed.offer, handoff }
     : { status: "unavailable" };
 }
-

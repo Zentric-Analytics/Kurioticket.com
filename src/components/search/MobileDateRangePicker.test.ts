@@ -11,7 +11,9 @@ test("shared mobile calendar renders one card with localized stacked months and 
   assert.match(source, /grid grid-cols-7/);
   assert.match(source, /data-adjacent-month-placeholder/);
   assert.match(source, /border-t border-slate-200\/70/);
-  assert.doesNotMatch(source, /ChevronLeft|ChevronRight|previousMonth|nextMonth/);
+  assert.match(source, /Array\.from\(\{ length: monthCount \}/);
+  assert.match(source, /data-scroll-direction=\{compactCars \? "vertical"/);
+  assert.doesNotMatch(source, /resultsMonth|ChevronLeft|ChevronRight/);
 });
 
 test("range endpoints and continuous band use the approved distinct treatments", () => {
@@ -19,13 +21,13 @@ test("range endpoints and continuous band use the approved distinct treatments",
   assert.match(source, /inRange && "inset-x-0"/);
   assert.match(source, /isStart && "start-1\/2 end-0"/);
   assert.match(source, /isEnd && "start-0 end-1\/2"/);
-  assert.match(source, /isStart && "bg-\[#075ee8\][^"]*text-white/);
-  assert.match(source, /isEnd && "border-\[1\.5px\] border-\[#075ee8\] bg-white/);
+  assert.match(source, /isStart &&[\s\S]*?"bg-\[#075ee8\][^"]*text-white/);
+  assert.match(source, /isEnd &&[\s\S]*?"border-\[1\.5px\] border-\[#075ee8\] bg-white/);
   assert.doesNotMatch(source, /isEnd && "bg-\[#075ee8\]/);
 });
 
 test("today uses only the subtle ring without a decorative dot", () => {
-  assert.match(source, /iso === todayIso && !disabled && !isStart && !isEnd && "ring-1 ring-inset ring-\[#075ee8\]\/20"/);
+  assert.match(source, /iso === todayIso[\s\S]*?!disabled[\s\S]*?!isStart[\s\S]*?!isEnd[\s\S]*?"ring-1 ring-inset ring-\[#075ee8\]\/20"/);
   assert.doesNotMatch(source, /todayIso[\s\S]{0,160}h-1 w-1 rounded-full/);
 });
 
@@ -64,4 +66,20 @@ test("calendar preserves internal mobile scrolling, safe fixed footer, accessibi
   assert.match(source, /aria-disabled=\{disabled\}/);
   assert.match(source, /selectDatePrefix/);
   assert.match(source, /`\$\{fullDate\}, \$\{endpoint\}`/);
+});
+
+
+test("Cars Results Edit uses native compact date hierarchy", () => {
+  assert.doesNotMatch(source, /data-cars-results-date-range-header/);
+  assert.doesNotMatch(source, /Previous month|Next month/);
+  assert.match(source, /text-\[16px\] font-semibold leading-5/);
+  assert.match(source, /h-8 w-8 rounded-lg text-xs/);
+  assert.match(source, /endpoint && !compactCars/);
+});
+
+test("Cars Main uses the compact vertical calendar without a duplicate heading", () => {
+  assert.match(source, /appearance\?: "default" \| "carsResultsEdit" \| "carsMain"/);
+  assert.match(source, /const compactCars = carsResultsEdit \|\| carsMain/);
+  assert.match(source, /\{!compactCars \? \([\s\S]*?\{labels\.selectDates\}/);
+  assert.match(source, /presentation === "carsMain" && "bg-white px-4 py-3"/);
 });

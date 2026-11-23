@@ -9,37 +9,48 @@
     "android": "node ./scripts/start-local-preview.mjs --android",
     "ios": "node ./scripts/start-local-preview.mjs --ios",
     "typecheck": "node ./scripts/validate-case-insensitive-paths.mjs && tsc --noEmit",
-    "test": "node --test --require ./testAssetSetup.cjs --import jiti/register \"src/**/*.test.ts\" \"scripts/start-local-preview.test.mjs\" \"scripts/issue6-boundaries.test.mjs\"",
+    "test": "node --test --require ./testAssetSetup.cjs --import jiti/register \"src/**/*.test.ts\" \"scripts/start-local-preview.test.mjs\" \"scripts/issue6-boundaries.test.mjs\" \"scripts/dependency-security.test.mjs\"",
     "expo:doctor": "expo-doctor",
     "release:validate": "node ./scripts/validate-release-policy.mjs",
     "release:classify": "node ./scripts/classify-release.mjs",
     "test:release-pipeline": "node --test ./scripts/release-pipeline.test.mjs",
-    "verify:ios-icon": "node ./scripts/verify-ios-icon-contract.mjs"
+    "verify:ios-icon": "node ./scripts/verify-ios-icon-contract.mjs",
+    "test:dependency-security": "node --test scripts/dependency-security.test.mjs"
   },
   "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.2",
     "expo": "~54.0.37",
+    "expo-blur": "~15.0.8",
     "expo-constants": "~18.0.14",
     "expo-crypto": "~15.0.9",
+    "expo-font": "~14.0.12",
+    "expo-glass-effect": "~0.1.10",
     "expo-linking": "~8.0.12",
     "expo-router": "~6.0.24",
     "expo-secure-store": "~15.0.8",
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.8",
     "expo-updates": "~29.0.20",
+    "expo-web-browser": "~15.0.11",
     "lucide-react-native": "^1.14.0",
     "react": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-maps": "1.20.1",
     "react-native-nitro-google-signin": "^1.0.2",
     "react-native-nitro-modules": "^0.36.3",
+    "react-native-passkeys": "0.4.2",
+    "react-native-qrcode-svg": "^6.3.21",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
-    "react-native-svg": "15.12.1"
+    "react-native-svg": "15.12.1",
+    "react-native-webview": "13.15.0",
+    "decode-uri-component": "file:vendor/decode-uri-component"
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
     "expo-doctor": "^1.20.1",
     "jiti": "^2.7.0",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.5",
     "typescript": "~5.9.2"
   },
   "expo": {
@@ -50,5 +61,57 @@
         ]
       }
     }
+  },
+  "overrides": {
+    "@expo/metro-config": {
+      "postcss": "8.5.33",
+      "glob@^13.0.0": "14.0.4"
+    },
+    "@react-navigation/core": {
+      "query-string": "9.5.1"
+    },
+    "expo-router": {
+      "query-string": "9.5.1"
+    },
+    "xcode": {
+      "uuid": "11.1.1"
+    },
+    "@expo/config": {
+      "glob@^13.0.0": "14.0.4"
+    },
+    "@expo/config-plugins": {
+      "glob@^13.0.0": "14.0.4"
+    },
+    "@expo/fingerprint": {
+      "glob@^13.0.0": "14.0.4",
+      "minimatch@>=9 <11": "11.0.5"
+    },
+    "@expo/cli": {
+      "glob@^13.0.0": "14.0.4",
+      "minimatch@>=9 <11": "11.0.5"
+    },
+    "expo-updates": {
+      "glob@^13.0.0": "14.0.4"
+    },
+    "metro@0.83.3": "0.83.8",
+    "metro-babel-transformer@0.83.3": "0.83.8",
+    "metro-cache@0.83.3": "0.83.8",
+    "metro-cache-key@0.83.3": "0.83.8",
+    "metro-config@0.83.3": "0.83.8",
+    "metro-core@0.83.3": "0.83.8",
+    "metro-file-map@0.83.3": "0.83.8",
+    "metro-minify-terser@0.83.3": "0.83.8",
+    "metro-resolver@0.83.3": "0.83.8",
+    "metro-runtime@0.83.3": "0.83.8",
+    "metro-source-map@0.83.3": "0.83.8",
+    "metro-symbolicate@0.83.3": "0.83.8",
+    "metro-transform-plugins@0.83.3": "0.83.8",
+    "metro-transform-worker@0.83.3": "0.83.8",
+    "postcss": "^8.5.33",
+    "image-size": "npm:image-size-next@1.2.2",
+    "query-string": {
+      "decode-uri-component": "0.5.1"
+    },
+    "react-dom": "19.1.0"
   }
 }

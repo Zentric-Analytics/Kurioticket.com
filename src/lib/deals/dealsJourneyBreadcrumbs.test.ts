@@ -18,47 +18,48 @@ import {
 
 const search = (mode: DealsPackageMode) =>
   ({
+    ...createDefaultDealsSearch(),
     mode,
-    origin: "Lagos",
-    destination: "Paris",
-    startDate: "2026-08-07",
-    endDate: "2026-08-09",
-  }) as DealsSearch;
+    flightOriginText: "Lagos",
+    flightDestinationText: "Paris",
+    sharedTravelStartDate: "2026-08-07",
+    sharedTravelEndDate: "2026-08-09",
+  }) satisfies DealsSearch;
 
 const expected: Record<
   DealsPackageMode,
   Partial<Record<DealsJourneyStage | "complete", string[]>>
 > = {
   "hotel-flight": {
-    "hotel-results": ["selectStay:current", "selectFlight:upcoming"],
-    "hotel-details": ["details:current", "selectFlight:upcoming"],
-    "flight-results": ["stay:completed", "selectFlight:current"],
-    "flight-details": ["stay:completed", "details:current"],
+    "hotel-results": ["flight:completed", "selectStay:current"],
+    "hotel-details": ["flight:completed", "details:current"],
+    "flight-results": ["selectFlight:current", "selectStay:upcoming"],
+    "flight-details": ["details:current", "selectStay:upcoming"],
     complete: ["stay:completed", "flight:completed"],
   },
   "hotel-flight-car": {
     "hotel-results": [
+      "flight:completed",
       "selectStay:current",
-      "selectFlight:upcoming",
       "selectCar:upcoming",
     ],
     "hotel-details": [
+      "flight:completed",
       "details:current",
-      "selectFlight:upcoming",
       "selectCar:upcoming",
     ],
     "flight-results": [
-      "stay:completed",
       "selectFlight:current",
+      "selectStay:upcoming",
       "selectCar:upcoming",
     ],
     "flight-details": [
-      "stay:completed",
       "details:current",
+      "selectStay:upcoming",
       "selectCar:upcoming",
     ],
-    "car-results": ["stay:completed", "flight:completed", "selectCar:current"],
-    "car-details": ["stay:completed", "flight:completed", "details:current"],
+    "car-results": ["flight:completed", "stay:completed", "selectCar:current"],
+    "car-details": ["flight:completed", "stay:completed", "details:current"],
     complete: ["stay:completed", "flight:completed", "car:completed"],
   },
   "hotel-car": {
@@ -158,9 +159,10 @@ test("details labels retain accessible product context", () => {
     ).find((item) => item.status === "current");
     assert.equal(current?.labelKey, "deals.breadcrumb.details");
     assert.equal(current?.accessibleLabelKey, `deals.breadcrumb.${accessible}`);
+    assert.ok(current && (current.id === "hotel" || current.id === "flight" || current.id === "car"));
     assert.equal(
       current?.href,
-      buildDealsJourneyUrl(`${current?.id}-results`, search(mode)),
+      buildDealsJourneyUrl(`${current.id}-results`, search(mode)),
     );
   }
 });

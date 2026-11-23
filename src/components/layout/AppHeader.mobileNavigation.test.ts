@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
+import { cn } from "../../lib/utils";
 
 const headerSource = readFileSync(
   new URL("./AppHeader.tsx", import.meta.url),
@@ -14,11 +17,11 @@ const homepageSource = readFileSync(
 test("homepage alone requests removal of the below-sm header product rail", () => {
   assert.match(homepageSource, /<AppHeader hideMobileSecondaryNavLinks \/>/);
 
-  const otherCallSites = Array.from(
+  const suppressedCallSites = Array.from(
     homepageSource.matchAll(/<AppHeader[\s\S]*?>/g),
     (match) => match[0],
-  );
-  assert.deepEqual(otherCallSites, ["<AppHeader hideMobileSecondaryNavLinks />"]);
+  ).filter((callSite) => callSite.includes("hideMobileSecondaryNavLinks"));
+  assert.deepEqual(suppressedCallSites, ["<AppHeader hideMobileSecondaryNavLinks />"]);
 });
 
 test("header removes the homepage product rail from layout only below sm", () => {
@@ -45,9 +48,40 @@ test("homepage keeps search product tabs and primary header controls", () => {
     /<SearchTabs[\s\S]*?mobileHomepage[\s\S]*?\/>/,
   );
   assert.match(headerSource, /aria-label=\{t\.signIn\}/);
-  assert.match(headerSource, /<UserCircle size=\{18\} \/>/);
-  assert.match(headerSource, /<Menu size=\{18\} \/>/);
+  assert.match(headerSource, /<UserCircle size=\{22\} \/>/);
+  assert.match(headerSource, /<Menu size=\{23\} \/>/);
   assert.match(headerSource, /mobileTravelMenuNavItems\.map/);
+});
+
+test("mobile account and menu launchers use clean 44px utility targets", () => {
+  const mobileControlsStart = headerSource.indexOf(
+    '<div className={cn("flex items-center gap-0 md:hidden"',
+  );
+  const mobileControls = headerSource.slice(
+    mobileControlsStart,
+    headerSource.indexOf(
+      '{languageOpen && typeof document !== "undefined"',
+      mobileControlsStart,
+    ),
+  );
+
+  assert.ok(mobileControlsStart >= 0);
+  assert.match(mobileControls, /flex items-center gap-0 md:hidden/);
+  assert.match(
+    mobileControls,
+    /carsResultsMobileInlineSearch && "shrink-0"/,
+  );
+  assert.equal(mobileControls.match(/h-11 w-11/g)?.length, 3);
+  assert.equal(mobileControls.match(/border border-transparent bg-transparent/g)?.length, 3);
+  assert.doesNotMatch(mobileControls, /bg-\[#F3F7FA\]|border-\[#DDE7F0\]/);
+  assert.match(mobileControls, /<UserCircle size=\{22\} \/>/);
+  assert.match(mobileControls, /<Menu size=\{23\} \/>/);
+  assert.match(mobileControls, /aria-expanded=\{mobileAccountOpen\}/);
+  assert.match(mobileControls, /aria-controls="mobile-account-drawer"/);
+  assert.match(mobileControls, /aria-expanded=\{mobileMenuOpen\}/);
+  assert.match(mobileControls, /aria-controls="mobile-menu-drawer"/);
+  assert.match(mobileControls, /session\?\.user\?\.image/);
+  assert.match(mobileControls, /accountInitials/);
 });
 
 test("desktop product navigation remains independent of the mobile suppression prop", () => {
@@ -59,4 +93,180 @@ test("desktop product navigation remains independent of the mobile suppression p
   assert.match(desktopRail, /className="hidden md:block"/);
   assert.match(desktopRail, /desktopPrimaryNavItems\.map/);
   assert.doesNotMatch(desktopRail, /hideMobileSecondaryNavLinks/);
+  assert.doesNotMatch(desktopRail, /gap-0 md:hidden/);
+});
+
+
+test("mobile preference selectors open full-screen without unmounting the currency selector", () => {
+  const handlerStart = headerSource.indexOf("const handleMobileCountryCurrencyBeforeOpen");
+  const handlerEnd = headerSource.indexOf("const handleSignOut", handlerStart);
+  const currencyHandler = headerSource.slice(handlerStart, handlerEnd);
+
+  assert.match(currencyHandler, /setMobileAccountOpen\(false\)/);
+  assert.doesNotMatch(currencyHandler, /setMobileMenuOpen\(false\)/);
+
+  const languageStart = headerSource.indexOf('{languageOpen && typeof document !== "undefined"');
+  const languageEnd = headerSource.indexOf("{desktopPrimaryNavItems.length > 0", languageStart);
+  const languageDialog = headerSource.slice(languageStart, languageEnd);
+
+  assert.match(languageDialog, /fixed inset-0 z-\[1000\]/);
+  assert.match(languageDialog, /data-mobile-language-dialog/);
+  assert.match(languageDialog, /h-\[100dvh\] max-h-\[100dvh\] w-full max-w-full overflow-y-auto/);
+  assert.match(languageDialog, /md:h-auto md:max-h-\[88vh\]/);
+  assert.match(languageDialog, /onClick=\{closeLanguageDialog\}/);
+  assert.match(languageDialog, /<X size=\{18\} aria-hidden="true" \/>/);
+  assert.doesNotMatch(languageDialog, /fixed inset-x-0 bottom-0 z-50 max-h-\[88vh\]/);
+});
+
+
+test("Hotel Results account drawer covers the full mobile viewport instead of sitting below the results header", () => {
+  const accountStart = headerSource.indexOf('{isSignedIn && mobileAccountOpen && typeof document !== "undefined"');
+  const accountEnd = headerSource.indexOf('{languageOpen && typeof document !== "undefined"', accountStart);
+  const accountDrawer = headerSource.slice(accountStart, accountEnd);
+
+  assert.ok(accountStart >= 0);
+  assert.match(
+    accountDrawer,
+    /mobileResultsSearch && mobileResultsTrailingActions && !fullscreenHotelMobileMenu && "max-sm:top-\[calc\(72px\+env\(safe-area-inset-top\)\)\] max-sm:z-\[940\]"/,
+  );
+  assert.match(accountDrawer, /fullscreenHotelMobileMenu && "max-sm:z-\[1100\]"/);
+  assert.match(
+    accountDrawer,
+    /fullscreenHotelMobileMenu && "max-sm:inset-x-0 max-sm:top-0 max-sm:w-full max-sm:max-w-none"/,
+  );
+  assert.doesNotMatch(
+    accountDrawer,
+    /mobileResultsSearch && mobileResultsTrailingActions && "max-sm:top-\[calc\(72px\+env\(safe-area-inset-top\)\)\]/,
+  );
+});
+
+test("mobile currency selector renders above the Hotel Results full-screen hamburger", () => {
+  const selectorSource = readFileSync(
+    new URL("../region/CountryCurrencySelector.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(headerSource, /fullscreenHotelMobileMenu && "max-sm:z-\[1100\]"/);
+  assert.match(selectorSource, /fixed inset-0 z-\[1200\][^"]*md:z-\[1000\]/);
+  assert.match(selectorSource, /relative z-\[1201\][^"]*md:z-\[1001\]/);
+});
+
+test("results navbar drawer uses pathname-aware product highlighting", () => {
+  assert.match(headerSource, /data-mobile-results-navbar/);
+  assert.match(
+    headerSource,
+    /const active = \(mobileResultsSearch \|\| carsResultsMobileInlineSearch\) && isNavItemActive\(item\.href\)/,
+  );
+  assert.match(headerSource, /aria-current=\{active \? "page" : undefined\}/);
+  assert.doesNotMatch(headerSource, /mobileResultsSearch && item\.href === "\/hotels"/);
+  assert.match(headerSource, /href\.startsWith\("\/flights"\)[\s\S]*pathname\.startsWith\("\/flights"\)/);
+  assert.match(headerSource, /href\.startsWith\("\/hotels"\)[\s\S]*pathname\.startsWith\("\/hotels"\)/);
+});
+
+test("results navbar accepts a custom leading action while preserving the default menu launcher", () => {
+  assert.match(headerSource, /mobileResultsLeadingAction\?: ReactNode/);
+  assert.match(headerSource, /mobileResultsLeadingAction \?\?/);
+  assert.match(headerSource, /kurioticket-icon-blue\.svg/);
+  assert.match(headerSource, /aria-controls="mobile-menu-drawer"/);
+});
+
+test("results navbar can render filters as part of the mobile header body", () => {
+  assert.match(headerSource, /mobileResultsFilters\?: ReactNode/);
+  assert.match(headerSource, /!mobileResultsFilters && !hotelResultsDesktopSticky && "border-b border-slate-200"/);
+  const header = ts.createSourceFile("AppHeader.tsx", headerSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const filterRails: ts.JsxOpeningElement[] = [];
+  function visit(node: ts.Node) {
+    if (ts.isJsxOpeningElement(node) && node.attributes.properties.some((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(header) === "data-mobile-results-filter-navbar")) filterRails.push(node);
+    ts.forEachChild(node, visit);
+  }
+  visit(header);
+  assert.equal(filterRails.length, 1, "the header owns a single mobile filter rail");
+  const rail = filterRails[0];
+  const className = rail.attributes.properties.find((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(header) === "className");
+  assert.ok(className && ts.isJsxAttribute(className) && className.initializer && ts.isJsxExpression(className.initializer) && className.initializer.expression);
+  const expression = className.initializer.expression.getText(header);
+  for (const hideMobileResultsNavbarDivider of [false, true]) {
+    const classes = new Set<string>(runInNewContext(expression, { cn, hideMobileResultsNavbarDivider }).split(/\s+/));
+    assert.ok(classes.has("bg-white"));
+    assert.ok(classes.has("sm:hidden"));
+    assert.equal(classes.has("border-b-0"), hideMobileResultsNavbarDivider);
+    assert.equal(classes.has("shadow-none"), hideMobileResultsNavbarDivider);
+  }
+  assert.ok(ts.isJsxElement(rail.parent));
+  const slots = rail.parent.children.filter((node) => ts.isJsxExpression(node) && node.expression && ts.isIdentifier(node.expression) && node.expression.text === "mobileResultsFilters");
+  assert.equal(slots.length, 1, "render the caller-owned filters once");
+  assert.doesNotMatch(headerSource, /<ResultsAvailabilityNotice\b/);
+});
+
+test("results header hides its filter rail while mobile drawers are open", () => {
+  assert.match(
+    headerSource,
+    /mobileResultsFilters && !mobileMenuOpen && !mobileAccountOpen \? \(/,
+  );
+  assert.match(headerSource, /id="mobile-menu-drawer"[\s\S]*aria-modal="true"/);
+  assert.match(headerSource, /id="mobile-account-drawer"[\s\S]*aria-modal="true"/);
+});
+
+
+test("mobile Flight Results uses a home arrow while preserving the K logo destination", () => {
+  const marker = headerSource.indexOf("data-flight-results-mobile-home");
+  assert.notEqual(marker, -1);
+  const block = headerSource.slice(Math.max(0, marker - 650), marker + 260);
+  assert.match(block, /flightResultsDesktopSticky/);
+  assert.match(block, /href="\/"/);
+  assert.match(block, /aria-label="Kurioticket home"/);
+  assert.match(block, /handleRouteLinkClick\(event, "\/"\)/);
+  assert.match(block, /<ArrowLeft size=\{24\} strokeWidth=\{2\.2\}/);
+});
+
+test("Cars results keep the sticky inline search with a mobile-only Back control and no compact Filter slot", () => {
+  assert.match(headerSource, /mobileResultsSticky\?: boolean/);
+  assert.match(headerSource, /mobileResultsSticky = true/);
+  assert.match(headerSource, /carsResultsMobileInlineSearch\?: boolean/);
+  assert.match(headerSource, /carsResultsMobileInlineSearch = false/);
+  assert.match(
+    headerSource,
+    /\(\(mobileResultsSearch && mobileResultsSticky\) \|\| carsResultsMobileInlineSearch\) &&\s*"max-sm:sticky max-sm:top-0 max-sm:z-\[950\]"/,
+  );
+  assert.match(headerSource, /data-cars-results-mobile-nav-search/);
+  assert.match(
+    headerSource,
+    /aria-label="Back"[\s\S]*data-cars-results-mobile-back[\s\S]*router\.back\(\)[\s\S]*router\.push\("\/cars"\)/,
+  );
+  assert.doesNotMatch(headerSource, /data-cars-results-mobile-nav-filter/);
+});
+
+
+test("shared footer exposes FAQ under Contact Us on desktop and mobile", () => {
+  const footer = readFileSync(new URL("./Footer.tsx", import.meta.url), "utf8");
+  const contactStart = footer.indexOf('id: "contact" as const');
+  const discoverStart = footer.indexOf('id: "discover" as const');
+  const contact = footer.slice(contactStart, discoverStart);
+  assert.ok(contactStart >= 0 && discoverStart > contactStart);
+  assert.match(contact, /label: t\.faqHeading,\s*href: "\/faq"/);
+  assert.match(footer, /footerSections\.map\(\(section\) =>/);
+  assert.match(footer, /className="hidden gap-x-8 lg:grid lg:grid-cols-4/);
+  assert.match(footer, /className="lg:hidden"/);
+});
+
+test("desktop signed-in menu restores My Account first without changing mobile links", () => {
+  const desktopStart = headerSource.indexOf("const desktopSignedInAccountMenuItems = [");
+  const mobileStart = headerSource.indexOf("const mobileSignedInAccountMenuItems = [");
+  const desktop = headerSource.slice(desktopStart, mobileStart);
+  assert.ok(desktopStart >= 0 && mobileStart > desktopStart);
+  assert.match(desktop, /href: "\/dashboard\/account", labelKey: "accountMenu\.myAccount\.label"/);
+  assert.match(desktop, /\.\.\.signedInAccountMenuItems/);
+  const accountIndex = desktop.indexOf('href: "/dashboard/account"');
+  const existingItemsIndex = desktop.indexOf("...signedInAccountMenuItems");
+  assert.ok(accountIndex >= 0 && existingItemsIndex >= 0 && accountIndex < existingItemsIndex,
+    "My Account must precede the existing desktop signed-in menu entries");
+  // Ensure My Account is actually the first array entry, not merely ahead of
+  // the spread of existing links.
+  assert.match(desktop, /const desktopSignedInAccountMenuItems = \[\s*\{\s*href: "\/dashboard\/account"/);
+  assert.match(headerSource, /desktopSignedInAccountMenuItems\.map\(\(item\) =>/);
+
+  const mobile = headerSource.slice(mobileStart, headerSource.indexOf("const mobileInfoLegalMenuItems", mobileStart));
+  assert.match(mobile, /href: "\/dashboard\/account"/);
+  assert.match(mobile, /\.\.\.signedInAccountMenuItems\.slice\(1\)/);
+  assert.match(headerSource, /translatedMobileSignedInAccountMenuItems\.map/);
 });

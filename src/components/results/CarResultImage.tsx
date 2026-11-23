@@ -3,7 +3,10 @@
 import Image from "next/image";
 import { Car, Truck } from "lucide-react";
 import { useState } from "react";
-import { resolveCarResultImageSource } from "@/lib/cars/carResultImage";
+import {
+  isCuratedCarResultImage,
+  resolveCarResultImageSource,
+} from "@/lib/cars/carResultImage";
 import type { CarCategory } from "@/lib/cars/types";
 
 type CarResultImageProps = {
@@ -14,6 +17,7 @@ type CarResultImageProps = {
   sizes?: string;
   fit?: "cover" | "contain";
   priority?: boolean;
+  position?: string;
 };
 
 export function CarResultImage({
@@ -24,19 +28,34 @@ export function CarResultImage({
   sizes = "(min-width: 1280px) 276px, (min-width: 768px) 256px, 100vw",
   fit = "cover",
   priority = false,
+  position = "center",
 }: CarResultImageProps) {
   const [failedUrl, setFailedUrl] = useState<string>();
   const resolvedImageUrl = resolveCarResultImageSource(imageUrl);
   const hasImage = Boolean(resolvedImageUrl && failedUrl !== resolvedImageUrl);
+  const effectiveFit = isCuratedCarResultImage(imageUrl) ? "contain" : fit;
   const FallbackIcon = category === "van" ? Truck : Car;
 
   if (!hasImage) {
     return (
-      <div className="relative flex h-full w-full items-center justify-center" role="img" aria-label={`${modelName} vehicle image unavailable`}>
-        <div className="absolute h-32 w-32 rounded-full bg-white/70 blur-sm" aria-hidden="true" />
+      <div
+        className="relative flex h-full w-full items-center justify-center"
+        role="img"
+        aria-label={`${modelName} vehicle image unavailable`}
+      >
+        <div
+          className="absolute h-32 w-32 rounded-full bg-white/70 blur-sm"
+          aria-hidden="true"
+        />
         <div className="relative flex flex-col items-center gap-2 text-[#315A7D]">
-          <FallbackIcon className="h-20 w-20" strokeWidth={1.25} aria-hidden="true" />
-          <span className="text-xs font-semibold">Vehicle image unavailable</span>
+          <FallbackIcon
+            className="h-20 w-20"
+            strokeWidth={1.25}
+            aria-hidden="true"
+          />
+          <span className="text-xs font-semibold">
+            Vehicle image unavailable
+          </span>
         </div>
       </div>
     );
@@ -52,10 +71,14 @@ export function CarResultImage({
       quality={92}
       className="h-full w-full"
       style={{
-        objectFit: fit,
-        objectPosition: "center",
+        objectFit: effectiveFit,
+        objectPosition: position,
       }}
-      onLoad={() => setFailedUrl((currentUrl) => currentUrl === resolvedImageUrl ? undefined : currentUrl)}
+      onLoad={() =>
+        setFailedUrl((currentUrl) =>
+          currentUrl === resolvedImageUrl ? undefined : currentUrl,
+        )
+      }
       onError={() => setFailedUrl(resolvedImageUrl)}
     />
   );

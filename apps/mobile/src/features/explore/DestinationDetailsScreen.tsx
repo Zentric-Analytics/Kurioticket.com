@@ -4,12 +4,11 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlowIcon } from "../flow/FlowIcon";
 import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
-import { fetchHomepageDefaultOrigin } from "../home/homepageDefaultOrigin";
 import { destinationMedia, resolvedDestinationHeroSource } from "./destinationMedia";
 import { destinationHandoff } from "./exploreInteractionModels";
 import {
-  exploreFlightResultsNavigation,
-  exploreHotelResultsNavigation,
+  exploreFlightDestinationNavigation,
+  exploreHotelSearchNavigation,
 } from "./exploreSearchHandoff";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { useExploreCatalogue } from "./exploreCatalogueStore";
@@ -80,27 +79,22 @@ function DestinationPage({ destination, destinationById, saved, onToggle }: { de
     if (flightSearchPending.current) return;
     flightSearchPending.current = true;
     const requestedDestinationId = destination.id;
-    void fetchHomepageDefaultOrigin()
-      .then((origin) => {
+    void exploreFlightDestinationNavigation({
+      id: destination.id,
+      name: destination.name,
+      primaryAirportCode: handoff.primaryAirportCode,
+      airportCodes: handoff.airportCodes,
+    })
+      .then((route) => {
         if (currentDestinationId.current !== requestedDestinationId) return;
-        const resultsRoute = origin
-          ? exploreFlightResultsNavigation(origin.code, handoff.primaryAirportCode)
-          : null;
-        if (resultsRoute) {
-          router.push(resultsRoute);
-          return;
-        }
-        router.push({
-          pathname: "/flights",
-          params: { destinationId: destination.id, destination: destination.name, to: handoff.primaryAirportCode, airportCodes: handoff.airportCodes.join(",") },
-        });
+        router.push(route);
       })
       .finally(() => {
         if (currentDestinationId.current === requestedDestinationId) flightSearchPending.current = false;
       });
   };
   const searchHotels = () => {
-    const resultsRoute = exploreHotelResultsNavigation(destination.name);
+    const resultsRoute = exploreHotelSearchNavigation({ id: destination.id, name: destination.name });
     if (resultsRoute) router.push(resultsRoute);
     else router.push({ pathname: "/hotels", params: { destinationId: destination.id, destination: destination.name } });
   };

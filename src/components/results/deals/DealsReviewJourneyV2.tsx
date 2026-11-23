@@ -4,17 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
-import {
-  formatCurrency,
-  formatDisplayPrice,
-} from "@/lib/currency/formatCurrency";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import {
   buildDealsReviewSnapshotV2,
   type DealsReviewSnapshotV2,
 } from "@/lib/deals/dealsReviewLifecycleV2";
 import {
   getDealsReviewItemsV2,
-  getDealsTripPlanV2EstimatedTotal,
 } from "@/lib/deals/dealsReviewPresentationV2";
 import {
   getDealsTripPlanV2NextDeadline,
@@ -49,11 +45,6 @@ export function DealsReviewJourneyV2({
   const items = useMemo(
     () => getDealsReviewItemsV2(plan, locale),
     [locale, plan],
-  );
-  const total = getDealsTripPlanV2EstimatedTotal(
-    plan,
-    selectedCurrency,
-    rates.rates,
   );
 
   useEffect(() => {
@@ -172,18 +163,12 @@ export function DealsReviewJourneyV2({
         })}
       </div>
       <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 xl:sticky xl:top-24">
-        <h2 className="text-xl font-extrabold">Estimated trip total</h2>
-        <p className="mt-3 text-2xl font-extrabold">
-          {total === null
-            ? "Estimate unavailable"
-            : formatCurrency(total, selectedCurrency)}
-        </p>
+        <h2 className="text-xl font-extrabold">Review coordinated options</h2>
         <p className="mt-4 text-sm text-slate-600">
-          This combines the values currently shown. Stay and car amounts are
-          planning estimates where included. The flight amount reflects the
-          current revalidated offer only while it remains valid. This is not a
-          bundled rate or guaranteed checkout total. Nothing has been booked or
-          charged. Downstream prices and terms may still change.
+          Component prices remain separate and come from their respective
+          inventory sources. Kurioticket does not claim a package total,
+          discount, bundled rate, or guaranteed checkout. Nothing has been
+          booked or charged. Downstream prices and terms may still change.
         </p>
         {rates.isFallback && (
           <p className="mt-2 text-sm font-semibold text-amber-900">
