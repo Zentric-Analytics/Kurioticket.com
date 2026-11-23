@@ -1,10 +1,8 @@
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 import { ChevronRight, Clock3, Monitor, Smartphone } from "lucide-react";
 import type { DeviceSessionResult, AdminDeviceSession } from "@/services/adminDeviceSessionsService";
 
-const timeToday = (date: Date) => new Intl.DateTimeFormat("en-GB", {
-  hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC",
-}).format(date) + " UTC";
 
 export function platformLabel(item: AdminDeviceSession) {
   if (item.client === "MOBILE") {
@@ -70,7 +68,7 @@ export function AdminIdentityDeviceAccess({ kind, result, historyHref }: {
           </span>
           <time dateTime={session.lastSeenAt.toISOString()}
             className="whitespace-nowrap pl-[23px] tabular-nums text-[#64748B] sm:pl-0 sm:text-right">
-            {timeToday(session.lastSeenAt)}
+            <AdminLocalDateTime value={session.lastSeenAt} style="time" />
           </time>
         </div>;
       })}
