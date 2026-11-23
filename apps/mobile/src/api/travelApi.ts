@@ -263,7 +263,7 @@ export const travelApi = {
     const params = new URLSearchParams({ q: query.trim(), limit: String(options.limit ?? 8) });
     if (options.countryCode) params.set("countryCode", options.countryCode);
     if (options.locale) params.set("locale", options.locale);
-    return request<{ suggestions?: HotelDestinationSuggestion[] }>(`/api/hotels/destinations?${params.toString()}`, {}, { signal: options.signal });
+    return request<{ suggestions?: HotelDestinationSuggestion[] }>(`/api/hotels/destinations?${params.toString()}`, {}, { signal: options.signal, sandboxDisplay: true });
   },
   searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   searchPackages: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<PackageSearchResponse>("/api/packages/search", { method: "POST", body: JSON.stringify(body) }, options),

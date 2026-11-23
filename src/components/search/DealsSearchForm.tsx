@@ -2152,6 +2152,7 @@ export function DealsSearchForm({
           const request = new URLSearchParams({ limit: "8" });
           if (query) request.set("q", query);
           const response = await fetch(`/api/hotels/destinations?${request}`, {
+            headers: { "x-sandbox-results-policy": "1" },
             signal: controller.signal,
             cache: "no-store",
           });

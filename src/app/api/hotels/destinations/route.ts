@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
 
 import { normalizeCountryCode } from "@/lib/geo/context";
 import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
@@ -67,6 +68,10 @@ const resolveCountryContext = async (request: Request, selectedCountryCode: stri
 };
 
 export async function GET(request: Request) {
+  return withProductionSandboxRequest(request, () => discoverHotelDestinations(request));
+}
+
+async function discoverHotelDestinations(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const query = (searchParams.get("q") || "").trim();
   const selectedCountryCode = normalizeCountryHint(searchParams.get("countryCode"));

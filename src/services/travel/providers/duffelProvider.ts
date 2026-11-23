@@ -736,15 +736,18 @@ const mergeProviderAndCuratedPlaces = (
   curatedPlaces: DuffelPlaceSuggestion[],
   searchContext?: PlaceSearchContext,
 ) => {
+  // A metro group and its primary airport can share an IATA code (MIA, LAX).
+  // Native clients must retain the airport when expanding an all-airports row.
+  const placeIdentity = (place: DuffelPlaceSuggestion) => `${place.type ?? "airport"}:${place.code}`;
   const placesByCode = new Map<string, DuffelPlaceSuggestion>();
 
   for (const providerPlace of providerPlaces) {
-    placesByCode.set(providerPlace.code, providerPlace);
+    placesByCode.set(placeIdentity(providerPlace), providerPlace);
   }
 
   for (const curatedPlace of curatedPlaces) {
-    if (!placesByCode.has(curatedPlace.code)) {
-      placesByCode.set(curatedPlace.code, curatedPlace);
+    if (!placesByCode.has(placeIdentity(curatedPlace))) {
+      placesByCode.set(placeIdentity(curatedPlace), curatedPlace);
     }
   }
 
@@ -808,11 +811,12 @@ export async function searchDuffelPlaces(
 
       if (!code || !city || !airport) continue;
 
-      if (seenCodes.has(code)) continue;
-      const nameKey = `${normalizeSuggestionText(city)}|${normalizeSuggestionText(airport)}`;
+      const identity = `${item.type ?? "airport"}:${code}`;
+      if (seenCodes.has(identity)) continue;
+      const nameKey = `${item.type ?? "airport"}|${normalizeSuggestionText(city)}|${normalizeSuggestionText(airport)}`;
       if (seenNames.has(nameKey)) continue;
 
-      seenCodes.add(code);
+      seenCodes.add(identity);
       seenNames.add(nameKey);
 
       const providerSuggestion: DuffelPlaceSuggestion = {

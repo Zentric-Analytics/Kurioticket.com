@@ -84,7 +84,7 @@ export function HotelDestinationMobilePicker({ appearance, open, value, titleId,
         const params = new URLSearchParams({ q: trimmed, limit: "8" });
         const hint = selectedCountryHint || detectedCountryHint;
         if (hint) params.set("countryCode", hint);
-        const response = await fetch(`/api/hotels/destinations?${params}`, { signal: controller.signal, cache: "no-store" });
+        const response = await fetch(`/api/hotels/destinations?${params}`, { signal: controller.signal, cache: "no-store", headers: { "x-sandbox-results-policy": "1" } });
         const payload = response.ok ? await response.json() as HotelDestinationsApiResponse : {};
         setSuggestions(Array.isArray(payload.suggestions) ? payload.suggestions.slice(0, 8) : []); setHighlightedIndex(-1); setRecoveryMessage(typeof payload.recovery?.message === "string" ? payload.recovery.message : "");
       } catch { if (!controller.signal.aborted) setSuggestions([]); }

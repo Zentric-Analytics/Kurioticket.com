@@ -49,6 +49,7 @@ async function loadCarLocationSuggestions(
   const params = new URLSearchParams({ q: query.trim(), limit: String(limit) });
   try {
     const response = await fetch(`/api/cars/locations?${params.toString()}`, {
+      headers: { "x-sandbox-results-policy": "1" },
       signal,
       cache: "no-store",
     });

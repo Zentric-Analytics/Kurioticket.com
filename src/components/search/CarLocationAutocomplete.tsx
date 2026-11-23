@@ -159,7 +159,7 @@ export function CarLocationAutocomplete({
           usesDesktopPanel && desktopResultsPresentation ? "6" : "8",
       });
       if (countryHint && /^[A-Za-z]{2}$/.test(countryHint)) params.set("country", countryHint.toUpperCase());
-      fetch(`/api/cars/locations?${params.toString()}`, { signal: controller.signal, cache: "no-store" })
+      fetch(`/api/cars/locations?${params.toString()}`, { signal: controller.signal, cache: "no-store", headers: { "x-sandbox-results-policy": "1" } })
         .then((response) => (response.ok ? response.json() : Promise.reject(new Error("Location suggestions unavailable"))))
         .then((data: ApiResponse) => {
           if (requestId !== requestIdRef.current) return;
