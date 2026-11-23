@@ -13,8 +13,9 @@ try {
   await expect(page.locator('[data-activity-id]')).toHaveCount(0);
   // Summary rows are intentionally informational; full detail stays in Journey History.
   const summaryRow = page.getByTestId('activity-journey-row').first();
-  await expect(summaryRow).toContainText('Flight · LOS → IST');
-  await expect(summaryRow).toContainText('matching events');
+  await expect(summaryRow).toContainText('Flight search');
+  await expect(summaryRow).toContainText('LOS → IST');
+  await expect(summaryRow).toContainText('recorded stages');
   await expect(summaryRow.getByRole('link')).toHaveCount(0);
   await expect(page.getByRole('link',{name:/View Journey History/})).toBeVisible();
   const longDirectory = "客".repeat(1000);
