@@ -80,7 +80,7 @@ test("empty activity remains UNKNOWN with no invented latency; Overview keeps un
     assert.match(overview, />48</);
     assert.equal((overview.match(/>12</g) || []).length, 3);
     assert.match(overview, />7</);
-    assert.match(overview, /Bots counts verified crawler search requests blocked/);
+    assert.match(overview, /verified search crawler attempts blocked before provider execution/);
     assert.match(overview, />Platform Search Activity</);
     assert.match(overview, /View details/);
     assert.doesNotMatch(overview, /View Search Activity →/);
