@@ -27,6 +27,45 @@ export function searchDetailDuration(ms: number | null) {
   return ms === null || !Number.isFinite(ms) || ms < 0 ? "—" : (ms / 1000).toFixed(1) + "s";
 }
 
+const crawlerNames: Readonly<Record<string, string>> = {
+  GOOGLEBOT: "Googlebot",
+  BINGBOT: "Bingbot",
+  GOOGLEOTHER: "GoogleOther",
+  GOOGLE_INSPECTION_TOOL: "Google-InspectionTool",
+  MEDIAPARTNERS_GOOGLE: "Mediapartners-Google",
+  PERPLEXITYBOT: "PerplexityBot",
+  PERPLEXITY_USER: "Perplexity-User",
+  META_WEBINDEXER: "Meta Web Indexer",
+  META_EXTERNALAGENT: "Meta-ExternalAgent",
+  META_EXTERNALFETCHER: "Meta-ExternalFetcher",
+  FACEBOOKEXTERNALHIT: "FacebookExternalHit",
+  GPTBOT: "GPTBot",
+  CHATGPT_USER: "ChatGPT-User",
+  CLAUDEBOT: "ClaudeBot",
+  CLAUDE_USER: "Claude-User",
+  APPLEBOT: "Applebot",
+  DUCKDUCKBOT: "DuckDuckBot",
+  TWITTERBOT: "Twitterbot",
+  LINKEDINBOT: "LinkedInBot",
+  BYTESPIDER: "Bytespider",
+  YANDEXBOT: "YandexBot",
+  BAIDUSPIDER: "Baiduspider",
+  AHREFSBOT: "AhrefsBot",
+  SEMRUSHBOT: "SemrushBot",
+  SLURP: "Slurp",
+  IA_ARCHIVER: "ia_archiver",
+};
+
+export function searchDetailCrawlerName(name: string | null | undefined) {
+  return name ? crawlerNames[name] ?? name : "Unknown bot";
+}
+
+export function searchDetailCrawlerEvidenceLabel(evidence: "VERIFIED_DNS" | "DECLARED_USER_AGENT" | null | undefined) {
+  return evidence === "VERIFIED_DNS" ? "DNS verified"
+    : evidence === "DECLARED_USER_AGENT" ? "User-Agent identified"
+    : "Not recorded";
+}
+
 export function searchDetailIdentityLabel(kind: AdminSearchRead["identity"]["kind"]) {
   return kind === "registered" ? "Registered" : kind === "guest" ? "Guest" : "Unattributed";
 }

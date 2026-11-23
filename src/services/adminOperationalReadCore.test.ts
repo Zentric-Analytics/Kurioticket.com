@@ -256,11 +256,78 @@ test("flight, hotel, and car provider logs carry exact request correlation for f
   assert.match(carRoute, /service: "car-search"[\s\S]*?metadata: \{ \.\.\.application, requestId \}/);
 });
 
+test("crawler detail reads only recorded bot evidence, including legacy verifiedCrawler", () => {
+  const crawler = __adminOperationalReadCoreTest.recordedSearchCrawler;
+  assert.deepEqual(crawler({
+    applicationSource: "BOT", identifiedCrawler: "GOOGLEBOT",
+    verifiedCrawler: "GOOGLEBOT", crawlerEvidence: "VERIFIED_DNS",
+  }), { name: "GOOGLEBOT", evidence: "VERIFIED_DNS" });
+  assert.deepEqual(crawler({ applicationSource: "BOT", verifiedCrawler: "BINGBOT" }),
+    { name: "BINGBOT", evidence: "VERIFIED_DNS" }, "legacy verified crawler remains identifiable");
+  assert.deepEqual(crawler({
+    applicationSource: "BOT", identifiedCrawler: "PERPLEXITYBOT", crawlerEvidence: "DECLARED_USER_AGENT",
+  }), { name: "PERPLEXITYBOT", evidence: "DECLARED_USER_AGENT" });
+  assert.deepEqual(crawler({
+    applicationSource: "BOT", identifiedCrawler: "META_EXTERNALAGENT", crawlerEvidence: "DECLARED_USER_AGENT",
+  }), { name: "META_EXTERNALAGENT", evidence: "DECLARED_USER_AGENT" });
+  assert.deepEqual(crawler({ applicationSource: "BOT" }), { name: null, evidence: null });
+  assert.deepEqual(crawler({ applicationSource: "BOT", identifiedCrawler: "GOOGLEBOT" }),
+    { name: "GOOGLEBOT", evidence: null }, "a name alone is not verification");
+  assert.deepEqual(crawler({
+    applicationSource: "BOT", identifiedCrawler: "GOOGLEBOT",
+    verifiedCrawler: "BINGBOT", crawlerEvidence: "VERIFIED_DNS",
+  }), { name: "GOOGLEBOT", evidence: null }, "conflicting metadata must never be verified");
+  assert.deepEqual(crawler({
+    applicationSource: "BOT", identifiedCrawler: "<script>alert(1)</script>", crawlerEvidence: "VERIFIED_DNS",
+  }), { name: null, evidence: null }, "reject unsanitized names");
+  assert.equal(crawler({ applicationSource: "WEB", verifiedCrawler: "GOOGLEBOT" }), null);
+  assert.equal(crawler({ applicationSource: "UNKNOWN", identifiedCrawler: "PERPLEXITYBOT" }), null);
+});
+
+test("authorized search detail returns crawler name and verification without inventing customer identity", async () => {
+  const row = {
+    id: "bot-search-123", requestId: null, userId: null, visitorId: null,
+    type: "HOTEL", origin: null, destination: "Bangkok",
+    checkIn: null, checkOut: null,
+    query: { environment: "staging", applicationSource: "BOT", verifiedCrawler: "GOOGLEBOT" },
+    resultCount: 0, latencyMs: 420, status: "FAILED",
+    createdAt: new Date("2026-11-23T16:07:58.632Z"),
+    visitor: null, journeyEvents: [],
+  };
+  const service = createAdminOperationalReadService({
+    authorize: async () => true,
+    environment: () => "staging",
+    database: () => ({
+      searchHistory: {
+        async findFirst(input: { where: { id: string; query: unknown } }) {
+          assert.equal(input.where.id, "bot-search-123");
+          return row;
+        },
+      },
+      apiProviderLog: { async findMany() { return []; } },
+      user: { async findUnique() { return null; } },
+      visitor: { async findFirst() { return null; } },
+    }) as never,
+  });
+
+  const result = await service.searches.detail("bot-search-123", new URLSearchParams("environment=staging"));
+  assert.equal(result.status, "ok");
+  if (result.status !== "ok") return;
+  assert.equal(result.data.applicationSource, "BOT");
+  assert.deepEqual(result.data.crawler, { name: "GOOGLEBOT", evidence: "VERIFIED_DNS" });
+  assert.equal(result.data.identity.kind, "unattributed");
+  assert.equal(result.data.searcher.activity, null);
+});
+
 test("search detail renders the reorganized read-only diagnostics without the visible admin header", () => {
   const page = readFileSync("src/app/admin/searches/[id]/page.tsx", "utf8");
   assert.match(page, /<AdminPageShell title="Search detail" hideHeader>/);
   assert.match(page, /Search overview/);
   assert.match(page, /Search information/);
+  assert.match(page, /<Field label="Bot name" value=\{botName\}/);
+  assert.match(page, /<Field label="Verification" value=\{searchDetailCrawlerEvidenceLabel/);
+  assert.match(page, /isBot \? botName/);
+  assert.match(page, /!isBot && search.searcher.activity/);
   assert.match(page, /Provider outcomes/);
   assert.doesNotMatch(page, /What happened/);
   assert.match(page, /What to check/);

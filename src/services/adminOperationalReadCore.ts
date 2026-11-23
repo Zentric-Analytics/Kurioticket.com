@@ -83,6 +83,33 @@ function jsonRecord(value: Prisma.JsonValue | null | undefined): Record<string, 
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 
+/** Use only stored crawler attribution, never infer a bot from IP or missing identity. */
+function recordedSearchCrawler(value: Prisma.JsonValue | null): AdminSearchDetail["crawler"] {
+  const query = jsonRecord(value);
+  if (applicationMetadata(query).applicationSource !== "BOT") return null;
+
+  const safeName = (raw: unknown) => {
+    if (typeof raw !== "string") return null;
+    const name = raw.trim().toUpperCase();
+    return name.length >= 2 && name.length <= 64
+      && /^[A-Z0-9][A-Z0-9_-]*$/.test(name)
+      && name !== "UNKNOWN" && name !== "BOT" ? name : null;
+  };
+  const identified = safeName(query.identifiedCrawler);
+  const verified = safeName(query.verifiedCrawler);
+  const name = identified ?? verified;
+  // An old DNS-verified row may contain only verifiedCrawler. Never promote
+  // User-Agent-only or contradictory metadata to verified status.
+  const evidence = name && verified === name
+    && (query.crawlerEvidence === "VERIFIED_DNS"
+      || (query.crawlerEvidence == null && verified))
+    ? "VERIFIED_DNS" as const
+    : name && query.crawlerEvidence === "DECLARED_USER_AGENT"
+      ? "DECLARED_USER_AGENT" as const
+      : null;
+  return { name, evidence };
+}
+
 function identity(userId: string | null, visitorId: string | null, operationalSessionId?: string | null): AdminOperationalIdentity {
   return { kind: userId ? "registered" : visitorId || operationalSessionId ? "guest" : "unattributed", userId, visitorId };
 }
@@ -769,6 +796,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
               ...searchDto(row, env.data, providers),
               diagnostic: exactSearchDiagnostic(row, providers),
               network: recordedSearchNetwork(row.query),
+              crawler: recordedSearchCrawler(row.query),
               searcher,
             },
           };
@@ -910,6 +938,7 @@ export const __adminOperationalReadCoreTest = {
   correlatedProviderLogs,
   exactProviderFilteredSearchSql,
   searchWhere,
+  recordedSearchCrawler,
   providerLogWhere,
   providerLogsForPageSql,
 };
