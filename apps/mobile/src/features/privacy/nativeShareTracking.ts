@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import { CryptoDigestAlgorithm, digestStringAsync, randomUUID } from "expo-crypto";
 import { travelApi } from "../../api/travelApi";
 import { visitorIdentity } from "./visitorIdentity";
@@ -24,6 +25,9 @@ export async function shareNativeResult<T extends NativeShareOutcome>({
   return shareAndRecordObservedAction({
     share,
     trackingContext: visitorIdentity.trackingContext,
+    // On Android RN 0.81 reports sharedAction on opening the chooser, not on
+    // confirmed selection. Do not misreport a cancelled chooser as a share.
+    canVerifyCompletion: Platform.OS === "ios",
     record: async context => {
       if (!resultId || resultId.length > 4096) return;
       const hashedResultId = await digestStringAsync(CryptoDigestAlgorithm.SHA256, resultId);
