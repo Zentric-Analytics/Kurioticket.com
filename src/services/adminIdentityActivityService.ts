@@ -16,7 +16,7 @@ const journeySelect = {
   id: true, type: true, product: true, provider: true, createdAt: true,
   searchHistoryId: true, redirectLogId: true,
   journey: { select: { id: true, visitorId: true, startedAt: true } },
-  searchHistory: { select: { visitorId: true, userId: true, type: true, origin: true, destination: true, status: true } },
+  searchHistory: { select: { visitorId: true, userId: true, type: true, origin: true, destination: true, status: true, resultCount: true, query: true } },
   redirectLog: { select: { visitorId: true, userId: true, type: true, provider: true, route: true } },
 } as const;
 
@@ -40,6 +40,12 @@ const safeInteractionNames: Record<string, string> = {
   price_alert_reactivated: "Price alert resumed",
   price_alert_deleted: "Price alert deleted",
 };
+function safeSearchPlatform(value: unknown): "WEB" | "IOS" | "ANDROID" | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const source = (value as Record<string, unknown>).applicationSource;
+  return source === "WEB" || source === "IOS" || source === "ANDROID" ? source : null;
+}
+
 function safeActivityMetadata(value: unknown): { product: string | null; detail: string } {
   if (!value || typeof value !== "object" || Array.isArray(value)) return { product: null, detail: "Recorded account activity" };
   const item = value as Record<string, unknown>;
@@ -398,7 +404,7 @@ export async function loadAdminIdentityActivity(
             where: { AND: [searchWhere, sourceActivitySeek(after, "s", order)] },
             orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }],
             take,
-            select: { id: true, type: true, origin: true, destination: true, status: true, createdAt: true },
+            select: { id: true, type: true, origin: true, destination: true, status: true, resultCount: true, query: true, createdAt: true },
           })) : Promise.resolve([]),
           canReadHandoffs ? readSource("r", (after, take) => tx.redirectLog.findMany({
             where: { AND: [handoffWhere, sourceActivitySeek(after, "r", order)] },
@@ -431,12 +437,17 @@ export async function loadAdminIdentityActivity(
       if (event.type !== "SEARCH_COMPLETED" && event.type !== "RESULTS_VIEWED"
         && event.type !== "OFFER_SELECTED" && event.type !== "PROVIDER_HANDOFF_STARTED") return [];
       const row = toAdminJourneyActivity({ ...event, type: event.type }, kind, id);
-      return row ? [row] : [];
+      return row ? [{
+        ...row,
+        platform: safeSearchPlatform(event.searchHistory?.query),
+        resultCount: event.searchHistory?.resultCount ?? null,
+      }] : [];
     });
     const legacy: ActivityRow[] = [
       ...searches.map(s => ({
         id: "s-" + s.id, stage: "SEARCH_COMPLETED" as const, product: s.type,
         searchHistoryId: s.id, dedupeKey: "search:" + s.id,
+        platform: safeSearchPlatform(s.query), resultCount: s.resultCount,
         label: "Search completed", detail: [s.type, [s.origin, s.destination].filter(Boolean).join(" → "), s.status].filter(Boolean).join(" · "),
         at: s.createdAt,
       })),
