@@ -154,25 +154,33 @@ export class JourneyEventCoordinator {
     this.contextChanged();
     if (this.context === null || !validRequestId(requestId) || !this.searches.has(requestId)) return;
     const current = this.context;
-    for (const pending of this.events.values()) {
-      if (pending.context !== current || pending.event.requestId !== requestId || !pending.cancelRetry || !pending.immediateRetryAllowed) continue;
-      pending.cancelRetry();
-      pending.cancelRetry = undefined;
-      pending.immediateRetryAllowed = false;
-      this.startDelivery(pending);
-    }
-    const active = [...this.deliveries.entries()]
-      .filter(([pending]) => pending.context === current && pending.event.requestId === requestId)
-      .map(([, task]) => task);
-    if (!active.length) return;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    try {
-      await Promise.race([
-        Promise.allSettled(active).then(() => undefined),
-        new Promise<void>(resolve => { timer = setTimeout(resolve, Math.max(0, Math.min(maxWaitMs, 500))); }),
-      ]);
-    } finally {
-      if (timer) clearTimeout(timer);
+    // Preserve one absolute bound across *all* retries, rather than resetting
+    // the 500ms budget for each attempt.
+    const deadline = Date.now() + Math.max(0, Math.min(maxWaitMs, 500));
+    while (this.context === current && Date.now() < deadline) {
+      for (const pending of this.events.values()) {
+        if (pending.context !== current || pending.event.requestId !== requestId
+          || !pending.cancelRetry || !pending.immediateRetryAllowed) continue;
+        pending.cancelRetry();
+        pending.cancelRetry = undefined;
+        pending.immediateRetryAllowed = false;
+        this.startDelivery(pending);
+      }
+      const active = [...this.deliveries.entries()]
+        .filter(([pending]) => pending.context === current && pending.event.requestId === requestId)
+        .map(([, task]) => task);
+      if (!active.length) return;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          Promise.allSettled(active).then(() => undefined),
+          new Promise<void>(resolve => { timer = setTimeout(resolve, Math.max(0, deadline - Date.now())); }),
+        ]);
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+      // An active attempt may have returned "retryable" *while we waited*.
+      // Recheck the newly scheduled retry before allowing external navigation.
     }
   }
 
