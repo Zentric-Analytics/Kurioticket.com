@@ -1,5 +1,6 @@
 import { hasDisplayOnlyInventory } from "../../../../../src/shared/presentation/sandboxInventory";
 import { useSandboxResults } from "./useSandboxResults";
+import { FlightProviderWarning } from "./FlightProviderWarning";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode, type SetStateAction } from "react";
 import {
   ActivityIndicator,
@@ -1212,6 +1213,7 @@ function ResultsScreen({ product }: { product: Product }) {
           keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
           renderItem={({ item, index }) => item === null ? (
             <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}>
+              <FlightProviderWarning message={message} style={[s0.notice, { backgroundColor: theme.surface, color: theme.textPrimary, borderColor: theme.border, borderWidth: 1 }]} />
               {flightDateStrip}
               {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><FlightPriceAlert plan={plan.plan} flightResults={results as FlightResult[]} available={availability.priceAlerts} displayCurrency={currencyState?.resolution.resolvedCurrency ?? String(plan.plan.payload.currency ?? "USD")} rates={currencyState?.rates ?? {}} onFeedback={setFlightPriceAlertFeedback} /></View> : null}
               <FlightResultsSummaryRow count={sorted.length} />
