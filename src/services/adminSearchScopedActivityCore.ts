@@ -180,7 +180,7 @@ export function createAdminSearchScopedActivityReader(deps: Dependencies) {
           handoff: event.type === "PROVIDER_HANDOFF_STARTED" && event.redirectLog
             ? {
                 route: event.redirectLog.route?.replace(/[\\u0000-\\u001f\\u007f]/g, " ").trim().slice(0, 160) || null,
-                price: event.redirectLog.price === null ? null : String(event.redirectLog.price),
+                price: event.redirectLog.price == null ? null : String(event.redirectLog.price),
                 currency: /^[A-Z]{3}$/.test(event.redirectLog.currency) ? event.redirectLog.currency : null,
               }
             : null,
