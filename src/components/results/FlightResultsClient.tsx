@@ -2674,6 +2674,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         ? readFlightResultsReturnView(searchKey, window.location.pathname + window.location.search)
         : null;
       setRestoredFlightView(returnView);
+      // Changing sort does not always update the URL. Restore the saved
+      // selection before applying the exact order on a return from details.
+      if (returnView) setSortMode(returnView.sortMode);
       if (!shouldBypassSnapshot && returnIntentRef.current?.returning && (!snapshotState?.isFresh || !returnView)) {
         // Returning is not a new search. Expired provider quotes require an
         // explicit customer refresh before they can become actionable again.
