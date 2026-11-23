@@ -71,7 +71,7 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     ...owner, id: "qa-search-" + String(index).padStart(6, "0"),
     createdAt: new Date(+baseTime - Math.floor(index / 17) * 1000), // ties cross batch boundaries
     type: products[index % products.length], origin: "LOS", destination: index % 2 ? "Accra" : "London",
-    status: "SUCCESS", query: metadata, journeyEvents: [],
+    status: "SUCCESS", countAsSearch: true, query: metadata, journeyEvents: [],
   }));
   const handoffRows: Row[] = Array.from({ length: 53 }, (_, index) => ({
     ...owner, id: "qa-handoff-" + String(index).padStart(6, "0"),
