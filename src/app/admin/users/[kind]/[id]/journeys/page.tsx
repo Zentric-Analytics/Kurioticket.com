@@ -1,3 +1,4 @@
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ChevronRight, Route } from "lucide-react";
@@ -6,7 +7,6 @@ import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeFields";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
-import { formatDateTime } from "@/lib/admin-data";
 import { decodeActivityJourneyReturn, encodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
 import { JOURNEY_ALL_TIME_FROM } from "@/lib/adminJourneyDateRange";
 import { identityJourneyHistoryHref, identityJourneyHistoryQuery } from "@/lib/adminIdentityJourneyHistory";
@@ -254,8 +254,8 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
               {list.data.items.map(item => (
                 <tr key={item.id} className="align-top hover:bg-[#F8FAFC]">
                   <td className="px-3 py-3">
-                    <p className="font-medium">{formatDateTime(new Date(item.startedAt))}</p>
-                    <p className="mt-1 text-[11px] text-[#64748B]">Last {formatDateTime(new Date(item.lastEventAt))}</p>
+                    <p className="font-medium"><AdminLocalDateTime value={item.startedAt} /></p>
+                    <p className="mt-1 text-[11px] text-[#64748B]">Last <AdminLocalDateTime value={item.lastEventAt} /></p>
                   </td>
                   <td className="break-words px-3 py-3 text-[#334155]">{item.products.join(", ") || "—"}</td>
                   <td className="break-words px-3 py-3 text-[#334155]">
