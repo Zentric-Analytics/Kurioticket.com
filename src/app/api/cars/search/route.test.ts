@@ -45,6 +45,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
     status: options.status ?? "available", warnings: [], providerStatuses: [provider],
   };
   const dependencies: Record<string, unknown> = {
+    "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
     "@/lib/application-source": { applicationMetadata },
     "@/lib/searchCrawlerGate": { blockVerifiedCrawlerSearch: async () => options.crawlerBlocked
       ? Response.json({ code: "CRAWLER_SEARCH_BLOCKED" }, { status: 403 }) : null },
