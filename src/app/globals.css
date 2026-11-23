@@ -2870,7 +2870,7 @@ textarea {
 .admin-search-records td[data-label="Currency"],
 .admin-search-records td[data-label="Results"],
 .admin-search-records td[data-label="Providers"],
-.admin-search-records td[data-label="Duration"],
+.admin-search-records td[data-label="Action"],
 .admin-search-records td[data-label="Identity"],
 .admin-journey-records td[data-label="Searches"] {
   white-space: nowrap;
@@ -2891,7 +2891,7 @@ textarea {
   .admin-search-records td[data-label="Currency"],
   .admin-search-records td[data-label="Results"],
   .admin-search-records td[data-label="Providers"],
-  .admin-search-records td[data-label="Duration"],
+  .admin-search-records td[data-label="Action"],
   .admin-search-records td[data-label="Identity"] {
     padding-inline: 4px;
     font-size: 11px;

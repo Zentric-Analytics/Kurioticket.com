@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { applicationLabel } from "@/lib/platformHealthPresentation";
 import { searchRoutePreview } from "@/lib/adminSearchRoutePreview";
 import { useEffect, useRef, useState } from "react";
@@ -121,15 +122,15 @@ function SearchMonitorTableState({
               <th scope="col" className="px-2 py-3 font-semibold">Currency</th>
               <th scope="col" className="px-2 py-3 font-semibold">Results</th>
               <th scope="col" className="px-2 py-3 font-semibold">Providers</th>
-              <th scope="col" className="px-2 py-3 font-semibold">Duration</th>
               <th scope="col" className="px-2 py-3 font-semibold">Identity</th>
               <th scope="col" className="px-2 py-3 font-semibold">Status</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Action</th>
             </tr>
           </thead>
           <tbody>
             {items.map((search) => (
               <tr key={search.id} className="group relative cursor-pointer border-b border-[#E5E7EB] text-[13px] text-[#374151] hover:bg-[#FAFAFA] focus-within:bg-[#F8FAFC]">
-                <td data-label="Created" className="px-2 py-3 align-top"><Link href={detailHref(search, detailQuery)} aria-label={"View details for " + productLabel(search.product) + " search " + routeLabel(search.origin, search.destination)} className="absolute inset-0 z-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#004BB8]" tabIndex={0} /><span className="relative pointer-events-none">{formatCreated(search.createdAt, referenceNow)}</span></td>
+                <td data-label="Created" className="px-2 py-3 align-top">{formatCreated(search.createdAt, referenceNow)}</td>
                 <td data-label="Product" className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td><td data-label="Application" className="break-words px-2 py-3 align-top">{applicationLabel(search.applicationSource)}{search.appVersion?<span className="mt-0.5 block text-[11px] text-slate-500">v{search.appVersion}</span>:null}</td>
                 <td data-label="Route / stay" className="min-w-0 px-2 py-3 align-top">
                   <p data-search-route-preview className="overflow-hidden text-ellipsis whitespace-nowrap font-semibold text-[#111827]"
@@ -147,9 +148,17 @@ function SearchMonitorTableState({
                 <td data-label="Currency" className="px-2 py-3 align-top">{search.currency || "—"}</td>
                 <td data-label="Results" className="px-2 py-3 align-top">{formatNumber(search.resultCount)}</td>
                 <td data-label="Providers" className="px-2 py-3 align-top" title={search.providerTelemetry ? [search.providers.join(", "), search.providerTelemetry.successful + " successful", search.providerTelemetry.failed + " failed", search.providerTelemetry.degraded + " degraded", search.providerTelemetry.disabled + " disabled"].filter(Boolean).join(" · ") : "No exact provider telemetry recorded"}>{search.providerTelemetry ? search.providerTelemetry.total : "—"}</td>
-                <td data-label="Duration" className="px-2 py-3 align-top">{formatLatency(search.latencyMs)}</td>
                 <td data-label="Identity" className="px-2 py-3 align-top">{identityLabel(search.identity.kind)}</td>
                 <td data-label="Status" className="px-2 py-3 align-top"><MonitorStatus status={search.status} /></td>
+                <td data-label="Action" className="px-2 py-3 align-top">
+                  <Link
+                    href={detailHref(search, detailQuery)}
+                    aria-label={`View details for ${productLabel(search.product)} search ${routeLabel(search.origin, search.destination)} at ${formatCreated(search.createdAt, referenceNow)}`}
+                    className="inline-flex items-center gap-0.5 font-medium text-[#004BB8] underline-offset-2 after:absolute after:inset-0 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+                  >
+                    View details <ChevronRight size={14} aria-hidden="true" />
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -211,11 +220,6 @@ function formatCreated(value: string, referenceNow: string) {
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat("en").format(value);
-}
-
-function formatLatency(value: number | null) {
-  if (value === null) return "—";
-  return (value / 1000).toFixed(1) + "s";
 }
 
 function productLabel(product: string) {
