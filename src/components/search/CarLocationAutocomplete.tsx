@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, KeyboardEvent, RefObject, useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import { ChangeEvent, KeyboardEvent, MouseEvent, PointerEvent, RefObject, useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { Building2, CarFront, LocateFixed, MapPin, Plane } from "lucide-react";
 
@@ -217,6 +217,20 @@ export function CarLocationAutocomplete({
     close();
   };
 
+  // Mouse selection must commit before focus/portal dismissal can remove the option.
+  // Keep click for touch, keyboard and assistive-technology activation.
+  const onOptionPointerDown = (event: PointerEvent<HTMLButtonElement>, suggestion: CarLocationSuggestion) => {
+    if (event.pointerType !== "mouse" || event.button !== 0) return;
+    event.preventDefault();
+    selectSuggestion(suggestion);
+  };
+
+  const onOptionClick = (event: MouseEvent<HTMLButtonElement>, suggestion: CarLocationSuggestion) => {
+    // A normal mouse click follows the pointerdown that already committed it.
+    if (event.detail > 0 && "pointerType" in event.nativeEvent && event.nativeEvent.pointerType === "mouse") return;
+    selectSuggestion(suggestion);
+  };
+
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     onValueChange(event.target.value);
     setOpen(true);
@@ -287,9 +301,10 @@ export function CarLocationAutocomplete({
                 type="button"
                 role="option"
                 aria-selected={selected}
+                onPointerDown={(event) => onOptionPointerDown(event, suggestion)}
                 onMouseDown={(event) => event.preventDefault()}
                 onMouseEnter={() => setHighlightedIndex(index)}
-                onClick={() => selectSuggestion(suggestion)}
+                onClick={(event) => onOptionClick(event, suggestion)}
                 data-cars-results-location-option
                 className={`flex w-full cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-start transition-colors ${selected ? "bg-[#004BB8]/8" : "hover:bg-slate-50"}`}
               >
@@ -322,9 +337,10 @@ export function CarLocationAutocomplete({
               type="button"
               role="option"
               aria-selected={selected}
+              onPointerDown={(event) => onOptionPointerDown(event, suggestion)}
               onMouseDown={(event) => event.preventDefault()}
               onMouseEnter={() => setHighlightedIndex(index)}
-              onClick={() => selectSuggestion(suggestion)}
+              onClick={(event) => onOptionClick(event, suggestion)}
               className={`flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-start transition ${selected ? "bg-slate-50 text-slate-950" : "text-slate-900 hover:bg-slate-50"}`}
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600">
