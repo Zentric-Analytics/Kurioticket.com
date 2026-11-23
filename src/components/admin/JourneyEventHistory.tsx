@@ -3,6 +3,38 @@ import type { AdminJourneyEvent } from "@/services/adminJourneyContract";
 const dateFormat = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeZone: "UTC" });
 const timeFormat = new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit", second: "2-digit", timeZone: "UTC" });
 const readable = (value: string) => value.toLowerCase().replaceAll("_", " ").replace(/^./, c => c.toUpperCase());
+const searchStatusLabel = (status: string, resultCount: number) =>
+  status === "PARTIAL"
+    ? resultCount > 0 ? "Partial provider coverage (results received)" : "Partial provider coverage"
+    : status === "SUCCESS" ? "Search completed" : readable(status);
+const searchCriteria = (search: NonNullable<AdminJourneyEvent["search"]>): string[] => {
+  const details = search.details;
+  if (!details) return [];
+  if (details.product === "FLIGHT") return [
+    details.tripType ? "Trip: " + readable(details.tripType) : "",
+    details.departureDate ? "Departure: " + details.departureDate : "",
+    details.returnDate ? "Return: " + details.returnDate : "",
+    details.travelers !== undefined ? "Travelers: " + details.travelers : "",
+    details.adults !== undefined ? "Adults: " + details.adults : "",
+    details.children !== undefined ? "Children: " + details.children : "",
+    details.infants !== undefined ? "Infants: " + details.infants : "",
+    details.cabinClass ? "Cabin: " + readable(details.cabinClass) : "",
+    ...(details.legs?.map(leg => leg.origin + " → " + leg.destination + " · " + leg.departureDate) ?? []),
+  ].filter(Boolean);
+  if (details.product === "HOTEL") return [
+    details.checkIn ? "Check-in: " + details.checkIn : "",
+    details.checkOut ? "Check-out: " + details.checkOut : "",
+    details.rooms !== undefined ? "Rooms: " + details.rooms : "",
+    details.guests !== undefined ? "Guests: " + details.guests : "",
+    details.adults !== undefined ? "Adults: " + details.adults : "",
+    details.children !== undefined ? "Children: " + details.children : "",
+  ].filter(Boolean);
+  return [
+    details.pickupDate ? "Pickup: " + details.pickupDate + (details.pickupTime ? " " + details.pickupTime : "") : "",
+    details.dropoffDate ? "Return: " + details.dropoffDate + (details.dropoffTime ? " " + details.dropoffTime : "") : "",
+    details.driverAge ? "Driver age: " + details.driverAge : "",
+  ].filter(Boolean);
+};
 
 /** Presentation only: retain the reader's event order and every recorded row. */
 export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] }) {
@@ -48,7 +80,8 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
               <td className="px-3 py-3 [overflow-wrap:anywhere]">
                 {event.search ? <>
                   {searchTitle ? <p className="font-medium text-[#020617]">{searchTitle}</p> : null}
-                  <p className={searchTitle ? "mt-1 text-xs text-[#64748B]" : "text-xs text-[#64748B]"}>{readable(event.search.status)} · {event.search.resultCount} results</p>
+                  <p className={searchTitle ? "mt-1 text-xs text-[#64748B]" : "text-xs text-[#64748B]"}>{searchStatusLabel(event.search.status, event.search.resultCount)} · {event.search.resultCount} results</p>
+                  {searchCriteria(event.search).length ? <p className="mt-1.5 text-xs leading-5 text-[#475569]">{searchCriteria(event.search).join(" · ")}</p> : null}
                 </> : <p className="text-xs text-[#64748B]">Search details not recorded</p>}
                 {event.filterSelections?.length ? <div className="mt-1 text-xs text-[#475569]">
                   <p className="font-medium">Selected filters (observed on customer device):</p>
