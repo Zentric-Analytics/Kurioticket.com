@@ -1,4 +1,4 @@
-import { isJourneySourcePath, type ClientJourneyEventType, type JourneyFilterGroup, type JourneySortMode } from "./search-journey";
+import { isJourneySourcePath, type ClientJourneyEventType, type JourneyFilterGroup, type JourneySortMode, type JourneySortChoice } from "./search-journey";
 
 export type WebJourneyEvent = {
   type: ClientJourneyEventType;
@@ -8,6 +8,7 @@ export type WebJourneyEvent = {
   offerId?: string;
   filterGroup?: JourneyFilterGroup;
   sortMode?: JourneySortMode;
+  sortChoice?: JourneySortChoice;
 };
 type Timer = ReturnType<typeof setTimeout>;
 type Dependencies = {
@@ -138,7 +139,8 @@ export function createJourneyEventSender(dependencies: Dependencies) {
         payload: { eventId, type: input.type, requestId, ...(provider ? { provider } : {}), ...(sourcePage ? { sourcePage } : {}),
           ...(input.offerId ? { offerId: input.offerId } : {}),
           ...(input.filterGroup ? { filterGroup: input.filterGroup } : {}),
-          ...(input.sortMode ? { sortMode: input.sortMode } : {}) },
+          ...(input.sortMode ? { sortMode: input.sortMode } : {}),
+          ...(input.sortChoice ? { sortChoice: input.sortChoice } : {}) },
         context, generation, attempts: 0, waiting: !consent,
       };
       pending.add(event);
