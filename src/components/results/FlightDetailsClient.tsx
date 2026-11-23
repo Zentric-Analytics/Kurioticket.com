@@ -27,6 +27,7 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { getDealsGuidedConfirmationActionId } from "@/lib/deals/dealsConfirmationIds";
 import { DetailsBackLink } from "@/components/results/DetailsBackLink";
 import { StandaloneFlightDetails } from "@/components/results/flightDetails/StandaloneFlightDetails";
+import { useResultsReturnIntent } from "@/components/results/useResultsReturnIntent";
 
 const FLIGHT_QUOTE_UNAVAILABLE_MESSAGE =
   enTranslations.flightSearchAgainCurrentPrices;
@@ -39,6 +40,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
   const searchParams = useSearchParams();
   const resultsQuery = searchParams.toString();
   const resultsHref = resultsQuery ? `/flights/results?${resultsQuery}` : "/flights/results";
+  useResultsReturnIntent("flight", resultsHref);
   return <StandaloneFlightDetails id={id} resultsHref={resultsHref} />;
 }
 
