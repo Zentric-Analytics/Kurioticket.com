@@ -127,6 +127,7 @@ import {
   writeFlightResultsSessionSnapshot,
 } from "@/lib/flights/flightResultsSessionCache";
 import { takeResultsReturn } from "@/lib/results/resultsReturnIntent";
+import { takeResultsScroll } from "@/lib/results/resultsReturnScroll";
 import { isFlightResultsPreparing } from "@/components/results/flightResultsReadiness";
 import {
   readSavedItemIds,
@@ -3923,6 +3924,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     currentSearchKey: currentFlightSearchKey,
     filtersReadySearchKey,
   }) || (!guidedMode && kayak?.vertical === "flights" && kayak.status === "loading");
+
+  useEffect(() => {
+    if (!returnIntentRef.current?.returning || loading || error || results.length === 0) return;
+    const y = takeResultsScroll("flight");
+    if (y === null) return;
+    // Restore after the old result list has mounted, not on the details page.
+    const frame = window.requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, error, results.length]);
 
   useEffect(() => {
     if (!resultsUiPreparing) clearSearchResultsLoadingSession("flight", currentFlightSearchKey);
