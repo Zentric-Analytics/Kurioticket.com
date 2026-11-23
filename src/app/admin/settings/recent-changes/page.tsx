@@ -1,3 +1,4 @@
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
@@ -91,7 +92,7 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
     ((fromDate || toDate) && range !== "custom");
   const result = invalid ? { status: "invalid" as const } : await adminSettingsHistory.list({
     range, category, cursor: single(raw.cursor), limit: 25,
-    fromDate, toDate,
+    fromDate, toDate, timeZone: await getAdminTimeZone(),
   });
 
   return (
