@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isResultsHref, markResultsReturn, peekResultsReturn, takeResultsReturn } from "./resultsReturnIntent";
+import { clearResultsReturn, isResultsHref, markResultsReturn, peekResultsReturn, takeResultsReturn } from "./resultsReturnIntent";
 
 function memoryStorage() {
   const values = new Map<string, string>();
@@ -30,6 +30,16 @@ test("flight Back matches the exact original query, including filters and sort",
     "a long details visit still counts as Back; expired fares must require explicit refresh");
   assert.equal(takeResultsReturn("flight", origin, storage, 110 + 30 * 60_000 + 1, base), false,
     "the marker is one-use");
+});
+
+test("explicit same-criteria search clears a departure marker rather than suppressing a new request", () => {
+  const storage = memoryStorage();
+  const href = "/flights/results?origin=LOS&destination=LHR";
+  markResultsReturn("flight", href, storage, 100, base);
+  assert.equal(peekResultsReturn("flight", href, storage, 101, base), true);
+  clearResultsReturn("flight", storage);
+  assert.equal(takeResultsReturn("flight", href, storage, 102, base), false);
+  assert.equal(storage.values.size, 0);
 });
 
 test("stale tokens cannot restart or suppress a new explicit search", () => {
