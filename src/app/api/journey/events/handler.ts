@@ -41,7 +41,7 @@ const clientEventSchema = z.object({
   if (event.type === "SEARCH_FILTER_APPLIED" ? !event.filterGroup : Boolean(event.filterGroup)) {
     ctx.addIssue({ code: "custom", path: ["filterGroup"], message: "Filter group must match the applied-filter action." });
   }
-  if (event.observedResult && !["RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"].includes(event.type)) {
+  if (event.observedResult && !["RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED", "FLIGHT_DETAILS_VIEWED"].includes(event.type)) {
     ctx.addIssue({ code: "custom", path: ["observedResult"], message: "Result evidence requires an actual details opening." });
   }
   if (event.type !== "SEARCH_FILTER_APPLIED" && event.filterSelections !== undefined) {
