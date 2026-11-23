@@ -73,12 +73,14 @@ test("empty activity remains UNKNOWN with no invented latency; Overview lists al
     assert.doesNotMatch(empty, />Healthy<|>0 ms</);
     const { PlatformOverviewSummary } = jiti("./PlatformOverviewSummary") as typeof import("./PlatformOverviewSummary");
     const fixture = platformFixture();
-    const data = { environment: fixture.environment, window: fixture.window, searches: fixture.activity.data!.searches };
+    const data = { environment: fixture.environment, window: fixture.window, searches: fixture.activity.data!.searches, verifiedBotAttempts: 7 };
     const overview = renderToStaticMarkup(createElement(PlatformOverviewSummary, { data }));
-    for (const label of ["All Platforms", "Website", "iOS", "Android", "Unknown"])
+    for (const label of ["All Platforms", "Website", "iOS", "Android", "Bots", "unverified platform searches"])
         assert.ok(overview.includes(label));
     assert.match(overview, />48</);
-    assert.equal((overview.match(/>12</g) || []).length, 4);
+    assert.equal((overview.match(/>12</g) || []).length, 3);
+    assert.match(overview, />7</);
+    assert.match(overview, /Bots counts verified crawler search requests blocked/);
     assert.match(overview, />Platform Search Activity</);
     assert.match(overview, /View details/);
     assert.doesNotMatch(overview, /View Search Activity →/);
@@ -121,7 +123,7 @@ test("Platform Health filter dropdowns use polished accessible Admin selectors w
     assert.match(filtersSource, /lg:grid-cols-/);
     assert.match(filtersSource, /Apply view/);
     const html = render();
-    for (const option of ["All Platforms", "Website", "iOS", "Android", "Unknown", "Today", "Last 7 days", "Last 30 days"]) {
+    for (const option of ["All Platforms", "Website", "iOS", "Android", "Unverified", "Today", "Last 7 days", "Last 30 days"]) {
       assert.ok(html.includes(option), option);
     }
 });
