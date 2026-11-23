@@ -10,7 +10,7 @@ function journey(id = "journey-002") {
   return {
     id, visitorId: "visitor-001", userId: null, startedAt: at, firstEventAt: at, lastEventAt: at,
     products: ["FLIGHT"], providers: ["Example Air"], providerCount: BigInt(1), eventCount: BigInt(4), searchCount: BigInt(1),
-    searchCompleted: BigInt(1), resultsViewed: BigInt(1), offerSelected: BigInt(1), handoffStarted: BigInt(1),
+    searchCompleted: BigInt(1), resultsViewed: BigInt(1), flightDetailsViewed: BigInt(0), offerSelected: BigInt(1), providerDealSelected: BigInt(0), handoffStarted: BigInt(1),
   };
 }
 function event(id = "event-001") {
@@ -27,7 +27,9 @@ function summary() {
     identities: BigInt(3), guests: BigInt(1), registered: BigInt(2), registeredAccounts: BigInt(1), journeys: BigInt(4), rawEvents: BigInt(12),
     searchCompletedIdentities: BigInt(3), searchCompletedJourneys: BigInt(4), searchCompletedEvents: BigInt(5),
     resultsViewedIdentities: BigInt(2), resultsViewedJourneys: BigInt(3), resultsViewedEvents: BigInt(3),
+    flightDetailsViewedIdentities: BigInt(0), flightDetailsViewedJourneys: BigInt(0), flightDetailsViewedEvents: BigInt(0),
     offerSelectedIdentities: BigInt(1), offerSelectedJourneys: BigInt(1), offerSelectedEvents: BigInt(2),
+    providerDealSelectedIdentities: BigInt(0), providerDealSelectedJourneys: BigInt(0), providerDealSelectedEvents: BigInt(0),
     handoffStartedIdentities: BigInt(1), handoffStartedJourneys: BigInt(1), handoffStartedEvents: BigInt(2),
     searches: BigInt(5), successfulSearches: BigInt(3), partialSearches: BigInt(1), failedSearches: BigInt(1), exactHandoffs: BigInt(1), uncorrelatedHandoffs: BigInt(1),
   };
@@ -158,6 +160,27 @@ test("verified save and share details retain exact event order and redact unsafe
   assert.equal(result.data.events[1].action, "share_link_copied");
   assert.equal(result.data.events[1].resultReference, null);
   assert.doesNotMatch(JSON.stringify(result), /private@provider|sensitive|tokenHash/);
+});
+
+test("new flight stages are preserved separately from offer selection and expose only safe references", async () => {
+  const f = fixture([[journey()], [
+    { ...event("opened"), type: "FLIGHT_DETAILS_VIEWED", redirectLogId: null,
+      destinationUrl: null, sourcePage: "/flight-results", resultReference: "flight_01" },
+    { ...event("fare"), type: "OFFER_SELECTED", redirectLogId: null,
+      destinationUrl: null, sourcePage: "/flight-details", resultReference: "fare_01" },
+    { ...event("deal"), type: "PROVIDER_DEAL_SELECTED", redirectLogId: null,
+      destinationUrl: null, sourcePage: "/flight-details", resultReference: "deal_01" },
+    { ...event("invalid"), type: "PROVIDER_DEAL_SELECTED", redirectLogId: null,
+      destinationUrl: null, sourcePage: "/flight-details", resultReference: "https://private.invalid/redirect?token=secret" },
+  ]]);
+  const result = await f.service.detail("journey-002");
+  assert.equal(result.status, "ok");
+  if (result.status !== "ok") return;
+  assert.deepEqual(result.data.events.map(x => x.type),
+    ["FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_DEAL_SELECTED"]);
+  assert.deepEqual(result.data.events.map(x => x.resultReference),
+    ["flight_01", "fare_01", "deal_01", null]);
+  assert.doesNotMatch(JSON.stringify(result), /private.invalid|token=secret/);
 });
 
 test("detail continuation uses event timestamp and ID and is bound to the requested journey", async () => {
