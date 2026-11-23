@@ -399,7 +399,7 @@ try {
     const fullUrl = base+"/admin/users/"+kind+"/qa-complete-history-0001/activity?range=all";
     await page.goto(fullUrl);
     await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
-    await expect(page.getByTestId("activity-journey-row")).toHaveCount(0);
+    await expect(page.getByTestId("activity-journey-row")).toHaveCount(10);
     await expect(page.locator("[data-activity-id]")).toHaveCount(0);
     await expect(page.getByRole("link",{name:/View Journey History/})).toBeVisible();
     const allHref = "/admin/users/"+kind+"/qa-complete-history-0001/other?range=all";
@@ -487,7 +487,7 @@ try {
   console.log("PASS hidden sort normalizes to newest");
 
   await page.goto(base+"/admin/users/guest/qa-no-events-0001/activity");
-  await expect(page.getByText("No tracked journeys match these filters. Open Journey History to review full records.")).toBeVisible();
+  await expect(page.getByText("No recorded searches match these filters. Open Journey History to review full records.")).toBeVisible();
   await page.screenshot({caret:"initial",path:output+"/after-approved-empty-state-1536.png",fullPage:true});
   await page.goto(url+"&cursor=bad");
   await expect(page.getByText("Activity page link expired")).toHaveCount(0);

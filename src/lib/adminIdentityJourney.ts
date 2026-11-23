@@ -18,6 +18,9 @@ export type ActivityRow = {
   provider?: string | null;
   searchHistoryId?: string | null;
   redirectLogId?: string | null;
+  /** Sanitized, server-attributed search platform only. */
+  platform?: "WEB" | "IOS" | "ANDROID" | null;
+  resultCount?: number | null;
 };
 
 export type JourneyEventRecord = {
