@@ -13,7 +13,7 @@ import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
 
 const journeySelect = {
-  id: true, type: true, product: true, provider: true, createdAt: true,
+  id: true, type: true, product: true, provider: true, createdAt: true, metadata: true,
   searchHistoryId: true, redirectLogId: true,
   journey: { select: { id: true, visitorId: true, startedAt: true } },
   searchHistory: { select: { visitorId: true, userId: true, type: true, origin: true, destination: true, status: true, resultCount: true, query: true } },
@@ -287,7 +287,8 @@ export async function loadAdminIdentityActivity(
     const primaryReferenceRequired: Prisma.JourneyEventWhereInput = {
       OR: [
         { type: "PROVIDER_HANDOFF_STARTED", redirectLogId: { not: null } },
-        { type: { in: ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED"] }, searchHistoryId: { not: null } },
+        { type: { in: ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED",
+          "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED"] }, searchHistoryId: { not: null } },
       ],
     };
     const canonicalForVisitor = (visitorId: string): Prisma.JourneyEventWhereInput => {
@@ -432,11 +433,10 @@ export async function loadAdminIdentityActivity(
     };
 
     const canonical = journey.flatMap(event => {
-      // These legacy Activity summaries intentionally show the original four
-      // journey stages. Verified save/share steps belong in Journey Details.
-      if (event.type !== "SEARCH_COMPLETED" && event.type !== "RESULTS_VIEWED"
-        && event.type !== "OFFER_SELECTED" && event.type !== "PROVIDER_HANDOFF_STARTED") return [];
-      const row = toAdminJourneyActivity({ ...event, type: event.type }, kind, id);
+      // All eligible canonical stages are visible to the authorized activity
+      // reader; the existing five top-level metrics still count only their
+      // original funnel categories. Never turn an account audit into a journey.
+      const row = toAdminJourneyActivity(event, kind, id);
       return row ? [{
         ...row,
         platform: safeSearchPlatform(event.searchHistory?.query),
