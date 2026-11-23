@@ -1,6 +1,8 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import { adminDisplayDateTime } from "@/lib/adminTimeZone";
+import { useAdminTimeZone } from "./AdminTimeZoneProvider";
 import { useEffect, useId, useState } from "react";
 
 import type { LinkedCaseOrigin, LinkedCasePreviewResult } from "@/services/adminLinkedCasePreviewCore";
@@ -21,11 +23,8 @@ const supportStatus: Record<string, string> = {
   CLOSED: "Closed",
 };
 
-function dateLabel(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? "Unavailable"
-    : new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(date) + " UTC";
+function dateLabel(value: string, timeZone: string) {
+  return adminDisplayDateTime(value, timeZone);
 }
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -40,6 +39,7 @@ function Field({ label, value }: { label: string; value: string }) {
 /** Minimal, on-demand case context. Never loads a full Support conversation or
  * exposes account deletion management actions through a cross-workspace preview. */
 export function LinkedCasePreview({ origin, sourceId }: Props) {
+  const timeZone = useAdminTimeZone();
   const panelId = useId();
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -108,10 +108,10 @@ export function LinkedCasePreview({ origin, sourceId }: Props) {
               <>
                 <dl className="grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 py-4 sm:grid-cols-2">
                   <Field label="Deletion status" value={deletionStatus[preview.status] ?? preview.status} />
-                  <Field label="Requested" value={dateLabel(preview.requestedAt)} />
-                  <Field label="Scheduled review" value={dateLabel(preview.deletionScheduledAt)} />
-                  {preview.cancelledAt ? <Field label="Cancelled" value={dateLabel(preview.cancelledAt)} /> : null}
-                  {preview.completedAt ? <Field label="Completed" value={dateLabel(preview.completedAt)} /> : null}
+                  <Field label="Requested" value={dateLabel(preview.requestedAt, timeZone)} />
+                  <Field label="Scheduled review" value={dateLabel(preview.deletionScheduledAt, timeZone)} />
+                  {preview.cancelledAt ? <Field label="Cancelled" value={dateLabel(preview.cancelledAt, timeZone)} /> : null}
+                  {preview.completedAt ? <Field label="Completed" value={dateLabel(preview.completedAt, timeZone)} /> : null}
                 </dl>
                 <p className="border-t border-[#E7ECF5] pt-2 text-[11px] leading-4 text-[#64748B]">
                   Deletion status is independent of ticket status. Management and finalization controls are not available here.
@@ -123,7 +123,7 @@ export function LinkedCasePreview({ origin, sourceId }: Props) {
                   <Field label="Ticket subject" value={preview.subject || "Unavailable"} />
                   <Field label="Ticket status" value={supportStatus[preview.status] ?? preview.status} />
                   <Field label="Priority" value={preview.priority.toLowerCase()} />
-                  <Field label="Last updated" value={dateLabel(preview.updatedAt)} />
+                  <Field label="Last updated" value={dateLabel(preview.updatedAt, timeZone)} />
                 </dl>
                 <p className="border-t border-[#E7ECF5] pt-2 text-[11px] leading-4 text-[#64748B]">
                   The ticket conversation and Support reply controls remain in Support.
