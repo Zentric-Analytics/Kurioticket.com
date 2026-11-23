@@ -89,7 +89,9 @@ test("favorite and share behavior survive relocation into independent hero actio
   assert.match(controls, /accessibilityLabel=\{saved\.saved\?"Remove car from saved":"Save car"\}/);
   assert.match(controls, /accessibilityState=\{\{selected:saved\.saved\}\} onPress=\{saved\.toggle\} style=\{s\.heroAction\}/);
   assert.match(controls, /<Heart size=\{22\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{saved\.saved\?androidFavoriteColors\.savedStroke:light\?androidFavoriteColors\.unsavedStroke:theme\.icon\} fill=\{saved\.saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/\>/);
-  assert.match(controls, /accessibilityLabel="Share car" onPress=\{\(\)=>void Share\.share\(\{message:`\$\{result\.modelName\} — \$\{result\.categoryLabel\}`\}\)\} style=\{s\.heroAction\}/);
+  assert.match(controls, /accessibilityLabel="Share car" onPress=\{\(\)=>void shareNativeResult/);
+  assert.match(controls, /share:\(\)=>Share\.share/);
+  assert.match(controls, /product:"CAR",resultId:result\.id/);
   assert.match(controls, /<Share2 size=\{21\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{light\?androidFavoriteColors\.shareStroke:theme\.icon\}\/\>/);
   assert.equal((controls.match(/style=\{s\.heroAction\}/g) ?? []).length, 2);
 });
