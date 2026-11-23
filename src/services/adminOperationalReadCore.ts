@@ -430,7 +430,7 @@ function exactProviderFilteredSearchSql(scope: AdminSearchScope, cursor: { at: s
         )
     )`] : []),
   ];
-  if (scope.applicationSource) clauses.push(Prisma.sql`(CASE WHEN s."query"->>'applicationSource' IN ('WEB','IOS','ANDROID','UNKNOWN') THEN s."query"->>'applicationSource' ELSE 'UNKNOWN' END) = ${scope.applicationSource}`);
+  if (scope.applicationSource) clauses.push(Prisma.sql`(CASE WHEN s."query"->>'applicationSource' IN ('WEB','IOS','ANDROID','BOT','UNKNOWN') THEN s."query"->>'applicationSource' ELSE 'UNKNOWN' END) = ${scope.applicationSource}`);
   if (scope.product) clauses.push(Prisma.sql`s."type"::text = ${scope.product}`);
   if (scope.status) clauses.push(Prisma.sql`s."status"::text = ${scope.status}`);
   if (scope.from) clauses.push(Prisma.sql`s."createdAt" >= ${new Date(scope.from)}`);

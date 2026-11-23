@@ -1,7 +1,7 @@
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
-import { blockVerifiedCrawlerSearch } from "@/lib/searchCrawlerGate";
+import { identifyVerifiedCrawlerSearch } from "@/lib/searchCrawlerGate";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicFlight } from "@/lib/searchCache";
 import { flightSearchSchema } from "@/lib/validation";
@@ -15,8 +15,7 @@ import { logNativeFlightProviderDiagnostics } from "./providerDiagnostics";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 
 export async function handleFlightSearch(request: Request, purpose: "customer" | "nearby-fare") {
-  const blocked = await blockVerifiedCrawlerSearch(request, "FLIGHT");
-  if (blocked) return blocked;
+  const verifiedCrawler = await identifyVerifiedCrawlerSearch(request);
   const nearby = purpose === "nearby-fare";
   const routeStartedAt = performance.now();
   let providerStartedAt = routeStartedAt;
@@ -41,7 +40,7 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
     return NextResponse.json({ error: "Search needs a little more detail.", issues: parsed.error.flatten() }, { status: 400 });
   }
 
-  const operationalSession = nearby ? null : prepareOperationalSearchSession(request);
+  const operationalSession = nearby || verifiedCrawler ? null : prepareOperationalSearchSession(request);
   const operationalQuery = (query: Record<string, unknown>) => ({ ...query, ...searchNetworkObservation(request), ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) });
   const mobilePlatformHeader = request.headers.get("x-mobile-platform")?.trim().toLowerCase();
   const mobilePlatform = mobilePlatformHeader === "android" || mobilePlatformHeader === "ios"
@@ -94,7 +93,9 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
 
   after(async () => {
     try {
-      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request, undefined, operationalSession);
+      const { userId, visitorId, ...application } = verifiedCrawler
+      ? { userId: null, visitorId: null, applicationSource: "BOT" as const }
+      : await resolveRequestActivityIdentity(request, undefined, operationalSession);
       const providerLogs = aggregate.providerStatuses.map((provider) =>
         logProviderCall({
           provider: provider.provider,
@@ -106,8 +107,8 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
         }),
       );
 
-      // Customer reports and journey completion use SearchHistory. A fare
-      // comparison never produces a customer event or an actionable offer.
+      // Nearby comparisons are part of a parent flight search, never separate
+      // SearchHistory rows for humans or verified crawlers.
       if (nearby) {
         await Promise.all(providerLogs);
         return;
@@ -119,12 +120,12 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
           ...application, userId, visitorId, requestId, type: "FLIGHT",
           origin: parsed.data.origin,
           destination: parsed.data.destination,
-          query: operationalQuery(parsed.data),
+          query: { ...operationalQuery(parsed.data), ...(verifiedCrawler ? { verifiedCrawler } : {}) },
           resultCount,
           latencyMs: aggregate.latencyMs,
           status,
         }),
-        ...(status === "FAILED" ? [] : [trackAnalyticsEvent({
+        ...(verifiedCrawler || status === "FAILED" ? [] : [trackAnalyticsEvent({
           ...application, userId, visitorId, type: "SEARCH", name: "flight_search",
           metadata: {
             origin: parsed.data.origin,

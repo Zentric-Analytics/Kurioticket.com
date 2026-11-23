@@ -1,6 +1,6 @@
 import { isSameOriginRequest } from "@/lib/visitor-identity";
 
-export const applicationSources = ["WEB", "IOS", "ANDROID", "UNKNOWN"] as const;
+export const applicationSources = ["WEB", "IOS", "ANDROID", "BOT", "UNKNOWN"] as const;
 export type ApplicationSource = typeof applicationSources[number];
 export type ApplicationAttribution = { applicationSource?: ApplicationSource; appVersion?: string };
 type ValidatedSession = { client: "WEB" | "MOBILE"; platform?: string | null; appVersion?: string | null };
@@ -21,7 +21,7 @@ export function resolveApplicationSource(request: Request, session?: ValidatedSe
   const browser = request.headers.get("sec-fetch-site") === "same-origin" && isSameOriginRequest(request);
   return { applicationSource: session?.client === "WEB" || browser ? "WEB" : "UNKNOWN" };
 }
-/** Historical absent/invalid source stays UNKNOWN; never infer OS from user-agent. */
+/** BOT is assigned only by server-side verified-crawler search handlers; never infer it or an OS from user-agent. Historical absent/invalid source stays UNKNOWN. */
 export function applicationMetadata(value: ApplicationAttribution = {}): { applicationSource: ApplicationSource; appVersion?: string } {
   const applicationSource = applicationSources.includes(value.applicationSource as ApplicationSource) ? value.applicationSource! : "UNKNOWN";
   const appVersion = validatedAppVersion(value.appVersion);
