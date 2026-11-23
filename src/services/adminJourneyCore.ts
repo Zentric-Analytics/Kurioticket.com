@@ -40,6 +40,7 @@ type EventRecord = {
   id: string; type: AdminJourneyEventType; createdAt: Date; product: AdminJourneyProduct | null;
   action: string | null; resultReference: string | null; filterGroup: string | null; sortMode: string | null; sortChoice?: string | null; filterSelections?: unknown;
   alertMode?: string | null; alertCurrency?: string | null; alertTargetPrice?: string | null; alertBaselinePrice?: string | null;
+  observedResult?: unknown;
   provider: string | null; sourcePage: string | null;
   searchHistoryId: string | null; requestId: string | null; searchProduct: AdminJourneyProduct | null;
   origin: string | null; destination: string | null; checkIn: Date | null; checkOut: Date | null;
@@ -80,6 +81,7 @@ function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
     WITH eligible_events AS (
       SELECT e."id", e."journeyId", e."type"::text AS "type", e."product"::text AS "product", e."provider", e."createdAt",
         e."metadata"->>'sourcePage' AS "sourcePage", e."metadata"->>'action' AS "action", e."metadata"->>'resultId' AS "resultReference",
+        e."metadata"->'observedResult' AS "observedResult",
         e."metadata"->>'filterGroup' AS "filterGroup", e."metadata"->'filterSelections' AS "filterSelections", e."metadata"->>'sortMode' AS "sortMode", e."metadata"->>'sortChoice' AS "sortChoice",
         e."metadata"->>'alertMode' AS "alertMode", e."metadata"->>'alertCurrency' AS "alertCurrency",
         e."metadata"->>'alertTargetPrice' AS "alertTargetPrice", e."metadata"->>'alertBaselinePrice' AS "alertBaselinePrice", j."visitorId", v."currentUserId" AS "userId", j."startedAt",
@@ -288,9 +290,30 @@ function journeyDto(row: JourneyRecord): AdminJourneyRow {
       PROVIDER_DEAL_SELECTED: count(row.providerDealSelected), PROVIDER_HANDOFF_STARTED: count(row.handoffStarted) },
   };
 }
+function safeObservedResult(value: unknown): AdminJourneyEvent["observedResult"] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const result = value as Record<string, unknown>;
+  const label = typeof result.label === "string" ? result.label.trim() : "";
+  const provider = typeof result.provider === "string" ? result.provider.trim() : "";
+  const amount = result.amount;
+  const currency = result.currency;
+  const basis = result.priceBasis;
+  if (!label || label.length > 120 || !provider || provider.length > 100
+    || /[\u0000-\u001f\u007f<>]/.test(label + provider)
+    || typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0 || amount > 1e9
+    || typeof currency !== "string" || !/^[A-Z]{3}$/.test(currency)
+    || !["total", "per_night", "per_day"].includes(String(basis))) return null;
+  const total = result.totalAmount;
+  return {
+    label, provider, amount, currency, priceBasis: basis as "total" | "per_night" | "per_day",
+    ...(typeof total === "number" && Number.isFinite(total) && total > 0 && total <= 1e9 ? { totalAmount: total } : {}),
+    provenance: "customer_display",
+  };
+}
 function eventDto(row: EventRecord): AdminJourneyEvent {
   return {
     id: row.id, type: row.type, createdAt: row.createdAt.toISOString(), product: row.product,
+    observedResult: ["RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"].includes(row.type) ? safeObservedResult(row.observedResult) : null,
     filterGroup: row.type === "SEARCH_FILTER_APPLIED" && ["all", "price", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "transmission", "other"].includes(row.filterGroup ?? "") ? row.filterGroup : null,
     sortMode: row.type === "SEARCH_SORT_CHANGED" && ["price", "best", "fastest", "stops", "rating", "recommended", "other"].includes(row.sortMode ?? "") ? row.sortMode : null,
     sortChoice: row.type === "SEARCH_SORT_CHANGED" && ["best", "cheapest", "fastest", "stops", "bestValue", "topRated", "recommended", "lowestTotal", "price", "duration", "departure-asc", "departure-desc"].includes(row.sortChoice ?? "") ? row.sortChoice : null,
