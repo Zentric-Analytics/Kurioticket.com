@@ -18,6 +18,14 @@ const payloadSchema = z.object({
   resultId: z.string().min(1).max(128).regex(/^[a-zA-Z0-9._:-]+$/),
   requestId: z.string().uuid().optional(),
   eventId: z.string().uuid(),
+  observedResult: z.object({
+    label: z.string().trim().min(1).max(120).regex(/^[^\u0000-\u001f\u007f<>]+$/),
+    provider: z.string().trim().min(1).max(100).regex(/^[^\u0000-\u001f\u007f<>]+$/),
+    amount: z.number().finite().positive().max(1_000_000_000),
+    currency: z.string().regex(/^[A-Z]{3}$/),
+    priceBasis: z.enum(["total", "per_night", "per_day"]),
+    totalAmount: z.number().finite().positive().max(1_000_000_000).optional(),
+  }).strict().optional(),
 }).strict();
 const json = (body: unknown, status = 202) => NextResponse.json(body, {
   status, headers: { "Cache-Control": "private, no-store" },
@@ -121,6 +129,7 @@ export async function POST(request: Request) {
             ...(verifiedLink ?? {}),
             outcome: "client_confirmed",
             applicationSource: identity.applicationSource,
+            ...(parsed.data.observedResult ? { observedResult: parsed.data.observedResult, observedSource: "customer_display" } : {}),
           }) as Prisma.InputJsonValue,
         } });
       } else if (verifiedLink && confirmedAudit) {
@@ -131,7 +140,8 @@ export async function POST(request: Request) {
           ? confirmedAudit.metadata as Record<string, unknown> : {};
         await tx.analyticsEvent.update({
           where: { id: confirmedAudit.id },
-          data: { metadata: { ...metadata, ...verifiedLink, eventId: parsed.data.eventId } as Prisma.InputJsonValue },
+          data: { metadata: { ...metadata, ...verifiedLink, eventId: parsed.data.eventId,
+            ...(parsed.data.observedResult ? { observedResult: parsed.data.observedResult, observedSource: "customer_display" } : {}) } as Prisma.InputJsonValue },
         });
       }
       if (verifiedLink) {
@@ -151,6 +161,7 @@ export async function POST(request: Request) {
               resultId: parsed.data.resultId,
               interactionEventId: parsed.data.eventId,
               requestId: verifiedLink.linkedRequestId,
+              ...(parsed.data.observedResult ? { observedResult: parsed.data.observedResult, observedSource: "customer_display" } : {}),
             }) as Prisma.InputJsonValue,
           },
         });
