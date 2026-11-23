@@ -2,6 +2,7 @@
 
 import { analyticsConsentStorageKey } from "@/lib/analyticsConsentClient";
 import { journeyRequestId } from "@/lib/journeyEventClient";
+import type { JourneyObservedResult } from "@/lib/search-journey";
 
 type Action = "local_saved" | "local_unsaved" | "saved_item_confirmed" | "saved_item_removed" | "share_link_copied" | "share_sheet_completed";
 type Product = "FLIGHT" | "HOTEL" | "CAR";
@@ -12,6 +13,7 @@ type Product = "FLIGHT" | "HOTEL" | "CAR";
  */
 export function recordCustomerInteraction(input: {
   action: Action; product: Product; resultId: string; requestId?: string | null;
+  observedResult?: JourneyObservedResult;
 }): void {
   if (typeof window === "undefined") return;
   try {
@@ -29,7 +31,12 @@ export function recordCustomerInteraction(input: {
         method: "POST", cache: "no-store", credentials: "same-origin", keepalive: true,
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ action: input.action, product: input.product, resultId, eventId,
-          ...(journeyRequestId(input.requestId) ? { requestId: journeyRequestId(input.requestId) } : {}) }),
+          ...(journeyRequestId(input.requestId) ? { requestId: journeyRequestId(input.requestId) } : {}),
+          ...(input.observedResult && /^[A-Z]{3}$/.test(input.observedResult.currency)
+            && Number.isFinite(input.observedResult.amount) && input.observedResult.amount > 0
+            && /^[^\u0000-\u001f\u007f<>]{1,100}$/.test(input.observedResult.provider)
+            && /^[^\u0000-\u001f\u007f<>]{1,120}$/.test(input.observedResult.label)
+            ? { observedResult: input.observedResult } : {}) }),
       });
     })().catch(() => undefined);
   } catch {

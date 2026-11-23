@@ -4,8 +4,41 @@ export const clientJourneyDecisionTypes = ["SEARCH_EDIT_APPLIED", "SEARCH_FILTER
 export type ClientJourneyDecisionType = (typeof clientJourneyDecisionTypes)[number];
 export const journeyFilterGroups = ["all", "price", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "transmission", "other"] as const;
 export type JourneyFilterGroup = (typeof journeyFilterGroups)[number];
+export const journeyFilterSelectionGroups = ["price", "pricePerDay", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "vehicleType", "transmission", "locations", "propertyTypes", "meals", "accessibility", "travellerFeatures", "bedTypes", "cancellation", "seats", "bags", "fuelPolicy", "mileagePolicy", "pickupLocationType", "fromAirports", "toAirports", "quality", "areas"] as const;
+export type JourneyFilterSelectionGroup = (typeof journeyFilterSelectionGroups)[number];
+/** Only UI-chosen option identifiers, never customer-entered search text. */
+export type JourneyFilterSelection = { group: JourneyFilterSelectionGroup; option: string };
+/** UI-observed detail at the time of selection; never treat it as server-confirmed
+ * price evidence. Store only result card labels, supplier, and quoted price.
+ */
+export type JourneyObservedResult = {
+  label: string;
+  provider: string;
+  amount: number;
+  currency: string;
+  priceBasis: "total" | "per_night" | "per_day";
+  totalAmount?: number;
+};
+
+/** Preserve only explicitly chosen UI options. Never serialize typed search terms
+ * or present an incomplete subset as if it were the entire filter selection.
+ */
+export function boundedJourneyFilterSelections(
+  groups: Array<{ group: JourneyFilterSelectionGroup; options: readonly string[] }>,
+): JourneyFilterSelection[] | undefined {
+  const selections = groups.flatMap(({ group, options }) => options.map(option => ({ group, option })));
+  if (selections.length > 20) return undefined;
+  if (selections.some(value => !/^[\p{L}\p{N} ._:+\-']{1,72}$/u.test(value.option))) return undefined;
+  return selections;
+}
 export const journeySortModes = ["price", "best", "fastest", "stops", "rating", "recommended", "other"] as const;
 export type JourneySortMode = (typeof journeySortModes)[number];
+/** Actual selectable sort keys, not generalized categories or translated labels. */
+export const journeySortChoices = ["best", "cheapest", "fastest", "stops", "bestValue", "topRated", "recommended", "lowestTotal", "price", "duration", "departure-asc", "departure-desc"] as const;
+export type JourneySortChoice = (typeof journeySortChoices)[number];
+export function normalizeJourneySortChoice(value: string): JourneySortChoice | undefined {
+  return (journeySortChoices as readonly string[]).includes(value) ? value as JourneySortChoice : undefined;
+}
 
 /** Convert only known UI choices to coarse, non-sensitive values. */
 export function normalizeJourneySortMode(value: string): JourneySortMode {

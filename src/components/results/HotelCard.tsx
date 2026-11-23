@@ -153,7 +153,16 @@ export function HotelCard({
 }: HotelCardProps) {
   const journeyEvents = useJourneyEvents();
   const rememberDetailsContext = () => {
-    if (resolvedDetailsHref) journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", searchRequestId, { offerId: hotel.id, sourcePage: "/hotels/results" });
+    if (resolvedDetailsHref) journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", searchRequestId, { offerId: hotel.id, sourcePage: "/hotels/results",
+      ...(typeof hotel.pricePerNight === "number" && Number.isFinite(hotel.pricePerNight)
+      && hotel.pricePerNight > 0 && typeof hotel.currency === "string"
+      && /^[A-Z]{3}$/.test(hotel.currency) ? { observedResult: {
+        label: hotel.name, provider: hotel.provider, amount: hotel.pricePerNight,
+        currency: hotel.currency, priceBasis: "per_night" as const,
+        ...(typeof hotel.totalPrice === "number" && Number.isFinite(hotel.totalPrice) && hotel.totalPrice > 0
+          ? { totalAmount: hotel.totalPrice } : {}),
+      } } : {}),
+    });
     journeyEvents.rememberDetailsContext("hotel", hotel.id, searchRequestId ?? null);
   };
   const { locale, t: dictionary } = useLocale();
@@ -396,16 +405,21 @@ export function HotelCard({
     );
   }
 
+  const observedShareResult = typeof hotel.totalPrice === "number" && hotel.totalPrice > 0 && typeof hotel.currency === "string"
+      && /^[A-Z]{3}$/.test(hotel.currency)
+      ? { label: hotel.name, provider: hotel.provider, amount: hotel.totalPrice, currency: hotel.currency, priceBasis: "total" as const }
+      : undefined;
+
   async function shareHotel() {
     if (!resolvedDetailsHref) return;
     const url = new URL(resolvedDetailsHref, window.location.origin).toString();
     try {
       if (navigator.share) {
         await navigator.share({ title: hotel.name, url });
-        recordCustomerInteraction({ action: "share_sheet_completed", product: "HOTEL", resultId: hotel.id, requestId: searchRequestId });
+        recordCustomerInteraction({ action: "share_sheet_completed", product: "HOTEL", resultId: hotel.id, requestId: searchRequestId, observedResult: observedShareResult });
       } else {
         await navigator.clipboard.writeText(url);
-        recordCustomerInteraction({ action: "share_link_copied", product: "HOTEL", resultId: hotel.id, requestId: searchRequestId });
+        recordCustomerInteraction({ action: "share_link_copied", product: "HOTEL", resultId: hotel.id, requestId: searchRequestId, observedResult: observedShareResult });
       }
       setShareStatus("shared");
       window.setTimeout(() => setShareStatus("idle"), 2400);

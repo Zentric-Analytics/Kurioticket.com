@@ -27,7 +27,8 @@ export async function linkCreatedPriceAlertToJourney(input: {
       if (!await lockConsentedVisitor(tx, input.visitorId!, input.userId)) return;
       const alert = await tx.priceAlert.findFirst({
         where: { id: input.alertId, userId: input.userId },
-        select: { id: true, userId: true, type: true, origin: true, destination: true, query: true },
+        select: { id: true, userId: true, type: true, origin: true, destination: true, query: true,
+          targetPrice: true, baselinePrice: true, currency: true, mode: true },
       });
       const search = await tx.searchHistory.findUnique({
         where: { requestId },
@@ -69,7 +70,11 @@ export async function linkCreatedPriceAlertToJourney(input: {
         createdAt: audit.createdAt,
         type: "PRICE_ALERT_CREATED", product: alert.type,
         metadata: { environment: getPublicEnvironment(), alertId: alert.id, action: "price_alert_created",
-          requestId, auditEventId: audit.id } as Prisma.InputJsonValue,
+          requestId, auditEventId: audit.id,
+          alertCurrency: alert.currency, alertMode: alert.mode,
+          ...(alert.targetPrice !== null ? { alertTargetPrice: alert.targetPrice.toString() } : {}),
+          ...(alert.baselinePrice !== null ? { alertBaselinePrice: alert.baselinePrice.toString() } : {}),
+        } as Prisma.InputJsonValue,
       } });
       await tx.analyticsEvent.update({ where: { id: audit.id },
         data: { metadata: { ...metadata, linkedJourneyId: journeys[0].journeyId,
