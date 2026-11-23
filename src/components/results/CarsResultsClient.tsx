@@ -2,7 +2,7 @@
 import { resultIdKey, VirtualResultsList } from "./VirtualResultsList";
 import { useKayakResults } from "./KayakResultsContext";
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
-import { normalizeJourneySortMode } from "@/lib/search-journey";
+import { normalizeJourneySortMode, normalizeJourneySortChoice } from "@/lib/search-journey";
 import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakCarCardModel } from "./kayakCardModels";
 import { groupKayakCarResults } from "@/lib/cars/carResults";
@@ -2909,7 +2909,7 @@ export function CarsResultsExperience({
                             className="cars-results-desktop-sort-option flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30"
                             onClick={() => {
                               startFilterResultsTransition();
-                              if (sort !== option.value) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", requestId, { sortMode: normalizeJourneySortMode(option.value) });
+                              if (sort !== option.value) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", requestId, { sortMode: normalizeJourneySortMode(option.value), sortChoice: normalizeJourneySortChoice(option.value) });
                               setSort(option.value);
                               setCarsSortOpen(false);
                             }}
@@ -3217,7 +3217,7 @@ export function CarsResultsExperience({
               style={{ paddingBottom: "max(12px, calc(env(safe-area-inset-bottom, 0px) - 12px))" }}
             >
               <button type="button" onClick={() => { if (quickFilterGroupId === "sort") setQuickSortDraft("recommended"); else setQuickFilterDraft([]); }} className="h-11 w-[32%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-4 text-sm font-semibold text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">Reset</button>
-              <button type="button" onClick={() => { startFilterResultsTransition(); if (quickFilterGroupId === "sort") { if (sort !== quickSortDraft) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", requestId, { sortMode: normalizeJourneySortMode(quickSortDraft) }); setSort(quickSortDraft); } else { journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", requestId, { filterGroup: "other" }); setSelectedCarFilters((current) => { const next = { ...current }; if (quickFilterDraft.length) next[quickFilterGroupId] = [...quickFilterDraft]; else delete next[quickFilterGroupId]; return next; }); } closeQuickFilter(); }} className="h-11 w-[32%] shrink-0 rounded-lg bg-[#004BB8] px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2">
+              <button type="button" onClick={() => { startFilterResultsTransition(); if (quickFilterGroupId === "sort") { if (sort !== quickSortDraft) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", requestId, { sortMode: normalizeJourneySortMode(quickSortDraft), sortChoice: normalizeJourneySortChoice(quickSortDraft) }); setSort(quickSortDraft); } else { journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", requestId, { filterGroup: "other" }); setSelectedCarFilters((current) => { const next = { ...current }; if (quickFilterDraft.length) next[quickFilterGroupId] = [...quickFilterDraft]; else delete next[quickFilterGroupId]; return next; }); } closeQuickFilter(); }} className="h-11 w-[32%] shrink-0 rounded-lg bg-[#004BB8] px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2">
                 Apply
               </button>
             </footer>
