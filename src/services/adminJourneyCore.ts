@@ -293,7 +293,7 @@ function eventDto(row: EventRecord): AdminJourneyEvent {
     id: row.id, type: row.type, createdAt: row.createdAt.toISOString(), product: row.product,
     filterGroup: row.type === "SEARCH_FILTER_APPLIED" && ["all", "price", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "transmission", "other"].includes(row.filterGroup ?? "") ? row.filterGroup : null,
     sortMode: row.type === "SEARCH_SORT_CHANGED" && ["price", "best", "fastest", "stops", "rating", "recommended", "other"].includes(row.sortMode ?? "") ? row.sortMode : null,
-    sortChoice: row.type === "SEARCH_SORT_CHANGED" && ["best", "cheapest", "fastest", "stops", "bestValue", "topRated", "recommended", "lowestTotal"].includes(row.sortChoice ?? "") ? row.sortChoice : null,
+    sortChoice: row.type === "SEARCH_SORT_CHANGED" && ["best", "cheapest", "fastest", "stops", "bestValue", "topRated", "recommended", "lowestTotal", "price", "duration", "departure-asc", "departure-desc"].includes(row.sortChoice ?? "") ? row.sortChoice : null,
     filterSelections: row.type === "SEARCH_FILTER_APPLIED" && Array.isArray(row.filterSelections)
       ? row.filterSelections.slice(0, 20).flatMap((choice: unknown) => {
           if (!choice || typeof choice !== "object" || Array.isArray(choice)) return [];
