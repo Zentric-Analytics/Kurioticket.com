@@ -74,7 +74,7 @@ import {
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { journeyEvents } from "../privacy/journeyEvents";
-import { normalizeJourneySortMode } from "../../../../../src/lib/search-journey";
+import { normalizeJourneySortMode, normalizeJourneySortChoice } from "../../../../../src/lib/search-journey";
 import { shareNativeResult } from "../privacy/nativeShareTracking";
 import { journeyResponseContext } from "../privacy/journeyResponseContext";
 import { flightEditSearchParams, flightSearchRouteParamPatch } from "../flow/flightSearchModel";
@@ -1384,7 +1384,7 @@ function ResultsScreen({ product }: { product: Product }) {
       )}
       {product === "flight" ? (
         <>
-          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { if (next !== sort) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", resultsRequestId, "/flight-results", { sortMode: normalizeJourneySortMode(next) }); setSort(next); setSortOpen(false); scrollToFlightResultsBeginning(); }} onClose={() => setSortOpen(false)} />
+          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { if (next !== sort) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", resultsRequestId, "/flight-results", { sortMode: normalizeJourneySortMode(next), sortChoice: normalizeJourneySortChoice(next) }); setSort(next); setSortOpen(false); scrollToFlightResultsBeginning(); }} onClose={() => setSortOpen(false)} />
           <FlightFilterSheet
             visible={filterOpen}
             section={filterSection}
@@ -1402,7 +1402,7 @@ function ResultsScreen({ product }: { product: Product }) {
       ) : (
         <>
           <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} totalCount={results.length} matchingCount={sorted.length} onChange={changeHotelFilters} onClose={completeHotelFilterSession}/>
-          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { if(next===hotelSort)return;journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", resultsRequestId, "/hotel-results", { sortMode: normalizeJourneySortMode(next) });setHotelSort(next);startHotelResultsTransition(); }} onChange={changeHotelQuickFilters} onClose={closeHotelQuickFilter} /> : null}
+          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { if(next===hotelSort)return;journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", resultsRequestId, "/hotel-results", { sortMode: normalizeJourneySortMode(next), sortChoice: normalizeJourneySortChoice(next) });setHotelSort(next);startHotelResultsTransition(); }} onChange={changeHotelQuickFilters} onClose={closeHotelQuickFilter} /> : null}
         </>
       )}
       {!flightResults ? (
