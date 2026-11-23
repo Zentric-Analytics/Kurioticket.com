@@ -13,7 +13,7 @@ test("committed sort, filter, and clear actions share one Results-start reset",(
   assert.match(s,/const clearFlightFilters = useCallback\([\s\S]*setFilters\(emptyFlightFilters\(\)\);[\s\S]*scrollToFlightResultsBeginning\(\)/);
   assert.match(s,/const clearFlightQuickFilterAndReset = useCallback\([\s\S]*clearFlightQuickFilterGroup[\s\S]*scrollToFlightResultsBeginning\(\)/);
   assert.match(s,/const completeFullFlightFilters = useCallback\([\s\S]*setFilterOpen\(false\);[\s\S]*scrollToFlightResultsBeginning\(\)/);
-  assert.match(s,/<FlightSortSheet[^>]*onApply=\{\(next\) => \{ if \(next !== sort\) journeyEvents\.workflowDecision\("SEARCH_SORT_CHANGED", resultsRequestId, "\/flight-results", \{ sortMode: normalizeJourneySortMode\(next\) \}\); setSort\(next\); setSortOpen\(false\); scrollToFlightResultsBeginning\(\); \}\}/);
+  assert.match(s,/<FlightSortSheet[^>]*onApply=\{\(next\) => \{ if \(next !== sort\) journeyEvents\.workflowDecision\("SEARCH_SORT_CHANGED", resultsRequestId, "\/flight-results", \{ sortMode: normalizeJourneySortMode\(next\), sortChoice: normalizeJourneySortChoice\(next\) \}\); setSort\(next\); setSortOpen\(false\); scrollToFlightResultsBeginning\(\); \}\}/);
   assert.match(s,/clearGroup=\{clearFlightQuickFilterAndReset\}/);
 });
 test("Hotel results use one continuous virtualized list with bounded result reveals", () => {
