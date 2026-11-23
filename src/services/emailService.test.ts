@@ -231,7 +231,7 @@ test("support lifecycle templates match the approved brief wording and escape ti
   const received = supportTicketEmail({ ticketId, subject: "Sensitive subject must not be repeated" });
   const resolved = supportTicketResolvedEmail({ ticketId });
   const closed = supportTicketClosedEmail({ ticketId });
-  assert.match(received, /We've received your request/);
+  assert.match(received, /We&#39;ve received your request/);
   assert.match(received, /Your request has been received successfully/);
   assert.doesNotMatch(received, /Sensitive subject/);
   assert.doesNotMatch(received, /Status:|Submitted:/);
