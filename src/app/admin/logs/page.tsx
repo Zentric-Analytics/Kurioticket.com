@@ -210,7 +210,7 @@ function auditParams(raw: Record<string, string | string[] | undefined>, range: 
   if (range === "custom") {
     const fromDate = one(raw.fromDate);
     const toDate = one(raw.toDate);
-    params.set("from", /^\d{4}-\d{2}-\d{2}$/.test(fromDate) ? adminCalendarDayStart(fromDate, timeZone).toISOString() : fromDate);
+    params.set("from", /^\d{4}-\d{2}-\d{2}$/.test(fromDate) ? safeStartIso(fromDate, timeZone) : fromDate);
     params.set("to", customEndIso(toDate, now, timeZone));
     return params;
   }
@@ -232,10 +232,16 @@ function auditParams(raw: Record<string, string | string[] | undefined>, range: 
   return params;
 }
 
+function safeStartIso(day: string, timeZone: string) {
+  try { return adminCalendarDayStart(day, timeZone).toISOString(); } catch { return day; }
+}
+
 function customEndIso(value: string, now: Date, timeZone: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  const end = adminCalendarNextDayStart(value, timeZone);
-  return new Date(Math.min(end.getTime(), now.getTime())).toISOString();
+  try {
+    const end = adminCalendarNextDayStart(value, timeZone);
+    return new Date(Math.min(end.getTime(), now.getTime())).toISOString();
+  } catch { return value; }
 }
 
 function currentHref(raw: Record<string, string | string[] | undefined>, range: AuditRange) {
