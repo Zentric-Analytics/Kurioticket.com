@@ -79,3 +79,59 @@ Historical ten-date batches must be reduced to one parent search for customer-fa
 Only platform-origin and crawler-evidence semantics are changing here. No operational event grants an authorization privilege.
 
 See [Google crawler verification](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) and [Bingbot verification](https://www.bing.com/webmasters/help/how-to-verify-bingbot-3905dc26).
+
+
+## All-time history audit and nearby-date count correction
+
+The dashboard must represent the complete search ledger dating from **2026-05-21**.
+The previous staging backfill corrected only a fixed seven-day cohort and
+excluded 408 historical nearby-date child records. The follow-on migration
+`20261123180000_alltime_nearby_fare_search_counts` evaluates **all earlier
+recorded search history** (not a rolling seven- or thirty-day UI window),
+including records that predate application-source and operational-session
+capture.
+
+**Read-only audit baseline (2026-11-23):** 50,046 raw SearchHistory rows,
+49,638 currently counted after the earlier 408 child exclusions, and 49,169
+canonical rows with no recorded application source. Existing BOT rows: 103.
+These snapshot figures change as genuine new searches are recorded.
+
+Two conservative, disjoint historical patterns qualify for **count-only**
+correction:
+
+1. **Session-backed date-strip fan-out:** 563 operational-session groups,
+   4,955 rows. Each group has 4–10 consecutive departure dates within one
+   minute, one product and route, identical nondate query parameters and
+   owners, consistent return-date offsets, and no previously excluded rows.
+   Retain 563 counted parent records; exclude 4,392 date-comparison children.
+   Only groups recorded before the fix for nearby-date logging went live
+   (2026-11-23 14:18:27 UTC) are eligible.
+2. **Older records without session references:** 565 date-strip clusters,
+   5,528 rows. Records must be 8–10 consecutive departure dates, same minute,
+   same route/traveler/query attributes, and recorded less than 20 seconds
+   apart. Retain 565 counted records; exclude 4,963 children. Because no
+   session identifier exists, the grouping is explicitly **pattern-inferred**;
+   no source attribution or original user-selected departure date is claimed.
+
+**Total potential change:** 1,128 counted searches instead of 10,483 raw
+entries, suppressing **9,355 additional duplicate contributions** without
+deleting or rewriting the individual provider/search audit rows. The
+all-time baseline would be 40,283 canonical searches if the audited cohort
+remains unchanged, plus any subsequent genuine new searches. This is a
+pre-deployment projection, **not a verified deployed number**.
+
+The migration changes only `countAsSearch` and writes
+`historicalNearbyReconciliation` metadata for audit. It **never changes
+`applicationSource`**. The first completed record is retained for stable
+linking but may not represent the exact departure date originally selected
+by the customer; the metadata says so. It refuses to proceed if its
+staging-only preflight row counts drift, and fails the transaction if the
+post-update count differs. On production, no existing rows are modified.
+
+**Historical Bots are not reconstructed from repetition alone.** Before
+source recording, SearchHistory and provider logs lacked persisted User-Agent
+or verified crawler evidence. Render's request-log retention is insufficient
+to prove all older crawler identities. Such records must stay Unverified
+until corroborating source-specific evidence is available. "Nearby fare
+automation" is frontend behavior, not evidence that Googlebot, Perplexity,
+Meta or another crawler initiated the parent search.
