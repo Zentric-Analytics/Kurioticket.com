@@ -909,6 +909,7 @@ export const __adminOperationalReadCoreTest = {
   exactProviderSummary,
   correlatedProviderLogs,
   exactProviderFilteredSearchSql,
+  searchWhere,
   providerLogWhere,
   providerLogsForPageSql,
 };
