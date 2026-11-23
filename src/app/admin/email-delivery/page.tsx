@@ -1,3 +1,5 @@
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
+import { adminTodayStart, adminCalendarDayStart, adminCalendarNextDayStart, adminDisplayDateTime } from "@/lib/adminTimeZone";
 import Link from "next/link";
 
 import { EmailDeliveryRangeFilter, type EmailDeliveryRange } from "@/components/admin/EmailDeliveryRangeFilter";
@@ -61,7 +63,7 @@ function StatusIndicator({ value, tone }: { value: string; tone: StatusTone }) {
 
 export default async function AdminEmailDeliveryPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
-  const rangeState = resolveRange(raw);
+  const rangeState = resolveRange(raw, await getAdminTimeZone());
   const requestedHistoryPage = parseHistoryPage(one(raw.historyPage));
   const operations = rangeState.error
     ? null
@@ -283,7 +285,7 @@ function normalizeRange(value: string): EmailDeliveryRange {
   return value === "today" || value === "24h" || value === "7d" || value === "30d" || value === "90d" || value === "custom" ? value : "today";
 }
 
-function resolveRange(raw: Record<string, string | string[] | undefined>) {
+function resolveRange(raw: Record<string, string | string[] | undefined>, timeZone = "UTC") {
   const range = normalizeRange(one(raw.range));
   const now = new Date();
 
@@ -295,7 +297,7 @@ function resolveRange(raw: Record<string, string | string[] | undefined>) {
             : 24 * 60 * 60 * 1000;
     return {
       range,
-      from: range === "today" ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())) : new Date(now.getTime() - durationMs),
+      from: range === "today" ? adminTodayStart(now, timeZone) : new Date(now.getTime() - durationMs),
       to: now,
       fromDate: "",
       toDate: "",
@@ -310,9 +312,8 @@ function resolveRange(raw: Record<string, string | string[] | undefined>) {
     return { range, from: now, to: now, fromDate, toDate, label: "Custom range", error: "Choose both a valid start date and end date." };
   }
 
-  const from = new Date(fromDate + "T00:00:00.000Z");
-  const requestedEnd = new Date(toDate + "T00:00:00.000Z");
-  requestedEnd.setUTCDate(requestedEnd.getUTCDate() + 1);
+  const from = adminCalendarDayStart(fromDate, timeZone);
+  const requestedEnd = adminCalendarNextDayStart(toDate, timeZone);
   const to = new Date(Math.min(requestedEnd.getTime(), now.getTime()));
 
   if (from.getTime() >= to.getTime()) {
@@ -322,7 +323,7 @@ function resolveRange(raw: Record<string, string | string[] | undefined>) {
     return { range, from, to, fromDate, toDate, label: "Custom range", error: "Custom ranges can cover up to 90 days." };
   }
 
-  const formatter = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+  const formatter = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone });
   return {
     range,
     from,
