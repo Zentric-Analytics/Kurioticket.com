@@ -1,0 +1,55 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+const read = (file: string) => readFileSync(file, "utf8");
+const share = read("src/features/privacy/nativeShareTracking.ts");
+const identity = read("src/features/privacy/visitorIdentityCoordinator.ts");
+const api = read("src/api/travelApi.ts");
+const repoRoot = "../../";
+
+test("native shares use only the existing first-party, authenticated, consent-gated API", () => {
+  assert.match(api, /customerInteraction:\s*\(body:/);
+  assert.match(api, /request<\{ accepted: boolean \}>\("\/api\/activity\/interactions"/);
+  assert.match(identity, /"\/api\/activity\/interactions"/);
+  assert.match(share, /visitorIdentity\.trackingContext/);
+  assert.match(share, /visitorContext: context/);
+  assert.match(share, /digestStringAsync\(CryptoDigestAlgorithm\.SHA256, resultId\)/);
+  assert.match(share, /eventId: randomUUID\(\)/);
+  assert.match(share, /requestIdPattern\.test\(requestId\)/);
+  assert.doesNotMatch(share, /message:|email:|recipient:|destinationUrl:|screenContent:/);
+});
+
+test("native flight hotel and car share buttons record only through consent-gated helper", () => {
+  const cases = [
+    ["src/features/search/NativeFlightDetails.tsx", "FLIGHT"],
+    ["src/features/search/ApprovedResultsScreen.tsx", "HOTEL"],
+    ["src/features/search/HotelDetailsScreen.tsx", "HOTEL"],
+    ["src/features/search/ApprovedDetailScreen.tsx", "HOTEL"],
+    ["src/features/search/CarResultCard.tsx", "CAR"],
+    ["src/features/search/ApprovedCarDetailScreen.tsx", "CAR"],
+    ["src/features/search/NativeKayakCarDetailScreen.tsx", "CAR"],
+  ] as const;
+  for (const [file, product] of cases) {
+    const source = read(file);
+    assert.match(source, /shareNativeResult/, file);
+    assert.ok(source.includes('product:"' + product + '"'), file);
+    assert.match(source, /resultId:/, file);
+    assert.match(source, /requestId/, file);
+    assert.match(source, /Share\.share/, file);
+  }
+});
+
+test("existing server checks consent, exact search ownership and event UUID idempotency", () => {
+  const server = read(repoRoot + "src/app/api/activity/interactions/route.ts");
+  assert.match(server, /lockConsentedVisitor/);
+  assert.match(server, /resolveRequestActivityIdentity/);
+  assert.match(server, /matchesInteractionSearch/);
+  assert.match(server, /eventId: parsed\.data\.eventId/);
+  assert.match(server, /type: "SEARCH_COMPLETED", searchHistoryId: search\.id/);
+  assert.match(server, /if \(verifiedLink\)/);
+  assert.match(server, /type: stage/);
+  const admin = read(repoRoot + "src/services/adminIdentityActivityService.ts");
+  assert.match(admin, /share_sheet_completed: "Share sheet completed"/);
+  assert.match(admin, /RESULT_SHARED/);
+});

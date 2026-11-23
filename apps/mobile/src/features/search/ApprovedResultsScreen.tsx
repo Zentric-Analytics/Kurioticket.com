@@ -74,6 +74,7 @@ import {
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { journeyEvents } from "../privacy/journeyEvents";
+import { shareNativeResult } from "../privacy/nativeShareTracking";
 import { journeyResponseContext } from "../privacy/journeyResponseContext";
 import { flightEditSearchParams, flightSearchRouteParamPatch } from "../flow/flightSearchModel";
 import { hotelSearchRouteParamPatch } from "../flow/hotelSearchModel";
@@ -1890,7 +1891,7 @@ const HotelCard = memo(function HotelCard({
     const message = hasPrice
       ? `${result.name} — ${result.location} — ${displayPrices?.nightly?.formatted ?? money(result.currency, result.pricePerNight)}/night`
       : `${result.name} — ${result.location} — Price unavailable`;
-    void Share.share({ message }).catch(() => undefined);
+    void shareNativeResult({share:()=>Share.share({ message }),product:"HOTEL",resultId:result.id,requestId}).catch(() => undefined);
   };
   return (
     <Pressable
