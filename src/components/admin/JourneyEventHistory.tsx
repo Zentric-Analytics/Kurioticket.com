@@ -51,7 +51,11 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
                   <p className={searchTitle ? "mt-1 text-xs text-[#64748B]" : "text-xs text-[#64748B]"}>{readable(event.search.status)} · {event.search.resultCount} results</p>
                 </> : <p className="text-xs text-[#64748B]">Search details not recorded</p>}
                 {event.filterGroup ? <p className="mt-1 text-xs text-[#64748B]">Applied filter group: {readable(event.filterGroup)}</p> : null}
-                {event.sortMode ? <p className="mt-1 text-xs text-[#64748B]">Sort: {readable(event.sortMode)}</p> : null}
+                {event.sortChoice ? <p className="mt-1 text-xs text-[#64748B]">Selected sort: {({
+                  best: "Best", cheapest: "Cheapest", fastest: "Fastest", stops: "Fewest stops",
+                  bestValue: "Best value", topRated: "Top rated", recommended: "Recommended", lowestTotal: "Lowest total price",
+                } as Record<string, string>)[event.sortChoice] ?? "Not recorded"}</p>
+                  : event.sortMode ? <p className="mt-1 text-xs text-[#64748B]">Sort category: {readable(event.sortMode)}</p> : null}
                 {event.alertDetails ? <div className="mt-2 space-y-1 text-xs text-[#475569]">
                   <p>Alert mode: {event.alertDetails.mode === "TARGET" ? "Target price" : "Automatic price tracking"}</p>
                   <p>Selected target: {event.alertDetails.targetPrice ? `${event.alertDetails.currency} ${event.alertDetails.targetPrice}` : "Not set"}</p>
