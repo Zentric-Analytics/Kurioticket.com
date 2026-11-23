@@ -3,17 +3,21 @@ import type { ResultsProduct } from "./resultsReturnIntent";
 const PREFIX = "kurioticket:results-scroll:v1:";
 const MAX_AGE = 10 * 60_000;
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+function browserStorage(): Store | null {
+  if (typeof window === "undefined") return null;
+  try { return window.sessionStorage; } catch { return null; }
+}
 
 /** A viewport position only, with no passenger or provider data. */
 export function rememberResultsScroll(product: ResultsProduct, y: number,
-  store: Store | null = typeof window === "undefined" ? null : window.sessionStorage,
+  store: Store | null = browserStorage(),
   now = Date.now()) {
   if (!store || !Number.isFinite(y) || y < 0) return;
   try { store.setItem(PREFIX + product, JSON.stringify({ y, savedAt: now })); } catch { /* private browsing */ }
 }
 
 export function takeResultsScroll(product: ResultsProduct,
-  store: Store | null = typeof window === "undefined" ? null : window.sessionStorage,
+  store: Store | null = browserStorage(),
   now = Date.now()): number | null {
   if (!store) return null;
   try {
