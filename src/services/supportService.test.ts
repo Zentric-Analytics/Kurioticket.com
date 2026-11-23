@@ -152,7 +152,7 @@ test("createSupportTicket returns saved ticket when confirmation email fails", a
   assert.equal(createCalls.length, 1);
 });
 
-test("addAdminSupportReply creates admin SupportMessage and attempts notification email", async () => {
+test("addAdminSupportReply saves admin SupportMessage without customer email", async () => {
   const messageOrder: string[] = ["customer-message"];
   const sentEmails: Array<{ to: string; subject: string; idempotencyKey?: string }> = [];
 
@@ -181,12 +181,12 @@ test("addAdminSupportReply creates admin SupportMessage and attempts notificatio
   const result = await addAdminSupportReply({ ticketId: "ticket-1", body: "Thanks for contacting support." });
 
   assert.equal(result.message.author, "admin");
-  assert.equal(result.emailStatus, "accepted");
+  assert.equal(result.emailStatus, "skipped");
   assert.deepEqual(messageOrder, ["customer-message", "Thanks for contacting support."]);
-  assert.deepEqual(sentEmails, [{ to: "user@example.com", subject: "Re: Your Kurioticket support request", idempotencyKey: "support-ticket-reply-message-admin" }]);
+  assert.deepEqual(sentEmails, []);
 });
 
-test("addAdminSupportReply returns saved message when notification email fails", async () => {
+test("addAdminSupportReply never calls email sender even when it would fail", async () => {
   __supportServiceTest.setPrismaClientForTesting({
     async $transaction(work) { return work(this); },
     supportTicket: {
@@ -210,7 +210,7 @@ test("addAdminSupportReply returns saved message when notification email fails",
   const result = await addAdminSupportReply({ ticketId: "ticket-1", body: "We are checking this." });
 
   assert.equal(result.message.id, "message-admin");
-  assert.equal(result.emailStatus, "failed");
+  assert.equal(result.emailStatus, "skipped");
 });
 
 test("updateSupportTicketStatus updates valid status and returns previous status", async () => {
@@ -336,4 +336,79 @@ test("addAdminSupportReply rolls back reply when activity update fails", async (
   assert.equal(attemptedWrites, 1, "message insert should be attempted inside the transaction");
   assert.deepEqual(committedMessages, [], "no reply may survive a failed activity update");
   assert.equal(emailAttempts, 0, "do not send email for a rolled-back reply");
+});
+
+test("status notifications are sent only for transitions to Resolved and Closed", async () => {
+  let currentStatus = "OPEN" as "OPEN" | "WAITING_ON_TEAM" | "WAITING_ON_USER" | "RESOLVED" | "CLOSED";
+  let updatedAt = new Date("2026-11-23T12:00:00.000Z");
+  const sends: Array<{ subject: string; idempotencyKey?: string; html: string; metadata?: Record<string, unknown> }> = [];
+  __supportServiceTest.setPrismaClientForTesting({
+    supportTicket: {
+      async updateMany() { return { count: 1 }; },
+      async create() { throw new Error("not used"); },
+      async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: currentStatus, updatedAt }; },
+      async update(args) {
+        assert.equal(args.where.status, currentStatus);
+        assert.deepEqual(args.where.updatedAt, updatedAt);
+        currentStatus = args.data.status;
+        updatedAt = new Date(updatedAt.getTime() + 1000);
+        return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: currentStatus, updatedAt };
+      },
+    },
+    supportMessage: { async create() { throw new Error("not used"); } },
+  });
+  __supportServiceTest.setSendSupportEmailForTesting(async (input) => {
+    sends.push({ subject: input.subject, html: input.html, metadata: input.metadata, idempotencyKey: input.idempotencyKey });
+    return { id: "email-1" };
+  });
+
+  await updateSupportTicketStatus({ ticketId: "ticket-1", status: "WAITING_ON_TEAM" });
+  await updateSupportTicketStatus({ ticketId: "ticket-1", status: "WAITING_ON_USER" });
+  assert.equal(sends.length, 0, "waiting statuses must never trigger email");
+  await updateSupportTicketStatus({ ticketId: "ticket-1", status: "RESOLVED" });
+  await updateSupportTicketStatus({ ticketId: "ticket-1", status: "RESOLVED" });
+  assert.equal(sends.length, 1, "re-saving Resolved must not send twice");
+  await updateSupportTicketStatus({ ticketId: "ticket-1", status: "CLOSED" });
+  await updateSupportTicketStatus({ ticketId: "ticket-1", status: "CLOSED" });
+  assert.equal(sends.length, 2, "Resolved to Closed still sends its own email");
+  await updateSupportTicketStatus({ ticketId: "ticket-1", status: "OPEN" });
+  assert.equal(sends.length, 2, "reopening does not repeat initial confirmation");
+  await updateSupportTicketStatus({ ticketId: "ticket-1", status: "RESOLVED" });
+  assert.equal(sends.length, 3, "a later distinct resolution is a new transition");
+  assert.notEqual(sends[0].idempotencyKey, sends[2].idempotencyKey);
+  assert.match(sends[0].html, /Your request has been resolved/);
+  assert.match(sends[1].html, /Your support request has been closed/);
+  assert.ok(sends.every((email) => email.html.includes("ticket-1")));
+  assert.deepEqual(sends.map((email) => email.metadata?.supportDeliveryType), ["resolved", "closed", "resolved"]);
+});
+
+test("status notification email failure does not undo saved ticket status", async () => {
+  __supportServiceTest.setPrismaClientForTesting({
+    supportTicket: {
+      async updateMany() { return { count: 1 }; },
+      async create() { throw new Error("not used"); },
+      async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN", updatedAt: new Date("2026-11-23T12:00:00Z") }; },
+      async update(args) { return { id: args.where.id, email: "user@example.com", subject: "Need help", status: args.data.status }; },
+    },
+    supportMessage: { async create() { throw new Error("not used"); } },
+  });
+  __supportServiceTest.setSendSupportEmailForTesting(async () => { throw new Error("email unavailable"); });
+  const result = await updateSupportTicketStatus({ ticketId: "ticket-1", status: "CLOSED" });
+  assert.equal(result.ticket.status, "CLOSED");
+});
+
+test("concurrent stale status write does not send an email", async () => {
+  let sendCount = 0;
+  __supportServiceTest.setPrismaClientForTesting({
+    supportTicket: {
+      async updateMany() { return { count: 1 }; },
+      async create() { throw new Error("not used"); },
+      async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN", updatedAt: new Date("2026-11-23T12:00:00Z") }; },
+      async update() { throw Object.assign(new Error("No record found"), { code: "P2025" }); },
+    },
+    supportMessage: { async create() { throw new Error("not used"); } },
+  });
+  __supportServiceTest.setSendSupportEmailForTesting(async () => { sendCount++; return { id: "email-1" }; });
+  await assert.rejects(updateSupportTicketStatus({ ticketId: "ticket-1", status: "CLOSED" }), /Ticket status changed/);
+  assert.equal(sendCount, 0);
 });

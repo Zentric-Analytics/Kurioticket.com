@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
 import { adminSupportReplySchema, adminSupportStatusSchema } from "@/lib/validation";
-import { addAdminSupportReply, SupportTicketNotFoundError, updateSupportTicketStatus } from "@/services/supportService";
+import { addAdminSupportReply, SupportTicketConflictError, SupportTicketNotFoundError, updateSupportTicketStatus } from "@/services/supportService";
 import { adminOperationalReadResponse } from "@/services/adminOperationalReadHttp";
 
 export const dynamic = "force-dynamic";
@@ -91,6 +91,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ ticket: result.ticket });
   } catch (error) {
     if (error instanceof SupportTicketNotFoundError) return NextResponse.json({ error: "Support ticket not found." }, { status: 404 });
+    if (error instanceof SupportTicketConflictError) return NextResponse.json({ error: error.message }, { status: 409 });
     console.error("[admin-support:status] Failed to update status", error);
     return NextResponse.json({ error: "Unable to update ticket status." }, { status: 500 });
   }

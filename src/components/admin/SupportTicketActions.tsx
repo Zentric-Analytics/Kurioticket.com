@@ -36,11 +36,7 @@ export function SupportReplyForm({ ticketId }: { ticketId: string }) {
           return;
         }
         setReply("");
-        setReplyMessage(payload.emailStatus === "accepted"
-          ? "Reply saved. Email accepted by provider; delivery is not confirmed."
-          : payload.emailStatus === "failed"
-            ? "Reply saved, but email sending failed. Check email delivery records."
-            : "Reply saved. Email sending status is unknown; check email delivery records.");
+        setReplyMessage("Reply saved to the ticket. No email was sent.");
         router.refresh();
       } catch {
         setError("Unable to send reply. Check the conversation before retrying.");
@@ -72,7 +68,7 @@ export function SupportReplyForm({ ticketId }: { ticketId: string }) {
               disabled={isReplyPending || !validReply}
               className="focus-ring inline-flex h-9 items-center justify-center rounded-lg bg-[#3154EF] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#2445D7] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-75"
             >
-              {isReplyPending ? "Sending…" : "Send reply"}
+              {isReplyPending ? "Saving…" : "Save reply"}
             </button>
           </div>
         </div>

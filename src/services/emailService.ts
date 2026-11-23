@@ -192,16 +192,72 @@ export function priceAlertEmail(input: {
 
 
 
-export function supportTicketEmail(input: { ticketId: string; subject: string }) {
+function supportTicketStatusEmail(input: {
+  ticketId: string;
+  heading: string;
+  beforeTicket: string[];
+  afterTicket: string[];
+}) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
-      <h1 style="font-size:22px">We received your request</h1>
-      <p>Your Kurioticket support ticket is open.</p>
-      <p><strong>Ticket:</strong> ${escapeHtml(input.ticketId)}</p>
-      <p><strong>Subject:</strong> ${escapeHtml(input.subject)}</p>
-      <p>Our team can help with Kurioticket searches, alerts, account tools, and travel guidance. External providers handle purchases, check-in, changes, cancellations, and refunds.</p>
+      <h1 style="font-size:22px">Kurioticket</h1>
+      <h2 style="font-size:20px">${escapeHtml(input.heading)}</h2>
+      <p>Hello,</p>
+      ${input.beforeTicket.map((text) => `<p>${escapeHtml(text)}</p>`).join("\n")}
+      <p><strong>Your Ticket Number:</strong> ${escapeHtml(input.ticketId)}</p>
+      ${input.afterTicket.map((text) => `<p>${escapeHtml(text)}</p>`).join("\n")}
+      <p><strong>Kurioticket Support Team</strong></p>
     </div>
   `;
+}
+
+// Keep the subject field for existing callers; the confirmation email deliberately
+// omits the subject, status and submission date, per the approved wording.
+export function supportTicketEmail(input: { ticketId: string; subject: string }) {
+  return supportTicketStatusEmail({
+    ticketId: input.ticketId,
+    heading: "We've received your request",
+    beforeTicket: [
+      "Thank you for contacting Kurioticket Support.",
+      "Your request has been received successfully. Our support team will review it and get back to you as soon as possible.",
+    ],
+    afterTicket: ["Thank you for your patience."],
+  });
+}
+
+export function supportTicketResolvedEmail(input: { ticketId: string }) {
+  return supportTicketStatusEmail({
+    ticketId: input.ticketId,
+    heading: "Your request has been resolved",
+    beforeTicket: ["Your support request has been reviewed and marked as resolved."],
+    afterTicket: [
+      "If you need further assistance, please contact Kurioticket Support.",
+      "Thank you for choosing Kurioticket.",
+    ],
+  });
+}
+
+export function supportTicketClosedEmail(input: { ticketId: string }) {
+  return supportTicketStatusEmail({
+    ticketId: input.ticketId,
+    heading: "Your support request has been closed",
+    beforeTicket: ["Your support request has now been closed."],
+    afterTicket: [
+      "If you still need assistance, please contact Kurioticket Support and reference your ticket number.",
+      "Thank you for contacting us.",
+    ],
+  });
+}
+
+// Preserve the verified sender address (including staging-labelled addresses)
+// while giving support emails a customer-facing display name.
+export function supportEmailSender() {
+  const configured = process.env.RESEND_FROM_EMAIL?.trim();
+  if (!configured) return undefined;
+  const address = configured.match(/<([^<>]+)>$/)?.[1]?.trim() || configured;
+  return /^[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+$/.test(address)
+    ? `Kurioticket Support <${address}>`
+    : undefined;
 }
 
 export function supportTicketReplyEmail(input: { ticketId: string; subject: string; body: string }) {
