@@ -1,7 +1,7 @@
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
-import { identifyVerifiedCrawlerSearch } from "@/lib/searchCrawlerGate";
+import { identifySearchCrawler, searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { createHash } from "node:crypto";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicHotel } from "@/lib/searchCache";
@@ -21,7 +21,7 @@ import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 
 export async function POST(request: Request) {
-  const verifiedCrawler = await identifyVerifiedCrawlerSearch(request);
+  const crawler = await identifySearchCrawler(request);
   const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("HOTEL_SEARCH_ENABLED"))) return NextResponse.json({ error: "Hotel search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
   const ip = getClientIp(request);
@@ -74,11 +74,11 @@ export async function POST(request: Request) {
   // require USD and must not depend on the customer's display preference.
   const providerSearch = { ...search };
   delete providerSearch.currency;
-  const operationalSession = verifiedCrawler ? null : prepareOperationalSearchSession(request);
+  const operationalSession = crawler ? null : prepareOperationalSearchSession(request);
   const recordedSearch = { ...search, ...searchNetworkObservation(request),
     ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}),
-    ...(verifiedCrawler ? { verifiedCrawler } : {}) };
-  const resolveSearchIdentity = () => verifiedCrawler
+    ...searchCrawlerMetadata(crawler) };
+  const resolveSearchIdentity = () => crawler
     ? Promise.resolve({ userId: null, visitorId: null, applicationSource: "BOT" as const })
     : resolveRequestActivityIdentity(request, undefined, operationalSession);
 
@@ -165,7 +165,7 @@ export async function POST(request: Request) {
       latencyMs: aggregate.latencyMs,
       status,
     }),
-    ...(verifiedCrawler ? [] : [trackAnalyticsEvent({ ...application,
+    ...(crawler ? [] : [trackAnalyticsEvent({ ...application,
       userId,
       visitorId,
       type: "SEARCH",
