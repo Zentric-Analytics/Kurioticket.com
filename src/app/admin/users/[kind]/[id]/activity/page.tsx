@@ -1,3 +1,4 @@
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Plane, Building2, CarFront } from "lucide-react";
@@ -111,7 +112,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const { kind, id } = await params;
   if (!validActivityIdentity(kind, id)) notFound();
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
-  const raw = normalizeUserActivityQuery(await searchParams, new Date());
+  const raw = normalizeUserActivityQuery(await searchParams, new Date(), await getAdminTimeZone());
   const filtersResult = parseActivityFilters(raw);
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
   const backHref = safeDirectoryHref(raw);
