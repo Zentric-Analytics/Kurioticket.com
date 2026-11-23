@@ -29,10 +29,46 @@ export function markResultsReturn(
   try {
     const target = new URL(href, base);
     storage.setItem(PREFIX + product, JSON.stringify({
-      pathname: target.pathname, savedAt: now,
-      // Don't persist customer search criteria or the location in this marker.
+      pathname: target.pathname,
+      // Flight returns must match the exact original results URL (including
+      // filters/sort). Otherwise a later deliberate search could consume a
+      // stale marker left by a details navigation.
+      ...(product === "flight" ? { search: target.search } : {}),
+      savedAt: now,
     }));
   } catch { /* Disabled storage must not block navigation. */ }
+}
+
+function readReturnMarker(
+  product: ResultsProduct, href: string, storage: StorageLike | null,
+  now: number, base: string, consume: boolean,
+): boolean {
+  if (!storage || !isResultsHref(product, href, base)) return false;
+  try {
+    const raw = storage.getItem(PREFIX + product);
+    if (consume) storage.removeItem(PREFIX + product);
+    if (!raw) return false;
+    const data: unknown = JSON.parse(raw);
+    if (!data || typeof data !== "object" || Array.isArray(data)) return false;
+    const marker = data as { pathname?: unknown; search?: unknown; savedAt?: unknown };
+    const destination = new URL(href, base);
+    return marker.pathname === PATHS[product]
+      && (product !== "flight" || marker.search === destination.search)
+      && typeof marker.savedAt === "number"
+      && Number.isFinite(marker.savedAt)
+      && now >= marker.savedAt
+      && now - marker.savedAt <= (product === "flight" ? 24 * 60 * 60_000 : MAX_AGE_MS);
+  } catch { return false; }
+}
+
+/** Read the intent without consuming it, for a companion provider component
+ * that must decide whether to fetch before FlightResultsClient effects run. */
+export function peekResultsReturn(
+  product: ResultsProduct, href: string,
+  storage: StorageLike | null = browserStorage(),
+  now = Date.now(), base = typeof window === "undefined" ? "https://kurioticket.invalid" : window.location.href,
+): boolean {
+  return readReturnMarker(product, href, storage, now, base, false);
 }
 
 export function takeResultsReturn(
@@ -40,16 +76,5 @@ export function takeResultsReturn(
   storage: StorageLike | null = browserStorage(),
   now = Date.now(), base = typeof window === "undefined" ? "https://kurioticket.invalid" : window.location.href,
 ): boolean {
-  if (!storage || !isResultsHref(product, href, base)) return false;
-  let raw: string | null = null;
-  try {
-    raw = storage.getItem(PREFIX + product);
-    storage.removeItem(PREFIX + product);
-    if (!raw) return false;
-    const data: unknown = JSON.parse(raw);
-    if (!data || typeof data !== "object") return false;
-    const marker = data as { pathname?: unknown; savedAt?: unknown };
-    return marker.pathname === PATHS[product] && typeof marker.savedAt === "number"
-      && Number.isFinite(marker.savedAt) && now >= marker.savedAt && now - marker.savedAt <= MAX_AGE_MS;
-  } catch { return false; }
+  return readReturnMarker(product, href, storage, now, base, true);
 }
