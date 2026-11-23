@@ -128,6 +128,10 @@ export function FlightCard({
   );
   const [shareConfirmation, setShareConfirmation] = useState("");
 
+  const observedShareResult = Number.isFinite(flight.price) && flight.price > 0 && /^[A-Z]{3}$/.test(flight.currency)
+      ? { label: flight.airlineName, provider: flight.provider, amount: flight.price, currency: flight.currency, priceBasis: "total" as const }
+      : undefined;
+
   async function shareFlight() {
     const relativeUrl = resolvedDetailsHref ?? window.location.href;
     const url = new URL(relativeUrl, window.location.origin).toString();
@@ -135,11 +139,11 @@ export function FlightCard({
     try {
       if (navigator.share) {
         await navigator.share({ title: route, text: flight.airlineName, url });
-        recordCustomerInteraction({ action: "share_sheet_completed", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId });
+        recordCustomerInteraction({ action: "share_sheet_completed", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId, observedResult: observedShareResult });
         return;
       }
       await navigator.clipboard.writeText(url);
-      recordCustomerInteraction({ action: "share_link_copied", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId });
+      recordCustomerInteraction({ action: "share_link_copied", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId, observedResult: observedShareResult });
       setShareConfirmation(t("linkCopied") || "Flight link copied");
       window.setTimeout(() => setShareConfirmation(""), 2200);
     } catch (error) {
