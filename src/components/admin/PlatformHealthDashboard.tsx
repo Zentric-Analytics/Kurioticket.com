@@ -56,8 +56,8 @@ export function PlatformHealthDashboard({ data: initialData, hours, period, appl
         Window: <time dateTime={data.window.from}>{data.window.from}</time> to <time dateTime={data.window.to}>{data.window.to}</time> · UTC
       </p>
       <p className="mt-1 text-[12px] leading-5 text-[#64748B]">Separate operational measures, not bookings or customers. Legacy UNKNOWN records appear as Unverified; they are not assumed to be bots.</p>
-      <p className="mt-2 text-[12px] leading-5 text-[#475569]" data-crawler-search-blocks>
-        Verified search-crawler requests blocked before contacting providers: <strong className="font-semibold text-[#020617]">{data.crawlerBlocks === null ? "Unavailable" : data.crawlerBlocks}</strong> · Shared across platforms in this window. Public pages remain accessible.
+      <p className="mt-2 text-[12px] leading-5 text-[#475569]" data-verified-bot-searches>
+        Verified Bots recorded as searches: <strong className="font-semibold text-[#020617]">{data.botSearches === null ? "Unavailable" : data.botSearches}</strong> · Included in All Platforms; nearby-date lookups are not separate searches.
       </p>
     </div>
     <div role="region" tabIndex={0} aria-label="Platform activity metrics" className="w-full min-w-0 overflow-x-auto overscroll-x-contain focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
