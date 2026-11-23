@@ -127,6 +127,7 @@ export type AdminIdentityPageRequest = {
   from?: string;
   to?: string;
   now?: Date;
+  timeZone?: string;
 };
 
 /**
@@ -142,7 +143,7 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
   const showOperationalGuests = input.showOperationalGuests ?? false;
   const environment = input.environment ?? "production";
   const sort = parseAdminIdentitySort(input.sort);
-  const bounds = adminIdentityDateBounds(input.date ?? "all", input.now, input.from, input.to);
+  const bounds = adminIdentityDateBounds(input.date ?? "all", input.now, input.from, input.to, input.timeZone);
   const order = sort === "oldest"
     ? Prisma.sql`"joinedAt" ASC, "kind" ASC, "id" ASC`
     : sort === "name_asc"
