@@ -777,7 +777,7 @@ function HotelDetail({
           accessibilityRole="button"
           accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
           accessibilityState={{ selected: saved }}
-          onPress={() => void canonical.toggleHotel(result, params)}
+          onPress={() => void canonical.toggleHotel(result, params, journeyRequestId)}
           style={s.heroAction}
         >
           <View pointerEvents="none" style={s.heroHeartIcon}>
