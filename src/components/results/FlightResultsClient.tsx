@@ -1,7 +1,7 @@
 "use client";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
-import { normalizeJourneySortMode } from "@/lib/search-journey";
+import { normalizeJourneySortMode, normalizeJourneySortChoice } from "@/lib/search-journey";
 import { displayedJourneyRequest, journeyRequestId } from "@/lib/journeyEventClient";
 import { resultIdKey, ResultsViewport, VirtualResultsList } from "./VirtualResultsList";
 
@@ -6692,7 +6692,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     const applySheet = () => {
       if (mobileShortcutSheet === "sort") {
-        if (mobileDraftSort !== sortMode) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", journeyResponse?.searchKey === currentFlightSearchKey ? journeyResponse.requestId : null, { sortMode: normalizeJourneySortMode(mobileDraftSort) });
+        if (mobileDraftSort !== sortMode) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", journeyResponse?.searchKey === currentFlightSearchKey ? journeyResponse.requestId : null, { sortMode: normalizeJourneySortMode(mobileDraftSort), sortChoice: normalizeJourneySortChoice(mobileDraftSort) });
         setSortMode(mobileDraftSort);
       }
       if (mobileShortcutSheet === "airlines") setSelectedAirlines(mobileDraftAirlines);
@@ -7254,7 +7254,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         </button>
         <div role="menu" className={cn("absolute right-0 top-11 z-30 w-44 origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_14px_32px_-18px_rgba(15,23,42,0.45)] transition duration-150", desktopSortOpen ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none -translate-y-1 scale-95 opacity-0")}>
           {sortOptions.map((option) => (
-            <button key={option.value} type="button" role="menuitemradio" aria-checked={sortMode === option.value} className={cn("flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25", sortMode === option.value ? "text-[#004BB8]" : "text-slate-700")} onClick={() => { triggerFilterApplying(); if (sortMode !== option.value) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", journeyResponse?.searchKey === currentFlightSearchKey ? journeyResponse.requestId : null, { sortMode: normalizeJourneySortMode(option.value) }); setSortMode(option.value); setDesktopSortOpen(false); handleUserFilterCommit("sort"); }}>
+            <button key={option.value} type="button" role="menuitemradio" aria-checked={sortMode === option.value} className={cn("flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25", sortMode === option.value ? "text-[#004BB8]" : "text-slate-700")} onClick={() => { triggerFilterApplying(); if (sortMode !== option.value) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", journeyResponse?.searchKey === currentFlightSearchKey ? journeyResponse.requestId : null, { sortMode: normalizeJourneySortMode(option.value), sortChoice: normalizeJourneySortChoice(option.value) }); setSortMode(option.value); setDesktopSortOpen(false); handleUserFilterCommit("sort"); }}>
               <span className="w-4 text-[#004BB8]">{sortMode === option.value ? "✓" : ""}</span>{option.label}
             </button>
           ))}
@@ -7564,7 +7564,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                             )}
                             onClick={() => {
                               triggerFilterApplying();
-                              if (sortMode !== option.value) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", journeyResponse?.searchKey === currentFlightSearchKey ? journeyResponse.requestId : null, { sortMode: normalizeJourneySortMode(option.value) });
+                              if (sortMode !== option.value) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", journeyResponse?.searchKey === currentFlightSearchKey ? journeyResponse.requestId : null, { sortMode: normalizeJourneySortMode(option.value), sortChoice: normalizeJourneySortChoice(option.value) });
                               setSortMode(option.value);
                               setDesktopSortOpen(false);
                               handleUserFilterCommit("sort");
