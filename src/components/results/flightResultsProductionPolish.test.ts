@@ -103,7 +103,7 @@ test("mobile Flight Results contains the filter rail within its gutter and keeps
   assert.doesNotMatch(source, /data-flight-mobile-results-intro[^\n]*px-3/);
   assert.match(source, /data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
   assert.match(source, /data-mobile-flight-results-summary-row\s*className="flex w-full/);
-  assert.match(source, /data-flight-results-card-list className="space-y-3"/);
+  assert.match(source, /data-flight-results-card-list onClickCapture=\{rememberVisibleFlightResults\} className="space-y-3"/);
   assert.match(source, /data-mobile-continuous-flight-results[\s\S]{0,220}"pt-3 pb-6"/);
   assert.doesNotMatch(source, /data-flight-results-skeleton-card-list|FlightResultsPageTransitionSkeleton/);
   assert.match(source, /ref=\{paginationListRef\}[\s\S]{0,180}aria-busy=\{filterApplying\}[\s\S]{0,180}className="hidden sm:block"/);
@@ -635,7 +635,7 @@ test("desktop Flight result summary keeps the premium hierarchy after nearby-far
   assert.match(summary, /role="option"/);
   assert.match(summary, /<ChevronDown[\s\S]*h-3\.5 w-3\.5 transition-transform/);
   assert.doesNotMatch(summary, /text-\[15px\] font-semibold leading-5 tracking-\[-0\.006em\]/);
-  assert.match(source, /data-flight-results-card-list className="space-y-3 sm:space-y-4"/);
+  assert.match(source, /data-flight-results-card-list onClickCapture=\{rememberVisibleFlightResults\} className="space-y-3 sm:space-y-4"/);
   assert.doesNotMatch(source, /data-flight-results-card-list className="space-y-3 sm:space-y-4 sm:pt-2 lg:pt-3"/);
 });
 
