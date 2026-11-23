@@ -8,7 +8,7 @@ import { adminOffsetZonedDateTime, adminZonedDateTimeInput, adminZonedDateTimeIs
 import { useAdminTimeZone } from "./AdminTimeZoneProvider";
 
 /** Used only by operational record directories supporting ISO from/to.
- * Custom UTC bounds appear on their own row, without disturbing the desktop
+ * Custom local bounds (submitted as UTC instants) appear on their own row, without disturbing the desktop
  * six-control filter bar. The selected range is applied only by the parent form. */
 export function AdminOperationalDateRangeFields({
   initialRange,
