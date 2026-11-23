@@ -244,3 +244,105 @@ test("consented native Car results are recorded once and cannot be replayed afte
   await turn();
   assert.equal(h.calls.length, 1, "old search cannot be attributed to the next signed-in user");
 });
+
+test("an iOS provider handoff waits for outstanding consented flight stages before leaving the app", async () => {
+  const h = harness();
+  const requestId = h.remember("0eaa39a2-51d5-40bb-8383-4a3e008d3d32");
+  let finish!: (value: JourneyEventResponse) => void;
+  h.responses.push(new Promise(resolve => { finish = resolve; }));
+  h.coordinator.resultsViewed(requestId, "/flight-results", 5);
+  h.coordinator.offerSelected(requestId, "flight-offer", "Flight provider", "/flight-details");
+  await turn();
+  let settled = false;
+  const navigationGate = h.coordinator.settleBeforeExternalHandoff(requestId).then(() => { settled = true; });
+  await turn();
+  assert.equal(settled, false, "the first event is still waiting for its HTTP response");
+  finish({ accepted: true });
+  await navigationGate;
+  assert.equal(settled, true);
+  assert.deepEqual(h.calls.map(call => call.event.type), ["RESULTS_VIEWED", "OFFER_SELECTED"]);
+  assert.equal(new Set(h.calls.map(call => call.event.eventId)).size, 2);
+});
+
+test("provider handoff immediately retries a pending history race with the original UUID", async () => {
+  const h = harness();
+  const requestId = h.remember("c6af0b63-0bb3-4cb3-a3de-3e264696998d");
+  h.responses.push({ accepted: false, retryable: true }, { accepted: true });
+  h.coordinator.resultsViewed(requestId, "/flight-results", 2);
+  await turn();
+  assert.equal(h.timers.length, 1);
+  assert.equal(h.timers[0].cancelled, false);
+  await h.coordinator.settleBeforeExternalHandoff(requestId);
+  assert.equal(h.timers[0].cancelled, true);
+  assert.equal(h.calls.length, 2);
+  assert.equal(h.calls[0].event.eventId, h.calls[1].event.eventId,
+    "backend idempotency protects the retry against double-counting");
+});
+
+test("external provider navigation never waits indefinitely for optional journey events", async () => {
+  const h = harness();
+  const requestId = h.remember("11a8a1b4-cb8a-4590-afd4-34d55a131afb");
+  h.responses.push(new Promise<JourneyEventResponse>(() => undefined));
+  h.coordinator.offerSelected(requestId, "offer", "Provider", "/flight-details");
+  await turn();
+  await h.coordinator.settleBeforeExternalHandoff(requestId, 1);
+  assert.equal(h.calls.length, 1);
+  h.setContext(null);
+  assert.equal(h.calls[0].signal.aborted, true);
+});
+
+test("settling one search cannot replay a different search or a withdrawn account", async () => {
+  const h = harness();
+  const first = h.remember("e8297782-bcfe-4e30-8a50-23cba29f8287");
+  const second = h.remember("a4e1ff34-c35e-4482-8799-4fd225e76c5a");
+  h.responses.push({ accepted: false, retryable: true });
+  h.coordinator.resultsViewed(first, "/flight-results", 1);
+  await turn();
+  assert.equal(h.calls.length, 1);
+  await h.coordinator.settleBeforeExternalHandoff(second);
+  assert.equal(h.calls.length, 1);
+  assert.equal(h.timers[0].cancelled, false);
+  h.setContext(null);
+  await h.coordinator.settleBeforeExternalHandoff(first);
+  assert.equal(h.calls.length, 1);
+  assert.equal(h.timers[0].cancelled, true);
+  const withoutConsent = harness(null);
+  await withoutConsent.coordinator.settleBeforeExternalHandoff(first);
+  assert.deepEqual(withoutConsent.calls, []);
+});
+
+test("urgent clickout preserves ordinary backoff on rate limit and offline failures", async () => {
+  for (const error of [
+    Object.assign(new Error("rate limited"), { status: 429 }),
+    Object.assign(new Error("offline"), { status: 0, code: "network" }),
+  ]) {
+    const h = harness();
+    const requestId = h.remember("a536b1a5-582e-4b86-86c3-d0c8ce012a92");
+    h.responses.push(error, { accepted: true });
+    h.coordinator.offerSelected(requestId, "offer", "Provider", "/flight-details");
+    await turn();
+    assert.equal(h.timers.length, 1);
+    await h.coordinator.settleBeforeExternalHandoff(requestId);
+    assert.equal(h.calls.length, 1, "only an explicit server retry may be expedited");
+    assert.equal(h.timers[0].cancelled, false, "normal backoff must remain active");
+    h.setContext(null);
+    assert.equal(h.timers[0].cancelled, true);
+  }
+});
+
+test("a retryable response that arrives after handoff settling begins is retried before navigation", async () => {
+  const h = harness();
+  const requestId = h.remember("2f29a1e6-c6b1-4ba5-952c-5a8e8509c58a");
+  let respond!: (value: JourneyEventResponse) => void;
+  h.responses.push(new Promise(resolve => { respond = resolve; }), { accepted: true });
+  h.coordinator.resultsViewed(requestId, "/flight-results", 4);
+  await turn();
+  const handoff = h.coordinator.settleBeforeExternalHandoff(requestId, 500);
+  await turn();
+  respond({ accepted: false, retryable: true });
+  await handoff;
+  assert.equal(h.calls.length, 2, "settlement must recheck retries scheduled by the awaited attempt");
+  assert.equal(h.calls[0].event.eventId, h.calls[1].event.eventId,
+    "the accelerated request reuses the same idempotency key");
+  assert.equal(h.timers[0].cancelled, true);
+});

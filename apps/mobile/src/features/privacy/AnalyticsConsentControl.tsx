@@ -16,8 +16,10 @@ export function AnalyticsConsentControl() {
   }, []);
   const enabled = state.choice === "granted";
   const status = state.error
-    ? enabled ? "Your choice is saved. The analytics connection is pending." : state.pending ? "Analytics sharing is off on this device. Withdrawal will finish when connected." : "Unable to save the analytics choice. Please try again."
-    : state.pending ? enabled ? "Connecting analytics…" : "Finishing withdrawal…" : "";
+    ? enabled ? "Analytics sharing is on, but this device is not connected. Try again." : state.pending ? "Analytics sharing is off. Withdrawal will finish when connected." : "Unable to save analytics sharing. Please try again."
+    : state.pending ? enabled ? "Connecting analytics…" : "Finishing withdrawal…"
+      : enabled ? state.tracking ? "Analytics is ready on this device." : "Analytics sharing is on, but this device is not connected. Try again." : "";
+  const canRetry = state.loaded && (state.error || (enabled && !state.tracking && !state.pending));
 
   return <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
     <View style={styles.row}>
@@ -41,7 +43,7 @@ export function AnalyticsConsentControl() {
     </View>
     <Text style={[styles.description, { color: theme.muted }]}>Allow optional measurement of app engagement and usage patterns to improve Kurioticket. Search and handoff operational records work even when this is off. You can change this preference at any time.</Text>
     {status ? <Text accessibilityRole={state.error ? "alert" : undefined} accessibilityLiveRegion="polite" style={[styles.status, { color: theme.muted }]}>{status}</Text> : null}
-    {state.error ? <Pressable accessibilityRole="button" accessibilityLabel="Retry analytics connection" onPress={() => { void visitorIdentity.refresh(); }} style={styles.retry}><Text style={{ color: theme.text, fontWeight: "700" }}>Try again</Text></Pressable> : null}
+    {canRetry ? <Pressable accessibilityRole="button" accessibilityLabel="Retry analytics connection" onPress={() => { void visitorIdentity.refresh(); }} style={styles.retry}><Text style={{ color: theme.text, fontWeight: "700" }}>Try again</Text></Pressable> : null}
   </View>;
 }
 

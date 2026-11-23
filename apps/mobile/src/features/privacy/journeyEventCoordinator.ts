@@ -21,6 +21,7 @@ type PendingEvent = {
   controller: AbortController;
   attempts: number;
   cancelRetry?: () => void;
+  immediateRetryAllowed?: boolean;
 };
 
 const retryDelays = [250, 1000, 3000];
@@ -47,6 +48,9 @@ export class JourneyEventCoordinator {
   private context: number | null = null;
   private searches = new Set<string>();
   private events = new Map<string, PendingEvent>();
+  // Only in-memory promises for the current consent/account generation.
+  // Never store analytics payloads on disk or transmit them after withdrawal.
+  private deliveries = new Map<PendingEvent, Promise<void>>();
 
   constructor(private readonly dependencies: Dependencies) {}
 
@@ -68,6 +72,7 @@ export class JourneyEventCoordinator {
       pending.controller.abort();
     }
     this.events.clear();
+    this.deliveries.clear();
     this.searches.clear();
   }
 
@@ -126,8 +131,57 @@ export class JourneyEventCoordinator {
       oldest[1].controller.abort();
       this.events.delete(oldest[0]);
     }
-    void Promise.resolve().then(() => this.deliver(pending));
+    this.startDelivery(pending);
     return pending.event.eventId;
+  }
+
+  private startDelivery(pending: PendingEvent) {
+    const task = Promise.resolve().then(() => this.deliver(pending)).catch(() => undefined);
+    this.deliveries.set(pending, task);
+    void task.then(() => {
+      if (this.deliveries.get(pending) === task) this.deliveries.delete(pending);
+    });
+  }
+
+  /**
+   * When iOS opens an external provider, the app may be suspended before
+   * optional, already-enqueued result/offer events finish their POST.
+   * Give only this search's in-memory deliveries a brief chance to complete.
+   * Never delay the provider when consent is absent or tracking is unlinked.
+   * A retryable history race may be retried immediately with its original UUID.
+   */
+  async settleBeforeExternalHandoff(requestId: string | undefined, maxWaitMs = 500): Promise<void> {
+    this.contextChanged();
+    if (this.context === null || !validRequestId(requestId) || !this.searches.has(requestId)) return;
+    const current = this.context;
+    // Preserve one absolute bound across *all* retries, rather than resetting
+    // the 500ms budget for each attempt.
+    const deadline = Date.now() + Math.max(0, Math.min(maxWaitMs, 500));
+    while (this.context === current && Date.now() < deadline) {
+      for (const pending of this.events.values()) {
+        if (pending.context !== current || pending.event.requestId !== requestId
+          || !pending.cancelRetry || !pending.immediateRetryAllowed) continue;
+        pending.cancelRetry();
+        pending.cancelRetry = undefined;
+        pending.immediateRetryAllowed = false;
+        this.startDelivery(pending);
+      }
+      const active = [...this.deliveries.entries()]
+        .filter(([pending]) => pending.context === current && pending.event.requestId === requestId)
+        .map(([, task]) => task);
+      if (!active.length) return;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          Promise.allSettled(active).then(() => undefined),
+          new Promise<void>(resolve => { timer = setTimeout(resolve, Math.max(0, deadline - Date.now())); }),
+        ]);
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+      // An active attempt may have returned "retryable" *while we waited*.
+      // Recheck the newly scheduled retry before allowing external navigation.
+    }
   }
 
   private async deliver(pending: PendingEvent) {
@@ -135,10 +189,15 @@ export class JourneyEventCoordinator {
     if (pending.controller.signal.aborted || this.context !== pending.context) return;
     pending.attempts += 1;
     let retry = false;
+    pending.immediateRetryAllowed = false;
     try {
       const response = await this.dependencies.send(pending.event, pending.context, pending.controller.signal);
       retry = !response.accepted && response.retryable === true;
+      // The server explicitly requested a retry (usually a deferred
+      // SearchHistory write); it is safe to expedite once before clickout.
+      pending.immediateRetryAllowed = retry;
     } catch (error) {
+      // Retain normal backoff for rate limiting, outages and network errors.
       retry = retryableFailure(error);
     }
     this.contextChanged();
@@ -148,6 +207,6 @@ export class JourneyEventCoordinator {
       const timer = setTimeout(callback, delayMs);
       return () => clearTimeout(timer);
     });
-    pending.cancelRetry = schedule(() => { pending.cancelRetry = undefined; void this.deliver(pending); }, delay);
+    pending.cancelRetry = schedule(() => { pending.cancelRetry = undefined; pending.immediateRetryAllowed = false; this.startDelivery(pending); }, delay);
   }
 }
