@@ -21,7 +21,8 @@ test("Compare deals owns the provider booking action", () => {
   assert.match(deals, /accessibilityRole="radio"/);
   assert.match(deals, /accessibilityRole="button"/);
   assert.match(deals, />View deal<\/Text>/);
-  assert.match(deals, /onSelectDeal\(deal\.offerId\);onViewDeal\(deal\.offerId\)/);
+  assert.match(deals, /onPress=\{\(\)=>onViewDeal\(deal\.offerId\)\}/);
+  assert.doesNotMatch(deals, /onSelectDeal\(deal\.offerId\);onViewDeal\(deal\.offerId\)/, "View deal must not count as selecting an offer");
   assert.match(available, /onViewDeal=\{\(offerId\)=>void handoff\(offerId\)\}/);
 });
 
