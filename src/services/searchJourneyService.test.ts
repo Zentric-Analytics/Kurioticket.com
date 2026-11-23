@@ -22,7 +22,7 @@ test("journey activity expires after thirty minutes of inactivity", () => {
 type Visitor = { id: string; consentStatus: string; trackingDisabledAt: Date | null; currentUserId: string | null; identityLinks: Array<{ userId: string }> };
 type History = { id: string; visitorId: string | null; userId: string | null; requestId: string; type: "FLIGHT" | "HOTEL"; resultCount: number; latencyMs: number; status: "SUCCESS" | "PARTIAL" | "FAILED"; query: unknown };
 type Journey = { id: string; visitorId: string; startedAt: Date; lastActivityAt: Date };
-type Event = { journeyId: string; eventKey: string; type: string; searchHistoryId: string | null; redirectLogId: string | null; provider: string | null };
+type Event = { journeyId: string; eventKey: string; type: string; searchHistoryId: string | null; redirectLogId: string | null; provider: string | null; metadata?: unknown };
 
 function fixture(countryLookup?: (ip: string) => Promise<string | null>) {
   const visitors: Visitor[] = [];
@@ -179,6 +179,45 @@ test("wrong-visitor, unowned, and other-account searches are permanent rejection
   const other = f.visitor();
   for (const search of [f.search(other.id), f.search(null), f.search(visitor.id, randomUUID(), "different-account")]) {
     assert.deepEqual(await f.service.recordClientJourneyEvent(client(visitor.id, search.requestId)), { accepted: false });
+  }
+  assert.equal(f.events.length, 0);
+});
+
+test("flight details, fare and provider selections remain distinct exact-search canonical stages", async () => {
+  const f = fixture();
+  const visitor = f.visitor();
+  const search = f.search(visitor.id);
+  for (const [type, offerId, provider] of [
+    ["FLIGHT_DETAILS_VIEWED", "flight.01", "KAYAK sandbox"],
+    ["OFFER_SELECTED", "fare.01", "Duffel"],
+    ["PROVIDER_DEAL_SELECTED", "deal.01", "Trip.com"],
+  ] as const) {
+    const accepted = await f.service.recordClientJourneyEvent({
+      ...client(visitor.id, search.requestId), eventId: randomUUID(),
+      type, offerId, provider,
+      sourcePage: type === "FLIGHT_DETAILS_VIEWED" ? "/flight-results" : "/flight-details",
+    });
+    assert.deepEqual(accepted, { accepted: true });
+  }
+  assert.deepEqual(f.events.map(row => row.type),
+    ["FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"]);
+  assert.deepEqual(f.events.map(row => (row.metadata as {resultId?:string})?.resultId),
+    ["flight.01", "fare.01", "deal.01"]);
+  assert.equal(new Set(f.events.map(row => row.eventKey)).size, 3);
+  assert.ok(f.events.every(row => row.searchHistoryId === search.id));
+});
+
+test("flight-only stages never attach to hotel searches even with matching consent", async () => {
+  const f = fixture();
+  const visitor = f.visitor();
+  const search = f.search(visitor.id);
+  search.type = "HOTEL";
+  for (const type of ["FLIGHT_DETAILS_VIEWED", "PROVIDER_DEAL_SELECTED"] as const) {
+    const response = await f.service.recordClientJourneyEvent({
+      ...client(visitor.id, search.requestId), eventId: randomUUID(), type,
+      offerId: "offer_01", sourcePage: "/flight-details",
+    });
+    assert.deepEqual(response, { accepted: false });
   }
   assert.equal(f.events.length, 0);
 });
