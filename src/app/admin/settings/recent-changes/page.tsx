@@ -1,3 +1,4 @@
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { SettingsHistoryRangeControl } from "@/components/admin/SettingsHistoryRangeControl";
@@ -20,11 +21,7 @@ const rowGrid = "lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,1.3fr)_m
 function single(value: string | string[] | undefined) {
   return typeof value === "string" ? value : undefined;
 }
-function formatAuditDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium", timeStyle: "short", timeZone: "UTC",
-  }).format(new Date(value)) + " UTC";
-}
+
 function historyHref(range: SettingsHistoryRange, category: SettingsHistoryCategory, cursor?: string, fromDate = "", toDate = "") {
   const params = new URLSearchParams({ range, category });
   if (cursor) params.set("cursor", cursor);
@@ -34,7 +31,7 @@ function historyHref(range: SettingsHistoryRange, category: SettingsHistoryCateg
   }
   return fullHistoryPath + "?" + params.toString();
 }
-function ReadOnlyDetail({ label, value }: { label: string; value: string }) {
+function ReadOnlyDetail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="min-w-0">
       <dt className="text-[11px] font-semibold uppercase tracking-wide text-[#64748B]">{label}</dt>
@@ -50,7 +47,7 @@ function SettingsHistoryRow({ item }: { item: SettingsHistoryEntry }) {
         <span className="min-w-0 text-[12px] text-[#475569]">{item.change}</span>
         <span className="min-w-0 break-all text-[12px] text-[#475569]">{item.adminEmail}</span>
         <span className="flex min-w-0 flex-wrap items-center justify-between gap-1 text-[12px] text-[#64748B]">
-          <time dateTime={item.createdAt}>{formatAuditDate(item.createdAt)}</time>
+          <AdminLocalDateTime value={item.createdAt} />
           <span className="text-[#004BB8] group-open:hidden">Details ▾</span>
           <span className="hidden text-[#004BB8] group-open:inline">Close ▴</span>
         </span>
@@ -61,7 +58,7 @@ function SettingsHistoryRow({ item }: { item: SettingsHistoryEntry }) {
           <ReadOnlyDetail label="Section" value={item.section} />
           <ReadOnlyDetail label="Change" value={item.change} />
           <ReadOnlyDetail label="Changed by" value={item.adminEmail} />
-          <ReadOnlyDetail label="Date & time" value={formatAuditDate(item.createdAt)} />
+          <ReadOnlyDetail label="Date & time" value={<AdminLocalDateTime value={item.createdAt} />} />
           <ReadOnlyDetail label="Action code" value={item.action} />
           <ReadOnlyDetail label="Target type" value={item.targetType} />
           {item.targetId ? <ReadOnlyDetail label="Target ID" value={item.targetId} /> : null}
