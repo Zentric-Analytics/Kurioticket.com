@@ -1,3 +1,4 @@
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -56,7 +57,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
       action={<Link href={path + "/devices"} className={linkClass}>Reset device filters</Link>} />
   </div>;
   const query = parsed.query;
-  const result = await loadAdminFullDeviceHistory(id, query);
+  const result = await loadAdminFullDeviceHistory(id, query, await getAdminTimeZone());
   if (result.status === "not_found") notFound();
   if (result.status === "unavailable") return <div className="min-w-0 space-y-4">
     <Link href={backHref} className={linkClass}><ArrowLeft size={15} aria-hidden="true"/> Back to Activity</Link>
