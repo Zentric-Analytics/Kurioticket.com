@@ -152,7 +152,10 @@ export function HotelCard({
   searchRequestId,
 }: HotelCardProps) {
   const journeyEvents = useJourneyEvents();
-  const rememberDetailsContext = () => journeyEvents.rememberDetailsContext("hotel", hotel.id, searchRequestId ?? null);
+  const rememberDetailsContext = () => {
+    if (resolvedDetailsHref) journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", searchRequestId, { offerId: hotel.id, sourcePage: "/hotels/results" });
+    journeyEvents.rememberDetailsContext("hotel", hotel.id, searchRequestId ?? null);
+  };
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();

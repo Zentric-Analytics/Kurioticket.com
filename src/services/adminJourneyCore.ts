@@ -38,7 +38,7 @@ type JourneyRecord = {
 };
 type EventRecord = {
   id: string; type: AdminJourneyEventType; createdAt: Date; product: AdminJourneyProduct | null;
-  action: string | null; resultReference: string | null;
+  action: string | null; resultReference: string | null; filterGroup: string | null; sortMode: string | null;
   provider: string | null; sourcePage: string | null;
   searchHistoryId: string | null; requestId: string | null; searchProduct: AdminJourneyProduct | null;
   origin: string | null; destination: string | null; checkIn: Date | null; checkOut: Date | null;
@@ -78,7 +78,8 @@ function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
   return Prisma.sql`
     WITH eligible_events AS (
       SELECT e."id", e."journeyId", e."type"::text AS "type", e."product"::text AS "product", e."provider", e."createdAt",
-        e."metadata"->>'sourcePage' AS "sourcePage", e."metadata"->>'action' AS "action", e."metadata"->>'resultId' AS "resultReference", j."visitorId", v."currentUserId" AS "userId", j."startedAt",
+        e."metadata"->>'sourcePage' AS "sourcePage", e."metadata"->>'action' AS "action", e."metadata"->>'resultId' AS "resultReference",
+        e."metadata"->>'filterGroup' AS "filterGroup", e."metadata"->>'sortMode' AS "sortMode", j."visitorId", v."currentUserId" AS "userId", j."startedAt",
         s."id" AS "searchHistoryId", s."requestId", s."type"::text AS "searchProduct", s."origin", s."destination",
         s."checkIn", s."checkOut", s."status"::text AS "searchStatus", s."resultCount", s."latencyMs",
         r."id" AS "redirectLogId", r."provider" AS "redirectProvider", r."route", r."destinationUrl"
@@ -114,7 +115,7 @@ function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
           AND (e."searchHistoryId" IS NULL OR (s."requestId" IS NOT NULL AND r."metadata"->>'requestId' = s."requestId"))
         ))
         AND (
-          (e."type" IN ('SEARCH_COMPLETED', 'RESULTS_VIEWED', 'FLIGHT_DETAILS_VIEWED', 'OFFER_SELECTED', 'PROVIDER_DEAL_SELECTED', 'RESULT_SAVED', 'RESULT_UNSAVED', 'RESULT_SHARED', 'PRICE_ALERT_CREATED') AND s."id" IS NOT NULL AND e."redirectLogId" IS NULL)
+          (e."type" IN ('SEARCH_COMPLETED', 'RESULTS_VIEWED', 'FLIGHT_DETAILS_VIEWED', 'OFFER_SELECTED', 'PROVIDER_DEAL_SELECTED', 'RESULT_SAVED', 'RESULT_UNSAVED', 'RESULT_SHARED', 'PRICE_ALERT_CREATED', 'SEARCH_EDIT_APPLIED', 'SEARCH_FILTER_APPLIED', 'SEARCH_SORT_CHANGED', 'RESULT_DETAILS_OPENED', 'RATE_DETAILS_OPENED') AND s."id" IS NOT NULL AND e."redirectLogId" IS NULL)
           OR (e."type" = 'PROVIDER_HANDOFF_STARTED' AND r."id" IS NOT NULL)
         )
         ${identity}
@@ -287,7 +288,9 @@ function journeyDto(row: JourneyRecord): AdminJourneyRow {
 function eventDto(row: EventRecord): AdminJourneyEvent {
   return {
     id: row.id, type: row.type, createdAt: row.createdAt.toISOString(), product: row.product,
-    ...(["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"].includes(row.type) ? {
+    filterGroup: row.type === "SEARCH_FILTER_APPLIED" && ["all", "price", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "transmission", "other"].includes(row.filterGroup ?? "") ? row.filterGroup : null,
+    sortMode: row.type === "SEARCH_SORT_CHANGED" && ["price", "best", "fastest", "stops", "rating", "recommended", "other"].includes(row.sortMode ?? "") ? row.sortMode : null,
+    ...(["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"].includes(row.type) ? {
       action: ["local_saved", "local_unsaved", "saved_item_confirmed", "saved_item_removed", "share_link_copied", "share_sheet_completed"].includes(row.action ?? "")
         ? row.action as AdminJourneyEvent["action"] : null,
       resultReference: row.resultReference && /^[A-Za-z0-9._:+~=-]{1,128}$/.test(row.resultReference) ? row.resultReference : null,

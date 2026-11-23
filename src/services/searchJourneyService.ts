@@ -2,12 +2,15 @@ import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { getOptionalPrisma } from "@/lib/prisma";
 import {
   clientJourneyEventTypes,
+  clientJourneyDecisionTypes,
   getJourneyActivityCutoff,
   journeyEventKey,
   type ClientJourneyEventType,
   type JourneyEventReceipt,
+  type JourneyFilterGroup,
+  type JourneySortMode,
 } from "@/lib/search-journey";
-import { withEnvironmentMetadata } from "@/lib/stagingSafety";
+import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
 import { applicationMetadata, type ApplicationAttribution } from "@/lib/application-source";
 import { completeSearchNetworkObservation, recordedSearchNetwork } from "@/lib/searchNetworkObservation";
@@ -37,6 +40,8 @@ export type ClientJourneyEventInput = ApplicationAttribution & {
   sourcePage?: string;
   /** Canonical offer reference from the validated search response. Not an arbitrary URL. */
   offerId?: string;
+  filterGroup?: JourneyFilterGroup;
+  sortMode?: JourneySortMode;
 };
 export type SearchHistoryInput = ApplicationAttribution & {
   userId?: string | null;
@@ -193,12 +198,16 @@ export function createSearchJourneyService(
         if (!(await lockConsentedVisitor(tx, visitorId, input.userId ?? null))) return { accepted: false };
         const search = await tx.searchHistory.findUnique({
           where: { requestId: input.requestId },
-          select: { id: true, type: true, visitorId: true, userId: true },
+          select: { id: true, type: true, visitorId: true, userId: true, query: true },
         });
         // Search responses are deliberately sent before optional history writes.
         // Retry this race, but never retry an already-known ownership mismatch.
         if (!search) return { accepted: false, retryable: true };
         if (!ownsActivity(search, visitorId, input.userId ?? null)) return { accepted: false };
+        if ((clientJourneyDecisionTypes as readonly string[]).includes(input.type)) {
+          const query = search.query;
+          if (!query || typeof query !== "object" || Array.isArray(query) || query.environment !== getPublicEnvironment()) return { accepted: false };
+        }
         // These stages are specific to native flight navigation. Do not allow
         // other product searches to be recast as a flight action.
         if ((input.type === "FLIGHT_DETAILS_VIEWED" || input.type === "PROVIDER_DEAL_SELECTED")
@@ -212,7 +221,9 @@ export function createSearchJourneyService(
           provider: input.provider,
           searchHistoryId: search.id,
           metadata: { ...applicationMetadata(input), ...(input.sourcePage ? { sourcePage: input.sourcePage } : {}),
-            ...(input.offerId ? { resultId: input.offerId } : {}) },
+            ...(input.offerId ? { resultId: input.offerId } : {}),
+            ...(input.filterGroup ? { filterGroup: input.filterGroup } : {}),
+            ...(input.sortMode ? { sortMode: input.sortMode } : {}) },
         }, now());
         return { accepted: Boolean(result) };
       });

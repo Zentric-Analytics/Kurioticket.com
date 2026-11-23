@@ -1,13 +1,16 @@
 import { createProviderHandoffMetadata } from "../../../../../src/lib/providerHandoffClient";
+import type { ClientJourneyDecisionType, JourneyFilterGroup, JourneySortMode } from "../../../../../src/lib/search-journey";
 
 export type JourneyEvent = {
   eventId: string;
-  type: "RESULTS_VIEWED" | "FLIGHT_DETAILS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_DEAL_SELECTED";
+  type: "RESULTS_VIEWED" | "FLIGHT_DETAILS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_DEAL_SELECTED" | ClientJourneyDecisionType;
   requestId: string;
   provider?: string;
   /** Safe, bounded reference only on explicit new flight interactions. */
   offerId?: string;
   sourcePage: string;
+  filterGroup?: JourneyFilterGroup;
+  sortMode?: JourneySortMode;
 };
 export type JourneyEventResponse = { accepted: boolean; retryable?: boolean };
 
@@ -50,6 +53,7 @@ export class JourneyEventCoordinator {
   private context: number | null = null;
   private searches = new Set<string>();
   private events = new Map<string, PendingEvent>();
+  private decisionSequence = 0;
   // Only in-memory promises for the current consent/account generation.
   // Never store analytics payloads on disk or transmit them after withdrawal.
   private deliveries = new Map<PendingEvent, Promise<void>>();
@@ -111,6 +115,17 @@ export class JourneyEventCoordinator {
     return this.enqueue("PROVIDER_DEAL_SELECTED", requestId, "/flight-details", offerId, provider, true);
   }
 
+  /** Each committed action is distinct; retries keep the same eventId. */
+  workflowDecision(type: ClientJourneyDecisionType, requestId: string | undefined, sourcePage: string,
+    detail: { offerId?: string; filterGroup?: JourneyFilterGroup; sortMode?: JourneySortMode } = {}) {
+    const requiresReference = type === "RESULT_DETAILS_OPENED" || type === "RATE_DETAILS_OPENED";
+    if (requiresReference && !/^[A-Za-z0-9._:+~=-]{1,128}$/.test(detail.offerId ?? "")) return;
+    if (type === "SEARCH_FILTER_APPLIED" ? !detail.filterGroup : Boolean(detail.filterGroup)) return;
+    if (type === "SEARCH_SORT_CHANGED" ? !detail.sortMode : Boolean(detail.sortMode)) return;
+    return this.enqueue(type, requestId, sourcePage, detail.offerId ?? "", undefined, requiresReference,
+      { filterGroup: detail.filterGroup, sortMode: detail.sortMode }, true);
+  }
+
   prepareHandoff(requestId: string | undefined) {
     const context = this.captureContext();
     return createProviderHandoffMetadata(() => {
@@ -121,14 +136,15 @@ export class JourneyEventCoordinator {
   }
 
   private enqueue(type: JourneyEvent["type"], requestId: string | undefined, sourcePage: string,
-    offerId = "", provider?: string, includeOfferReference = false) {
+    offerId = "", provider?: string, includeOfferReference = false,
+    decision: { filterGroup?: JourneyFilterGroup; sortMode?: JourneySortMode } = {}, allowRepeat = false) {
     this.contextChanged();
     const sourcePath = journeySourcePath(sourcePage);
     if (this.context === null || !validRequestId(requestId) || !this.searches.has(requestId) || !sourcePath) return;
     if (includeOfferReference && !/^[A-Za-z0-9._:+~=-]{1,128}$/.test(offerId)) return;
     // Re-renders, reopening cached details and repeated presses on the same offer
     // do not create duplicate funnel steps. Delivery retries retain this UUID.
-    const key = JSON.stringify([type, requestId, sourcePath, offerId, provider ?? null]);
+    const key = JSON.stringify([type, requestId, sourcePath, offerId, provider ?? null, allowRepeat ? ++this.decisionSequence : null]);
     const existing = this.events.get(key);
     if (existing) return existing.event.eventId;
     let eventId: string;
@@ -139,6 +155,8 @@ export class JourneyEventCoordinator {
         eventId, type, requestId, sourcePage: sourcePath,
         ...(provider?.trim() ? { provider: provider.trim().slice(0, 100) } : {}),
         ...(includeOfferReference ? { offerId } : {}),
+        ...(decision.filterGroup ? { filterGroup: decision.filterGroup } : {}),
+        ...(decision.sortMode ? { sortMode: decision.sortMode } : {}),
       },
       context: this.context,
       controller: new AbortController(),
