@@ -1,3 +1,4 @@
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 import { ArrowLeft, ChevronDown } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -6,7 +7,6 @@ import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { CaseDetailHeading, CaseSidebarField, caseAsideClass, caseColumnsClass, caseMainClass, casePageClass } from "@/components/admin/AdminCaseDetailUI";
 import { SupportReplyForm, SupportTicketStatusControl } from "@/components/admin/SupportTicketActions";
 import { LinkedCasePreview } from "@/components/admin/LinkedCasePreview";
-import { formatDateTime } from "@/lib/admin-data";
 import { supportCategoryLabel, supportTicketBackHref } from "@/lib/adminSupportInboxNavigation";
 import type { AdminSupportDetail, AdminSupportStatus } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
@@ -94,7 +94,7 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
                       <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                           <span className="min-w-0 break-words text-[13px] font-semibold text-[#111827]">{senderName(message.author, ticket)}</span>
-                          <time dateTime={message.createdAt} className="shrink-0 text-[11px] text-[#64748B]">{formatDateTime(new Date(message.createdAt))}</time>
+                          <AdminLocalDateTime value={message.createdAt} className="shrink-0 text-[11px] text-[#64748B]" />
                         </div>
                         <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-5 text-[#374151]">{message.body}</p>
                       </div>
@@ -155,8 +155,8 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
             <dl className="space-y-0 pt-2">
               <CaseSidebarField label="Category">{supportCategoryLabel(ticket.category)}</CaseSidebarField>
               <CaseSidebarField label="Priority">{ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()}</CaseSidebarField>
-              <CaseSidebarField label="Created">{formatDateTime(new Date(ticket.createdAt))}</CaseSidebarField>
-              <CaseSidebarField label="Updated">{formatDateTime(new Date(ticket.updatedAt))}</CaseSidebarField>
+              <CaseSidebarField label="Created"><AdminLocalDateTime value={ticket.createdAt} /></CaseSidebarField>
+              <CaseSidebarField label="Updated"><AdminLocalDateTime value={ticket.updatedAt} /></CaseSidebarField>
               <CaseSidebarField label="Ticket ID"><span className="[overflow-wrap:anywhere] text-[12px]">{ticket.id}</span></CaseSidebarField>
             </dl>
             {ticket.identity.userId ? (
