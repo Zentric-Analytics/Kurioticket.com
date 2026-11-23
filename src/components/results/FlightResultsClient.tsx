@@ -2676,7 +2676,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setRestoredFlightView(returnView);
       // Changing sort does not always update the URL. Restore the saved
       // selection before applying the exact order on a return from details.
-      if (returnView) setSortMode(returnView.sortMode);
+      if (returnView) {
+        setSortMode(returnView.sortMode);
+        setMobileJourneyTimeMaximums(returnView.journeyTimeMaximums);
+      }
       if (!shouldBypassSnapshot && returnIntentRef.current?.returning && (!snapshotState?.isFresh || !returnView)) {
         // Returning is not a new search. Expired provider quotes require an
         // explicit customer refresh before they can become actionable again.
@@ -4335,11 +4338,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       validUntil: snapshotState.snapshot.validUntil,
       resultIds: sortedResults.map(flight => flight.id),
       sortMode,
+      journeyTimeMaximums: mobileJourneyTimeMaximums,
       kayakOffers: displayedKayakOffers,
       kayakCriteria: displayedKayakCriteria,
     });
   }, [guidedMode, loading, error, filterApplying, resultsUiPreparing, sortedResults,
-    currentFlightSearchKey, sortMode, displayedKayakOffers, displayedKayakCriteria]);
+    currentFlightSearchKey, sortMode, mobileJourneyTimeMaximums,
+    displayedKayakOffers, displayedKayakCriteria]);
 
   const visibleJourneyRequestId = displayedJourneyRequest({ response: journeyResponse, currentSearchKey: currentFlightSearchKey, loading: loading || backgroundRefreshing || filterApplying, error, visibleCount: sortedResults.some(flight => providerResults.includes(flight)) ? 1 : 0 });
   useEffect(() => { journeyEvents.resultsViewed(visibleJourneyRequestId); }, [journeyEvents, visibleJourneyRequestId]);
