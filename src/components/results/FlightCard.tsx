@@ -68,7 +68,12 @@ export function FlightCard({
   const rememberDetailsContext = () => {
     // A guided selection may have a default details URL yet call onAction
     // instead of navigating. Never report an unobserved details opening.
-    if (resolvedDetailsHref && !onAction) journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", searchRequestId, { offerId: flight.id, sourcePage: "/flights/results" });
+    if (resolvedDetailsHref && !onAction) journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", searchRequestId, { offerId: flight.id, sourcePage: "/flights/results",
+      ...(Number.isFinite(flight.price) && flight.price > 0 && /^[A-Z]{3}$/.test(flight.currency) ? { observedResult: {
+        label: flight.airlineName, provider: flight.provider, amount: flight.price,
+        currency: flight.currency, priceBasis: "total" as const,
+      } } : {}),
+    });
     journeyEvents.rememberDetailsContext("flight", flight.id, searchRequestId ?? null);
     if (typeof window !== "undefined" && window.location.pathname === "/flights/results" &&
       (resolvedDetailsHref?.startsWith("/flights/details/") || resolvedDetailsHref?.startsWith("/sandbox/kayak/details"))) {
