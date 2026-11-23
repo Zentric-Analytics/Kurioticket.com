@@ -34,7 +34,7 @@ type JourneyRecord = {
   id: string; visitorId: string; userId: string | null;
   startedAt: Date; firstEventAt: Date; lastEventAt: Date;
   products: string[]; providers: string[]; providerCount: Count; eventCount: Count; searchCount: Count;
-  searchCompleted: Count; resultsViewed: Count; offerSelected: Count; handoffStarted: Count;
+  searchCompleted: Count; resultsViewed: Count; flightDetailsViewed: Count; offerSelected: Count; providerDealSelected: Count; handoffStarted: Count;
 };
 type EventRecord = {
   id: string; type: AdminJourneyEventType; createdAt: Date; product: AdminJourneyProduct | null;
@@ -49,7 +49,9 @@ type SummaryRecord = {
   identities: Count; guests: Count; registered: Count; registeredAccounts: Count; journeys: Count; rawEvents: Count;
   searchCompletedIdentities: Count; searchCompletedJourneys: Count; searchCompletedEvents: Count;
   resultsViewedIdentities: Count; resultsViewedJourneys: Count; resultsViewedEvents: Count;
+  flightDetailsViewedIdentities: Count; flightDetailsViewedJourneys: Count; flightDetailsViewedEvents: Count;
   offerSelectedIdentities: Count; offerSelectedJourneys: Count; offerSelectedEvents: Count;
+  providerDealSelectedIdentities: Count; providerDealSelectedJourneys: Count; providerDealSelectedEvents: Count;
   handoffStartedIdentities: Count; handoffStartedJourneys: Count; handoffStartedEvents: Count;
   searches: Count; successfulSearches: Count; partialSearches: Count; failedSearches: Count;
   exactHandoffs: Count; uncorrelatedHandoffs: Count;
@@ -112,7 +114,7 @@ function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
           AND (e."searchHistoryId" IS NULL OR (s."requestId" IS NOT NULL AND r."metadata"->>'requestId' = s."requestId"))
         ))
         AND (
-          (e."type" IN ('SEARCH_COMPLETED', 'RESULTS_VIEWED', 'OFFER_SELECTED', 'RESULT_SAVED', 'RESULT_UNSAVED', 'RESULT_SHARED', 'PRICE_ALERT_CREATED') AND s."id" IS NOT NULL AND e."redirectLogId" IS NULL)
+          (e."type" IN ('SEARCH_COMPLETED', 'RESULTS_VIEWED', 'FLIGHT_DETAILS_VIEWED', 'OFFER_SELECTED', 'PROVIDER_DEAL_SELECTED', 'RESULT_SAVED', 'RESULT_UNSAVED', 'RESULT_SHARED', 'PRICE_ALERT_CREATED') AND s."id" IS NOT NULL AND e."redirectLogId" IS NULL)
           OR (e."type" = 'PROVIDER_HANDOFF_STARTED' AND r."id" IS NOT NULL)
         )
         ${identity}
@@ -137,7 +139,9 @@ function journeyRollups() {
       count(DISTINCT "provider") AS "providerCount", count(*) AS "eventCount", count(DISTINCT "searchHistoryId") AS "searchCount",
       count(*) FILTER (WHERE "type" = 'SEARCH_COMPLETED') AS "searchCompleted",
       count(*) FILTER (WHERE "type" = 'RESULTS_VIEWED') AS "resultsViewed",
+      count(*) FILTER (WHERE "type" = 'FLIGHT_DETAILS_VIEWED') AS "flightDetailsViewed",
       count(*) FILTER (WHERE "type" = 'OFFER_SELECTED') AS "offerSelected",
+      count(*) FILTER (WHERE "type" = 'PROVIDER_DEAL_SELECTED') AS "providerDealSelected",
       count(*) FILTER (WHERE "type" = 'PROVIDER_HANDOFF_STARTED') AS "handoffStarted"
     FROM scoped_events GROUP BY "journeyId", "visitorId", "userId"
   )`;
@@ -175,9 +179,15 @@ function summarySql(scope: AdminJourneyScope) {
     count(DISTINCT "visitorId") FILTER (WHERE "type" = 'RESULTS_VIEWED') AS "resultsViewedIdentities",
     count(DISTINCT "journeyId") FILTER (WHERE "type" = 'RESULTS_VIEWED') AS "resultsViewedJourneys",
     count(*) FILTER (WHERE "type" = 'RESULTS_VIEWED') AS "resultsViewedEvents",
+    count(DISTINCT "visitorId") FILTER (WHERE "type" = 'FLIGHT_DETAILS_VIEWED') AS "flightDetailsViewedIdentities",
+    count(DISTINCT "journeyId") FILTER (WHERE "type" = 'FLIGHT_DETAILS_VIEWED') AS "flightDetailsViewedJourneys",
+    count(*) FILTER (WHERE "type" = 'FLIGHT_DETAILS_VIEWED') AS "flightDetailsViewedEvents",
     count(DISTINCT "visitorId") FILTER (WHERE "type" = 'OFFER_SELECTED') AS "offerSelectedIdentities",
     count(DISTINCT "journeyId") FILTER (WHERE "type" = 'OFFER_SELECTED') AS "offerSelectedJourneys",
     count(*) FILTER (WHERE "type" = 'OFFER_SELECTED') AS "offerSelectedEvents",
+    count(DISTINCT "visitorId") FILTER (WHERE "type" = 'PROVIDER_DEAL_SELECTED') AS "providerDealSelectedIdentities",
+    count(DISTINCT "journeyId") FILTER (WHERE "type" = 'PROVIDER_DEAL_SELECTED') AS "providerDealSelectedJourneys",
+    count(*) FILTER (WHERE "type" = 'PROVIDER_DEAL_SELECTED') AS "providerDealSelectedEvents",
     count(DISTINCT "visitorId") FILTER (WHERE "type" = 'PROVIDER_HANDOFF_STARTED') AS "handoffStartedIdentities",
     count(DISTINCT "journeyId") FILTER (WHERE "type" = 'PROVIDER_HANDOFF_STARTED') AS "handoffStartedJourneys",
     count(*) FILTER (WHERE "type" = 'PROVIDER_HANDOFF_STARTED') AS "handoffStartedEvents",
@@ -269,13 +279,15 @@ function journeyDto(row: JourneyRecord): AdminJourneyRow {
     products: (row.products ?? []).filter((product): product is AdminJourneyProduct => adminJourneyProducts.includes(product as AdminJourneyProduct)),
     providers: row.providers.slice(0, 10).map(provider => text(provider, 100)).filter((provider): provider is string => Boolean(provider)),
     providerCount: count(row.providerCount), eventCount: count(row.eventCount), searchCount: count(row.searchCount),
-    stages: { SEARCH_COMPLETED: count(row.searchCompleted), RESULTS_VIEWED: count(row.resultsViewed), OFFER_SELECTED: count(row.offerSelected), PROVIDER_HANDOFF_STARTED: count(row.handoffStarted) },
+    stages: { SEARCH_COMPLETED: count(row.searchCompleted), RESULTS_VIEWED: count(row.resultsViewed),
+      FLIGHT_DETAILS_VIEWED: count(row.flightDetailsViewed), OFFER_SELECTED: count(row.offerSelected),
+      PROVIDER_DEAL_SELECTED: count(row.providerDealSelected), PROVIDER_HANDOFF_STARTED: count(row.handoffStarted) },
   };
 }
 function eventDto(row: EventRecord): AdminJourneyEvent {
   return {
     id: row.id, type: row.type, createdAt: row.createdAt.toISOString(), product: row.product,
-    ...(["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED"].includes(row.type) ? {
+    ...(["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"].includes(row.type) ? {
       action: ["local_saved", "local_unsaved", "saved_item_confirmed", "saved_item_removed", "share_link_copied", "share_sheet_completed"].includes(row.action ?? "")
         ? row.action as AdminJourneyEvent["action"] : null,
       resultReference: row.resultReference && /^[a-zA-Z0-9._:-]{1,128}$/.test(row.resultReference) ? row.resultReference : null,
@@ -298,7 +310,7 @@ function summaryDto(
   operational: OperationalRecord,
   handoffs: OperationalHandoffRecord,
 ): AdminJourneySummary {
-  const prefixes = ["searchCompleted", "resultsViewed", "offerSelected", "handoffStarted"] as const;
+  const prefixes = ["searchCompleted", "resultsViewed", "flightDetailsViewed", "offerSelected", "providerDealSelected", "handoffStarted"] as const;
   const stages = Object.fromEntries(adminJourneyStages.map((stage, index) => {
     const prefix = prefixes[index];
     return [stage, { identities: count(row[`${prefix}Identities`]), journeys: count(row[`${prefix}Journeys`]), events: count(row[`${prefix}Events`]) }];
