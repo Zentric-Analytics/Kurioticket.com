@@ -1,3 +1,4 @@
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import Link from "next/link";
 
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
@@ -31,7 +32,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
   // The legacy backend defaults each call to its own moving seven-day window.
   // Pin both reads to the same explicit bounds, including cursor continuations.
   const range = selectedJourneyRange(raw);
-  const fixed = journeyWindow(raw, now);
+  const fixed = journeyWindow(raw, now, await getAdminTimeZone());
   const providerOptions = buildAdminSearchProviderOptions(getProviderIntegrationStatuses(), one(raw.provider) || null);
   // Always constrain this view to the deployment's configured environment.
   // Historical environment URLs must not silently switch staging into production.
