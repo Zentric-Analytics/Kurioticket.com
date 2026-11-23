@@ -2,7 +2,7 @@
 
 ## Branches and intent
 Production baseline: fcb413180c4d9829a32f3c98232be1bc3e9183e3 (tree bacfe6f34e35a88a96edbb84d10f4d7206f5d7a0).
-Latest incorporated dev: 98336a244ebb6b89b90386f20adcab0226fb4714.
+Latest incorporated dev: 6d2ec36710ce4895165bb20e371b89d0837b9030.
 Integration branch: integration/dev-production-sync-2026-11-23. Do not merge automatically.
 No development changes are promoted to production by this PR.
 
@@ -43,3 +43,5 @@ A later dev98336a update caused one additional travelApi.ts conflict: preserve t
 - No migrations executed; existing dev migration remains present; production migration SQL unchanged.
 
 CI on this exact PR remains required. The PR must stay open for separate review.
+
+Final dev6d2ec367 integration adds Android share-chooser outcome safeguards without conflicts; focused share tests pass.
