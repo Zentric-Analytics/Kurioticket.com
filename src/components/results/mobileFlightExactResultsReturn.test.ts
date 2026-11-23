@@ -50,6 +50,16 @@ test("KAYAK details preserve originating flight results without forcing provider
   assert.match(kayakClient, /void run\(\)/);
 });
 
+test("departing elsewhere and explicit new searches do not reuse old flight results", () => {
+  const returnHook = read("src/components/results/useResultsReturnIntent.ts");
+  const searchTabs = read("src/components/search/SearchTabs.tsx");
+  const standalone = read("src/components/search/StandaloneFlightSearchForm.tsx");
+  assert.match(returnHook, /if \(product === "flight"\) clearResultsReturn\("flight"\)/);
+  assert.match(searchTabs, /setIsFlightSubmitting\(true\);\s*clearResultsReturn\("flight"\)/);
+  assert.match(standalone, /setIsSubmitting\(true\);\s*clearResultsReturn\("flight"\)/);
+  assert.match(results, /clearResultsReturn\("flight"\);\s*router\.push\(`\/flights\/results/);
+});
+
 test("flight return scroll waits for the virtualized result list", () => {
   assert.match(results, /const y = takeResultsScroll\("flight"\)/);
   assert.match(results, /resultsUiPreparing \|\| error \|\| !sortedResults\.length/);
