@@ -37,8 +37,8 @@ export function useCanonicalSaved() {
       await repository.toggleHotel(hotel, params);
       void recordNativeSavedInteraction({ action: wasSaved ? "saved_item_removed" : "saved_item_confirmed",
         product: "HOTEL", resultId: hotel.id, requestId: journeyRequestId,
-        observedResult: { label: hotel.name, provider: hotel.provider, amount: Number(hotel.totalPrice),
-          currency: hotel.currency, priceBasis: "total" } });
+        observedResult: typeof hotel.currency === "string" ? { label: hotel.name, provider: hotel.provider,
+          amount: Number(hotel.totalPrice), currency: hotel.currency, priceBasis: "total" } : undefined });
     },
     toggleCar: async (car: import("../api/travelApi").CarResult, params: Record<string, unknown>, journeyRequestId?: string | null) => {
       if (favoriteAction(userId) === "sign-in" || !userId) {
