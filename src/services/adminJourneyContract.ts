@@ -3,7 +3,8 @@ import { z } from "zod";
 export const adminJourneyStages = ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED"] as const;
 export const adminJourneyProducts = ["FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const;
 export type AdminJourneyStage = (typeof adminJourneyStages)[number];
-export type AdminJourneyEventType = AdminJourneyStage | "RESULT_SAVED" | "RESULT_UNSAVED" | "RESULT_SHARED" | "PRICE_ALERT_CREATED";
+export type AdminJourneyEventType = AdminJourneyStage | "RESULT_SAVED" | "RESULT_UNSAVED" | "RESULT_SHARED" | "PRICE_ALERT_CREATED"
+  | "SEARCH_EDIT_APPLIED" | "SEARCH_FILTER_APPLIED" | "SEARCH_SORT_CHANGED" | "RESULT_DETAILS_OPENED" | "RATE_DETAILS_OPENED";
 export type AdminJourneyProduct = (typeof adminJourneyProducts)[number];
 export type AdminJourneyEnvironment = "staging" | "production";
 export type AdminJourneyIdentity = { kind: "guest" | "registered"; visitorId: string; userId: string | null };
@@ -59,6 +60,8 @@ export type AdminJourneyEvent = {
   createdAt: string;
   action?: "local_saved" | "local_unsaved" | "saved_item_confirmed" | "saved_item_removed" | "share_link_copied" | "share_sheet_completed" | null;
   resultReference?: string | null;
+  filterGroup?: string | null;
+  sortMode?: string | null;
   product: AdminJourneyProduct | null;
   provider: string | null;
   sourcePage: string | null;
