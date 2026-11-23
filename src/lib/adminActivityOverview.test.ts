@@ -22,7 +22,7 @@ function row(id: string, journeyId: string | undefined, stage: ActivityRow["stag
 
 test("recent searches split the same visitor journey by verified SearchHistory reference", () => {
   const rows: ActivityRow[] = [
-    { ...row("flight-search","shared","SEARCH_COMPLETED",new Date("2026-11-23T10:00:00Z"),"FLIGHT"), searchHistoryId:"flight-1",detail:"FLIGHT · LOS → CDG · SUCCESS" },
+    { ...row("flight-search","shared","SEARCH_COMPLETED",new Date("2026-11-23T10:00:00Z"),"FLIGHT"), searchHistoryId:"flight-1",detail:"FLIGHT · LOS → CDG · SUCCESS", platform:"IOS", resultCount:125 },
     { ...row("hotel-one","shared","SEARCH_COMPLETED",new Date("2026-11-23T10:02:00Z"),"HOTEL"),searchHistoryId:"hotel-1",detail:"HOTEL · Paris · SUCCESS" },
     { ...row("hotel-two","shared","SEARCH_COMPLETED",new Date("2026-11-23T10:03:00Z"),"HOTEL"),searchHistoryId:"hotel-2",detail:"HOTEL · Lyon · SUCCESS" },
     { ...row("car-search","shared","SEARCH_COMPLETED",new Date("2026-11-23T10:05:00Z"),"CAR"),searchHistoryId:"car-1",detail:"CAR · CDG · SUCCESS" },
@@ -45,6 +45,8 @@ test("recent searches split the same visitor journey by verified SearchHistory r
   assert.equal(flight.handoffs,1);
   assert.equal(flight.route,"LOS → CDG");
   assert.equal(flight.searchStatus,"SUCCESS");
+  assert.equal(flight.platform,"IOS");
+  assert.equal(flight.resultCount,125);
   assert.deepEqual(flight.providers,["Example provider"]);
   assert.equal(summary.searches.find(s=>s.id==="hotel-2")!.route,"Lyon");
   assert.equal(summary.searches.find(s=>s.id==="flight-unlinked")!.journeyId,null);
@@ -94,6 +96,8 @@ test("recent search presentation is informational and leaves full Journey Histor
   assert.match(component,/search\.offersSelected/);
   assert.match(component,/search\.handoffs/);
   assert.match(component,/search\.route/);
+  assert.match(component,/search\.platform/);
+  assert.match(component,/search\.resultCount/);
   assert.match(component,/Search record only/);
   assert.match(component,/View Journey History/);
   assert.doesNotMatch(component,/completeJourneyDetailHref|View journey for /);
