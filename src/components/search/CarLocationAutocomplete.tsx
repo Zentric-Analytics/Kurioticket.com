@@ -372,7 +372,7 @@ export function CarLocationAutocomplete({
       />
 
       {showPanel ? (usesDesktopPanel && typeof document !== "undefined" ? createPortal(
-        <div ref={popoverRef} style={style} data-placement={placement} className={panelClass} data-cars-desktop-popover="locations">
+        <div ref={popoverRef} style={{ ...style, ...(id.startsWith("sticky-cars-search") ? { zIndex: 1150 } : {}) }} data-placement={placement} className={panelClass} data-cars-desktop-popover="locations" data-cars-sticky-location-suggestions={id.startsWith("sticky-cars-search") ? "true" : undefined}>
           {panelContent}
         </div>,
         document.body,
