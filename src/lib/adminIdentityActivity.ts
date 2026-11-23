@@ -4,8 +4,9 @@ import type { PublicEnvironment } from "./stagingSafety";
 
 export const ACTIVITY_PAGE_SIZE = 20;
 export const ACTIVITY_FETCH_LIMIT = ACTIVITY_PAGE_SIZE + 25;
-export const activityTabs = ["all", "searches", "journeys", "selections", "handoffs"] as const;
-export const activityStages = ["all", "SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED", "ACCOUNT_ACTIVITY"] as const;
+export const activityTabs = ["all", "searches", "journeys", "selections", "handoffs", "interactions"] as const;
+export const activityStages = ["all", "SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED",
+  "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "ACCOUNT_ACTIVITY"] as const;
 export const activityProducts = ["all", "FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const;
 
 export type ActivityTab = (typeof activityTabs)[number];
@@ -97,13 +98,16 @@ export function activityWindow(filters: ActivityFilters) {
   };
 }
 export type JourneyStage = Exclude<ActivityStage, "all" | "ACCOUNT_ACTIVITY">;
-const allJourneyStages: JourneyStage[] = ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED"];
+const allJourneyStages: JourneyStage[] = ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED",
+  "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED"];
 export function allowedActivityStages(filters: ActivityFilters): Set<ActivityStage> {
   const available: ActivityStage[] = filters.tab === "all"
     ? [...allJourneyStages, "ACCOUNT_ACTIVITY"]
     : filters.tab === "journeys" ? allJourneyStages
     : filters.tab === "searches" ? ["SEARCH_COMPLETED", "RESULTS_VIEWED"]
-    : filters.tab === "selections" ? ["OFFER_SELECTED"] : ["PROVIDER_HANDOFF_STARTED"];
+    : filters.tab === "selections" ? ["OFFER_SELECTED"]
+    : filters.tab === "interactions" ? ["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "ACCOUNT_ACTIVITY"]
+    : ["PROVIDER_HANDOFF_STARTED"];
   return new Set(filters.stage === "all" ? available : available.filter(stage => stage === filters.stage));
 }
 export const activitySource = (id: string) => id.startsWith("j-") ? "j" : id.startsWith("s-") ? "s"
