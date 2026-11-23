@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import { isResultsHref, markResultsReturn, type ResultsProduct } from "@/lib/results/resultsReturnIntent";
+import { clearResultsReturn, isResultsHref, markResultsReturn, type ResultsProduct } from "@/lib/results/resultsReturnIntent";
 
 /** Mark only a real Back-to-results link or history traversal from details.
  * Viewing details alone never causes an unrelated later search to be restored.
@@ -17,11 +17,16 @@ export function useResultsReturnIntent(product: ResultsProduct, resultsHref: str
       const target = event.target;
       if (!(target instanceof Element)) return;
       const link = target.closest("a[href]");
-      if (!link || !isResultsHref(product, link.getAttribute("href") || "", window.location.href)) return;
-      remember();
+      if (!link) return;
+      if (isResultsHref(product, link.getAttribute("href") || "", window.location.href)) {
+        remember();
+        return;
+      }
+      if (product === "flight") clearResultsReturn("flight");
     };
     const onPopState = () => {
       if (isResultsHref(product, window.location.href, window.location.href)) remember();
+      else if (product === "flight") clearResultsReturn("flight");
     };
     document.addEventListener("click", onClick, true);
     window.addEventListener("popstate", onPopState);

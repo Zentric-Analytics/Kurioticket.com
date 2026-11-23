@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { clearResultsReturn } from "@/lib/results/resultsReturnIntent";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
@@ -1031,6 +1032,7 @@ export function StandaloneFlightSearchForm({
     if (tripType === "multi-city") appendFlightLegParams(params, authoritativeLegs);
 
     setIsSubmitting(true);
+    clearResultsReturn("flight");
     startRouteProgress();
     router.push(`/flights/results?${params.toString()}`);
   };

@@ -127,8 +127,13 @@ import {
   readFlightResultsSessionSnapshotForRefresh,
   writeFlightResultsSessionSnapshot,
 } from "@/lib/flights/flightResultsSessionCache";
-import { takeResultsReturn } from "@/lib/results/resultsReturnIntent";
+import { clearResultsReturn, takeResultsReturn } from "@/lib/results/resultsReturnIntent";
 import { takeResultsScroll } from "@/lib/results/resultsReturnScroll";
+import {
+  readFlightResultsReturnView,
+  writeFlightResultsReturnView,
+  type FlightResultsReturnView,
+} from "@/lib/flights/flightResultsReturnView";
 import { isFlightResultsPreparing } from "@/components/results/flightResultsReadiness";
 import {
   readSavedItemIds,
@@ -1008,9 +1013,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const desktopSortButtonRef = useRef<HTMLButtonElement | null>(null);
   const [providerResults, setResults] = useState<PublicFlightResult[]>([]);
   const kayak = useKayakResults();
-  const results = useMemo(() => guidedMode || kayak?.vertical !== "flights" ? providerResults : [
-    ...providerResults, ...kayak.offers.map(offer => kayakFlightCardModel(offer, kayak.criteria)).filter((flight): flight is PublicFlightResult => flight !== null),
-  ],[guidedMode,kayak,providerResults]);
+  const [restoredFlightView, setRestoredFlightView] = useState<FlightResultsReturnView | null>(null);
+  // The return view freezes KAYAK's original offers instead of letting a
+  // separate provider fetch replace the rows while mobile results remount.
+  const displayedKayakOffers = useMemo(
+    () => restoredFlightView?.kayakOffers ?? (kayak?.vertical === "flights" ? kayak.offers : []),
+    [restoredFlightView, kayak],
+  );
+  const displayedKayakCriteria = useMemo(
+    () => restoredFlightView?.kayakCriteria ?? (kayak?.vertical === "flights" ? kayak.criteria : {}),
+    [restoredFlightView, kayak],
+  );
+  const results = useMemo(() => guidedMode ? providerResults : [
+    ...providerResults,
+    ...displayedKayakOffers.map(offer => kayakFlightCardModel(offer, displayedKayakCriteria))
+      .filter((flight): flight is PublicFlightResult => flight !== null),
+  ],[guidedMode, displayedKayakCriteria, displayedKayakOffers, providerResults]);
   const activeFlightSearchKeyRef = useRef<string>("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -2652,7 +2670,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         : readFlightResultsSessionSnapshotForRefresh(searchKey);
       const snapshot = snapshotState?.snapshot;
       const refreshingStaleSnapshot = Boolean(snapshot && !snapshotState?.isFresh);
-      if (!shouldBypassSnapshot && returnIntentRef.current?.returning && !snapshotState?.isFresh) {
+      const returnView = !shouldBypassSnapshot && returnIntentRef.current?.returning
+        ? readFlightResultsReturnView(searchKey, window.location.pathname + window.location.search)
+        : null;
+      setRestoredFlightView(returnView);
+      // Changing sort does not always update the URL. Restore the saved
+      // selection before applying the exact order on a return from details.
+      if (returnView) {
+        setSortMode(returnView.sortMode);
+        setMobileJourneyTimeMaximums(returnView.journeyTimeMaximums);
+      }
+      if (!shouldBypassSnapshot && returnIntentRef.current?.returning && (!snapshotState?.isFresh || !returnView)) {
         // Returning is not a new search. Expired provider quotes require an
         // explicit customer refresh before they can become actionable again.
         mainInventoryFreshness.current = { fetchedAt: 0 };
@@ -2760,13 +2788,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   const retryMainInventorySearch = useCallback(() => {
     userInitiatedRetryRef.current = true;
+    setRestoredFlightView(null);
     setError("");
     setResults([]);
     setLoading(true);
     setBackgroundRefreshing(false);
     setFiltersReadySearchKey(null);
     setMainInventoryRetryGeneration((generation) => generation + 1);
-  }, []);
+    // Explicit Search again revalidates both suppliers. Browser Back never
+    // invokes either of these provider requests.
+    if (!guidedMode && kayak?.vertical === "flights") kayak.retry?.();
+  }, [guidedMode, kayak]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 639px)");
@@ -3454,6 +3486,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       collapseStickySearch();
     }
 
+    clearResultsReturn("flight");
     router.push(`/flights/results?${nextParams.toString()}`, { scroll: true });
   }
 
@@ -3544,6 +3577,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
       setDepartureDateInput(date);
       triggerFilterApplying();
+      clearResultsReturn("flight");
       router.push(`/flights/results?${nextParams.toString()}`, {
         scroll: true,
       });
@@ -3924,16 +3958,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     error,
     currentSearchKey: currentFlightSearchKey,
     filtersReadySearchKey,
-  }) || (!guidedMode && kayak?.vertical === "flights" && kayak.status === "loading");
+  }) || (!guidedMode && !restoredFlightView && kayak?.vertical === "flights" && kayak.status === "loading");
 
-  useEffect(() => {
-    if (!returnIntentRef.current?.returning || userInitiatedRetryRef.current || loading || error || results.length === 0) return;
-    const y = takeResultsScroll("flight");
-    if (y === null) return;
-    // Restore after the old result list has mounted, not on the details page.
-    const frame = window.requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" }));
-    return () => window.cancelAnimationFrame(frame);
-  }, [loading, error, results.length]);
+
 
   useEffect(() => {
     if (!resultsUiPreparing) clearSearchResultsLoadingSession("flight", currentFlightSearchKey);
@@ -4265,8 +4292,61 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       return secondBestScore - firstBestScore || compareFlightPrices(first, second, selectedCurrency, currencyRates.rates);
     });
 
+    if (restoredFlightView && !guidedMode &&
+      restoredFlightView.searchKey === currentFlightSearchKey &&
+      restoredFlightView.sortMode === sortMode &&
+      restoredFlightView.href === "/flights/results?" + queryString) {
+      const byId = new Map(nextResults.map(flight => [flight.id, flight]));
+      if (byId.size !== restoredFlightView.resultIds.length ||
+        !restoredFlightView.resultIds.every(id => byId.has(id))) return [];
+      return restoredFlightView.resultIds.map(id => byId.get(id)!);
+    }
     return nextResults;
-  }, [currencyRates.rates, filtered, selectedCurrency, sortMode]);
+  }, [currencyRates.rates, filtered, selectedCurrency, sortMode,
+    restoredFlightView, guidedMode, currentFlightSearchKey, queryString]);
+
+  useEffect(() => {
+    if (!returnIntentRef.current?.returning || userInitiatedRetryRef.current
+      || !restoredFlightView || resultsUiPreparing || error || !sortedResults.length) return;
+    const y = takeResultsScroll("flight");
+    if (y === null) return;
+    // Mobile uses a virtualized list: wait until it has its final extent.
+    let frame = 0;
+    let attempts = 0;
+    const restore = () => {
+      if (++attempts < 8 && document.documentElement.scrollHeight < y + window.innerHeight) {
+        frame = window.requestAnimationFrame(restore);
+        return;
+      }
+      window.scrollTo({ top: y, behavior: "instant" });
+    };
+    frame = window.requestAnimationFrame(restore);
+    return () => window.cancelAnimationFrame(frame);
+  }, [restoredFlightView, resultsUiPreparing, error, sortedResults.length]);
+
+  const exactFlightReturnUnavailable = Boolean(restoredFlightView && !guidedMode &&
+    restoredFlightView.searchKey === currentFlightSearchKey &&
+    restoredFlightView.sortMode === sortMode &&
+    restoredFlightView.href === "/flights/results?" + queryString &&
+    restoredFlightView.resultIds.length > 0 && sortedResults.length === 0);
+
+  const rememberVisibleFlightResults = useCallback(() => {
+    if (guidedMode || loading || error || filterApplying || resultsUiPreparing || !sortedResults.length) return;
+    const snapshotState = readFlightResultsSessionSnapshotForRefresh(currentFlightSearchKey);
+    if (!snapshotState?.isFresh) return;
+    writeFlightResultsReturnView({
+      searchKey: currentFlightSearchKey,
+      href: window.location.pathname + window.location.search,
+      validUntil: snapshotState.snapshot.validUntil,
+      resultIds: sortedResults.map(flight => flight.id),
+      sortMode,
+      journeyTimeMaximums: mobileJourneyTimeMaximums,
+      kayakOffers: displayedKayakOffers,
+      kayakCriteria: displayedKayakCriteria,
+    });
+  }, [guidedMode, loading, error, filterApplying, resultsUiPreparing, sortedResults,
+    currentFlightSearchKey, sortMode, mobileJourneyTimeMaximums,
+    displayedKayakOffers, displayedKayakCriteria]);
 
   const visibleJourneyRequestId = displayedJourneyRequest({ response: journeyResponse, currentSearchKey: currentFlightSearchKey, loading: loading || backgroundRefreshing || filterApplying, error, visibleCount: sortedResults.some(flight => providerResults.includes(flight)) ? 1 : 0 });
   useEffect(() => { journeyEvents.resultsViewed(visibleJourneyRequestId); }, [journeyEvents, visibleJourneyRequestId]);
@@ -4507,6 +4587,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 // best effort only
               }
 
+              clearResultsReturn("flight");
               router.push(`/flights/results?${nextParams.toString()}`);
             }}
           >
@@ -6981,6 +7062,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           if (value.tripType === "round-trip" && value.returnDate) nextParams.set("returnDate", value.returnDate);
           if (value.tripType === "multi-city") { nextParams.set("currency", selectedCurrency); appendFlightLegParams(nextParams, value.legs); }
           closeMobileSearchDrawer({ restoreFocus: false });
+          clearResultsReturn("flight");
           router.push(`/flights/results?${nextParams.toString()}`, { scroll: true });
         }}
       />
@@ -7401,7 +7483,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
               <ResultsViewport mobile><div className="sm:hidden">
                 <p role="status" aria-live="polite" className="sr-only">{filterApplying ? t("updatingResults") : ""}</p>
-                {error && results.length === 0 ? (
+                {(error && results.length === 0) || exactFlightReturnUnavailable ? (
                   <MobileFlightResultsState kind="error" onPrimary={retryMainInventorySearch} onSecondary={() => openMobileSearchDrawer()} />
                 ) : results.length === 0 ? (
                   <MobileFlightResultsState kind="empty" onPrimary={() => openMobileSearchDrawer()} />
@@ -7413,10 +7495,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     aria-busy={filterApplying}
                     className="pt-3 pb-6"
                   >
-                    <div data-flight-results-card-list className="space-y-3">
+                    <div data-flight-results-card-list onClickCapture={rememberVisibleFlightResults} className="space-y-3">
                       <VirtualResultsList items={sortedResults} itemKey={resultIdKey} label="Flight results" preserveViewportOnScrollLock rowClassName="pb-3" estimateHeight={320} renderItem={(flight, index) => {
-                        const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
-                        if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
+                        const sandboxOffer = displayedKayakOffers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
+                        if (sandboxOffer) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={displayedKayakCriteria} />;
                         const detailsQuery = params.toString();
                         const internalDetailsHref = `/flights/details/${encodeURIComponent(flight.id)}` + (detailsQuery ? `?${detailsQuery}` : "");
                         return <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={resultActionHref(flight, internalDetailsHref)} searchRequestId={visibleJourneyRequestId} />;
@@ -7526,8 +7608,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 aria-busy={filterApplying}
                 className="hidden sm:block"
               >
-              {error && results.length === 0 ? (
-                <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger"><p>{error}</p><button type="button" onClick={retryMainInventorySearch} className="focus-ring mt-3 rounded-lg border border-[#004BB8] bg-white px-4 py-2 text-sm font-semibold text-[#004BB8]">Search again</button></div>
+              {(error && results.length === 0) || exactFlightReturnUnavailable ? (
+                <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger"><p>{exactFlightReturnUnavailable ? "Your previous flight list could not be restored exactly. Search again to check current prices." : error}</p><button type="button" onClick={retryMainInventorySearch} className="focus-ring mt-3 rounded-lg border border-[#004BB8] bg-white px-4 py-2 text-sm font-semibold text-[#004BB8]">Search again</button></div>
               ) : filterApplying ? (
                 <div className="space-y-3">
                   <div role="status" aria-live="polite" className="sr-only">
@@ -7537,10 +7619,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 </div>
               ) : sortedResults.length ? (
                 <>
-                  <div data-flight-results-card-list className="space-y-3 sm:space-y-4">
+                  <div data-flight-results-card-list onClickCapture={rememberVisibleFlightResults} className="space-y-3 sm:space-y-4">
                     <VirtualResultsList items={sortedResults} itemKey={resultIdKey} label="Flight results" estimateHeight={320} renderItem={(flight, index) => {
-                      const sandboxOffer = kayak?.offers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
-                      if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
+                      const sandboxOffer = displayedKayakOffers.find(offer => `kayak-sandbox:${offer.id}` === flight.id);
+                      if (sandboxOffer) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={displayedKayakCriteria} />;
                       const detailsQuery = params.toString();
                       const internalDetailsHref =
                         `/flights/details/${encodeURIComponent(flight.id)}` +
