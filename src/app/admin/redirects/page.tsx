@@ -1,3 +1,4 @@
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 
 import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
@@ -7,7 +8,6 @@ import { buildHandoffProviderOptions } from "@/lib/adminHandoffProviderOptions";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
-import { formatDateTime } from "@/lib/admin-data";
 import { handoffDetailHref } from "@/lib/adminReferralHandoffNavigation";
 import { adminHandoffRoutePreview } from "@/lib/adminHandoffRoutePreview";
 import { handoffNextPageHref, handoffPreviousPageHref } from "@/lib/adminHandoffPagination";
@@ -75,7 +75,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                 rows={result.data.items.map((handoff) => ({
                   id: handoff.id,
                   cells: [
-                    formatDateTime(new Date(handoff.createdAt)),
+                    <AdminLocalDateTime value={handoff.createdAt} />,
                     <AdminStatusBadge key="product" tone="info">{handoff.product}</AdminStatusBadge>,
                     <span key="provider" className="font-semibold text-slate-950">{handoff.provider}</span>,
                     <span key="route-preview" title={handoff.route || undefined} aria-label={handoff.route || "No route recorded"}>{adminHandoffRoutePreview(handoff.route)}</span>,
@@ -165,7 +165,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                 <tbody className="divide-y divide-[#E7ECF5]">
                   {result.data.items.map(handoff => (
                     <tr key={handoff.id} className="align-top hover:bg-[#FAFBFD]">
-                      <td data-label="Created" className="py-3 pr-1.5 tabular-nums">{formatDateTime(new Date(handoff.createdAt))}</td>
+                      <td data-label="Created" className="py-3 pr-1.5 tabular-nums">{<AdminLocalDateTime value={handoff.createdAt} />}</td>
                       <td data-label="Product" className="px-1.5 py-3 font-medium">{handoff.product}</td>
                       <th scope="row" data-label="Provider" className="px-1.5 py-3 text-left font-medium">{handoff.provider}</th>
                       <td data-label="Route / property" className="min-w-0 px-1.5 py-3">
