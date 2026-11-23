@@ -1,4 +1,5 @@
 import type { SandboxOffer } from "@/services/travel/kayakSandbox";
+import type { SortMode } from "@/lib/types";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
 
 /** Exact, tab-local displayed flight inventory for a return from details.
@@ -23,7 +24,7 @@ export type FlightResultsReturnView = {
   savedAt: number;
   validUntil: number;
   resultIds: string[];
-  sortMode: string;
+  sortMode: SortMode;
   kayakOffers: SandboxOffer[];
   kayakCriteria: Record<string, string>;
 };
@@ -36,7 +37,8 @@ export function writeFlightResultsReturnView(
     || !value.searchKey || !value.href.startsWith("/flights/results?")
     || value.resultIds.length === 0 || value.resultIds.length > MAX_RESULT_IDS
     || value.kayakOffers.length > MAX_KAYAK_OFFERS
-    || value.resultIds.some(id => typeof id !== "string" || !id || id.length > 512)) return;
+    || value.resultIds.some(id => typeof id !== "string" || !id || id.length > 512)
+    || !["cheapest", "best", "fastest", "stops"].includes(value.sortMode)) return;
   try {
     // Never write raw provider credentials, internal refs or an arbitrary URL.
     const safeOffers = value.kayakOffers.map(offer => {
@@ -73,7 +75,7 @@ export function readFlightResultsReturnView(
       || !Array.isArray(snapshot.resultIds) || snapshot.resultIds.length === 0
       || snapshot.resultIds.length > MAX_RESULT_IDS
       || snapshot.resultIds.some(id => typeof id !== "string" || !id || id.length > 512)
-      || typeof snapshot.sortMode !== "string"
+      || !["cheapest", "best", "fastest", "stops"].includes(snapshot.sortMode ?? "")
       || !Array.isArray(snapshot.kayakOffers) || snapshot.kayakOffers.length > MAX_KAYAK_OFFERS
       || !snapshot.kayakOffers.every(offer => offer && typeof offer === "object"
         && typeof offer.id === "string"
