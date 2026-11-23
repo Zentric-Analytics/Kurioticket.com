@@ -216,6 +216,9 @@ test("summary keeps distinct identities, stage observations, search outcomes and
     exactSearchLinks: 5, eligibleWithoutExactSearch: 0, withRequestId: 5, flights: 4, hotels: 3, cars: 2,
   });
   assert.deepEqual(result.data.operationalSearches, { scope: "environment_and_date_only", total: 20, success: 15, partial: 3, failed: 2, partialWithResults: 1, partialWithoutResults: 2 });
+  const operationalSearchSql = f.queries.find(query => query.sql.includes('FROM "SearchHistory"'));
+  assert.ok(operationalSearchSql);
+  assert.match(operationalSearchSql.sql, /"countAsSearch" = TRUE/, "Search Performance counts canonical searches only");
   assert.doesNotThrow(() => JSON.stringify(result));
 });
 
