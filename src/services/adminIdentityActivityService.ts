@@ -232,7 +232,7 @@ export async function loadAdminIdentityActivity(
     };
     const searchWhere: Prisma.SearchHistoryWhereInput = {
       AND: [
-        searchOwner, environmentScope.search, { createdAt: window },
+        searchOwner, environmentScope.search, { createdAt: window }, { countAsSearch: true },
         ...(isOperationalGuest ? [] : [excludeCanonicalLegacyRows("SEARCH_COMPLETED", scopedJourneyOwner, window, productEventFilter, eventQ)]),
         ...(product ? [{ type: product }] : []),
         ...(q && !legacyStageLabelMatchesQuery("SEARCH_COMPLETED", q) ? [{ OR: [
