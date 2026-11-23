@@ -1,6 +1,5 @@
-import { randomUUID } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
-import { sendTransactionalEmail, supportEmailSender, supportTicketClosedEmail, supportTicketEmail, supportTicketReplyEmail, supportTicketResolvedEmail } from "@/services/emailService";
+import { sendTransactionalEmail, supportEmailSender, supportTicketClosedEmail, supportTicketEmail, supportTicketResolvedEmail } from "@/services/emailService";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { createNotificationEvent } from "@/services/notificationService";
 import type { SupportTicketStatusValue } from "@/lib/supportTickets";
@@ -37,7 +36,7 @@ type SupportPrismaClient = {
     update(args: {
       where: { id: string; status?: SupportTicketStatusValue; updatedAt?: Date };
       data: { status: SupportTicketStatusValue };
-    }): Promise<{ id: string; email: string; subject: string; status: SupportTicketStatusValue }>;
+    }): Promise<{ id: string; email: string; subject: string; status: SupportTicketStatusValue; updatedAt?: Date }>;
   };
   supportMessage: {
     create(args: {
@@ -97,7 +96,7 @@ export async function createSupportTicket(input: {
   try {
     await getSendSupportEmail()({
       to: input.email,
-      subject: "We\u0027ve received your support request – Kurioticket",
+      subject: "We've received your support request – Kurioticket",
       html: supportTicketEmail({ ticketId: ticket.id, subject: input.subject }),
       from: supportEmailSender(),
       template: "support_ticket",
@@ -138,24 +137,9 @@ export async function addAdminSupportReply(input: { ticketId: string; body: stri
     await createNotificationEvent({ userId: ticket.userId, eventKey: `support-reply:${message.id}`, type: "SUPPORT_UPDATE", title: "Kurioticket Support replied", body: `There is a new reply to “${ticket.subject}”.`, actionPath: "/support", metadata: { ticketId: ticket.id, supportMessageId: message.id } }).catch((error) => console.error("[support] Failed to persist support reply notification", { ticketId: ticket.id, messageId: message.id, message: error instanceof Error ? error.message : "notification_failed" }));
   }
 
-  let emailStatus: "accepted" | "failed" | "unknown" = "unknown";
-  try {
-    const sendResult = await getSendSupportEmail()({
-      to: ticket.email,
-      subject: "Re: Your Kurioticket support request",
-      html: supportTicketReplyEmail({ ticketId: ticket.id, subject: ticket.subject, body: input.body }),
-      from: supportEmailSender(),
-      template: "support_ticket",
-      idempotencyKey: `support-ticket-reply-${message.id}`,
-      metadata: { supportTicketId: ticket.id, supportMessageId: message.id, supportDeliveryType: "admin_reply" },
-    });
-    emailStatus = sendResult.id === "resend-not-configured" ? "failed" : sendResult.id ? "accepted" : "unknown";
-  } catch (error) {
-    emailStatus = "failed";
-    console.error("[support] Failed to send support ticket reply email", error);
-  }
-
-  return { ticket, message, emailStatus };
+  // Replies remain in the ticket conversation. Only Open, Resolved and
+  // Closed ticket lifecycle events generate automatic customer emails.
+  return { ticket, message, emailStatus: "skipped" as const };
 }
 
 export async function updateSupportTicketStatus(input: { ticketId: string; status: SupportTicketStatusValue }) {
@@ -190,7 +174,7 @@ export async function updateSupportTicketStatus(input: { ticketId: string; statu
   }
 
   // OPEN is confirmed once on creation. Waiting statuses are internal only.
-  // A deliberate admin reply is separate from automatic status notifications.
+  // Admin replies stay in the ticket conversation without sending email.
   if (input.status === "RESOLVED" || input.status === "CLOSED") {
     const resolved = input.status === "RESOLVED";
     try {
@@ -206,7 +190,7 @@ export async function updateSupportTicketStatus(input: { ticketId: string; statu
         template: "support_ticket",
         // Every successful transition is distinct, including later re-resolutions.
         // The conditional status update above is the single-send gate.
-        idempotencyKey: `support-ticket-status-${ticket.id}-${input.status.toLowerCase()}-${randomUUID()}`,
+        idempotencyKey: `support-ticket-status-${ticket.id}-${input.status.toLowerCase()}-${ticket.updatedAt?.toISOString() ?? Date.now()}`,
         metadata: {
           supportTicketId: ticket.id,
           supportDeliveryType: resolved ? "resolved" : "closed",
