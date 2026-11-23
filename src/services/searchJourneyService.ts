@@ -58,12 +58,15 @@ export type SearchHistoryInput = ApplicationAttribution & {
 async function enrichRecordedSearchCountry(
   db: SearchJourneyDatabase,
   history: { id: string; query: Prisma.JsonValue },
+  countryLookup?: (ip: string) => Promise<string | null>,
 ) {
   const observed = recordedSearchNetwork(history.query);
   if (!observed.ipAddress || observed.countryCode) return;
   const original = history.query;
   if (!original || typeof original !== "object" || Array.isArray(original)) return;
-  const enriched = await completeSearchNetworkObservation(original as Record<string, unknown>);
+  const enriched = countryLookup
+    ? await completeSearchNetworkObservation(original as Record<string, unknown>, countryLookup)
+    : await completeSearchNetworkObservation(original as Record<string, unknown>);
   const country = recordedSearchNetwork(enriched).countryCode;
   if (!country) return;
   try {
@@ -140,7 +143,11 @@ async function appendEvent(tx: Prisma.TransactionClient, input: JourneyEventInpu
 }
 
 /** The same transactional implementation is used by production and lifecycle tests. */
-export function createSearchJourneyService(getDatabase: () => SearchJourneyDatabase | null, now = () => new Date()) {
+export function createSearchJourneyService(
+  getDatabase: () => SearchJourneyDatabase | null,
+  now = () => new Date(),
+  countryLookup?: (ip: string) => Promise<string | null>,
+) {
   async function recordJourneyEvent(input: JourneyEventInput) {
     const visitorId = input.visitorId;
     if (!visitorId) return null;
@@ -265,7 +272,7 @@ export function createSearchJourneyService(getDatabase: () => SearchJourneyDatab
           metadata: { requestId: input.requestId || undefined, resultCount: history.resultCount, status: history.status, ...applicationMetadata(input) },
         });
       }
-      if (history) await enrichRecordedSearchCountry(db, history);
+      if (history) await enrichRecordedSearchCountry(db, history, countryLookup);
       return history ? { id: history.id } : null;
     } catch {
       return null;
