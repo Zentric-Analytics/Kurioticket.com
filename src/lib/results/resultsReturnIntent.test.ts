@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isResultsHref, markResultsReturn, takeResultsReturn } from "./resultsReturnIntent";
+import { isResultsHref, markResultsReturn, peekResultsReturn, takeResultsReturn } from "./resultsReturnIntent";
 
 function memoryStorage() {
   const values = new Map<string, string>();
@@ -16,6 +16,20 @@ test("a back-navigation token is one-use and product-specific", () => {
   assert.equal(takeResultsReturn("hotel", "/hotels/results?destination=Paris", storage, 101, base), false);
   assert.equal(takeResultsReturn("flight", "/flights/results?origin=LOS&destination=LHR", storage, 101, base), true);
   assert.equal(takeResultsReturn("flight", "/flights/results", storage, 102, base), false);
+});
+
+test("flight Back matches the exact original query, including filters and sort", () => {
+  const storage = memoryStorage();
+  const origin = "/flights/results?origin=LOS&destination=LHR&sort=fastest&fStop=0";
+  markResultsReturn("flight", origin, storage, 100, base);
+  assert.equal(peekResultsReturn("flight", origin, storage, 101, base), true);
+  assert.equal(takeResultsReturn("flight", "/flights/results?origin=ABV&destination=ACC", storage, 102, base), false,
+    "navigating to a different search must not reuse old results");
+  markResultsReturn("flight", origin, storage, 110, base);
+  assert.equal(takeResultsReturn("flight", origin, storage, 110 + 30 * 60_000, base), true,
+    "a long details visit still counts as Back; expired fares must require explicit refresh");
+  assert.equal(takeResultsReturn("flight", origin, storage, 110 + 30 * 60_000 + 1, base), false,
+    "the marker is one-use");
 });
 
 test("stale tokens cannot restart or suppress a new explicit search", () => {
