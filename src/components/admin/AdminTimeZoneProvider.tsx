@@ -47,7 +47,7 @@ export function useAdminTimeZone() {
  * operator's actual time zone. Preserve semantic UTC datetime for machines. */
 export function AdminLocalDateTime({ value, style = "datetime", referenceNow, className }: {
   value: string | number | Date | null | undefined;
-  style?: "datetime" | "date" | "time" | "relative" | "split";
+  style?: "datetime" | "date" | "time" | "relative" | "split" | "compact";
   referenceNow?: string;
   className?: string;
 }) {
