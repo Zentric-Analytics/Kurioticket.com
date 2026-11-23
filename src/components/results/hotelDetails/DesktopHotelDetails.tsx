@@ -14,6 +14,8 @@ import { HotelReviewsSection } from "./HotelReviewsSection";
 import { RelatedHotelsSection } from "./RelatedHotelsSection";
 import { HotelAmenityList } from "../HotelAmenityList";
 import { HotelPriceAlertControl } from "../HotelPriceAlertControl";
+import { shareProductLink } from "@/lib/shareProductLink";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 import { buildHotelAddress } from "@/lib/hotels/hotelMap";
 import { buildKurioticketHotelDetailsProviderOffer, isActionableExternalHotelProviderOffer, resolveHotelBookingContinuation, resolveSelectedHotelProviderOfferId } from "./hotelBookingContinuation";
 import { desktopHotelReviewScore } from "./desktopHotelDetailsModel";
@@ -131,12 +133,18 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
   }
 
   async function sharePage() {
-    try {
-      if (navigator.share) await navigator.share({ title: props.hotelName, url: window.location.href });
-      else { await navigator.clipboard.writeText(window.location.href); setShareStatus(props.labels.shared); }
-    } catch (error) {
-      if (!(error instanceof DOMException && error.name === "AbortError")) setShareStatus("Unable to share. Please try again.");
+    const outcome = await shareProductLink({ title: props.hotelName, url: window.location.href });
+    if (outcome === "shared" || outcome === "copied") {
+      recordCustomerInteraction({
+        action: outcome === "shared" ? "share_sheet_completed" : "share_link_copied",
+        product: "HOTEL", resultId: props.hotelResultId, requestId: props.searchRequestId,
+      });
     }
+    if (outcome === "cancelled") return;
+    setShareStatus(outcome === "shared" ? "Share sheet completed"
+      : outcome === "copied" ? props.labels.shared
+      : "Sharing unavailable. Copy this page's link from the address bar.");
+    window.setTimeout(() => setShareStatus(""), 3000);
   }
 
   async function continueOffer(offerId: string, trigger: HTMLButtonElement) {

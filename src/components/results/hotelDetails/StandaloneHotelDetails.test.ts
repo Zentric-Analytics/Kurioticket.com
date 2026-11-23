@@ -48,8 +48,10 @@ test("canonical result name and save state reach both property presentations", (
     assert.match(source, /<h1[^>]*>\{props\.hotelName\}<\/h1>/);
     assert.match(source, /aria-pressed=\{props\.isSaved\}/);
     assert.match(source, /onClick=\{props\.onSave\}/);
-    assert.match(source, /navigator\.share/);
-    assert.match(source, /navigator\.clipboard\.writeText/);
+    assert.match(source, /shareProductLink/);
+    assert.match(source, /recordCustomerInteraction/);
+    assert.match(source, /props\.hotelResultId/);
+    assert.match(source, /props\.searchRequestId/);
     assert.doesNotMatch(source, /hotelName\.(?:slice|split|replace)/);
   }
 });
