@@ -10,6 +10,7 @@ import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { AdminWorkspaceSearchProvider, AdminSearchTrigger, AdminSearchHeader, AdminSearchContent } from "./AdminWorkspaceSearch";
 
 import { AdminNotificationsPanel } from "./AdminNotificationsPanel";
+import { AdminTimeZoneProvider } from "./AdminTimeZoneProvider";
 
 type HeaderGroup = ReturnType<typeof getAdminHeaderGroups>[number];
 type HeaderEntry = HeaderGroup["links"][number];
@@ -227,7 +228,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const hotelCarsWorkspace = pathname === "/admin/hotels" || pathname === "/admin/hotels/" || pathname === "/admin/cars" || pathname === "/admin/cars/";
   const whiteWorkspace = userActivity || pathname === "/admin/platform-health" || pathname === "/admin/platform-health/" || pathname === "/admin/system" || pathname === "/admin/system/" || pathname === "/admin/system/cms-health" || pathname === "/admin/system/cms-health/" || auditLogsWorkspace || emailDeliveryWorkspace || settingsWorkspace || usersDirectory || visitorJourneysWorkspace || searchesWorkspace || supportWorkspace
     || providersWorkspace || providerReportingWorkspace || hotelCarsWorkspace || accountDeletionWorkspace || accountDeletionDetail || contentWorkspace || notificationsWorkspace || homepageFaresWorkspace || !isOverview;
-  return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div ref={workspaceRef} className={"min-h-screen text-slate-950 " + (whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
+  return <AdminTimeZoneProvider><AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div ref={workspaceRef} className={"min-h-screen text-slate-950 " + (whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
     <header ref={headerRef} className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <AdminSearchHeader>
       <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between gap-4 pl-2 pr-4 sm:pr-6 lg:pr-10">
@@ -268,5 +269,5 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
       </AdminSearchContent>
     </main>
 
-  </div></AdminWorkspaceSearchProvider>;
+  </div></AdminWorkspaceSearchProvider></AdminTimeZoneProvider>;
 }
