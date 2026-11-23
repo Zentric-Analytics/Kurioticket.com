@@ -14,7 +14,7 @@ Current aggregate observations: SupportTicket backfill matches zero; encrypted T
 
 ## Recovery decision and bounded proposal
 
-The paid source database is Oregon, plan `0.1c-256mb`, 15 GB storage, no HA. Current Dashboard recovery content could not load. No dated recent export, archive integrity result or completed isolated production restore has been established. Historical November 19 UI advertised seven-day recovery; this is not proof of current recoverability. The staging-only recovery deferral does not apply.
+The paid source database is Oregon, plan `0.1c-256mb`, 15 GB storage, no HA. Initial Dashboard loading stalled; after the owner reopened the project, November 23 read-only inspection confirmed a seven-day PITR window and an enabled Restore database action. No logical export links or export table were displayed. No dated recent export, archive integrity result or completed isolated production restore has been established. An offered recovery action is not proof of successful recovery. The staging-only recovery deferral does not apply.
 
 The source currently permits external connections from `0.0.0.0/0`. Render documents that PITR inherits the source allowlist. Do not repeat the earlier failed isolation procedure, use a timeout as denial evidence, change source access or create a public recovery copy. A Render PITR rehearsal is not execution-ready until its independent isolation proof and creation/cancellation capabilities are established.
 
@@ -26,7 +26,7 @@ PASS requires a recorded source/recovery timestamp, archive checksum and success
 
 Expected local cloud-compute charge: zero; transfer/egress and tooling availability are not verified and must be checked before proposing a hard spending ceiling. Do not transfer data under an assumed zero-charge allowance. For comparison only, a same-size Render copy is approximately $10.50/month equivalent ($6 compute plus 15 GB at $0.30), about $0.35 for 24 hours using a 30-day estimate, before other charges. This is not approval or a hard total quote. A proposed $1 cap and 24-hour maximum would need explicit approval and verified total billing. No recovery charge has been incurred in this assignment.
 
-References checked November 23: [Render recovery](https://render.com/docs/postgresql-backups.md), [compute plans](https://render.com/docs/compute-plans.md), [pricing](https://render.com/pricing.md). The source backup window, export dates and full restoration remain unverified.
+References checked November 23: [Render recovery](https://render.com/docs/postgresql-backups.md), [compute plans](https://render.com/docs/compute-plans.md), [pricing](https://render.com/pricing.md). The displayed source recovery window is verified; dated export availability, integrity and full restoration remain unverified.
 
 ## Configuration decision sheet
 
@@ -37,7 +37,7 @@ Masked Dashboard inspection again found 44 environment keys and no linked enviro
 | `ACCOUNT_SECURITY_ENCRYPTION_KEY` | Production TOTP encryption requires at least 32 characters, with no development fallback. Owner supplies a securely generated dedicated value through Render's secret UI and retains it securely for recovery. Current encrypted-row count is zero; recheck before configuration. Do not rotate auth/database keys or invent legacy keys. |
 | `FEATURE_CONTROL_PRODUCTION_ADMINS` | Existing `ADMIN_EMAILS` does not grant production feature mutation. Owner supplies the explicit comma-separated production operator email allowlist. Existing admin authorization, recent reauthentication, reason and audit remain. |
 | `WEBAUTHN_ANDROID_PACKAGE_NAME` | Set only to verified production package `com.kurioticket.app`. |
-| `WEBAUTHN_ANDROID_CERT_SHA256` | Supply the current Play App Signing certificate fingerprint(s), not the upload certificate or Preview identity. Verify in the existing account before setting. Existing code derives approved Android origins from these fingerprints. |
+| `WEBAUTHN_ANDROID_CERT_SHA256` | Supply current Play App Signing fingerprint(s), not the upload certificate or Preview identity. November 23 Play-generated Digital Asset Links identifies `16:98:2E:9F:98:73:E8:CE:C5:7D:18:92:CD:49:6C:BF:14:00:3C:04:5A:05:03:74:49:57:1B:63:BF:04:66:62`. This differs from the August audit; previous signing keys are displayed, so review older-client coverage before approving the complete list. Existing code derives approved Android origins. No key was changed. |
 
 Present but value-level verification remains: `NEXT_PUBLIC_APP_URL`, `NEXTAUTH_URL`, `WEBAUTHN_RP_ID`, `WEBAUTHN_ORIGINS`, `WEBAUTHN_IOS_APP_IDS`, OAuth/mobile audiences and provider mode. Confirm canonical HTTPS production URLs, RP ID `kurioticket.com`, approved origins and the actual production iOS application identifier/entitlements. No wildcard origins or Preview substitutions. Secret reveal remained Loading; no secret values were saved. Duffel live credential class plus explicit live mode were securely verified November 22; key/mode names remain present November 23, but today's reveal did not independently reconfirm values. Recheck securely before cutover; do not modify working Duffel without evidence of a defect.
 
