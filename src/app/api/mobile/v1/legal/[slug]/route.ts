@@ -2,7 +2,7 @@ import { legalDocuments } from "@/data/legalDocuments";
 import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
 import { getLegalDocumentTranslationNamespace, localizeLegalDocument } from "@/lib/legal/localizeLegalDocument";
 
-const allowedSlugs = new Set(["terms-of-service", "privacy-policy"]);
+const allowedSlugs = new Set(["terms-of-service", "privacy-policy", "cookie-policy"]);
 
 function formatLegalDate(value: string, locale: string) {
   const date = new Date(value);
