@@ -90,7 +90,7 @@ try {
     await expect(combo("Sort by")).toHaveCount(0);
     await expect(combo("Date range")).toContainText("Today");
     await expect(combo("Account role")).toContainText("All roles");
-    await expect(combo("Account status")).toContainText("All statuses");
+    await expect(combo("Status")).toContainText("All statuses");
     await expect(tabs().getByRole("link", {name:"All (30)"})).toHaveAttribute("aria-current","page");
     assert.deepEqual((await page.locator("thead th").allTextContents()).map(x=>x.trim()),
       ["IDENTITY","TYPE","STATUS","JOINED / FIRST SEEN","LAST SEEN","ACTIVITY"]);
@@ -235,7 +235,7 @@ try {
   await expect(page).toHaveURL(/to=2026-10-23/);
   await choose("Date range","All time");
   await choose("Account role","Support");
-  await choose("Account status","Active");
+  await choose("Status","Active");
   await expect(page).not.toHaveURL(/role=SUPPORT/);
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page).toHaveURL(/date=all/);
@@ -246,7 +246,7 @@ try {
   await expect(page.getByRole("link",{name:"Clear filters"})).toHaveCount(0);
   await choose("Date range","All time");
   await choose("Account role","All roles");
-  await choose("Account status","All statuses");
+  await choose("Status","All statuses");
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page).toHaveURL(/role=ALL/);
   await expect(page).toHaveURL(/status=ALL/);
@@ -261,7 +261,8 @@ try {
   }
   await tabs().getByRole("link",{name:/Guests/}).click();
   await expect(page).toHaveURL(/tab=GUEST/);
-  await expect(combo("Account status")).toHaveCount(0);
+  await expect(combo("Guest status")).toBeVisible();
+  await expect(page.getByTestId("guest-directory-status").first()).toHaveText("Active");
   await expect(combo("Date range")).toBeVisible();
   console.log("PASS date options and guest tab");
   const noJS = await browser.newContext({javaScriptEnabled:false});

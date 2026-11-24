@@ -6,6 +6,7 @@ import test from "node:test";
 import ts from "typescript";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
+import { operationalSessionMetadata } from "@/lib/operationalSearchSession";
 
 const requestId = "78e1de9e-6dfe-494f-9fdb-83726d83bf64";
 type History = { requestId: string; type: string; status: string; userId: string | null; visitorId: string | null; resultCount: number; query: unknown; latencyMs: number };
@@ -44,6 +45,7 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
     "@/services/travel/hotelAggregator": { searchHotels: async (criteria: unknown) => { providerCriteria.push(criteria); return aggregate; }, searchHotelsByProvider: async (criteria: unknown) => { providerCriteria.push(criteria); return aggregate; } },
     "@/lib/feature-controls/service": { isFeatureEnabled: async () => true },
     "@/lib/operationalSearchSession": {
+      operationalSessionMetadata,
       prepareOperationalSearchSession: () => options.operationalGuest ? ({
         reference: { id: "38d77b62-f43d-40d5-9597-a6ff76f02c28",
           environment: "staging", expiresAt: new Date("2099-05-01") },
@@ -151,6 +153,7 @@ for (const product of ["flight", "hotel"] as const) {
     assert.equal(fixture.histories[0].visitorId, null);
     assert.equal((fixture.histories[0].query as Record<string, unknown>).operationalSessionId,
       "38d77b62-f43d-40d5-9597-a6ff76f02c28");
+    assert.equal((fixture.histories[0].query as Record<string, unknown>).operationalSessionExpiresAtMs, Date.parse("2099-05-01"));
     assert.ok(!JSON.stringify(fixture.histories).includes("synthetic-test-only"));
   });
 

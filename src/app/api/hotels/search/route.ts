@@ -1,6 +1,6 @@
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { after, NextResponse } from "next/server";
-import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
+import { attachOperationalSearchSession, prepareOperationalSearchSession, operationalSessionMetadata } from "@/lib/operationalSearchSession";
 import { identifySearchCrawler, searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { createHash } from "node:crypto";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
   delete providerSearch.currency;
   const operationalSession = crawler ? null : prepareOperationalSearchSession(request);
   const recordedSearch = { ...search, ...searchNetworkObservation(request),
-    ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}),
+    ...(operationalSession ? operationalSessionMetadata(operationalSession.reference) : {}),
     ...searchCrawlerMetadata(crawler) };
   const resolveSearchIdentity = () => crawler
     ? Promise.resolve({ userId: null, visitorId: null, applicationSource: "BOT" as const })

@@ -1,7 +1,7 @@
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { after, NextResponse } from "next/server";
-import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
+import { attachOperationalSearchSession, prepareOperationalSearchSession, operationalSessionMetadata } from "@/lib/operationalSearchSession";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { hotelSearchSchema } from "@/lib/validation";
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid hotel search." }, { status: 400 });
   const search = parsed.data;
   const operationalSession = prepareOperationalSearchSession(request);
-  const recordedSearch = { ...search, ...searchNetworkObservation(request), ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) };
+  const recordedSearch = { ...search, ...searchNetworkObservation(request), ...(operationalSession ? operationalSessionMetadata(operationalSession.reference) : {}) };
   const startedAt = state?.startedAt ?? Date.now();
   const trackId = state?.trackId ?? randomUUID();
   const snapshot = state?.snapshot ?? randomUUID();

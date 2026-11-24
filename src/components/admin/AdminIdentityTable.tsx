@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, UserRound } from "lucide-react";
 import { CopyIdentityId } from "./CopyIdentityId";
-import type { AdminIdentitySort as IdentitySort } from "@/lib/adminIdentityDirectory";
+import type { AdminIdentitySort as IdentitySort, GuestDirectoryStatus } from "@/lib/adminIdentityDirectory";
 
 export type IdentityRow =
   | {
@@ -18,6 +18,8 @@ export type IdentityRow =
     }
   | {
       kind: "guest";
+      guestStatus?: GuestDirectoryStatus;
+      guestSource?: "visitor" | "operational";
       lastSeenAt?: Date | null;
       record: { id: string; firstSeenAt: Date; lastSeenAt: Date };
     };
@@ -170,7 +172,14 @@ export function AdminIdentityTable({
                         {label(user.status)}
                       </span>
                     ) : (
-                      <span aria-label="No account status for guest visitor" className="text-[13px] text-[#64748B]">—</span>
+                      <span data-testid="guest-directory-status"
+                        title={row.kind === "guest" && row.guestStatus === "ACTIVE"
+                          ? row.guestSource === "visitor" ? "Eligible consented guest identity; not live presence" : "Recorded session has not expired; not live presence"
+                          : row.kind === "guest" && row.guestStatus === "INACTIVE" ? "Recorded session has expired"
+                          : "No verified session expiry is recorded"}
+                        className={`text-[13px] font-medium ${row.kind === "guest" && row.guestStatus === "ACTIVE" ? "text-[#047857]" : "text-[#64748B]"}`}>
+                        {label(row.kind === "guest" ? row.guestStatus ?? "UNAVAILABLE" : "UNAVAILABLE")}
+                      </span>
                     )}
                   </td>
                   <td data-label="Joined / First Seen" className="px-3 py-1.5">

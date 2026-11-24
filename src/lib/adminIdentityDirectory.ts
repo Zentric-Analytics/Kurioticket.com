@@ -85,11 +85,14 @@ export function adminRegisteredLastSeenSql(environment: "staging" | "production"
 
 export type AdminIdentityReference = { kind: "user" | "guest"; id: string };
 /** One directory read carries operational guest totals and recorded timestamps. */
+export type GuestDirectoryStatus = "ACTIVE" | "INACTIVE" | "UNAVAILABLE";
 export type AdminIdentityDirectoryRow = {
   kind: "user" | "guest" | null;
   id: string | null;
   firstSeenAt: Date | null;
   lastSeenAt: Date | null;
+  guestSource: "visitor" | "operational" | null;
+  guestStatus: GuestDirectoryStatus | null;
   operationalGuestCount: bigint;
   /** All recorded, unlinked operational sessions in this deployment. */
   operationalAllTimeCount: bigint;
@@ -153,6 +156,15 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
   }
 
   const includeOperational = showOperationalGuests || input.withOperationalSummary === true;
+  const nowMs = (input.now ?? new Date()).getTime();
+  // Only server-recorded, numeric signed expiry evidence is authoritative.
+  // The legacy session ID and Last Seen alone cannot prove current validity.
+  const operationalStatus = Prisma.sql`CASE
+    WHEN o."expiresAtMs" IS NULL THEN 'UNAVAILABLE'
+    WHEN o."expiresAtMs" > ${nowMs} THEN 'ACTIVE'
+    ELSE 'INACTIVE' END`;
+  const operationalStatusFilter = status === "ALL" ? Prisma.empty
+    : Prisma.sql`AND (${operationalStatus}) = ${status}`;
   // Group deployment-scoped operational sessions once, across all recorded history.
   // The directory keeps its last-seen activity filter, while metric totals are
   // independent of search, role and status filters. Do not rescan the JSON logs.
@@ -160,15 +172,18 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
     WITH all_operational_sessions AS MATERIALIZED (
       SELECT a."sessionId" AS "id",
         MIN(a."createdAt") AS "firstSeenAt",
-        MAX(a."createdAt") AS "lastSeenAt"
+        MAX(a."createdAt") AS "lastSeenAt",
+        MAX(CASE WHEN a."expiresAtMs" ~ '^[0-9]{13}$' THEN a."expiresAtMs"::bigint ELSE NULL END) AS "expiresAtMs"
       FROM (
-        SELECT s."query"->>'operationalSessionId' AS "sessionId", s."createdAt"
+        SELECT s."query"->>'operationalSessionId' AS "sessionId", s."createdAt",
+          CASE WHEN jsonb_typeof(s."query"->'operationalSessionExpiresAtMs') = 'number' THEN s."query"->>'operationalSessionExpiresAtMs' END AS "expiresAtMs"
         FROM "SearchHistory" s
         WHERE s."userId" IS NULL AND s."visitorId" IS NULL
           AND s."query"->>'environment' = ${environment}
           AND s."query"->>'operationalSessionId' IS NOT NULL
         UNION ALL
-        SELECT r."metadata"->>'operationalSessionId' AS "sessionId", r."createdAt"
+        SELECT r."metadata"->>'operationalSessionId' AS "sessionId", r."createdAt",
+          CASE WHEN jsonb_typeof(r."metadata"->'operationalSessionExpiresAtMs') = 'number' THEN r."metadata"->>'operationalSessionExpiresAtMs' END AS "expiresAtMs"
         FROM "RedirectLog" r
         WHERE r."userId" IS NULL AND r."visitorId" IS NULL
           AND r."metadata"->>'environment' = ${environment}
@@ -177,9 +192,10 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
       WHERE a."sessionId" ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
       GROUP BY a."sessionId"
     ), operational_sessions AS (
-      SELECT o."id", o."firstSeenAt", o."lastSeenAt"
+      SELECT o."id", o."firstSeenAt", o."lastSeenAt", (${operationalStatus}) AS "guestStatus"
       FROM all_operational_sessions o
       WHERE TRUE
+        ${operationalStatusFilter}
         ${query ? Prisma.sql`AND strpos(lower(o."id"), lower(${query})) > 0` : Prisma.empty}
         ${bounds ? Prisma.sql`AND o."lastSeenAt" >= ${bounds.from}
           ${bounds.to ? Prisma.sql`AND o."lastSeenAt" < ${bounds.to}` : Prisma.empty}` : Prisma.empty}
@@ -199,7 +215,7 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
       SELECT 'user'::text AS "kind", u."id" AS "id", u."createdAt" AS "joinedAt",
         COALESCE(NULLIF(BTRIM(u."name"), ''), 'Unnamed user') AS "displayName",
         NULL::timestamp AS "firstSeenAt",
-        ${adminRegisteredLastSeenSql(environment)} AS "lastSeenAt"
+        ${adminRegisteredLastSeenSql(environment)} AS "lastSeenAt", NULL::text AS "guestSource", NULL::text AS "guestStatus"
       FROM "User" u
       WHERE TRUE
         ${bounds ? Prisma.sql`AND (
@@ -243,7 +259,8 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
     sources.push(Prisma.sql`
       SELECT 'guest'::text AS "kind", v."id" AS "id", v."firstSeenAt" AS "joinedAt",
         'Guest visitor'::text AS "displayName",
-        v."firstSeenAt" AS "firstSeenAt", v."lastSeenAt" AS "lastSeenAt"
+        v."firstSeenAt" AS "firstSeenAt", v."lastSeenAt" AS "lastSeenAt",
+        'visitor'::text AS "guestSource", 'ACTIVE'::text AS "guestStatus"
       FROM "Visitor" v
       WHERE v."consentStatus" = 'GRANTED'
         ${bounds ? Prisma.sql`AND (
@@ -265,7 +282,7 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
     sources.push(Prisma.sql`
       SELECT 'guest'::text AS "kind", o."id", o."firstSeenAt" AS "joinedAt",
         'Guest visitor'::text AS "displayName",
-        o."firstSeenAt", o."lastSeenAt"
+        o."firstSeenAt", o."lastSeenAt", 'operational'::text AS "guestSource", o."guestStatus"
       FROM operational_sessions o
     `);
   }
@@ -277,7 +294,8 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
     sources.push(Prisma.sql`
       SELECT NULL::text AS "kind", NULL::text AS "id",
         NULL::timestamp AS "joinedAt", NULL::text AS "displayName",
-        NULL::timestamp AS "firstSeenAt", NULL::timestamp AS "lastSeenAt"
+        NULL::timestamp AS "firstSeenAt", NULL::timestamp AS "lastSeenAt",
+        NULL::text AS "guestSource", NULL::text AS "guestStatus"
       WHERE FALSE
     `);
   }
@@ -288,7 +306,7 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
   return Prisma.sql`
     ${operationalCte}
     SELECT identities."kind", identities."id", identities."firstSeenAt",
-      identities."lastSeenAt",
+      identities."lastSeenAt", identities."guestSource", identities."guestStatus",
       ${input.withOperationalSummary
         ? Prisma.sql`totals."operationalGuestCount", totals."operationalAllTimeCount", totals."operationalNewCount"`
         : Prisma.sql`0::bigint AS "operationalGuestCount",

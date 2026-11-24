@@ -33,7 +33,7 @@ test("six data columns and user/guest activity links retain all recorded identit
   assert.match(html, /Copy guest ID: qa-guest-long-id/);
   assert.match(html, /aria-label="Guest ID: qa-guest-long-id"/);
   assert.match(html, /Registered · Support/);
-  assert.match(html, /aria-label="No account status for guest visitor"/);
+  assert.match(html, /data-testid="guest-directory-status"[^>]*>Unavailable<\/span>/);
   assert.match(html, /<time dateTime=/);
   for (const kind of ["user", "guest"]) {
     const id = kind === "user" ? "qa-user-internal-id" : "qa-guest-long-id";
@@ -91,4 +91,14 @@ test("Last Seen distinguishes actual observations from registration and absent d
   assert.match(html, /dateTime="2026-11-20T10:00:00\.000Z"/);
   assert.match(html, /aria-label="No recorded last seen"/);
   assert.doesNotMatch(html, /Online now|Currently online/);
+});
+
+test("guest status labels distinguish identity eligibility, expiry and unavailable evidence", () => {
+  const html = render({ rows: [
+    { kind: "guest", guestSource: "visitor", guestStatus: "ACTIVE", record: { id: "qa-guest-active", firstSeenAt: at, lastSeenAt: at } },
+    { kind: "guest", guestSource: "operational", guestStatus: "INACTIVE", record: { id: "qa-guest-expired", firstSeenAt: at, lastSeenAt: at } },
+    { kind: "guest", guestSource: "operational", record: { id: "qa-guest-unknown", firstSeenAt: at, lastSeenAt: at } },
+  ] });
+  for (const status of ["Active", "Inactive", "Unavailable"]) assert.match(html, new RegExp('data-testid="guest-directory-status"[^>]*>' + status + '</span>'));
+  assert.match(html, /not live presence/);
 });

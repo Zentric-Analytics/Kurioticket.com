@@ -27,7 +27,8 @@ test("Users Directory places search, date, role, status, and Apply on one deskto
   assert.match(users, /<nav aria-label="User types"/);
   assert.ok(users.indexOf('data-testid="users-directory-filter-row"') < users.indexOf('<nav aria-label="User types"'));
   assert.match(users, /tab === "GUEST"/);
-  assert.match(users, /Status not applicable/);
+  assert.match(users, /Guest status/);
+  assert.doesNotMatch(users, /Status not applicable/);
   assert.match(users, /name="sort" value=\{sort\}/);
   assert.match(users, /href=\{href\(\{ tab: item.value \}\)\}/);
 });

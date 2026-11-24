@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import test, { type TestContext } from "node:test";
 import ts from "typescript";
-import { attachOperationalSearchSession, type PreparedOperationalSession } from "@/lib/operationalSearchSession";
+import { attachOperationalSearchSession, operationalSessionMetadata, type PreparedOperationalSession } from "@/lib/operationalSearchSession";
 
 const requestId = "78e1de9e-6dfe-494f-9fdb-83726d83bf64";
 const query = {
@@ -56,6 +56,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
     },
     "next/server": { after: (callback: () => Promise<unknown>) => { deferred.push(callback); } },
     "@/lib/operationalSearchSession": {
+      operationalSessionMetadata,
       prepareOperationalSearchSession: (value: Request) => {
         check(value === request && ++prepareCalls === 1, "prepare exactly one session for the actual request");
         return session;
@@ -152,6 +153,7 @@ test("car search records a consented history after returning provider results", 
   assert.equal(f.histories[0].resultCount, 1);
   assert.equal(f.histories[0].status, "SUCCESS");
   assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionId, f.session!.reference.id);
+  assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionExpiresAtMs, f.session!.reference.expiresAt.getTime());
   assert.equal(f.analytics[0].name, "car_search");
   assert.equal(f.histories[0].applicationSource, "WEB");
   assert.equal(f.analytics[0].applicationSource, "WEB");
@@ -186,6 +188,7 @@ test("new non-consented car search has a recorded session without granting visit
   assert.equal(f.histories[0].userId, null);
   assert.equal(f.histories[0].visitorId, null);
   assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionId, f.session!.reference.id);
+  assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionExpiresAtMs, f.session!.reference.expiresAt.getTime());
   assert.ok(!JSON.stringify(f.histories).includes(f.session!.credential));
 });
 
