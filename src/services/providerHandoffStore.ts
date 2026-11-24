@@ -18,7 +18,7 @@ export type ProviderHandoffActivity = {
   requestId?: string;
   handoffId?: string;
 };
-export type AttributedHandoff = ProviderHandoffActivity & ApplicationAttribution & { userId: string | null; visitorId: string | null; operationalSessionId?: string | null };
+export type AttributedHandoff = ProviderHandoffActivity & ApplicationAttribution & { userId: string | null; visitorId: string | null; operationalSessionId?: string | null; operationalSessionExpiresAtMs?: number };
 export type HandoffReceipt = {
   id: string;
   created: boolean;
@@ -103,7 +103,7 @@ export function createProviderHandoffStore(
           provider: input.provider, route: input.route, price: input.price, currency: input.currency,
           destinationUrl: input.destinationUrl, userType: input.userId ? "user" : "guest",
           sourcePage: journeySourcePath(input.sourcePage) ?? "unknown",
-          metadata: withEnvironmentMetadata({ ...applicationMetadata(input), resultId: input.resultId, ...(requestId && (visitorId || input.operationalSessionId) ? { requestId } : {}), ...(input.operationalSessionId ? { operationalSessionId: input.operationalSessionId } : {}) }),
+          metadata: withEnvironmentMetadata({ ...applicationMetadata(input), resultId: input.resultId, ...(requestId && (visitorId || input.operationalSessionId) ? { requestId } : {}), ...(input.operationalSessionId ? { operationalSessionId: input.operationalSessionId, ...(Number.isSafeInteger(input.operationalSessionExpiresAtMs) ? { operationalSessionExpiresAtMs: input.operationalSessionExpiresAtMs } : {}) } : {}) }),
         }, select: { id: true } });
         return { id: redirect.id, created: true, visitorId, userId: input.userId,
           ...await correlate(tx, input, visitorId) };
