@@ -45,6 +45,8 @@ function Navigation({ groups, pathname, close }: { groups: HeaderGroup[]; pathna
 }
 
 function WorkspaceSectionNavigation({ pathname, role }: { pathname: string; role: AdminRole }) {
+  const searchParams = useSearchParams();
+  const activityReturn = searchParams.getAll("activityReturn");
   // Providers already has its own Health / Attribution tabs. Do not render two bars.
   if (pathname === "/admin/providers" || pathname === "/admin/providers/") return null;
   const group = getAdminWorkspaceSections(pathname, role);
@@ -52,7 +54,7 @@ function WorkspaceSectionNavigation({ pathname, role }: { pathname: string; role
   return (
     <nav aria-label={group.label + " sections"} className="mb-5 flex min-w-0 flex-wrap items-end gap-x-5 gap-y-1 border-b border-[#D8E1EC] sm:gap-x-6">
       {group.links.map((item) => {
-        const active = isAdminWorkspaceSectionActive(pathname, item.href);
+        const active = isAdminWorkspaceSectionActive(pathname, item.href, activityReturn.length === 1 ? activityReturn[0] : undefined);
         return (
           <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined}
             className={"inline-flex min-h-11 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
@@ -69,6 +71,7 @@ function WorkspaceSidebar({ pathname, role, showPreviewTesters }: { pathname: st
   const groups = getAdminHeaderGroups(role, showPreviewTesters);
   const navigation = getAdminNavForRole(role, showPreviewTesters);
   const searchParams = useSearchParams();
+  const activityReturn = searchParams.getAll("activityReturn");
   const activeGroup = groups.flatMap(group => group.links).find(entry =>
     isAdminNavItemActive(entry.item.href, pathname)
     || entry.children.some(child => isAdminNavItemActive(child.href, pathname))
@@ -95,7 +98,7 @@ function WorkspaceSidebar({ pathname, role, showPreviewTesters }: { pathname: st
               const active = link.href === "/admin/providers?view=attribution"
                 ? providerAttribution || pathname === "/admin/referral-attribution"
                 : !(providerAttribution && link.href === "/admin/providers")
-                  && isAdminWorkspaceSectionActive(pathname, link.href);
+                  && isAdminWorkspaceSectionActive(pathname, link.href, activityReturn.length === 1 ? activityReturn[0] : undefined);
               return (
                 <Link key={link.href} href={link.href} aria-current={active ? "page" : undefined}
                   className={"flex min-h-10 min-w-0 items-center gap-2.5 rounded-r-md border-l-2 px-3 py-2 text-[13px] font-medium leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 " +
