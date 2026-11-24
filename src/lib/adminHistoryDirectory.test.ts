@@ -16,7 +16,7 @@ function query(section: HistorySection, raw: Record<string, string | string[] | 
 }
 
 test("history directories start at Today and reject invalid filters instead of broadening the record scope", () => {
-  assert.deepEqual(query("devices"), { range: "today", page: 1, q: "", tab: "registered", platform: "all" });
+  assert.deepEqual(query("devices"), { range: "today", page: 1, q: "", tab: "all", platform: "all" });
   assert.deepEqual(query("pages"), { range: "today", page: 1, q: "", tab: "all", platform: "all" });
   for (const raw of [
     { range: "invalid" }, { range: "custom" }, { range: "custom", from: "2026-02-30", to: "2026-03-01" },
@@ -24,8 +24,12 @@ test("history directories start at Today and reject invalid filters instead of b
     { tab: "unknown" }, { platform: "unknown" }, { q: "x".repeat(81) }, { q: "bad\nquery" },
     { tab: ["registered", "guests"] },
   ]) assert.equal(parseHistoryDirectoryQuery("pages", raw).ok, false, JSON.stringify(raw));
-  for (const raw of [{ tab: "guests" }, { tab: "all" }, { platform: "ios" }])
-    assert.equal(parseHistoryDirectoryQuery("devices", raw).ok, false);
+  for (const tab of ["all", "registered", "guests"] as const) for (const platform of ["all", "ios", "android", "desktop", "mobile"] as const) {
+    const selected = query("devices", { tab, platform });
+    assert.equal(selected.tab, tab);
+    assert.equal(selected.platform, platform);
+  }
+  assert.equal(parseHistoryDirectoryQuery("devices", { platform: "unknown" }).ok, false);
 });
 
 test("history links keep the selected identity and inherit only compatible history filters", () => {
@@ -38,7 +42,13 @@ test("history links keep the selected identity and inherit only compatible histo
   const deviceDetail = parseDeviceHistoryQuery(Object.fromEntries(deviceUrl.searchParams));
   assert.ok(deviceDetail.ok);
   assert.deepEqual(deviceHistoryWindow(deviceDetail.query, now), deviceHistoryWindow(device, now));
-  assert.throws(() => historyIdentityHref("devices", { kind: "guest", id: "qa-guest-0001" }, device, now));
+  const guest = query("devices", { range: "all", tab: "guests", platform: "ios", page: "2", q: "qa-guest" });
+  const guestUrl = new URL(historyIdentityHref("devices", { kind: "guest", id: "qa-guest-0001" }, guest, now), origin);
+  assert.equal(guestUrl.pathname, "/admin/users/guest/qa-guest-0001/devices");
+  assert.equal(guestUrl.searchParams.get("platform"), "ios");
+  assert.equal(guestUrl.searchParams.get("page"), "1");
+  assert.equal(guestUrl.searchParams.has("q"), false);
+  assert.equal(historyDirectoryReturnHref("devices", guestUrl.searchParams.get("activityReturn")), historyDirectoryHref("devices", guest));
 
   for (const kind of ["user", "guest"] as const) {
     const pages = query("pages", { range: "7d", platform: "ios", tab: kind === "user" ? "registered" : "guests", page: "2", q: "qa-id" });
@@ -70,12 +80,13 @@ test("directory return paths are strictly internal and preserve valid search, pa
 });
 
 test("device directory counts retained account sessions with the same date window before pagination", () => {
-  const filters = query("devices", { range: "custom", from: "2026-11-01", to: "2026-11-24", q: "a%_'", page: "3" });
+  const filters = query("devices", { range: "custom", from: "2026-11-01", to: "2026-11-24", q: "a%_'", page: "3", tab: "registered", platform: "desktop" });
   const sql = historyDirectorySql("devices", filters, "staging", now);
   const text = sql.strings.join("?");
   assert.match(text, /FROM "AccountSession" s JOIN "User" u ON u\."id" = s\."userId"/);
   assert.match(text, /COUNT\(\*\)::bigint AS "count", MAX\(s\."lastSeenAt"\)/);
   assert.match(text, /GROUP BY u\."id", u\."name", u\."email"/);
+  assert.match(text, /s\."client" = 'WEB' AND NOT/);
   assert.doesNotMatch(text, /OnlinePresenceSession|AnalyticsEvent|tokenHash|maskedIp|userAgent/);
   assert.ok(!text.includes(filters.q), "search is a bound literal, not SQL");
   assert.equal(sql.values.filter(value => value === filters.q).length, 3);
@@ -129,4 +140,28 @@ test("both routes require admin authorization before rendering and reuse the exi
   assert.match(pages, /loadAdminIdentityActivity\(kind, id, query\.filters/);
   assert.match(devices, /Back to Activity/);
   assert.match(pages, /Back to Activity/);
+});
+
+test("guest access directory and detail use the identical consent and operational record scopes", () => {
+  const selected = query("devices", { range: "all", tab: "guests", platform: "ios" });
+  const sql = historyDirectorySql("devices", selected, "staging", now);
+  const text = sql.strings.join("?");
+  assert.doesNotMatch(text, /FROM "AccountSession"|OnlinePresenceSession|tokenHash|userAgent|maskedIp/);
+  assert.match(text, /a\."userId" IS NULL AND v\."currentUserId" IS NULL/);
+  assert.match(text, /v\."consentStatus" = 'GRANTED' AND v\."trackingDisabledAt" IS NULL/);
+  assert.match(text, /NOT EXISTS \(SELECT 1 FROM "VisitorIdentityLink"/);
+  assert.match(text, /FROM "SearchHistory" x/);
+  assert.match(text, /FROM "RedirectLog" x/);
+  assert.match(text, /x\."userId" IS NULL AND x\."visitorId" IS NULL/);
+  assert.match(text, /NOT EXISTS \(SELECT 1 FROM "Visitor" existing/);
+  assert.match(text, /'operational'::text AS "guestSource"/);
+  assert.match(text, /'consented'::text AS "guestSource"/);
+  assert.ok(sql.values.includes("IOS"));
+  assert.ok(sql.values.includes("iOS app (reported)"));
+  const browser = historyDirectorySql("devices", query("devices", { tab: "guests", platform: "desktop" }), "staging", now);
+  assert.doesNotMatch(browser.strings.join("?"), /FROM "SearchHistory"|FROM "RedirectLog"/);
+  const all = historyDirectorySql("devices", query("devices"), "production", now);
+  assert.match(all.strings.join("?"), /FROM "AccountSession"/);
+  assert.match(all.strings.join("?"), /FROM "AnalyticsEvent"/);
+  assert.ok(all.values.includes("production"));
 });
