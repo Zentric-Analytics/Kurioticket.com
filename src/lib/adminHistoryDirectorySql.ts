@@ -1,6 +1,7 @@
 import { Prisma } from "@/generated/prisma/client";
 import { activityWindow } from "./adminIdentityActivity";
 import { deviceHistoryWindow } from "./adminDeviceHistory";
+import { accountDevicePlatformPredicate, guestAccessRecordsSql } from "./adminGuestAccessSql";
 import { pageHistoryPlatformValues, pageHistoryTransport, parsePageHistoryQuery } from "./adminPageHistory";
 import { pageViewCatalog, type PageViewKey } from "./pageViewCatalog";
 import { HISTORY_DIRECTORY_PAGE_SIZE, type HistoryDirectoryQuery, type HistorySection } from "./adminHistoryDirectory";
@@ -14,18 +15,27 @@ function datePredicate(column: Prisma.Sql, window: { gte?: Date; lt?: Date; lte?
 }
 
 /** Group the same retained records used by each detail reader. Never derive
- * guest access history from activity or use a live-presence snapshot as history. */
+ * authenticated sessions from guest access evidence or use live presence as history. */
 export function historyDirectorySql(section: HistorySection, query: HistoryDirectoryQuery, environment: PublicEnvironment, now: Date) {
   if (!Number.isSafeInteger(query.page) || query.page < 1 || query.page > 1_000_000) throw new Error("Invalid history directory page");
   let source: Prisma.Sql;
   if (section === "devices") {
-    source = Prisma.sql`
+    const accounts = Prisma.sql`
       SELECT 'user'::text AS "kind", u."id", COALESCE(NULLIF(u."name", ''), u."email", 'Registered user') AS "name",
-        u."email", COUNT(*)::bigint AS "count", MAX(s."lastSeenAt") AS "lastSeenAt"
+        u."email", COUNT(*)::bigint AS "count", MAX(s."lastSeenAt") AS "lastSeenAt", NULL::text AS "guestSource"
       FROM "AccountSession" s JOIN "User" u ON u."id" = s."userId"
       WHERE ${datePredicate(Prisma.sql`s."lastSeenAt"`, deviceHistoryWindow(query, now))}
+      ${accountDevicePlatformPredicate(query.platform)}
       GROUP BY u."id", u."name", u."email"
     `;
+    const guests = Prisma.sql`
+      SELECT 'guest'::text AS "kind", g."guestId" AS "id",
+        CASE WHEN g."guestSource" = 'consented' THEN 'Guest visitor' ELSE 'Guest session' END AS "name",
+        NULL::text AS "email", COUNT(*)::bigint AS "count", MAX(g."at") AS "lastSeenAt", g."guestSource"
+      FROM (${guestAccessRecordsSql(query, environment, now)}) g
+      GROUP BY g."guestId", g."guestSource"
+    `;
+    source = query.tab === "registered" ? accounts : query.tab === "guests" ? guests : Prisma.sql`${accounts} UNION ALL ${guests}`;
   } else {
     const parsed = parsePageHistoryQuery({ range: query.range, from: query.from, to: query.to, platform: query.platform }, now);
     if (!parsed.ok) throw new Error(parsed.error);
@@ -43,7 +53,8 @@ export function historyDirectorySql(section: HistorySection, query: HistoryDirec
         COALESCE(v."currentUserId", v."id") AS "id",
         CASE WHEN v."currentUserId" IS NULL THEN 'Guest visitor'
           ELSE COALESCE(NULLIF(u."name", ''), u."email", 'Registered user') END AS "name",
-        u."email", COUNT(*)::bigint AS "count", MAX(a."createdAt") AS "lastSeenAt"
+        u."email", COUNT(*)::bigint AS "count", MAX(a."createdAt") AS "lastSeenAt",
+        CASE WHEN v."currentUserId" IS NULL THEN 'consented' ELSE NULL END AS "guestSource"
       FROM "AnalyticsEvent" a JOIN "Visitor" v ON v."id" = a."visitorId"
       LEFT JOIN "User" u ON u."id" = v."currentUserId"
       WHERE a."type" = 'PAGE_VIEW' AND a."name" = 'page_viewed'
@@ -65,7 +76,7 @@ export function historyDirectorySql(section: HistorySection, query: HistoryDirec
             AND EXISTS (SELECT 1 FROM "VisitorIdentityLink" l WHERE l."visitorId" = v."id" AND l."userId" = v."currentUserId")
             AND NOT EXISTS (SELECT 1 FROM "VisitorIdentityLink" l WHERE l."visitorId" = v."id" AND l."userId" <> v."currentUserId"))
         )
-      GROUP BY 1, 2, 3, 4
+      GROUP BY 1, 2, 3, 4, 7
     `;
   }
   // One database snapshot, exact identity count even for an empty/out-of-range
