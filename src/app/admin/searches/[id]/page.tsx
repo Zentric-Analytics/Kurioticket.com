@@ -21,6 +21,7 @@ import {
   searchDetailCrawlerEvidenceLabel,
 } from "@/lib/adminSearchDetailPresentation";
 import { AdminLocalTimestamp } from "@/components/admin/AdminLocalTimestamp";
+import { formatDateTime } from "@/lib/admin-data";
 import type { AdminSearchDetail } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -225,7 +226,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
             {search.operationalSessionId ? <Field label="Operational session ID" value={search.operationalSessionId} /> : null}
             {providerReasonCodes.length ? <Field label="Provider reason codes" value={providerReasonCodes.join("; ")} /> : null}
             {diagnostic.providers.some(provider => Math.abs(Date.parse(provider.observedAt) - Date.parse(search.createdAt)) > 60_000) ? (
-              <Field label="Provider observation times" value={diagnostic.providers.map(provider => provider.provider + ": " + new Date(provider.observedAt).toISOString()).join("; ")} />
+              <Field label="Provider observation times" value={diagnostic.providers.map(provider => provider.provider + ": " + formatDateTime(new Date(provider.observedAt))).join("; ")} />
             ) : null}
           </div>
         </details>
