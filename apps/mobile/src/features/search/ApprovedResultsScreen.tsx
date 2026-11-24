@@ -74,6 +74,7 @@ import {
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { journeyEvents } from "../privacy/journeyEvents";
+import { recordNativeResultsPage } from "../privacy/useNativePageViews";
 import { normalizeJourneySortMode, normalizeJourneySortChoice, boundedJourneyFilterSelections } from "../../../../../src/lib/search-journey";
 import { shareNativeResult } from "../privacy/nativeShareTracking";
 import { journeyResponseContext } from "../privacy/journeyResponseContext";
@@ -749,6 +750,7 @@ function ResultsScreen({ product }: { product: Product }) {
   useFocusEffect(useCallback(() => {
     const recordDisplayedResults = () => {
       if (!visualTest && status === "ready" && AppState.currentState === "active") {
+        recordNativeResultsPage(product === "flight" ? "flight" : "hotel", resultsRequestId);
         journeyEvents.resultsViewed(resultsRequestId, product === "flight" ? "/flight-results" : "/hotel-results", sorted.length);
       }
     };
