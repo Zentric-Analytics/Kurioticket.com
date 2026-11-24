@@ -2,7 +2,7 @@
  * Native route names and website paths are intentionally separate.
  */
 export const pageViewCatalog = {
-  home: { label: "Homepage", web: ["/"], native: ["/home"] },
+  home: { label: "Homepage", web: ["/"], native: ["/", "/home"] },
   flights: { label: "Flights", web: ["/flights"], native: ["/flights"], product: "FLIGHT" },
   flight_results: { label: "Flight results", web: ["/flights/results"], native: ["/flight-results"], product: "FLIGHT" },
   flight_details: { label: "Flight details", web: ["/flights/details"], native: ["/flight-details"], product: "FLIGHT" },
@@ -21,11 +21,28 @@ export const pageViewCatalog = {
   support: { label: "Support", web: ["/support"], native: ["/support"] },
   faq: { label: "FAQs", web: ["/faq"], native: ["/faq"] },
   legal: { label: "Legal information", web: ["/legal"], native: ["/legal-information"] },
-  privacy_policy: { label: "Privacy policy", web: ["/legal/privacy-policy"], native: ["/privacy-policy"] },
+  privacy_policy: { label: "Privacy policy", web: ["/legal/privacy-policy"], native: ["/profile/privacy-policy", "/privacy-policy"] },
   cookie_policy: { label: "Cookie policy", web: ["/legal/cookie-policy"], native: ["/cookie-policy"] },
-  terms: { label: "Terms of service", web: ["/legal/terms-of-service"], native: ["/terms-of-service"] },
-  dashboard: { label: "Account dashboard", web: ["/dashboard"], native: ["/account"] },
+  terms: { label: "Terms of service", web: ["/legal/terms-of-service"], native: ["/profile/terms-of-service", "/terms-of-service"] },
+  dashboard: { label: "Account dashboard", web: ["/dashboard"], native: ["/profile", "/account"] },
   settings: { label: "Settings", web: ["/dashboard/settings"], native: ["/settings"] },
+  trips: { label: "My Trips", web: [], native: ["/trips"] },
+  notifications: { label: "Notifications", web: [], native: ["/notifications"] },
+  recent: { label: "Recent searches", web: [], native: ["/recent"] },
+  currency: { label: "Currency", web: [], native: ["/currency"] },
+  language: { label: "Language", web: [], native: ["/language"] },
+  security: { label: "Security settings", web: [], native: ["/security"] },
+  personal_information: { label: "Personal information", web: [], native: ["/personal-information"] },
+  email_preferences: { label: "Email preferences", web: [], native: ["/email-preferences"] },
+  travel_preferences: { label: "Travel preferences", web: [], native: ["/travel-preferences"] },
+  edit_flight_search: { label: "Edit flight search", web: [], native: ["/edit-flight-search"], product: "FLIGHT" },
+  package_results: { label: "Package results", web: [], native: ["/package-results"], product: "PACKAGE" },
+  explore_region: { label: "Explore region", web: [], native: ["/explore/region/[region]"] },
+  explore_destination: { label: "Explore destination", web: [], native: ["/explore/destination/[id]"] },
+  home_flights: { label: "Home · Flights", web: [], native: ["/home#flights"], product: "FLIGHT" },
+  home_hotels: { label: "Home · Hotels", web: [], native: ["/home#hotels"], product: "HOTEL" },
+  home_cars: { label: "Home · Cars", web: [], native: ["/home#cars"], product: "CAR" },
+  home_packages: { label: "Home · Packages", web: [], native: ["/home#packages"], product: "PACKAGE" },
 } as const;
 export type PageViewKey = keyof typeof pageViewCatalog;
 export type PageViewTransport = "web" | "native";
@@ -39,6 +56,12 @@ export function pageViewKey(pathname: string | null | undefined, transport: Page
   const path = pathname === "/" ? pathname : pathname.replace(/\/$/, "");
   // Recognize only the established product details route template. Discard
   // its private identifier; never return or persist the original path.
+  if (transport === "native") {
+    if (/^\/explore\/region\/[^/?#]+$/.test(path)) return "explore_region";
+    if (/^\/explore\/destination\/[^/?#]+$/.test(path)) return "explore_destination";
+    // In-page Home sections are recorded only by their explicit UI observer.
+    if (path.includes("#") || path.includes("?")) return null;
+  }
   if (transport === "web") {
     const detail = /^\/(flights|hotels|cars)\/details\/[A-Za-z0-9._%:+~=-]{1,160}$/.exec(path);
     if (detail) return ({ flights: "flight_details", hotels: "hotel_details", cars: "car_details" } as const)[detail[1] as "flights" | "hotels" | "cars"];
@@ -51,7 +74,7 @@ export function pageViewKey(pathname: string | null | undefined, transport: Page
 export function pageViewInfo(key: unknown) {
   if (!isPageViewKey(key)) return null;
   const entry = pageViewCatalog[key];
-  return { label: entry.label, webPath: entry.web[0], nativePath: entry.native[0],
+  return { label: entry.label, webPath: (entry.web as readonly string[])[0] ?? null, nativePath: (entry.native as readonly string[])[0] ?? null,
     product: "product" in entry ? entry.product : null };
 }
 /** Only public, parameter-free landing pages are safe admin click-throughs.
@@ -60,7 +83,7 @@ export function pageViewInfo(key: unknown) {
 export function publicPageViewPath(key: unknown): string | null {
   if (!isPageViewKey(key)) return null;
   if (["home","flights","hotels","cars","packages","deals","explore","destinations","support","faq","legal","privacy_policy","cookie_policy","terms"].includes(key)) {
-    return pageViewCatalog[key].web[0];
+    return (pageViewCatalog[key].web as readonly string[])[0] ?? null;
   }
   return null;
 }

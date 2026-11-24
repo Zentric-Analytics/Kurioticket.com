@@ -12,6 +12,7 @@ export function toAdminPageView(event: { id: string; createdAt: Date; metadata: 
   const transport = item.transport;
   const previous = pageViewInfo(item.previousPageKey);
   const path = transport === "web" ? page.webPath : page.nativePath;
+  if (!path) return null;
   const previousPath = previous ? transport === "web" ? previous.webPath : previous.nativePath : null;
   const platform = ["iOS app", "Android app", "iOS app (reported)", "Android app (reported)", "Native app", "Mobile web (reported)", "Website", "Desktop web (reported)"].find(value => value === item.platform) ?? "Unknown";
   const safePath = transport === "web" ? publicPageViewPath(item.pageKey) : null;

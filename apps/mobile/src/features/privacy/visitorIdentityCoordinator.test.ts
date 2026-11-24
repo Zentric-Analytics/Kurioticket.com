@@ -24,7 +24,8 @@ function harness(initial: unknown = null) {
     waitGrant: null as ReturnType<typeof deferred<void>> | null,
     waitMerge: null as ReturnType<typeof deferred<void>> | null,
   };
-  const restart = () => new VisitorIdentityCoordinator({
+  const restart = (reviewVersion?: string) => new VisitorIdentityCoordinator({
+    reviewVersion,
     read: async () => { if (controls.failRead) throw new Error("storage temporarily unavailable"); return saved; },
     write: async value => { if (controls.failWrite) throw new Error("storage unavailable"); saved = structuredClone(value); },
     grant: async (token, session) => {
@@ -413,4 +414,63 @@ test("recovering storage preserves a returning visitor's previous refusal", asyn
   assert.equal(returning.snapshot().choice, "declined");
   assert.deepEqual(await returning.headers("/api/redirect", null), {});
   assert.deepEqual(h.calls, []);
+});
+
+test("existing testers review the new notice once without losing their consented guest identity", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  await h.coordinator.choose(true);
+  const original = h.saved().visitorToken;
+  const upgraded = h.restart("analytics-visitor-v2");
+  await upgraded.transition(null);
+  assert.equal(upgraded.snapshot().reviewRequired, true);
+  assert.equal(upgraded.snapshot().tracking, false);
+  assert.deepEqual(await upgraded.headers("/api/activity/page-views", null), {});
+  assert.equal(h.calls.filter(call => call.operation === "grant").length, 1);
+  await upgraded.choose(true);
+  assert.equal(h.saved().reviewVersion, "analytics-visitor-v2");
+  assert.equal(h.saved().confirmedReviewVersion, "analytics-visitor-v2");
+  assert.equal(h.saved().visitorToken, original);
+  assert.equal(h.records.size, 1);
+  assert.deepEqual(await upgraded.headers("/api/activity/page-views", null), { "x-kt-visitor": original });
+  const returning = h.restart("analytics-visitor-v2");
+  await returning.transition(null);
+  assert.equal(returning.snapshot().reviewRequired, false);
+  assert.equal(returning.snapshot().tracking, true);
+  assert.equal(h.records.size, 1);
+});
+
+test("prior refusal remains off during the review and a saved refusal is not repeatedly prompted", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  await h.coordinator.choose(false);
+  const upgraded = h.restart("analytics-visitor-v2");
+  await upgraded.transition(null);
+  assert.equal(upgraded.snapshot().choice, "declined");
+  assert.equal(upgraded.snapshot().reviewRequired, true);
+  assert.deepEqual(h.calls, []);
+  await upgraded.choose(false);
+  const returning = h.restart("analytics-visitor-v2");
+  await returning.transition(null);
+  assert.equal(returning.snapshot().reviewRequired, false);
+  assert.deepEqual(await returning.headers("/api/activity/page-views", null), {});
+  assert.deepEqual(h.calls, []);
+});
+
+test("a failed review save cannot authorize page views or replace an existing token", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  await h.coordinator.choose(true);
+  const original = h.saved().visitorToken;
+  const upgraded = h.restart("analytics-visitor-v2");
+  await upgraded.transition(null);
+  h.controls.failWrite = true;
+  await assert.rejects(upgraded.choose(true), /Unable to save the analytics choice/);
+  assert.equal(upgraded.snapshot().reviewRequired, true);
+  assert.equal(upgraded.trackingContext(), null);
+  assert.equal(h.saved().visitorToken, original);
+  h.controls.failWrite = false;
+  await upgraded.choose(true);
+  assert.equal(h.saved().visitorToken, original);
+  assert.equal(upgraded.snapshot().tracking, true);
 });

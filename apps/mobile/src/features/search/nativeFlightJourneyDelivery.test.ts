@@ -24,7 +24,7 @@ test("iOS flight View deal does not double count an offer and settles queued con
 
 test("native analytics settings show disconnected grant separately from a connected device", () => {
   assert.match(consent, /enabled \? state\.tracking \? "Analytics is ready on this device\."/);
-  assert.match(consent, /enabled && !state\.tracking && !state\.pending/);
+  assert.match(consent, /enabled && !state\.reviewRequired && !state\.tracking && !state\.pending/);
   assert.match(consent, /accessibilityLabel="Retry analytics connection"/);
   assert.match(consent, /value=\{!!checked\}/);
   assert.match(consent, /analytics checked=\{draft\}/);

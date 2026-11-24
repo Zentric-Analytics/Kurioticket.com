@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, useWindowDimensions, View } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { usePathname, useSegments } from "expo-router";
+import { pageViewKey } from "@/lib/pageViewCatalog";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronRight, Minus, Plus, X } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -108,27 +109,26 @@ function PrivacySheet({ visible, initial, editing, onOpen, onClose, onDone, curr
         </View>
         <ScrollView bounces={false} overScrollMode="never" style={styles.scroll} contentContainerStyle={styles.content}>
           <Text style={[styles.body, { color: theme.muted }]}>{details
-            ? "Choose how Kurioticket uses app data to support and improve your experience. Optional sharing is your choice."
-            : "Essential app functions keep Kurioticket secure and working. With your permission, optional analytics helps us understand and improve your experience. You can change your preferences at any time."}</Text>
+            ? "Choose how Kurioticket uses app data to support and improve your experience. To use essential app functions only, turn off analytics and save your preferences."
+            : "Essential app functions keep Kurioticket secure and working. With your permission, optional analytics helps us understand and improve your experience. You can change your choice at any time under Profile → About & legal."}</Text>
           {details ? <>
-            <View style={styles.actions}><View style={styles.flex}><Action label="Essential only" disabled={saving} onPress={() => void choose(false)} /></View><View style={styles.flex}><Action label="Accept all" disabled={saving} onPress={() => void choose(true)} /></View></View>
+            <Action label="Accept all" disabled={saving} onPress={() => void choose(true)} />
             <Text accessibilityRole="header" style={[styles.label, { color: theme.text }]}>Manage your preferences</Text>
             <Category title="Essential app functions" subtitle="Keeps Kurioticket secure and working"
               description="Supports security, sign-in, requested travel searches and necessary search-to-provider handoff records. This does not enable optional behavioural analytics." />
-            <Category title="Analytics sharing" subtitle="Helps us understand your experience"
+            <Category title="Analytics sharing" subtitle={initial && current ? "Review your choice · not enabled until saved" : "Helps us understand your experience"}
               description="With your permission, we measure app engagement and travel activity, including account-linked activity when you sign in. Turning analytics off does not prevent requested searches or necessary records."
               analytics checked={draft} disabled={saving} onChange={setDraft} />
             <Category title="Performance sharing" subtitle="Helps measure speed and reliability" description="Optional performance measurement could help us understand loading times, responsiveness and technical issues. This separate preference is not available yet and is not enabled by Accept all. Essential service diagnostics are separate." unavailable />
+             <Category title="Marketing sharing" subtitle="Helps measure campaigns and relevant promotions" description="Optional marketing measurement is not available yet and is not enabled by Accept all." unavailable />
           </> : null}
           {saving ? <Text accessibilityLiveRegion="polite" style={[styles.body, { color: theme.muted }]}>Saving your choice…</Text> : null}
-          {error ? <Text accessibilityRole="alert" style={[styles.body, { color: theme.text }]}>We couldn't save your preferences. Optional analytics is off for now. Try again or continue.</Text> : null}
-          {error ? <Action label="Continue without analytics" secondary onPress={onDone} /> : null}
+          {error ? <Text accessibilityRole="alert" style={[styles.body, { color: theme.text }]}>We couldn't save your preferences. Optional analytics is off for now. Please try again.</Text> : null}
         </ScrollView>
         <View style={[styles.footer, { borderTopColor: theme.border, paddingBottom: Math.max(insets.bottom, 16) }]}>
-          {details ? <Action label="Save preferences" disabled={saving} onPress={() => void choose(draft)} /> : <>
-            <Action label="Privacy preferences" secondary disabled={saving} onPress={onOpen} />
+          {details ? <Action label={initial && draft ? "Allow analytics" : "Save preferences"} disabled={saving} onPress={() => void choose(draft)} /> : <>
             <View style={styles.actions}>
-              <View style={styles.flex}><Action label="Essential only" disabled={saving} onPress={() => void choose(false)} /></View>
+              <View style={styles.flex}><Action label="Privacy preferences" secondary disabled={saving} onPress={onOpen} /></View>
               <View style={styles.flex}><Action label="Accept all" disabled={saving} onPress={() => void choose(true)} /></View>
             </View>
           </>}
@@ -138,47 +138,50 @@ function PrivacySheet({ visible, initial, editing, onOpen, onClose, onDone, curr
   </Modal>;
 }
 
-/** Ask only after the travel home screen is focused, not during startup/auth
- * or on top of native legal, recovery and external-provider screens. */
+/** Prompt once per review version on the first eligible customer screen.
+ * Exclude bootstrap, auth, recovery, legal and provider handoff screens. */
 export function NativeFirstVisitPrivacyPrompt() {
   const state = useConsentSnapshot();
-  const [focused, setFocused] = useState(false);
+  const pathname = usePathname();
+  const segments = useSegments() as readonly string[];
+  const key = pageViewKey(pathname, "native");
+  const focused = Boolean(key && !["privacy_policy", "cookie_policy", "terms", "legal", "security", "personal_information"].includes(key)
+    && pathname !== "/home" && (pathname !== "/" || segments.includes("(tabs)")));
   const [editing, setEditing] = useState(false);
-  const [completed, setCompleted] = useState(false);
-  useFocusEffect(useCallback(() => {
-    setFocused(true);
-    return () => setFocused(false);
-  }, []));
-  // Keep the same sheet mounted while the explicit choice is being saved,
-  // even when the coordinator publishes its new choice before the request ends.
   const [started, setStarted] = useState(false);
+  const [completed, setCompleted] = useState(false);
+  const [initialDraft, setInitialDraft] = useState(false);
   useEffect(() => {
-    if (focused && state.loaded && state.choice === "unknown" && !completed) setStarted(true);
-  }, [focused, state.loaded, state.choice, completed]);
+    if (focused && state.loaded && state.reviewRequired && !started && !completed) {
+      // Preserve prior refusals. A suggestion is never the stored permission.
+      setInitialDraft(state.choice !== "declined");
+      setStarted(true);
+    }
+  }, [focused, state.loaded, state.reviewRequired, state.choice, started, completed]);
   if (!started || completed) return null;
-  return <PrivacySheet visible={focused} initial editing={editing} current={false}
+  return <PrivacySheet visible={focused} initial editing={editing} current={initialDraft}
     onOpen={() => setEditing(true)} onClose={() => setEditing(false)}
     onDone={() => { setCompleted(true); setEditing(false); }} />;
 }
 
-/** Reopen privacy preferences for guests and signed-in users. */
+/** Discreet withdrawal/review control within the existing About & legal card. */
 export function AnalyticsConsentControl() {
   const { theme } = useAppTheme();
   const state = useConsentSnapshot();
   const [editing, setEditing] = useState(false);
   const enabled = state.choice === "granted";
-  const status = state.error
+  const status = state.reviewRequired && state.loaded ? "Review your privacy choice before optional analytics can connect." : state.error
     ? enabled ? "Analytics sharing is on, but this device is not connected. Try again." : state.pending ? "Analytics sharing is off. Withdrawal will finish when connected." : "Unable to save analytics sharing. Please try again."
     : state.pending ? enabled ? "Connecting analytics…" : "Finishing withdrawal…"
       : enabled ? state.tracking ? "Analytics is ready on this device." : "Analytics sharing is on, but this device is not connected. Try again." : "";
-  const canRetry = state.loaded && (state.error || (enabled && !state.tracking && !state.pending));
+  const canRetry = state.error || (state.loaded && enabled && !state.reviewRequired && !state.tracking && !state.pending);
 
-  return <View style={[styles.category, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-    <Pressable accessibilityRole="button" accessibilityLabel="Privacy preferences" disabled={!state.loaded}
+  return <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border }}>
+    <Pressable accessibilityRole="button" accessibilityLabel="Manage analytics consent" disabled={!state.loaded}
       accessibilityState={{ disabled: !state.loaded }} onPress={() => setEditing(true)} style={styles.settingsRow}>
       <View style={styles.flex}>
-        <Text style={[styles.label, { color: theme.text }]}>Privacy preferences</Text>
-        <Text style={[styles.subtitle, { color: theme.muted }]}>{!state.loaded ? "Loading preferences…" : enabled ? "Optional analytics on" : "Optional analytics off"}</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Manage analytics consent</Text>
+        <Text style={[styles.subtitle, { color: theme.muted }]}>{!state.loaded ? "Loading preferences…" : state.reviewRequired ? "Review your choice" : enabled ? "Optional analytics on" : "Optional analytics off"}</Text>
       </View>
       <ChevronRight size={20} color={theme.icon} accessible={false} />
     </Pressable>

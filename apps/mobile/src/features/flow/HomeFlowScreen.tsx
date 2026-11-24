@@ -12,6 +12,7 @@ import { useCallback, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
+import { recordNativeHomeSection } from "../privacy/useNativePageViews";
 import { travelApi } from "../../api/travelApi";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { HomeProductIcon, type HomeProductIconName } from "../home/HomeProductIcon";
@@ -26,7 +27,6 @@ import { HomepageAdventureDiscovery } from "../home/HomepageAdventureDiscovery";
 import { PopularDestinationStays } from "../home/PopularDestinationStays";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { UnavailableNotice } from "./FlowPrimitives";
-import { NativeFirstVisitPrivacyPrompt } from "../privacy/AnalyticsConsentControl";
 
 const homeHeroSource = {
   uri: "https://kurioticket.com/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg",
@@ -243,7 +243,7 @@ function HomePageContent() {
                 accessibilityRole="tab"
                 accessibilityLabel={product.label}
                 accessibilityState={{ selected }}
-                onPress={() => setActiveProduct(product.id)}
+                onPress={() => { if (!selected) recordNativeHomeSection(product.id); setActiveProduct(product.id); }}
                 style={({ pressed }) => [
                   styles.product,
                   selected && [styles.productActive, { backgroundColor: ft.colors.selected, borderBottomColor: ft.colors.selectedBorder }],
@@ -278,7 +278,7 @@ function HomePageContent() {
 }
 
 export function SharedHomePage() {
-  return <><HomePresentationProvider><HomePageContent /></HomePresentationProvider><NativeFirstVisitPrivacyPrompt /></>;
+  return <HomePresentationProvider><HomePageContent /></HomePresentationProvider>;
 }
 
 export const HomeFlowScreen = SharedHomePage;

@@ -22,6 +22,7 @@ import { createForegroundUpdateHandler, ensureLatestUpdate } from "../src/update
 import { startVisitorIdentity } from "../src/features/privacy/visitorIdentity";
 import { useNativePresence } from "../src/features/privacy/useNativePresence";
 import { useNativePageViews } from "../src/features/privacy/useNativePageViews";
+import { NativeFirstVisitPrivacyPrompt } from "../src/features/privacy/AnalyticsConsentControl";
 import { MobileRecoveryBoundary } from "../src/features/auth/MobileRecoveryBoundary";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -82,6 +83,7 @@ function ThemedRootLayout() {
         <Stack.Screen name="hotel-results" options={{ gestureEnabled: true }} />
         <Stack.Screen name="flight-details" options={{ animation: "ios_from_right", gestureEnabled: true }} />
       </Stack></MobileRecoveryBoundary>
+      <NativeFirstVisitPrivacyPrompt />
     </View>
   );
 }

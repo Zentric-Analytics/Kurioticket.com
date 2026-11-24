@@ -74,6 +74,7 @@ import {
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { journeyEvents } from "../privacy/journeyEvents";
+import { recordNativeResultsPage } from "../privacy/useNativePageViews";
 import { normalizeJourneySortMode, normalizeJourneySortChoice, boundedJourneyFilterSelections } from "../../../../../src/lib/search-journey";
 import { shareNativeResult } from "../privacy/nativeShareTracking";
 import { journeyResponseContext } from "../privacy/journeyResponseContext";
@@ -748,8 +749,9 @@ function ResultsScreen({ product }: { product: Product }) {
   }, [filteredHotelResults, ownedFlightResults, filters, hotelSort, sort, product, flightPriceContext, normalizeFlightPrice, currencyState?.rates]);
   useFocusEffect(useCallback(() => {
     const recordDisplayedResults = () => {
-      if (!visualTest && status === "ready" && AppState.currentState === "active") {
-        journeyEvents.resultsViewed(resultsRequestId, product === "flight" ? "/flight-results" : "/hotel-results", sorted.length);
+      if (!visualTest && (status === "ready" || status === "empty") && AppState.currentState === "active") {
+        recordNativeResultsPage(product === "flight" ? "flight" : "hotel", resultsRequestId);
+        if (status === "ready") journeyEvents.resultsViewed(resultsRequestId, product === "flight" ? "/flight-results" : "/hotel-results", sorted.length);
       }
     };
     recordDisplayedResults();

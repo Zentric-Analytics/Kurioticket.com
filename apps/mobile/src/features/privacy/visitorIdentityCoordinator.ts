@@ -7,6 +7,8 @@ export type StoredVisitorIdentity = {
   pendingToken: string | null;
   pendingUserId: string | null;
   pendingWithdrawals: string[];
+  reviewVersion?: string;
+  confirmedReviewVersion?: string;
 };
 export type AnalyticsSnapshot = {
   loaded: boolean;
@@ -14,6 +16,7 @@ export type AnalyticsSnapshot = {
   tracking: boolean;
   pending: boolean;
   error: boolean;
+  reviewRequired: boolean;
 };
 type Dependencies = {
   read: () => Promise<unknown>;
@@ -22,6 +25,8 @@ type Dependencies = {
   merge: (token: string, session: NonNullable<IdentitySession>) => Promise<{ merged: boolean; visitorToken?: string }>;
   withdraw: (token: string) => Promise<void>;
   now?: () => number;
+  /** Required presentation version, independent of the storage key. */
+  reviewVersion?: string;
 };
 
 const tokenPattern = /^[A-Za-z0-9_-]{43}$/;
@@ -45,6 +50,8 @@ export function parseStoredVisitorIdentity(value: unknown): StoredVisitorIdentit
     pendingToken: choice === "granted" ? pendingToken : null,
     pendingUserId: choice === "granted" && pendingToken && typeof stored.pendingUserId === "string" ? stored.pendingUserId : null,
     pendingWithdrawals: [...new Set(pendingWithdrawals)],
+    ...(typeof stored.reviewVersion === "string" ? { reviewVersion: stored.reviewVersion } : {}),
+    ...(typeof stored.confirmedReviewVersion === "string" ? { confirmedReviewVersion: stored.confirmedReviewVersion } : {}),
   };
 }
 
@@ -81,12 +88,17 @@ export class VisitorIdentityCoordinator {
 
   constructor(private readonly dependencies: Dependencies) {}
 
+  private reviewRequired() {
+    return this.state.choice === "unknown" || Boolean(this.dependencies.reviewVersion && this.state.reviewVersion !== this.dependencies.reviewVersion);
+  }
+
   snapshot = (): AnalyticsSnapshot => ({
     loaded: this.loaded,
     choice: this.state.choice,
-    tracking: this.loaded && this.state.choice === "granted" && Boolean(this.state.visitorToken) && this.sessionKnown && this.state.userId === (this.session?.user.id ?? null),
+    tracking: this.loaded && !this.reviewRequired() && (!this.dependencies.reviewVersion || (!this.storageDirty && this.state.confirmedReviewVersion === this.dependencies.reviewVersion)) && this.state.choice === "granted" && Boolean(this.state.visitorToken) && this.sessionKnown && this.state.userId === (this.session?.user.id ?? null),
     pending: Boolean(this.task) || this.state.pendingWithdrawals.length > 0,
     error: this.failed,
+    reviewRequired: this.reviewRequired(),
   });
 
   /** Local generation only; never an identity credential or a value sent to the server. */
@@ -168,7 +180,13 @@ export class VisitorIdentityCoordinator {
     await this.load();
     if (!this.loaded) throw new Error("Unable to read existing analytics preferences.");
     this.revision += 1;
+    const previousChoice = this.state.choice;
+    const version = this.dependencies.reviewVersion;
     this.state.choice = enabled ? "granted" : "declined";
+    if (version) {
+      this.state.reviewVersion = version;
+      this.state.confirmedReviewVersion = undefined;
+    }
     this.failed = false;
     if (!enabled) {
       this.queueWithdrawal(this.state.visitorToken);
@@ -179,11 +197,17 @@ export class VisitorIdentityCoordinator {
       this.state.pendingToken = null;
       this.state.pendingUserId = null;
     }
+    // Queue the durable write before publishing; a grant cannot become active while saving.
+    const write = this.persist();
     this.publish();
-    try { await this.persist(); }
+    try { await write; }
     catch {
       // Never enable tracking if the explicit choice could not be retained.
-      if (enabled) { this.state.choice = "declined"; this.state.visitorToken = null; this.state.userId = null; }
+      if (version) {
+        this.state.reviewVersion = undefined;
+        this.state.confirmedReviewVersion = undefined;
+        if (enabled) this.state.choice = previousChoice;
+      } else if (enabled) { this.state.choice = "declined"; this.state.visitorToken = null; this.state.userId = null; }
       this.failed = true;
       this.publish();
       if (!enabled) await this.refresh();
@@ -198,7 +222,7 @@ export class VisitorIdentityCoordinator {
     if (!this.loaded) return {};
     const changed = this.adoptSession(session);
     const pendingSearchIdentity = nativeJourneySearchPaths.has(path)
-      && this.state.choice === "granted" && !this.snapshot().tracking;
+      && this.state.choice === "granted" && !this.reviewRequired() && !this.snapshot().tracking;
     // Retry when an already-consented search starts, even if an earlier
     // background identity connection failed. Unknown/declined consent never
     // starts a visitor request.
@@ -254,7 +278,7 @@ export class VisitorIdentityCoordinator {
       await this.persist();
     }
     if (this.storageDirty) throw new Error("The analytics choice is not saved yet.");
-    if (this.state.choice !== "granted" || !this.sessionKnown) { this.failed = false; return; }
+    if (this.state.choice !== "granted" || this.reviewRequired() || !this.sessionKnown) { this.failed = false; return; }
     if (this.snapshot().tracking) { this.failed = false; return; }
 
     const revision = this.revision;
@@ -295,6 +319,7 @@ export class VisitorIdentityCoordinator {
       this.state.userId = session?.user.id ?? null;
       this.state.pendingToken = null;
       this.state.pendingUserId = null;
+      if (this.dependencies.reviewVersion) this.state.confirmedReviewVersion = this.dependencies.reviewVersion;
       await this.persist();
       this.failed = false;
     } finally {

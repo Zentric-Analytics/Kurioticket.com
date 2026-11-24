@@ -36,6 +36,7 @@ export async function POST(request: Request) {
   const page = pageViewInfo(parsed.data.pageKey);
   if (!page) return json({ accepted: false }, 400);
   const native = isNativeVisitorRequest(request);
+  if (!(native ? page.nativePath : page.webPath)) return json({ accepted: false }, 400);
   const declaredPlatform = request.headers.get("x-mobile-platform");
   // Guest native OS and web device class are reported transport attributes,
   // not device attestation or authorization. Never collect raw user-agent.
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
     const accepted = await db.$transaction(async tx => {
       // The existing visitor row lock serializes duplicate event IDs and
       // rechecks account ownership and consent against concurrent withdrawal.
-      if (!await lockConsentedVisitor(tx, identity.visitorId!, identity.userId)) return false;
+      if (!await lockConsentedVisitor(tx, identity.visitorId!, identity.userId)) return { accepted: false, retryable: false };
       const existing = await tx.analyticsEvent.findFirst({
         where: { visitorId: identity.visitorId, userId: identity.userId, type: "PAGE_VIEW",
           AND: [{ metadata: { path: ["eventId"], equals: parsed.data.eventId } },
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
       });
       const meta = existing?.metadata && typeof existing.metadata === "object" && !Array.isArray(existing.metadata)
         ? existing.metadata as Record<string, unknown> : null;
-      if (existing && (meta?.pageKey !== parsed.data.pageKey || meta?.transport !== (native ? "native" : "web"))) return false;
+      if (existing && (meta?.pageKey !== parsed.data.pageKey || meta?.transport !== (native ? "native" : "web"))) return { accepted: false, retryable: false };
       let verifiedLink: { linkedJourneyId: string; linkedSearchHistoryId: string } | null = null;
       // Only an explicit, current search response/reference can link a product
       // results or details view. A support visit or guessed latest search cannot.
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
           where: { id: existing.id },
           data: { metadata: { ...meta, ...verifiedLink } as Prisma.InputJsonValue },
         });
-        return true;
+        return { accepted: true, retryable: Boolean(parsed.data.requestId && pageViewCanLink(parsed.data.pageKey) && !meta?.linkedJourneyId && !verifiedLink) };
       }
       await tx.analyticsEvent.create({ data: {
         type: "PAGE_VIEW", name: "page_viewed", userId: identity.userId, visitorId: identity.visitorId,
@@ -95,8 +96,8 @@ export async function POST(request: Request) {
           ...(verifiedLink ?? {}),
         }) as Prisma.InputJsonValue,
       } });
-      return true;
+      return { accepted: true, retryable: Boolean(parsed.data.requestId && pageViewCanLink(parsed.data.pageKey) && !verifiedLink) };
     });
-    return json({ accepted });
+    return json(accepted);
   } catch { return json({ accepted: false }, 503); }
 }
