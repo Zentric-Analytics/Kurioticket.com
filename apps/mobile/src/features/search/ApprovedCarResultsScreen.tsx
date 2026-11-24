@@ -101,9 +101,9 @@ export function ApprovedCarResultsScreen() {
   useEffect(()=>{const executionKey=`${plan.plan?.key??"invalid"}:${retry}`;if(searchAbortTimer.current)clearTimeout(searchAbortTimer.current);searchAbortTimer.current=undefined;if(activeExecutionKey.current!==executionKey){activeExecutionKey.current=executionKey;void load();}return()=>{searchAbortTimer.current=setTimeout(()=>{if(activeExecutionKey.current!==executionKey)return;searchSequence.current+=1;activeSearch.current?.abort("screen-cleanup");activeExecutionKey.current=undefined;},0);};},[load,plan.plan?.key,retry]);
   useEffect(()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);carResultsApplyingTimer.current=undefined;setCarResultsApplying(false);return()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);};},[plan.plan?.key]);
   useFocusEffect(useCallback(()=>{
-    if(status==="ready") {
+    if(status==="ready" || status==="empty") {
       recordNativeResultsPage("car", resultsRequestId);
-      if(results.length>0) journeyEvents.resultsViewed(resultsRequestId,"/car-results",results.length);
+      if(status==="ready" && results.length>0) journeyEvents.resultsViewed(resultsRequestId,"/car-results",results.length);
     }
   },[status,results.length,resultsRequestId]));
   const filterGroups=useMemo(()=>visibleCarFilterGroups(results,pricePerDay),[pricePerDay,results]);
