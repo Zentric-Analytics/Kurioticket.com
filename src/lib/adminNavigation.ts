@@ -1,4 +1,5 @@
 import type React from "react";
+import { historyDirectoryReturnHref } from "./adminHistoryDirectory";
 
 import {
   Activity,
@@ -197,16 +198,18 @@ const workspaceSections: ReadonlyArray<{
  * Highlight exactly one section at a time, including legacy search detail URLs.
  * Providers renders its query-driven Attribution tab locally on the landing page.
  */
-export function isAdminWorkspaceSectionActive(pathname: string, href: string): boolean {
+export function isAdminWorkspaceSectionActive(pathname: string, href: string, activityReturn?: unknown): boolean {
   const destination = href.split("?")[0];
   if (href.includes("?")) return pathname === "/admin/referral-attribution";
   if (destination === "/admin/searches/activity"
     && /^\/admin\/searches\/(?!activity(?:\/|$))[^/]+\/?$/.test(pathname)) return true;
-  // Individual histories highlight their corresponding Users directory.
-  // Other account-specific activity and legacy journeys remain in Users Directory.
+  // Both individual history routes are shared by Activity and their standalone
+  // directories. Match the same validated return context as the detail page.
   const history = /^\/admin\/users\/(?:user|guest)\/[^/]+\/(devices|pages)\/?$/.exec(pathname);
   if (history && ["/admin/users", "/admin/users/devices", "/admin/users/pages"].includes(destination)) {
-    return destination === "/admin/users/" + history[1];
+    const section = history[1] === "devices" ? "devices" : "pages";
+    const owner = historyDirectoryReturnHref(section, activityReturn) ? "/admin/users/" + section : "/admin/users";
+    return destination === owner;
   }
   // Only platform-wide monitoring belongs to the separate Platforms workspace.
   if (destination === "/admin/users") return (pathname === destination
