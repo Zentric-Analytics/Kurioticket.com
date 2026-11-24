@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { validActivityIdentity } from "@/lib/adminIdentityActivity";
 import { historyDirectoryReturnHref } from "@/lib/adminHistoryDirectory";
+import { AdminGuestAccessHistory } from "@/components/admin/AdminGuestAccessHistory";
 import { activityJourneyReturnHref } from "@/lib/adminActivityJourneyNavigation";
 import { deviceHistoryHref, parseDeviceHistoryQuery, DEVICE_HISTORY_PAGE_SIZE } from "@/lib/adminDeviceHistory";
 import { loadAdminFullDeviceHistory, type AdminDeviceSession } from "@/services/adminDeviceSessionsService";
@@ -47,7 +48,6 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
   if (!validActivityIdentity(kind, id)) notFound();
   const path = "/admin/users/" + kind + "/" + encodeURIComponent(id);
   await requireAdminSession(path + "/devices");
-  if (kind !== "user") notFound(); // No authenticated guest device ownership exists.
   const raw = await searchParams;
   const activityPath = path + "/activity";
   const incoming = typeof raw.activityReturn === "string" ? raw.activityReturn : "";
@@ -64,6 +64,8 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
       action={<Link href={path + "/devices?" + new URLSearchParams({ activityReturn: backHref }).toString()} className={linkClass}>Reset device filters</Link>} />
   </div>;
   const query = parsed.query;
+  if (kind === "guest") return <AdminGuestAccessHistory id={id} query={query} path={path + "/devices"} backHref={backHref} backLabel={backLabel}/>;
+  // Only authenticated accounts enter the canonical account session reader.
   const result = await loadAdminFullDeviceHistory(id, query);
   if (result.status === "not_found") notFound();
   if (result.status === "unavailable") return <div className="min-w-0 space-y-4">
@@ -98,7 +100,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
           <Clock3 size={14} aria-hidden="true"/>{result.total.toLocaleString()} matching sessions
         </span>
       </header>
-      <AdminDeviceHistoryFilters key={query.range + ":" + (query.from ?? "") + ":" + (query.to ?? "")}
+      <AdminDeviceHistoryFilters key={query.range + ":" + (query.from ?? "") + ":" + (query.to ?? "") + ":" + (query.platform ?? "all")}
         path={pagePath} query={query} returnHref={backHref}/>
       {result.sessions.length === 0 ? <p role="status" className="rounded-lg bg-[#F8FAFC] px-4 py-7 text-center text-[13px] text-[#64748B]">
         {result.total === 0 ? "No device history matches this date range." : "No records on this page. Go to a previous page."}
