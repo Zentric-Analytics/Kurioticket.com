@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
+import { createPageViewObserver } from "@/lib/pageViewCatalog";
 import { analyticsConsentAccountKey, analyticsConsentChangedEvent, analyticsConsentStorageKey, hasAnalyticsDenial, parseAnalyticsConsent } from "@/lib/analyticsConsentClient";
 import { createJourneyEventSender, forgetJourneySelections, journeyRequestId, readJourneySelection, rememberJourneySelection } from "@/lib/journeyEventClient";
 import { createProviderHandoffMetadata, type ProviderHandoffMetadataReader } from "@/lib/providerHandoffClient";
@@ -31,7 +33,9 @@ export function JourneyEventsProvider({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const actor = analyticsConsentAccountKey(status, session?.user);
   const previousActor = useRef(actor);
-  const [, setConfirmation] = useState<{ actor: string | null; enabled: boolean }>({ actor: null, enabled: false });
+  const [confirmation, setConfirmation] = useState<{ actor: string | null; enabled: boolean }>({ actor: null, enabled: false });
+  const pathname = usePathname();
+  const [observePage] = useState(() => createPageViewObserver());
   const [sender] = useState(() => createJourneyEventSender({
     request: (url, init) => fetch(url, init),
     allowed: browserAllowsAnalytics,
@@ -74,6 +78,27 @@ export function JourneyEventsProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("storage", storage);
     };
   }, [actor, sender]);
+
+  // Observe the currently visible, allowlisted route only after canonical
+  // visitor consent is confirmed. Do not replay routes viewed before consent.
+  useEffect(() => {
+    const observe = () => {
+      const confirmed = confirmation.actor === actor && confirmation.enabled && browserAllowsAnalytics();
+      const event = observePage({
+        pathname, transport: "web", context: confirmed ? actor : null,
+        visible: document.visibilityState === "visible",
+      });
+      if (!event || typeof crypto.randomUUID !== "function" || !browserAllowsAnalytics()) return;
+      void fetch("/api/activity/page-views", {
+        method: "POST", cache: "no-store", credentials: "same-origin", keepalive: true,
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ ...event, eventId: crypto.randomUUID() }),
+      }).catch(() => undefined);
+    };
+    observe();
+    document.addEventListener("visibilitychange", observe);
+    return () => document.removeEventListener("visibilitychange", observe);
+  }, [actor, confirmation, pathname, observePage]);
 
   // Refresh observers after a consent change. The sender owns impression
   // deduplication and holds explicitly consented actions until confirmation.
