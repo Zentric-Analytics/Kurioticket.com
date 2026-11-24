@@ -41,3 +41,13 @@ test("Changing from custom dates to a preset ignores stale date inputs", () => {
   const parsed = parseDeviceHistoryQuery({ range: "today", from: "2025-01-01", to: "2025-01-02" });
   assert.deepEqual(parsed, { ok: true, query: { range: "today", page: 1 } });
 });
+
+test("platform is validated and preserved across device history navigation", () => {
+  for (const platform of ["desktop", "mobile", "ios", "android"]) {
+    const result = parseDeviceHistoryQuery({ range: "today", platform });
+    assert.ok(result.ok);
+    assert.equal(result.query.platform, platform);
+    assert.match(deviceHistoryHref("/admin/users/user/id/devices", result.query), new RegExp("platform=" + platform));
+  }
+  assert.equal(parseDeviceHistoryQuery({ platform: "invalid" }).ok, false);
+});
