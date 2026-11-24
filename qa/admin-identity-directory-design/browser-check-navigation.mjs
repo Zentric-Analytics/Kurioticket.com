@@ -28,6 +28,8 @@ try {
     await expect(page.getByRole("complementary", { name: "Users navigation" }).getByRole("heading", { name: "Users", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Online Users", exact: true })).toBeVisible();
+    await expect(workspace.getByRole("link", { name: "Device & Access", exact: true })).toBeVisible();
+    await expect(workspace.getByRole("link", { name: "Pages Visited", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Visitor Journeys", exact: true })).toHaveCount(0);
     await expect(workspace.getByRole("link", { name: "Platform Metrics", exact: true })).toHaveCount(0);
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
@@ -96,7 +98,7 @@ try {
     await page.goto(root + "/admin/users/user/example123/devices", { waitUntil: "networkidle" });
     await expect(page.getByRole("complementary", { name: "Users navigation" })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Users subsections" })
-      .getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
+      .getByRole("link", { name: "Device & Access", exact: true })).toHaveAttribute("aria-current", "page");
     await expect(page.getByRole("navigation", { name: "Platforms subsections" })).toHaveCount(0);
     checks.push("Platforms workspace and account device history navigation at " + width + "px");
   }
