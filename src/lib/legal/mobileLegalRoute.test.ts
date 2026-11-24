@@ -5,10 +5,11 @@ import { GET } from "@/app/api/mobile/v1/legal/[slug]/route";
 
 const call = (slug: string, locale = "en-us") => GET(new Request(`https://kurioticket.com/api/mobile/v1/legal/${slug}?locale=${locale}`), { params: Promise.resolve({ slug }) });
 
-test("mobile legal API strictly allows the two mobile documents", async () => {
+test("mobile legal API strictly allows the three approved mobile documents", async () => {
   assert.equal((await call("terms-of-service")).status, 200);
   assert.equal((await call("privacy-policy")).status, 200);
-  assert.equal((await call("cookie-policy")).status, 404);
+  assert.equal((await call("cookie-policy")).status, 200);
+  assert.equal((await call("affiliate-disclosure")).status, 404);
 });
 
 test("mobile legal API validates locale and localizes canonical data", async () => {
@@ -47,4 +48,16 @@ test("mobile legal API accepts Arabic mobile locale content", async () => {
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.slug, "privacy-policy");
+});
+
+test("Cookie policy returns the existing canonical document and no duplicate policy", async () => {
+  const response = await call("cookie-policy");
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  const canonical = legalDocuments.find(document => document.slug === "cookie-policy");
+  assert.ok(canonical);
+  assert.equal(body.slug, canonical.slug);
+  assert.equal(body.title, canonical.title);
+  assert.deepEqual(body.sections.map((section: { id: string }) => section.id), canonical.sections.map(section => section.id));
+  assert.deepEqual(body.sections.map((section: { paragraphs: string[] }) => section.paragraphs.length), canonical.sections.map(section => section.paragraphs.length));
 });
