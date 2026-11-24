@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { usePathname } from "expo-router";
+import { usePathname, useGlobalSearchParams } from "expo-router";
 import { AppState, Platform } from "react-native";
 import { randomUUID } from "expo-crypto";
-import { createPageViewObserver } from "@/lib/pageViewCatalog";
+import { createPageViewCapture } from "@/lib/pageViewCatalog";
 import { travelApi } from "../../api/travelApi";
 import { visitorIdentity } from "./visitorIdentity";
 
@@ -10,7 +10,9 @@ import { visitorIdentity } from "./visitorIdentity";
  * parameters or dynamic route identifiers ever enter the event body. */
 export function useNativePageViews() {
   const pathname = usePathname();
-  const [observe] = useState(() => createPageViewObserver());
+  const params = useGlobalSearchParams();
+  const requestId = typeof params.journeyRequestId === "string" ? params.journeyRequestId : typeof params.requestId === "string" ? params.requestId : undefined;
+  const [observe] = useState(() => createPageViewCapture(randomUUID));
   const [context, setContext] = useState(visitorIdentity.trackingContext);
   const [foreground, setForeground] = useState(AppState.currentState === "active");
   useEffect(() => {
@@ -24,10 +26,10 @@ export function useNativePageViews() {
     if (Platform.OS !== "ios" && Platform.OS !== "android") return;
     const current = visitorIdentity.trackingContext();
     const event = observe({
-      pathname, transport: "native", context: current === context ? context : null,
+      requestId, pathname, transport: "native", context: current === context ? context : null,
       visible: foreground && AppState.currentState === "active",
     });
     if (!event || current === null || current !== visitorIdentity.trackingContext()) return;
-    void travelApi.pageView({ ...event, eventId: randomUUID() }, { visitorContext: current }).catch(() => undefined);
-  }, [context, foreground, observe, pathname]);
+    void travelApi.pageView(event, { visitorContext: current }).catch(() => undefined);
+  }, [context, foreground, observe, pathname, requestId]);
 }
