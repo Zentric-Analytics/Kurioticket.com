@@ -57,9 +57,11 @@ test("cookie preferences stay anchored, preserve refusal and never replay the ba
     await expect(preferences.getByRole("button", { name: "Essential only" })).toHaveCount(0);
     await expect(preferences.getByRole("switch", { name: "Performance cookies" })).toHaveCount(0);
     const analytics = preferences.getByRole("switch", { name: "Analytics cookies" });
-    await expect(analytics).toHaveAttribute("aria-checked", "false");
-    await analytics.click();
     await expect(analytics).toHaveAttribute("aria-checked", "true");
+    await expect(preferences.getByRole("button", { name: "Allow analytics" })).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem("kurioticket:analytics-consent:v1"))).toBeNull();
+    await analytics.click();
+    await expect(analytics).toHaveAttribute("aria-checked", "false");
     await preferences.getByRole("button", { name: /Essential cookies/ }).click();
     await preferences.getByRole("button", { name: /Analytics cookies/ }).click();
     await preferences.getByRole("button", { name: /Marketing cookies/ }).click();
@@ -72,6 +74,8 @@ test("cookie preferences stay anchored, preserve refusal and never replay the ba
     expect(restored!.y).toBeCloseTo(bounds!.y, 0);
   }
   await banner.getByRole("button", { name: "Cookie preferences", exact: true }).click();
+  await expect(preferences.getByRole("switch")).toHaveAttribute("aria-checked", "true");
+  await preferences.getByRole("switch").click();
   await expect(preferences.getByRole("switch")).toHaveAttribute("aria-checked", "false");
   await preferences.getByRole("button", { name: "Save preferences" }).click();
   await expect(preferences).toBeHidden();
