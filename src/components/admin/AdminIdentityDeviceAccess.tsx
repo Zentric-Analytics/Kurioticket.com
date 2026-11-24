@@ -1,20 +1,14 @@
 import Link from "next/link";
 import { ChevronRight, Clock3, Monitor, Smartphone } from "lucide-react";
 import type { DeviceSessionResult, AdminDeviceSession } from "@/services/adminDeviceSessionsService";
+import { accountDevicePlatform, recordedDevicePlatformLabels } from "@/lib/adminDevicePlatform";
 
 const timeToday = (date: Date) => new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC",
 }).format(date) + " UTC";
 
 export function platformLabel(item: AdminDeviceSession) {
-  if (item.client === "MOBILE") {
-    if (item.platform === "ios") return "iOS app";
-    if (item.platform === "android") return "Android app";
-    return "Mobile app";
-  }
-  if (item.deviceLabel === "Mobile device" || /iPhone|iPad|Android/.test(item.deviceLabel ?? "")) return "Mobile web";
-  if (item.deviceLabel === "Desktop device" || /computer|Mac$/.test(item.deviceLabel ?? "")) return "Desktop web";
-  return "Web";
+  return recordedDevicePlatformLabels[accountDevicePlatform(item)];
 }
 export function sourceIcon(item: AdminDeviceSession) {
   return item.client === "MOBILE" || platformLabel(item) === "Mobile web" ? Smartphone : Monitor;
