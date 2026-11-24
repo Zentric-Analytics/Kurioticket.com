@@ -28,7 +28,7 @@ export function useNativePageViews() {
   const params = useGlobalSearchParams();
   const [context, setContext] = useState(visitorIdentity.trackingContext);
   const [foreground, setForeground] = useState(AppState.currentState === "active");
-  const key: PageViewKey | null = pathname === "/" && !segments.includes("(tabs)") ? null : pageViewKey(pathname, "native");
+  const key: PageViewKey | null = (pathname === "/" && !segments.includes("(tabs)")) || pathname === "/home" ? null : pageViewKey(pathname, "native");
   // Result pages get their reference from the actual completed search, not from
   // user-supplied route parameters. Details still require server verification.
   const requestId = key?.endsWith("_details") && typeof params.journeyRequestId === "string" ? params.journeyRequestId : undefined;
