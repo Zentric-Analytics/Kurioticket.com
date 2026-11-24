@@ -7,6 +7,7 @@ import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { AdminActivityOverview } from "@/components/admin/AdminActivityOverview";
+import { PageViewRecords } from "@/components/admin/PageViewRecords";
 import { AdminIdentityDeviceAccess } from "@/components/admin/AdminIdentityDeviceAccess";
 import { loadAdminDeviceSessions } from "@/services/adminDeviceSessionsService";
 import { journeyHistoryHrefFromActivity } from "@/lib/adminActivityOverview";
@@ -27,7 +28,6 @@ type PageProps = { params: Promise<Params>; searchParams: Promise<RawQuery> };
 
 const tabs = [
   { value: "all", label: "All activity" },
-  { value: "pages", label: "Pages visited" },
   { value: "searches", label: "Searches" },
   { value: "selections", label: "Selections" },
   { value: "handoffs", label: "Provider handoffs" },
@@ -114,6 +114,10 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   if (!validActivityIdentity(kind, id)) notFound();
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
   const raw = normalizeUserActivityQuery(await searchParams, new Date());
+  // Legacy activity bookmarks still open this workspace; page views now have their own section.
+  if (raw.tab === "pages") delete raw.tab;
+  if (raw.stage === "PAGE_VIEW") delete raw.stage;
+  if (raw.type === "PAGE_VIEW") delete raw.type;
   const filtersResult = parseActivityFilters(raw);
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
   const backHref = safeDirectoryHref(raw);
@@ -144,7 +148,16 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const operational = data.source === "operational";
   const order = filters.order === "oldest" ? "oldest" : "newest";
   const activityReturn = activityHref(basePath, queryParams, {});
-  const pagesHref = pageHistoryHrefFromActivity(kind, id, filters, typeof raw.range === "string" ? raw.range : undefined, activityReturn);
+  // Keep the selected UTC window, but do not let travel-specific filters hide page visits.
+  const pageFilters: ActivityFilters = { ...filters, tab: "pages", stage: "all", product: "all", q: "", order: "newest" };
+  const pagesHref = pageHistoryHrefFromActivity(kind, id, pageFilters, typeof raw.range === "string" ? raw.range : undefined, activityReturn);
+  // The unfiltered overview already includes the five newest page records and total.
+  // Only issue a separate compact, owner-scoped read when travel filters exclude them.
+  const pageSummaryResult = operational ? null
+    : filters.tab === "all" && filters.stage === "all" && filters.product === "all" && !filters.q
+      ? result
+      : await loadAdminIdentityActivity(kind, id, pageFilters, undefined, "summary");
+  const pageSummary = pageSummaryResult?.status === "ok" ? pageSummaryResult.data : null;
   const journeyHistoryHref = journeyHistoryHrefFromActivity(kind, id, filters,
     typeof raw.range === "string" ? raw.range : undefined, activityReturn);
 
@@ -247,6 +260,18 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       {kind === "user" ? <AdminIdentityDeviceAccess kind={kind} result={deviceSessions}
         historyHref={"/admin/users/user/" + encodeURIComponent(id) + "/devices?range=all&activityReturn=" + encodeURIComponent(activityReturn)} /> : null}
 
+      {!operational ? <div data-testid="activity-page-visits-summary" className="min-w-0 space-y-2 border-t border-[#E2E8F0] pt-4">
+        {pageSummary && pageSummary.source !== "operational" ? <>
+          <p className="text-[12px] text-[#64748B]">Page visits use the selected date range only.</p>
+          <PageViewRecords key={pagesHref} events={pageSummary.events} count={pageSummary.summary.pagesVisited ?? 0}
+            full={false} href={pagesHref} operational={false}/>
+        </> : <section aria-label="Pages visited" className="space-y-2">
+          <h2 className="text-[15px] font-semibold">Pages visited</h2>
+          <p className="text-[13px] text-[#64748B]">Page visit history is unavailable. This does not mean there are no recorded visits.</p>
+          <Link href={pagesHref} className={buttonClass}>View all pages visited</Link>
+        </section>}
+      </div> : null}
+
       <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
         <section aria-label="Activity filters" className="min-w-0">
           <ActivityFiltersBar path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
@@ -264,7 +289,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         </section>
 
         <AdminActivityOverview events={data.events} journeyHistoryHref={journeyHistoryHref}
-          environment={environment} operational={operational} tab={filters.tab} pagesVisited={data.summary.pagesVisited ?? 0} pagesHref={pagesHref}/>
+          environment={environment} operational={operational}/>
       </div>
     </section>
   </div>;

@@ -95,7 +95,7 @@ function WorkspaceSidebar({ pathname, role, showPreviewTesters }: { pathname: st
               const active = link.href === "/admin/providers?view=attribution"
                 ? providerAttribution || pathname === "/admin/referral-attribution"
                 : !(providerAttribution && link.href === "/admin/providers")
-                  && isAdminWorkspaceSectionActive(pathname, link.href);
+                  && isAdminWorkspaceSectionActive(pathname, link.href, searchParams.get("activityReturn"));
               return (
                 <Link key={link.href} href={link.href} aria-current={active ? "page" : undefined}
                   className={"flex min-h-10 min-w-0 items-center gap-2.5 rounded-r-md border-l-2 px-3 py-2 text-[13px] font-medium leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 " +
