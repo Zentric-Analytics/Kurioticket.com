@@ -54,7 +54,7 @@ export class NativePageViewTracker {
   }
   observeResult(key: PageViewKey, reference: unknown) {
     this.contextChanged();
-    if (this.current?.pageKey !== key || !pageViewCanLink(key)) return;
+    if (!pageViewCanLink(key) || !pageViewRequestId(reference)) return;
     this.observe(key, true, reference);
   }
   observeHomeSection(key: PageViewKey) {
