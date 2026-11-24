@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { platformOptions } from "@/lib/platformHealthPresentation";
 import { redirect } from "next/navigation";
 import { searchWorkspaceTab } from "@/lib/adminSearchWorkspace";
@@ -54,7 +55,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
 
   return (
     <>
-      <AdminSearchTimeZoneSync />
+      <Suspense fallback={null}><AdminSearchTimeZoneSync /></Suspense>
       <AdminPageShell title="Search activity" hideHeader>
         <div className="mx-auto w-full max-w-[1500px]">
         
