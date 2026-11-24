@@ -2999,7 +2999,47 @@ textarea {
   }
 }
 
+/* Consent overlays use fixed edges and short, paint-only transitions. Never
+   translate the full sheet height or animate its viewport-dependent geometry. */
+.cookie-consent-dialog {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  overscroll-behavior: contain;
+}
+
+.cookie-consent-banner,
+.cookie-consent-preferences {
+  max-height: min(100%, 100svh);
+}
+
+@media (min-width: 640px) {
+  .cookie-consent-preferences {
+    max-height: min(100%, 85svh);
+  }
+}
+
+@keyframes cookie-banner-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @keyframes cookie-preferences-enter {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cookie-preferences-desktop-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cookie-consent-banner { animation: cookie-banner-enter 180ms ease-out both; }
+  .cookie-consent-preferences { animation: cookie-preferences-enter 200ms ease-out both; }
+  @media (min-width: 640px) {
+    .cookie-consent-preferences { animation-name: cookie-preferences-desktop-enter; }
+  }
 }
