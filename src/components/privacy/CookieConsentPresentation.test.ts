@@ -3,6 +3,7 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createJiti } from "jiti";
+import { cookieConsentCopy, isCookiePolicyFromPreferences, cookiePolicyFromPreferencesHref } from "@/lib/cookieConsentCopy";
 
 const jiti = createJiti(import.meta.url, { jsx: { runtime: "automatic" }, fsCache: false });
 const { CookieConsentPresentation } = jiti("./CookieConsentPresentation") as typeof import("./CookieConsentPresentation");
@@ -15,6 +16,7 @@ const render = (editing: boolean, draftAnalytics = false, overrides: Partial<Par
 test("initial consent banner has exactly two buttons and no links", () => {
   const markup = render(false);
   assert.match(markup, /We value your privacy/);
+  assert.ok(markup.includes(cookieConsentCopy.banner));
   assert.doesNotMatch(markup, /Continue without optional cookies|data-cookie-consent-continue/);
   assert.equal((markup.match(/<button\b/g) ?? []).length, 2);
   assert.doesNotMatch(markup, /<a\b/);
@@ -44,13 +46,16 @@ test("preferences show all four categories without exposing unsupported switches
   assert.doesNotMatch(markup, /role="switch" aria-label="Performance cookies"/);
 });
 
-test("detail window removes redundant links and reject button while preserving a clear opt-out", () => {
+test("detail window has only the existing Cookie policy link and a clear opt-out", () => {
   const markup = render(true, false, { showBanner: false });
   assert.doesNotMatch(markup, /Cookie Policy|Privacy Policy|Reject optional|Your privacy\. Your choice\.|Save my preferences/);
   assert.match(markup, /Manage your preferences/);
   assert.doesNotMatch(markup, /Essential only|Decline optional/);
-  assert.match(markup, /switch analytics off and save your preferences/);
-  assert.match(markup, /Optional cookies are your choice/);
+  assert.ok(markup.includes(cookieConsentCopy.optOut));
+  assert.ok(markup.includes(cookieConsentCopy.details));
+  assert.equal((markup.match(/<a\b/g) ?? []).length, 1);
+  assert.match(markup, /href="\/legal\/cookie-policy\?view=consent" target="_blank" rel="noopener noreferrer"/);
+  assert.match(markup, />Cookie policy<\/a>/);
   assert.match(markup, /Accept all/);
   assert.match(markup, /Save preferences/);
   assert.match(markup, /aria-modal="true"/);
@@ -73,4 +78,12 @@ test("saving an explicit choice uses a non-modal status instead of replaying the
   assert.doesNotMatch(suggested, />Save preferences</);
   assert.match(render(true, false), /Save preferences/);
   assert.match(render(true, true, { showBanner: false }), /Save preferences/);
+});
+
+test("only the policy opened from preferences suppresses a redundant first-visit banner", () => {
+  const url = new URL(cookiePolicyFromPreferencesHref, "https://kurioticket.com");
+  assert.equal(isCookiePolicyFromPreferences(url.pathname, url.search), true);
+  assert.equal(isCookiePolicyFromPreferences("/legal/cookie-policy", ""), false);
+  assert.equal(isCookiePolicyFromPreferences("/support", "?view=consent"), false);
+  assert.equal(isCookiePolicyFromPreferences("/legal/privacy-policy", "?view=consent"), false);
 });
