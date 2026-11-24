@@ -147,7 +147,7 @@ export function NativeFirstVisitPrivacyPrompt() {
   const segments = useSegments() as readonly string[];
   const key = pageViewKey(pathname, "native");
   const focused = Boolean(key && !["privacy_policy", "cookie_policy", "terms", "legal", "security", "personal_information"].includes(key)
-    && (pathname !== "/" || segments.includes("(tabs)")));
+    && pathname !== "/home" && (pathname !== "/" || segments.includes("(tabs)")));
   const [editing, setEditing] = useState(false);
   const [started, setStarted] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -171,7 +171,7 @@ export function AnalyticsConsentControl() {
   const state = useConsentSnapshot();
   const [editing, setEditing] = useState(false);
   const enabled = state.choice === "granted";
-  const status = state.error
+  const status = state.reviewRequired && state.loaded ? "Review your privacy choice before optional analytics can connect." : state.error
     ? enabled ? "Analytics sharing is on, but this device is not connected. Try again." : state.pending ? "Analytics sharing is off. Withdrawal will finish when connected." : "Unable to save analytics sharing. Please try again."
     : state.pending ? enabled ? "Connecting analytics…" : "Finishing withdrawal…"
       : enabled ? state.tracking ? "Analytics is ready on this device." : "Analytics sharing is on, but this device is not connected. Try again." : "";
