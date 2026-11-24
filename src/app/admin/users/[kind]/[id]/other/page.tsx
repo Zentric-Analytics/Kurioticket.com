@@ -1,3 +1,4 @@
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -23,7 +24,7 @@ export default async function AdminIdentityOtherActivityPage({
   if (!validActivityIdentity(kind, id)) notFound();
   const path = "/admin/users/" + kind + "/" + encodeURIComponent(id);
   await requireAdminSession(path + "/other");
-  const raw = normalizeUserActivityQuery(await searchParams, new Date());
+  const raw = normalizeUserActivityQuery(await searchParams, new Date(), await getAdminTimeZone());
   const paramsForActivity = safeActivityQueryParams(raw);
   const activityPath = path + "/activity";
   const backHref = activityHref(activityPath, paramsForActivity, {});

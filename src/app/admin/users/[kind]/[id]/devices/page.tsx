@@ -1,3 +1,5 @@
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
@@ -15,10 +17,6 @@ export const metadata = { title: "Admin Device & Access History" };
 type RawQuery = Record<string, string | string[] | undefined>;
 type Props = { params: Promise<{ kind: string; id: string }>; searchParams: Promise<RawQuery> };
 const linkClass = "focus-ring inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-white px-3 text-[12px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
-const format = (date: Date) => new Intl.DateTimeFormat("en-GB", {
-  day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-  hour12: false, timeZone: "UTC",
-}).format(date) + " UTC";
 
 /** Render the same verified session status on desktop and mobile. */
 function VerifiedDeviceStatus({ session, observedAt, onlineSessionIds, validSessionIds }: {
@@ -59,7 +57,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
       action={<Link href={path + "/devices"} className={linkClass}>Reset device filters</Link>} />
   </div>;
   const query = parsed.query;
-  const result = await loadAdminFullDeviceHistory(id, query);
+  const result = await loadAdminFullDeviceHistory(id, query, await getAdminTimeZone());
   if (result.status === "not_found") notFound();
   if (result.status === "unavailable") return <div className="min-w-0 space-y-4">
     <Link href={backHref} className={linkClass}><ArrowLeft size={15} aria-hidden="true"/> Back to Activity</Link>
@@ -104,7 +102,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
               <p className="flex items-center gap-2 font-semibold"><Icon size={15} aria-hidden="true"/>{platformLabel(session)}</p>
               <p className="break-words text-[#475569]">{deviceValue(session.deviceLabel)} · {deviceValue(session.os)}</p>
               <p className="break-words text-[#64748B]">{session.client === "MOBILE" ? "In-app" : deviceValue(session.browser)} · {deviceValue(session.locationLabel)}</p>
-              <p className="tabular-nums text-[#64748B]">Last seen <time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt)}</time></p>
+              <p className="tabular-nums text-[#64748B]">Last seen <time dateTime={session.lastSeenAt.toISOString()}><AdminLocalDateTime value={session.lastSeenAt} /></time></p>
               <p className="text-[#475569]">Status: <VerifiedDeviceStatus session={session} observedAt={observedAt} onlineSessionIds={onlineSessionIds} validSessionIds={validSessionIds} /></p>
               {session.revokedAt && recordedDeviceSignOutReason(session.revokeReason) ? <p className="text-[#64748B]">
                 Reason: {recordedDeviceSignOutReason(session.revokeReason)}
@@ -135,7 +133,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
                   <td className="px-3 py-3">{deviceValue(session.os)}</td>
                   <td className="px-3 py-3">{session.client === "MOBILE" ? "In-app" : deviceValue(session.browser)}</td>
                   <td className="break-words px-3 py-3">{deviceValue(session.locationLabel)}</td>
-                  <td className="px-3 py-3 tabular-nums"><time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt)}</time></td>
+                  <td className="px-3 py-3 tabular-nums"><time dateTime={session.lastSeenAt.toISOString()}><AdminLocalDateTime value={session.lastSeenAt} /></time></td>
                   <td className="px-3 py-3">
                     <VerifiedDeviceStatus session={session} observedAt={observedAt} onlineSessionIds={onlineSessionIds} validSessionIds={validSessionIds} />
                     {session.revokedAt && recordedDeviceSignOutReason(session.revokeReason) ? <span className="mt-1 block break-words text-[11px] leading-4 text-[#64748B]">

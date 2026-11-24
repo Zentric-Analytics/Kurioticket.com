@@ -20,8 +20,8 @@ test("Email Delivery uses a compact title and one page-level date range control"
     assert.ok(rangeFilter.includes(label));
   }
   assert.match(rangeFilter, /onValueChange=\{changeRange\}/);
-  assert.match(rangeFilter, /Email delivery custom start date UTC/);
-  assert.match(rangeFilter, /Email delivery custom end date UTC/);
+  assert.match(rangeFilter, /Email delivery custom start date local/);
+  assert.match(rangeFilter, /Email delivery custom end date local/);
   assert.ok(rangeFilter.includes("Apply dates"));
   assert.match(rangeFilter, /setRangeSelectVersion/);
 });
@@ -76,14 +76,15 @@ test("current setup hides healthy configuration details and surfaces only missin
   assert.match(page, /Setup required/);
 });
 
-test("range parsing defaults to Today UTC and constrains custom ranges to 90 days", () => {
+test("range parsing defaults to operator-local Today and constrains custom ranges to 90 days", () => {
   assert.match(page, /function normalizeRange/);
   assert.match(page, /: "today"/);
   assert.match(page, /MAX_RANGE_MS = 90 \* 24 \* 60 \* 60 \* 1000/);
   assert.match(page, /Custom ranges can cover up to 90 days/);
   assert.match(page, /Choose both a valid start date and end date/);
   assert.match(page, /The start date must be before the end of the selected range/);
-  assert.match(page, /Math\.min\(requestedEnd\.getTime\(\), now\.getTime\(\)\)/);
+  assert.match(page, /adminCalendarNextDayStart\(toDate, timeZone\)/);
+  assert.match(page, /adminTodayStart\(now, timeZone\)/);
   assert.match(page, /date\.getUTCFullYear\(\) === year/);
   assert.match(rangeFilter, /date\.getUTCFullYear\(\) === year/);
 });

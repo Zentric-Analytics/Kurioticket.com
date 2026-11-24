@@ -2,6 +2,7 @@
 
 import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAdminTimeZone } from "./AdminTimeZoneProvider";
 import { useEffect, useState, useTransition, type FormEvent, type ReactNode } from "react";
 
 import { AdminDirectorySelect } from "./AdminDirectorySelect";
@@ -36,6 +37,7 @@ export function AdminDeletionFilters({
   children: ReactNode;
 }) {
   const router = useRouter();
+  const timeZone = useAdminTimeZone();
   const [search, setSearch] = useState(query);
   const [draftStatus, setDraftStatus] = useState(status);
   const [draftRange, setDraftRange] = useState<AdminQueueRange>(range);
@@ -67,7 +69,7 @@ export function AdminDeletionFilters({
       range: draftRange,
       from: new Date(customFrom).toISOString(),
       to: new Date(customTo).toISOString(),
-    } : resolveAdminQueueWindow({ range: draftRange });
+    } : resolveAdminQueueWindow({ range: draftRange }, new Date(), timeZone);
     params.set("range", selectedWindow.range);
     if (selectedWindow.from) params.set("from", selectedWindow.from);
     if (selectedWindow.to) params.set("to", selectedWindow.to);

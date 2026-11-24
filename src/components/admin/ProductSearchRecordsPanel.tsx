@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { adminDisplayDateTime } from "@/lib/adminTimeZone";
+import { useAdminTimeZone } from "./AdminTimeZoneProvider";
 import { Fragment, useCallback, useEffect, useId, useState } from "react";
 import { ChevronDown, RefreshCw } from "lucide-react";
 
@@ -31,15 +33,10 @@ const windowOptions = [
   { value: "all", label: "All time" },
 ] as const;
 
-function dateLabel(value: string | null) {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return "Time unavailable";
-  return new Intl.DateTimeFormat("en", {
-    month: "short", day: "numeric", year: "numeric",
-    hour: "numeric", minute: "2-digit", timeZone: "UTC",
-  }).format(date) + " UTC";
+function dateLabel(value: string | null, timeZone: string) {
+  return value ? adminDisplayDateTime(value, timeZone) : "—";
 }
+
 function dateOnly(value: string | null) {
   if (!value) return "—";
   const date = new Date(value);
@@ -64,6 +61,7 @@ function validStatus(value: unknown): value is ProductSearchResult<never>["statu
 /** All product records, filters, pagination and diagnostics stay inside Providers.
  * Only the server-protected minimal record endpoints are used. */
 export function ProductSearchRecordsPanel({ product }: { product: ProviderProduct }) {
+  const timeZone = useAdminTimeZone();
   const disclosureId = useId();
   const sectionId = product === "HOTEL" ? "hotel-search-records" : "car-search-records";
   const [filter, setFilter] = useState<ProductSearchFilter>("EXCEPTIONS");
@@ -222,7 +220,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
               return <Fragment key={record.id}>
                 <tr className="align-top hover:bg-[#FAFBFD]">
                   <td data-label="Observed" className="px-3 py-3 align-top tabular-nums first:pl-0">
-                    <time dateTime={record.createdAt ?? undefined} className="block whitespace-normal leading-5">{dateLabel(record.createdAt)}</time>
+                    <time dateTime={record.createdAt ?? undefined} className="block whitespace-normal leading-5">{dateLabel(record.createdAt, timeZone)}</time>
                   </td>
                   <td data-label={product === "HOTEL" ? "Destination" : "Pick-up"} className="min-w-0 px-3 py-3">
                     <p className="break-words font-medium text-[#020617]">{product === "HOTEL" ? record.destination || "—" : record.origin || "—"}</p>
@@ -262,7 +260,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
                         <dl className="mt-3 grid min-w-0 grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
                           <Field label="Search ID" value={detail.data.search.id} />
                           <Field label="Request ID" value={detail.data.search.requestId} />
-                          <Field label="Recorded" value={dateLabel(detail.data.search.createdAt)} />
+                          <Field label="Recorded" value={dateLabel(detail.data.search.createdAt, timeZone)} />
                           <Field label={product === "HOTEL" ? "Destination" : "Pick-up"} value={product === "HOTEL" ? detail.data.search.destination : detail.data.search.origin} />
                           <Field label={product === "HOTEL" ? "Stay dates" : "Drop-off"} value={product === "HOTEL" ? dateOnly(detail.data.search.checkIn) + " → " + dateOnly(detail.data.search.checkOut) : detail.data.search.destination} />
                           <Field label="Outcome" value={statusLabel(detail.data.search.outcome)} />
@@ -280,7 +278,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
                                     <p className="font-semibold text-[#0F172A]">{provider.provider} · {provider.status}</p>
                                     {provider.category ? <p className="text-[#64748B]">{provider.category}</p> : null}
                                   </div>
-                                  <span className="text-[#64748B]">{dateLabel(provider.observedAt)} · {provider.latencyMs === null ? "Latency unavailable" : provider.latencyMs + " ms"}</span>
+                                  <span className="text-[#64748B]">{dateLabel(provider.observedAt, timeZone)} · {provider.latencyMs === null ? "Latency unavailable" : provider.latencyMs + " ms"}</span>
                                 </li>
                               ))}
                             </ul>

@@ -1,3 +1,4 @@
+import { adminTodayStart } from "./adminTimeZone";
 /** Consistent operator-facing vocabulary. Backend readers retain their own
  * authorization, date bounds, cursor and retention policies. */
 export const ADMIN_REPORTING_RANGE_OPTIONS = [
@@ -31,7 +32,7 @@ export function adminUtcTodayStart(now = new Date()): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
-export function adminRollingRange(range: "today" | "24h" | "7d" | "30d", now = new Date()) {
+export function adminRollingRange(range: "today" | "24h" | "7d" | "30d", now = new Date(), timeZone = "UTC") {
   const hours = range === "24h" ? 24 : range === "7d" ? 168 : 720;
-  return { from: (range === "today" ? adminUtcTodayStart(now) : new Date(now.getTime() - hours * 3_600_000)).toISOString(), to: now.toISOString() };
+  return { from: (range === "today" ? adminTodayStart(now, timeZone) : new Date(now.getTime() - hours * 3_600_000)).toISOString(), to: now.toISOString() };
 }

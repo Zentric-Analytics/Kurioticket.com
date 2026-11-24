@@ -1,3 +1,6 @@
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
+import { adminTodayStart, adminCalendarDayStart, adminCalendarNextDayStart } from "@/lib/adminTimeZone";
 import Link from "next/link";
 
 import { EmailDeliveryRangeFilter, type EmailDeliveryRange } from "@/components/admin/EmailDeliveryRangeFilter";
@@ -32,16 +35,6 @@ const statusLabels: Record<string, string> = {
   QUEUED: "Queued",
 };
 
-function formatDateTime(value: Date | string | null) {
-  if (!value) return "—";
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
 function statusTone(status: string): StatusTone {
   if (["DELIVERED", "OPENED", "CLICKED", "SENT"].includes(status)) return "good";
   if (["FAILED", "BOUNCED", "COMPLAINED", "SUPPRESSED"].includes(status)) return "bad";
@@ -61,7 +54,7 @@ function StatusIndicator({ value, tone }: { value: string; tone: StatusTone }) {
 
 export default async function AdminEmailDeliveryPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
-  const rangeState = resolveRange(raw);
+  const rangeState = resolveRange(raw, await getAdminTimeZone());
   const requestedHistoryPage = parseHistoryPage(one(raw.historyPage));
   const operations = rangeState.error
     ? null
@@ -205,9 +198,9 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
                     <td className="px-3 py-3">
                       <StatusIndicator value={statusLabels[delivery.status] || delivery.status} tone={statusTone(delivery.status)} />
                     </td>
-                    <td className="px-3 py-3 text-[12px] text-[#475569]">{formatDateTime(delivery.createdAt)}</td>
-                    <td className="px-3 py-3 text-[12px] text-[#475569]">{formatDateTime(delivery.sentAt)}</td>
-                    <td className="px-3 py-3 text-[12px] text-[#475569]">{formatDateTime(delivery.deliveredAt)}</td>
+                    <td className="px-3 py-3 text-[12px] text-[#475569]">{<AdminLocalDateTime value={delivery.createdAt} />}</td>
+                    <td className="px-3 py-3 text-[12px] text-[#475569]">{<AdminLocalDateTime value={delivery.sentAt} />}</td>
+                    <td className="px-3 py-3 text-[12px] text-[#475569]">{<AdminLocalDateTime value={delivery.deliveredAt} />}</td>
                   </tr>
                 ))}
               </tbody>
@@ -283,7 +276,7 @@ function normalizeRange(value: string): EmailDeliveryRange {
   return value === "today" || value === "24h" || value === "7d" || value === "30d" || value === "90d" || value === "custom" ? value : "today";
 }
 
-function resolveRange(raw: Record<string, string | string[] | undefined>) {
+function resolveRange(raw: Record<string, string | string[] | undefined>, timeZone = "UTC") {
   const range = normalizeRange(one(raw.range));
   const now = new Date();
 
@@ -295,7 +288,7 @@ function resolveRange(raw: Record<string, string | string[] | undefined>) {
             : 24 * 60 * 60 * 1000;
     return {
       range,
-      from: range === "today" ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())) : new Date(now.getTime() - durationMs),
+      from: range === "today" ? adminTodayStart(now, timeZone) : new Date(now.getTime() - durationMs),
       to: now,
       fromDate: "",
       toDate: "",
@@ -310,9 +303,8 @@ function resolveRange(raw: Record<string, string | string[] | undefined>) {
     return { range, from: now, to: now, fromDate, toDate, label: "Custom range", error: "Choose both a valid start date and end date." };
   }
 
-  const from = new Date(fromDate + "T00:00:00.000Z");
-  const requestedEnd = new Date(toDate + "T00:00:00.000Z");
-  requestedEnd.setUTCDate(requestedEnd.getUTCDate() + 1);
+  const from = adminCalendarDayStart(fromDate, timeZone);
+  const requestedEnd = adminCalendarNextDayStart(toDate, timeZone);
   const to = new Date(Math.min(requestedEnd.getTime(), now.getTime()));
 
   if (from.getTime() >= to.getTime()) {
@@ -322,7 +314,7 @@ function resolveRange(raw: Record<string, string | string[] | undefined>) {
     return { range, from, to, fromDate, toDate, label: "Custom range", error: "Custom ranges can cover up to 90 days." };
   }
 
-  const formatter = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+  const formatter = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone });
   return {
     range,
     from,

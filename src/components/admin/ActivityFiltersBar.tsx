@@ -6,6 +6,8 @@ import { AdminCalendarInput } from "./AdminCalendarInput";
 import { ADMIN_REPORTING_RANGE_OPTIONS } from "@/lib/adminReportingRanges";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
+import { adminCalendarDate, adminCalendarDayStart, adminCalendarNextDayStart, adminTodayStart } from "@/lib/adminTimeZone";
+import { useAdminTimeZone } from "./AdminTimeZoneProvider";
 
 type Values = { tab: string; q: string; product: string; stage: string; order: string; from: string; to: string; range: string };
 const options = {
@@ -17,10 +19,19 @@ function utcWindow(days: number) {
   const to = new Date();
   return { from: new Date(to.getTime() - days * 86_400_000).toISOString(), to: to.toISOString() };
 }
+function calendarDraft(value: string, timeZone: string, end = false) {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const instant = new Date(value);
+  if (!Number.isFinite(instant.getTime())) return "";
+  return adminCalendarDate(new Date(instant.getTime() - (end ? 1 : 0)), timeZone);
+}
+
 export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: string; initial: Values; directory: string; tabs: ReactNode }) {
   const router = useRouter();
+  const timeZone = useAdminTimeZone();
   const [values, setValues] = useState(initial);
-  const [draftDates, setDraftDates] = useState({ from: initial.from, to: initial.to });
+  const [draftDates, setDraftDates] = useState({ from: calendarDraft(initial.from, "UTC"), to: calendarDraft(initial.to, "UTC", true) });
   const [editingCustom, setEditingCustom] = useState(false);
   const [pending, startTransition] = useTransition();
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -30,9 +41,12 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
   if (previousScope !== scope) {
     setPreviousScope(scope);
     setValues(initial);
-    setDraftDates({ from: initial.from, to: initial.to });
+    setDraftDates({ from: calendarDraft(initial.from, timeZone), to: calendarDraft(initial.to, timeZone, true) });
     setEditingCustom(false);
   }
+  useEffect(() => {
+    if (!editingCustom) setDraftDates({ from: calendarDraft(initial.from, timeZone), to: calendarDraft(initial.to, timeZone, true) });
+  }, [initial.from, initial.to, timeZone, editingCustom]);
   useEffect(() => {
     if (timeout.current) clearTimeout(timeout.current);
     submitted.current = "";
@@ -62,12 +76,12 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
     ...(values.range === "24h" ? [{ value: "24h", label: "Last 24 hrs (legacy)" }] : [])];
   const setRange = (range: string) => {
     if (range === "custom") {
-      setDraftDates({ from: values.range === "custom" ? values.from : "", to: values.range === "custom" ? values.to : "" });
+      setDraftDates({ from: values.range === "custom" ? calendarDraft(values.from, timeZone) : "", to: values.range === "custom" ? calendarDraft(values.to, timeZone, true) : "" });
       setEditingCustom(true);
       return;
     }
     setEditingCustom(false);
-    const dates = range === "today" ? { from: new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString(), to: new Date().toISOString() }
+    const dates = range === "today" ? { from: adminTodayStart(new Date(), timeZone).toISOString(), to: new Date().toISOString() }
       : range === "24h" ? utcWindow(1) : range === "7d" ? utcWindow(7) : range === "30d" ? utcWindow(30) : {from:"",to:""};
     update({range, ...dates});
   };
@@ -78,7 +92,7 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
   const cancelDates = () => {
     setEditingCustom(false);
     setValues(current => ({...current, range: initial.range, from: initial.from, to: initial.to}));
-    setDraftDates({from: initial.from,to: initial.to});
+    setDraftDates({from: calendarDraft(initial.from, timeZone),to: calendarDraft(initial.to, timeZone, true)});
   };
   return <div className="min-w-0 space-y-3">
     <label className="relative block min-w-0">
@@ -100,21 +114,21 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
           options={options.stage.map(([value,label])=>({value,label}))} appearance="fare"
           onValueChange={stage=>update({stage})} />
         <button type="button" onClick={() => navigate((editingCustom || values.range === "custom") && validCustom
-          ? { ...values, range: "custom", from: draftDates.from,
-              to: draftDates.to } : values)}
+          ? { ...values, range: "custom", from: adminCalendarDayStart(draftDates.from, timeZone).toISOString(),
+              to: adminCalendarNextDayStart(draftDates.to, timeZone).toISOString() } : values)}
           disabled={pending || ((editingCustom || values.range === "custom") && !validCustom)}
           className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60">
           Apply filters
         </button>
       </div>
       {(editingCustom || values.range === "custom") ? <div className="mt-3 flex flex-wrap items-end gap-3">
-      <label className="text-xs text-[#64748B]">From (UTC)
-        <AdminCalendarInput ariaLabel="Custom start date UTC" value={draftDates.from}
+      <label className="text-xs text-[#64748B]">From (local)
+        <AdminCalendarInput timeZone="local" ariaLabel="Custom start date local" value={draftDates.from}
           max={draftDates.to || undefined} onChange={e => { setDraftDates(current => ({...current, from:e.target.value}));
           setValues(current => ({...current, range:"custom", from:e.target.value})); }} className="w-[210px] max-w-full" />
       </label>
-      <label className="text-xs text-[#64748B]">To (UTC)
-        <AdminCalendarInput ariaLabel="Custom end date UTC" value={draftDates.to}
+      <label className="text-xs text-[#64748B]">To (local)
+        <AdminCalendarInput timeZone="local" ariaLabel="Custom end date local" value={draftDates.to}
           min={draftDates.from || undefined} onChange={e => { setDraftDates(current => ({...current, to:e.target.value}));
           setValues(current => ({...current, range:"custom", to:e.target.value})); }} className="w-[210px] max-w-full" />
       </label>

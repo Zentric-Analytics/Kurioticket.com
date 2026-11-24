@@ -1,3 +1,4 @@
+import { adminTodayStart } from "./adminTimeZone";
 /** UI-only date range selection for Admin Journeys.
  * The journey service still receives only its documented ISO UTC bounds.
  */
@@ -21,7 +22,7 @@ export function selectedJourneyRange(raw: JourneyDateParams): JourneyDateRange {
   return one(raw.from) || one(raw.to) || one(raw.cursor) ? "custom" : "today";
 }
 
-export function journeyWindow(raw: JourneyDateParams, now: Date): { from?: string; to?: string } {
+export function journeyWindow(raw: JourneyDateParams, now: Date, timeZone = "UTC"): { from?: string; to?: string } {
   // Preserve either explicit bound and the signed scope in a pagination cursor.
   // A new preset submission excludes previous custom inputs entirely.
   if (one(raw.cursor) || one(raw.from) || one(raw.to)) return {};
@@ -31,7 +32,7 @@ export function journeyWindow(raw: JourneyDateParams, now: Date): { from?: strin
   if (range === "custom") return {};
   const to = now.toISOString();
   const from = range === "all" ? JOURNEY_ALL_TIME_FROM
-    : range === "today" ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString()
+    : range === "today" ? adminTodayStart(now, timeZone).toISOString()
     : new Date(now.getTime() - (range === "24h" ? 1 : range === "90d" ? 90 : range === "30d" ? 30 : 7) * dayMs).toISOString();
   return { from, to };
 }

@@ -1,3 +1,5 @@
+import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
+import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import Link from "next/link";
 
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
@@ -6,7 +8,6 @@ import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeField
 import { journeyWindow, selectedJourneyRange } from "@/lib/adminJourneyDateRange";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
-import { formatDateTime } from "@/lib/admin-data";
 import { buildAdminSearchProviderOptions } from "@/lib/adminSearchProviderOptions";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
@@ -31,7 +32,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
   // The legacy backend defaults each call to its own moving seven-day window.
   // Pin both reads to the same explicit bounds, including cursor continuations.
   const range = selectedJourneyRange(raw);
-  const fixed = journeyWindow(raw, now);
+  const fixed = journeyWindow(raw, now, await getAdminTimeZone());
   const providerOptions = buildAdminSearchProviderOptions(getProviderIntegrationStatuses(), one(raw.provider) || null);
   // Always constrain this view to the deployment's configured environment.
   // Historical environment URLs must not silently switch staging into production.
@@ -147,8 +148,8 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
                       return (
                       <tr key={journey.id} className="min-h-[56px] align-top transition-colors hover:bg-[#F8FAFC]">
                         <td data-label="Last activity" className="px-2 py-2.5">
-                          <p className="font-medium leading-5 text-[#020617]">{formatDateTime(new Date(journey.lastEventAt))}</p>
-                          <p className="mt-1 text-[12px] leading-4 text-[#64748B]">Started {formatDateTime(new Date(journey.startedAt))}</p>
+                          <p className="font-medium leading-5 text-[#020617]"><AdminLocalDateTime value={journey.lastEventAt} /></p>
+                          <p className="mt-1 text-[12px] leading-4 text-[#64748B]">Started <AdminLocalDateTime value={journey.startedAt} /></p>
                         </td>
                         <td data-label="Identity" className="px-2 py-2.5">
                           <p className="font-medium capitalize text-[#020617]">{journey.identity.kind}</p>
