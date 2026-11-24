@@ -211,6 +211,54 @@ test("untrusted, browser, invalid-bearer and unverifiable native requests remain
   }
 });
 
+test("revoked native bearer retains platform only with previously signed same-platform continuity", async () => {
+  const original = process.env.AUTH_SECRET;
+  process.env.AUTH_SECRET = "test-revoked-native-attribution-secret-at-least-32-characters";
+  try {
+    for (const platform of ["ios", "android"] as const) {
+      const url = "https://kurioticket.com/api/flights/search";
+      const guest = new Request(url, { method: "POST", headers: {
+        "x-mobile-platform": platform, "x-kt-search-protocol": "v2",
+      } });
+      const credential = prepareOperationalSearchSession(guest, Date.now(), getPublicEnvironment());
+      assert.ok(credential?.guestNativeAttribution);
+      const deps = {
+        web: async () => { throw new Error("must not use web identity"); },
+        mobile: async () => null,
+        visitor: async () => null,
+      };
+      const revoked = new Request(url, { method: "POST", headers: {
+        "x-mobile-platform": platform, authorization: "Bearer revoked",
+        "x-kt-search-session": credential.credential, "x-kt-search-protocol": "v2",
+      } });
+      const continued = prepareOperationalSearchSession(revoked, Date.now(), getPublicEnvironment());
+      assert.equal(continued?.newCredential, false);
+      assert.deepEqual(await resolveRequestActivityIdentity(revoked, deps, continued),
+        { userId: null, visitorId: null, applicationSource: platform.toUpperCase() });
+      assert.equal((await resolveRequestActivityIdentity(revoked, deps)).applicationSource, platform.toUpperCase());
+
+      const wrongPlatform = platform === "ios" ? "android" : "ios";
+      const wrong = new Request(url, { method: "POST", headers: {
+        "x-mobile-platform": wrongPlatform, authorization: "Bearer revoked",
+        "x-kt-search-session": credential.credential, "x-kt-search-protocol": "v2",
+      } });
+      assert.equal(prepareOperationalSearchSession(wrong), null);
+      assert.equal((await resolveRequestActivityIdentity(wrong, deps)).applicationSource, "UNKNOWN");
+
+      const first = new Request(url, { method: "POST", headers: {
+        "x-mobile-platform": platform, authorization: "Bearer revoked",
+        "x-kt-search-protocol": "v2",
+      } });
+      const fresh = prepareOperationalSearchSession(first, Date.now(), getPublicEnvironment());
+      assert.ok(fresh?.newCredential);
+      assert.deepEqual(await resolveRequestActivityIdentity(first, deps, fresh),
+        { userId: null, visitorId: null, applicationSource: "UNKNOWN" });
+    }
+  } finally {
+    if (original === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = original;
+  }
+});
+
 test("previously signed same-origin web continuity attributes a guest without Fetch Metadata, never a fresh Origin claim", async () => {
   const previous = process.env.AUTH_SECRET;
   const previousPublicUrl = process.env.NEXT_PUBLIC_APP_URL;
