@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { adminDisplayDateTime } from "@/lib/adminTimeZone";
-import { useAdminTimeZone } from "./AdminTimeZoneProvider";
 
 import type { SearchScopedActivityResult, SearchScopedEvent } from "@/services/adminSearchScopedActivityCore";
 
@@ -21,12 +19,13 @@ const activityLabels: Record<Exclude<SearchScopedEvent["stage"], "SEARCH_COMPLET
 };
 const buttonStyle = "inline-flex min-h-9 items-center rounded-md border border-[#D8E1EC] bg-white px-3 text-[12px] font-medium text-[#004BB8] hover:bg-[#F5F8FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-50";
 
-function timestamp(value: string, timeZone: string) {
+function timestamp(value: string) {
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return "Time unavailable";
-  return adminDisplayDateTime(date, timeZone) + " (" + timeZone + ")";
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium", timeStyle: "short", timeZone: "UTC",
+  }).format(date) + " UTC";
 }
-
 function handoffLabel(event: SearchScopedEvent) {
   if (!event.handoff) return null;
   const { price, currency, route } = event.handoff;
@@ -39,7 +38,6 @@ function handoffLabel(event: SearchScopedEvent) {
 /** A first-class section, not a hidden View activity link. It only loads
  * consented events linked to this exact search and verified provider handoffs. */
 export function SearchDetailActivityPanel({ searchId, environment }: Props) {
-  const timeZone = useAdminTimeZone();
   const [cursors, setCursors] = useState<Array<string | null>>([null]);
   const [pageIndex, setPageIndex] = useState(0);
   const [request, setRequest] = useState(0);
@@ -118,7 +116,7 @@ export function SearchDetailActivityPanel({ searchId, environment }: Props) {
                   <p className="font-semibold text-[#111827]">{event.stage === "OFFER_SELECTED" && event.offerReference
                       ? "Fare selected"
                       : activityLabels[event.stage as Exclude<SearchScopedEvent["stage"], "SEARCH_COMPLETED">]}</p>
-                  <p className="text-[#6B7280]">{timestamp(event.occurredAt, timeZone)}</p>
+                  <p className="text-[#6B7280]">{timestamp(event.occurredAt)}</p>
                 </div>
               </div>
               <div className="min-w-0 self-center break-words text-[#475569]">

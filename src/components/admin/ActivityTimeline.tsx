@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { adminCalendarDate, adminDisplayDateTime } from "@/lib/adminTimeZone";
-import { useAdminTimeZone } from "./AdminTimeZoneProvider";
 import {
   Building2, CarFront, ChevronRight, CircleDot, ExternalLink,
   ListChecks, MousePointerClick, Plane, Search,
@@ -14,7 +12,9 @@ import type { ActivityRow } from "@/lib/adminIdentityJourney";
 const dayLabel = (at: Date) => new Intl.DateTimeFormat("en", {
   month: "short", day: "numeric", year: "numeric", timeZone: "UTC",
 }).format(at);
-const hourLabel = (at: Date, timeZone: string) => adminDisplayDateTime(at, timeZone, "time") + " (" + timeZone + ")";
+const hourLabel = (at: Date) => new Intl.DateTimeFormat("en", {
+  hour: "numeric", minute: "2-digit", timeZone: "UTC",
+}).format(at) + " UTC";
 
 const productLabels = new Map([
   ["FLIGHT", "Flight"], ["HOTEL", "Hotel"], ["CAR", "Car"], ["PACKAGE", "Package"],
@@ -63,22 +63,22 @@ function detailHref(row: ActivityRow, environment: string, now: Date, returnHref
   }
   return null;
 }
-function RecordedEvent({ row, timeZone }: { row: ActivityRow; timeZone: string }) {
+function RecordedEvent({ row }: { row: ActivityRow }) {
   return <li data-activity-id={row.id} className="flex min-w-0 flex-col gap-1.5 py-3 sm:flex-row sm:items-start sm:gap-4">
     <span aria-hidden="true" className="mt-0.5 hidden shrink-0 text-[#64748B] sm:block"><EventIcon stage={row.stage} /></span>
     <div className="min-w-0 flex-1">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <p className="text-[13px] font-medium text-[#0F172A]">{row.label}</p>
-        <time dateTime={row.at.toISOString()} className="shrink-0 text-[12px] font-normal text-[#64748B]">{hourLabel(row.at, timeZone)}</time>
+        <time dateTime={row.at.toISOString()} className="shrink-0 text-[12px] font-normal text-[#64748B]">{hourLabel(row.at)}</time>
       </div>
       <p className="mt-1 break-words text-[12px] leading-5 text-[#64748B]">{activityDetail(row) || "No additional details recorded"}</p>
     </div>
   </li>;
 }
-function dayGroups(events: ActivityRow[], timeZone: string) {
+function dayGroups(events: ActivityRow[]) {
   const byDate = new Map<string, ActivityRow[]>();
   for (const row of events) {
-    const date = adminCalendarDate(row.at, timeZone);
+    const date = row.at.toISOString().slice(0,10);
     byDate.set(date, [...(byDate.get(date) ?? []), row]);
   }
   return [...byDate].map(([date,rows]) => ({date,rows,journeys:groupContiguousActivityRows(rows)}));
@@ -99,8 +99,7 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
   events: ActivityRow[]; nextHref: string | null; environment: string;
   order?: "newest" | "oldest"; returnHref?: string; clearHref?: string;
 }) {
-  const timeZone = useAdminTimeZone();
-  const days = dayGroups(events, timeZone);
+  const days = dayGroups(events);
   const now = new Date();
   return <section aria-labelledby="activity-history-title" className="min-w-0">
     <div className="flex items-center justify-between gap-3 pb-3">
@@ -113,7 +112,7 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
     </div> : <div className="space-y-6">
       {days.map(day => <section key={day.date} aria-label={"Activity on " + dayLabel(new Date(day.date + "T12:00:00Z"))}>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold">{dayLabel(new Date(day.date + "T12:00:00Z"))}</h3>
+          <h3 className="text-sm font-semibold">{dayLabel(new Date(day.date + "T12:00:00Z"))} <span className="ml-1 text-xs font-normal text-[#475569]">UTC</span></h3>
           <span className="text-xs text-[#475569]">{day.rows.length} {day.rows.length === 1 ? "event" : "events"}</span>
         </div>
         <div className="divide-y divide-[#E2E8F0] border-y border-[#E2E8F0]">
@@ -131,7 +130,7 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
                 {href ? <Link href={href} aria-label={"View journey for " + title} className="focus-ring inline-flex shrink-0 items-center gap-1 rounded-sm py-1 text-[13px] font-medium text-[#004BB8] hover:underline">View journey<ChevronRight size={14} aria-hidden="true" /></Link> : null}
               </div> : null}
               <ol className={"divide-y divide-[#E2E8F0] pl-3 sm:pl-8 " + (group.journeyId ? "border-t border-[#E2E8F0]" : "")}>
-                {group.events.map(row => <RecordedEvent key={row.id} row={row} timeZone={timeZone}/>)}
+                {group.events.map(row => <RecordedEvent key={row.id} row={row}/>)}
               </ol>
             </div>;
           })}

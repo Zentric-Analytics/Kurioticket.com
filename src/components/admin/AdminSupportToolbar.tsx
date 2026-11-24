@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { AdminQueueLoadingState } from "./AdminQueueLoadingState";
 import { useRouter } from "next/navigation";
-import { useAdminTimeZone } from "./AdminTimeZoneProvider";
 import {
   useCallback,
   useEffect,
@@ -41,7 +40,6 @@ type Props = {
 /** Search above a responsive tabs/filters row. Applied filters stay separate from drafts. */
 export function AdminSupportToolbar({ query, status, priority, category, range, from, to, pageHref, children }: Props) {
   const router = useRouter();
-  const timeZone = useAdminTimeZone();
   const [searchText, setSearchText] = useState(query);
   const [draftPriority, setDraftPriority] = useState(priority);
   const [draftCategory, setDraftCategory] = useState(category);
@@ -115,7 +113,7 @@ export function AdminSupportToolbar({ query, status, priority, category, range, 
       range: draftRange,
       from: new Date(customFrom).toISOString(),
       to: new Date(customTo).toISOString(),
-    } : resolveAdminQueueWindow({ range: draftRange }, new Date(), timeZone);
+    } : resolveAdminQueueWindow({ range: draftRange });
     setDateError(null);
     navigate({ q: searchText.trim().slice(0, 160), priority: draftPriority, category: draftCategory,
       range: draftRange, from: customWindow.from, to: customWindow.to });
