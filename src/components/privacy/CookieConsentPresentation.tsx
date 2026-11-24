@@ -161,7 +161,7 @@ export function CookieConsentPresentation({
               <div className="space-y-2">
                 <Category id="cookie-essential-description" name="Essential cookies" subtitle="Keeps Kurioticket secure and working"
                   description="Supports secure sign-in, requested travel searches and necessary search-to-provider handoff records. These cookies do not enable optional behavioural analytics. Records follow our data-retention policy." />
-                <Category id="cookie-analytics-description" name="Analytics cookies" subtitle="Helps us understand your experience"
+                <Category id="cookie-analytics-description" name="Analytics cookies" subtitle={showBanner ? "Suggested on · awaiting your choice" : "Helps us understand your experience"}
                   description="With your permission, we measure how you browse and use Kurioticket, including activity across visits, to improve our services. Turning analytics off does not stop requested searches or necessary records."
                   analytics checked={draftAnalytics} disabled={busy} onChange={onDraftChange} />
                 {/* No independent performance permission or collector is wired yet.
@@ -173,12 +173,12 @@ export function CookieConsentPresentation({
                   description="Optional marketing cookies could help measure advertising campaigns and show relevant travel promotions. This separate preference is not available yet and is not enabled by Accept all."
                   unavailable />
               </div>
-              <p className="mt-3 text-xs leading-5 text-slate-600">To decline optional cookies, leave analytics off and save your preferences. You can change or withdraw your choice at any time in the website footer.</p>
+              <p className="mt-3 text-xs leading-5 text-slate-600">To decline optional cookies, switch analytics off and save your preferences. You can change or withdraw your choice at any time in the website footer.</p>
               {busy || failed ? <div className="mt-4">{status}</div> : null}
             </div>
             <footer className="shrink-0 border-t border-slate-100 bg-white px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
               <Button type="button" disabled={busy} className={`w-full ${actionClass}`}
-                onClick={() => onChoose(draftAnalytics ? "granted" : "declined")}>Save preferences</Button>
+                onClick={() => onChoose(draftAnalytics ? "granted" : "declined")}>{showBanner && draftAnalytics ? "Allow analytics" : "Save preferences"}</Button>
             </footer>
           </section>
         </div>
