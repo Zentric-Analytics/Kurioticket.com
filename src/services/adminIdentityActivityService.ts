@@ -13,6 +13,7 @@ import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
 import { pageViewCatalog, pageViewInfo, type PageViewKey } from "@/lib/pageViewCatalog";
 import { toAdminPageView } from "@/lib/adminPageView";
+import { PAGE_VIEW_SUMMARY_LIMIT, isPageHistoryPlatform, pageHistoryPlatformValues, pageHistoryTransport, validPageHistoryPage, type PageHistoryPlatform } from "@/lib/adminPageHistory";
 
 const journeySelect = {
   id: true, type: true, product: true, provider: true, createdAt: true, metadata: true,
@@ -107,10 +108,13 @@ export type ActivityReadResult =
 /** Re-authorize before calling. Never expose token hashes or raw analytics metadata. */
 export async function loadAdminIdentityActivity(
   kind: IdentityKind, id: string, filters: ActivityFilters, cursorInput?: string,
-  readMode: "page" | "all" = "page",
+  readMode: "page" | "all" | "summary" = "page",
+  pageHistory?: { page: number; platform: PageHistoryPlatform },
 ): Promise<ActivityReadResult> {
   const environment = getPublicEnvironment();
-  const complete = readMode === "all";
+  const complete = readMode !== "page";
+  const compactPages = readMode === "summary";
+  if (pageHistory && (readMode !== "page" || filters.tab !== "pages" || cursorInput || !validPageHistoryPage(pageHistory.page) || !isPageHistoryPlatform(pageHistory.platform))) return { status: "invalid_cursor" };
   const startedAt = Date.now();
   let phase = "identity_lookup";
   let preflightMilliseconds = 0;
@@ -268,10 +272,17 @@ export async function loadAdminIdentityActivity(
       return (!product || info.product === product)
         && (!q || text.includes(filters.q.toLowerCase()) || "page visited".includes(filters.q.toLowerCase()));
     });
+    const platforms = pageHistory ? pageHistoryPlatformValues(pageHistory.platform) : [];
+    const platformTransport = pageHistory ? pageHistoryTransport(pageHistory.platform) : null;
     const pageWhere: Prisma.AnalyticsEventWhereInput = {
       AND: [pageOwner, { type: "PAGE_VIEW", name: "page_viewed" }, environmentScope.analytics, { createdAt: window },
-        { OR: [{ metadata: { path: ["transport"], equals: "web" } }, { metadata: { path: ["transport"], equals: "native" } }] },
-        { OR: pageKeys.map(key => ({ metadata: { path: ["pageKey"], equals: key } })) },
+        { OR: (["web", "native"] as const).map(transport => ({
+          AND: [{ metadata: { path: ["transport"], equals: transport } },
+            { OR: pageKeys.filter(key => transport === "web" ? pageViewInfo(key)?.webPath : pageViewInfo(key)?.nativePath)
+              .map(key => ({ metadata: { path: ["pageKey"], equals: key } })) }],
+        })) },
+        ...(platforms.length ? [{ OR: platforms.map(platform => ({ metadata: { path: ["platform"], equals: platform } })) }] : []),
+        ...(platformTransport ? [{ metadata: { path: ["transport"], equals: platformTransport } }] : []),
       ],
     };
     const accountAnalyticsWhere: Prisma.AnalyticsEventWhereInput = {
@@ -348,8 +359,8 @@ export async function loadAdminIdentityActivity(
       stages.length && !isOperationalGuest ? db.journeyEvent.count({ where: journeyWhere }) : Promise.resolve(0),
       allowed.has("SEARCH_COMPLETED") ? db.searchHistory.count({ where: searchWhere }) : Promise.resolve(0),
       canReadHandoffs ? db.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
-      canReadAnalytics
-        ? db.analyticsEvent.count({ where: analyticsWhere }) : Promise.resolve(0),
+      (compactPages ? readAccountActivity : canReadAnalytics)
+        ? db.analyticsEvent.count({ where: compactPages ? accountAnalyticsWhere : analyticsWhere }) : Promise.resolve(0),
       candidateVisitors
         ? db.visitor.count({ where: candidateVisitors }) : Promise.resolve(0),
     ]) : null;
@@ -435,6 +446,30 @@ export async function loadAdminIdentityActivity(
         ): Promise<T[]> => complete
           ? readCompleteActivitySource(prefix, fetchBatch)
           : fetchBatch(cursor, ACTIVITY_FETCH_LIMIT);
+        // Summary mode still reads complete travel/account history for its
+        // established aggregates, but never downloads the full page-view log.
+        // The separate history uses the same consent/identity/filter predicates.
+        const analyticsSelect = { id: true, type: true, name: true, metadata: true, createdAt: true } as const;
+        const readAnalytics = () => {
+          if (pageHistory) return readPages ? tx.analyticsEvent.findMany({
+            where: pageWhere, orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+            skip: (pageHistory.page - 1) * ACTIVITY_PAGE_SIZE, take: ACTIVITY_PAGE_SIZE, select: analyticsSelect,
+          }) : Promise.resolve([]);
+          if (compactPages) return Promise.all([
+            readAccountActivity ? readSource("e", (after, take) => tx.analyticsEvent.findMany({
+              where: { AND: [accountAnalyticsWhere, sourceActivitySeek(after, "e", order)] },
+              orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take, select: analyticsSelect,
+            })) : Promise.resolve([]),
+            readPages ? tx.analyticsEvent.findMany({
+              where: pageWhere, orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+              take: PAGE_VIEW_SUMMARY_LIMIT, select: analyticsSelect,
+            }) : Promise.resolve([]),
+          ]).then(([account, pages]) => [...account, ...pages]);
+          return canReadAnalytics ? readSource("e", (after, take) => tx.analyticsEvent.findMany({
+            where: { AND: [analyticsWhere, sourceActivitySeek(after, "e", order)] },
+            orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take, select: analyticsSelect,
+          })) : Promise.resolve([]);
+        };
         const [pageJourney, pageSearches, pageHandoffs, pageAnalytics, searchTotal, handoffTotal, pageTotal] = await Promise.all([
           stages.length && !isOperationalGuest ? readSource("j", (after, take) => tx.journeyEvent.findMany({
             where: { AND: [journeyWhere, sourceActivitySeek(after, "j", order)] },
@@ -452,11 +487,7 @@ export async function loadAdminIdentityActivity(
             orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take,
             select: { id: true, type: true, provider: true, route: true, createdAt: true },
           })) : Promise.resolve([]),
-          canReadAnalytics ? readSource("e", (after, take) => tx.analyticsEvent.findMany({
-            where: { AND: [analyticsWhere, sourceActivitySeek(after, "e", order)] },
-            orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take,
-            select: { id: true, type: true, name: true, metadata: true, createdAt: true },
-          })) : Promise.resolve([]),
+          readAnalytics(),
           allowed.has("SEARCH_COMPLETED") ? tx.searchHistory.count({ where: searchWhere }) : Promise.resolve(0),
           canReadHandoffs ? tx.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
           readPages ? tx.analyticsEvent.count({ where: pageWhere }) : Promise.resolve(0),
@@ -533,7 +564,7 @@ export async function loadAdminIdentityActivity(
     }
     const page = complete ? sorted : sorted.slice(0, ACTIVITY_PAGE_SIZE);
     const last = page.at(-1);
-    const hasMore = !complete && (sorted.length > ACTIVITY_PAGE_SIZE
+    const hasMore = !complete && !pageHistory && (sorted.length > ACTIVITY_PAGE_SIZE
       || [journey.length, searches.length, handoffs.length, analytics.length]
         .some(count => count === ACTIVITY_FETCH_LIMIT));
 
