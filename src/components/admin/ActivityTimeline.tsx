@@ -8,6 +8,7 @@ import {
 import { groupContiguousActivityRows } from "@/lib/adminIdentityActivity";
 import { encodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
+import { PageViewDetails } from "@/components/admin/PageViewRecords";
 
 const dayLabel = (at: Date) => new Intl.DateTimeFormat("en", {
   month: "short", day: "numeric", year: "numeric", timeZone: "UTC",
@@ -71,7 +72,7 @@ function RecordedEvent({ row }: { row: ActivityRow }) {
         <p className="text-[13px] font-medium text-[#0F172A]">{row.label}</p>
         <time dateTime={row.at.toISOString()} className="shrink-0 text-[12px] font-normal text-[#64748B]">{hourLabel(row.at)}</time>
       </div>
-      <p className="mt-1 break-words text-[12px] leading-5 text-[#64748B]">{activityDetail(row) || "No additional details recorded"}</p>
+      {row.pageView ? <PageViewDetails row={row}/> : <p className="mt-1 break-words text-[12px] leading-5 text-[#64748B]">{activityDetail(row) || "No additional details recorded"}</p>}
     </div>
   </li>;
 }

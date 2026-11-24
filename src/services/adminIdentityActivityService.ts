@@ -11,6 +11,8 @@ import { completeActivityReadTimeout, readCompleteActivitySource, type ActivityS
 import { adminRegisteredLastSeenSql, escapePrismaContainsQuery } from "@/lib/adminIdentityDirectory";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
+import { pageViewCatalog, pageViewInfo, type PageViewKey } from "@/lib/pageViewCatalog";
+import { toAdminPageView } from "@/lib/adminPageView";
 
 const journeySelect = {
   id: true, type: true, product: true, provider: true, createdAt: true, metadata: true,
@@ -68,6 +70,8 @@ type SafeAnalyticsType = keyof typeof safeAnalyticsLabels;
 
 export type IdentityActivitySummary = {
   searches: number;
+  /** Exact page-view total under the selected filters. */
+  pagesVisited?: number;
   /** Available on complete reads; uses the same authorized, merged timeline. */
   searchProducts?: { flights: number; hotels: number; cars: number; other: number };
   resultsViewed: number;
@@ -197,7 +201,10 @@ export async function loadAdminIdentityActivity(
     };
 
     const allowed = allowedActivityStages(filters);
-    const stages = [...allowed].filter(stage => stage !== "ACCOUNT_ACTIVITY") as JourneyStage[];
+    const stages = [...allowed].filter(stage => stage !== "ACCOUNT_ACTIVITY" && stage !== "PAGE_VIEW") as JourneyStage[];
+    const readPages = allowed.has("PAGE_VIEW") && !isOperationalGuest;
+    const readAccountActivity = allowed.has("ACCOUNT_ACTIVITY") && !isOperationalGuest;
+    const canReadAnalytics = readPages || readAccountActivity;
     const product = filters.product === "all" ? null : filters.product;
     const q = filters.q ? escapePrismaContainsQuery(filters.q) : "";
     const ci = (value: string) => ({ contains: value, mode: "insensitive" as const });
@@ -250,7 +257,24 @@ export async function loadAdminIdentityActivity(
           ? [{ OR: [{ provider: ci(q) }, { route: ci(q) }] }] : []),
       ],
     };
-    const analyticsWhere: Prisma.AnalyticsEventWhereInput = {
+    // Page views are optional behaviour, not account-audit evidence. Recheck
+    // the linked visitor's current eligibility even for direct account rows.
+    const pageOwner: Prisma.AnalyticsEventWhereInput = kind === "guest"
+      ? { userId: null, visitorId: id, visitor: { is: eligibleGuestVisitorWhere(id) } }
+      : { OR: [{ userId: id }, { userId: null }], visitor: { is: eligibleJourneyLinkedVisitorWhere(id) } };
+    const pageKeys = (Object.keys(pageViewCatalog) as PageViewKey[]).filter(key => {
+      const info = pageViewInfo(key)!;
+      const text = [info.label, info.webPath, info.nativePath].join(" ").toLowerCase();
+      return (!product || info.product === product)
+        && (!q || text.includes(filters.q.toLowerCase()) || "page visited".includes(filters.q.toLowerCase()));
+    });
+    const pageWhere: Prisma.AnalyticsEventWhereInput = {
+      AND: [pageOwner, { type: "PAGE_VIEW", name: "page_viewed" }, environmentScope.analytics, { createdAt: window },
+        { OR: [{ metadata: { path: ["transport"], equals: "web" } }, { metadata: { path: ["transport"], equals: "native" } }] },
+        { OR: pageKeys.map(key => ({ metadata: { path: ["pageKey"], equals: key } })) },
+      ],
+    };
+    const accountAnalyticsWhere: Prisma.AnalyticsEventWhereInput = {
       AND: [
         analyticsOwner, environmentScope.analytics, { createdAt: window },
         { type: { in: Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[] } },
@@ -277,6 +301,9 @@ export async function loadAdminIdentityActivity(
         ] }] : []),
       ],
     };
+    const analyticsWhere: Prisma.AnalyticsEventWhereInput = { OR: [
+      ...(readPages ? [pageWhere] : []), ...(readAccountActivity ? [accountAnalyticsWhere] : []),
+    ] };
     const canReadHandoffs = allowed.has("PROVIDER_HANDOFF_STARTED")
       && (!product || product === "FLIGHT" || product === "HOTEL" || product === "CAR");
     // Candidate selection is a strict superset of final canonical events:
@@ -321,7 +348,7 @@ export async function loadAdminIdentityActivity(
       stages.length && !isOperationalGuest ? db.journeyEvent.count({ where: journeyWhere }) : Promise.resolve(0),
       allowed.has("SEARCH_COMPLETED") ? db.searchHistory.count({ where: searchWhere }) : Promise.resolve(0),
       canReadHandoffs ? db.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
-      allowed.has("ACCOUNT_ACTIVITY") && !isOperationalGuest
+      canReadAnalytics
         ? db.analyticsEvent.count({ where: analyticsWhere }) : Promise.resolve(0),
       candidateVisitors
         ? db.visitor.count({ where: candidateVisitors }) : Promise.resolve(0),
@@ -336,7 +363,7 @@ export async function loadAdminIdentityActivity(
     // A repeatable-read snapshot keeps canonical + legacy de-duplication stable
     // when a source record and its JourneyEvent are inserted concurrently.
     // The timeline, all totals and every visitor-ID batch observe one snapshot.
-    const [journey, searches, handoffs, analytics, canonicalCounts, legacySearchTotal, legacyHandoffTotal, journeysTracked] =
+    const [journey, searches, handoffs, analytics, canonicalCounts, legacySearchTotal, legacyHandoffTotal, journeysTracked, pagesVisited] =
       await db.$transaction(async tx => {
         const counts = new Map<string, number>();
         let distinctJourneyCount = 0;
@@ -408,7 +435,7 @@ export async function loadAdminIdentityActivity(
         ): Promise<T[]> => complete
           ? readCompleteActivitySource(prefix, fetchBatch)
           : fetchBatch(cursor, ACTIVITY_FETCH_LIMIT);
-        const [pageJourney, pageSearches, pageHandoffs, pageAnalytics, searchTotal, handoffTotal] = await Promise.all([
+        const [pageJourney, pageSearches, pageHandoffs, pageAnalytics, searchTotal, handoffTotal, pageTotal] = await Promise.all([
           stages.length && !isOperationalGuest ? readSource("j", (after, take) => tx.journeyEvent.findMany({
             where: { AND: [journeyWhere, sourceActivitySeek(after, "j", order)] },
             orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }],
@@ -425,19 +452,21 @@ export async function loadAdminIdentityActivity(
             orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take,
             select: { id: true, type: true, provider: true, route: true, createdAt: true },
           })) : Promise.resolve([]),
-          allowed.has("ACCOUNT_ACTIVITY") && !isOperationalGuest ? readSource("e", (after, take) => tx.analyticsEvent.findMany({
+          canReadAnalytics ? readSource("e", (after, take) => tx.analyticsEvent.findMany({
             where: { AND: [analyticsWhere, sourceActivitySeek(after, "e", order)] },
             orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take,
             select: { id: true, type: true, name: true, metadata: true, createdAt: true },
           })) : Promise.resolve([]),
           allowed.has("SEARCH_COMPLETED") ? tx.searchHistory.count({ where: searchWhere }) : Promise.resolve(0),
           canReadHandoffs ? tx.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
+          readPages ? tx.analyticsEvent.count({ where: pageWhere }) : Promise.resolve(0),
         ]);
-        return [pageJourney, pageSearches, pageHandoffs, pageAnalytics, counts, searchTotal, handoffTotal, distinctJourneyCount] as const;
+        return [pageJourney, pageSearches, pageHandoffs, pageAnalytics, counts, searchTotal, handoffTotal, distinctJourneyCount, pageTotal] as const;
       }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead, timeout: transactionTimeout });
     snapshotMilliseconds = Date.now() - snapshotAt;
 
     const summary: IdentityActivitySummary = {
+      pagesVisited,
       searches: (canonicalCounts.get("SEARCH_COMPLETED") ?? 0) + legacySearchTotal,
       resultsViewed: canonicalCounts.get("RESULTS_VIEWED") ?? 0,
       offersSelected: canonicalCounts.get("OFFER_SELECTED") ?? 0,
@@ -470,7 +499,11 @@ export async function loadAdminIdentityActivity(
         label: "Provider handoff started", detail: [r.type, r.route, r.provider].filter(Boolean).join(" · "),
         at: r.createdAt,
       })),
-      ...analytics.flatMap(a => {
+      ...analytics.flatMap<ActivityRow>(a => {
+        if (a.type === "PAGE_VIEW") {
+          const row = toAdminPageView(a, environment);
+          return row ? [row] : [];
+        }
         // Once the same interaction has a verified canonical JourneyEvent, it
         // belongs to that journey's Event History, not Unlinked Other Activity.
         const meta = a.metadata && typeof a.metadata === "object" && !Array.isArray(a.metadata)

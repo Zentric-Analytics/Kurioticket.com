@@ -65,7 +65,7 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
               </td>
               <td className="px-3 py-3 [overflow-wrap:anywhere]">
                 <span className="block text-[11px] font-semibold tabular-nums text-[#64748B]">Step {index + 1}</span>
-                <span className="mt-1 inline-flex rounded-md border border-[#D8E1EC] bg-white px-2 py-1 text-[11px] font-medium text-[#475569]">{event.type === "RESULTS_VIEWED" ? "Results page viewed" : event.type === "RESULT_SHARED"
+                <span className="mt-1 inline-flex rounded-md border border-[#D8E1EC] bg-white px-2 py-1 text-[11px] font-medium text-[#475569]">{event.type === "PAGE_VIEW" ? event.pageView?.label ?? "Page visited" : event.type === "RESULTS_VIEWED" ? "Results page viewed" : event.type === "RESULT_SHARED"
                   ? event.action === "share_link_copied" ? "Result link copied" : event.action === "share_sheet_completed" ? "Share sheet completed" : "Result shared"
                    : event.type === "PRICE_ALERT_CREATED" ? "Price alert created"
                   : event.type === "RESULT_SAVED"
@@ -109,6 +109,7 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
                 {event.resultReference ? <p className="mt-1.5 break-all text-[11px] leading-4 text-[#64748B]">
                   Recorded result reference: {event.resultReference}
                 </p> : null}
+                {event.pageView ? <p className="mt-1 text-xs break-all text-[#475569]">{event.pageView.href ? <a href={event.pageView.href} target="_blank" rel="noopener noreferrer" className="text-[#004BB8] underline">{event.pageView.href}</a> : event.pageView.path} · {event.pageView.platform}</p> : null}
                 {event.sourcePage ? <p className="mt-1.5 break-all text-[11px] leading-4 text-[#64748B]"><span className="mr-1">Source:</span>{event.sourcePage}</p> : null}
               </td>
               <td className="px-3 py-3 [overflow-wrap:anywhere]">

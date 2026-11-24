@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { isJourneySourcePath, journeySourcePath } from "@/lib/search-journey";
+import { toAdminPageView } from "@/lib/adminPageView";
 import { safeAdminJourneySearchDetails } from "./adminJourneySearchDetails";
 import {
   adminJourneyProducts,
@@ -42,6 +43,7 @@ type EventRecord = {
   action: string | null; resultReference: string | null; filterGroup: string | null; sortMode: string | null; sortChoice?: string | null; filterSelections?: unknown;
   alertMode?: string | null; alertCurrency?: string | null; alertTargetPrice?: string | null; alertBaselinePrice?: string | null;
   observedResult?: unknown;
+  pageViewMetadata?: unknown;
   provider: string | null; sourcePage: string | null;
   searchHistoryId: string | null; requestId: string | null; searchProduct: AdminJourneyProduct | null;
   origin: string | null; destination: string | null; checkIn: Date | null; checkOut: Date | null; searchQuery?: unknown;
@@ -168,7 +170,36 @@ function listSql(query: AdminJourneyQuery, journeyId?: string) {
 }
 
 function detailSql(query: AdminJourneyQuery, journeyId: string) {
-  return Prisma.sql`${scopedEvents(query.scope, journeyId)} SELECT * FROM scoped_events
+  // Navigation observations remain single AnalyticsEvent records. Include
+  // only those with an exact canonical search link in this authorized
+  // journey; never inflate the existing funnel rollups or guess a match.
+  return Prisma.sql`${scopedEvents(query.scope, journeyId)},
+    exact_searches AS (
+      SELECT DISTINCT ON ("journeyId", "searchHistoryId") *
+      FROM scoped_events WHERE "type" = 'SEARCH_COMPLETED'
+      ORDER BY "journeyId", "searchHistoryId", "createdAt", "id"
+    ), detail_events AS (
+      SELECT *, NULL::jsonb AS "pageViewMetadata" FROM scoped_events
+      UNION ALL
+      SELECT 'pv-' || a."id", s."journeyId", 'PAGE_VIEW', s."product", NULL, a."createdAt",
+        NULL, NULL, NULL, NULL::jsonb, NULL, NULL::jsonb, NULL, NULL, NULL, NULL, NULL, NULL,
+        s."visitorId", s."userId", s."startedAt",
+        s."searchHistoryId", s."requestId", s."searchProduct", s."origin", s."destination",
+        s."checkIn", s."checkOut", s."searchQuery", s."searchStatus", s."resultCount", s."latencyMs",
+        NULL, NULL, NULL, NULL, a."metadata"
+      FROM "AnalyticsEvent" a
+      JOIN exact_searches s ON s."visitorId" = a."visitorId"
+        AND s."journeyId" = a."metadata"->>'linkedJourneyId'
+        AND s."searchHistoryId" = a."metadata"->>'linkedSearchHistoryId'
+      WHERE a."type" = 'PAGE_VIEW' AND a."name" = 'page_viewed'
+        AND (a."userId" IS NULL OR a."userId" = s."userId")
+        AND a."metadata"->>'environment' = ${query.scope.environment}
+        AND a."createdAt" >= ${new Date(query.scope.from)} AND a."createdAt" < ${new Date(query.scope.to)}
+        AND a."metadata"->>'transport' IN ('web', 'native')
+        AND ((s."product" = 'FLIGHT' AND a."metadata"->>'pageKey' IN ('flight_results', 'flight_details'))
+          OR (s."product" = 'HOTEL' AND a."metadata"->>'pageKey' IN ('hotel_results', 'hotel_details'))
+          OR (s."product" = 'CAR' AND a."metadata"->>'pageKey' IN ('car_results', 'car_details')))
+    ) SELECT * FROM detail_events
     WHERE "journeyId" = ${journeyId}
       ${query.cursor ? Prisma.sql`AND ("createdAt", "id") > (${new Date(query.cursor.at)}, ${query.cursor.id})` : Prisma.empty}
     ORDER BY "createdAt" ASC, "id" ASC LIMIT ${query.limit + 1}`;
@@ -313,8 +344,10 @@ function safeObservedResult(value: unknown): AdminJourneyEvent["observedResult"]
   };
 }
 function eventDto(row: EventRecord): AdminJourneyEvent {
+  const page = row.type === "PAGE_VIEW" ? toAdminPageView({ id: row.id, createdAt: row.createdAt, metadata: row.pageViewMetadata }, (row.pageViewMetadata as { environment?: string } | null)?.environment === "staging" ? "staging" : "production") : null;
   return {
     id: row.id, type: row.type, createdAt: row.createdAt.toISOString(), product: row.product,
+    ...(page?.pageView ? { pageView: { ...page.pageView, label: page.label } } : {}),
     observedResult: ["RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED", "FLIGHT_DETAILS_VIEWED", "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED"].includes(row.type) ? safeObservedResult(row.observedResult) : null,
     filterGroup: row.type === "SEARCH_FILTER_APPLIED" && ["all", "price", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "transmission", "other"].includes(row.filterGroup ?? "") ? row.filterGroup : null,
     sortMode: row.type === "SEARCH_SORT_CHANGED" && ["price", "best", "fastest", "stops", "rating", "recommended", "other"].includes(row.sortMode ?? "") ? row.sortMode : null,

@@ -131,6 +131,7 @@ enum RedirectType {
 }
 
 enum AnalyticsEventType {
+  PAGE_VIEW
   SEARCH
   REDIRECT
   SAVE

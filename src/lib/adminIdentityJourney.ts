@@ -13,7 +13,8 @@ export type ActivityRow = {
   journeyId?: string;
   journeyStartedAt?: Date;
   dedupeKey?: string;
-  stage?: JourneyEventType | "ACCOUNT_ACTIVITY";
+  stage?: JourneyEventType | "ACCOUNT_ACTIVITY" | "PAGE_VIEW";
+  pageView?: { path: string; previousPath: string | null; transport: "web" | "native"; platform: string; href: string | null };
   product?: string | null;
   provider?: string | null;
   searchHistoryId?: string | null;
