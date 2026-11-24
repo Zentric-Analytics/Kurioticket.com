@@ -278,7 +278,7 @@ function HomePageContent() {
 }
 
 export function SharedHomePage() {
-  return <HomePresentationProvider><HomePageContent /><NativeFirstVisitPrivacyPrompt /></HomePresentationProvider>;
+  return <><HomePresentationProvider><HomePageContent /></HomePresentationProvider><NativeFirstVisitPrivacyPrompt /></>;
 }
 
 export const HomeFlowScreen = SharedHomePage;
