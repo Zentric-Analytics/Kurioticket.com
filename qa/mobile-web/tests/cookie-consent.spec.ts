@@ -34,7 +34,8 @@ test("cookie preferences stay anchored, preserve refusal and never replay the ba
     await expect(preferences).toBeVisible();
     await expect(preferences.getByText("Manage your preferences")).toBeVisible();
     await expect(preferences.getByRole("button", { name: "Reject optional" })).toHaveCount(0);
-    await expect(preferences.getByRole("link", { name: /Cookie Policy|Privacy Policy/ })).toHaveCount(0);
+    await expect(preferences.getByRole("link")).toHaveCount(1);
+    await expect(preferences.getByRole("link", { name: "Cookie policy", exact: true })).toHaveAttribute("href", "/legal/cookie-policy?view=consent");
     const samples = await preferences.evaluate(async panel => {
       const frames: { top: number; bottom: number; left: number; right: number; scrollWidth: number; width: number }[] = [];
       for (let i = 0; i < 24; i++) {
@@ -122,4 +123,33 @@ test("preferences allow refusal without granting analytics consent", async ({ pa
   await page.reload();
   await expect(page.getByRole("button", { name: "Cookie preferences", exact: true })).toBeVisible();
   await expect(banner).toHaveCount(0);
+});
+
+
+test("opening Cookie policy leaves the pending choice unchanged", async ({ page, context }) => {
+  const writes: string[] = [];
+  await context.route("**/api/identity/visitor", route => {
+    if (route.request().method() !== "GET") writes.push(route.request().method());
+    return route.fulfill({ json: { analyticsTracking: "disabled" } });
+  });
+  await page.goto("/");
+  const banner = page.locator("[data-cookie-consent-banner]");
+  await banner.getByRole("button", { name: "Cookie preferences", exact: true }).click();
+  const preferences = page.locator("[data-cookie-consent-preferences]");
+  const analytics = preferences.getByRole("switch", { name: "Analytics cookies" });
+  await expect(analytics).toHaveAttribute("aria-checked", "true");
+  await analytics.click();
+  await expect(analytics).toHaveAttribute("aria-checked", "false");
+  const [policy] = await Promise.all([
+    page.waitForEvent("popup"),
+    preferences.getByRole("link", { name: "Cookie policy", exact: true }).click(),
+  ]);
+  await expect(policy).toHaveURL(/\/legal\/cookie-policy\?view=consent$/);
+  await expect(policy.getByRole("heading", { name: "Cookie Policy", exact: true })).toBeVisible();
+  await expect(policy.locator("[data-cookie-consent-banner]")).toHaveCount(0);
+  await policy.close();
+  await expect(preferences).toBeVisible();
+  await expect(analytics).toHaveAttribute("aria-checked", "false");
+  expect(await page.evaluate(() => localStorage.getItem("kurioticket:analytics-consent:v1"))).toBeNull();
+  expect(writes).toEqual([]);
 });
