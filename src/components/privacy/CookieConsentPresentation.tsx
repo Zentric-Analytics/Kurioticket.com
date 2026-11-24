@@ -129,11 +129,14 @@ export function CookieConsentPresentation({
             <p className="mt-3 max-w-[900px] text-sm leading-6 text-slate-600">
               We use essential cookies to keep Kurioticket secure and working. With your permission, optional analytics helps us improve your experience. Change or withdraw your choice at any time in Cookie preferences in the website footer.
             </p>
-            <div className="mt-5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4 sm:flex sm:flex-wrap sm:justify-end sm:gap-3">
-              <Button type="button" variant="secondary" data-cookie-preferences-open onClick={onOpen} disabled={busy}
-                className="col-span-2 min-h-11 rounded-xl border-slate-300 px-5 font-semibold text-[#004BB8] hover:bg-slate-50">Cookie preferences</Button>
-              <Button type="button" disabled={busy} onClick={() => onChoose("declined")} className={actionClass}>Decline optional</Button>
-              <Button type="button" disabled={busy} onClick={() => onChoose("granted")} className={actionClass}>Accept all</Button>
+            <div className="mt-5 grid gap-3 border-t border-slate-100 pt-4 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+              <button type="button" data-cookie-consent-continue disabled={busy} onClick={() => onChoose("declined")}
+                className="focus-ring min-h-11 justify-self-center rounded-md px-2 text-sm font-semibold text-[#004BB8] underline underline-offset-4 hover:text-[#003D99] disabled:opacity-60 sm:justify-self-start">Continue without optional cookies</button>
+              <div data-cookie-consent-actions className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:flex sm:flex-wrap sm:gap-3">
+                <Button type="button" variant="secondary" data-cookie-preferences-open onClick={onOpen} disabled={busy}
+                  className="min-h-11 rounded-xl border-slate-300 px-3 font-semibold text-[#004BB8] hover:bg-slate-50 sm:px-5">Cookie preferences</Button>
+                <Button type="button" disabled={busy} onClick={() => onChoose("granted")} className={actionClass}>Accept all</Button>
+              </div>
             </div>
           </div>
         </section>
