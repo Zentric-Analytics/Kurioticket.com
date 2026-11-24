@@ -20,7 +20,7 @@ import {
   searchDetailCrawlerName,
   searchDetailCrawlerEvidenceLabel,
 } from "@/lib/adminSearchDetailPresentation";
-import { formatDateTime } from "@/lib/admin-data";
+import { AdminLocalTimestamp } from "@/components/admin/AdminLocalTimestamp";
 import type { AdminSearchDetail } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -78,7 +78,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
               {searchDetailHeadline(search)}
             </p>
             <p className="mt-1 text-[12px] font-medium text-[#6B7280]">
-              Searched {formatDateTime(new Date(search.createdAt))}
+              Searched <AdminLocalTimestamp value={search.createdAt} />
             </p>
           </div>
           <StatusDot status={diagnostic.outcome === "ZERO_RESULTS" ? "ZERO_RESULTS" : search.status} label={searchDetailOutcomeLabel(diagnostic.outcome)} />
@@ -225,7 +225,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
             {search.operationalSessionId ? <Field label="Operational session ID" value={search.operationalSessionId} /> : null}
             {providerReasonCodes.length ? <Field label="Provider reason codes" value={providerReasonCodes.join("; ")} /> : null}
             {diagnostic.providers.some(provider => Math.abs(Date.parse(provider.observedAt) - Date.parse(search.createdAt)) > 60_000) ? (
-              <Field label="Provider observation times" value={diagnostic.providers.map(provider => provider.provider + ": " + formatDateTime(new Date(provider.observedAt))).join("; ")} />
+              <Field label="Provider observation times" value={diagnostic.providers.map(provider => provider.provider + ": " + new Date(provider.observedAt).toISOString()).join("; ")} />
             ) : null}
           </div>
         </details>
