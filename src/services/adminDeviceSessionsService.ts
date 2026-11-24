@@ -6,6 +6,7 @@ import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { getOnlinePresenceSnapshot } from "@/services/onlinePresenceService";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { deviceTodayWindow, deviceHistoryWindow, DEVICE_HISTORY_PAGE_SIZE, type DeviceHistoryQuery } from "@/lib/adminDeviceHistory";
+import { accountDevicePlatformWhere } from "@/lib/adminDevicePlatform";
 
 /** A bounded, account-owned view. Never return tokens, IPs or raw user agents. */
 export type AdminDeviceSession = {
@@ -28,7 +29,7 @@ export type DeviceSessionResult =
   | { status: "unavailable" };
 
 export type FullDeviceHistoryResult =
-  | { status: "ok"; sessions: AdminDeviceSession[]; total: number; hasNext: boolean; onlineSessionIds: string[] | null; validSessionIds: string[] | null }
+  | { status: "ok"; owner: { id: string; name: string | null; email: string | null }; sessions: AdminDeviceSession[]; total: number; hasNext: boolean; onlineSessionIds: string[] | null; validSessionIds: string[] | null }
   | { status: "not_found" }
   | { status: "unavailable" };
 
@@ -60,9 +61,9 @@ export async function loadAdminFullDeviceHistory(
   try {
     const db = getOptionalPrisma();
     if (!db) return { status: "unavailable" };
-    const owner = await db.user.findUnique({ where: { id: userId }, select: { id: true } });
+    const owner = await db.user.findUnique({ where: { id: userId }, select: { id: true, name: true, email: true } });
     if (!owner) return { status: "not_found" };
-    const where = { userId, lastSeenAt: deviceHistoryWindow(query) };
+    const where = { userId, lastSeenAt: deviceHistoryWindow(query), ...accountDevicePlatformWhere(query.platform) };
     const [total, sessions] = await Promise.all([
       db.accountSession.count({ where }),
       db.accountSession.findMany({
@@ -124,7 +125,7 @@ export async function loadAdminFullDeviceHistory(
         validSessionIds = null;
       }
     }
-    return { status: "ok", sessions, total, onlineSessionIds, validSessionIds,
+    return { status: "ok", owner, sessions, total, onlineSessionIds, validSessionIds,
       hasNext: query.page * DEVICE_HISTORY_PAGE_SIZE < total };
   } catch {
     return { status: "unavailable" };

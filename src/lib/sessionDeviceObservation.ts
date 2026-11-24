@@ -57,7 +57,7 @@ function estimatedLocation(headers: Headers, trustedEdge: boolean) {
   return city ? city + ", " + country : country;
 }
 
-/** Consume this only after an authenticated, validated presence heartbeat. */
+/** Consume only after authenticated presence validation or an independently consent-checked guest observation. */
 export function sessionDeviceObservation(
   request: Request, platform: OnlinePresencePlatform,
   trustedEdge = process.env.RENDER === "true",

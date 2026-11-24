@@ -1,4 +1,5 @@
 import { adminUtcTodayStart } from "./adminReportingRanges";
+import { isPageHistoryPlatform, type PageHistoryPlatform } from "./adminPageHistory";
 
 export const DEVICE_HISTORY_PAGE_SIZE = 20;
 export const deviceHistoryRanges = ["all", "today", "7d", "30d", "custom"] as const;
@@ -6,6 +7,7 @@ export type DeviceHistoryRange = (typeof deviceHistoryRanges)[number];
 export type DeviceHistoryQuery = {
   range: DeviceHistoryRange;
   page: number;
+  platform?: PageHistoryPlatform;
   from?: string;
   to?: string;
 };
@@ -32,17 +34,20 @@ export function parseDeviceHistoryQuery(raw: RawQuery): DeviceHistoryParsed {
   const page = Number(rawPage);
   if (!Number.isSafeInteger(page) || page > 1_000_000)
     return { ok: false, error: "History page is out of range." };
+  const platform = raw.platform ?? "all";
+  if (!isPageHistoryPlatform(platform)) return { ok: false, error: "Unsupported platform." };
+  const platformFilter = platform === "all" ? {} : { platform };
   const from = raw.from ?? "";
   const to = raw.to ?? "";
   if (range === "custom") {
     if (typeof from !== "string" || typeof to !== "string"
       || !validUtcDay(from) || !validUtcDay(to) || from > to)
       return { ok: false, error: "Choose valid inclusive From and To dates (UTC)." };
-    return { ok: true, query: { range, page, from, to } };
+    return { ok: true, query: { range, page, from, to, ...platformFilter } };
   }
   // Date inputs may retain values when switching from Custom to a preset.
   // They are ignored unless Custom was explicitly selected.
-  return { ok: true, query: { range: range as DeviceHistoryRange, page } };
+  return { ok: true, query: { range: range as DeviceHistoryRange, page, ...platformFilter } };
 }
 
 /** UTC Today means midnight UTC through the current observation, not a rolling 24 hours. */
@@ -75,6 +80,7 @@ export function deviceHistoryHref(
     params.set("from", next.from);
     params.set("to", next.to);
   }
+  if (next.platform && next.platform !== "all") params.set("platform", next.platform);
   if (activityReturn) params.set("activityReturn", activityReturn);
   return basePath + "?" + params.toString();
 }

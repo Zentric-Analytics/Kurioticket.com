@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { validActivityIdentity } from "@/lib/adminIdentityActivity";
+import { historyDirectoryReturnHref } from "@/lib/adminHistoryDirectory";
+import { AdminGuestAccessHistory } from "@/components/admin/AdminGuestAccessHistory";
+import { activityJourneyReturnHref } from "@/lib/adminActivityJourneyNavigation";
 import { deviceHistoryHref, parseDeviceHistoryQuery, DEVICE_HISTORY_PAGE_SIZE } from "@/lib/adminDeviceHistory";
 import { loadAdminFullDeviceHistory, type AdminDeviceSession } from "@/services/adminDeviceSessionsService";
 import { AdminDeviceHistoryAutoRefresh } from "@/components/admin/AdminDeviceHistoryAutoRefresh";
@@ -45,24 +48,28 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
   if (!validActivityIdentity(kind, id)) notFound();
   const path = "/admin/users/" + kind + "/" + encodeURIComponent(id);
   await requireAdminSession(path + "/devices");
-  if (kind !== "user") notFound(); // No authenticated guest device ownership exists.
   const raw = await searchParams;
   const activityPath = path + "/activity";
   const incoming = typeof raw.activityReturn === "string" ? raw.activityReturn : "";
-  const backHref = incoming.length <= 1000
-    && (incoming === activityPath || incoming.startsWith(activityPath + "?"))
-    ? incoming : activityPath;
+  const directoryReturn = historyDirectoryReturnHref("devices", incoming);
+  const safeActivity = activityJourneyReturnHref(incoming);
+  const activityReturn = safeActivity && (safeActivity === activityPath || safeActivity.startsWith(activityPath + "?"))
+    ? safeActivity : activityPath;
+  const backHref = directoryReturn ?? activityReturn;
+  const backLabel = directoryReturn ? "Back to Device & Access" : "Back to Activity";
   const parsed = parseDeviceHistoryQuery(raw);
   if (!parsed.ok) return <div className="min-w-0 space-y-4 bg-white">
-    <Link href={backHref} className={linkClass}><ArrowLeft size={15} aria-hidden="true"/> Back to Activity</Link>
+    <Link href={backHref} className={linkClass}><ArrowLeft size={15} aria-hidden="true"/> {backLabel}</Link>
     <AdminEmptyState title="Invalid device history filters" message={parsed.error}
-      action={<Link href={path + "/devices"} className={linkClass}>Reset device filters</Link>} />
+      action={<Link href={path + "/devices?" + new URLSearchParams({ activityReturn: backHref }).toString()} className={linkClass}>Reset device filters</Link>} />
   </div>;
   const query = parsed.query;
+  if (kind === "guest") return <AdminGuestAccessHistory id={id} query={query} path={path + "/devices"} backHref={backHref} backLabel={backLabel}/>;
+  // Only authenticated accounts enter the canonical account session reader.
   const result = await loadAdminFullDeviceHistory(id, query);
   if (result.status === "not_found") notFound();
   if (result.status === "unavailable") return <div className="min-w-0 space-y-4">
-    <Link href={backHref} className={linkClass}><ArrowLeft size={15} aria-hidden="true"/> Back to Activity</Link>
+    <Link href={backHref} className={linkClass}><ArrowLeft size={15} aria-hidden="true"/> {backLabel}</Link>
     <AdminEmptyState title="Device history unavailable"
       message="Stored device sessions could not be loaded. This does not mean that the account has no history."
       action={<Link href={deviceHistoryHref(path + "/devices", query, {}, backHref)} className={linkClass}>Retry</Link>} />
@@ -77,7 +84,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
     <AdminDeviceHistoryAutoRefresh />
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[13px]">
       <Link href={backHref} className="focus-ring inline-flex items-center gap-1.5 text-[#004BB8] hover:underline">
-        <ArrowLeft size={15} aria-hidden="true"/> Back to Activity
+        <ArrowLeft size={15} aria-hidden="true"/> {backLabel}
       </Link>
     </nav>
     <section className="min-w-0 space-y-4 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-5"
@@ -85,13 +92,15 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
       <header className="flex min-w-0 flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-[19px] font-semibold">Device &amp; Access History</h1>
+          <p className="mt-1 break-words text-[13px] font-medium text-[#334155]">{result.owner.name || result.owner.email || id}</p>
+          <p className="mt-1 break-all text-[12px] text-[#64748B]">{result.owner.email && result.owner.email !== result.owner.name ? result.owner.email + " · " : ""}{id}</p>
           <p className="mt-1 text-[12px] text-[#64748B]">Recorded sessions · UTC · Approximate locations · Online status updates automatically</p>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-md bg-[#F8FAFC] px-2.5 py-1.5 text-[12px] text-[#475569]">
           <Clock3 size={14} aria-hidden="true"/>{result.total.toLocaleString()} matching sessions
         </span>
       </header>
-      <AdminDeviceHistoryFilters key={query.range + ":" + (query.from ?? "") + ":" + (query.to ?? "")}
+      <AdminDeviceHistoryFilters key={query.range + ":" + (query.from ?? "") + ":" + (query.to ?? "") + ":" + (query.platform ?? "all")}
         path={pagePath} query={query} returnHref={backHref}/>
       {result.sessions.length === 0 ? <p role="status" className="rounded-lg bg-[#F8FAFC] px-4 py-7 text-center text-[13px] text-[#64748B]">
         {result.total === 0 ? "No device history matches this date range." : "No records on this page. Go to a previous page."}

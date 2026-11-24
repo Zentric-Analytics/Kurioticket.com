@@ -43,7 +43,9 @@ const syntheticSessions = [
 function selectSyntheticSessions(where = {}) {
   const dates = where.lastSeenAt ?? {};
   return syntheticSessions.filter(item =>
-    (!dates.gte || item.lastSeenAt >= dates.gte)
+    (!where.client || item.client === where.client)
+    && (!where.platform || item.platform === where.platform)
+    && (!dates.gte || item.lastSeenAt >= dates.gte)
     && (!dates.lte || item.lastSeenAt <= dates.lte)
     && (!dates.lt || item.lastSeenAt < dates.lt));
 }

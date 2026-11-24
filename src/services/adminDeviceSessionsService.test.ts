@@ -5,7 +5,7 @@ import test from "node:test";
 test("device history is account-scoped and excludes credentials and network identifiers", () => {
   const source = readFileSync("src/services/adminDeviceSessionsService.ts", "utf8");
   assert.match(source, /where:\s*\{ userId, lastSeenAt: deviceTodayWindow\(\) \}/);
-  assert.match(source, /const where = \{ userId, lastSeenAt: deviceHistoryWindow\(query\) \}/);
+  assert.match(source, /const where = \{ userId, lastSeenAt: deviceHistoryWindow\(query\), \.\.\.accountDevicePlatformWhere\(query.platform\) \}/);
   assert.match(source, /take:\s*3/);
   assert.match(source, /deviceTodayWindow\(\)/);
   assert.match(source, /loadAdminFullDeviceHistory/);
@@ -53,7 +53,7 @@ test("registered Activity embeds a heading-free Today preview with a separate fu
   assert.match(preview, /View full history/);
   assert.match(preview, /kind !== "user"\) return null/);
   assert.match(dedicated, /loadPlatformAccess/);
-  assert.match(history, /kind !== "user"/);
+  assert.match(history, /if \(kind === "guest"\) return <AdminGuestAccessHistory/);
 });
 
 test("presence captures only verified canonical sessions and no raw user agents or IP storage", () => {

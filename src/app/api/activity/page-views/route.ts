@@ -9,6 +9,7 @@ import { isSameOriginRequest, isNativeVisitorRequest } from "@/lib/visitor-ident
 import { isPageViewKey, pageViewInfo, pageViewCanLink } from "@/lib/pageViewCatalog";
 import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
+import { consentedGuestAccessObservation } from "@/lib/guestAccessObservation";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 
 export const runtime = "nodejs";
@@ -86,12 +87,18 @@ export async function POST(request: Request) {
         });
         return { accepted: true, retryable: Boolean(parsed.data.requestId && pageViewCanLink(parsed.data.pageKey) && !meta?.linkedJourneyId && !verifiedLink) };
       }
+      // Optional device evidence is captured only for a newly accepted, consented guest visit.
+      // It does not create a new event, credential, or authenticated session.
+      // New optional descriptive fields are staging-only until the privacy/retention review.
+      const guestAccess = !identity.userId && getPublicEnvironment() === "staging"
+        ? consentedGuestAccessObservation(request, platform, native ? "native" : "web") : undefined;
       await tx.analyticsEvent.create({ data: {
         type: "PAGE_VIEW", name: "page_viewed", userId: identity.userId, visitorId: identity.visitorId,
         metadata: withEnvironmentMetadata({
           eventId: parsed.data.eventId, pageKey: parsed.data.pageKey,
           ...(parsed.data.previousPageKey ? { previousPageKey: parsed.data.previousPageKey } : {}),
           transport: native ? "native" : "web", platform,
+          ...(guestAccess ? { guestAccess } : {}),
           ...(page.product ? { product: page.product } : {}),
           ...(verifiedLink ?? {}),
         }) as Prisma.InputJsonValue,

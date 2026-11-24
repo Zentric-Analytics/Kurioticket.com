@@ -41,22 +41,22 @@ export function AdminPageHistoryFilters({ path, query, returnHref }: { path: str
     startTransition(() => router.push(href, { scroll: false }));
   };
   return <section aria-label="Page history filters" className="min-w-0 space-y-3 border-y border-[#E2E8F0] py-3">
-    <div className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))_auto]">
+    <div data-testid="page-history-filter-row" className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))_minmax(104px,0.8fr)]">
       <label className="relative min-w-0">
         <Search aria-hidden="true" size={16} className="pointer-events-none absolute left-3 top-3 text-[#64748B]"/>
         <input aria-label="Search page or route" placeholder="Search page or route" maxLength={80} value={q} onChange={e => setQ(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); apply(); } }}
           className="focus-ring h-10 w-full min-w-0 rounded-lg border border-[#E2E8F0] bg-white pl-9 pr-3 text-[13px]"/>
       </label>
-      <SearchMonitorSelect label="Page history range" name="range" value={range} options={rangeOptions} appearance="fare" onValueChange={value => setRange(value as AdminReportingRange)}/>
-      <SearchMonitorSelect label="Page history platform" name="platform" value={platform} options={[...PAGE_HISTORY_PLATFORMS]} appearance="fare" onValueChange={value => setPlatform(value as PageHistoryPlatform)}/>
-      <SearchMonitorSelect label="Page history product" name="product" value={product} options={products} appearance="fare" onValueChange={value => setProduct(value as ActivityProduct)}/>
+      <SearchMonitorSelect label="Page history range" name="range" value={range} options={rangeOptions} appearance="fare" truncateLabel onValueChange={value => setRange(value as AdminReportingRange)}/>
+      <SearchMonitorSelect label="Page history platform" name="platform" value={platform} options={[...PAGE_HISTORY_PLATFORMS]} appearance="fare" truncateLabel onValueChange={value => setPlatform(value as PageHistoryPlatform)}/>
+      <SearchMonitorSelect label="Page history product" name="product" value={product} options={products} appearance="fare" truncateLabel onValueChange={value => setProduct(value as ActivityProduct)}/>
       <button type="button" disabled={pending || !customValid} onClick={apply}
         className="focus-ring inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60">
         {pending ? "Applying…" : "Apply filters"}
       </button>
     </div>
-    {customDates ? <div className="flex min-w-0 flex-wrap items-end gap-3 text-[12px] text-[#475569]">
+    {customDates ? <div className="grid min-w-0 grid-cols-1 items-end gap-2 text-[12px] text-[#475569] sm:grid-cols-2 lg:max-w-[440px]">
       <label className="min-w-0 space-y-1"><span>From (UTC)</span><AdminCalendarInput ariaLabel="Page history From UTC" value={from} max={to || undefined} onValueChange={setFrom} className="w-[185px] max-w-full"/></label>
       <label className="min-w-0 space-y-1"><span>To (UTC)</span><AdminCalendarInput ariaLabel="Page history To UTC" value={to} min={from || undefined} onValueChange={setTo} className="w-[185px] max-w-full"/></label>
     </div> : null}
