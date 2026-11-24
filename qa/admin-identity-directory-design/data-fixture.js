@@ -119,7 +119,8 @@ const db = {
     return all.slice(offset, offset + limit).map(item => ({
       id: item.record.id, kind: item.kind,
       firstSeenAt: item.kind === "guest" ? item.record.firstSeenAt : null,
-      lastSeenAt: item.record.lastSeenAt ?? null, operationalGuestCount: 0n,
+      lastSeenAt: item.record.lastSeenAt ?? null, guestSource: item.kind === "guest" ? "visitor" : null,
+      guestStatus: item.kind === "guest" ? "ACTIVE" : null, operationalGuestCount: 0n,
       operationalAllTimeCount: 0n, operationalNewCount: 0n,
     }));
   },
