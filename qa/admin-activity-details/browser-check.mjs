@@ -265,6 +265,49 @@ try {
     await page.screenshot({caret:"initial",path: output + "/after-desktop-zoom-equivalent-" + Math.round(zoom*100) + ".png",fullPage:true});
   }
 
+  // Dedicated page visits use a compact summary, real server-page navigation,
+  // and return to the exact activity filters rather than expanding the overview.
+  await page.setViewportSize({width:1280,height:900});
+  const pageActivityPath = "/admin/users/user/qa-page-history-0001/activity?range=all";
+  await page.goto(base + pageActivityPath);
+  const visitSummary = page.getByTestId("page-view-records");
+  await expect(visitSummary.getByTestId("page-view-row")).toHaveCount(5);
+  await expect(visitSummary.getByTestId("pages-visited-total")).toHaveText("45");
+  await expect(page.getByTestId("activity-events-fact")).toContainText("45");
+  await visitSummary.getByRole("link",{name:"View all pages visited"}).click();
+  await expect(page).toHaveURL(url => url.pathname === "/admin/users/user/qa-page-history-0001/pages");
+  await expect(page.getByRole("heading",{name:"Pages Visited History"})).toBeVisible();
+  await expect(page.getByTestId("page-view-row")).toHaveCount(20);
+  await page.getByRole("link",{name:"Next",exact:true}).click();
+  await expect(page.getByTestId("page-view-row")).toHaveCount(20);
+  await expect(page.getByRole("navigation",{name:"Page history pagination"})).toContainText("Page 2 of 3");
+  await page.getByRole("link",{name:"Next",exact:true}).click();
+  await expect(page.getByTestId("page-view-row")).toHaveCount(5);
+  await page.getByRole("link",{name:"Previous",exact:true}).click();
+  await expect(page.getByRole("navigation",{name:"Page history pagination"})).toContainText("Page 2 of 3");
+  await page.getByRole("button",{name:"Page history platform: All platforms"}).click();
+  await page.getByRole("listbox",{name:"Page history platform"}).getByRole("option",{name:"iOS app",exact:true}).click();
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
+  await expect(page).toHaveURL(url => url.searchParams.get("platform")==="ios" && url.searchParams.get("page")==="1");
+  await expect(page.getByTestId("page-view-row")).toHaveCount(15);
+  await expect(page.getByTestId("pages-visited-total")).toHaveText("15");
+  await page.getByRole("textbox",{name:"Search page or route"}).fill("Support");
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
+  await expect(page.getByTestId("page-view-row")).toHaveCount(7);
+  await page.setViewportSize({width:320,height:800});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1),false,"Page history must fit mobile viewport");
+  await page.getByRole("link",{name:"Back to Activity",exact:true}).click();
+  await expect(page).toHaveURL(url => url.pathname.endsWith("/activity") && url.searchParams.get("range")==="all" && !url.searchParams.has("platform"));
+  await expect(page.getByTestId("page-view-row")).toHaveCount(5);
+  await expect(page.getByTestId("pages-visited-total")).toHaveText("45");
+  await page.getByRole("link",{name:"Pages visited",exact:true}).click();
+  await expect(page.getByTestId("page-view-row")).toHaveCount(5);
+  await page.getByRole("link",{name:"View all pages visited"}).click();
+  await page.getByRole("link",{name:"Back to Activity",exact:true}).click();
+  await expect(page).toHaveURL(url => url.searchParams.get("tab")==="pages");
+  await expect(page.getByTestId("page-view-row")).toHaveCount(5);
+  console.log("PASS five recent page visits, separate history pagination, filters and return navigation");
+
   // Full device history uses its own date filters and returns records older than Today.
   await page.setViewportSize({width:1280,height:900});
   await page.goto(base + "/admin/users/user/qa-registered-0001/activity?range=all");

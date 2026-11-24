@@ -26,7 +26,7 @@ export function AdminActivityOverview({
   pagesHref?: string;
 }) {
   const overview = activityOverviewRows(events.filter(event => event.stage !== "PAGE_VIEW"));
-  if (tab === "pages") return <PageViewRecords key={pagesHref} events={events} count={pagesVisited ?? 0} full operational={operational}/>;
+  if (tab === "pages") return <PageViewRecords key={pagesHref} events={events} count={pagesVisited ?? 0} full={false} href={pagesHref} operational={operational}/>;
   return <section data-testid="activity-overview" aria-label="Activity overview" className="min-w-0 space-y-6">
     {tab === "all" && pagesVisited !== undefined && !operational ? <PageViewRecords key={pagesHref} events={events} count={pagesVisited} full={false} href={pagesHref} operational={false}/> : null}
     {!operational ? <section aria-labelledby="recent-journeys-title" className="min-w-0">

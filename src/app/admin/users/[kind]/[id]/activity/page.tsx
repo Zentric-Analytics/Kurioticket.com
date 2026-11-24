@@ -10,6 +10,7 @@ import { AdminActivityOverview } from "@/components/admin/AdminActivityOverview"
 import { AdminIdentityDeviceAccess } from "@/components/admin/AdminIdentityDeviceAccess";
 import { loadAdminDeviceSessions } from "@/services/adminDeviceSessionsService";
 import { journeyHistoryHrefFromActivity } from "@/lib/adminActivityOverview";
+import { pageHistoryHrefFromActivity } from "@/lib/adminPageHistory";
 import { normalizeUserActivityQuery, safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
 import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
 import { requireAdminSession } from "@/lib/auth-guards";
@@ -126,7 +127,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       action={<Link className={buttonClass} href={basePath}>Reset activity filters</Link>} />
   </div>;
   const filters: ActivityFilters = filtersResult.filters;
-  const result = await loadAdminIdentityActivity(kind, id, filters, undefined, "all");
+  const result = await loadAdminIdentityActivity(kind, id, filters, undefined, "summary");
   if (result.status === "not_found") notFound();
   if (result.status !== "ok") return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -143,6 +144,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const operational = data.source === "operational";
   const order = filters.order === "oldest" ? "oldest" : "newest";
   const activityReturn = activityHref(basePath, queryParams, {});
+  const pagesHref = pageHistoryHrefFromActivity(kind, id, filters, typeof raw.range === "string" ? raw.range : undefined, activityReturn);
   const journeyHistoryHref = journeyHistoryHrefFromActivity(kind, id, filters,
     typeof raw.range === "string" ? raw.range : undefined, activityReturn);
 
@@ -196,7 +198,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             <Fact label="Last seen" className="lg:border-l-0 lg:pl-2 2xl:pl-6">{data.lastSeenAvailable === false ? "Unavailable" : data.lastSeenAt ? <HeaderTime at={data.lastSeenAt}/> : "—"}</Fact>
             <Fact label="Events" testId="activity-events-fact"
               className={"lg:border-l-0 lg:pl-6 " + (kind === "user" || data.source === "visitor" ? "lg:pr-28" : "")}>
-              {data.events.length}
+              {data.events.length - data.events.filter(event => event.stage === "PAGE_VIEW").length + (data.summary.pagesVisited ?? 0)}
             </Fact>
           </dl>
 
@@ -262,7 +264,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         </section>
 
         <AdminActivityOverview events={data.events} journeyHistoryHref={journeyHistoryHref}
-          environment={environment} operational={operational} tab={filters.tab} pagesVisited={data.summary.pagesVisited ?? 0} pagesHref={activityHref(basePath, queryParams, { tab: "pages", stage: null, cursor: null })}/>
+          environment={environment} operational={operational} tab={filters.tab} pagesVisited={data.summary.pagesVisited ?? 0} pagesHref={pagesHref}/>
       </div>
     </section>
   </div>;
