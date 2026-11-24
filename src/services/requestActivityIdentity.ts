@@ -36,13 +36,17 @@ export async function resolveRequestActivityIdentity(
     if (isNativeVisitorRequest(request)) {
       const session = await resolve.mobile(request);
       if (session?.user.status === "ACTIVE") { userId = session.user.id; application = resolveApplicationSource(request, { client: "MOBILE", platform: session.platform, appVersion: session.appVersion }); }
-      else if (!request.headers.has("authorization")) {
-        // Guest operational attribution is not visitor analytics or mobile authentication.
-        // Only accept server-signed, platform-bound continuity (or the credential
-        // prepared by this very search). Never trust the platform header alone.
+      else {
+        // A revoked bearer is not an account identity. A previously signed,
+        // platform-bound operational credential may still establish the native
+        // search transport, but cannot authenticate the caller or a visitor.
+        // A NEW credential is eligible only for an unauthenticated guest search:
+        // an invalid bearer must never bootstrap platform attribution.
+        const hasBearer = request.headers.has("authorization");
         const reference = operationalSession === undefined
           ? readOperationalSearchSession(request)
           : operationalSession?.transport === "native" && operationalSession.guestNativeAttribution
+            && (!hasBearer || !operationalSession.newCredential)
             ? operationalSession.reference : null;
         const declared = request.headers.get("x-mobile-platform");
         if (reference?.nativePlatform && reference.nativePlatform === declared) {
