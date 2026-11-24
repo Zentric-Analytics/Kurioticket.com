@@ -108,7 +108,7 @@ export function createPageViewCapture(createId: () => string) {
       current = { context: input.context, payload };
       return payload;
     }
-    if (!current || !requestId || (current.payload.requestId && current.payload.requestId !== requestId)) return null;
+    if (!current || !requestId || current.payload.requestId) return null;
     // Same event ID even when the response arrives after the page observation.
     // Identical retries are safe, and the server never overwrites a valid link.
     current.payload = { ...current.payload, requestId };
