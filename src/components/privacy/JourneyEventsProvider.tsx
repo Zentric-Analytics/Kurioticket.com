@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { createPageViewObserver } from "@/lib/pageViewCatalog";
+import { createPageViewCapture } from "@/lib/pageViewCatalog";
 import { analyticsConsentAccountKey, analyticsConsentChangedEvent, analyticsConsentStorageKey, hasAnalyticsDenial, parseAnalyticsConsent } from "@/lib/analyticsConsentClient";
 import { createJourneyEventSender, forgetJourneySelections, journeyRequestId, readJourneySelection, rememberJourneySelection } from "@/lib/journeyEventClient";
 import { createProviderHandoffMetadata, type ProviderHandoffMetadataReader } from "@/lib/providerHandoffClient";
@@ -35,7 +35,7 @@ export function JourneyEventsProvider({ children }: { children: ReactNode }) {
   const previousActor = useRef(actor);
   const [confirmation, setConfirmation] = useState<{ actor: string | null; enabled: boolean }>({ actor: null, enabled: false });
   const pathname = usePathname();
-  const [observePage] = useState(() => createPageViewObserver());
+  const [observePage] = useState(() => createPageViewCapture(() => crypto.randomUUID()));
   const [sender] = useState(() => createJourneyEventSender({
     request: (url, init) => fetch(url, init),
     allowed: browserAllowsAnalytics,
@@ -84,7 +84,9 @@ export function JourneyEventsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const observe = () => {
       const confirmed = confirmation.actor === actor && confirmation.enabled && browserAllowsAnalytics();
+      if (typeof crypto.randomUUID !== "function") return;
       const event = observePage({
+        requestId: new URLSearchParams(window.location.search).get("requestId"),
         pathname, transport: "web", context: confirmed ? actor : null,
         visible: document.visibilityState === "visible",
       });
@@ -92,7 +94,7 @@ export function JourneyEventsProvider({ children }: { children: ReactNode }) {
       void fetch("/api/activity/page-views", {
         method: "POST", cache: "no-store", credentials: "same-origin", keepalive: true,
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ ...event, eventId: crypto.randomUUID() }),
+        body: JSON.stringify(event),
       }).catch(() => undefined);
     };
     observe();
@@ -114,7 +116,13 @@ export function JourneyEventsProvider({ children }: { children: ReactNode }) {
         ? readJourneySelection(product, resultId, actor, window.sessionStorage) : null, browserActionId);
     },
     resultsViewed(requestId) {
-      if (requestId) sender.send({ type: "RESULTS_VIEWED", requestId, sourcePage: window.location.pathname });
+      if (requestId) {
+        sender.send({ type: "RESULTS_VIEWED", requestId, sourcePage: window.location.pathname });
+        if (confirmation.actor === actor && confirmation.enabled && browserAllowsAnalytics() && typeof crypto.randomUUID === "function") {
+          const event = observePage({ pathname: window.location.pathname, transport: "web", context: actor, visible: document.visibilityState === "visible", requestId });
+          if (event) void fetch("/api/activity/page-views", { method: "POST", credentials: "same-origin", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify(event) }).catch(() => undefined);
+        }
+      }
     },
     workflowDecision(type, requestId, detail) {
       if (!browserAllowsAnalytics()) return;
