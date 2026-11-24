@@ -1,8 +1,6 @@
 "use client";
 
 import { AdminCalendarInput } from "@/components/admin/AdminCalendarInput";
-import { adminCalendarDate } from "@/lib/adminTimeZone";
-import { useAdminTimeZone } from "./AdminTimeZoneProvider";
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { LoaderCircle, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -77,7 +75,6 @@ export function AdminAuditLogsToolbar({
   pageHref,
 }: Props) {
   const router = useRouter();
-  const timeZone = useAdminTimeZone();
   const [customOpen, setCustomOpen] = useState(false);
   const [draftRange, setDraftRange] = useState<AuditRange>(range);
   const [draftAction, setDraftAction] = useState(action);
@@ -137,8 +134,8 @@ export function AdminAuditLogsToolbar({
     ...(draftRange === "90d" ? [{ value: "90d", label: "Last 90 days (legacy)" }] : []),
     ...(draftRange === "24h" ? [{ value: "24h", label: "Last 24 hrs (legacy)" }] : []),
   ];
-  const todayLocal = adminCalendarDate(new Date(), timeZone);
-  const validCustom = validDate(draftDates.from) && validDate(draftDates.to) && draftDates.from <= draftDates.to && draftDates.to <= todayLocal;
+  const todayUtc = new Date().toISOString().slice(0, 10);
+  const validCustom = validDate(draftDates.from) && validDate(draftDates.to) && draftDates.from <= draftDates.to && draftDates.to <= todayUtc;
 
   const navigate = useCallback((values: Record<string, string | null>) => {
     const params = new URLSearchParams(paramsRef.current);
@@ -256,11 +253,11 @@ export function AdminAuditLogsToolbar({
       {(customOpen || draftRange === "custom") ? (
         <div className="mt-3 flex flex-wrap items-end gap-3">
           <label className="text-[11px] font-medium text-[#64748B]">
-            From (local)
-            <AdminCalendarInput timeZone="local"
-              ariaLabel="Custom start date local"
+            From (UTC)
+            <AdminCalendarInput
+              ariaLabel="Custom start date UTC"
               value={draftDates.from}
-              max={draftDates.to || todayLocal}
+              max={draftDates.to || todayUtc}
               onChange={event => {
                 setCustomOpen(true);
                 setDraftDates(current => ({ ...current, from: event.target.value }));
@@ -268,12 +265,12 @@ export function AdminAuditLogsToolbar({
               className="w-[210px] max-w-full" />
           </label>
           <label className="text-[11px] font-medium text-[#64748B]">
-            To (local)
+            To (UTC)
             <AdminCalendarInput
-              ariaLabel="Custom end date local"
+              ariaLabel="Custom end date UTC"
               value={draftDates.to}
               min={draftDates.from || undefined}
-              max={todayLocal}
+              max={todayUtc}
               onChange={event => {
                 setCustomOpen(true);
                 setDraftDates(current => ({ ...current, to: event.target.value }));

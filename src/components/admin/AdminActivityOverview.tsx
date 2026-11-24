@@ -1,10 +1,13 @@
-import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 import { ChevronRight, Route } from "lucide-react";
 import { activityOverviewRows } from "@/lib/adminActivityOverview";
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
 
+const stamp = (date: Date) => new Intl.DateTimeFormat("en-GB", {
+  day: "numeric", month: "short", year: "numeric", hour: "2-digit",
+  minute: "2-digit", timeZone: "UTC", hour12: false,
+}).format(date) + " UTC";
 const name = (product: string) => ({
   FLIGHT: "Flight", HOTEL: "Hotel", CAR: "Car", PACKAGE: "Package",
 } as Record<string,string>)[product] ?? "Recorded product";
@@ -46,7 +49,7 @@ export function AdminActivityOverview({
                     <h3 className="break-words text-[13px] font-semibold text-[#0F172A]">{name(search.product ?? "")} search</h3>
                     {search.route ? <p className="mt-1 break-words text-[12px] text-[#475569]">{search.route}</p> : null}
                   </div>
-                  <AdminLocalDateTime value={search.searchedAt ?? search.at} className="shrink-0 text-[12px] text-[#64748B]" />
+                  <time dateTime={(search.searchedAt ?? search.at).toISOString()} className="shrink-0 text-[12px] text-[#64748B]">{stamp(search.searchedAt ?? search.at)}</time>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[#64748B]">
                   {search.platform ? <span>Platform: <span className="font-medium text-[#334155]">{search.platform === "IOS" ? "iOS app" : search.platform === "ANDROID" ? "Android app" : "Website"}</span></span> : null}
@@ -82,7 +85,7 @@ export function AdminActivityOverview({
               <p className="font-medium text-[#334155]">{event.label}</p>
               <p className="mt-0.5 break-words text-[#64748B]">{event.detail}</p>
             </div>
-            <AdminLocalDateTime value={event.at} className="shrink-0 tabular-nums text-[#64748B]" />
+            <time dateTime={event.at.toISOString()} className="shrink-0 tabular-nums text-[#64748B]">{stamp(event.at)}</time>
           </li>)}
         </ol>
         {overview.otherCount > overview.other.length ? <p className="mt-2 text-[12px] text-[#64748B]">Additional account activity is available in the complete recorded history.</p> : null}

@@ -1,6 +1,7 @@
-import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import type { AdminJourneyEvent } from "@/services/adminJourneyContract";
 
+const dateFormat = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeZone: "UTC" });
+const timeFormat = new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit", second: "2-digit", timeZone: "UTC" });
 const readable = (value: string) => value.toLowerCase().replaceAll("_", " ").replace(/^./, c => c.toUpperCase());
 const searchStatusLabel = (status: string, resultCount: number) =>
   status === "PARTIAL"
@@ -58,8 +59,8 @@ export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] })
             return <tr key={event.id} data-journey-event={event.id} className="align-top transition-colors hover:bg-[#F8FAFC]">
               <td className="px-3 py-3">
                 <time dateTime={event.createdAt} className="block tabular-nums">
-                  <span className="block font-medium text-[#020617]"><AdminLocalDateTime value={at} style="time" /></span>
-                  <span className="mt-1 block text-xs text-[#64748B]"><AdminLocalDateTime value={at} style="date" /></span>
+                  <span className="block font-medium text-[#020617]">{timeFormat.format(at)}</span>
+                  <span className="mt-1 block text-xs text-[#64748B]">{dateFormat.format(at)}</span>
                 </time>
               </td>
               <td className="px-3 py-3 [overflow-wrap:anywhere]">

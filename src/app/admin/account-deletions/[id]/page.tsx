@@ -1,4 +1,3 @@
-import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -7,6 +6,7 @@ import { AccountDeletionManageForm } from "@/components/admin/AccountDeletionMan
 import { CaseDetailHeading, CaseInfoField, CaseMilestone, CaseSectionTitle, caseAsideClass, caseColumnsClass, caseMainClass, casePageClass } from "@/components/admin/AdminCaseDetailUI";
 import { LinkedCasePreview } from "@/components/admin/LinkedCasePreview";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import { formatDateTime } from "@/lib/admin-data";
 import { deletionRequestBackHref } from "@/lib/adminSupportInboxNavigation";
 import { getAdminAccountDeletionDetail, type AdminAccountDeletionDetail } from "@/services/adminAccountDeletionDetailService";
 
@@ -87,10 +87,10 @@ export default async function AdminAccountDeletionDetailPage({ params, searchPar
                         : statusView[request.status].description}
                   </p>
                   <dl className="mt-4 grid min-w-0 gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
-                    <CaseMilestone label="Requested" tone="info" value={<AdminLocalDateTime value={request.requestedAt} />} />
-                    <CaseMilestone label="Scheduled review" value={<AdminLocalDateTime value={request.deletionScheduledAt} />} />
-                    {request.cancelledAt ? <CaseMilestone label="Cancelled" value={<AdminLocalDateTime value={request.cancelledAt} />} /> : null}
-                    {request.completedAt ? <CaseMilestone label="Completed" tone="complete" value={<AdminLocalDateTime value={request.completedAt} />} /> : null}
+                    <CaseMilestone label="Requested" tone="info" value={formatDateTime(new Date(request.requestedAt))} />
+                    <CaseMilestone label="Scheduled review" value={formatDateTime(new Date(request.deletionScheduledAt))} />
+                    {request.cancelledAt ? <CaseMilestone label="Cancelled" value={formatDateTime(new Date(request.cancelledAt))} /> : null}
+                    {request.completedAt ? <CaseMilestone label="Completed" tone="complete" value={formatDateTime(new Date(request.completedAt))} /> : null}
                   </dl>
                 </section>
 

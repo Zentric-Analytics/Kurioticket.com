@@ -1,4 +1,3 @@
-import { adminCalendarDate, adminCalendarDayStart, adminCalendarNextDayStart, adminTodayStart } from "./adminTimeZone";
 import { Prisma } from "@/generated/prisma/client";
 
 /** Identity types remain separate in storage; only their Admin listing is unified. */
@@ -17,7 +16,7 @@ export type AdminIdentityDate = (typeof ADMIN_IDENTITY_DATES)[number];
 export function parseAdminIdentityDate(value?: string): AdminIdentityDate {
   return ADMIN_IDENTITY_DATES.includes(value as AdminIdentityDate) ? value as AdminIdentityDate : "today";
 }
-export function validAdminIdentityCustomDates(from?: string, to?: string, timeZone = "UTC") {
+export function validAdminIdentityCustomDates(from?: string, to?: string) {
   const parse = (value?: string) => {
     if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
     const result = new Date(value + "T00:00:00.000Z");
@@ -25,24 +24,21 @@ export function validAdminIdentityCustomDates(from?: string, to?: string, timeZo
   };
   const start = parse(from);
   const end = parse(to);
-  return start && end && start <= end ? { from: adminCalendarDayStart(from!, timeZone), to: adminCalendarNextDayStart(to!, timeZone) } : null;
+  return start && end && start <= end ? { from: start, to: new Date(end.getTime() + 86400000) } : null;
 }
-export function adminIdentityDateBounds(date: AdminIdentityDate, now = new Date(), from?: string, to?: string, timeZone = "UTC") {
+export function adminIdentityDateBounds(date: AdminIdentityDate, now = new Date(), from?: string, to?: string) {
   if (date === "all") return null;
-  if (date === "custom") return validAdminIdentityCustomDates(from, to, timeZone);
+  if (date === "custom") return validAdminIdentityCustomDates(from, to);
   if (date === "24h" || date === "last7" || date === "last30") {
     const days = date === "24h" ? 1 : date === "last7" ? 7 : 30;
     return { from: new Date(now.getTime() - days * 86_400_000), to: now };
   }
-  const today = adminTodayStart(now, timeZone);
-  const local = adminCalendarDate(now, timeZone);
-  const [year, month] = local.split("-").map(Number);
-  const monthKey = (offset: number) => new Date(Date.UTC(year, month - 1 + offset, 1)).toISOString().slice(0, 7) + "-01";
-  const monthStart = adminCalendarDayStart(monthKey(0), timeZone);
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const month = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   if (date === "today") return { from: today, to: now };
-  if (date === "thisMonth") return { from: monthStart, to: adminCalendarDayStart(monthKey(1), timeZone) };
-  if (date === "lastMonth") return { from: adminCalendarDayStart(monthKey(-1), timeZone), to: monthStart };
-  return { from: adminCalendarDayStart(monthKey(-2), timeZone), to: adminCalendarDayStart(monthKey(1), timeZone) };
+  if (date === "thisMonth") return { from: month, to: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)) };
+  if (date === "lastMonth") return { from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)), to: month };
+  return { from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1)), to: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)) };
 }
 
 /** An existing registered account is discoverable when it was created OR
@@ -127,7 +123,6 @@ export type AdminIdentityPageRequest = {
   from?: string;
   to?: string;
   now?: Date;
-  timeZone?: string;
 };
 
 /**
@@ -143,7 +138,7 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
   const showOperationalGuests = input.showOperationalGuests ?? false;
   const environment = input.environment ?? "production";
   const sort = parseAdminIdentitySort(input.sort);
-  const bounds = adminIdentityDateBounds(input.date ?? "all", input.now, input.from, input.to, input.timeZone);
+  const bounds = adminIdentityDateBounds(input.date ?? "all", input.now, input.from, input.to);
   const order = sort === "oldest"
     ? Prisma.sql`"joinedAt" ASC, "kind" ASC, "id" ASC`
     : sort === "name_asc"

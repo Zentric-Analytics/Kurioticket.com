@@ -1,5 +1,4 @@
 import { SearchDetailActivityPanel } from "@/components/admin/SearchDetailActivityPanel";
-import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import { applicationLabel } from "@/lib/platformHealthPresentation";
 import { countryCodeToCountryName } from "@/lib/geo/context";
 import Link from "next/link";
@@ -21,6 +20,7 @@ import {
   searchDetailCrawlerName,
   searchDetailCrawlerEvidenceLabel,
 } from "@/lib/adminSearchDetailPresentation";
+import { formatDateTime } from "@/lib/admin-data";
 import type { AdminSearchDetail } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -78,7 +78,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
               {searchDetailHeadline(search)}
             </p>
             <p className="mt-1 text-[12px] font-medium text-[#6B7280]">
-              Searched <AdminLocalDateTime value={search.createdAt} />
+              Searched {formatDateTime(new Date(search.createdAt))}
             </p>
           </div>
           <StatusDot status={diagnostic.outcome === "ZERO_RESULTS" ? "ZERO_RESULTS" : search.status} label={searchDetailOutcomeLabel(diagnostic.outcome)} />
@@ -225,7 +225,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
             {search.operationalSessionId ? <Field label="Operational session ID" value={search.operationalSessionId} /> : null}
             {providerReasonCodes.length ? <Field label="Provider reason codes" value={providerReasonCodes.join("; ")} /> : null}
             {diagnostic.providers.some(provider => Math.abs(Date.parse(provider.observedAt) - Date.parse(search.createdAt)) > 60_000) ? (
-              <Field label="Provider observation times" value={diagnostic.providers.map((provider, index) => <span key={provider.provider + provider.observedAt}>{index ? "; " : ""}{provider.provider}: <AdminLocalDateTime value={provider.observedAt} /></span>)} />
+              <Field label="Provider observation times" value={diagnostic.providers.map(provider => provider.provider + ": " + formatDateTime(new Date(provider.observedAt))).join("; ")} />
             ) : null}
           </div>
         </details>
