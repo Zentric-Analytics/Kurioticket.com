@@ -71,6 +71,7 @@ export function CookieConsentPresentation({
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const wasEditingRef = useRef(false);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const busy = decisionPending && syncState !== "error";
   const failed = decisionPending && syncState === "error";
@@ -97,8 +98,10 @@ export function CookieConsentPresentation({
   }, [modal]);
 
   useEffect(() => {
-    if (modal) headingRef.current?.focus({ preventScroll: true });
-  }, [editing, modal]);
+    if (wasEditingRef.current && !editing && showBanner) dialogRef.current?.querySelector<HTMLButtonElement>("[data-cookie-preferences-open]")?.focus({ preventScroll: true });
+    else if (modal) headingRef.current?.focus({ preventScroll: true });
+    wasEditingRef.current = editing;
+  }, [editing, modal, showBanner]);
 
   const actions = (
     <>
@@ -138,7 +141,7 @@ export function CookieConsentPresentation({
             </div>
             {!editing && (busy || failed) ? <div className="mt-3">{status}</div> : null}
             <div className="mt-5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4 sm:flex sm:flex-wrap sm:justify-end sm:gap-3">
-              <Button type="button" variant="secondary" onClick={onOpen} disabled={busy}
+              <Button type="button" variant="secondary" data-cookie-preferences-open onClick={onOpen} disabled={busy}
                 className="col-span-2 min-h-11 rounded-xl border-slate-300 px-5 font-semibold text-[#004BB8] hover:bg-slate-50">Cookie preferences</Button>
               {actions}
             </div>
