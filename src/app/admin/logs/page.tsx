@@ -1,9 +1,7 @@
-import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
-import { adminTodayStart, adminCalendarDayStart, adminCalendarNextDayStart } from "@/lib/adminTimeZone";
-import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 
 import { AdminAuditLogsToolbar } from "@/components/admin/AdminAuditLogsToolbar";
+import { formatDateTime } from "@/lib/admin-data";
 import type { AdminAuditRead } from "@/services/adminAuditReadContract";
 import { adminAuditReads } from "@/services/adminAuditReadService";
 
@@ -32,7 +30,7 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
   const range = normalizeRange(one(raw.range));
   const fromDate = one(raw.fromDate);
   const toDate = one(raw.toDate);
-  const params = auditParams(raw, range, now, await getAdminTimeZone());
+  const params = auditParams(raw, range, now);
   const result = await adminAuditReads.list(params);
   const pageHref = currentHref(raw, range);
 
@@ -115,7 +113,7 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
 function AuditRow({ log }: { log: AdminAuditRead }) {
   const content = (
     <>
-      <AdminLocalDateTime value={log.createdAt} className="text-[12px] leading-5 text-[#475569]" />
+      <time dateTime={log.createdAt} className="text-[12px] leading-5 text-[#475569]">{formatDateTime(new Date(log.createdAt))}</time>
       <div className="min-w-0">
         <p className="break-all text-[13px] font-medium text-[#020617]" title={log.adminEmail}>{log.adminEmail}</p>
       </div>
@@ -191,7 +189,7 @@ function normalizeRange(value: string): AuditRange {
   return value === "today" || value === "24h" || value === "7d" || value === "30d" || value === "all" || value === "90d" || value === "custom" ? value : "today";
 }
 
-function auditParams(raw: Record<string, string | string[] | undefined>, range: AuditRange, now: Date, timeZone = "UTC") {
+function auditParams(raw: Record<string, string | string[] | undefined>, range: AuditRange, now: Date) {
   const params = new URLSearchParams();
   const pageOnlyKeys = new Set(["range", "fromDate", "toDate"]);
 
@@ -210,8 +208,8 @@ function auditParams(raw: Record<string, string | string[] | undefined>, range: 
   if (range === "custom") {
     const fromDate = one(raw.fromDate);
     const toDate = one(raw.toDate);
-    params.set("from", /^\d{4}-\d{2}-\d{2}$/.test(fromDate) ? safeStartIso(fromDate, timeZone) : fromDate);
-    params.set("to", customEndIso(toDate, now, timeZone));
+    params.set("from", /^\d{4}-\d{2}-\d{2}$/.test(fromDate) ? fromDate + "T00:00:00.000Z" : fromDate);
+    params.set("to", customEndIso(toDate, now));
     return params;
   }
 
@@ -226,22 +224,17 @@ function auditParams(raw: Record<string, string | string[] | undefined>, range: 
       : range === "90d" ? 90 * 24 * 60 * 60 * 1000
         : 7 * 24 * 60 * 60 * 1000;
   params.set("from", (range === "today"
-    ? adminTodayStart(now, timeZone)
+    ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
     : new Date(now.getTime() - durationMs)).toISOString());
   params.set("to", now.toISOString());
   return params;
 }
 
-function safeStartIso(day: string, timeZone: string) {
-  try { return adminCalendarDayStart(day, timeZone).toISOString(); } catch { return day; }
-}
-
-function customEndIso(value: string, now: Date, timeZone: string) {
+function customEndIso(value: string, now: Date) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  try {
-    const end = adminCalendarNextDayStart(value, timeZone);
-    return new Date(Math.min(end.getTime(), now.getTime())).toISOString();
-  } catch { return value; }
+  const end = new Date(value + "T00:00:00.000Z");
+  end.setUTCDate(end.getUTCDate() + 1);
+  return new Date(Math.min(end.getTime(), now.getTime())).toISOString();
 }
 
 function currentHref(raw: Record<string, string | string[] | undefined>, range: AuditRange) {

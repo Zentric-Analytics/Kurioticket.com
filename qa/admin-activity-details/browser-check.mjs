@@ -100,7 +100,7 @@ async function expectHeaderTimePresentation(page, context) {
     assert.ok(displayed.length > 0 && !/\bUTC\b/.test(displayed),
       context + ": header date should not wrap a visible UTC suffix: " + displayed);
     await expect(timestamp).toHaveAttribute("datetime", /Z$/);
-    await expect(timestamp).toHaveAttribute("title", /.+/);
+    await expect(timestamp).toHaveAttribute("title", /\bUTC\b/);
   }
 }
 
@@ -253,7 +253,7 @@ try {
     await expectBalancedDesktopHeader(page, "Registered zoom " + zoom);
     const inlineDevices = page.getByTestId("identity-device-access");
     await expect(inlineDevices).toBeVisible();
-    await expect(inlineDevices.getByText("Today (local)")).toBeVisible();
+    await expect(inlineDevices.getByText("Today (UTC)")).toBeVisible();
     await expect(inlineDevices.getByRole("heading",{name:"Device & Access History"})).toHaveCount(0);
     await expect(inlineDevices.getByTestId("device-session-row")).toHaveCount(3);
     await expect(inlineDevices.getByTestId("device-today-list")).toBeVisible();
@@ -460,10 +460,10 @@ try {
   await expect(page).not.toHaveURL(/product=FLIGHT/);
   // Legacy custom-date URLs remain editable without adding a fifth preset option.
   await page.goto(url.split("?")[0]+"?range=custom&from=2026-10-01&to=2026-10-23");
-  await expect(page.getByRole("button", { name: "Custom start date local" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Custom end date local" })).toBeVisible();
-  await page.getByRole("button", { name: "Custom end date local" }).click();
-  const endCalendar = page.getByRole("dialog", { name: "Custom end date local" });
+  await expect(page.getByRole("button", { name: "Custom start date UTC" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Custom end date UTC" })).toBeVisible();
+  await page.getByRole("button", { name: "Custom end date UTC" }).click();
+  const endCalendar = page.getByRole("dialog", { name: "Custom end date UTC" });
   await expect(endCalendar.getByRole("heading")).toHaveText("October 2026");
   await expect(endCalendar.getByRole("combobox")).toHaveCount(0);
   await endCalendar.getByRole("gridcell", { name: "Saturday, October 24, 2026" }).click();
@@ -472,8 +472,7 @@ try {
   await expect(page.getByRole("button",{name:"Set custom dates"})).toHaveCount(0);
   await expect(page).toHaveURL(/to=2026-10-23/);
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
-  // The selected local day is inclusive; the persisted UTC bound is the next midnight.
-  await expect(page).toHaveURL(/to=2026-10-25/);
+  await expect(page).toHaveURL(/to=2026-10-24/);
   await page.getByRole("button",{name:/Date range:/}).click();
   await page.getByRole("listbox",{name:"Date range"}).getByRole("option",{name:"Last 7 days"}).click();
   await expect(page).toHaveURL(/range=custom/);

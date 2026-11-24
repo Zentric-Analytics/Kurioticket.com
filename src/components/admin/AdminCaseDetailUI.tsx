@@ -55,7 +55,7 @@ export function CaseSidebarField({ label, children }: { label: string; children:
 }
 
 export function CaseMilestone({ label, value, tone = "neutral" }: {
-  label: string; value: React.ReactNode; tone?: "neutral" | "info" | "complete";
+  label: string; value: string; tone?: "neutral" | "info" | "complete";
 }) {
   const dot = tone === "info" ? "bg-[#004BB8]" : tone === "complete" ? "bg-emerald-500" : "bg-[#94A3B8]";
   return (

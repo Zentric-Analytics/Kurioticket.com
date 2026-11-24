@@ -1,4 +1,3 @@
-import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
@@ -26,13 +25,12 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     selectedTab === "REGISTERED" || selectedTab === "GUEST" ? selectedTab : "ALL";
   const sort = parseAdminIdentitySort(params?.sort);
   const requestedDate = parseAdminIdentityDate(params?.date);
-  const timeZone = await getAdminTimeZone();
-  const custom = validAdminIdentityCustomDates(params?.from, params?.to, timeZone);
+  const custom = validAdminIdentityCustomDates(params?.from, params?.to);
   const date = requestedDate === "custom" && !custom ? "today" : requestedDate;
   const from = date === "custom" ? params?.from : undefined;
   const to = date === "custom" ? params?.to : undefined;
   const now = new Date();
-  const bounds = adminIdentityDateBounds(date, now, from, to, timeZone);
+  const bounds = adminIdentityDateBounds(date, now, from, to);
   const dateWhere = bounds ? { gte: bounds.from, ...(bounds.to ? { lt: bounds.to } : {}) } : undefined;
   const environment = getPublicEnvironment();
   // Existing bookmarked drawer URLs remain functional; only the presentation changes.
@@ -82,7 +80,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     const sql = adminIdentityPageSql({
       query: q, role, status, showUsers, showGuests,
       showOperationalGuests: showGuests, withOperationalSummary: true,
-      environment, sort, date, from, to, now, timeZone,
+      environment, sort, date, from, to, now,
       limit: Math.max(1, countBeforeOperational), offset: 0, allIdentities: true,
     });
     const fetched: AdminIdentityDirectoryRow[] = sql ? await db.$queryRaw<AdminIdentityDirectoryRow[]>(sql) : [];
@@ -133,10 +131,10 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       (guestsEligibleForFilters ? scopedOperationalGuestCount : 0),
       operationalAllTimeCount, operationalNewCount };
   }, null);
-  const population = await readUserPopulationMetrics(date, now, from, to, timeZone);
-  const periodLabel = date === "today" ? "Today (local)" : date === "last7" ? "Last 7 days"
+  const population = await readUserPopulationMetrics(date, now, from, to);
+  const periodLabel = date === "today" ? "Today (UTC)" : date === "last7" ? "Last 7 days"
     : date === "last30" ? "Last 30 days" : date === "all" ? "All time"
-    : date === "custom" ? "Custom range (local)" : date === "24h" ? "Last 24 hours"
+    : date === "custom" ? "Custom range (UTC)" : date === "24h" ? "Last 24 hours"
     : date === "thisMonth" ? "This month" : date === "lastMonth" ? "Last month" : "Last 3 months";
   const link = "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date, ...(from && to ? {from,to} : {}) }).toString();
   if (result === null) {

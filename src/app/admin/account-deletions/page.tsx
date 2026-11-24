@@ -1,10 +1,9 @@
-import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
-import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminDeletionFilters } from "@/components/admin/AdminDeletionFilters";
+import { formatDateTime } from "@/lib/admin-data";
 import { resolveAdminQueueWindow } from "@/lib/adminQueueDateRange";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -22,7 +21,7 @@ const statusPresentation: Record<string, { label: string; dot: string; text: str
 
 export default async function AdminAccountDeletionsPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
-  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) }, new Date(), await getAdminTimeZone());
+  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) });
   const applied = { ...raw, from: window.from || undefined, to: window.to || undefined };
   const params = toParams(applied);
   if (!params.has("limit")) params.set("limit", "50");
@@ -83,18 +82,18 @@ export default async function AdminAccountDeletionsPage({ searchParams }: { sear
                             </span>
                           </td>
                           <td data-label="Requested" className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums text-[#475569]">
-                            <AdminLocalDateTime value={request.requestedAt} />
+                            {formatDateTime(new Date(request.requestedAt))}
                           </td>
                           <td data-label="Scheduled" className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums text-[#475569]">
-                            <AdminLocalDateTime value={request.deletionScheduledAt} />
+                            {formatDateTime(new Date(request.deletionScheduledAt))}
                           </td>
                           <td data-label="Resolution" className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums">
                             {request.cancelledAt ? (
-                              <p><span className="block text-[#64748B]">Cancelled</span><AdminLocalDateTime value={request.cancelledAt} /></p>
+                              <p><span className="block text-[#64748B]">Cancelled</span>{formatDateTime(new Date(request.cancelledAt))}</p>
                             ) : null}
                             {request.completedAt ? (
                               <p className={request.cancelledAt ? "mt-2" : ""}>
-                                <span className="block text-[#64748B]">Completed</span><AdminLocalDateTime value={request.completedAt} />
+                                <span className="block text-[#64748B]">Completed</span>{formatDateTime(new Date(request.completedAt))}
                               </p>
                             ) : null}
                             {!request.cancelledAt && !request.completedAt ? "—" : null}

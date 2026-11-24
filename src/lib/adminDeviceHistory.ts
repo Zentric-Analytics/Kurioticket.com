@@ -1,4 +1,4 @@
-import { adminCalendarDayStart, adminCalendarNextDayStart, adminTodayStart } from "./adminTimeZone";
+import { adminUtcTodayStart } from "./adminReportingRanges";
 
 export const DEVICE_HISTORY_PAGE_SIZE = 20;
 export const deviceHistoryRanges = ["all", "today", "7d", "30d", "custom"] as const;
@@ -37,7 +37,7 @@ export function parseDeviceHistoryQuery(raw: RawQuery): DeviceHistoryParsed {
   if (range === "custom") {
     if (typeof from !== "string" || typeof to !== "string"
       || !validUtcDay(from) || !validUtcDay(to) || from > to)
-      return { ok: false, error: "Choose valid inclusive From and To dates." };
+      return { ok: false, error: "Choose valid inclusive From and To dates (UTC)." };
     return { ok: true, query: { range, page, from, to } };
   }
   // Date inputs may retain values when switching from Custom to a preset.
@@ -45,23 +45,23 @@ export function parseDeviceHistoryQuery(raw: RawQuery): DeviceHistoryParsed {
   return { ok: true, query: { range: range as DeviceHistoryRange, page } };
 }
 
-/** Today means local midnight through the current observation, not a rolling 24 hours. */
-export function deviceTodayWindow(now = new Date(), timeZone = "UTC") {
-  return { gte: adminTodayStart(now, timeZone), lte: now };
+/** UTC Today means midnight UTC through the current observation, not a rolling 24 hours. */
+export function deviceTodayWindow(now = new Date()) {
+  return { gte: adminUtcTodayStart(now), lte: now };
 }
 
 /** Inclusive calendar date bounds; data are always limited to observations <= now. */
-export function deviceHistoryWindow(query: DeviceHistoryQuery, now = new Date(), timeZone = "UTC") {
+export function deviceHistoryWindow(query: DeviceHistoryQuery, now = new Date()) {
   if (query.range === "all") return { lte: now };
-  if (query.range === "today") return deviceTodayWindow(now, timeZone);
+  if (query.range === "today") return deviceTodayWindow(now);
   if (query.range === "7d" || query.range === "30d") {
     return {
       gte: new Date(now.getTime() - (query.range === "7d" ? 7 : 30) * 86_400_000),
       lte: now,
     };
   }
-  const start = adminCalendarDayStart(query.from!, timeZone);
-  const afterEnd = adminCalendarNextDayStart(query.to!, timeZone);
+  const start = new Date(query.from! + "T00:00:00.000Z");
+  const afterEnd = new Date(new Date(query.to! + "T00:00:00.000Z").getTime() + 86_400_000);
   return { gte: start, lt: afterEnd, lte: now };
 }
 

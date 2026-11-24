@@ -1,4 +1,3 @@
-import { adminCalendarDayStart, adminCalendarNextDayStart, adminTodayStart, safeAdminTimeZone } from "@/lib/adminTimeZone";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 
 export type SettingsHistoryRange = "today" | "24h" | "7d" | "30d" | "90d" | "all" | "custom";
@@ -27,7 +26,6 @@ type SettingsQuery = {
   limit?: 6 | 25;
   fromDate?: string;
   toDate?: string;
-  timeZone?: string;
 };
 type Database = Pick<PrismaClient, "adminAuditLog">;
 type Dependencies = { authorize: () => Promise<boolean>; database: () => Database | null; now?: () => Date };
@@ -135,15 +133,17 @@ function permittedWhere(category: SettingsHistoryCategory): Prisma.AdminAuditLog
 function customScopeDates(query: SettingsQuery, now: Date) {
   const fromDate = query.fromDate ?? "";
   const toDate = query.toDate ?? "";
-  const timeZone = safeAdminTimeZone(query.timeZone);
-  try {
-    const from = adminCalendarDayStart(fromDate, timeZone);
-    const toStart = adminCalendarDayStart(toDate, timeZone);
-    if (from > toStart || toStart > now ||
-        toStart.getTime() - from.getTime() >= 90 * 86_400_000) return null;
-    const to = new Date(Math.min(adminCalendarNextDayStart(toDate, timeZone).getTime(), now.getTime()));
-    return { from: from.toISOString(), to: to.toISOString() };
-  } catch { return null; }
+  const isoDay = (value: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const date = new Date(value + "T00:00:00.000Z");
+    return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value ? date : null;
+  };
+  const from = isoDay(fromDate);
+  const toStart = isoDay(toDate);
+  if (!from || !toStart || from > toStart || toStart > now ||
+      toStart.getTime() - from.getTime() >= 90 * 86_400_000) return null;
+  const to = new Date(Math.min(toStart.getTime() + 86_400_000, now.getTime()));
+  return { from: from.toISOString(), to: to.toISOString() };
 }
 
 function scopeFor(query: SettingsQuery, now: Date): { scope: Scope; position: Position | null } | null {
@@ -170,8 +170,8 @@ function scopeFor(query: SettingsQuery, now: Date): { scope: Scope; position: Po
       } else if (query.range === "custom") {
         if (!custom || payload.from !== custom.from || Date.parse(payload.to) > Date.parse(custom.to)) return null;
       } else if (query.range === "today") {
-        const dayStart = adminTodayStart(new Date(to), safeAdminTimeZone(query.timeZone)).toISOString();
-        if (payload.from !== dayStart) return null;
+        const utcStart = new Date(Date.UTC(new Date(to).getUTCFullYear(), new Date(to).getUTCMonth(), new Date(to).getUTCDate())).toISOString();
+        if (payload.from !== utcStart) return null;
       } else if (to - from !== windows[query.range as keyof typeof windows]) return null;
       scope = payload;
       position = { at: new Date(at).toISOString(), id: decoded.id };
@@ -184,7 +184,7 @@ function scopeFor(query: SettingsQuery, now: Date): { scope: Scope; position: Po
         ? { range: "custom", category: query.category, ...custom }
         : { range: query.range, category: query.category,
             from: (query.range === "today"
-              ? adminTodayStart(now, safeAdminTimeZone(query.timeZone))
+              ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
               : new Date(to - windows[query.range as keyof typeof windows])).toISOString(),
             to: now.toISOString() };
   }
