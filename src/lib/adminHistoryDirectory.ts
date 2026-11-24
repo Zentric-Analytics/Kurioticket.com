@@ -8,7 +8,7 @@ export type HistoryIdentityTab = "all" | "registered" | "guests";
 export const HISTORY_DIRECTORY_PAGE_SIZE = 20;
 export const HISTORY_DIRECTORY_LABELS = { devices: "Device & Access", pages: "Pages Visited" } as const;
 export type HistoryDirectoryQuery = DeviceHistoryQuery & { q: string; tab: HistoryIdentityTab; platform: PageHistoryPlatform };
-export type HistoryDirectoryRow = { kind: IdentityKind; id: string; name: string; email: string | null; count: number; lastSeenAt: Date };
+export type HistoryDirectoryRow = { kind: IdentityKind; id: string; name: string; email: string | null; count: number; lastSeenAt: Date; guestSource?: "consented" | "operational" };
 type RawQuery = Record<string, string | string[] | undefined>;
 const directoryKeys = ["range", "page", "from", "to", "q", "tab", "platform"] as const;
 
@@ -22,11 +22,10 @@ export function parseHistoryDirectoryQuery(section: HistorySection, raw: RawQuer
   const search = typeof raw.q === "string" ? raw.q : "";
   const q = search.trim();
   if (q.length > 80 || /[\u0000-\u001f\u007f]/.test(search)) return { ok: false, error: "Enter up to 80 ordinary characters." };
-  const tab = raw.tab ?? (section === "devices" ? "registered" : "all");
+  const tab = raw.tab ?? "all";
   if (tab !== "all" && tab !== "registered" && tab !== "guests") return { ok: false, error: "Unsupported identity filter." };
-  if (section === "devices" && tab !== "registered") return { ok: false, error: "Device history is available for registered accounts only." };
   const platform = raw.platform ?? "all";
-  if (!isPageHistoryPlatform(platform) || (section === "devices" && platform !== "all"))
+  if (!isPageHistoryPlatform(platform))
     return { ok: false, error: "Unsupported platform filter." };
   return { ok: true, query: { ...parsed.query, q, tab, platform } };
 }
@@ -39,10 +38,8 @@ export function historyDirectoryHref(section: HistorySection, query: HistoryDire
     params.set("to", next.to);
   }
   if (next.q) params.set("q", next.q);
-  if (section === "pages") {
-    params.set("tab", next.tab);
-    if (next.platform !== "all") params.set("platform", next.platform);
-  }
+  params.set("tab", next.tab);
+  if (next.platform !== "all") params.set("platform", next.platform);
   return historyDirectoryPath(section) + "?" + params.toString();
 }
 
@@ -64,10 +61,10 @@ export function historyDirectoryReturnHref(section: HistorySection, incoming: un
 }
 
 export function historyIdentityHref(section: HistorySection, row: Pick<HistoryDirectoryRow, "kind" | "id">, query: HistoryDirectoryQuery, now: Date): string {
-  if (!validActivityIdentity(row.kind, row.id) || (section === "devices" && row.kind !== "user")) throw new Error("Invalid history identity");
+  if (!validActivityIdentity(row.kind, row.id)) throw new Error("Invalid history identity");
   const path = "/admin/users/" + row.kind + "/" + encodeURIComponent(row.id) + "/" + section;
   const back = historyDirectoryHref(section, query);
-  if (section === "devices") return deviceHistoryHref(path, { range: query.range, from: query.from, to: query.to, page: 1 }, {}, back);
+  if (section === "devices") return deviceHistoryHref(path, { range: query.range, from: query.from, to: query.to, page: 1, platform: query.platform }, {}, back);
   // Identity search belongs only to the directory. The detail's search is
   // about routes/screens and must not inherit a person's name or email.
   const parsed = parsePageHistoryQuery({ range: query.range, from: query.from, to: query.to, platform: query.platform, page: "1" }, now);
