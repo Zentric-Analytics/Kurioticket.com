@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, ChevronDown, SlidersHorizontal, SquarePen } from "lucide-react-native";
 import { travelApi, type CarResult } from "../../api/travelApi";
 import { journeyEvents } from "../privacy/journeyEvents";
+import { recordNativeResultsPage } from "../privacy/useNativePageViews";
 import { normalizeJourneySortMode, normalizeJourneySortChoice } from "../../../../../src/lib/search-journey";
 import { carJourneyFilterSelections } from "../../../../../src/lib/cars/carFilterPresentation";
 import { journeyResponseContext } from "../privacy/journeyResponseContext";
@@ -99,9 +100,12 @@ export function ApprovedCarResultsScreen() {
   },[plan.plan?.key,retry]);
   useEffect(()=>{const executionKey=`${plan.plan?.key??"invalid"}:${retry}`;if(searchAbortTimer.current)clearTimeout(searchAbortTimer.current);searchAbortTimer.current=undefined;if(activeExecutionKey.current!==executionKey){activeExecutionKey.current=executionKey;void load();}return()=>{searchAbortTimer.current=setTimeout(()=>{if(activeExecutionKey.current!==executionKey)return;searchSequence.current+=1;activeSearch.current?.abort("screen-cleanup");activeExecutionKey.current=undefined;},0);};},[load,plan.plan?.key,retry]);
   useEffect(()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);carResultsApplyingTimer.current=undefined;setCarResultsApplying(false);return()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);};},[plan.plan?.key]);
-  useEffect(()=>{
-    if(status==="ready" && results.length>0) journeyEvents.resultsViewed(resultsRequestId,"/car-results",results.length);
-  },[status,results.length,resultsRequestId]);
+  useFocusEffect(useCallback(()=>{
+    if(status==="ready") {
+      recordNativeResultsPage("car", resultsRequestId);
+      if(results.length>0) journeyEvents.resultsViewed(resultsRequestId,"/car-results",results.length);
+    }
+  },[status,results.length,resultsRequestId]));
   const filterGroups=useMemo(()=>visibleCarFilterGroups(results,pricePerDay),[pricePerDay,results]);
   const quickGroups=useMemo(()=>carQuickFilterGroupIds.flatMap(id=>{const group=filterGroups.find(candidate=>candidate.id===id);return group?[group]:[];}),[filterGroups]);
   const copy=useMemo(()=>carFilterCopy(locale),[locale]);
