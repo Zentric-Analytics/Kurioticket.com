@@ -12,9 +12,10 @@ test("cookie preferences stay anchored, preserve refusal and never replay the ba
   const banner = page.locator("[data-cookie-consent-banner]");
   const preferences = page.locator("[data-cookie-consent-preferences]");
   await expect(banner).toBeVisible();
-  await expect(banner.getByRole("button", { name: "Essential only" })).toBeVisible();
+  await expect(banner.getByRole("button", { name: "Essential only" })).toHaveCount(0);
+  await expect(banner.getByRole("button", { name: "Decline optional" })).toBeVisible();
   await expect(banner.getByRole("button", { name: "Reject optional" })).toHaveCount(0);
-  await expect(banner.getByRole("link", { name: "Learn about our use of cookies" })).toBeVisible();
+  await expect(banner.getByRole("link", { name: "Learn about our use of cookies" })).toHaveCount(0);
   const bounds = await banner.boundingBox();
   expect(bounds).not.toBeNull();
   const initialScroll = await page.evaluate(() => ({ x: scrollX, y: scrollY }));
@@ -48,7 +49,10 @@ test("cookie preferences stay anchored, preserve refusal and never replay the ba
     else expect((last.top + last.bottom) / 2).toBeCloseTo(viewport.height / 2, 0);
 
     await expect(preferences.getByText("Performance cookies", { exact: true })).toBeVisible();
-    await expect(preferences.getByText("Not available", { exact: true })).toBeVisible();
+    await expect(preferences.getByText("Marketing cookies", { exact: true })).toBeVisible();
+    await expect(preferences.getByText("Not available", { exact: true })).toHaveCount(2);
+    await expect(preferences.getByRole("switch", { name: "Marketing cookies" })).toHaveCount(0);
+    await expect(preferences.getByRole("button", { name: "Essential only" })).toHaveCount(0);
     await expect(preferences.getByRole("switch", { name: "Performance cookies" })).toHaveCount(0);
     const analytics = preferences.getByRole("switch", { name: "Analytics cookies" });
     await expect(analytics).toHaveAttribute("aria-checked", "false");
@@ -56,6 +60,8 @@ test("cookie preferences stay anchored, preserve refusal and never replay the ba
     await expect(analytics).toHaveAttribute("aria-checked", "true");
     await preferences.getByRole("button", { name: /Essential cookies/ }).click();
     await preferences.getByRole("button", { name: /Analytics cookies/ }).click();
+    await preferences.getByRole("button", { name: /Marketing cookies/ }).click();
+    await expect(preferences.locator("#cookie-marketing-description")).toBeVisible();
     await expect(preferences.getByRole("button", { name: "Save preferences" })).toBeVisible();
     await preferences.getByRole("button", { name: "Close cookie preferences" }).click();
     await expect(preferences).toBeHidden();
