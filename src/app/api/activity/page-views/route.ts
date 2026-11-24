@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@/generated/prisma/client";
+import { matchesInteractionSearch } from "@/lib/verifiedInteractionSearch";
 import { z } from "zod";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { readBoundedJsonBody } from "@/lib/bounded-json-body";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { isSameOriginRequest, isNativeVisitorRequest } from "@/lib/visitor-identity";
-import { isPageViewKey, pageViewInfo } from "@/lib/pageViewCatalog";
+import { isPageViewKey, pageViewInfo, pageViewCanLink } from "@/lib/pageViewCatalog";
 import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
@@ -14,6 +16,7 @@ const schema = z.object({
   eventId: z.string().uuid(),
   pageKey: z.string().refine(isPageViewKey),
   previousPageKey: z.string().refine(isPageViewKey).optional(),
+  requestId: z.string().uuid().optional(),
 }).strict();
 const json = (body: unknown, status = 202) => NextResponse.json(body, {
   status, headers: { "Cache-Control": "private, no-store" },
@@ -40,7 +43,7 @@ export async function POST(request: Request) {
   const platform = source === "IOS" ? "iOS app" : source === "ANDROID" ? "Android app"
     : native ? declaredPlatform === "ios" ? "iOS app (reported)" : declaredPlatform === "android" ? "Android app (reported)" : "Native app"
     : request.headers.get("sec-ch-ua-mobile") === "?1" || /Mobile|Android|iPhone|iPad/i.test(request.headers.get("user-agent") ?? "")
-      ? "Mobile web (reported)" : "Website";
+      ? "Mobile web (reported)" : request.headers.get("sec-ch-ua-mobile") === "?0" || /Windows|Macintosh|X11|Linux/i.test(request.headers.get("user-agent") ?? "") ? "Desktop web (reported)" : "Website";
   try {
     const db = getOptionalPrisma();
     if (!db) return json({ accepted: false }, 503);
@@ -52,11 +55,35 @@ export async function POST(request: Request) {
         where: { visitorId: identity.visitorId, userId: identity.userId, type: "PAGE_VIEW",
           AND: [{ metadata: { path: ["eventId"], equals: parsed.data.eventId } },
             { metadata: { path: ["environment"], equals: getPublicEnvironment() } }] },
-        select: { metadata: true },
+        select: { id: true, metadata: true },
       });
+      const meta = existing?.metadata && typeof existing.metadata === "object" && !Array.isArray(existing.metadata)
+        ? existing.metadata as Record<string, unknown> : null;
+      if (existing && (meta?.pageKey !== parsed.data.pageKey || meta?.transport !== (native ? "native" : "web"))) return false;
+      let verifiedLink: { linkedJourneyId: string; linkedSearchHistoryId: string } | null = null;
+      // Only an explicit, current search response/reference can link a product
+      // results or details view. A support visit or guessed latest search cannot.
+      if (parsed.data.requestId && page.product && pageViewCanLink(parsed.data.pageKey) && !meta?.linkedJourneyId) {
+        const search = await tx.searchHistory.findUnique({
+          where: { requestId: parsed.data.requestId.toLowerCase() },
+          select: { id: true, visitorId: true, userId: true, type: true, query: true, createdAt: true },
+        });
+        if (search && matchesInteractionSearch(search, identity, page.product, getPublicEnvironment(), new Date())) {
+          const candidates = await tx.journeyEvent.findMany({
+            where: { type: "SEARCH_COMPLETED", searchHistoryId: search.id,
+              journey: { visitorId: identity.visitorId! },
+              metadata: { path: ["environment"], equals: getPublicEnvironment() } },
+            select: { journeyId: true }, distinct: ["journeyId"], take: 2,
+          });
+          if (candidates.length === 1) verifiedLink = { linkedJourneyId: candidates[0].journeyId, linkedSearchHistoryId: search.id };
+        }
+      }
       if (existing) {
-        const meta = existing.metadata as { pageKey?: unknown } | null;
-        return meta?.pageKey === parsed.data.pageKey;
+        if (verifiedLink) await tx.analyticsEvent.update({
+          where: { id: existing.id },
+          data: { metadata: { ...meta, ...verifiedLink } as Prisma.InputJsonValue },
+        });
+        return true;
       }
       await tx.analyticsEvent.create({ data: {
         type: "PAGE_VIEW", name: "page_viewed", userId: identity.userId, visitorId: identity.visitorId,
@@ -65,7 +92,8 @@ export async function POST(request: Request) {
           ...(parsed.data.previousPageKey ? { previousPageKey: parsed.data.previousPageKey } : {}),
           transport: native ? "native" : "web", platform,
           ...(page.product ? { product: page.product } : {}),
-        }),
+          ...(verifiedLink ?? {}),
+        }) as Prisma.InputJsonValue,
       } });
       return true;
     });
