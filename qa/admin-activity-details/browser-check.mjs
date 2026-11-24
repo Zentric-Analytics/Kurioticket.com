@@ -271,12 +271,16 @@ try {
   const pageActivityPath = "/admin/users/user/qa-page-history-0001/activity?range=all";
   await page.goto(base + pageActivityPath);
   const visitSummary = page.getByTestId("page-view-records");
+  await expect(page.getByTestId("activity-page-visits-summary").getByTestId("page-view-records")).toHaveCount(1);
+  await expect(page.getByTestId("activity-body-card").getByTestId("page-view-records")).toHaveCount(0);
+  await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Pages visited",exact:true})).toHaveCount(0);
   await expect(visitSummary.getByTestId("page-view-row")).toHaveCount(5);
   await expect(visitSummary.getByTestId("pages-visited-total")).toHaveText("45");
   await expect(page.getByTestId("activity-events-fact")).toContainText("45");
   await visitSummary.getByRole("link",{name:"View all pages visited"}).click();
   await expect(page).toHaveURL(url => url.pathname === "/admin/users/user/qa-page-history-0001/pages");
   await expect(page.getByRole("heading",{name:"Pages Visited History"})).toBeVisible();
+  await expect(page.getByRole("complementary",{name:"Users navigation"}).getByRole("link",{name:"Users Directory",exact:true})).toHaveAttribute("aria-current","page");
   await expect(page.getByTestId("page-view-row")).toHaveCount(20);
   await page.getByRole("link",{name:"Next",exact:true}).click();
   await expect(page.getByTestId("page-view-row")).toHaveCount(20);
@@ -300,31 +304,20 @@ try {
   await expect(page).toHaveURL(url => url.pathname.endsWith("/activity") && url.searchParams.get("range")==="all" && !url.searchParams.has("platform"));
   await expect(page.getByTestId("page-view-row")).toHaveCount(5);
   await expect(page.getByTestId("pages-visited-total")).toHaveText("45");
-  // Both activity tabs show five visits. The row count alone cannot tell
-  // whether the Pages visited navigation has committed in the browser.
-  const pagesTab = page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Pages visited",exact:true});
-  await pagesTab.click();
-  await expect(page).toHaveURL(url => url.pathname.endsWith("/activity") && url.searchParams.get("range")==="all" && url.searchParams.get("tab")==="pages");
-  await expect(pagesTab).toHaveAttribute("aria-current","page");
+  // A travel tab and its text/product/stage filters cannot hide page visits.
+  await page.goto(base + pageActivityPath + "&tab=searches&product=FLIGHT&stage=SEARCH_COMPLETED&q=unmatched");
+  const searchesTab = page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Searches",exact:true});
+  await expect(searchesTab).toHaveAttribute("aria-current","page");
   await expect(page.getByTestId("page-view-row")).toHaveCount(5);
+  await expect(page.getByTestId("pages-visited-total")).toHaveText("45");
   const pagesHistoryLink = page.getByTestId("page-view-records").getByRole("link",{name:"View all pages visited",exact:true});
-  // Assert the real rendered link carries the newly selected tab, not the
-  // prior All activity context from the still-visible server payload.
-  await expect.poll(async () => {
-    const href = await pagesHistoryLink.getAttribute("href");
-    if (!href) return null;
-    const destination = new URL(href, base);
-    const returnPath = destination.searchParams.get("activityReturn");
-    return returnPath ? new URL(returnPath, base).searchParams.get("tab") : null;
-  }).toBe("pages");
   await pagesHistoryLink.click();
-  await expect(page).toHaveURL(url => url.pathname === "/admin/users/user/qa-page-history-0001/pages");
-  await expect(page.getByRole("heading",{name:"Pages Visited History",exact:true})).toBeVisible();
-  const historyBackToActivity = page.getByRole("link",{name:"Back to Activity",exact:true});
-  await expect(historyBackToActivity).toHaveAttribute("href", /[?&]tab=pages(?:&|$)/);
-  await historyBackToActivity.click();
-  await expect(page).toHaveURL(url => url.pathname.endsWith("/activity") && url.searchParams.get("range")==="all" && url.searchParams.get("tab")==="pages");
-  await expect(pagesTab).toHaveAttribute("aria-current","page");
+  await expect(page).toHaveURL(url => url.pathname.endsWith("/pages") && !url.searchParams.has("q") && !url.searchParams.has("product"));
+  await expect(page.getByTestId("pages-visited-total")).toHaveText("45");
+  await expect(page.getByRole("complementary",{name:"Users navigation"}).getByRole("link",{name:"Users Directory",exact:true})).toHaveAttribute("aria-current","page");
+  await page.getByRole("link",{name:"Back to Activity",exact:true}).click();
+  await expect(page).toHaveURL(url => url.pathname.endsWith("/activity") && url.searchParams.get("range")==="all" && url.searchParams.get("tab")==="searches" && url.searchParams.get("product")==="FLIGHT" && url.searchParams.get("q")==="unmatched");
+  await expect(searchesTab).toHaveAttribute("aria-current","page");
   await expect(page.getByTestId("page-view-row")).toHaveCount(5);
   console.log("PASS five recent page visits, separate history pagination, filters and return navigation");
 
@@ -424,6 +417,7 @@ try {
   await expect(page.getByTestId("history-directory-row")).toHaveCount(1);
   await page.getByTestId("history-directory-row").getByRole("link",{name:/View history for/}).click();
   await expect(page).toHaveURL(url => url.pathname === "/admin/users/user/qa-page-history-0001/pages" && url.searchParams.get("platform")==="ios" && !url.searchParams.has("q"));
+  await expect(usersSidebar.getByRole("link",{name:"Pages Visited",exact:true})).toHaveAttribute("aria-current","page");
   await expect(page.getByTestId("pages-visited-total")).toHaveText("15");
   await assertHorizontalFilters("page-history-filter-row", 5);
   await page.getByRole("link",{name:"Back to Pages Visited",exact:true}).click();

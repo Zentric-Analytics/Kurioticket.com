@@ -282,3 +282,19 @@ test("both history directories belong to Users and highlight exactly one subsect
     assert.equal(getAdminWorkspaceSections(path, "SUPPORT"), null);
   }
 });
+
+
+test("individual histories retain the originating Users workspace section", () => {
+  for (const kind of ["user", "guest"]) {
+    for (const section of ["pages", "devices"]) {
+      const activity = "/admin/users/" + kind + "/example123/activity";
+      const history = "/admin/users/" + kind + "/example123/" + section;
+      const links = getAdminWorkspaceSections(history, "ADMIN")!.links;
+      const active = (context: string) => links.filter(link => isAdminWorkspaceSectionActive(history, link.href, context)).map(link => link.href);
+      assert.deepEqual(active(activity + "?range=today&directory=role%3DALL"), ["/admin/users"]);
+      assert.deepEqual(active("/admin/users/" + section + "?range=all"), ["/admin/users/" + section]);
+      assert.deepEqual(active("/admin/users/" + kind + "/other123/activity"), ["/admin/users/" + section]);
+      assert.deepEqual(active("https://example.invalid" + activity), ["/admin/users/" + section]);
+    }
+  }
+});

@@ -66,5 +66,9 @@ test("the dedicated history requires admin access and both activity summaries st
   assert.match(history, /page: query\.page, platform: query\.platform/);
   assert.match(activity, /loadAdminIdentityActivity\(kind, id, filters, undefined, "summary"\)/);
   assert.match(activity, /data\.summary\.pagesVisited/);
-  assert.match(overview, /if \(tab === "pages"\) return <PageViewRecords[^\n]*full=\{false\}/);
+  assert.match(activity, /loadAdminIdentityActivity\(kind, id, pageFilters, undefined, "summary"\)/);
+  assert.match(activity, /pageFilters: ActivityFilters = \{ \.\.\.filters, tab: "pages", stage: "all", product: "all", q: "", order: "newest" \}/);
+  assert.ok(activity.indexOf("<PageViewRecords") > activity.indexOf("<AdminIdentityDeviceAccess"));
+  assert.ok(activity.indexOf("<PageViewRecords") < activity.indexOf('data-testid="activity-body-card"'));
+  assert.doesNotMatch(overview, /PageViewRecords/);
 });
