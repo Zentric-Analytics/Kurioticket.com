@@ -18,13 +18,14 @@ function harness(initial: unknown = null) {
   const calls: { operation: string; token: string | null; userId: string | null }[] = [];
   const controls = {
     failWithdrawal: false,
+    failRead: false,
     failWrite: false,
     failMerge: false,
     waitGrant: null as ReturnType<typeof deferred<void>> | null,
     waitMerge: null as ReturnType<typeof deferred<void>> | null,
   };
-  const coordinator = new VisitorIdentityCoordinator({
-    read: async () => saved,
+  const restart = () => new VisitorIdentityCoordinator({
+    read: async () => { if (controls.failRead) throw new Error("storage temporarily unavailable"); return saved; },
     write: async value => { if (controls.failWrite) throw new Error("storage unavailable"); saved = structuredClone(value); },
     grant: async (token, session) => {
       calls.push({ operation: "grant", token, userId: session?.user.id ?? null });
@@ -52,7 +53,7 @@ function harness(initial: unknown = null) {
     },
     now: () => 0,
   });
-  return { coordinator, records, calls, controls, saved: () => saved as StoredVisitorIdentity };
+  return { coordinator: restart(), restart, records, calls, controls, saved: () => saved as StoredVisitorIdentity };
 }
 
 test("unknown and declined consent never create or attach a visitor", async () => {
@@ -353,4 +354,63 @@ test("a declined or unknown visitor never waits for or attempts native analytics
     }
     assert.deepEqual(h.calls, []);
   }
+});
+
+test("a returning consented guest restores the same identity after repeated native restarts", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  await h.coordinator.choose(true);
+  const original = h.saved().visitorToken;
+  assert.ok(original);
+  for (let visit = 0; visit < 3; visit += 1) {
+    const returning = h.restart();
+    await returning.transition(null);
+    assert.equal(returning.snapshot().choice, "granted");
+    assert.deepEqual(await returning.headers("/api/flights/search", null), { "x-kt-visitor": original });
+    assert.deepEqual(await returning.headers("/api/hotels/search", null), { "x-kt-visitor": original });
+    assert.deepEqual(await returning.headers("/api/cars/search", null), { "x-kt-visitor": original });
+    assert.equal(h.saved().visitorToken, original);
+  }
+  assert.equal(h.records.size, 1);
+  assert.equal(h.calls.filter(call => call.operation === "grant").length, 1);
+});
+
+test("temporary native identity storage failure cannot overwrite a returning guest or start analytics", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  await h.coordinator.choose(true);
+  const before = structuredClone(h.saved());
+  const returning = h.restart();
+  h.controls.failRead = true;
+  await returning.transition(null);
+  assert.equal(returning.snapshot().loaded, false);
+  assert.equal(returning.snapshot().error, true);
+  assert.deepEqual(await returning.headers("/api/flights/search", null), {});
+  await assert.rejects(returning.choose(true), /Unable to read existing analytics preferences/);
+  await assert.rejects(returning.choose(false), /Unable to read existing analytics preferences/);
+  assert.deepEqual(h.saved(), before);
+  assert.equal(h.calls.length, 1);
+  h.controls.failRead = false;
+  await returning.transition(null);
+  assert.equal(returning.snapshot().loaded, true);
+  assert.equal(returning.snapshot().error, false);
+  assert.equal(returning.snapshot().choice, "granted");
+  assert.deepEqual(await returning.headers("/api/cars/search", null), { "x-kt-visitor": before.visitorToken });
+  assert.equal(h.records.size, 1);
+  assert.equal(h.calls.length, 1);
+});
+
+test("recovering storage preserves a returning visitor's previous refusal", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  await h.coordinator.choose(false);
+  const returning = h.restart();
+  h.controls.failRead = true;
+  await returning.load();
+  assert.equal(returning.snapshot().loaded, false);
+  h.controls.failRead = false;
+  await returning.transition(null);
+  assert.equal(returning.snapshot().choice, "declined");
+  assert.deepEqual(await returning.headers("/api/redirect", null), {});
+  assert.deepEqual(h.calls, []);
 });

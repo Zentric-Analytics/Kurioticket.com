@@ -363,3 +363,19 @@ test("a queued stale account claim cannot revive a visitor after deletion commit
   assert.equal(f.rows().length, 1);
   assert.equal(f.rows()[0].consentStatus, "WITHDRAWN");
 });
+
+test("returning guests with the same credential refresh activity without creating identities or grants", async () => {
+  const f = fixture();
+  const first = await f.service.registerAnalyticsVisitor({ policyVersion: "v1" });
+  f.rows()[0].lastSeenAt = new Date("2026-01-01T00:00:00Z");
+  const previous = f.rows()[0].lastSeenAt.getTime();
+  const returning = await Promise.all(Array.from({ length: 4 }, () =>
+    f.service.registerAnalyticsVisitor({ token: first.token, policyVersion: "v1" })));
+  for (const visit of returning) {
+    assert.deepEqual(visit, { id: first.id, token: first.token, created: false });
+  }
+  assert.equal(f.rows().length, 1);
+  assert.equal(f.rows()[0].consentRecords.length, 1);
+  assert.ok(f.rows()[0].lastSeenAt.getTime() > previous);
+  assert.equal(f.rows()[0].currentUserId, null);
+});
