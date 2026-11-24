@@ -26,13 +26,20 @@ await put("tsconfig.json", JSON.stringify({
 }));
 await put("next.config.mjs",
   'import path from "node:path";\n' +
-  'export default {devIndicators:false,agentRules:false,experimental:{externalDir:true},webpack(config){\n' +
+  'export default {devIndicators:false,agentRules:false,experimental:{externalDir:true},webpack(config,{webpack}){\n' +
   'config.resolve.alias["@/lib/auth-guards"]=path.resolve("mocks/auth-guards.js");\n' +
   'config.resolve.alias["@/lib/stagingSafety"]=path.resolve("mocks/stagingSafety.js");\n' +
   'config.resolve.alias["@/services/adminJourneyService"]=path.resolve("mocks/journeys.js");\n' +
   'config.resolve.alias["@/lib/prisma"]=path.resolve("mocks/prisma.js");\n' +
   'config.resolve.alias["@/services/adminIdentityActivityService"]=path.resolve("mocks/activity.js");\n' +
   'config.resolve.alias["@/services/onlinePresenceService"]=path.resolve("mocks/presence.js");\n' +
+  // Baseline modules use their own source tree and the same QA service mocks.
+  'config.plugins.push(new webpack.NormalModuleReplacementPlugin(/^[@][/]/, resource => {\n' +
+  '  const baseline = path.resolve("baseline/src");\n' +
+  '  if ((resource.context === baseline || resource.context.startsWith(baseline + path.sep)) && !Object.hasOwn(config.resolve.alias, resource.request)) {\n' +
+  '    resource.request = path.join(baseline, resource.request.slice(2));\n' +
+  '  }\n' +
+  '}));\n' +
   'config.resolve.alias["@"]=' + JSON.stringify(source) + ';return config;}};');
 await put("postcss.config.mjs", 'export default {plugins:{"@tailwindcss/postcss":{}}};');
 await put("app/globals.css",
@@ -69,27 +76,21 @@ await put("mocks/journeys.js", await readFile(path.join(qa, "journey-fixture.js"
 // Compare the unmodified Activity page and timeline at this change's dev base,
 // using the same fictional identity and complete event history.
 const baseline = process.env.ADMIN_ACTIVITY_QA_BASE || "90741da62f3743bc6b431485e4257837b4ab7fd9";
-const oldTimeline = execFileSync("git", [
-  "show", baseline + ":src/components/admin/ActivityTimeline.tsx",
-], { cwd: repo, encoding: "utf8" });
-await put("app/before/BeforeActivityTimeline.tsx", oldTimeline);
-const oldActivity = execFileSync("git", [
-  "show", baseline + ":src/app/admin/users/[kind]/[id]/activity/page.tsx",
-], { cwd: repo, encoding: "utf8" })
-  .replace('from "@/components/admin/ActivityTimeline"', 'from "./BeforeActivityTimeline"');
-await put("app/before/OldActivityPage.tsx", oldActivity);
+const archive = path.join(temp, "baseline.tar");
+const baselineDir = path.join(temp, "baseline");
+await mkdir(baselineDir);
+execFileSync("git", ["archive", "--output", archive, baseline, "src"], { cwd: repo });
+execFileSync("tar", ["-xf", archive, "-C", baselineDir]);
 // The synthetic activity records are from October. Recent baselines now default
 // to Last 24 hours, so compare the same complete history with All time (QA only).
 await put("app/before/page.tsx", [
-  'import OldActivityPage from "./OldActivityPage";',
+  'import OldActivityPage from "../../baseline/src/app/admin/users/[kind]/[id]/activity/page";',
   'export default async function BeforeActivityPage({searchParams}){ const raw=await searchParams;',
   '  return <OldActivityPage params={Promise.resolve({kind:raw.kind === "user" ? "user" : "guest",id:raw.kind === "user" ? "qa-realistic-identity-0001" : "qa-guest-activity-0001"})} searchParams={Promise.resolve({range:"all"})} />;',
   '}',
 ].join("\n"));
 
-const oldJourney = execFileSync("git", ["show", baseline + ":src/app/admin/journeys/[id]/page.tsx"], { cwd: repo, encoding: "utf8" });
-await put("app/before-journey/OldJourneyPage.tsx", oldJourney);
-await put("app/before-journey/page.tsx", 'import OldJourneyPage from "./OldJourneyPage"; export default function BeforeJourney(){return <OldJourneyPage params={Promise.resolve({id:"qa-journey-flight"})} searchParams={Promise.resolve({})} />;}');
+await put("app/before-journey/page.tsx", 'import OldJourneyPage from "../../baseline/src/app/admin/journeys/[id]/page"; export default function BeforeJourney(){return <OldJourneyPage params={Promise.resolve({id:"qa-journey-flight"})} searchParams={Promise.resolve({})} />;}');
 
 const app = spawn(process.execPath,
   [path.join(repo, "node_modules/next/dist/bin/next"), "dev", "--webpack", "--hostname", "127.0.0.1", "-p", port],
