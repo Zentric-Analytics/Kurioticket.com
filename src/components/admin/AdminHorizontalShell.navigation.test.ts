@@ -131,7 +131,8 @@ test("global More sections dropdown is replaced with per-workspace navigation", 
   assert.match(shell, /getAdminWorkspaceSections\(pathname, role\)/);
   assert.match(shell, /<WorkspaceSectionNavigation pathname=\{pathname\} role=\{role\}/);
   assert.match(shell, /if \(pathname === "\/admin\/providers"/);
-  assert.match(shell, /isAdminWorkspaceSectionActive\(pathname, item\.href\)/);
+  assert.match(shell, /isAdminWorkspaceSectionActive\(pathname, item\.href, activityReturn\.length === 1/);
+  assert.match(shell, /isAdminWorkspaceSectionActive\(pathname, link\.href, activityReturn\.length === 1/);
 });
 
 test("Platforms uses the standard sidebar layout for Platform Health and Platform Metrics", () => {
