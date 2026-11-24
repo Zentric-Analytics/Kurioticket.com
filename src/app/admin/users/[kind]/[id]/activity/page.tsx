@@ -26,6 +26,7 @@ type PageProps = { params: Promise<Params>; searchParams: Promise<RawQuery> };
 
 const tabs = [
   { value: "all", label: "All activity" },
+  { value: "pages", label: "Pages visited" },
   { value: "searches", label: "Searches" },
   { value: "selections", label: "Selections" },
   { value: "handoffs", label: "Provider handoffs" },
@@ -251,7 +252,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
               from:filters.from,to:filters.to,range:typeof raw.range === "string" && ["today","24h","7d","30d","all","custom"].includes(raw.range) ? raw.range : (filters.from || filters.to ? "custom" : "today")}}
             tabs={<nav aria-label="Activity tabs" className="flex max-w-full shrink-0 gap-7 overflow-x-auto">
               {tabs.map(tab => <Link key={tab.value}
-                href={activityHref(basePath, queryParams, { tab: tab.value, cursor: null })}
+                href={activityHref(basePath, queryParams, { tab: tab.value, cursor: null, stage: null })}
                 aria-current={filters.tab === tab.value ? "page" : undefined}
                 className={"focus-ring relative shrink-0 whitespace-nowrap rounded-sm py-3 text-[13px] font-medium text-[#475569] " +
                   (filters.tab === tab.value ? "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#004BB8]" : "")}>
@@ -261,7 +262,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         </section>
 
         <AdminActivityOverview events={data.events} journeyHistoryHref={journeyHistoryHref}
-          environment={environment} operational={operational}/>
+          environment={environment} operational={operational} tab={filters.tab} pagesVisited={data.summary.pagesVisited ?? 0} pagesHref={activityHref(basePath, queryParams, { tab: "pages", stage: null, cursor: null })}/>
       </div>
     </section>
   </div>;
