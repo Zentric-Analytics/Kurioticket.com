@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 
 import { CookieConsentPresentation } from "./CookieConsentPresentation";
+import { isCookiePolicyFromPreferences } from "@/lib/cookieConsentCopy";
 import { isPublicWebsitePresenceRoute, websitePresenceHeartbeatMs } from "@/lib/website-presence";
 import {
   analyticsConsentStorageKey,
@@ -271,7 +272,10 @@ function WebsiteAnalyticsConsentBridge() {
 
   // Keep first-visit decisions explicit, but permit policy access and avoid
   // blocking essential services while an explicit decision is synchronising.
-  const showBanner = choice === null && !decisionPending;
+  // A policy opened from preferences is read-only access, not a second consent
+  // decision. The original tab keeps its unsaved draft. Footer controls remain usable.
+  const readingPolicy = ready && typeof window !== "undefined" && isCookiePolicyFromPreferences(pathname, window.location.search);
+  const showBanner = choice === null && !decisionPending && !readingPolicy;
   const isLegalPage = pathname === "/legal" || pathname?.startsWith("/legal/");
   const modal = editing || (choice === null && !isLegalPage && !decisionPending);
   if (!ready || (!editing && !showBanner && !decisionPending)) return null;
