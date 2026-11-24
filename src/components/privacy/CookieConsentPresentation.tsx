@@ -129,11 +129,14 @@ export function CookieConsentPresentation({
             <p className="mt-3 max-w-[900px] text-sm leading-6 text-slate-600">
               We use essential cookies to keep Kurioticket secure and working. With your permission, optional analytics helps us improve your experience. Change or withdraw your choice at any time in Cookie preferences in the website footer.
             </p>
-            <div className="mt-5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4 sm:flex sm:flex-wrap sm:justify-end sm:gap-3">
-              <Button type="button" variant="secondary" data-cookie-preferences-open onClick={onOpen} disabled={busy}
-                className="col-span-2 min-h-11 rounded-xl border-slate-300 px-5 font-semibold text-[#004BB8] hover:bg-slate-50">Cookie preferences</Button>
-              <Button type="button" disabled={busy} onClick={() => onChoose("declined")} className={actionClass}>Decline optional</Button>
-              <Button type="button" disabled={busy} onClick={() => onChoose("granted")} className={actionClass}>Accept all</Button>
+            <div className="mt-5 grid gap-3 border-t border-slate-100 pt-4 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+              <button type="button" data-cookie-consent-continue disabled={busy} onClick={() => onChoose("declined")}
+                className="focus-ring min-h-11 justify-self-center rounded-md px-2 text-sm font-semibold text-[#004BB8] underline underline-offset-4 hover:text-[#003D99] disabled:opacity-60 sm:justify-self-start">Continue without optional cookies</button>
+              <div data-cookie-consent-actions className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:flex sm:flex-wrap sm:gap-3">
+                <Button type="button" variant="secondary" data-cookie-preferences-open onClick={onOpen} disabled={busy}
+                  className="min-h-11 rounded-xl border-slate-300 px-3 font-semibold text-[#004BB8] hover:bg-slate-50 sm:px-5">Cookie preferences</Button>
+                <Button type="button" disabled={busy} onClick={() => onChoose("granted")} className={actionClass}>Accept all</Button>
+              </div>
             </div>
           </div>
         </section>
@@ -158,7 +161,7 @@ export function CookieConsentPresentation({
               <div className="space-y-2">
                 <Category id="cookie-essential-description" name="Essential cookies" subtitle="Keeps Kurioticket secure and working"
                   description="Supports secure sign-in, requested travel searches and necessary search-to-provider handoff records. These cookies do not enable optional behavioural analytics. Records follow our data-retention policy." />
-                <Category id="cookie-analytics-description" name="Analytics cookies" subtitle="Helps us understand your experience"
+                <Category id="cookie-analytics-description" name="Analytics cookies" subtitle={showBanner ? "Suggested on · awaiting your choice" : "Helps us understand your experience"}
                   description="With your permission, we measure how you browse and use Kurioticket, including activity across visits, to improve our services. Turning analytics off does not stop requested searches or necessary records."
                   analytics checked={draftAnalytics} disabled={busy} onChange={onDraftChange} />
                 {/* No independent performance permission or collector is wired yet.
@@ -170,12 +173,12 @@ export function CookieConsentPresentation({
                   description="Optional marketing cookies could help measure advertising campaigns and show relevant travel promotions. This separate preference is not available yet and is not enabled by Accept all."
                   unavailable />
               </div>
-              <p className="mt-3 text-xs leading-5 text-slate-600">To decline optional cookies, leave analytics off and save your preferences. You can change or withdraw your choice at any time in the website footer.</p>
+              <p className="mt-3 text-xs leading-5 text-slate-600">To decline optional cookies, switch analytics off and save your preferences. You can change or withdraw your choice at any time in the website footer.</p>
               {busy || failed ? <div className="mt-4">{status}</div> : null}
             </div>
             <footer className="shrink-0 border-t border-slate-100 bg-white px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
               <Button type="button" disabled={busy} className={`w-full ${actionClass}`}
-                onClick={() => onChoose(draftAnalytics ? "granted" : "declined")}>Save preferences</Button>
+                onClick={() => onChoose(draftAnalytics ? "granted" : "declined")}>{showBanner && draftAnalytics ? "Allow analytics" : "Save preferences"}</Button>
             </footer>
           </section>
         </div>

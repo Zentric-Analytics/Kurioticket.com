@@ -75,7 +75,9 @@ export function AnalyticsConsentBridge() {
 function WebsiteAnalyticsConsentBridge() {
   const { data: session, status } = useSession();
   const [choice, setChoice] = useState<AnalyticsConsentChoice>(null);
-  const [draftAnalytics, setDraftAnalytics] = useState(false);
+  // A new visitor may see a suggested On draft, but actual consent remains null
+  // until an explicit choice. Never persist or sync this draft as consent.
+  const [draftAnalytics, setDraftAnalytics] = useState(true);
   const [ready, setReady] = useState(false);
   const [editing, setEditing] = useState(false);
   const [decisionPending, setDecisionPending] = useState(false);
@@ -154,7 +156,7 @@ function WebsiteAnalyticsConsentBridge() {
         choiceRef.current = initialChoice;
         if (initialChoice) saveFailedRef.current = !saveChoice(initialChoice);
         setChoice(initialChoice);
-        setDraftAnalytics(initialChoice === "granted");
+        setDraftAnalytics(initialChoice !== "declined");
       }
       setReady(true);
     }
@@ -174,7 +176,7 @@ function WebsiteAnalyticsConsentBridge() {
     }
     function openSettings() {
       if (isDenied()) { choiceRef.current = "declined"; setChoice("declined"); }
-      setDraftAnalytics(choiceRef.current === "granted");
+      setDraftAnalytics(choiceRef.current !== "declined");
       setEditing(true);
     }
     window.addEventListener("storage", handleStorage);
@@ -242,11 +244,12 @@ function WebsiteAnalyticsConsentBridge() {
 
   const close = useCallback(() => {
     setEditing(false);
-    setDraftAnalytics(choiceRef.current === "granted");
+    setDraftAnalytics(choiceRef.current !== "declined");
   }, []);
 
   function openPreferences() {
-    setDraftAnalytics(choiceRef.current === "granted");
+    if (isDenied()) { choiceRef.current = "declined"; setChoice("declined"); }
+    setDraftAnalytics(choiceRef.current !== "declined");
     setEditing(true);
   }
 
