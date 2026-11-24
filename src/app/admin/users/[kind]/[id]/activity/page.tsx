@@ -7,6 +7,7 @@ import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { AdminActivityOverview } from "@/components/admin/AdminActivityOverview";
+import { PageViewRecords } from "@/components/admin/PageViewRecords";
 import { AdminIdentityDeviceAccess } from "@/components/admin/AdminIdentityDeviceAccess";
 import { loadAdminDeviceSessions } from "@/services/adminDeviceSessionsService";
 import { journeyHistoryHrefFromActivity } from "@/lib/adminActivityOverview";
@@ -27,7 +28,6 @@ type PageProps = { params: Promise<Params>; searchParams: Promise<RawQuery> };
 
 const tabs = [
   { value: "all", label: "All activity" },
-  { value: "pages", label: "Pages visited" },
   { value: "searches", label: "Searches" },
   { value: "selections", label: "Selections" },
   { value: "handoffs", label: "Provider handoffs" },
@@ -114,6 +114,10 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   if (!validActivityIdentity(kind, id)) notFound();
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
   const raw = normalizeUserActivityQuery(await searchParams, new Date());
+  // Existing page-only bookmarks now show the dedicated summary above the filters.
+  // Keep the date and other valid context, but do not leave an invisible tab selected.
+  if (raw.tab === "pages") delete raw.tab;
+  if (raw.stage === "PAGE_VIEW") delete raw.stage;
   const filtersResult = parseActivityFilters(raw);
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
   const backHref = safeDirectoryHref(raw);
@@ -144,7 +148,15 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const operational = data.source === "operational";
   const order = filters.order === "oldest" ? "oldest" : "newest";
   const activityReturn = activityHref(basePath, queryParams, {});
-  const pagesHref = pageHistoryHrefFromActivity(kind, id, filters, typeof raw.range === "string" ? raw.range : undefined, activityReturn);
+  // Page visits share the selected UTC date window, not the travel-specific
+  // search, product, stage or tab filters. Reuse the default summary read.
+  const pageVisitFilters: ActivityFilters = {
+    ...filters, tab: "pages", stage: "all", product: "all", q: "", order: "newest",
+  };
+  const pageVisitResult = operational || (filters.tab === "all" && filters.stage === "all" && filters.product === "all" && !filters.q)
+    ? result
+    : await loadAdminIdentityActivity(kind, id, pageVisitFilters, undefined, "summary");
+  const pagesHref = pageHistoryHrefFromActivity(kind, id, pageVisitFilters, typeof raw.range === "string" ? raw.range : undefined, activityReturn);
   const journeyHistoryHref = journeyHistoryHrefFromActivity(kind, id, filters,
     typeof raw.range === "string" ? raw.range : undefined, activityReturn);
 
@@ -247,6 +259,17 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       {kind === "user" ? <AdminIdentityDeviceAccess kind={kind} result={deviceSessions}
         historyHref={"/admin/users/user/" + encodeURIComponent(id) + "/devices?range=all&activityReturn=" + encodeURIComponent(activityReturn)} /> : null}
 
+      {!operational && (pageVisitResult.status !== "ok" ? <section aria-label="Pages visited" className="min-w-0 space-y-2 py-1">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-[15px] font-semibold text-[#0F172A]">Pages visited</h2>
+          <Link href={pagesHref} className="focus-ring rounded-md px-2 py-1.5 text-[13px] font-medium text-[#004BB8] hover:bg-[#F1F6FF]">View all pages visited</Link>
+        </div>
+        <p role="status" className="rounded-lg border border-[#E2E8F0] p-3 text-[13px] text-[#64748B]">Page visits could not be loaded. This does not mean there is no history.</p>
+      </section> : pageVisitResult.data.source !== "operational" ? <div className="min-w-0 py-1">
+        <PageViewRecords key={pagesHref} events={pageVisitResult.data.events}
+          count={pageVisitResult.data.summary.pagesVisited ?? 0} full={false} href={pagesHref} operational={false}/>
+      </div> : null)}
+
       <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
         <section aria-label="Activity filters" className="min-w-0">
           <ActivityFiltersBar path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
@@ -264,7 +287,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         </section>
 
         <AdminActivityOverview events={data.events} journeyHistoryHref={journeyHistoryHref}
-          environment={environment} operational={operational} tab={filters.tab} pagesVisited={data.summary.pagesVisited ?? 0} pagesHref={pagesHref}/>
+          environment={environment} operational={operational}/>
       </div>
     </section>
   </div>;
