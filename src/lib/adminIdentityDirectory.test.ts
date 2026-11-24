@@ -241,3 +241,16 @@ test("Directory and Activity share a parameterized recorded account last-seen ex
   assert.match(activityPage, /<Fact label="Last seen"/);
   assert.doesNotMatch(activityPage, /<Fact label="Last active"/);
 });
+
+test("guest statuses use recorded expiry, not last seen or online presence", () => {
+  const now = new Date("2026-11-24T12:00:00Z");
+  const result = sql({ ...base, status: "INACTIVE", showUsers: false, showGuests: false, showOperationalGuests: true, withOperationalSummary: true, now });
+  assert.match(result.text, /WHEN o\."expiresAtMs" IS NULL THEN 'UNAVAILABLE'/);
+  assert.match(result.text, /WHEN o\."expiresAtMs" > \? THEN 'ACTIVE'/);
+  assert.match(result.text, /ELSE 'INACTIVE' END/);
+  assert.ok(result.values.includes(now.getTime()));
+  assert.ok(result.values.includes("INACTIVE"));
+  assert.match(result.text, /jsonb_typeof/);
+  assert.match(result.text, /FROM all_operational_sessions\s*\)/);
+  assert.doesNotMatch(result.text, /OnlinePresenceSession/);
+});
