@@ -1,6 +1,6 @@
 import { hasDisplayOnlyInventory } from "../../../../../src/shared/presentation/sandboxInventory";
 import { useSandboxResults } from "./useSandboxResults";
-import { FlightProviderWarning } from "./FlightProviderWarning";
+import { presentSearchResults, searchUnavailableMessage } from "./searchFailurePresentation";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode, type SetStateAction } from "react";
 import {
   ActivityIndicator,
@@ -445,11 +445,6 @@ function ResultsScreen({ product }: { product: Product }) {
             ? await travelApi.searchHotelsProgressive(plan.plan.payload, null, { signal: controller.signal, requestId, sandboxDisplay: true })
             : await travelApi.searchHotels(plan.plan.payload, { signal: controller.signal, requestId, sandboxDisplay: true });
       if (!isCurrent()) return;
-      if (product === "hotel" && "warningCategory" in response && response.warningCategory === "provider_unavailable") {
-        setResults([]); resultsRef.current = []; setStatus("error");
-        setMessage("Hotel search is temporarily unavailable. Please try again.");
-        return;
-      }
       const validationStartedAt = performance.now();
       const flightAcceptance = product === "flight"
         ? acceptCanonicalResults(response.results as FlightResult[], (result) => validFlight(result, plan.plan!))
@@ -490,7 +485,7 @@ function ResultsScreen({ product }: { product: Product }) {
         setResults([]);
         resultsRef.current = [];
         setStatus("error");
-        setMessage("The canonical search returned inventory that this app could not render safely.");
+        setMessage(searchUnavailableMessage(product));
         return;
       }
       if (flightAcceptance && canonicalResultsWereSilentlyLost(flightAcceptance)) {
@@ -499,7 +494,7 @@ function ResultsScreen({ product }: { product: Product }) {
         flightResultsOwnerKey.current = undefined;
         setFlightResultsOwner(undefined);
         setStatus("error");
-        setMessage("The canonical search returned inventory that this app could not render safely.");
+        setMessage(searchUnavailableMessage(product));
         return;
       }
       setResults(valid);
@@ -512,10 +507,11 @@ function ResultsScreen({ product }: { product: Product }) {
         flightResultsOwnerKey.current = searchKey;
         setFlightResultsOwner(searchKey);
       }
-      setStatus(valid.length ? "ready" : "empty");
-      setMessage(response.warnings?.[0] || "");
+      const presentation = presentSearchResults(product, valid.length, response);
+      setStatus(presentation.status);
+      setMessage(presentation.message);
       void recordRecentSearchBestEffort(buildRecentSearch(product, plan.plan.payload));
-      if (product === "hotel" && Platform.OS === "android" && "progressive" in response && response.progressive && response.nextCursor) {
+      if (presentation.status !== "error" && product === "hotel" && Platform.OS === "android" && "progressive" in response && response.progressive && response.nextCursor) {
         // The first validated batch is already visible. Subsequent completed
         // pages are merged without navigating away or resetting the list.
         let cursor: string | null = response.nextCursor;
@@ -527,7 +523,7 @@ function ResultsScreen({ product }: { product: Product }) {
             if (!isCurrent()) return;
             const accepted = acceptCanonicalResults(page.results as HotelResult[], safeCanonicalHotelResult);
             if (canonicalResultsWereSilentlyLost(accepted)) {
-              setMessage("Some hotel results could not be displayed safely.");
+              setMessage("Some hotels are still unavailable. You can browse the results already loaded.");
               break;
             }
             for (const hotel of accepted.accepted) merged.set(hotel.id, hotel);
@@ -562,11 +558,11 @@ function ResultsScreen({ product }: { product: Product }) {
       if (!isLatest() || (product === "flight" && currentFlightSearchKey.current !== requestedSearchKey)) return;
       if (!deadlineExpired && (controller.signal.aborted || (e instanceof TravelApiError && e.code === "cancelled"))) return;
       const failureMessage =
-        deadlineExpired ||
+        product === "flight" && (deadlineExpired ||
         (e instanceof TravelApiError && e.code === "timeout") ||
-        (e instanceof Error && e.message === "flight_loading_deadline")
+        (e instanceof Error && e.message === "flight_loading_deadline"))
           ? "Flight search took too long. Please try again."
-          : e instanceof Error ? e.message : "Search failed";
+          : searchUnavailableMessage(product);
       if (product === "flight") {
         const failure = resolveFlightSearchFailure({
           searchKey: flightResultsOwnerKey.current,
@@ -1213,7 +1209,6 @@ function ResultsScreen({ product }: { product: Product }) {
           keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
           renderItem={({ item, index }) => item === null ? (
             <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}>
-              <FlightProviderWarning message={message} style={[s0.notice, { backgroundColor: theme.surface, color: theme.textPrimary, borderColor: theme.border, borderWidth: 1 }]} />
               {flightDateStrip}
               {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><FlightPriceAlert plan={plan.plan} flightResults={results as FlightResult[]} available={availability.priceAlerts} displayCurrency={currencyState?.resolution.resolvedCurrency ?? String(plan.plan.payload.currency ?? "USD")} rates={currencyState?.rates ?? {}} onFeedback={setFlightPriceAlertFeedback} /></View> : null}
               <FlightResultsSummaryRow count={sorted.length} />

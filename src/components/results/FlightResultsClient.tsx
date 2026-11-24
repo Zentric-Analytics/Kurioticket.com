@@ -2668,16 +2668,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         .then(async (response) => {
           const data = await response.json();
 
-          if (!response.ok) {
-            throw new Error(
-              data.error ||
-                dictionary.unableToSearchFlights ||
-                enTranslations.unableToSearchFlights ||
-                "Unable to search flights.",
-            );
+          if (!response.ok || !Array.isArray(data?.results) || (data.status === "unavailable" && data.results.length === 0)) {
+            throw new Error("Flight search unavailable");
           }
 
-          return data as { results: PublicFlightResult[]; warnings?: string[]; resultsCacheValidUntil?: number; requestId?: string };
+          return data as { results: PublicFlightResult[]; resultsCacheValidUntil?: number; requestId?: string };
         })
         .then((data) => {
           if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
@@ -2686,12 +2681,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             data.results,
             body.departureDate,
           );
-          const warnings = Array.isArray(data.warnings) ? data.warnings : [];
           if (typeof data.resultsCacheValidUntil === "number") {
             writeFlightResultsSessionSnapshot(
               searchKey,
               filteredResults,
-              warnings,
+              [],
               data.resultsCacheValidUntil,
               undefined,
               undefined,
@@ -2701,16 +2695,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           setResults(filteredResults);
           setJourneyResponse({ searchKey, requestId: journeyRequestId(data.requestId) });
         })
-        .catch((searchError) => {
+        .catch(() => {
           if (controller?.signal.aborted || !active || activeFlightSearchKeyRef.current !== searchKey) return;
 
           if (!refreshingStaleSnapshot) {
             setError(
-              searchError instanceof Error
-                ? t(searchError.message) || searchError.message
-                : dictionary.unableToSearchFlights ||
-                    enTranslations.unableToSearchFlights ||
-                    "Unable to search flights.",
+              dictionary.unableToSearchFlights ||
+                enTranslations.unableToSearchFlights ||
+                "Unable to search flights.",
             );
           }
         })
@@ -2728,7 +2720,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       window.clearTimeout(timer);
       controller?.abort();
     };
-  }, [body, dictionary.unableToSearchFlights, guidedMode, mainInventoryRetryGeneration, t]);
+  }, [body, dictionary.unableToSearchFlights, guidedMode, mainInventoryRetryGeneration]);
 
   const retryMainInventorySearch = useCallback(() => {
     userInitiatedRetryRef.current = true;

@@ -13,18 +13,24 @@ export async function readHotelSearchResponse(
   } catch {
     throw new Error(unavailableMessage);
   }
-  if (data && typeof data === "object" && (data as { warningCategory?: unknown }).warningCategory === "unsupported_search") {
+  const body = data && typeof data === "object"
+    ? data as { error?: unknown; results?: unknown; warningCategory?: unknown; status?: unknown; requestId?: unknown }
+    : undefined;
+  const publicResults = (results: PublicHotelResult[], requestId: unknown) => ({
+    results,
+    ...(typeof requestId === "string" ? { requestId } : {}),
+  });
+  // Older servers can attach a failure category to a partial response.
+  if (response.ok && Array.isArray(body?.results) && body.results.length > 0) return publicResults(body.results, body.requestId);
+  if (body?.warningCategory === "unsupported_search") {
     throw new Error(unsupportedMessage);
   }
-  if (data && typeof data === "object" && !response.ok &&
-      (data as { warningCategory?: unknown }).warningCategory !== "provider_unavailable" && localizeError) {
-    throw new Error(localizeError(data));
+  if (body && !response.ok && body.warningCategory !== "provider_unavailable" && localizeError) {
+    throw new Error(localizeError(body));
   }
-  if (!response.ok || !data || typeof data !== "object" ||
-      !Array.isArray((data as { results?: unknown }).results) ||
-      (data as { status?: unknown }).status === "unavailable" ||
-      (data as { warningCategory?: unknown }).warningCategory === "provider_unavailable") {
+  if (!response.ok || !Array.isArray(body?.results) ||
+      body.status === "unavailable" || body.warningCategory === "provider_unavailable") {
     throw new Error(unavailableMessage);
   }
-  return data as { results: PublicHotelResult[]; warnings?: string[]; requestId?: string };
+  return publicResults(body.results, body.requestId);
 }

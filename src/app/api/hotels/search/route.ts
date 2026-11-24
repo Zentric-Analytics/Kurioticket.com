@@ -113,19 +113,14 @@ export async function POST(request: Request) {
 
     return attachOperationalSearchSession(NextResponse.json(
       {
-        error: aggregate.unavailableMessage,
+        error: "Hotel search is temporarily unavailable. Please try again.",
         results: [],
         status: "unavailable",
         source: providerMode || "kayak-sandbox",
-        warnings: aggregate.warnings,
+        warnings: [],
         partial: false,
         requestId,
         warningCategory: deriveHotelWarningCategory(aggregate),
-        providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs }) => ({
-          provider,
-          status,
-          latencyMs,
-        })),
       },
       { status: 503 },
     ), operationalSession);
@@ -189,12 +184,6 @@ export async function POST(request: Request) {
   return attachOperationalSearchSession(NextResponse.json({
     ...classified,
     source: providerMode || classified.source,
-    providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs, error }) => ({
-      provider,
-      status,
-      latencyMs,
-      error: sanitizeProviderError(error),
-    })),
     warningCategory: deriveHotelWarningCategory(aggregate),
     latencyMs: aggregate.latencyMs,
   }), operationalSession);

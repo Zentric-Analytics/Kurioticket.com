@@ -23,3 +23,13 @@ test("preserves valid results and empty successful searches", async () => {
     assert.deepEqual(await readHotelSearchResponse(Response.json({ results }), message), { results });
   }
 });
+
+test("legacy partial responses preserve healthy hotel offers but discard diagnostics", async () => {
+  const results = [{ id: "healthy-hotel" }];
+  const response = Response.json({
+    results, requestId: "search-request", status: "partial", warningCategory: "provider_unavailable",
+    warnings: ["KAYAK HTTP 403: synthetic provider authentication failure"],
+    providerStatuses: [{ error: "private provider diagnostic" }],
+  });
+  assert.deepEqual(await readHotelSearchResponse(response, message), { results, requestId: "search-request" });
+});
