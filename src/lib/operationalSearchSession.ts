@@ -13,6 +13,12 @@ export type OperationalSessionReference = {
   /** Signed native transport declaration, not device attestation or account identity. */
   nativePlatform?: "ios" | "android";
 };
+/** Only non-secret, server-issued session evidence goes into activity records.
+ * The signed credential itself must never be persisted in analytics or Admin. */
+export function operationalSessionMetadata(reference: OperationalSessionReference) {
+  return { operationalSessionId: reference.id, operationalSessionExpiresAtMs: reference.expiresAt.getTime() };
+}
+
 export type PreparedOperationalSession = {
   reference: OperationalSessionReference;
   credential: string;
