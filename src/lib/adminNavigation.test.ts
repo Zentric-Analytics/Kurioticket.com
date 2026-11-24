@@ -171,8 +171,8 @@ test("Platforms reuses the former Platform Health header destination without dup
     ["Platform Metrics"]);
   assert.equal(getAdminWorkspaceSections("/admin/platforms/devices", "ADMIN")?.label, "Platforms");
   assert.equal(getAdminWorkspaceSections("/admin/users/user/known-account/devices", "ADMIN")?.label, "Users");
-  assert.equal(isAdminWorkspaceSectionActive("/admin/users/user/known-account/devices", "/admin/users/devices"), true);
-  assert.equal(isAdminWorkspaceSectionActive("/admin/users/user/known-account/devices", "/admin/users"), false);
+  assert.equal(isAdminWorkspaceSectionActive("/admin/users/user/known-account/devices", "/admin/users/devices", "/admin/users/devices?range=all"), true);
+  assert.equal(isAdminWorkspaceSectionActive("/admin/users/user/known-account/devices", "/admin/users", "/admin/users/devices?range=all"), false);
   assert.equal(isAdminWorkspaceSectionActive("/admin/platforms/devices", "/admin/platform-health"), false);
 });
 
@@ -221,10 +221,10 @@ test("contextual tabs highlight the actual current subsection, including nested 
     ["/admin/platforms/devices", "/admin/platforms/devices", true],
     ["/admin/platform-health", "/admin/platform-health", true],
     ["/admin/platform-health", "/admin/platforms/devices", false],
-    ["/admin/users/user/example123/devices", "/admin/users", false],
-    ["/admin/users/user/example123/devices", "/admin/users/devices", true],
-    ["/admin/users/guest/example123/pages", "/admin/users/pages", true],
-    ["/admin/users/guest/example123/pages", "/admin/users", false],
+    ["/admin/users/user/example123/devices", "/admin/users", true],
+    ["/admin/users/user/example123/devices", "/admin/users/devices", false],
+    ["/admin/users/guest/example123/pages", "/admin/users/pages", false],
+    ["/admin/users/guest/example123/pages", "/admin/users", true],
     ["/admin/users/user/example123/devices", "/admin/platforms/devices", false],
     ["/admin/users/user/example123/activity", "/admin/users", true],
     ["/admin/searches/activity", "/admin/searches/activity", true],
@@ -280,5 +280,28 @@ test("both history directories belong to Users and highlight exactly one subsect
     assert.deepEqual(sections?.links.map(link => link.label), ["Users Directory", "Online Users", "Device & Access", "Pages Visited"]);
     assert.deepEqual(sections?.links.filter(link => isAdminWorkspaceSectionActive(path, link.href)).map(link => link.href), [active]);
     assert.equal(getAdminWorkspaceSections(path, "SUPPORT"), null);
+  }
+});
+
+test("individual device and page history preserve the validated entry context", () => {
+  const destinations = ["/admin/users", "/admin/users/online", "/admin/users/devices", "/admin/users/pages"];
+  for (const kind of ["user", "guest"]) {
+    for (const section of ["devices", "pages"]) {
+      const base = "/admin/users/" + kind + "/example123";
+      const path = base + "/" + section;
+      const directory = "/admin/users/" + section;
+      const other = "/admin/users/" + (section === "pages" ? "devices" : "pages");
+      for (const [incoming, expected] of [
+        [base + "/activity?range=all&tab=searches", "/admin/users"],
+        [directory + "?range=all&tab=all", directory],
+        [undefined, "/admin/users"],
+        [other + "?range=all", "/admin/users"],
+        ["https://example.invalid" + directory, "/admin/users"],
+        [directory + "?range=invalid", "/admin/users"],
+        [directory + "?tab=all&tab=registered", "/admin/users"],
+      ]) {
+        assert.deepEqual(destinations.filter(href => isAdminWorkspaceSectionActive(path, href, incoming)), [expected]);
+      }
+    }
   }
 });
