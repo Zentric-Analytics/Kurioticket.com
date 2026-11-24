@@ -47,7 +47,7 @@ test("detail window removes redundant links and reject button while preserving a
   assert.doesNotMatch(markup, /Cookie Policy|Privacy Policy|Reject optional|Your privacy\. Your choice\.|Save my preferences/);
   assert.match(markup, /Manage your preferences/);
   assert.doesNotMatch(markup, /Essential only|Decline optional/);
-  assert.match(markup, /leave analytics off and save your preferences/);
+  assert.match(markup, /switch analytics off and save your preferences/);
   assert.match(markup, /Optional cookies are your choice/);
   assert.match(markup, /Accept all/);
   assert.match(markup, /Save preferences/);
@@ -62,4 +62,13 @@ test("saving an explicit choice uses a non-modal status instead of replaying the
   assert.match(failure, /Please retry/);
   assert.match(failure, />Retry</);
   assert.doesNotMatch(failure, /We value your privacy/);
+});
+
+ test("suggested first-visit analytics requires an explicit allow action", () => {
+  const suggested = render(true, true);
+  assert.match(suggested, /Suggested on/);
+  assert.match(suggested, /Allow analytics/);
+  assert.doesNotMatch(suggested, />Save preferences</);
+  assert.match(render(true, false), /Save preferences/);
+  assert.match(render(true, true, { showBanner: false }), /Save preferences/);
 });
