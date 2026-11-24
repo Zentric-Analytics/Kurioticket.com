@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { getApiBaseUrl } from "../../config/apiUrl";
-import { clearSession, readSession, writeSession } from "../../storage/sessionStorage";
+import { applySessionRevocation, clearSession, readSession, readStoredSession, writeSession, type StoredSession } from "../../storage/sessionStorage";
 import { completePreviewPasskeySignIn, isIOSPreviewPasskeyEnabled, safePasskeyFailureDetails, type PasskeyDiagnosticStage } from "./previewPasskeySignIn";
 
 export const isPreviewPasskeySignIn = () => isIOSPreviewPasskeyEnabled(Platform.OS, Constants.expoConfig?.extra?.environment?.isPreview);
@@ -15,6 +15,7 @@ export type PasskeyAuthenticationOptions = { challenge: string; rpId: string; ti
 export type PasskeyAssertion = import("../passkeys/nativePasskeys").NormalizedPasskeyAssertion;
 
 type AuthResult = { session: { token: string; expires: string; recovery?: { deadline: string } }; user: { id: string; email: string; name?: string | null } } | { requiresTwoFactor: true; challengeToken: string; expiresAt: string };
+type SessionStatus = { user: { id: string }; expires: string; recovery?: { deadline: string } };
 
 export class AuthApiError extends Error {
   constructor(message: string, public status = 0, public code = "") { super(message); }
@@ -49,10 +50,10 @@ async function request<T>(path: string, options: RequestInit = {}, externalSigna
   } finally { clearTimeout(timer); externalSignal?.removeEventListener("abort", abort); }
 }
 export const authApi = {
-  recoveryStatus: async () => {
-    const session = await readSession();
-    if (!session) throw new AuthApiError("Recovery sign-in expired. Sign in again.", 401);
-    return request<{ recovery?: { deadline: string }; expires: string }>("session", { headers: { Authorization: `Bearer ${session.token}` } });
+  recoveryStatus: async (expectedToken: string) => {
+    const session = await readStoredSession();
+    if (!session?.recovery || session.token !== expectedToken) throw new AuthApiError("Recovery sign-in expired. Sign in again.", 401);
+    return checkSessionStatus(session);
   },
   passkeyOptions: (signal?: AbortSignal) => request<{ options: PasskeyAuthenticationOptions }>("passkey/options", { method: "POST", body: "{}" }, signal),
   passkeyVerify: async (assertion: PasskeyAssertion, signal?: AbortSignal) => {
@@ -101,16 +102,45 @@ export const authApi = {
   resetForgotPassword: (input: { email: string; code: string; newPassword: string; confirmPassword: string }) => request<{ success: true }>("forgot-password", { method: "POST", body: JSON.stringify({ action: "reset", ...input }) }),
   logout: async () => {
     const session = await readSession();
-    try { if (session) await request<{ ok: true }>("logout", { method: "POST", headers: { Authorization: `Bearer ${session.token}` } }); }
-    finally { await clearSession(); }
+    if (!session) return;
+    try { await request<{ ok: true }>("logout", { method: "POST", headers: { Authorization: `Bearer ${session.token}` } }); }
+    finally { await clearSession(session.token); }
   },
 };
-export async function restoreAuthenticatedSession() {
-  const session = await readSession();
-  if (!session) return false;
+async function checkSessionStatus(session: StoredSession) {
+  const result = await request<SessionStatus>("session", { headers: { Authorization: `Bearer ${session.token}` } });
+  if (result.user?.id !== session.user.id || !(Date.parse(result.expires) > Date.now()) ||
+    (result.recovery && !(Date.parse(result.recovery.deadline) > Date.now()))) {
+    throw new AuthApiError("Unable to verify sign-in.");
+  }
+  return result;
+}
+
+async function validateOrdinarySession(session: StoredSession): Promise<StoredSession | null> {
+  if (!(Date.parse(session.expires) > Date.now())) return applySessionRevocation(session.token);
   try {
-    const result = await request<{ recovery?: { deadline: string } }>("session", { headers: { Authorization: `Bearer ${session.token}` } });
-    if (result.recovery) { await writeSession({ ...session, recovery: result.recovery }); return false; }
-    return true;
-  } catch { await clearSession(); return false; }
+    const result = await checkSessionStatus(session);
+    if (result.recovery) return applySessionRevocation(session.token, result.recovery);
+    return session;
+  } catch (error) {
+    if (error instanceof AuthApiError && error.status === 401) return applySessionRevocation(session.token);
+    throw error;
+  }
+}
+
+const sessionChecks = new Map<string, Promise<StoredSession | null>>();
+
+export function reconcileOrdinarySession(session: StoredSession) {
+  const existing = sessionChecks.get(session.token);
+  if (existing) return existing;
+  const pending = validateOrdinarySession(session).finally(() => sessionChecks.delete(session.token));
+  sessionChecks.set(session.token, pending);
+  return pending;
+}
+
+export async function restoreAuthenticatedSession() {
+  const session = await readStoredSession();
+  if (!session || session.recovery) return false;
+  const verified = await reconcileOrdinarySession(session).catch(() => null);
+  return Boolean(verified && !verified.recovery && verified.token === session.token);
 }

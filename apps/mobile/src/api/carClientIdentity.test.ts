@@ -18,6 +18,7 @@ function fixture(platform = "android", version = "0.3.0", registered = true, sig
     "../features/search/flightSearchDiagnostics": { logFlightSearchCheckpoint: () => {} },
     "../features/privacy/visitorIdentity": { visitorIdentity: { headers: async () => ({}), trackingContext: () => null } },
     "../features/privacy/journeyResponseContext": { rememberJourneyResponseContext: (data: unknown) => { journeyResponses.push(data); } },
+    "../features/auth/authApi": {},
     "../../../../src/lib/providerHandoffClient": { createProviderHandoffMetadata: () => () => ({}) },
   };
   const compiled = ts.transpileModule(readFileSync(new NodeURL("./travelApi.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;

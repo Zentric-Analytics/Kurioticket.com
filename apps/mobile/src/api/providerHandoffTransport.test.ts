@@ -31,6 +31,7 @@ function fixture() {
       trackingContext: () => context,
     } },
     "../features/privacy/journeyResponseContext": { rememberJourneyResponseContext: () => undefined },
+    "../features/auth/authApi": {},
     "../../../../src/lib/providerHandoffClient": { createProviderHandoffMetadata },
   };
   const compiled = ts.transpileModule(readFileSync(new NodeURL("./travelApi.ts", import.meta.url), "utf8"), {

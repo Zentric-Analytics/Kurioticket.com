@@ -4,3 +4,25 @@ test("deletion status requires mobile auth and scopes lookup",async()=>{const no
 test("deletion request needs explicit confirmation, ignores client identity, and is idempotent",async()=>{let input:unknown;const handlers=createDeletionHandlers({authenticate:async()=>auth,get:async()=>null,request:async value=>(input=value,{request:pending,created:false} as never)});assert.equal((await handlers.POST(req({userId:"attacker"}))).status,400);const response=await handlers.POST(req({confirmed:true,userId:"attacker",email:"evil@example.com"}));assert.equal(response.status,200);assert.deepEqual(input,{userId:"owner",email:"owner@example.com"});assert.equal((await response.json()).created,false);});
 test("reactivation is cross-user safe and preserves canonical service errors",async()=>{let args:unknown;const ok=await createReactivateHandler({authenticate:async()=>auth,reactivate:async(...value)=>(args=value,{id:"request",status:"CANCELLED",cancelledAt:new Date()} as never)})(req({confirmed:true,userId:"attacker",email:"evil@example.com"}));assert.equal(ok.status,200);assert.deepEqual(args,["owner","owner@example.com",undefined,{sessionId:"session",tokenHash:"fixture-hash"}]);assert.equal((await (await createReactivateHandler({authenticate:async()=>auth,reactivate:async()=>{throw new Error("GracePeriodExpired")}})(req({confirmed:true}))).status),410);assert.equal((await createReactivateHandler({authenticate:async()=>auth,reactivate:async()=>{throw new Error("NoPendingRequest")}})(req({confirmed:true}))).status,404);assert.equal((await createReactivateHandler({authenticate:async()=>auth,reactivate:async()=>{throw new Error("DatabaseUnavailable")}})(req({confirmed:true}))).status,503);for(const request of [new Request("https://test",{method:"POST"}),req()])assert.equal((await createReactivateHandler({authenticate:async()=>null,reactivate:async()=>assert.fail()})(request)).status,401);});
 test("canonical reactivation activates the user without restoring revoked sessions",()=>{const source=readFileSync("src/services/accountDeletionService.ts","utf8");const start=source.indexOf("export async function reactivateAccount");const end=source.indexOf("export async function markDeletionRequestsReadyForReview",start);const reactivate=source.slice(start,end);assert.match(reactivate,/user\.update\(\{ where: \{ id: userId \}, data: \{ status: "ACTIVE" \} \}\)/);assert.doesNotMatch(reactivate,/accountSession|revokedAt|revokeReason|sessionVersion/);});
+
+test("only a persisted deletion request returns pending status and its deadline", async () => {
+  const created = createDeletionHandlers({
+    authenticate: async () => auth,
+    get: async () => null,
+    request: async () => ({ request: pending, created: true } as never),
+  });
+  const response = await created.POST(req({ confirmed: true }));
+  assert.equal(response.status, 201);
+  const result = await response.json();
+  assert.equal(result.request.status, "PENDING");
+  assert.equal(result.request.deletionScheduledAt, pending.deletionScheduledAt.toISOString());
+
+  const unavailable = createDeletionHandlers({
+    authenticate: async () => auth,
+    get: async () => null,
+    request: async () => { throw new Error("DatabaseUnavailable"); },
+  });
+  const failure = await unavailable.POST(req({ confirmed: true }));
+  assert.equal(failure.status, 503);
+  assert.deepEqual(await failure.json(), { error: "Unable to request account deletion." });
+});

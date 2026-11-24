@@ -6,7 +6,7 @@ import { travelApi } from "../../api/travelApi";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { profileWelcomeGreeting } from "../../localization/profileGreetingCopy";
 import { peekProfileName, readProfileName, writeProfileName } from "../../storage/profileNameCache";
-import { readSession } from "../../storage/sessionStorage";
+import { readSession, subscribeSession } from "../../storage/sessionStorage";
 import { useAppTheme } from "../../theme/AppTheme";
 import { authApi } from "../auth/authApi";
 import { FlowIcon } from "../flow/FlowIcon";
@@ -72,8 +72,9 @@ export function AuthenticatedProfileScreen() {
   useFocusEffect(load);
   useEffect(() => {
     const unsubscribe = subscribeUnreadCountChanged(load);
+    const stopWatchingSession = subscribeSession(session => { if (!session) loadGeneration.current++; });
     const appState = AppState.addEventListener("change", state => { if (state === "active") load(); });
-    return () => { unsubscribe(); appState.remove(); };
+    return () => { loadGeneration.current++; unsubscribe(); stopWatchingSession(); appState.remove(); };
   }, [load]);
   const logout = () => Alert.alert(t("logoutConfirm"), t("logoutExplanation"), [{ text: t("cancel"), style: "cancel" }, { text: t("logout"), style: "destructive", onPress: () => void authApi.logout().catch(() => undefined).finally(() => router.replace("/(tabs)/profile")) }]);
   const [manageAccount, ...remainingSections] = authenticatedProfileSections;

@@ -2491,7 +2491,6 @@ function SecuritySettingRow({
 export function SecurityDashboardPage() {
   const { t, locale } = useLocale();
   const dateTimeLocale = findLanguageOption(locale)?.locale ?? "en-US";
-  const router = useRouter();
   const [actionMessage, setActionMessage] = useState("");
   const [securityFeedback, setSecurityFeedback] = useState("");
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
@@ -3022,16 +3021,15 @@ export function SecurityDashboardPage() {
         method: "POST",
         credentials: "same-origin",
       });
-      await response.json().catch(() => ({}));
+      const data = await response.json().catch(() => ({}));
 
-      if (!response.ok) {
+      if (!response.ok || !["PENDING", "READY_FOR_REVIEW"].includes(data.request?.status)) {
         setActionMessage("Unable to request account deletion.");
         return;
       }
 
-      setDeleteModalOpen(false);
-      showSecurityFeedback("Delete account request submitted");
-      router.push("/account/pending-deletion");
+      // Drop the authenticated document and its client-side router cache.
+      window.location.replace("/account/pending-deletion");
     } catch {
       setActionMessage("Unable to request account deletion.");
     } finally {
