@@ -89,7 +89,9 @@ export async function POST(request: Request) {
       }
       // Optional device evidence is captured only for a newly accepted, consented guest visit.
       // It does not create a new event, credential, or authenticated session.
-      const guestAccess = !identity.userId ? consentedGuestAccessObservation(request, platform, native ? "native" : "web") : undefined;
+      // New optional descriptive fields are staging-only until the privacy/retention review.
+      const guestAccess = !identity.userId && getPublicEnvironment() === "staging"
+        ? consentedGuestAccessObservation(request, platform, native ? "native" : "web") : undefined;
       await tx.analyticsEvent.create({ data: {
         type: "PAGE_VIEW", name: "page_viewed", userId: identity.userId, visitorId: identity.visitorId,
         metadata: withEnvironmentMetadata({
