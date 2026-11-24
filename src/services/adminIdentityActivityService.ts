@@ -277,7 +277,7 @@ export async function loadAdminIdentityActivity(
     const accountAnalyticsWhere: Prisma.AnalyticsEventWhereInput = {
       AND: [
         analyticsOwner, environmentScope.analytics, { createdAt: window },
-        { type: { in: Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[] } },
+        { type: { in: (Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[]).filter(type => type !== "PAGE_VIEW") } },
         // The dedicated interaction tab excludes signup, support and provider
         // diagnostics while All activity keeps their operational audit trail.
         ...(filters.tab === "interactions" ? [{
