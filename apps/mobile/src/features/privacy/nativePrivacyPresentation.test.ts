@@ -24,7 +24,10 @@ test("native consent requires an explicit choice and leaves unsupported categori
   assert.match(sheet, /analytics checked=\{draft\}/);
   assert.match(sheet, /onChange=\{setDraft\}/);
   assert.match(sheet, /"Allow analytics" : "Save preferences".*choose\(draft\)/);
-  assert.match(sheet, /label="Essential only".*choose\(false\)/);
+  assert.doesNotMatch(sheet, /label="Essential only"/);
+  assert.match(sheet, /label="Privacy preferences" secondary disabled=\{saving\} onPress=\{onOpen\}/);
+  assert.equal((sheet.match(/label="Accept all"/g) ?? []).length, 2);
+  assert.match(sheet, /turn off analytics and save your preferences/);
   assert.match(sheet, /await visitorIdentity\.choose\(value\)/);
   assert.match(sheet, /accessibilityState=\{\{ expanded \}\}/);
   assert.match(sheet, /Manage your preferences/);
