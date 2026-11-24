@@ -1,7 +1,7 @@
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { applicationMetadata } from "@/lib/application-source";
 import { after } from "next/server";
-import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
+import { attachOperationalSearchSession, prepareOperationalSearchSession, operationalSessionMetadata } from "@/lib/operationalSearchSession";
 import { identifySearchCrawler, searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   if (!search) return Response.json({ error: "Invalid car search parameters.", requestId }, { status: 400, headers: noStore });
   const operationalSession = crawler ? null : prepareOperationalSearchSession(request);
   const recordedSearch = { ...search, ...searchNetworkObservation(request),
-    ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}),
+    ...(operationalSession ? operationalSessionMetadata(operationalSession.reference) : {}),
     ...searchCrawlerMetadata(crawler) };
   const started = performance.now();
   let activityIdentity: ReturnType<typeof resolveRequestActivityIdentity> | undefined;
