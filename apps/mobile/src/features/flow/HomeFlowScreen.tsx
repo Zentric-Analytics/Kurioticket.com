@@ -26,7 +26,6 @@ import { HomepageAdventureDiscovery } from "../home/HomepageAdventureDiscovery";
 import { PopularDestinationStays } from "../home/PopularDestinationStays";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { UnavailableNotice } from "./FlowPrimitives";
-import { NativeFirstVisitPrivacyPrompt } from "../privacy/AnalyticsConsentControl";
 
 const homeHeroSource = {
   uri: "https://kurioticket.com/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg",
@@ -278,7 +277,7 @@ function HomePageContent() {
 }
 
 export function SharedHomePage() {
-  return <><HomePresentationProvider><HomePageContent /></HomePresentationProvider><NativeFirstVisitPrivacyPrompt /></>;
+  return <HomePresentationProvider><HomePageContent /></HomePresentationProvider>;
 }
 
 export const HomeFlowScreen = SharedHomePage;
