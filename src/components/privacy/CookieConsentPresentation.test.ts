@@ -15,7 +15,9 @@ const render = (editing: boolean, draftAnalytics = false, overrides: Partial<Par
 test("initial consent banner offers explicit equally accessible decisions without a close button", () => {
   const markup = render(false);
   assert.match(markup, /We value your privacy/);
-  assert.match(markup, /Decline optional/);
+  assert.match(markup, /Continue without optional cookies/);
+  assert.match(markup, /data-cookie-consent-actions/);
+  assert.doesNotMatch(markup, /Decline optional/);
   assert.doesNotMatch(markup, /Essential only|Reject optional|Cookie Policy|Privacy Policy/);
   assert.doesNotMatch(markup, /Learn about our use of cookies/);
   assert.match(markup, /Accept all/);
