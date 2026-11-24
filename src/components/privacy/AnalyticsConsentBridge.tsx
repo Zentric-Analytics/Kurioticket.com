@@ -260,6 +260,7 @@ function WebsiteAnalyticsConsentBridge() {
     saveFailedRef.current = !saveChoice(nextChoice);
     setChoice(nextChoice);
     setDraftAnalytics(nextChoice === "granted");
+    setEditing(false);
     decisionPendingRef.current = true;
     setDecisionPending(true);
     void synchronizerRef.current!.sync({ choice: nextChoice, accountKey }, true);
