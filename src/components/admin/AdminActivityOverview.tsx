@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronRight, Route } from "lucide-react";
 import { activityOverviewRows } from "@/lib/adminActivityOverview";
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
+import { PageViewRecords } from "@/components/admin/PageViewRecords";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
 
 const stamp = (date: Date) => new Intl.DateTimeFormat("en-GB", {
@@ -14,15 +15,20 @@ const name = (product: string) => ({
 const action = "focus-ring inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1.5 text-[13px] font-medium text-[#004BB8] hover:bg-[#F1F6FF]";
 
 export function AdminActivityOverview({
-  events, journeyHistoryHref, operational, environment,
+  events, journeyHistoryHref, operational, environment, tab = "all", pagesVisited, pagesHref,
 }: {
   events: ActivityRow[];
   journeyHistoryHref: string;
   operational: boolean;
   environment: string;
+  tab?: string;
+  pagesVisited?: number;
+  pagesHref?: string;
 }) {
-  const overview = activityOverviewRows(events);
+  const overview = activityOverviewRows(events.filter(event => event.stage !== "PAGE_VIEW"));
+  if (tab === "pages") return <PageViewRecords key={pagesHref} events={events} count={pagesVisited ?? 0} full operational={operational}/>;
   return <section data-testid="activity-overview" aria-label="Activity overview" className="min-w-0 space-y-6">
+    {tab === "all" && pagesVisited !== undefined && !operational ? <PageViewRecords key={pagesHref} events={events} count={pagesVisited} full={false} href={pagesHref} operational={false}/> : null}
     {!operational ? <section aria-labelledby="recent-journeys-title" className="min-w-0">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
         <div>
