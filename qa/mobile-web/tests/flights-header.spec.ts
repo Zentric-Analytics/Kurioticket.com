@@ -13,6 +13,9 @@ test("Flight browser fixture dates stay future-dated across year and leap-day bo
 });
 
 test.beforeEach(async ({ page, request }) => {
+  // Flight header tests are not consent-dialog tests. Seed an explicit denied
+  // choice so the real modal cannot block navbar actions in clean CI browsers.
+  await page.addInitScript(() => localStorage.setItem("kurioticket:analytics-consent:v1", "declined"));
   await page.route("**/api/flights/search", async (route) => {
     const response = await request.post("http://127.0.0.1:3011/api/flights/search");
     await route.fulfill({ response });
@@ -301,8 +304,8 @@ test("authenticated Flight card persists airport-local provider times as real in
     await route.fulfill({ json: body });
   });
   await page.route("**/api/account/customization-preferences", route => route.fulfill({ json: { preferences: null } }));
-  // Exercise consent withdrawal through its UI with a controlled backend,
-  // independent of the nonexistent fixture account and local database.
+  // Consent is explicitly declined by beforeEach; this test verifies
+  // authenticated flight saving without depending on a cookie modal.
   await page.route("**/api/identity/visitor", route => route.fulfill({ json: { analyticsTracking: "disabled" } }));
   const writes: Record<string, unknown>[] = [];
   await page.route("**/api/dashboard/saved**", async route => {
@@ -312,9 +315,6 @@ test("authenticated Flight card persists airport-local provider times as real in
     } else await route.fulfill({ json: { items: [] } });
   });
   await page.goto(flightResults.replace(dates.departureDate, departureDate).replace(dates.returnDate, `${year}-12-18`));
-  const consent = page.getByRole("button", { name: "Save preferences", exact: true });
-  await expect(consent).toBeVisible();
-  await consent.click();
   await expect(page.getByRole("dialog", { name: "Cookie preferences", exact: true })).toBeHidden();
   const save = page.getByRole("button", { name: /^Save .* flight$/ }).filter({ visible: true }).first();
   await expect(save).toBeEnabled(); await save.click();
