@@ -33,10 +33,16 @@ export function isPageViewKey(value: unknown): value is PageViewKey {
   return typeof value === "string" && Object.prototype.hasOwnProperty.call(pageViewCatalog, value);
 }
 export function pageViewKey(pathname: string | null | undefined, transport: PageViewTransport): PageViewKey | null {
-  if (!pathname || pathname.length > 120 || !pathname.startsWith("/") || pathname.startsWith("//")) return null;
+  if (!pathname || pathname.length > 240 || !pathname.startsWith("/") || pathname.startsWith("//")) return null;
   // Only literal route paths; query strings, fragments, encoded paths and
   // identifiers are not parsed, decoded, persisted or forwarded.
   const path = pathname === "/" ? pathname : pathname.replace(/\/$/, "");
+  // Recognize only the established product details route template. Discard
+  // its private identifier; never return or persist the original path.
+  if (transport === "web") {
+    const detail = /^\/(flights|hotels|cars)\/details\/[A-Za-z0-9._%:+~=-]{1,160}$/.exec(path);
+    if (detail) return ({ flights: "flight_details", hotels: "hotel_details", cars: "car_details" } as const)[detail[1] as "flights" | "hotels" | "cars"];
+  }
   for (const key of Object.keys(pageViewCatalog) as PageViewKey[]) {
     if ((pageViewCatalog[key][transport] as readonly string[]).includes(path)) return key;
   }
@@ -76,5 +82,36 @@ export function createPageViewObserver() {
     const previousPageKey = lastKey;
     lastKey = key;
     return { pageKey: key, ...(previousPageKey ? { previousPageKey } : {}) };
+  };
+}
+
+export type PageViewPayload = { eventId: string; pageKey: PageViewKey; previousPageKey?: PageViewKey; requestId?: string };
+export function pageViewRequestId(value: unknown): string | undefined {
+  return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value) ? value.toLowerCase() : undefined;
+}
+export function pageViewCanLink(key: unknown) {
+  return isPageViewKey(key) && /^(flight|hotel|car)_(results|details)$/.test(key);
+}
+/** Each committed navigation gets one event ID. Exact search references enrich
+ * that event instead of writing another page view. Never link by recency. */
+export function createPageViewCapture(createId: () => string) {
+  const observe = createPageViewObserver();
+  let current: { context: string | number; payload: PageViewPayload } | null = null;
+  return (input: { pathname: string | null; transport: PageViewTransport; context: string | number | null; visible: boolean; requestId?: unknown }): PageViewPayload | null => {
+    const observation = observe(input);
+    const key = pageViewKey(input.pathname, input.transport);
+    if (input.context === null || !key || current?.context !== input.context || current.payload.pageKey !== key) current = null;
+    if (!input.visible || input.context === null || !key) return null;
+    const requestId = pageViewCanLink(key) ? pageViewRequestId(input.requestId) : undefined;
+    if (observation) {
+      const payload: PageViewPayload = { ...observation, eventId: createId(), ...(requestId ? { requestId } : {}) };
+      current = { context: input.context, payload };
+      return payload;
+    }
+    if (!current || !requestId || (current.payload.requestId && current.payload.requestId !== requestId)) return null;
+    // Same event ID even when the response arrives after the page observation.
+    // Identical retries are safe, and the server never overwrites a valid link.
+    current.payload = { ...current.payload, requestId };
+    return current.payload;
   };
 }
