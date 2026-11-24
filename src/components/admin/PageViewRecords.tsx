@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
+import { recentPageViews } from "@/lib/adminPageHistory";
 
 const stamp = (date: Date) => new Intl.DateTimeFormat("en-GB", {
   day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
@@ -22,14 +22,12 @@ export function PageViewDetails({ row }: { row: ActivityRow }) {
 export function PageViewRecords({ events, count, full, href, operational }: {
   events: ActivityRow[]; count: number; full: boolean; href?: string; operational: boolean;
 }) {
-  const [visibleCount, setVisibleCount] = useState(25);
-  const rows = events.filter(row => row.stage === "PAGE_VIEW" && row.pageView);
-  const visible = rows.slice(0, full ? visibleCount : 10);
+  const visible = full ? events.filter(row => row.stage === "PAGE_VIEW" && row.pageView) : recentPageViews(events);
   return <section aria-label="Pages visited" className="min-w-0 space-y-3" data-testid="page-view-records">
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="min-w-0">
         <h2 className="text-[15px] font-semibold text-[#0F172A]">Pages visited</h2>
-        <p className="mt-1 text-[12px] text-[#64748B]">{operational ? "Optional page tracking is not available for this guest session." : "Matching page and screen visits"}</p>
+        <p className="mt-1 text-[12px] text-[#64748B]">{operational ? "Optional page tracking is not available for this guest session." : full ? "Matching page and screen visits" : "Showing " + visible.length + " most recent " + (visible.length === 1 ? "visit" : "visits")}</p>
         {!operational ? <p data-testid="pages-visited-total" className="mt-1 text-[19px] font-semibold tabular-nums text-[#0F172A]">{count}</p> : null}
       </div>
       {!full && href && !operational ? <Link href={href} className="focus-ring shrink-0 rounded-md px-2 py-1.5 text-[13px] font-medium text-[#004BB8] hover:bg-[#F1F6FF]">View all pages visited</Link> : null}
@@ -48,6 +46,5 @@ export function PageViewRecords({ events, count, full, href, operational }: {
           </li>)}
         </ol>
       </div>}
-    {full && rows.length > visible.length ? <button type="button" onClick={() => setVisibleCount(n => n + 25)} className="focus-ring rounded-md border border-[#E2E8F0] px-3 py-2 text-[13px] font-medium text-[#004BB8]">Show more ({rows.length - visible.length} remaining)</button> : null}
   </section>;
 }
