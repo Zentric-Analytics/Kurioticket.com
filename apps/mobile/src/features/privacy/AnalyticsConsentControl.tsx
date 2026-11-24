@@ -109,10 +109,10 @@ function PrivacySheet({ visible, initial, editing, onOpen, onClose, onDone, curr
         </View>
         <ScrollView bounces={false} overScrollMode="never" style={styles.scroll} contentContainerStyle={styles.content}>
           <Text style={[styles.body, { color: theme.muted }]}>{details
-            ? "Choose how Kurioticket uses app data to support and improve your experience. Optional sharing is your choice."
+            ? "Choose how Kurioticket uses app data to support and improve your experience. To use essential app functions only, turn off analytics and save your preferences."
             : "Essential app functions keep Kurioticket secure and working. With your permission, optional analytics helps us understand and improve your experience. You can change your choice at any time under Profile → About & legal."}</Text>
           {details ? <>
-            <View style={styles.actions}><View style={styles.flex}><Action label="Essential only" disabled={saving} onPress={() => void choose(false)} /></View><View style={styles.flex}><Action label="Accept all" disabled={saving} onPress={() => void choose(true)} /></View></View>
+            <Action label="Accept all" disabled={saving} onPress={() => void choose(true)} />
             <Text accessibilityRole="header" style={[styles.label, { color: theme.text }]}>Manage your preferences</Text>
             <Category title="Essential app functions" subtitle="Keeps Kurioticket secure and working"
               description="Supports security, sign-in, requested travel searches and necessary search-to-provider handoff records. This does not enable optional behavioural analytics." />
@@ -127,9 +127,8 @@ function PrivacySheet({ visible, initial, editing, onOpen, onClose, onDone, curr
         </ScrollView>
         <View style={[styles.footer, { borderTopColor: theme.border, paddingBottom: Math.max(insets.bottom, 16) }]}>
           {details ? <Action label={initial && draft ? "Allow analytics" : "Save preferences"} disabled={saving} onPress={() => void choose(draft)} /> : <>
-            <Action label="Privacy preferences" secondary disabled={saving} onPress={onOpen} />
             <View style={styles.actions}>
-              <View style={styles.flex}><Action label="Essential only" disabled={saving} onPress={() => void choose(false)} /></View>
+              <View style={styles.flex}><Action label="Privacy preferences" secondary disabled={saving} onPress={onOpen} /></View>
               <View style={styles.flex}><Action label="Accept all" disabled={saving} onPress={() => void choose(true)} /></View>
             </View>
           </>}
