@@ -11,6 +11,8 @@ import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { AdminOperationalDateRangeFields } from "@/components/admin/AdminOperationalDateRangeFields";
 import { SearchMonitorTable } from "@/components/admin/SearchMonitorTable";
+import { AdminSearchTimeZoneSync } from "@/components/admin/AdminSearchTimeZoneSync";
+import { validViewerTimeZone, viewerTodayStart } from "@/lib/adminLocalTime";
 
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -52,6 +54,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
 
   return (
     <>
+      <AdminSearchTimeZoneSync />
       <AdminPageShell title="Search activity" hideHeader>
         <div className="mx-auto w-full max-w-[1500px]">
         
@@ -65,6 +68,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
             </div>
 
             <form action="/admin/searches/activity" className="border-b border-[#E5E7EB]">
+              {one(raw.viewerTimeZone) ? <input type="hidden" name="viewerTimeZone" value={one(raw.viewerTimeZone)} /> : null}
               {one(raw.product) ? <input type="hidden" name="product" value={one(raw.product)} /> : null}
               {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
               {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
@@ -195,7 +199,7 @@ function resolveRange(raw: Record<string, string | string[] | undefined>): Range
 function toBackendParams(raw: Record<string, string | string[] | undefined>, range: RangeKey) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(raw)) {
-    if (key === "range" || key === "cursor" || key === "limit") continue;
+    if (key === "range" || key === "cursor" || key === "limit" || key === "viewerTimeZone") continue;
     if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
     else if (value) params.set(key, value);
   }
@@ -209,7 +213,11 @@ function toBackendParams(raw: Record<string, string | string[] | undefined>, ran
     const now = new Date();
     const from = new Date(now);
     if (range === "24h") from.setTime(now.getTime() - 24 * 60 * 60 * 1000);
-    if (range === "today") from.setUTCHours(0, 0, 0, 0);
+    if (range === "today") {
+      const zone = validViewerTimeZone(one(raw.viewerTimeZone));
+      if (zone) from.setTime(Date.parse(viewerTodayStart(now, zone)));
+      else from.setUTCHours(0, 0, 0, 0);
+    }
     if (range === "7d") from.setUTCDate(from.getUTCDate() - 7);
     if (range === "30d") from.setUTCDate(from.getUTCDate() - 30);
     params.set("from", from.toISOString());
