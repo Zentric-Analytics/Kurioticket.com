@@ -300,11 +300,31 @@ try {
   await expect(page).toHaveURL(url => url.pathname.endsWith("/activity") && url.searchParams.get("range")==="all" && !url.searchParams.has("platform"));
   await expect(page.getByTestId("page-view-row")).toHaveCount(5);
   await expect(page.getByTestId("pages-visited-total")).toHaveText("45");
-  await page.getByRole("link",{name:"Pages visited",exact:true}).click();
+  // Both activity tabs show five visits. The row count alone cannot tell
+  // whether the Pages visited navigation has committed in the browser.
+  const pagesTab = page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Pages visited",exact:true});
+  await pagesTab.click();
+  await expect(page).toHaveURL(url => url.pathname.endsWith("/activity") && url.searchParams.get("range")==="all" && url.searchParams.get("tab")==="pages");
+  await expect(pagesTab).toHaveAttribute("aria-current","page");
   await expect(page.getByTestId("page-view-row")).toHaveCount(5);
-  await page.getByRole("link",{name:"View all pages visited"}).click();
-  await page.getByRole("link",{name:"Back to Activity",exact:true}).click();
-  await expect(page).toHaveURL(url => url.searchParams.get("tab")==="pages");
+  const pagesHistoryLink = page.getByTestId("page-view-records").getByRole("link",{name:"View all pages visited",exact:true});
+  // Assert the real rendered link carries the newly selected tab, not the
+  // prior All activity context from the still-visible server payload.
+  await expect.poll(async () => {
+    const href = await pagesHistoryLink.getAttribute("href");
+    if (!href) return null;
+    const destination = new URL(href, base);
+    const returnPath = destination.searchParams.get("activityReturn");
+    return returnPath ? new URL(returnPath, base).searchParams.get("tab") : null;
+  }).toBe("pages");
+  await pagesHistoryLink.click();
+  await expect(page).toHaveURL(url => url.pathname === "/admin/users/user/qa-page-history-0001/pages");
+  await expect(page.getByRole("heading",{name:"Pages Visited History",exact:true})).toBeVisible();
+  const historyBackToActivity = page.getByRole("link",{name:"Back to Activity",exact:true});
+  await expect(historyBackToActivity).toHaveAttribute("href", /[?&]tab=pages(?:&|$)/);
+  await historyBackToActivity.click();
+  await expect(page).toHaveURL(url => url.pathname.endsWith("/activity") && url.searchParams.get("range")==="all" && url.searchParams.get("tab")==="pages");
+  await expect(pagesTab).toHaveAttribute("aria-current","page");
   await expect(page.getByTestId("page-view-row")).toHaveCount(5);
   console.log("PASS five recent page visits, separate history pagination, filters and return navigation");
 
