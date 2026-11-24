@@ -174,7 +174,7 @@ export function AppHeader({
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
 
-  const isSignedIn = Boolean(session?.user);
+  const isSignedIn = session?.user?.status === "ACTIVE";
   const resultsDesktopSticky =
     hotelResultsDesktopSticky || flightResultsDesktopSticky || carsResultsDesktopSticky;
   const fullscreenHotelMobileMenu = Boolean(hotelResultsDesktopSticky && mobileResultsSearch);

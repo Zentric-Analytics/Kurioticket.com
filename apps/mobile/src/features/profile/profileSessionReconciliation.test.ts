@@ -46,8 +46,9 @@ test("authenticated Profile reconciles a cleared session to guest", async () => 
   const profile = harness({ initialSession: session, guest: true });
   await flush();
   profile.publish(null);
+  assert.deepEqual(profile.states, ["authenticated", "loading"]);
   await flush();
-  assert.deepEqual(profile.states, ["authenticated", "guest"]);
+  assert.deepEqual(profile.states, ["authenticated", "loading", "guest"]);
   profile.stop();
 });
 

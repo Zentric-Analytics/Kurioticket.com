@@ -12581,7 +12581,7 @@ test("Swedish account dashboard overview resolves localized copy while preservin
   }
   assert.ok(dashboardSource.includes("href={row.href}"), "Dashboard rows should keep Link click behavior.");
   assert.ok(dashboardSource.includes('className="grid gap-4 md:grid-cols-2 lg:gap-5"'), "Dashboard overview layout should remain unchanged.");
-  assert.ok(accountPageSource.includes("getServerSession(authOptions)"), "Account overview should preserve auth/session behavior.");
+  assert.ok(accountPageSource.includes('await requireUserSession("/dashboard/account")'), "Account overview must require an ordinary authenticated session.");
   assert.ok(supportedLocalesSource.includes('code: "sv"') && supportedLocalesSource.includes('locale: "sv-SE"') && supportedLocalesSource.includes('nativeLabel: "Svenska"') && supportedLocalesSource.includes('direction: "ltr"'));
   assert.ok(supportedLocalesSource.includes('code: "ar"') && supportedLocalesSource.includes('direction: "rtl"'));
 });

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
 import { validateMobileBearer, validateMobileDeletionReactivationBearer as validateRecovery } from "./account-session";
+import { MOBILE_RECOVERY_REASON } from "./mobile-deletion-recovery";
 import { requireMobileSecurity } from "./mobile-security-route";
 
 const secret = "a".repeat(43);
@@ -32,6 +33,35 @@ test("deletion-reactivation authentication accepts only the exact deletion trans
   const result = await validateMobileDeletionReactivationBearer(bearer(), lookup(eligible()));
   assert.equal(result?.user.id, "user-1");
   assert.equal(result?.user.email, "owner@example.com");
+});
+
+test("a freshly verified recovery credential never authorizes ordinary mobile operations", async () => {
+  const createdAt = new Date(deletedAt.getTime() + 100);
+  const restricted = eligible({
+    createdAt,
+    revokedAt: createdAt,
+    revokeReason: MOBILE_RECOVERY_REASON + deletion.id,
+    sessionVersion: 5,
+    assuranceLevel: "PRIMARY",
+    reauthenticatedAt: createdAt,
+    twoFactorVerifiedAt: null,
+  });
+
+  assert.equal((await validateMobileDeletionReactivationBearer(bearer(), lookup(restricted)))?.user.id, "user-1");
+  assert.equal(await validateMobileBearer(bearer(), lookup(restricted)), null);
+  assert.equal(await requireMobileSecurity(bearer(), async () => restricted as never), null);
+
+  const reactivated = { ...restricted, user: { ...restricted.user, status: "ACTIVE" } };
+  assert.equal(await validateMobileBearer(bearer(), lookup(reactivated)), null);
+  assert.equal(await validateMobileDeletionReactivationBearer(bearer(), lookup(reactivated)), null);
+});
+
+test("a valid transition token cannot recover an account after the deletion deadline", async () => {
+  const result = await validateRecovery(bearer(), lookup(eligible()), async () => ({
+    ...deletion,
+    deletionScheduledAt: new Date(Date.now() - 1),
+  }) as never);
+  assert.equal(result, null);
 });
 
 test("deletion-reactivation authentication rejects malformed and mismatched bearers", async () => {
