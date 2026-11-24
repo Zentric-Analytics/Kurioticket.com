@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, useWindowDimensions, View } from "react-native";
 import { usePathname, useSegments } from "expo-router";
 import { pageViewKey } from "@/lib/pageViewCatalog";
+import { cookieConsentCopy } from "@/lib/cookieConsentCopy";
+import { CookiePolicyReader } from "../legal/CookiePolicyReader";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronRight, Minus, Plus, X } from "lucide-react-native";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -67,11 +69,13 @@ function PrivacySheet({ visible, initial, editing, onOpen, onClose, onDone, curr
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const [draft, setDraft] = useState(current);
+  const [policyOpen, setPolicyOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
   const savingRef = useRef(false);
 
   const close = () => {
+    if (policyOpen) { setPolicyOpen(false); return; }
     if (savingRef.current) return;
     setDraft(current);
     setError(false);
@@ -95,32 +99,35 @@ function PrivacySheet({ visible, initial, editing, onOpen, onClose, onDone, curr
     }
   }
   const details = editing || !initial;
-  const title = details ? "Privacy preferences" : "We value your privacy";
+  const title = details ? "Cookie preferences" : "We value your privacy";
 
   return <Modal visible={visible} transparent animationType="fade" presentationStyle="overFullScreen"
     statusBarTranslucent navigationBarTranslucent onRequestClose={close}>
     <View style={[styles.overlay, { paddingTop: insets.top + 8, paddingLeft: insets.left, paddingRight: insets.right }]} accessibilityViewIsModal onAccessibilityEscape={close}>
-      <View style={[styles.sheet, { backgroundColor: theme.surface, maxHeight: Math.min(height - insets.top - 8, 680) }]}>
+      <View style={[styles.sheet, { backgroundColor: theme.surface, maxHeight: Math.min(height - insets.top - 8, 680) }]}
+        pointerEvents={policyOpen ? "none" : "auto"} accessibilityElementsHidden={policyOpen} importantForAccessibility={policyOpen ? "no-hide-descendants" : "auto"}>
         <View style={[styles.header, { borderBottomColor: theme.border }]}>
           <Text accessibilityRole="header" style={[styles.title, styles.flex, { color: theme.text }]}>{title}</Text>
-          {details ? <Pressable accessibilityRole="button" accessibilityLabel="Close privacy preferences" disabled={saving} onPress={close} style={[styles.close, { backgroundColor: theme.background }]}>
+          {details ? <Pressable accessibilityRole="button" accessibilityLabel="Close cookie preferences" disabled={saving} onPress={close} style={[styles.close, { backgroundColor: theme.background }]}>
             <X size={20} color={theme.icon} accessible={false} />
           </Pressable> : null}
         </View>
         <ScrollView bounces={false} overScrollMode="never" style={styles.scroll} contentContainerStyle={styles.content}>
-          <Text style={[styles.body, { color: theme.muted }]}>{details
-            ? "Choose how Kurioticket uses app data to support and improve your experience. To use essential app functions only, turn off analytics and save your preferences."
-            : "Essential app functions keep Kurioticket secure and working. With your permission, optional analytics helps us understand and improve your experience. You can change your choice at any time under Profile → About & legal."}</Text>
+          <Text style={[styles.body, { color: theme.muted }]}>{details ? cookieConsentCopy.details : cookieConsentCopy.banner}</Text>
           {details ? <>
+            <Pressable accessibilityRole="link" accessibilityLabel="Cookie policy" disabled={saving} onPress={() => setPolicyOpen(true)} style={styles.policyLink}>
+              <Text style={[styles.policyLinkText, { color: theme.dark ? "#8EB7FF" : "#004BB8" }]}>Cookie policy</Text>
+            </Pressable>
             <Action label="Accept all" disabled={saving} onPress={() => void choose(true)} />
             <Text accessibilityRole="header" style={[styles.label, { color: theme.text }]}>Manage your preferences</Text>
-            <Category title="Essential app functions" subtitle="Keeps Kurioticket secure and working"
-              description="Supports security, sign-in, requested travel searches and necessary search-to-provider handoff records. This does not enable optional behavioural analytics." />
-            <Category title="Analytics sharing" subtitle={initial && current ? "Review your choice · not enabled until saved" : "Helps us understand your experience"}
-              description="With your permission, we measure app engagement and travel activity, including account-linked activity when you sign in. Turning analytics off does not prevent requested searches or necessary records."
+            <Category title="Essential app functions" subtitle={cookieConsentCopy.essential.subtitle}
+              description={cookieConsentCopy.essential.description} />
+            <Category title="Analytics sharing" subtitle={initial && draft ? cookieConsentCopy.analytics.suggested : cookieConsentCopy.analytics.subtitle}
+              description={cookieConsentCopy.analytics.description}
               analytics checked={draft} disabled={saving} onChange={setDraft} />
-            <Category title="Performance sharing" subtitle="Helps measure speed and reliability" description="Optional performance measurement could help us understand loading times, responsiveness and technical issues. This separate preference is not available yet and is not enabled by Accept all. Essential service diagnostics are separate." unavailable />
-             <Category title="Marketing sharing" subtitle="Helps measure campaigns and relevant promotions" description="Optional marketing measurement is not available yet and is not enabled by Accept all." unavailable />
+            <Category title="Performance sharing" subtitle={cookieConsentCopy.performance.subtitle} description={cookieConsentCopy.performance.description} unavailable />
+             <Category title="Marketing sharing" subtitle={cookieConsentCopy.marketing.subtitle} description={cookieConsentCopy.marketing.description} unavailable />
+            <Text style={[styles.subtitle, { color: theme.muted }]}>{cookieConsentCopy.optOut} {cookieConsentCopy.nativeManage}</Text>
           </> : null}
           {saving ? <Text accessibilityLiveRegion="polite" style={[styles.body, { color: theme.muted }]}>Saving your choice…</Text> : null}
           {error ? <Text accessibilityRole="alert" style={[styles.body, { color: theme.text }]}>We couldn't save your preferences. Optional analytics is off for now. Please try again.</Text> : null}
@@ -128,12 +135,13 @@ function PrivacySheet({ visible, initial, editing, onOpen, onClose, onDone, curr
         <View style={[styles.footer, { borderTopColor: theme.border, paddingBottom: Math.max(insets.bottom, 16) }]}>
           {details ? <Action label={initial && draft ? "Allow analytics" : "Save preferences"} disabled={saving} onPress={() => void choose(draft)} /> : <>
             <View style={styles.actions}>
-              <View style={styles.flex}><Action label="Privacy preferences" secondary disabled={saving} onPress={onOpen} /></View>
+              <View style={styles.flex}><Action label="Cookie preferences" secondary disabled={saving} onPress={onOpen} /></View>
               <View style={styles.flex}><Action label="Accept all" disabled={saving} onPress={() => void choose(true)} /></View>
             </View>
           </>}
         </View>
       </View>
+      {policyOpen ? <CookiePolicyReader onClose={() => setPolicyOpen(false)} /> : null}
     </View>
   </Modal>;
 }
@@ -202,6 +210,8 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 0, flexShrink: 1 },
   content: { padding: 20, gap: 12 },
   body: { fontFamily: appFonts.regular, fontSize: 14, lineHeight: 21 },
+  policyLink: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
+  policyLinkText: { fontFamily: appFonts.semibold, fontSize: 14, lineHeight: 20, textDecorationLine: "underline" },
   label: { fontFamily: appFonts.semibold, fontSize: 14, lineHeight: 20 },
   subtitle: { fontFamily: appFonts.regular, fontSize: 12, lineHeight: 18, marginTop: 2 },
   active: { fontFamily: appFonts.semibold, fontSize: 12, maxWidth: 82, textAlign: "right" },
