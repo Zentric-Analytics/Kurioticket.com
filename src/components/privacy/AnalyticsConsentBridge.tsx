@@ -268,14 +268,14 @@ function WebsiteAnalyticsConsentBridge() {
 
   // Keep first-visit decisions explicit, but permit policy access and avoid
   // blocking essential services while an explicit decision is synchronising.
-  const showBanner = choice === null || (!editing && decisionPending);
+  const showBanner = choice === null && !decisionPending;
   const isLegalPage = pathname === "/legal" || pathname?.startsWith("/legal/");
   const modal = editing || (choice === null && !isLegalPage && !decisionPending);
-  if (!ready || (!editing && !showBanner)) return null;
+  if (!ready || (!editing && !showBanner && !decisionPending)) return null;
 
   return (
     <CookieConsentPresentation
-      showBanner={showBanner || (editing && choice === null)}
+      showBanner={showBanner}
       editing={editing}
       modal={modal}
       draftAnalytics={draftAnalytics}
