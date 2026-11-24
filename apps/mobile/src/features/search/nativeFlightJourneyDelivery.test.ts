@@ -26,5 +26,7 @@ test("native analytics settings show disconnected grant separately from a connec
   assert.match(consent, /enabled \? state\.tracking \? "Analytics is ready on this device\."/);
   assert.match(consent, /enabled && !state\.tracking && !state\.pending/);
   assert.match(consent, /accessibilityLabel="Retry analytics connection"/);
-  assert.match(consent, /value=\{enabled\}/);
+  assert.match(consent, /value=\{!!checked\}/);
+  assert.match(consent, /analytics checked=\{draft\}/);
+  assert.match(consent, /await visitorIdentity\.choose\(value\)/);
 });
