@@ -18,7 +18,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const q = (params?.q || "").trim().slice(0, 120);
   const prismaQuery = escapePrismaContainsQuery(q);
   const role = ["ALL", "USER", "SUPPORT", "ADMIN"].includes(params?.role || "") ? params!.role! : "ALL";
-  const status = ["ALL", "ACTIVE", "SUSPENDED", "DELETED", "PENDING_DELETION"].includes(params?.status || "") ? params!.status! : "ALL";
+  const status = ["ALL", "ACTIVE", "INACTIVE", "UNAVAILABLE", "SUSPENDED", "DELETED", "PENDING_DELETION"].includes(params?.status || "") ? params!.status! : "ALL";
   // New shareable URLs use tab=; preserve older identity= bookmarks.
   const selectedTab = params?.tab ?? params?.identity;
   const tab: "ALL" | "REGISTERED" | "GUEST" =
@@ -43,6 +43,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     redirect("/admin/users/" + legacy[1].toLowerCase() + "/" + encodeURIComponent(legacy[2])
       + "/activity?directory=" + encodeURIComponent(directory));
   }
+  const registeredEligibleForFilters = status !== "INACTIVE" && status !== "UNAVAILABLE";
   const where = {
     // Date means a recorded account/session/search/handoff in this window,
     // not only the date the account was originally registered.
@@ -51,7 +52,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       ...(q ? [{ OR: [{ email: { contains: prismaQuery, mode: "insensitive" as const } }, { name: { contains: prismaQuery, mode: "insensitive" as const } }, { id: { contains: prismaQuery, mode: "insensitive" as const } }] }] : []),
     ],
     ...(role !== "ALL" ? { role: role as never } : {}),
-    ...(status !== "ALL" ? { status: status as never } : {}),
+    ...(registeredEligibleForFilters && status !== "ALL" ? { status: status as never } : {}),
   };
   // The existing User model remains the authority for registered accounts.
   // Guests remain distinct records and only consent-eligible, unlinked guests are listed.
@@ -63,23 +64,26 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     currentUserId: null, identityLinks: { none: {} },
     ...(q ? { id: { contains: prismaQuery, mode: "insensitive" as const } } : {}),
   };
-  const showUsers = tab !== "GUEST";
-  // Role/status are account-only filters. Guest identities never have either.
-  const guestsEligibleForFilters = role === "ALL" && status === "ALL";
-  const showGuests = tab !== "REGISTERED" && guestsEligibleForFilters;
+  const showUsers = tab !== "GUEST" && registeredEligibleForFilters;
+  // Role filters still apply only to accounts. Active can match both kinds,
+  // while Inactive/Unavailable are operational guest statuses, not User enums.
+  const guestsEligibleForFilters = role === "ALL" && ["ALL", "ACTIVE", "INACTIVE", "UNAVAILABLE"].includes(status);
+  const consentedGuestsEligible = guestsEligibleForFilters && (status === "ALL" || status === "ACTIVE");
+  const showGuests = tab !== "REGISTERED" && consentedGuestsEligible;
+  const showOperationalGuests = tab !== "REGISTERED" && guestsEligibleForFilters;
 
   // Operational sessions are not accounts or analytics visitor identities.
   // A single identity query supplies the operational guest cohort, timestamps,
   // and total. Account and consented visitor counts remain independent of tab.
   const result = await withOptionalDb<{ rows: IdentityRow[]; registeredCount: number; guestCount: number; operationalAllTimeCount: number | null; operationalNewCount: number | null } | null>(async db => {
     const [registeredCount, consentedGuestCount] = await Promise.all([
-      db.user.count({ where }),
-      guestsEligibleForFilters ? db.visitor.count({ where: guestWhere }) : Promise.resolve(0),
+      registeredEligibleForFilters ? db.user.count({ where }) : Promise.resolve(0),
+      consentedGuestsEligible ? db.visitor.count({ where: guestWhere }) : Promise.resolve(0),
     ]);
     const countBeforeOperational = (showUsers ? registeredCount : 0) + (showGuests ? consentedGuestCount : 0);
     const sql = adminIdentityPageSql({
       query: q, role, status, showUsers, showGuests,
-      showOperationalGuests: showGuests, withOperationalSummary: true,
+      showOperationalGuests, withOperationalSummary: true,
       environment, sort, date, from, to, now,
       limit: Math.max(1, countBeforeOperational), offset: 0, allIdentities: true,
     });
@@ -99,7 +103,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     const identities = fetched.filter((item): item is AdminIdentityDirectoryRow & { kind: "user" | "guest"; id: string } =>
       item.kind !== null && item.id !== null);
     const userIds = identities.filter(item => item.kind === "user").map(item => item.id);
-    const guestIds = identities.filter(item => item.kind === "guest").map(item => item.id);
+    const guestIds = identities.filter(item => item.kind === "guest" && item.guestSource === "visitor").map(item => item.id);
     const [users, guests] = await Promise.all([
       userIds.length ? db.user.findMany({
         where: { ...where, id: { in: userIds } },
@@ -114,18 +118,18 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     // Never recompute it after ordering or infer a timestamp from registration.
     const observed = new Map(identities.map(item => [item.kind + ":" + item.id, item.lastSeenAt]));
     const userMap = new Map(users.map(user => [user.id, user]));
-    const guestMap = new Map([
-      ...identities.filter(item => item.kind === "guest" && item.firstSeenAt && item.lastSeenAt)
-        .map(item => [item.id, { id: item.id, firstSeenAt: item.firstSeenAt!, lastSeenAt: item.lastSeenAt! }] as const),
-      ...guests.map(guest => [guest.id, guest] as const),
-    ]);
+    const guestMap = new Map(guests.map(guest => [guest.id, guest]));
     const rows = identities.flatMap<IdentityRow>(identity => {
       if (identity.kind === "user") {
         const record = userMap.get(identity.id);
         return record ? [{ kind: "user" as const, record, lastSeenAt: observed.get("user:" + identity.id) ?? null }] : [];
       }
-      const record = guestMap.get(identity.id);
-      return record ? [{ kind: "guest" as const, record, lastSeenAt: observed.get("guest:" + identity.id) ?? record.lastSeenAt }] : [];
+      // A withdrawn/linked visitor cannot reappear via an operational fallback.
+      const record = identity.guestSource === "visitor" ? guestMap.get(identity.id)
+        : identity.guestSource === "operational" && identity.firstSeenAt && identity.lastSeenAt
+          ? { id: identity.id, firstSeenAt: identity.firstSeenAt, lastSeenAt: identity.lastSeenAt } : null;
+      return record ? [{ kind: "guest" as const, record, lastSeenAt: observed.get("guest:" + identity.id) ?? record.lastSeenAt,
+        guestSource: identity.guestSource ?? undefined, guestStatus: identity.guestStatus ?? "UNAVAILABLE" }] : [];
     });
     return { rows, registeredCount, guestCount: consentedGuestCount +
       (guestsEligibleForFilters ? scopedOperationalGuestCount : 0),
