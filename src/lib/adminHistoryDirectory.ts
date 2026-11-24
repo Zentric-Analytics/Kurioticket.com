@@ -19,8 +19,9 @@ export function parseHistoryDirectoryQuery(section: HistorySection, raw: RawQuer
   if (Object.values(raw).some(Array.isArray)) return { ok: false, error: "Repeated filters are not supported." };
   const parsed = parseDeviceHistoryQuery({ range: raw.range ?? "today", page: raw.page, from: raw.from, to: raw.to });
   if (!parsed.ok) return parsed;
-  const q = typeof raw.q === "string" ? raw.q.trim() : "";
-  if (q.length > 80 || /[\u0000-\u001f\u007f]/.test(q)) return { ok: false, error: "Enter up to 80 ordinary characters." };
+  const search = typeof raw.q === "string" ? raw.q : "";
+  const q = search.trim();
+  if (q.length > 80 || /[\u0000-\u001f\u007f]/.test(search)) return { ok: false, error: "Enter up to 80 ordinary characters." };
   const tab = raw.tab ?? (section === "devices" ? "registered" : "all");
   if (tab !== "all" && tab !== "registered" && tab !== "guests") return { ok: false, error: "Unsupported identity filter." };
   if (section === "devices" && tab !== "registered") return { ok: false, error: "Device history is available for registered accounts only." };
