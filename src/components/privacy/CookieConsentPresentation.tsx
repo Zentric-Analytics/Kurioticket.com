@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useLayoutEffect, useRef, useState } from "react";
 import { Minus, Plus, X } from "lucide-react";
 
@@ -128,13 +127,12 @@ export function CookieConsentPresentation({
             <h2 ref={!editing ? headingRef : undefined} tabIndex={-1} id="cookie-banner-title"
               className="text-xl font-semibold tracking-tight text-navy outline-none sm:text-2xl">We value your privacy</h2>
             <p className="mt-3 max-w-[900px] text-sm leading-6 text-slate-600">
-              We use essential cookies to keep Kurioticket secure and working. With your permission, optional analytics helps us understand and improve your experience. You can change your preferences at any time.
+              We use essential cookies to keep Kurioticket secure and working. With your permission, optional analytics helps us improve your experience. Change or withdraw your choice at any time in Cookie preferences in the website footer.
             </p>
-            <Link href="/legal#legal-documents-heading" className="focus-ring mt-3 inline-block rounded-sm text-sm font-medium text-[#004BB8] underline underline-offset-2 hover:text-[#003D99]">Learn about our use of cookies</Link>
             <div className="mt-5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4 sm:flex sm:flex-wrap sm:justify-end sm:gap-3">
               <Button type="button" variant="secondary" data-cookie-preferences-open onClick={onOpen} disabled={busy}
                 className="col-span-2 min-h-11 rounded-xl border-slate-300 px-5 font-semibold text-[#004BB8] hover:bg-slate-50">Cookie preferences</Button>
-              <Button type="button" disabled={busy} onClick={() => onChoose("declined")} className={actionClass}>Essential only</Button>
+              <Button type="button" disabled={busy} onClick={() => onChoose("declined")} className={actionClass}>Decline optional</Button>
               <Button type="button" disabled={busy} onClick={() => onChoose("granted")} className={actionClass}>Accept all</Button>
             </div>
           </div>
@@ -154,11 +152,8 @@ export function CookieConsentPresentation({
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
               <h2 id="cookie-preferences-title" ref={headingRef} tabIndex={-1}
                 className="text-xl font-semibold tracking-tight text-navy outline-none sm:text-2xl">Cookie preferences</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Choose how Kurioticket uses cookies to support and improve your experience. Optional cookies are your choice.</p>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <Button type="button" disabled={busy} onClick={() => onChoose("declined")} className={actionClass}>Essential only</Button>
-                <Button type="button" disabled={busy} onClick={() => onChoose("granted")} className={actionClass}>Accept all</Button>
-              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Choose how Kurioticket uses cookies to support and improve your experience. Optional cookies are your choice. Accept all enables available optional cookies only.</p>
+              <Button type="button" disabled={busy} onClick={() => onChoose("granted")} className={`mt-4 w-full ${actionClass}`}>Accept all</Button>
               <h3 className="mt-5 mb-3 text-sm font-semibold text-navy">Manage your preferences</h3>
               <div className="space-y-2">
                 <Category id="cookie-essential-description" name="Essential cookies" subtitle="Keeps Kurioticket secure and working"
@@ -171,7 +166,11 @@ export function CookieConsentPresentation({
                 <Category id="cookie-performance-description" name="Performance cookies" subtitle="Helps measure speed and reliability"
                   description="Optional performance measurement could help us understand loading times, responsiveness and technical issues. This separate preference is not available yet and is not enabled by Accept all. Essential service diagnostics are separate."
                   unavailable />
+                <Category id="cookie-marketing-description" name="Marketing cookies" subtitle="Helps measure campaigns and relevant promotions"
+                  description="Optional marketing cookies could help measure advertising campaigns and show relevant travel promotions. This separate preference is not available yet and is not enabled by Accept all."
+                  unavailable />
               </div>
+              <p className="mt-3 text-xs leading-5 text-slate-600">To decline optional cookies, leave analytics off and save your preferences. You can change or withdraw your choice at any time in the website footer.</p>
               {busy || failed ? <div className="mt-4">{status}</div> : null}
             </div>
             <footer className="shrink-0 border-t border-slate-100 bg-white px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
