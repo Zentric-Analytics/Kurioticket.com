@@ -14,7 +14,11 @@ test("cookie preferences stay anchored, preserve refusal and never replay the ba
   await expect(banner).toBeVisible();
   await expect(banner.getByRole("button", { name: "Essential only" })).toHaveCount(0);
   await expect(banner.getByRole("button", { name: "Decline optional" })).toHaveCount(0);
-  await expect(banner.getByRole("button", { name: "Continue without optional cookies" })).toBeVisible();
+  await expect(banner.getByText("Continue without optional cookies", { exact: true })).toHaveCount(0);
+  await expect(banner.getByRole("button")).toHaveCount(2);
+  await expect(banner.getByRole("link")).toHaveCount(0);
+  await expect(banner.getByRole("button", { name: "Cookie preferences", exact: true })).toBeVisible();
+  await expect(banner.getByRole("button", { name: "Accept all", exact: true })).toBeVisible();
   await expect(banner.locator("[data-cookie-consent-actions]").getByRole("button")).toHaveCount(2);
   await expect(banner.getByRole("button", { name: "Reject optional" })).toHaveCount(0);
   await expect(banner.getByRole("link", { name: "Learn about our use of cookies" })).toHaveCount(0);
@@ -95,7 +99,7 @@ test("cookie preferences stay anchored, preserve refusal and never replay the ba
 });
 
 
-test("direct continuation refuses analytics without granting consent", async ({ page }) => {
+test("preferences allow refusal without granting analytics consent", async ({ page }) => {
   const methods: string[] = [];
   await page.route("**/api/identity/visitor", async route => {
     methods.push(route.request().method());
@@ -104,7 +108,13 @@ test("direct continuation refuses analytics without granting consent", async ({ 
   await page.route("**/api/identity/presence", route => route.fulfill({ json: {} }));
   await page.goto("/");
   const banner = page.locator("[data-cookie-consent-banner]");
-  await banner.getByRole("button", { name: "Continue without optional cookies" }).click();
+  await banner.getByRole("button", { name: "Cookie preferences", exact: true }).click();
+  const preferences = page.locator("[data-cookie-consent-preferences]");
+  const analytics = preferences.getByRole("switch", { name: "Analytics cookies" });
+  await expect(analytics).toHaveAttribute("aria-checked", "true");
+  await analytics.click();
+  await expect(analytics).toHaveAttribute("aria-checked", "false");
+  await preferences.getByRole("button", { name: "Save preferences", exact: true }).click();
   await expect(banner).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => localStorage.getItem("kurioticket:analytics-consent:v1"))).toBe("declined");
   await expect(page.getByRole("region", { name: "Cookie preferences status" })).toBeHidden();
