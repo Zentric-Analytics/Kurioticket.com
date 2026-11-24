@@ -20,6 +20,7 @@ import {
   searchDetailCrawlerName,
   searchDetailCrawlerEvidenceLabel,
 } from "@/lib/adminSearchDetailPresentation";
+import { AdminLocalTimestamp } from "@/components/admin/AdminLocalTimestamp";
 import { formatDateTime } from "@/lib/admin-data";
 import type { AdminSearchDetail } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
@@ -78,7 +79,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
               {searchDetailHeadline(search)}
             </p>
             <p className="mt-1 text-[12px] font-medium text-[#6B7280]">
-              Searched {formatDateTime(new Date(search.createdAt))}
+              Searched <AdminLocalTimestamp value={search.createdAt} />
             </p>
           </div>
           <StatusDot status={diagnostic.outcome === "ZERO_RESULTS" ? "ZERO_RESULTS" : search.status} label={searchDetailOutcomeLabel(diagnostic.outcome)} />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 
 import type { SearchScopedActivityResult, SearchScopedEvent } from "@/services/adminSearchScopedActivityCore";
 
@@ -20,11 +21,8 @@ const activityLabels: Record<Exclude<SearchScopedEvent["stage"], "SEARCH_COMPLET
 const buttonStyle = "inline-flex min-h-9 items-center rounded-md border border-[#D8E1EC] bg-white px-3 text-[12px] font-medium text-[#004BB8] hover:bg-[#F5F8FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-50";
 
 function timestamp(value: string) {
-  const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return "Time unavailable";
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium", timeStyle: "short", timeZone: "UTC",
-  }).format(date) + " UTC";
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  return formatViewerTimestamp(value, zone);
 }
 function handoffLabel(event: SearchScopedEvent) {
   if (!event.handoff) return null;
