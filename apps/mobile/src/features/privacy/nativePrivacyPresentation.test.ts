@@ -20,9 +20,12 @@ test("native preferences have an explicit save and draft toggle without extra co
   assert.match(sheet, /analytics checked=\{draft\}/);
   assert.match(sheet, /onChange=\{setDraft\}/);
   assert.match(sheet, /label="Save preferences".*choose\(draft\)/);
-  assert.match(sheet, /label="Reject optional".*choose\(false\)/);
+  assert.match(sheet, /label="Essential only".*choose\(false\)/);
   assert.match(sheet, /await visitorIdentity\.choose\(value\)/);
   assert.match(sheet, /accessibilityState=\{\{ expanded \}\}/);
   assert.match(sheet, /Privacy preferences/);
-  assert.doesNotMatch(sheet, /Cookie Policy|Privacy Policy|Marketing cookies|Performance cookies/);
+  assert.doesNotMatch(sheet, /Cookie Policy|Privacy Policy|Marketing cookies|Reject optional|Privacy categories/);
+  assert.match(sheet, /Manage your preferences/);
+  assert.match(sheet, /title="Performance sharing"/);
+  assert.match(sheet, /not enabled by Accept all/);
 });

@@ -29,8 +29,8 @@ function Action({ label, onPress, secondary = false, disabled = false }: {
   </Pressable>;
 }
 
-function Category({ title, subtitle, description, analytics, checked, disabled, onChange }: {
-  title: string; subtitle: string; description: string; analytics?: boolean; checked?: boolean;
+function Category({ title, subtitle, description, analytics, unavailable, checked, disabled, onChange }: {
+  title: string; subtitle: string; description: string; analytics?: boolean; unavailable?: boolean; checked?: boolean;
   disabled?: boolean; onChange?: (value: boolean) => void;
 }) {
   const { theme } = useAppTheme();
@@ -50,7 +50,7 @@ function Category({ title, subtitle, description, analytics, checked, disabled, 
         accessibilityRole="switch" accessibilityState={{ checked: !!checked, disabled: !!disabled }}
         disabled={disabled} value={!!checked} onValueChange={onChange}
         trackColor={{ false: theme.dark ? "#33435D" : "#ADB8C8", true: "#004BB8" }} thumbColor="#FFFFFF" />
-        : <Text style={[styles.active, { color: theme.dark ? "#91D9B5" : "#17664A" }]}>Always active</Text>}
+        : <Text style={[styles.active, { color: unavailable ? theme.muted : theme.dark ? "#91D9B5" : "#17664A" }]}>{unavailable ? "Not available" : "Always active"}</Text>}
     </View>
     {expanded ? <Text style={[styles.description, { color: theme.muted, borderTopColor: theme.border }]}>{description}</Text> : null}
   </View>;
@@ -108,16 +108,17 @@ function PrivacySheet({ visible, initial, editing, onOpen, onClose, onDone, curr
         </View>
         <ScrollView bounces={false} overScrollMode="never" style={styles.scroll} contentContainerStyle={styles.content}>
           <Text style={[styles.body, { color: theme.muted }]}>{details
-            ? "Manage how Kurioticket uses app data. Analytics is optional; leave it off and save to use essential services only."
-            : "Essential app functions keep Kurioticket secure and support the travel services you request. Optional analytics helps us improve your experience. Choose what you allow."}</Text>
+            ? "Choose how Kurioticket uses app data to support and improve your experience. Optional sharing is your choice."
+            : "Essential app functions keep Kurioticket secure and working. With your permission, optional analytics helps us understand and improve your experience. You can change your preferences at any time."}</Text>
           {details ? <>
-            <Action label="Accept all" disabled={saving} onPress={() => void choose(true)} />
-            <Text accessibilityRole="header" style={[styles.label, { color: theme.text }]}>Privacy categories</Text>
-            <Category title="Essential app functions" subtitle="Required for core services"
+            <View style={styles.actions}><View style={styles.flex}><Action label="Essential only" disabled={saving} onPress={() => void choose(false)} /></View><View style={styles.flex}><Action label="Accept all" disabled={saving} onPress={() => void choose(true)} /></View></View>
+            <Text accessibilityRole="header" style={[styles.label, { color: theme.text }]}>Manage your preferences</Text>
+            <Category title="Essential app functions" subtitle="Keeps Kurioticket secure and working"
               description="Supports security, sign-in, requested travel searches and necessary search-to-provider handoff records. This does not enable optional behavioural analytics." />
-            <Category title="Analytics sharing" subtitle="Helps improve your experience"
+            <Category title="Analytics sharing" subtitle="Helps us understand your experience"
               description="With your permission, we measure app engagement and travel activity, including account-linked activity when you sign in. Turning analytics off does not prevent requested searches or necessary records."
               analytics checked={draft} disabled={saving} onChange={setDraft} />
+            <Category title="Performance sharing" subtitle="Helps measure speed and reliability" description="Optional performance measurement could help us understand loading times, responsiveness and technical issues. This separate preference is not available yet and is not enabled by Accept all. Essential service diagnostics are separate." unavailable />
           </> : null}
           {saving ? <Text accessibilityLiveRegion="polite" style={[styles.body, { color: theme.muted }]}>Saving your choice…</Text> : null}
           {error ? <Text accessibilityRole="alert" style={[styles.body, { color: theme.text }]}>We couldn't save your preferences. Optional analytics is off for now. Try again or continue.</Text> : null}
@@ -127,7 +128,7 @@ function PrivacySheet({ visible, initial, editing, onOpen, onClose, onDone, curr
           {details ? <Action label="Save preferences" disabled={saving} onPress={() => void choose(draft)} /> : <>
             <Action label="Privacy preferences" secondary disabled={saving} onPress={onOpen} />
             <View style={styles.actions}>
-              <View style={styles.flex}><Action label="Reject optional" disabled={saving} onPress={() => void choose(false)} /></View>
+              <View style={styles.flex}><Action label="Essential only" disabled={saving} onPress={() => void choose(false)} /></View>
               <View style={styles.flex}><Action label="Accept all" disabled={saving} onPress={() => void choose(true)} /></View>
             </View>
           </>}
