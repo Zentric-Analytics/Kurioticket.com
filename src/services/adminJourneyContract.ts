@@ -4,7 +4,7 @@ export const adminJourneyStages = ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT
 export const adminJourneyProducts = ["FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const;
 export type AdminJourneyStage = (typeof adminJourneyStages)[number];
 export type AdminJourneyEventType = AdminJourneyStage | "RESULT_SAVED" | "RESULT_UNSAVED" | "RESULT_SHARED" | "PRICE_ALERT_CREATED"
-  | "SEARCH_EDIT_APPLIED" | "SEARCH_FILTER_APPLIED" | "SEARCH_SORT_CHANGED" | "RESULT_DETAILS_OPENED" | "RATE_DETAILS_OPENED";
+  | "SEARCH_EDIT_APPLIED" | "SEARCH_FILTER_APPLIED" | "SEARCH_SORT_CHANGED" | "RESULT_DETAILS_OPENED" | "RATE_DETAILS_OPENED" | "PAGE_VIEW";
 export type AdminJourneyProduct = (typeof adminJourneyProducts)[number];
 export type AdminJourneyEnvironment = "staging" | "production";
 export type AdminJourneyIdentity = { kind: "guest" | "registered"; visitorId: string; userId: string | null };
@@ -87,6 +87,7 @@ export type AdminJourneyEvent = {
   product: AdminJourneyProduct | null;
   provider: string | null;
   sourcePage: string | null;
+  pageView?: { label: string; path: string; previousPath: string | null; transport: "web" | "native"; platform: string; href: string | null };
   search: AdminJourneySearch | null;
   handoff: {
     id: string;
