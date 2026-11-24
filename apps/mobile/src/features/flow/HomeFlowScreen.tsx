@@ -12,6 +12,7 @@ import { useCallback, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
+import { recordNativeHomeSection } from "../privacy/useNativePageViews";
 import { travelApi } from "../../api/travelApi";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { HomeProductIcon, type HomeProductIconName } from "../home/HomeProductIcon";
@@ -242,7 +243,7 @@ function HomePageContent() {
                 accessibilityRole="tab"
                 accessibilityLabel={product.label}
                 accessibilityState={{ selected }}
-                onPress={() => setActiveProduct(product.id)}
+                onPress={() => { if (!selected) recordNativeHomeSection(product.id); setActiveProduct(product.id); }}
                 style={({ pressed }) => [
                   styles.product,
                   selected && [styles.productActive, { backgroundColor: ft.colors.selected, borderBottomColor: ft.colors.selectedBorder }],
