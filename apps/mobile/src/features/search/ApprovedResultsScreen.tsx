@@ -749,9 +749,9 @@ function ResultsScreen({ product }: { product: Product }) {
   }, [filteredHotelResults, ownedFlightResults, filters, hotelSort, sort, product, flightPriceContext, normalizeFlightPrice, currencyState?.rates]);
   useFocusEffect(useCallback(() => {
     const recordDisplayedResults = () => {
-      if (!visualTest && status === "ready" && AppState.currentState === "active") {
+      if (!visualTest && (status === "ready" || status === "empty") && AppState.currentState === "active") {
         recordNativeResultsPage(product === "flight" ? "flight" : "hotel", resultsRequestId);
-        journeyEvents.resultsViewed(resultsRequestId, product === "flight" ? "/flight-results" : "/hotel-results", sorted.length);
+        if (status === "ready") journeyEvents.resultsViewed(resultsRequestId, product === "flight" ? "/flight-results" : "/hotel-results", sorted.length);
       }
     };
     recordDisplayedResults();
