@@ -6,6 +6,7 @@ import { Minus, Plus, X } from "lucide-react";
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { Button } from "@/components/ui/Button";
 import type { AnalyticsConsentChoice, VisitorConsentSyncState } from "@/lib/analyticsConsentClient";
+import { cookieConsentCopy, cookiePolicyFromPreferencesHref } from "@/lib/cookieConsentCopy";
 
 type Props = {
   showBanner: boolean;
@@ -127,7 +128,7 @@ export function CookieConsentPresentation({
             <h2 ref={!editing ? headingRef : undefined} tabIndex={-1} id="cookie-banner-title"
               className="text-xl font-semibold tracking-tight text-navy outline-none sm:text-2xl">We value your privacy</h2>
             <p className="mt-3 max-w-[900px] text-sm leading-6 text-slate-600">
-              We use essential cookies to keep Kurioticket secure and working. With your permission, optional analytics helps us improve your experience. Choose whether to allow analytics in Cookie preferences. You can change your choice at any time in the website footer.
+              {cookieConsentCopy.banner}
             </p>
             <div data-cookie-consent-actions className="mt-5 grid grid-cols-1 gap-2 border-t border-slate-100 pt-4 min-[360px]:grid-cols-2 sm:flex sm:flex-wrap sm:justify-end sm:gap-3">
               <Button type="button" variant="secondary" data-cookie-preferences-open onClick={onOpen} disabled={busy}
@@ -151,25 +152,26 @@ export function CookieConsentPresentation({
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
               <h2 id="cookie-preferences-title" ref={headingRef} tabIndex={-1}
                 className="text-xl font-semibold tracking-tight text-navy outline-none sm:text-2xl">Cookie preferences</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Choose how Kurioticket uses cookies to support and improve your experience. Optional cookies are your choice. Accept all enables available optional cookies only.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{cookieConsentCopy.details}</p>
+              <a href={cookiePolicyFromPreferencesHref} target="_blank" rel="noopener noreferrer" className="focus-ring mt-2 inline-flex min-h-11 items-center rounded-sm text-sm font-semibold text-[#004BB8] underline underline-offset-4">Cookie policy</a>
               <Button type="button" disabled={busy} onClick={() => onChoose("granted")} className={`mt-4 w-full ${actionClass}`}>Accept all</Button>
               <h3 className="mt-5 mb-3 text-sm font-semibold text-navy">Manage your preferences</h3>
               <div className="space-y-2">
-                <Category id="cookie-essential-description" name="Essential cookies" subtitle="Keeps Kurioticket secure and working"
-                  description="Supports secure sign-in, requested travel searches and necessary search-to-provider handoff records. These cookies do not enable optional behavioural analytics. Records follow our data-retention policy." />
-                <Category id="cookie-analytics-description" name="Analytics cookies" subtitle={showBanner ? "Suggested on · awaiting your choice" : "Helps us understand your experience"}
-                  description="With your permission, we measure how you browse and use Kurioticket, including activity across visits, to improve our services. Turning analytics off does not stop requested searches or necessary records."
+                <Category id="cookie-essential-description" name="Essential cookies" subtitle={cookieConsentCopy.essential.subtitle}
+                  description={cookieConsentCopy.essential.description} />
+                <Category id="cookie-analytics-description" name="Analytics cookies" subtitle={showBanner && draftAnalytics ? cookieConsentCopy.analytics.suggested : cookieConsentCopy.analytics.subtitle}
+                  description={cookieConsentCopy.analytics.description}
                   analytics checked={draftAnalytics} disabled={busy} onChange={onDraftChange} />
                 {/* No independent performance permission or collector is wired yet.
                     Keep this informational, rather than exposing a misleading switch. */}
-                <Category id="cookie-performance-description" name="Performance cookies" subtitle="Helps measure speed and reliability"
-                  description="Optional performance measurement could help us understand loading times, responsiveness and technical issues. This separate preference is not available yet and is not enabled by Accept all. Essential service diagnostics are separate."
+                <Category id="cookie-performance-description" name="Performance cookies" subtitle={cookieConsentCopy.performance.subtitle}
+                  description={cookieConsentCopy.performance.description}
                   unavailable />
-                <Category id="cookie-marketing-description" name="Marketing cookies" subtitle="Helps measure campaigns and relevant promotions"
-                  description="Optional marketing cookies could help measure advertising campaigns and show relevant travel promotions. This separate preference is not available yet and is not enabled by Accept all."
+                <Category id="cookie-marketing-description" name="Marketing cookies" subtitle={cookieConsentCopy.marketing.subtitle}
+                  description={cookieConsentCopy.marketing.description}
                   unavailable />
               </div>
-              <p className="mt-3 text-xs leading-5 text-slate-600">To decline optional cookies, switch analytics off and save your preferences. You can change or withdraw your choice at any time in the website footer.</p>
+              <p className="mt-3 text-xs leading-5 text-slate-600">{cookieConsentCopy.optOut} {cookieConsentCopy.webManage}</p>
               {busy || failed ? <div className="mt-4">{status}</div> : null}
             </div>
             <footer className="shrink-0 border-t border-slate-100 bg-white px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
