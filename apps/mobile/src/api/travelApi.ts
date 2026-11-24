@@ -259,6 +259,8 @@ export const travelApi = {
   homepageContent: (market: string, locale: string) => request<unknown>(`/api/content/homepage?market=${encodeURIComponent(market)}&locale=${encodeURIComponent(locale)}`),
   faqContent: (locale: string) => request<unknown>(`/api/content/faqs?locale=${encodeURIComponent(locale)}`),
   journeyEvent: (body: JourneyEvent, options: { signal: AbortSignal; visitorContext: number }) => request<JourneyEventResponse>("/api/journey/events", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: 4000 }),
+  pageView: (body: { eventId: string; pageKey: string; previousPageKey?: string }, options: { visitorContext: number }) =>
+    request<{ accepted: boolean }>("/api/activity/page-views", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: 4000 }),
   customerInteraction: (body: {
     action: "share_sheet_completed" | "saved_item_confirmed" | "saved_item_removed"; product: "FLIGHT" | "HOTEL" | "CAR";
     resultId: string; eventId: string; requestId?: string;
