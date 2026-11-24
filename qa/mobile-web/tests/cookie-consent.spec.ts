@@ -12,6 +12,9 @@ test("cookie preferences stay anchored, preserve refusal and never replay the ba
   const banner = page.locator("[data-cookie-consent-banner]");
   const preferences = page.locator("[data-cookie-consent-preferences]");
   await expect(banner).toBeVisible();
+  await expect(banner.getByRole("button", { name: "Essential only" })).toBeVisible();
+  await expect(banner.getByRole("button", { name: "Reject optional" })).toHaveCount(0);
+  await expect(banner.getByRole("link", { name: "Learn about our use of cookies" })).toBeVisible();
   const bounds = await banner.boundingBox();
   expect(bounds).not.toBeNull();
   const initialScroll = await page.evaluate(() => ({ x: scrollX, y: scrollY }));
@@ -22,7 +25,7 @@ test("cookie preferences stay anchored, preserve refusal and never replay the ba
   for (let cycle = 0; cycle < 3; cycle += 1) {
     await banner.getByRole("button", { name: "Cookie preferences", exact: true }).click();
     await expect(preferences).toBeVisible();
-    await expect(preferences.getByText("Cookie categories")).toBeVisible();
+    await expect(preferences.getByText("Manage your preferences")).toBeVisible();
     await expect(preferences.getByRole("button", { name: "Reject optional" })).toHaveCount(0);
     await expect(preferences.getByRole("link", { name: /Cookie Policy|Privacy Policy/ })).toHaveCount(0);
     const samples = await preferences.evaluate(async panel => {
@@ -44,6 +47,9 @@ test("cookie preferences stay anchored, preserve refusal and never replay the ba
     if (mobile) expect(last.bottom).toBeCloseTo(viewport.height, 0);
     else expect((last.top + last.bottom) / 2).toBeCloseTo(viewport.height / 2, 0);
 
+    await expect(preferences.getByText("Performance cookies", { exact: true })).toBeVisible();
+    await expect(preferences.getByText("Not available", { exact: true })).toBeVisible();
+    await expect(preferences.getByRole("switch", { name: "Performance cookies" })).toHaveCount(0);
     const analytics = preferences.getByRole("switch", { name: "Analytics cookies" });
     await expect(analytics).toHaveAttribute("aria-checked", "false");
     await analytics.click();
