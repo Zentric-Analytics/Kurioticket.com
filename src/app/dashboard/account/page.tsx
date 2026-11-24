@@ -1,9 +1,8 @@
 import { cookies } from "next/headers";
-import { getServerSession } from "next-auth";
 import { AccountMenuPage } from "@/components/dashboard/DashboardGrid";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
-import { authOptions } from "@/lib/auth";
+import { requireUserSession } from "@/lib/auth-guards";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getTranslations } from "@/lib/i18n";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
@@ -44,7 +43,7 @@ function getSafeDisplayName(name?: string | null, email?: string | null) {
 }
 
 export default async function AccountPage() {
-  const session = await getServerSession(authOptions);
+  const session = await requireUserSession("/dashboard/account");
   const sessionUserName = session?.user?.name?.trim();
   const userEmail = session?.user?.email?.trim();
   const db = getOptionalPrisma();

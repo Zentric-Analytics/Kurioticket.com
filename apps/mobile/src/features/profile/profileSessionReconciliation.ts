@@ -1,4 +1,4 @@
-export type ProfileSessionState = "authenticated" | "guest" | "signed-out";
+export type ProfileSessionState = "loading" | "authenticated" | "guest" | "signed-out";
 
 type Session = { user: { id: string } } | null;
 
@@ -23,6 +23,7 @@ export function startProfileSessionReconciliation({
       return;
     }
 
+    if (mounted) onState("loading");
     const guest = await readOnboardingCompleted().catch(() => false);
     if (mounted && generation === currentGeneration) {
       onState(guest ? "guest" : "signed-out");
