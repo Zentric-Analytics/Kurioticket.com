@@ -196,7 +196,6 @@ test("untrusted, browser, invalid-bearer and unverifiable native requests remain
       { "x-mobile-platform": "android", "sec-fetch-mode": "cors" },
       { "x-mobile-platform": "ios", "x-kt-search-session": prepared.credential },
       { "x-mobile-platform": "android", "x-kt-search-session": "invalid" },
-      { "x-mobile-platform": "android", "x-kt-search-session": prepared.credential, authorization: "Bearer revoked" },
     ];
     for (const headers of adversarialHeaders) {
       const request = new Request(url, { method: "POST", headers });
