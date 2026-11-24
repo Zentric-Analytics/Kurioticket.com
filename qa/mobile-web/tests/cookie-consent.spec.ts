@@ -13,7 +13,9 @@ test("cookie preferences stay anchored, preserve refusal and never replay the ba
   const preferences = page.locator("[data-cookie-consent-preferences]");
   await expect(banner).toBeVisible();
   await expect(banner.getByRole("button", { name: "Essential only" })).toHaveCount(0);
-  await expect(banner.getByRole("button", { name: "Decline optional" })).toBeVisible();
+  await expect(banner.getByRole("button", { name: "Decline optional" })).toHaveCount(0);
+  await expect(banner.getByRole("button", { name: "Continue without optional cookies" })).toBeVisible();
+  await expect(banner.locator("[data-cookie-consent-actions]").getByRole("button")).toHaveCount(2);
   await expect(banner.getByRole("button", { name: "Reject optional" })).toHaveCount(0);
   await expect(banner.getByRole("link", { name: "Learn about our use of cookies" })).toHaveCount(0);
   const bounds = await banner.boundingBox();
@@ -85,5 +87,25 @@ test("cookie preferences stay anchored, preserve refusal and never replay the ba
   await expect(preferences.getByRole("switch")).toHaveAttribute("aria-checked", "false");
   await preferences.getByRole("button", { name: "Close cookie preferences" }).click();
   await expect(preferences).toBeHidden();
+  await expect(banner).toHaveCount(0);
+});
+
+
+test("direct continuation refuses analytics without granting consent", async ({ page }) => {
+  const methods: string[] = [];
+  await page.route("**/api/identity/visitor", async route => {
+    methods.push(route.request().method());
+    await route.fulfill({ json: { analyticsTracking: "disabled" } });
+  });
+  await page.route("**/api/identity/presence", route => route.fulfill({ json: {} }));
+  await page.goto("/");
+  const banner = page.locator("[data-cookie-consent-banner]");
+  await banner.getByRole("button", { name: "Continue without optional cookies" }).click();
+  await expect(banner).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("kurioticket:analytics-consent:v1"))).toBe("declined");
+  await expect(page.getByRole("region", { name: "Cookie preferences status" })).toBeHidden();
+  expect(methods).not.toContain("POST");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Cookie preferences", exact: true })).toBeVisible();
   await expect(banner).toHaveCount(0);
 });
