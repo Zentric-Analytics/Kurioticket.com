@@ -18,3 +18,10 @@ test("detail return navigation cannot accept redirect destinations or unexpected
 test("unfiltered search still returns with the selected default range", () => {
   assert.equal(searchActivityDetailQuery({}, "today"), "range=today");
 });
+
+test("viewer timezone survives search detail and back navigation", () => {
+  const raw = { range: "today", viewerTimeZone: "Africa/Lagos", product: "FLIGHT" };
+  const query = searchActivityDetailQuery(raw);
+  assert.equal(new URLSearchParams(query).get("viewerTimeZone"), "Africa/Lagos");
+  assert.equal(searchActivityReturnHref(Object.fromEntries(new URLSearchParams(query))), "/admin/searches/activity?" + query);
+});
