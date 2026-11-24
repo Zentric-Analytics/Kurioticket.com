@@ -4,13 +4,13 @@ import { sessionDeviceObservation } from "./sessionDeviceObservation";
 /** The caller must hold the existing consented, unlinked visitor row lock.
  * Only coarse fields already supported by the session observation helper;
  * never store a raw user agent, IP, unique device ID, or new cookie. */
-export function consentedGuestAccessObservation(request: Request, platform: string, transport: "web" | "native") {
+export function consentedGuestAccessObservation(request: Request, platform: string, transport: "web" | "native", trustedEdge = process.env.RENDER === "true") {
   const key = pageViewDevicePlatform(platform, transport);
   if (key === "web" || key === "native" || key === "unknown") return undefined;
   const source = key === "desktop" ? "desktop_web" : key === "mobile" ? "mobile_web" : key;
   // Without a real browser header do not fabricate a browser/device description.
   if (transport === "web" && !request.headers.get("user-agent")) return undefined;
-  const observed = sessionDeviceObservation(request, source);
+  const observed = sessionDeviceObservation(request, source, trustedEdge);
   return { version: 1, deviceLabel: observed.deviceLabel, browser: observed.browser, os: observed.os,
     locationLabel: observed.locationLabel };
 }
