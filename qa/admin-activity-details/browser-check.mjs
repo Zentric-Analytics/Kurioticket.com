@@ -308,6 +308,54 @@ try {
   await expect(page.getByTestId("page-view-row")).toHaveCount(5);
   console.log("PASS five recent page visits, separate history pagination, filters and return navigation");
 
+  // New directory entry points reuse the real individual history routes.
+  await page.setViewportSize({width:1280,height:900});
+  const usersSidebar = page.getByRole("navigation",{name:"Users subsections"});
+  await usersSidebar.getByRole("link",{name:"Device & Access",exact:true}).click();
+  await expect(page).toHaveURL(url => url.pathname === "/admin/users/devices");
+  await expect(page.getByRole("heading",{name:"Device & Access",exact:true})).toBeVisible();
+  await expect(usersSidebar.getByRole("link",{name:"Device & Access",exact:true})).toHaveAttribute("aria-current","page");
+  await expect(page.getByTestId("history-directory-row")).toHaveCount(1);
+  await page.getByRole("button",{name:"History range: Today"}).click();
+  await page.getByRole("listbox",{name:"History range"}).getByRole("option",{name:"All time",exact:true}).click();
+  await page.getByRole("textbox",{name:"Search name, email or ID"}).fill("customer.qa");
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
+  await expect(page).toHaveURL(url => url.searchParams.get("range")==="all" && url.searchParams.get("q")==="customer.qa");
+  await page.getByTestId("history-directory-row").getByRole("link",{name:/View history for/}).click();
+  await expect(page).toHaveURL(url => url.pathname === "/admin/users/user/qa-registered-0001/devices");
+  await expect(page.getByRole("heading",{name:"Device & Access History"})).toBeVisible();
+  await expect(page.locator('[data-testid="device-history-row"]:visible')).toHaveCount(5);
+  await page.getByRole("link",{name:"Back to Device & Access",exact:true}).click();
+  await expect(page).toHaveURL(url => url.pathname === "/admin/users/devices" && url.searchParams.get("q")==="customer.qa" && url.searchParams.get("range")==="all");
+  await expect(page.getByRole("textbox",{name:"Search name, email or ID"})).toHaveValue("customer.qa");
+
+  await usersSidebar.getByRole("link",{name:"Pages Visited",exact:true}).click();
+  await expect(page).toHaveURL(url => url.pathname === "/admin/users/pages");
+  await expect(page.getByRole("heading",{name:"Pages Visited",exact:true})).toBeVisible();
+  await page.getByRole("button",{name:"History range: Today"}).click();
+  await page.getByRole("listbox",{name:"History range"}).getByRole("option",{name:"All time",exact:true}).click();
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
+  await expect(page.getByTestId("history-directory-total")).toHaveText("23 matching identities");
+  await expect(page.getByTestId("history-directory-row")).toHaveCount(20);
+  await page.getByRole("link",{name:"Next",exact:true}).click();
+  await expect(page.getByTestId("history-directory-row")).toHaveCount(3);
+  await page.getByRole("navigation",{name:"History identity types"}).getByRole("link",{name:"Guests",exact:true}).click();
+  await expect(page.getByTestId("history-directory-row")).toHaveCount(1);
+  await page.getByRole("navigation",{name:"History identity types"}).getByRole("link",{name:"Registered",exact:true}).click();
+  await page.getByRole("button",{name:"History platform: All platforms"}).click();
+  await page.getByRole("listbox",{name:"History platform"}).getByRole("option",{name:"iOS app",exact:true}).click();
+  await page.getByRole("textbox",{name:"Search name, email or ID"}).fill("page-history");
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
+  await expect(page.getByTestId("history-directory-row")).toHaveCount(1);
+  await page.getByTestId("history-directory-row").getByRole("link",{name:/View history for/}).click();
+  await expect(page).toHaveURL(url => url.pathname === "/admin/users/user/qa-page-history-0001/pages" && url.searchParams.get("platform")==="ios" && !url.searchParams.has("q"));
+  await expect(page.getByTestId("pages-visited-total")).toHaveText("15");
+  await page.getByRole("link",{name:"Back to Pages Visited",exact:true}).click();
+  await expect(page).toHaveURL(url => url.pathname === "/admin/users/pages" && url.searchParams.get("q")==="page-history" && url.searchParams.get("tab")==="registered" && url.searchParams.get("platform")==="ios");
+  await page.setViewportSize({width:320,height:800});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1),false,"History directory must not overflow narrow screens");
+  console.log("PASS Device & Access and Pages Visited directories, filters, pagination, detail and back links");
+
   // Full device history uses its own date filters and returns records older than Today.
   await page.setViewportSize({width:1280,height:900});
   await page.goto(base + "/admin/users/user/qa-registered-0001/activity?range=all");
