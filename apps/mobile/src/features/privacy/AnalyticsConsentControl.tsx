@@ -69,9 +69,6 @@ function PrivacySheet({ visible, initial, editing, onOpen, onClose, onDone, curr
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
   const savingRef = useRef(false);
-  useEffect(() => {
-    if (visible && !savingRef.current) { setDraft(current); setError(false); }
-  }, [visible, editing, current]);
 
   const close = () => {
     if (savingRef.current) return;
@@ -123,8 +120,8 @@ function PrivacySheet({ visible, initial, editing, onOpen, onClose, onDone, curr
               analytics checked={draft} disabled={saving} onChange={setDraft} />
           </> : null}
           {saving ? <Text accessibilityLiveRegion="polite" style={[styles.body, { color: theme.muted }]}>Saving your choice…</Text> : null}
-          {error ? <Text accessibilityRole="alert" style={[styles.body, { color: theme.text }]}>We couldn't save your preferences. Try again or continue without optional analytics.</Text> : null}
-          {error ? <Action label="Continue without optional analytics" secondary onPress={onDone} /> : null}
+          {error ? <Text accessibilityRole="alert" style={[styles.body, { color: theme.text }]}>We couldn't save your preferences. Optional analytics is off for now. Try again or continue.</Text> : null}
+          {error ? <Action label="Continue without analytics" secondary onPress={onDone} /> : null}
         </ScrollView>
         <View style={[styles.footer, { borderTopColor: theme.border, paddingBottom: Math.max(insets.bottom, 16) }]}>
           {details ? <Action label="Save preferences" disabled={saving} onPress={() => void choose(draft)} /> : <>
