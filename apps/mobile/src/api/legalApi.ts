@@ -2,7 +2,7 @@ import { getRuntimeEnvironment } from "../config/environment";
 import type { MobileLocale } from "../localization/mobileLocalizationCatalog";
 
 export type MobileLegalDocument = {
-  slug: "terms-of-service" | "privacy-policy";
+  slug: "terms-of-service" | "privacy-policy" | "cookie-policy";
   title: string;
   summary: string;
   lastUpdated: string;
