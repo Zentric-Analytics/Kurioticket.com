@@ -84,7 +84,7 @@ export class VisitorIdentityCoordinator {
   snapshot = (): AnalyticsSnapshot => ({
     loaded: this.loaded,
     choice: this.state.choice,
-    tracking: this.state.choice === "granted" && Boolean(this.state.visitorToken) && this.sessionKnown && this.state.userId === (this.session?.user.id ?? null),
+    tracking: this.loaded && this.state.choice === "granted" && Boolean(this.state.visitorToken) && this.sessionKnown && this.state.userId === (this.session?.user.id ?? null),
     pending: Boolean(this.task) || this.state.pendingWithdrawals.length > 0,
     error: this.failed,
   });
@@ -96,9 +96,22 @@ export class VisitorIdentityCoordinator {
   private publish() { this.listeners.forEach(listener => listener()); }
 
   async load() {
-    if (!this.loadTask) this.loadTask = this.dependencies.read().then(value => {
-      this.state = parseStoredVisitorIdentity(value);
-    }).catch(() => { this.failed = true; }).then(() => { this.loaded = true; this.publish(); });
+    if (this.loaded) return;
+    if (!this.loadTask) {
+      // A temporary SecureStore read failure is not a new installation.
+      // Do not publish "unknown" as a loaded choice or overwrite an existing
+      // identity until the original storage has actually been read.
+      this.loadTask = Promise.resolve().then(() => this.dependencies.read()).then(value => {
+        this.state = parseStoredVisitorIdentity(value);
+        this.loaded = true;
+        this.failed = false;
+      }).catch(() => {
+        this.failed = true;
+      }).finally(() => {
+        this.loadTask = undefined;
+        this.publish();
+      });
+    }
     await this.loadTask;
   }
 
@@ -147,11 +160,13 @@ export class VisitorIdentityCoordinator {
 
   async transition(session: IdentitySession) {
     await this.load();
+    if (!this.loaded) return;
     if (this.adoptSession(session)) await this.refresh();
   }
 
   async choose(enabled: boolean) {
     await this.load();
+    if (!this.loaded) throw new Error("Unable to read existing analytics preferences.");
     this.revision += 1;
     this.state.choice = enabled ? "granted" : "declined";
     this.failed = false;
@@ -180,6 +195,7 @@ export class VisitorIdentityCoordinator {
   async headers(path: string, session: IdentitySession): Promise<Record<string, string>> {
     if (!isVisitorTrackedPath(path)) return {};
     await this.load();
+    if (!this.loaded) return {};
     const changed = this.adoptSession(session);
     const pendingSearchIdentity = nativeJourneySearchPaths.has(path)
       && this.state.choice === "granted" && !this.snapshot().tracking;
@@ -228,6 +244,7 @@ export class VisitorIdentityCoordinator {
 
   private async synchronize() {
     await this.load();
+    if (!this.loaded) throw new Error("Unable to read existing analytics preferences.");
     // Save a local refusal as soon as storage recovers, even while the server is
     // offline. A storage failure must not prevent attempted remote withdrawal.
     if (this.storageDirty) await this.persist().catch(() => undefined);
