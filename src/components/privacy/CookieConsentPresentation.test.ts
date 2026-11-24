@@ -12,10 +12,12 @@ const render = (editing: boolean, draftAnalytics = false, overrides: Partial<Par
   onOpen() {}, onClose() {}, onDraftChange() {}, onChoose() {}, onRetry() {}, ...overrides,
 }));
 
-test("initial consent banner offers explicit equally accessible decisions without a close button", () => {
+test("initial consent banner has exactly two buttons and no links", () => {
   const markup = render(false);
   assert.match(markup, /We value your privacy/);
-  assert.match(markup, /Continue without optional cookies/);
+  assert.doesNotMatch(markup, /Continue without optional cookies|data-cookie-consent-continue/);
+  assert.equal((markup.match(/<button\b/g) ?? []).length, 2);
+  assert.doesNotMatch(markup, /<a\b/);
   assert.match(markup, /data-cookie-consent-actions/);
   assert.doesNotMatch(markup, /Decline optional/);
   assert.doesNotMatch(markup, /Essential only|Reject optional|Cookie Policy|Privacy Policy/);
