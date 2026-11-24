@@ -1,10 +1,10 @@
-import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AdminEmptyState, AdminPageShell } from "@/components/admin/AdminPageShell";
 import { JourneyEventHistory } from "@/components/admin/JourneyEventHistory";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
+import { formatDateTime } from "@/lib/admin-data";
 import { decodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
 import { adminJourneys } from "@/services/adminJourneyService";
 
@@ -31,9 +31,9 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
               <Field label="Identity" value={result.data.journey.identity.kind} />
               <Field label="User ID" value={result.data.journey.identity.userId || "—"} />
               <Field label="Visitor ID" value={result.data.journey.identity.visitorId} />
-              <Field label="Started" value={<AdminLocalDateTime value={result.data.journey.startedAt} />} />
-              <Field label="First event in window" value={<AdminLocalDateTime value={result.data.journey.firstEventAt} />} />
-              <Field label="Last event in window" value={<AdminLocalDateTime value={result.data.journey.lastEventAt} />} />
+              <Field label="Started" value={formatDateTime(new Date(result.data.journey.startedAt))} />
+              <Field label="First event in window" value={formatDateTime(new Date(result.data.journey.firstEventAt))} />
+              <Field label="Last event in window" value={formatDateTime(new Date(result.data.journey.lastEventAt))} />
               <Field label="Products" value={result.data.journey.products.join(", ") || "—"} />
               <Field label="Providers" value={result.data.journey.providers.join(", ") || "—"} />
               <Field label="Recorded searches" value={String(result.data.journey.searchCount)} />

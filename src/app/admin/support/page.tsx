@@ -1,5 +1,3 @@
-import { AdminLocalDateTime } from "@/components/admin/AdminTimeZoneProvider";
-import { getAdminTimeZone } from "@/lib/adminTimeZoneServer";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
@@ -55,7 +53,7 @@ function priorityStyle(priority: AdminSupportPriority) {
 
 export default async function AdminSupportPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
-  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) }, new Date(), await getAdminTimeZone());
+  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) });
   const applied = { ...raw, from: window.from || undefined, to: window.to || undefined };
   const params = scopedParams(applied);
   // Forward the continuation cursor only to the ticket read. Status tabs and
@@ -119,12 +117,12 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                             </span>
                           </td>
                           <td data-label="Last updated" className="px-3 py-1.5 align-middle">
-                            <div className="block whitespace-nowrap text-[13px] font-medium text-[#374151]">
-                              <AdminLocalDateTime value={updatedAt} style="date" />
+                            <time dateTime={updatedAt.toISOString()} className="block whitespace-nowrap text-[13px] font-medium text-[#374151]">
+                              {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(updatedAt)}
                               <span className="mt-0.5 block text-[12px] font-normal text-[#64748B]">
-                                <AdminLocalDateTime value={updatedAt} style="time" />
+                                {new Intl.DateTimeFormat("en", { timeStyle: "short" }).format(updatedAt)}
                               </span>
-                            </div>
+                            </time>
                           </td>
                           <td data-label="Action" className="whitespace-nowrap px-3 py-1.5 align-middle">
                             <Link

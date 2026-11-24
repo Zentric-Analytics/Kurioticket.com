@@ -1,8 +1,6 @@
 "use client";
 
 import { Fragment, useEffect, useId, useState } from "react";
-import { adminDisplayDateTime } from "@/lib/adminTimeZone";
-import { useAdminTimeZone } from "./AdminTimeZoneProvider";
 import { RefreshCw } from "lucide-react";
 
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
@@ -29,8 +27,11 @@ type Props = {
 const PAGE_SIZE = 25;
 const actionClass = "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#D8E1EC] bg-white px-3.5 text-[13px] font-medium text-[#004BB8] transition-colors hover:border-[#B8C9DF] hover:bg-[#F5F8FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-50";
 
-function dateLabel(value: string, timeZone: string) {
-  return adminDisplayDateTime(value, timeZone);
+function dateLabel(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "Unavailable"
+    : new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(date) + " UTC";
 }
 
 function DetailField({ label, value, identifier = false }: { label: string; value: string | null; identifier?: boolean }) {
@@ -47,7 +48,6 @@ function DetailField({ label, value, identifier = false }: { label: string; valu
 /** Providers-only presentation of the existing protected, read-only handoff
  * records. No Search Activity route or new data/authorization path is created. */
 export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, providers }: Props) {
-  const timeZone = useAdminTimeZone();
   const detailId = useId();
   const [provider, setProvider] = useState("");
   const [product, setProduct] = useState<ProductFilter>("");
@@ -214,7 +214,7 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
                     {list.items.map(handoff => (
                       <Fragment key={handoff.id}>
                         <tr className="align-top hover:bg-[#FAFBFD]">
-                          <td className="py-3 pr-2 tabular-nums">{dateLabel(handoff.createdAt, timeZone)}</td>
+                          <td className="py-3 pr-2 tabular-nums">{dateLabel(handoff.createdAt)}</td>
                           <td className="break-words px-2 py-3">{handoff.product}</td>
                           <th scope="row" className="break-words px-2 py-3 text-left font-semibold">{handoff.provider}</th>
                           <td className="break-words px-2 py-3">{handoff.route || "—"}</td>
@@ -253,7 +253,7 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
                                     <DetailField label="Product" value={handoff.product} />
                                     <DetailField label="Route or property" value={handoff.route} />
                                     <DetailField label="Price" value={handoff.price ? handoff.currency + " " + handoff.price : null} />
-                                    <DetailField label="Created" value={dateLabel(handoff.createdAt, timeZone)} />
+                                    <DetailField label="Created" value={dateLabel(handoff.createdAt)} />
                                   </dl>
                                 </div>
                                 <div className="mt-4 border-t border-[#E7ECF5] pt-4">

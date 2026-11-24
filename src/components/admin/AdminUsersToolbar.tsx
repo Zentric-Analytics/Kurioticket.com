@@ -149,7 +149,7 @@ export function AdminUsersToolbar({
   function applyFilters() {
     if (isPending) return;
     if (draftDate === "custom" && !validCustom) {
-      setDateError("Choose a valid start and end date (local).");
+      setDateError("Choose a valid start and end date (UTC).");
       return;
     }
     setDateError(null);
@@ -226,13 +226,13 @@ export function AdminUsersToolbar({
     </form>
 
     {draftDate === "custom" ? <div data-testid="users-custom-date-fields" className="flex min-w-0 flex-wrap items-end gap-3 border-b border-[#D8E1EC] py-3">
-      <label className="flex min-w-0 flex-col gap-1 text-xs text-[#475569]">From (local)
-        <AdminCalendarInput timeZone="local" ariaLabel="Custom start date local" value={draftDates.from}
+      <label className="flex min-w-0 flex-col gap-1 text-xs text-[#475569]">From (UTC)
+        <AdminCalendarInput ariaLabel="Custom start date UTC" value={draftDates.from}
           max={draftDates.to || undefined} onChange={event => { setDraftDates(current => ({ ...current, from: event.target.value })); setDateError(null); }}
           className="w-[210px] max-w-full" />
       </label>
-      <label className="flex min-w-0 flex-col gap-1 text-xs text-[#475569]">To (local)
-        <AdminCalendarInput timeZone="local" ariaLabel="Custom end date local" value={draftDates.to}
+      <label className="flex min-w-0 flex-col gap-1 text-xs text-[#475569]">To (UTC)
+        <AdminCalendarInput ariaLabel="Custom end date UTC" value={draftDates.to}
           min={draftDates.from || undefined} onChange={event => { setDraftDates(current => ({ ...current, to: event.target.value })); setDateError(null); }}
           className="w-[210px] max-w-full" />
       </label>

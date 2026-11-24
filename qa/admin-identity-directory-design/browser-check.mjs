@@ -46,7 +46,7 @@ try {
     await expect(population.getByRole("note")).toHaveCount(0);
     await expect(population.locator('[data-testid="user-population-metric"] [title]')).toHaveCount(0);
     await expect(population.locator('[data-testid="user-population-metric"]').nth(3)).toContainText("Recorded sessions · All time");
-    await expect(population.locator('[data-testid="user-population-metric"]').nth(6)).toContainText("New recorded sessions · Today (local)");
+    await expect(population.locator('[data-testid="user-population-metric"]').nth(6)).toContainText("New recorded sessions · Today (UTC)");
     await expect(population).not.toContainText("Registered counts include all account roles");
     await expect(population.locator('[data-testid="user-population-metric"]')).toHaveCount(7);
     const rows = population.locator('[data-testid="user-population-row"]');
@@ -225,9 +225,9 @@ try {
     await calendar.getByRole("gridcell", { name: fullDate }).click();
     await expect(calendar).toHaveCount(0);
   };
-  await expect(page.getByRole("button", { name: "Custom start date local" })).toBeVisible();
-  await pickCalendarDate("Custom start date local", "2026-10-01");
-  await pickCalendarDate("Custom end date local", "2026-10-23");
+  await expect(page.getByRole("button", { name: "Custom start date UTC" })).toBeVisible();
+  await pickCalendarDate("Custom start date UTC", "2026-10-01");
+  await pickCalendarDate("Custom end date UTC", "2026-10-23");
   await expect(page).not.toHaveURL(/date=custom/);
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page).toHaveURL(/date=custom/);

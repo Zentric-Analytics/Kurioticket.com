@@ -32,12 +32,12 @@ export type FullDeviceHistoryResult =
   | { status: "not_found" }
   | { status: "unavailable" };
 
-export async function loadAdminDeviceSessions(userId: string, timeZone = "UTC"): Promise<DeviceSessionResult> {
+export async function loadAdminDeviceSessions(userId: string): Promise<DeviceSessionResult> {
   try {
     const db = getOptionalPrisma();
     if (!db) return { status: "unavailable" };
     const sessions = await db.accountSession.findMany({
-      where: { userId, lastSeenAt: deviceTodayWindow(new Date(), timeZone) },
+      where: { userId, lastSeenAt: deviceTodayWindow() },
       orderBy: [{ lastSeenAt: "desc" }, { id: "desc" }],
       take: 3,
       select: {
@@ -55,14 +55,14 @@ export async function loadAdminDeviceSessions(userId: string, timeZone = "UTC"):
 
 /** All retained records, paginated at the database. Not limited by the profile's Today preview. */
 export async function loadAdminFullDeviceHistory(
-  userId: string, query: DeviceHistoryQuery, timeZone = "UTC",
+  userId: string, query: DeviceHistoryQuery,
 ): Promise<FullDeviceHistoryResult> {
   try {
     const db = getOptionalPrisma();
     if (!db) return { status: "unavailable" };
     const owner = await db.user.findUnique({ where: { id: userId }, select: { id: true } });
     if (!owner) return { status: "not_found" };
-    const where = { userId, lastSeenAt: deviceHistoryWindow(query, new Date(), timeZone) };
+    const where = { userId, lastSeenAt: deviceHistoryWindow(query) };
     const [total, sessions] = await Promise.all([
       db.accountSession.count({ where }),
       db.accountSession.findMany({
