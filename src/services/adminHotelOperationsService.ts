@@ -18,7 +18,7 @@ export type HotelOperationsSnapshot = {
     averageLatencyMs: number | null;
   };
   providerHealth: Array<{
-    id: "duffel" | "kayak-sandbox";
+    id: string;
     provider: string;
     attemptedCalls: number;
     degradedCalls: number;

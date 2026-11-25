@@ -13,6 +13,7 @@ export function recentSearchId(type: RecentInput["type"], params: Record<string,
 }
 
 export function buildRecentSearch(type: RecentInput["type"], payload: Record<string, unknown>): RecentInput | null {
+  const extension=Object.fromEntries(["currency","locale","market","originLocation","destinationLocation","destinationId","pickupLocationTarget","dropoffLocationTarget","adults","children","petFriendly","roomComposition","legs"].flatMap(key=>payload[key]===undefined?[]:[[key,payload[key]]]));
   if (type === "package") {
     const destination = String(payload.destination || ""); const startDate = String(payload.startDate || ""); const endDate = String(payload.endDate || "");
     if (!destination || !startDate || !endDate || !payload.mode) return null;
@@ -22,19 +23,19 @@ export function buildRecentSearch(type: RecentInput["type"], payload: Record<str
   if (type === "flight") {
     const origin = String(payload.origin || ""); const destination = String(payload.destination || ""); const departureDate = String(payload.departureDate || "");
     if (!origin || !destination || !departureDate) return null;
-    const params = { tripType: payload.tripType === "one-way" ? "one-way" : "round-trip", origin, destination, departureDate, ...(payload.returnDate ? { returnDate: String(payload.returnDate) } : {}), adults: Number(payload.adults) || 1, children: Number(payload.children) || 0, infants: Number(payload.infants) || 0, travelers: Number(payload.travelers) || Number(payload.adults) || 1, cabinClass: String(payload.cabinClass || "economy") };
+    const params = { ...extension, tripType: payload.tripType === "multi-city" ? "multi-city" : payload.tripType === "one-way" ? "one-way" : "round-trip", origin, destination, departureDate, ...(payload.returnDate ? { returnDate: String(payload.returnDate) } : {}), adults: Number(payload.adults) || 1, children: Number(payload.children) || 0, infants: Number(payload.infants) || 0, travelers: Number(payload.travelers) || Number(payload.adults) || 1, cabinClass: String(payload.cabinClass || "economy") };
     return { id: recentSearchId(type, params), type, label: `${origin} to ${destination}`, subtitle: departureDate, href: "/flights/results", params };
   }
   if (type === "hotel") {
     const destination = String(payload.destination || ""); const checkIn = String(payload.checkIn || ""); const checkOut = String(payload.checkOut || "");
     if (!destination || !checkIn || !checkOut || !payload.guests || !payload.rooms) return null;
-    const params = { destination, checkIn, checkOut, guests: Number(payload.guests), rooms: Number(payload.rooms) };
+    const params = { ...extension, destination, checkIn, checkOut, guests: Number(payload.guests), rooms: Number(payload.rooms) };
     return { id: recentSearchId(type, params), type, label: destination, subtitle: `${checkIn} – ${checkOut}`, href: "/hotels/results", params };
   }
   const pickupLocation = String(payload.pickupLocation || ""); const dropoffLocation = String(payload.dropoffLocation || "");
   const pickupDate = String(payload.pickupDate || ""); const pickupTime = String(payload.pickupTime || "");
   const dropoffDate = String(payload.dropoffDate || ""); const dropoffTime = String(payload.dropoffTime || ""); const driverAge = String(payload.driverAge || "");
   if (![pickupLocation, dropoffLocation, pickupDate, pickupTime, dropoffDate, dropoffTime, driverAge].every(Boolean)) return null;
-  const params = { pickupLocation, dropoffLocation, pickupDate, pickupTime, dropoffDate, dropoffTime, driverAge };
+  const params = { ...extension, pickupLocation, dropoffLocation, pickupDate, pickupTime, dropoffDate, dropoffTime, driverAge };
   return { id: recentSearchId(type, params), type, label: pickupLocation === dropoffLocation ? pickupLocation : `${pickupLocation} → ${dropoffLocation}`, subtitle: `${pickupDate} – ${dropoffDate}`, href: "/cars/results", params };
 }

@@ -1,6 +1,6 @@
 import type { CarLocationSuggestion, CarLocationSuggestionKind } from "@/lib/cars/carLocationSuggestions";
 import { discoverLocations } from "@/lib/locations/discovery";
-import { availableDiscoveryAdapters } from "@/lib/locations/providerDiscoveryAdapters";
+import { availableDiscoveryAdapters, registeredLocationProviders } from "@/lib/locations/providerDiscoveryAdapters";
 import { getCanonicalCarLocationCatalog } from "@/lib/cars/carLocationSuggestions";
 import type { CanonicalLocation } from "@/lib/locations/types";
 import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
@@ -47,7 +47,7 @@ async function discoverCarLocations(request: Request) {
 
   try {
     if (q) {
-      const discovery = await discoverLocations({ query: q, product: "cars", catalog: getCanonicalCarLocationCatalog(), adapters: availableDiscoveryAdapters(request, "cars"), limit, timeoutMs: 900, signal: request.signal, supportedByProviders: ["kayak"] });
+      const discovery = await discoverLocations({ query: q, product: "cars", catalog: getCanonicalCarLocationCatalog(), adapters: await availableDiscoveryAdapters(request, "cars"), limit, timeoutMs: 900, signal: request.signal, supportedByProviders: await registeredLocationProviders("cars") });
       const suggestions: CarLocationSuggestion[] = discovery.suggestions.map((canonical) => ({ id: canonical.id, kind: toCarSuggestionKind(canonical),
         value: canonical.submittedValue, primaryText: canonical.primaryLabel, secondaryText: canonical.supportingLabel, city: canonical.primaryLabel,
         countryCode: canonical.country?.code, airportCode: canonical.codes?.iata, canonical, validation: "provider-verified", isProviderValidated: true }));

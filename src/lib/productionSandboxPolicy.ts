@@ -16,6 +16,22 @@ const scopeKey = Symbol.for("kurioticket.production-sandbox-request.v1");
 // Aliased server modules must share request context, never inventory or policy values.
 const requestScopes = globalThis as unknown as Record<symbol, AsyncLocalStorage<Grant | null>>;
 const scope = requestScopes[scopeKey] ??= new AsyncLocalStorage<Grant | null>();
+type FinalPublication={value?:{count:number;status:"SUCCESS"|"PARTIAL"|"FAILED"}};
+const publicationKey=Symbol.for("kurioticket.search-final-publication.v1");
+const publicationStores=globalThis as unknown as Record<symbol,AsyncLocalStorage<FinalPublication>>;
+const publications=publicationStores[publicationKey]??=new AsyncLocalStorage<FinalPublication>();
+/** Capture inside the route; after-response writers retain only a private
+ * request-local reference, never a process-global inventory/policy cache. */
+export function captureFinalSearchHistory() {
+ const publication=publications.getStore();
+ return <T extends {resultCount?:number;status?:string}>(input:T):T=>publication?.value ? {...input,resultCount:publication.value.count,status:publication.value.status}:input;
+}
+function publishFinalAccounting(payload:unknown) {
+ const publication=publications.getStore();
+ if(!publication || !payload || typeof payload!=="object")return;
+ const value=payload as {results?:unknown;status?:unknown};
+ if(Array.isArray(value.results))publication.value={count:value.results.length,status:value.status==="unavailable"?"FAILED":value.status==="partial"?"PARTIAL":"SUCCESS"};
+}
 export function productionSandboxHost(env: Record<string, string | undefined> = process.env) {
     try {
         const url = new URL(env.NEXT_PUBLIC_APP_URL || "");
@@ -62,13 +78,15 @@ export async function withProductionSandboxRequest(request: Request, task: () =>
     const safeRead = () => read().catch(() => ({ enabled: false, revision: null, available: false }));
     const state = request.headers.get(SANDBOX_PROTOCOL_HEADER) === "1" ? await safeRead() : null;
     const grant = state?.available && state.enabled && state.revision ? { revision: state.revision, read: safeRead } : null;
-    return scope.run(grant, async () => {
+    return publications.run({},()=>scope.run(grant, async () => {
         const response = await task();
         if (!response.headers.get("content-type")?.includes("application/json"))
             return response;
         const payload: unknown = await response.clone().json();
-        if (!productionSandboxInventory(payload))
+        if (!productionSandboxInventory(payload)) {
+            publishFinalAccounting(payload);
             return response;
+        }
         const final = await currentSandboxGrant();
         function filter(value: unknown): unknown {
             if (Array.isArray(value))
@@ -97,6 +115,8 @@ export async function withProductionSandboxRequest(request: Request, task: () =>
         headers.set("Cache-Control", "private, no-store, max-age=0");
         headers.set("CDN-Cache-Control", "no-store");
         headers.delete("Content-Length");
-        return new Response(JSON.stringify(filter(payload)), { status: response.status, headers });
-    });
+        const projected=filter(payload);
+        publishFinalAccounting(projected);
+        return new Response(JSON.stringify(projected), { status: response.status, headers });
+    }));
 }

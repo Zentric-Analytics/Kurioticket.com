@@ -10,7 +10,8 @@ export type ProviderOperationalState =
   | "FAILING";
 
 export type ProviderOperationalReadiness = {
-  id: "duffel" | "kayak-sandbox";
+  id: string;
+  products?:readonly string[];
   provider: string;
   state: "READY" | "DISABLED" | "NOT_CONFIGURED" | "ENVIRONMENT_BLOCKED";
 };
@@ -124,7 +125,7 @@ export function summarizeProviderServices(
   groups: readonly GroupRow[],
 ): ProviderOperationalServiceStatus[] {
   const byService = new Map<string, { counts: CallCounts; reasons: Map<string, ProviderOperationalIssue> }>();
-  for (const service of expectedServices[readiness.id]) {
+  for (const service of servicesFor(readiness)) {
     byService.set(service, { counts: blankCounts(), reasons: new Map() });
   }
 
@@ -167,6 +168,8 @@ export function summarizeProviderServices(
   });
 }
 
+function servicesFor(readiness:ProviderOperationalReadiness){return expectedServices[readiness.id]??(readiness.products??[]).map(product=>`${product.toLowerCase().replace(/s$/,"")}-search`);}
+
 export async function readProviderOperationalSnapshot(input: {
   database: ProviderOperationalDatabase;
   readiness: ProviderOperationalReadiness[];
@@ -191,13 +194,13 @@ export async function readProviderOperationalSnapshot(input: {
   const until = custom?.to ?? input.now;
 
   return Promise.all(input.readiness.map(async integration => {
-    const provider = providerNames[integration.id];
+    const provider = providerNames[integration.id]??integration.provider;
     const where: Prisma.ApiProviderLogWhereInput = {
       provider,
       // Count customer search requests only. Admin-initiated health probes
       // use service "provider-health" and must not distort success rates,
       // latency, last activity, or service-specific timestamp availability.
-      service: { in: [...expectedServices[integration.id]] },
+      service: { in: [...servicesFor(integration)] },
       createdAt: { gte: since, lte: until },
       metadata: { path: ["environment"], equals: input.environment },
     };

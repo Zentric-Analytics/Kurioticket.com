@@ -1,5 +1,5 @@
 import { discoverLocations } from "@/lib/locations/discovery";
-import { availableDiscoveryAdapters } from "@/lib/locations/providerDiscoveryAdapters";
+import { availableDiscoveryAdapters, registeredLocationProviders } from "@/lib/locations/providerDiscoveryAdapters";
 import { getOwnedFlightLocationCatalog } from "@/lib/locations/flightDiscovery";
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { fromHotelDestination } from "@/lib/locations/adapters";
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   const catalog = product === "flights" ? getOwnedFlightLocationCatalog()
     : product === "hotels" ? hotelDestinations.map(fromHotelDestination)
     : getCanonicalCarLocationCatalog();
-  const supportedByProviders = product === "flights" ? ["duffel", "kayak"] : ["kayak"];
-  const result = await discoverLocations({ query, product, catalog, adapters: availableDiscoveryAdapters(request, product), limit: 8, timeoutMs: 900, signal: request.signal, supportedByProviders });
+  const supportedByProviders = await registeredLocationProviders(product);
+  const result = await discoverLocations({ query, product, catalog, adapters: await availableDiscoveryAdapters(request, product), limit: 8, timeoutMs: 900, signal: request.signal, supportedByProviders });
   return Response.json({ ...result, query, product, isLiveAvailability: false }, { headers: { "Cache-Control": "private, no-store" } });
 }

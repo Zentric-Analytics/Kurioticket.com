@@ -21,5 +21,5 @@ export function assertInventorySubset(parent:readonly InventoryIdentity[], child
 
 export function inventoryAccounting(stages: readonly {stage:InventoryStage;rows:readonly InventoryIdentity[]}[]) {
   for(let index=1;index<stages.length;index++) assertInventorySubset(stages[index-1].rows,stages[index].rows);
-  return stages.map(({stage,rows})=>{const {identities: _identities,...counts}=inventoryStage(stage,rows);return counts;});
+  return stages.map(({stage,rows})=>{const snapshot=inventoryStage(stage,rows);return {stage:snapshot.stage,count:snapshot.count,uniqueCount:snapshot.uniqueCount};});
 }

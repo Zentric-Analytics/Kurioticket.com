@@ -33,11 +33,11 @@ test("hotel picker uses bounded separate drafts and commits their total only on 
   assert.match(source, /onPress=\{\(\) => onDone\(draft\)\}/);
 });
 
-test("pet-friendly is an accessible committed draft without an invented search parameter", () => {
+test("pet-friendly is an accessible committed intent for server capability validation", () => {
   assert.match(source, /accessibilityRole="switch" accessibilityState=\{\{ checked: draft\.petFriendly \}\}/);
   assert.match(source, /setPetFriendly\(draft\.petFriendly\)/);
   const serializer = model.slice(model.indexOf("export const hotelSearchParams"));
-  assert.doesNotMatch(serializer, /petFriendly/);
+  assert.match(serializer, /petFriendly:String\(form.petFriendly\)/);
 });
 
 test("picker uses the web icon family with decorative native icons", () => {

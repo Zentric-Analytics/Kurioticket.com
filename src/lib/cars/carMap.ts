@@ -1,5 +1,16 @@
+import {getAirportByCode} from "@/data/airports";
+
 function normalizeLocation(value: string | undefined): string {
   return value?.trim().replace(/\s+/g, " ") ?? "";
+}
+
+/** Airport geography is context, never an assertion about the rental desk. */
+export function carPickupMapQuery(value:string):string|null {
+  const query=normalizeLocation(value);
+  if(!query)return null;
+  if(!/^[A-Za-z]{3}$/.test(query))return query;
+  const airport=getAirportByCode(query);
+  return airport ? `${airport.airport}, ${airport.city}, ${airport.country} (${airport.code})` : null;
 }
 
 export function buildGoogleCarMapEmbedUrl({
@@ -10,7 +21,7 @@ export function buildGoogleCarMapEmbedUrl({
   googleMapsEmbedApiKey?: string;
 }): string | null {
   const apiKey = googleMapsEmbedApiKey?.trim();
-  const query = normalizeLocation(pickupLocation);
+  const query = carPickupMapQuery(pickupLocation);
   if (!apiKey || !query) return null;
 
   const url = new URL("https://www.google.com/maps/embed/v1/place");
@@ -56,7 +67,7 @@ export function buildGoogleCarStreetViewEmbedUrl({
 }
 
 export function buildCarDirectionsUrl(pickupLocation: string): string | null {
-  const destination = normalizeLocation(pickupLocation);
+  const destination = carPickupMapQuery(pickupLocation);
   if (!destination) return null;
 
   const url = new URL("https://www.google.com/maps/dir/");

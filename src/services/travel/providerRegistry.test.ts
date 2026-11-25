@@ -1,3 +1,4 @@
+import {registeredIntegrationStatus} from "./providerIntegrationStatus";
 import { classifyFlights,classifyHotels,classifyCars } from "@/lib/travel/searchContract";
 import {toPublicFlight,toPublicHotel} from "@/lib/searchCache";
 import assert from "node:assert/strict";
@@ -5,7 +6,7 @@ import test, {beforeEach,afterEach} from "node:test";
 let savedMode: string | undefined;
 beforeEach(()=>{savedMode=process.env.NODE_ENV;Object.assign(process.env,{NODE_ENV:"test"});});
 afterEach(()=>{if(savedMode===undefined)Reflect.deleteProperty(process.env,"NODE_ENV");else Object.assign(process.env,{NODE_ENV:savedMode});});
-import { providersFor, executeRegisteredProvider, type ProviderRegistration, type SearchProduct, type ProductContracts } from "./providerRegistry";
+import { providersFor, executeRegisteredProvider, type ProductContracts } from "./providerRegistry";
 import { searchFlights } from "./flightAggregator";
 import { searchHotels, searchHotelBatch } from "./hotelAggregator";
 import { searchCars } from "./carAggregator";
@@ -14,14 +15,7 @@ import { buildStaticCarResults } from "./staticCarResults";
 import { setFlightResultCacheBackendForTests } from "@/lib/searchCache";
 import type { NormalizedFlightResult } from "@/lib/types";
 
-/** Fixture adapters are injected only by tests; there is no runtime registration switch. */
-export function fixtureProvider<P extends SearchProduct>(product: P, rows: ProductContracts[P]["offer"][]): ProviderRegistration<P> {
-  return { id: `fixture-${product}`, label: `Fixture ${product}`, product, timeoutMs: 50,
-    capabilities: { ...providersFor(product)[0].capabilities, mode: "test", environments: ["test"], refresh: "none", handoff: "none", booking: "none", details: "none" },
-    supports: () => true,
-    execute: async () => ({provider:`Fixture ${product}`,status:"success",results:rows,latencyMs:0}),
-  };
-}
+import {fixtureProvider} from "./fixtures/testProviders";
 
 test("central registrations participate in all three active product services", async () => {
   const previous = process.env.NODE_ENV;
@@ -37,7 +31,7 @@ test("central registrations participate in all three active product services", a
       legs:[{direction:"outbound",originAirport:"HOU",destinationAirport:"SFO",departureTime:"2099-12-25T10:00:00Z",arrivalTime:"2099-12-25T14:00:00Z",duration:"4h",durationMinutes:240,stops:0,layovers:[],segments:[]}],
     };
     const flights = await searchFlights(query,{providers:[fixtureProvider("flights",[flight])]});
-    assert.deepEqual(flights.results.map(row=>row.id),[flight.id]);
+    assert.deepEqual(flights.results.map(row=>row.id),[`fixture-flights:${flight.id}`]);
     assert.equal(flights.providerStatuses[0].provider,"Fixture flights");
     const projectedFlight=classifyFlights(flights.results.map(toPublicFlight),query,[],"fixture");
     assert.equal(projectedFlight.results[0].searchPolicy.source,"metasearch");
@@ -46,19 +40,19 @@ test("central registrations participate in all three active product services", a
     const second=fixtureProvider("flights",[{...flight,id:"fixture:second:1"}]);second.id="fixture-second";second.label="Second fixture";
     setFlightResultCacheBackendForTests({write:async rows=>rows.filter(row=>row.normalizedResult.provider!=="Second fixture").map(row=>row.publicResultId),find:async()=>null,findCompatible:async()=>[],cleanupExpired:async()=>0});
     const partial=await searchFlights(query,{providers:[fixtureProvider("flights",[flight]),second]});
-    assert.deepEqual(partial.results.map(row=>row.id),[flight.id]);assert.equal(partial.unavailableMessage,undefined);assert(partial.warnings.length);
+    assert.deepEqual(partial.results.map(row=>row.id),[`fixture-flights:${flight.id}`]);assert.equal(partial.unavailableMessage,undefined);assert(partial.warnings.length);
 
     const hotelQuery = {destination:"New York",checkIn:"2099-12-25",checkOut:"2099-12-29",guests:2,rooms:1};
-    const hotel = {...buildStaticHotelResults(hotelQuery)[0],id:"fixture:hotels:1",provider:"Fixture hotels",dataSource:"live" as const};
+    const hotel = {...buildStaticHotelResults(hotelQuery)[0],id:"fixture:hotels:1",provider:"Fixture hotels",dataSource:"demo" as const};
     const hotels = await searchHotels(hotelQuery,{providers:[fixtureProvider("hotels",[hotel])],dependencies:{searchKayak:async()=>{throw new Error("wrong integration");},persist:async()=>{}}});
-    assert.deepEqual(hotels.results.map(row=>row.id),[hotel.id]);
+    assert.equal(hotels.results.length,1);assert(hotels.results[0].id.startsWith("fixture-hotels:"));assert(hotels.results[0].id.endsWith(":"+hotel.id));
     const projectedHotel=classifyHotels(hotels.results.map(toPublicHotel),[],"fixture");
     assert.equal(projectedHotel.results[0].inventoryProvenance?.providerId,"fixture-hotels");
     assert.deepEqual(projectedHotel.results[0].searchPolicy.action,{kind:"none",enabled:false});
     const carQuery = {pickupLocation:"LHR",dropoffLocation:"LHR",pickupDate:"2099-12-25",dropoffDate:"2099-12-29",pickupTime:"10:00",dropoffTime:"10:00",driverAge:"25"};
     const car = {...buildStaticCarResults(carQuery)[0],id:"fixture:cars:1"};
     const cars = await searchCars(carQuery,{providers:[fixtureProvider("cars",[car])],dependencies:{searchKayak:async()=>{throw new Error("wrong integration");},rememberResults:async()=>{},rememberCohort:async()=>{}}});
-    assert.deepEqual(cars.results.map(row=>row.id),[car.id]);
+    assert.equal(cars.results.length,1);assert(cars.results[0].id.startsWith("fixture-cars:"));assert(cars.results[0].id.endsWith(":"+car.id));
     assert.equal(cars.providerStatuses[0].provider,"Fixture cars");
     const projectedCar=classifyCars(cars.results,carQuery,"fixture");
     assert.equal(projectedCar.results[0].inventorySource,"metasearch");
@@ -85,6 +79,7 @@ test("test injection and duplicate registrations cannot become runtime inventory
     Object.assign(process.env,{NODE_ENV:"test"});
     const provider=fixtureProvider("hotels",[]);
     assert.throws(()=>providersFor("hotels",[provider,provider]),/Invalid/);
+    assert.throws(()=>providersFor("hotels",[{...provider,id:"../invalid"}]),/Invalid/);
   } finally { if(previous===undefined)Reflect.deleteProperty(process.env,"NODE_ENV");else Object.assign(process.env,{NODE_ENV:previous}); }
 });
 
@@ -107,4 +102,24 @@ test("compatibility batches use shared hotel cohort rules and fail closed on los
   provider.hotelBatch=async()=>{throw new Error("upstream continuation failed");};
   await assert.rejects(searchHotelBatch(query,{clientIp:"192.0.2.1"},"snapshot",checkpoint,options),/batch unavailable/);
   assert.deepEqual(published,[first.id,second.id]);
+});
+
+test("new provider snapshots cannot collide across providers or later searches",async()=>{
+ const query={destination:"Paris",checkIn:"2099-12-25",checkOut:"2099-12-29",guests:1,rooms:1};
+ const row={...buildStaticHotelResults(query)[0],id:"reused-row",provider:"Fixture hotels"};
+ const first=fixtureProvider("hotels",[row]);const second={...first,id:"second-fixture",label:"Second fixture"};
+ const a=await executeRegisteredProvider(first,query,{requestId:"snapshot-one"});
+ const b=await executeRegisteredProvider(second,query,{requestId:"snapshot-one"});
+ const c=await executeRegisteredProvider(first,query,{requestId:"snapshot-two"});
+ assert.equal(new Set([a.results[0].id,b.results[0].id,c.results[0].id]).size,3);
+});
+
+test("central readiness governs dispatch and safely projects a future approved provider",async()=>{
+ const provider=fixtureProvider("hotels",[]);let calls=0;
+ provider.execute=async()=>{calls++;return {provider:provider.label,results:[],status:"success",latencyMs:0};};
+ provider.readiness=()=>({configured:false,enabled:false});
+ assert.equal((await executeRegisteredProvider(provider,{} as ProductContracts["hotels"]["query"],{})).status,"skipped");assert.equal(calls,0);
+ assert.equal(registeredIntegrationStatus(provider),null,"test fixtures never become real provider readiness");
+ const approved={...provider,id:"future-approved",label:"Approved provider",capabilities:{...provider.capabilities,mode:"live" as const},readiness:()=>({configured:true,enabled:true}),privateCredential:"synthetic-not-a-key"};
+ const projected=registeredIntegrationStatus(approved);assert(projected);assert.equal(projected.searchEnabled,true);assert.deepEqual(projected.products,["HOTELS"]);assert.equal("privateCredential" in projected,false);assert.equal("readiness" in projected,false);assert.equal(projected.bookingEnabled,false);
 });

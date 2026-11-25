@@ -1,4 +1,4 @@
-import { searchHotelBatch } from "@/services/travel/hotelAggregator";
+import { searchHotelBatch, hotelSearchRequiresCanonicalResponse } from "@/services/travel/hotelAggregator";
 import { productionSandboxHost } from "@/lib/productionSandboxPolicy";
 import { POST as canonicalHotelSearch } from "@/app/api/hotels/search/route";
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
@@ -62,6 +62,13 @@ export async function POST(request: Request) {
   }
   if (request.headers.get("x-mobile-platform") !== "android")
     return NextResponse.json({ error: "Unsupported platform." }, { status: 404 });
+  if(hotelSearchRequiresCanonicalResponse()) {
+    const payload=await request.clone().json().catch(()=>null);
+    if(payload?.search && typeof payload.search === "object" && !Array.isArray(payload.search) && !payload.cursor) {
+      const headers=new Headers(request.headers);headers.delete("content-length");
+      return canonicalHotelSearch(new Request(request.url,{method:"POST",headers,body:JSON.stringify(payload.search),signal:request.signal}));
+    }
+  }
   if (!(await isFeatureEnabled("HOTEL_SEARCH_ENABLED")) || !isKayakSandboxEnabled())
     return NextResponse.json({ error: "Hotel search is temporarily unavailable." }, { status: 503 });
   const ip = getClientIp(request);

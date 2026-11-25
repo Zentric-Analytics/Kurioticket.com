@@ -1,10 +1,10 @@
-import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
+import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
 import { applicationMetadata } from "@/lib/application-source";
 import { after } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
-import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
+import { logProviderCall, logSearchHistory as persistSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { validateCarsForm, type CarsFormValues } from "@/lib/cars/carsSearchUtils";
 import type { LocationBoundCarSearchParams } from "@/lib/cars/types";
 import { searchCars } from "@/services/travel/carAggregator";
@@ -40,6 +40,8 @@ function canonicalSearch(value: unknown): LocationBoundCarSearchParams | null {
 
 export async function POST(request: Request) {
  return withProductionSandboxRequest(request, async () => {
+  const projectHistory=captureFinalSearchHistory();
+  const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(input));
 
   const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("CAR_SEARCH_ENABLED"))) return Response.json({ error: "Car search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503, headers: noStore });

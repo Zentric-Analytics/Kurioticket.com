@@ -60,7 +60,7 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
     if (tripType === "round-trip" && (!future(returnDate, now) || returnDate <= departureDate)) return { error: "Choose a return date after departure." };
     if (adults < 1 || adults > 9 || children < 0 || infants < 0 || adults + children + infants > 9) return { error: "Choose valid traveler counts." };
     if (!["economy", "premium-economy", "business", "first"].includes(cabinClass)) return { error: "Choose a supported cabin class." };
-    const payload = { tripType, origin, destination, ...(parseLocationTarget(text(params.fromLocation)) ? {originLocation:parseLocationTarget(text(params.fromLocation))}:{}), ...(parseLocationTarget(text(params.toLocation)) ? {destinationLocation:parseLocationTarget(text(params.toLocation))}:{}), departureDate, ...(tripType === "round-trip" ? { returnDate } : {}), adults, children, infants, travelers: adults + children + infants, cabinClass, currency };
+    const payload = { tripType, origin, destination, ...(parseLocationTarget(text(params.fromLocation)||text(params.originLocation)) ? {originLocation:parseLocationTarget(text(params.fromLocation)||text(params.originLocation))}:{}), ...(parseLocationTarget(text(params.toLocation)||text(params.destinationLocation)) ? {destinationLocation:parseLocationTarget(text(params.toLocation)||text(params.destinationLocation))}:{}), departureDate, ...(tripType === "round-trip" ? { returnDate } : {}), adults, children, infants, travelers: adults + children + infants, cabinClass, currency };
     return { plan: { payload, key: JSON.stringify(["flight", ...Object.values(payload)]), summary: `${origin} → ${destination} · ${departureDate}` } };
   }
   if (product === "hotel") {

@@ -767,6 +767,7 @@ const mergeProviderAndCuratedPlaces = (
 export async function searchDuffelPlaces(
   query: string,
   searchContext?: PlaceSearchContext,
+  signal?: AbortSignal,
 ): Promise<ProviderResult<DuffelPlaceSuggestion>> {
   const apiKey = process.env.DUFFEL_API_KEY;
   const stagingSafety = getStagingProviderSafety();
@@ -786,6 +787,7 @@ export async function searchDuffelPlaces(
     const response = await fetchJson<DuffelPlaceApiResponse>(
       `https://api.duffel.com/places/suggestions?query=${encodeURIComponent(query)}`,
       {
+        signal,
         headers: {
           Authorization: `Bearer ${apiKey}`,
           Accept: "application/json",

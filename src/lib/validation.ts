@@ -161,6 +161,7 @@ export const hotelSearchSchema = z
     destinationId: z.union([
       z.string().trim().regex(/^(?:hotel:)?[a-z0-9]+(?:-[a-z0-9]+)*$/).max(86),
       z.string().trim().regex(/^place:[\p{L}\p{N}][\p{L}\p{N}-]*$/u).max(126),
+      z.string().trim().regex(/^place:(?:airport|city|metropolitan-area|district|landmark|rental-area):[\p{L}\p{N}][\p{L}\p{N}-]{0,119}$/u).max(160),
       z.string().trim().regex(/^airport:[A-Z]{3}$/),
     ]).optional(),
     destination: z.string().trim().min(2, "Enter a destination.").max(120),

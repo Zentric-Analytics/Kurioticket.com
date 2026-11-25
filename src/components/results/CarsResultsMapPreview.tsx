@@ -2,9 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import { MapPin, X } from "lucide-react";
+import {carPickupMapQuery} from "@/lib/cars/carMap";
 
 function googleMapUrl(location: string) {
-  return `https://maps.google.com/maps?q=${encodeURIComponent(`car rental near ${location}`)}&output=embed&z=13`;
+  return `https://maps.google.com/maps?q=${encodeURIComponent(location)}&output=embed&z=13`;
 }
 
 export function CarsResultsMapPreview({ location }: { location: string }) {
@@ -18,6 +19,7 @@ export function CarsResultsMapPreview({ location }: { location: string }) {
   } | null>(null);
   const previousRootOverflowRef = useRef<string | null>(null);
   const place = location.trim();
+  const mapQuery=carPickupMapQuery(place);
 
   const unlockBackgroundScroll = () => {
     const previousBodyStyle = previousBodyStyleRef.current;
@@ -67,7 +69,7 @@ export function CarsResultsMapPreview({ location }: { location: string }) {
     };
   }, []);
 
-  if (!place) return null;
+  if (!place || !mapQuery) return null;
 
   return (
     <>
@@ -77,7 +79,7 @@ export function CarsResultsMapPreview({ location }: { location: string }) {
       >
         <iframe
           title={`Map preview of ${place}`}
-          src={googleMapUrl(place)}
+          src={googleMapUrl(mapQuery)}
           loading="lazy"
           tabIndex={-1}
           aria-hidden="true"
@@ -115,7 +117,7 @@ export function CarsResultsMapPreview({ location }: { location: string }) {
           </div>
           <iframe
             title={`Google map of car pickup area near ${place}`}
-            src={googleMapUrl(place)}
+            src={googleMapUrl(mapQuery)}
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
             className="min-h-0 w-full flex-1 border-0 bg-slate-100"

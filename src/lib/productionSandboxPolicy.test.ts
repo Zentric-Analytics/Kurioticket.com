@@ -1,3 +1,4 @@
+import {captureFinalSearchHistory} from "./productionSandboxPolicy";
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, test } from "node:test";
 import { currentSandboxGrant, productionSandboxHost, productionSandboxInventory, withProductionSandboxRequest } from "./productionSandboxPolicy";
@@ -90,4 +91,11 @@ test("legacy cached sandbox offers cannot be read or reused in production",async
 test("final authorization recomputes status and counts after revocation",async()=>{
  const response=await withProductionSandboxRequest(request(false),async()=>Response.json({results:[result()],status:"available",partial:false,resultCount:1,receivedCount:1,available:true}),async()=>state(false));
  const payload=await response.json();assert.equal(payload.status,"unavailable");assert.equal(payload.lifecycle,"restricted");assert.equal(payload.resultCount,0);assert.equal(payload.receivedCount,0);assert.equal(payload.available,false);
+});
+
+test("after-response operational history observes final authorization counts and status",async()=>{
+ let project:ReturnType<typeof captureFinalSearchHistory>|undefined;
+ await withProductionSandboxRequest(request(false),async()=>{project=captureFinalSearchHistory();return Response.json({results:[result()],status:"available"});},async()=>state(false));
+ assert(project);assert.deepEqual(project({resultCount:1,status:"SUCCESS",requestId:"synthetic"}),{resultCount:0,status:"FAILED",requestId:"synthetic"});
+ assert.deepEqual(captureFinalSearchHistory()({resultCount:3,status:"SUCCESS"}),{resultCount:3,status:"SUCCESS"});
 });

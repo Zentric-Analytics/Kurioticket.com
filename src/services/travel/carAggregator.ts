@@ -20,7 +20,7 @@ export async function searchCars(search:LocationBoundCarSearchParams,options:{si
   if(!search.pickupLocation||!search.pickupDate||!search.dropoffDate)return{results:[],status:"invalid-search",warnings:[],providerStatuses:[]};
   const dependencies = options.dependencies ?? carSearchDependencies;
   const providerStatuses = await runRegisteredProviders(providersFor("cars", options.providers).map(registration =>
-    options.dependencies && registration.id === "kayak" ? {...registration, execute:(query:LocationBoundCarSearchParams, context:import("./providerRegistry").ProviderExecutionContext) => dependencies.searchKayak(query, context.kayak)} : registration), search, options);
+    options.dependencies && registration.id === "kayak" ? {...registration, readiness:()=>({configured:true,enabled:true}), execute:(query:LocationBoundCarSearchParams, context:import("./providerRegistry").ProviderExecutionContext) => dependencies.searchKayak(query, context.kayak)} : registration), search, options);
   const inventory = providerStatuses.flatMap(provider => provider.results);
   const kayak = providerStatuses.find(provider => provider.provider === "KAYAK sandbox") ?? providerStatuses[0] ?? {provider:"none",status:"skipped" as const,results:[],latencyMs:0};
   console.info("[car-search:provider-diagnostics]", {

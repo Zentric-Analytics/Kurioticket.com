@@ -1,3 +1,4 @@
+import {buildCarDirectionsUrl} from "../../../../../src/lib/cars/carMap";
 import type { CarResult } from "../../api/travelApi";
 import { airports, normalizeAirportSearchText } from "../../../../../src/shared/airports";
 
@@ -71,9 +72,5 @@ export function nativeCarStreetViewEmbedUrl(
 }
 
 export function nativeCarDirectionsUrl(location: string): string | null {
-  const destination = location.trim().replace(/\s+/g, " ");
-  if (!destination) return null;
-  const url = new URL("https://www.google.com/maps/dir/");
-  url.search = new URLSearchParams({ api: "1", destination }).toString();
-  return url.toString();
+  return buildCarDirectionsUrl(location);
 }

@@ -75,7 +75,7 @@ export async function GET(request: Request) {
     query.length >= MIN_QUERY_LENGTH && query.length <= MAX_QUERY_LENGTH && SAFE_QUERY.test(query);
 
   if (isQueryValid) {
-    const providerResult = await searchDuffelPlaces(query, { context, lat, lng, radiusKm, countryCode, locale });
+    const providerResult = await searchDuffelPlaces(query, { context, lat, lng, radiusKm, countryCode, locale }, request.signal);
     if (providerResult.status !== "success") {
       const fallbackSuggestions = searchCuratedPlaceSuggestions(query, { context, lat, lng, radiusKm, countryCode, locale });
       const orderedFallbackSuggestions = context === "origin"

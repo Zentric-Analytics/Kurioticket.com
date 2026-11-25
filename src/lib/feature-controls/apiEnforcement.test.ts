@@ -1,4 +1,4 @@
-import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
+import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
@@ -13,7 +13,7 @@ for (const product of ["flights", "hotels", "cars", "packages"]) {
     runInNewContext(compiled, {
       exports: exported, Response, URL, performance, crypto: { randomUUID: () => "request-id" },
       require: (name: string) => {
-        if (name === "@/lib/productionSandboxPolicy") return {withProductionSandboxRequest};
+        if (name === "@/lib/productionSandboxPolicy") return {withProductionSandboxRequest,captureFinalSearchHistory};
         if (name === "next/server") return { NextResponse: { json: Response.json } };
         if (name === "@/lib/feature-controls/service") return { isFeatureEnabled: async () => false };
         if (name === "@/lib/search-journey") return { resolveSearchRequestId: () => "request-id" };

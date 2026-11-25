@@ -1,4 +1,4 @@
-import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
+import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
 import { createHash } from "node:crypto";
@@ -7,7 +7,7 @@ import { toPublicHotel } from "@/lib/searchCache";
 import { hotelSearchSchema } from "@/lib/validation";
 import { classifyHotels } from "@/lib/travel/searchContract";
 import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
-import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
+import { logProviderCall, logSearchHistory as persistSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import {
   searchHotels,
   searchHotelsByProvider,
@@ -21,6 +21,8 @@ import { resolveSearchRequestId } from "@/lib/search-journey";
 
 export async function POST(request: Request) {
  return withProductionSandboxRequest(request, async () => {
+  const projectHistory=captureFinalSearchHistory();
+  const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(input));
 
   const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("HOTEL_SEARCH_ENABLED"))) return NextResponse.json({ error: "Hotel search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });

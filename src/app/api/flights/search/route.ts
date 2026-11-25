@@ -1,11 +1,11 @@
-import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
+import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicFlight } from "@/lib/searchCache";
 import { flightSearchSchema } from "@/lib/validation";
 import { classifyFlights } from "@/lib/travel/searchContract";
-import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
+import { logProviderCall, logSearchHistory as persistSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { searchFlights } from "@/services/travel/flightAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
@@ -15,6 +15,8 @@ import { resolveSearchRequestId } from "@/lib/search-journey";
 
 export async function POST(request: Request) {
  return withProductionSandboxRequest(request, async () => {
+  const projectHistory=captureFinalSearchHistory();
+  const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(input));
 
   const routeStartedAt = performance.now();
   let providerStartedAt = routeStartedAt;
