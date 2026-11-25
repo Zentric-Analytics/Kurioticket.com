@@ -11,7 +11,7 @@ export type SearchWorkspaceParams = Record<string, string | string[] | undefined
 export const searchWorkspacePath = "/admin/searches/activity";
 
 const sectionFilters: Record<SearchWorkspaceTab, readonly string[]> = {
-  searches: ["applicationSource", "range", "environment", "product", "status", "identity", "userId", "visitorId", "provider", "from", "to", "cursor", "limit"],
+  searches: ["applicationSource", "range", "viewerTimeZone", "environment", "product", "status", "identity", "userId", "visitorId", "provider", "from", "to", "cursor", "limit"],
   journeys: ["range", "environment", "product", "identity", "userId", "visitorId", "provider", "stage", "from", "to", "cursor", "limit"],
   handoffs: ["environment", "product", "identity", "userId", "visitorId", "provider", "correlation", "from", "to", "cursor", "limit"],
   attribution: ["days"],

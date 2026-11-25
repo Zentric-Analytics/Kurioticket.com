@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { Suspense } from "react";
-import { platformOptions } from "@/lib/platformHealthPresentation";
+import { Suspense, type ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { searchWorkspaceTab } from "@/lib/adminSearchWorkspace";
 
-import { searchActivityDetailQuery } from "@/lib/adminSearchActivityNavigation";
+import { resolveSearchActivityLegacyFilters, searchActivityDetailQuery, searchActivityReturnHref } from "@/lib/adminSearchActivityNavigation";
+import { searchActivityIdentityLabels } from "@/lib/adminSearchDetailPresentation";
 import { buildAdminSearchProviderOptions } from "@/lib/adminSearchProviderOptions";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
@@ -22,6 +22,18 @@ export const metadata = { title: "Admin Search Activity" };
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 type RangeKey = "24h" | "today" | "7d" | "30d" | "all" | "custom";
 
+const platformOptions = [
+  { value: "", label: "All platforms" },
+  { value: "WEB", label: "Website" },
+  { value: "IOS", label: "iOS" },
+  { value: "ANDROID", label: "Android" },
+];
+
+const identityOptions = [
+  { value: "all", label: "All identities" },
+  ...Object.entries(searchActivityIdentityLabels).map(([value, label]) => ({ value, label })),
+];
+
 export default async function AdminSearchActivityPage({ searchParams }: { searchParams: SearchParams }) {
   const supplied = await searchParams;
   // Preserve bookmarks to former workspace tabs without duplicating the
@@ -37,9 +49,23 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
     for (const key of keys) if (typeof old[key] === "string" && old[key].length <= 200) params.set(key, old[key]);
     redirect(target + (params.size ? (target.includes("?") ? "&" : "?") + params.toString() : ""));
   }
-  const suppliedSearch = { ...supplied }; delete suppliedSearch.tab;
-  const raw = { ...suppliedSearch };
+  const raw = { ...supplied };
+  delete raw.tab;
   delete raw.environment;
+  const legacy = resolveSearchActivityLegacyFilters(raw);
+  if (legacy?.kind === "redirect") redirect(legacy.href);
+  if (legacy?.kind === "unsupported") {
+    return (
+      <AdminPageShell title="Search activity" hideHeader>
+        <SearchState title="Check the filters" message={legacy.message}>
+          <Link href={legacy.href} className="mt-3 inline-block text-sm font-semibold text-[#004BB8] hover:underline">
+            {legacy.action}
+          </Link>
+        </SearchState>
+      </AdminPageShell>
+    );
+  }
+  const legacySourceFilter = raw.applicationSource === "UNKNOWN";
   const currentEnvironment = getPublicEnvironment();
   const providerOptions = buildAdminSearchProviderOptions(getProviderIntegrationStatuses(), one(raw.provider) || null);
   const referenceNow = new Date().toISOString();
@@ -49,8 +75,8 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
   const listParams = new URLSearchParams(params);
   listParams.set("limit", "100");
   const [result, summary] = await Promise.all([
-    adminOperationalReads.searches.list(listParams),
-    adminOperationalReads.searches.summary(params),
+    adminOperationalReads.searchActivity.list(listParams),
+    adminOperationalReads.searchActivity.summary(params),
   ]);
 
   return (
@@ -97,24 +123,24 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                   <SearchMonitorSelect label="Identity" appearance="fare" name="identity"
                     value={one(raw.identity) || "all"}
                     clearFieldNamesOnChange={["userId", "visitorId"]}
-                    options={[
-                      { value: "all", label: "All identities" },
-                      { value: "registered", label: "Registered" },
-                      { value: "guest", label: "Guest" },
-                      { value: "unattributed", label: "Unattributed" },
-                    ]} truncateLabel />
+                    options={identityOptions} truncateLabel />
                 </div>
                 <div className="min-w-0">
                   <SearchMonitorSelect label="Provider" appearance="fare" name="provider"
                     value={one(raw.provider)} options={providerOptions} truncateLabel />
                 </div>
                 <div className="min-w-0">
-                  <SearchMonitorSelect label="Application" appearance="fare" name="applicationSource"
-                    value={one(raw.applicationSource)}
-                    options={platformOptions.map(option => ({
-                      value: option.value === "ALL" ? "" : option.value,
-                      label: option.label,
-                    }))} align="end" truncateLabel />
+                  {legacySourceFilter ? (
+                    <div className="flex min-h-10 flex-wrap items-center gap-x-2 text-xs text-[#475569]">
+                      <input type="hidden" name="applicationSource" value="UNKNOWN" />
+                      <span>Source not recorded (legacy filter)</span>
+                      <Link href={searchActivityReturnHref({ ...raw, applicationSource: undefined }, range)}
+                        className="font-semibold text-[#004BB8] hover:underline">Clear legacy source filter</Link>
+                    </div>
+                  ) : (
+                    <SearchMonitorSelect label="Platform" appearance="fare" name="applicationSource"
+                      value={one(raw.applicationSource)} options={platformOptions} align="end" truncateLabel />
+                  )}
                 </div>
                 <button type="submit"
                   className="inline-flex h-10 w-full min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
@@ -241,11 +267,12 @@ function productHref(raw: Record<string, string | string[] | undefined>, product
   return "/admin/searches/activity" + (query ? "?" + query : "");
 }
 
-function SearchState({ title, message }: { title: string; message: string }) {
+function SearchState({ title, message, children }: { title: string; message: string; children?: ReactNode }) {
   return (
     <div className="border-b border-[#E5E7EB] py-10 text-center">
       <p className="text-[14px] font-semibold text-[#111827]">{title}</p>
       <p className="mt-1 text-[12px] text-[#6B7280]">{message}</p>
+      {children}
     </div>
   );
 }

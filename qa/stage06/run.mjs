@@ -19,7 +19,7 @@ const mocks={
  "@/services/platformOperationsService":`import {platformFixture} from ${JSON.stringify(fixturePath)};import {headers} from 'next/headers';export async function readPlatformOperations(hours=24,period='rolling'){const d=platformFixture((await headers()).get('x-qa-unavailable')==='1');if(period==='today'){const to=new Date(Date.parse(d.window.to)+12*3600000);d.window.to=to.toISOString();d.window.from=new Date(Date.UTC(to.getUTCFullYear(),to.getUTCMonth(),to.getUTCDate())).toISOString();}else{d.window.from=new Date(Date.parse(d.window.to)-hours*3600000).toISOString();}return d;}`,
  "@/lib/stagingSafety":`export function getPublicEnvironment(){return 'staging';}`,
  "@/services/travel/providerIntegrationStatus":`export function getProviderIntegrationStatuses(){return [];}`,
- "@/services/adminOperationalReadService":`import {parseAdminSearchQuery} from '@/services/adminOperationalReadContract';const rows=['WEB','IOS','ANDROID','UNKNOWN'].map((applicationSource,i)=>({id:'search_qa00'+i,requestId:null,operationalSessionId:null,identity:{kind:'unattributed',userId:null,visitorId:null},product:'FLIGHT',origin:'LOS',destination:'LHR',checkIn:null,checkOut:null,resultCount:2,latencyMs:null,status:'SUCCESS',providers:[],providerTelemetry:null,market:'NG',currency:'USD',environment:'staging',createdAt:'2026-11-16T00:00:00.000Z',applicationSource,appVersion:applicationSource==='IOS'?'1.2.3':undefined}));function selected(params){const parsed=parseAdminSearchQuery(params,'staging');if(parsed.status!=='ok')return parsed;return {status:'ok',data:{scope:parsed.data.scope,items:rows.filter(r=>!parsed.data.scope.applicationSource||r.applicationSource===parsed.data.scope.applicationSource),nextCursor:null}};}export const adminOperationalReads={searches:{list:async p=>selected(p),summary:async p=>{const r=selected(p);if(r.status!=='ok')return r;return {status:'ok',data:{scope:r.data.scope,total:r.data.items.length,success:r.data.items.length,partial:0,failed:0}};},detail:async id=>{const row=rows.find(r=>r.id===id);return row?{status:'ok',data:{...row,diagnostic:{outcome:'SUCCESS',reasonCode:'SEARCH_SUCCEEDED',reason:'QA fixture successful search.',retryable:false,correlation:'exact',providers:[]},searcher:{name:null,email:null,activity:null}}}:{status:'not_found'};}}};`,
+ "@/services/adminOperationalReadService":`import {stage06SearchActivityReads} from ${JSON.stringify(fixturePath)};export const adminOperationalReads={searchActivity:stage06SearchActivityReads};`,
 };
 const aliases={};let n=0;for(const[id,content]of Object.entries(mocks)){const file='mocks/mock-'+n+++'.js';await put(file,content);aliases[id]=path.join(temp,file);}
 await put('package.json',JSON.stringify({private:true,type:'module'}));
@@ -34,6 +34,7 @@ await put('app/api/admin/notifications/route.js',`export async function GET(){re
 await put('app/api/admin/search/route.js',`export async function GET(){return Response.json({pages:[{id:'health',title:'Platform Health',detail:'Combined operational health',href:'/admin/platform-health',status:'Workspace'}],users:[],searches:[],providers:[],databaseUnavailable:false})}`);
 // Exercise the real refresh endpoint with the synthetic operational reader instead of a 404.
 await put('app/api/admin/platform-operations/route.ts',await readFile(path.join(source,'app/api/admin/platform-operations/route.ts'),'utf8'));
+await put('app/api/admin/searches/activity/route.ts',await readFile(path.join(source,'app/api/admin/searches/activity/route.ts'),'utf8'));
 for(const route of ['platform-health','searches/activity','searches/[id]'])await put('app/admin/'+route+'/page.tsx',await readFile(path.join(source,'app/admin',route,'page.tsx'),'utf8'));
 await put('app/admin/preview-testers/page.jsx',`import {PreviewTesterRegistry} from '@/components/admin/PreviewTesterRegistry';
 const member={id:'qa-member',email:'test-member@example.invalid',status:'ACTIVE',roles:['TESTER'],expiresAt:new Date('2026-11-18T17:40:00.000Z'),approvedAt:new Date('2026-11-01T08:00:00.000Z'),suspendedAt:null,revokedAt:null,updatedAt:new Date('2026-11-15T00:00:00.000Z'),reason:'QA only',approvedByAdmin:null,suspendedByAdmin:null,revokedByAdmin:null};
@@ -72,7 +73,37 @@ try{
   const runningMotion=await page.locator('[data-platform-health]').evaluate(el=>el.getAnimations({subtree:true}).filter(a=>a.playState==='running').length);expect(runningMotion).toBe(0);
   const table=page.getByRole('region',{name:'Scheduled-job observations table'});await table.focus();await page.keyboard.press('ArrowRight');expect(await table.evaluate(el=>el.scrollWidth>=el.clientWidth)).toBeTruthy();
   await page.screenshot({path:path.join(output,'health-'+width+'.png'),fullPage:true});
-  await page.getByRole('link',{name:'Investigate searches',exact:false}).click();await expect(page).toHaveURL(/applicationSource=IOS/);await expect(page.getByRole('cell',{name:'iOS v1.2.3'})).toBeVisible();await page.getByRole('link',{name:/View details for Flight search/}).click();await expect(page.getByText('Application source',{exact:true})).toBeVisible();await expect(page.getByText('1.2.3',{exact:true})).toBeVisible();await page.getByRole('link',{name:'Search activity',exact:true}).click();await expect(page).toHaveURL(/applicationSource=IOS/);await page.getByRole('button',{name:/^Application:/}).click();await page.getByRole('listbox',{name:'Application'}).getByRole('option',{name:'Unverified',exact:true}).click();await page.getByRole('button',{name:'Apply filters'}).click();await expect(page.getByRole('cell',{name:/^(?:Application )?Unverified$/})).toBeVisible();
+  await page.getByRole('link',{name:'Investigate searches',exact:false}).click();
+  await expect(page).toHaveURL(/applicationSource=IOS/);
+  const searchRows=page.getByRole('region',{name:'Search activity table'}).locator('tbody tr');
+  await expect(searchRows).toHaveCount(1);
+  await expect(searchRows.locator('td[data-label="Platform"]')).toHaveText('iOSv1.2.3');
+  await expect(searchRows.locator('td[data-label="Identity"]')).toHaveText('Guest');
+  await page.getByRole('link',{name:/View details for Flight search/}).click();
+  await expect(page.getByText('Platform',{exact:true})).toBeVisible();
+  await expect(page.getByText('1.2.3',{exact:true})).toBeVisible();
+  await expect(page.getByText('Guest',{exact:true})).toBeVisible();
+  await expect(page.locator('a[href^="/admin/users/"][href$="/activity"]')).toHaveCount(0);
+  await page.getByRole('link',{name:'Search activity',exact:true}).click();
+  await expect(page).toHaveURL(/applicationSource=IOS/);
+
+  const platformTrigger=page.getByRole('button',{name:/^Platform:/});
+  const platformList=page.getByRole('listbox',{name:'Platform',exact:true});
+  await platformTrigger.click();
+  await expect(platformList.getByRole('option')).toHaveText(['All platforms','Website','iOS','Android']);
+  await platformList.getByRole('option',{name:'All platforms',exact:true}).click();
+  const paging=page.waitForRequest(request=>request.url().includes('/api/admin/searches/activity?')&&request.url().includes('cursor='));
+  await page.getByRole('button',{name:'Apply filters'}).click();
+  const total=page.getByText('All searches',{exact:true}).locator('..').locator('p').last();
+  await expect(total).toHaveText('5');
+  await searchRows.last().scrollIntoViewIfNeeded();
+  await paging;
+  await expect.poll(()=>searchRows.count()).toBeGreaterThanOrEqual(4);
+  await searchRows.last().scrollIntoViewIfNeeded();
+  await expect(searchRows).toHaveCount(5);
+  const historicalRow=searchRows.filter({hasText:'Source not recorded'});
+  await expect(historicalRow.locator('td[data-label="Identity"]')).toHaveText('Guest');
+  await page.evaluate(()=>window.scrollTo(0,0));
   const searchOverflow=await page.evaluate(()=>{
     const content=Array.from(document.querySelectorAll('body *'));
     return {
@@ -86,9 +117,56 @@ try{
   if(searchOverflow.document>width+1)console.error('SEARCH_ACTIVITY_OVERFLOW_DIAGNOSTIC',JSON.stringify(searchOverflow));
   expect(searchOverflow.document).toBeLessThanOrEqual(width+1);
   await page.screenshot({path:path.join(output,'search-'+width+'.png'),fullPage:true});
+  if (width===1440) {
+    const identityTrigger=page.getByRole('button',{name:/^Identity:/});
+    const identityList=page.getByRole('listbox',{name:'Identity',exact:true});
+    await identityTrigger.click();
+    await expect(identityList.getByRole('option')).toHaveText(['All identities','Registered','Guest','Bot']);
+    await identityList.getByRole('option',{name:'Bot',exact:true}).click();
+    await page.getByRole('button',{name:'Apply filters'}).click();
+    await expect(total).toHaveText('1');
+    await expect(searchRows).toHaveCount(1);
+    await expect(searchRows.locator('td[data-label="Identity"]')).toHaveText('Bot');
+    await searchRows.getByRole('link',{name:/View details/}).click();
+    await expect(page.getByText('Googlebot',{exact:true})).toBeVisible();
+    await expect(page.getByText('User-Agent identified',{exact:true})).toBeVisible();
+    await expect(page.locator('a[href^="/admin/users/"][href$="/activity"]')).toHaveCount(0);
+    await page.getByRole('link',{name:'Search activity',exact:true}).click();
+    await expect(page).toHaveURL(/identity=bot/);
+    await expect(page).toHaveURL(/range=custom/);
+
+    for (const platform of ['Website','Android']) {
+      await platformTrigger.click();
+      await platformList.getByRole('option',{name:platform,exact:true}).click();
+      await page.getByRole('button',{name:'Apply filters'}).click();
+      await expect(total).toHaveText('0');
+      await expect(page.getByText('No searches found',{exact:true})).toBeVisible();
+    }
+    await page.goto(base+'/admin/searches/activity?range=all&applicationSource=WEB&identity=registered');
+    await expect(total).toHaveText('1');
+    await expect(searchRows.locator('td[data-label="Identity"]')).toHaveText('Registered');
+    await searchRows.getByRole('link',{name:/View details/}).click();
+    await expect(page.getByText('Registered',{exact:true})).toBeVisible();
+    await expect(page.getByRole('link',{name:/View user details/})).toHaveAttribute('href','/admin/users/user/user_qa000/activity');
+
+    await page.goto(base+'/admin/searches/activity?range=all&applicationSource=UNKNOWN');
+    await expect(total).toHaveText('1');
+    await expect(page.getByRole('link',{name:'Clear legacy source filter'})).toBeVisible();
+    await historicalRow.getByRole('link',{name:/View details/}).click();
+    await expect(page.getByText('Source not recorded',{exact:true})).toBeVisible();
+    await expect(page.getByText('Guest',{exact:true})).toBeVisible();
+    await expect(page.locator('a[href^="/admin/users/"][href$="/activity"]')).toHaveCount(0);
+
+    await page.goto(base+'/admin/searches/activity?range=all&product=FLIGHT&applicationSource=BOT');
+    await expect(page).toHaveURL(/identity=bot/);
+    await expect(page).toHaveURL(/range=all/);
+    await expect(page).toHaveURL(/product=FLIGHT/);
+    await expect(page).not.toHaveURL(/applicationSource=BOT/);
+    await expect(total).toHaveText('1');
+  }
   await page.setExtraHTTPHeaders({'x-qa-unavailable':'1'});await page.goto(base+'/admin/platform-health',{waitUntil:'networkidle'});await expect(page.getByText('Telemetry could not be read')).toHaveCount(3);await page.setExtraHTTPHeaders({});await page.getByRole('button',{name:'Refresh observations'}).click();await expect(page.getByText('Recorded operations · sample size')).toHaveCount(3);
   await page.goto(base+'/admin/platform-health?hours=24&hours=168');const invalidFilterAlert=page.getByRole('alert').filter({hasText:'Check the health filters'});await expect(invalidFilterAlert).toBeVisible();await expect(invalidFilterAlert).toContainText('Choose an application and a Today, 7-day or 30-day window.');
-  expect(errors).toEqual([]);results.push({width,overflow,keyboardPolishedFilters:true,filterNavigation:true,detailBackContext:true,unverified:true,unavailableRefreshRecovery:true,reducedMotion:true,runningMotion,pageErrors:errors});await context.close();
+  expect(errors).toEqual([]);results.push({width,overflow,keyboardPolishedFilters:true,filterNavigation:true,detailBackContext:true,searchActivityFilters:true,unavailableRefreshRecovery:true,reducedMotion:true,runningMotion,pageErrors:errors});await context.close();
  }
 
  // Actual Team Access client component and calendar/time picker (synthetic member).

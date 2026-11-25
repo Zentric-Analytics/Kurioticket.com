@@ -20,6 +20,33 @@ export const searchActivityFilterKeys = [
 
 type SearchActivityRawParams = Record<string, string | string[] | undefined>;
 
+/** Translate compatible bookmarks and ask before widening an old identity scope. */
+export function resolveSearchActivityLegacyFilters(raw: SearchActivityRawParams) {
+  if (raw.applicationSource === "BOT") {
+    const href = searchActivityReturnHref({ ...raw, applicationSource: undefined, identity: "bot" });
+    if (raw.identity && raw.identity !== "all" && raw.identity !== "bot") {
+      return {
+        kind: "unsupported" as const,
+        href,
+        message: "This link combines the former Bot platform filter with another identity. Use the Bot identity filter to see crawler searches.",
+        action: "Use Bot identity",
+      };
+    }
+    if (!searchActivityFilterKeys.some(key => Array.isArray(raw[key]))) {
+      return { kind: "redirect" as const, href };
+    }
+  }
+  if (raw.identity === "unattributed") {
+    return {
+      kind: "unsupported" as const,
+      href: searchActivityReturnHref({ ...raw, identity: undefined }),
+      message: "The Unattributed identity filter has been removed. Clear it to choose All identities, Registered, Guest, or Bot.",
+      action: "Clear legacy identity filter",
+    };
+  }
+  return null;
+}
+
 /** A filtered URL that is safe to use as the search detail's back destination. */
 export function searchActivityReturnHref(raw: SearchActivityRawParams, defaultRange?: string): string {
   const params = new URLSearchParams();

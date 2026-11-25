@@ -61,13 +61,13 @@ test("changing identity clears stale deep-linked customer IDs without dropping t
 });
 
 test("Search Activity filters use one consistent boxed dropdown treatment and explicit Apply", () => {
-  const controls = ["Outcome", "Identity", "Provider", "Application"];
+  const controls = ["Outcome", "Identity", "Provider", "Platform"];
   for (const label of controls) {
     assert.match(activity, new RegExp(`label="${label}"[^>]*appearance="fare"|label="${label}"[^>]*\\n[^>]*appearance="fare"`));
   }
   assert.doesNotMatch(activity, /<ApplicationSourceSelect/);
   assert.doesNotMatch(activity, /autoSubmit/);
-  assert.match(activity, /option\.value === "ALL" \? "" : option\.value/);
+  assert.match(activity, /\{ value: "", label: "All platforms" \}/);
   assert.match(activity, /clearFieldNamesOnChange=\{\["userId", "visitorId"\]\}/);
   assert.match(activity, /action="\/admin\/searches\/activity"/);
   assert.match(activity, /bg-\[#004BB8\] px-3/);

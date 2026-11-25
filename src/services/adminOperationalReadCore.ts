@@ -12,6 +12,7 @@ import {
   parseAdminHandoffQuery,
   parseAdminOperationalEnvironment,
   parseAdminOperationalId,
+  parseAdminSearchActivityQuery,
   parseAdminSearchQuery,
   parseAdminSupportQuery,
   type AdminDeletionListItem,
@@ -21,6 +22,9 @@ import {
   type AdminOperationalIdentity,
   type AdminOperationalList,
   type AdminOperationalResult,
+  type AdminSearchActivityDetail,
+  type AdminSearchActivityRead,
+  type AdminSearchActivityScope,
   type AdminSearchDetail,
   type AdminSearchDiagnostic,
   type AdminSearchProviderDiagnostic,
@@ -31,6 +35,9 @@ import {
   type AdminSupportListItem,
   type AdminSupportScope,
 } from "./adminOperationalReadContract";
+
+type SearchScope = AdminSearchScope | AdminSearchActivityScope;
+type SearchDetailFields = Omit<AdminSearchDetail, keyof AdminSearchRead>;
 
 export type AdminOperationalDatabase = Pick<PrismaClient, "searchHistory" | "apiProviderLog" | "redirectLog" | "supportTicket" | "accountDeletionRequest" | "user" | "visitor" | "$queryRaw">;
 type Dependencies = {
@@ -429,10 +436,9 @@ function providerLogsForPageSql(requestIds: readonly string[], services: readonl
 }
 
 // Prisma cannot correlate SearchHistory and ApiProviderLog across the JSON
-// request keys in its model where API. For provider/source-filtered lists and KPI
+// request keys in its model where API. For exact-filtered lists and KPI
 // totals, use the same parameterized EXISTS predicate before keyset paging.
-// Identity, consent, date and environment scope must match searchWhere().
-function exactProviderFilteredSearchSql(scope: AdminSearchScope, cursor: { at: string; id: string } | null = null): Prisma.Sql {
+function exactProviderFilteredSearchSql(scope: SearchScope, cursor: { at: string; id: string } | null = null): Prisma.Sql {
   const clauses: Prisma.Sql[] = [
     Prisma.sql`s."query"->>'environment' = ${scope.environment}`,
     Prisma.sql`s."countAsSearch" = TRUE`,
@@ -470,7 +476,16 @@ function exactProviderFilteredSearchSql(scope: AdminSearchScope, cursor: { at: s
       AND v."consentStatus"::text = 'GRANTED'
       AND v."trackingDisabledAt" IS NULL
   )`;
-  if (scope.identity === "registered" && scope.userId && !scope.visitorId) {
+  const registeredDrilldown = scope.surface !== "activity" && scope.identity === "registered" && scope.userId && !scope.visitorId;
+  if (scope.surface === "activity") {
+    // Only the stored crawler attribution determines bot status on this read.
+    // A missing source still participates in the two human identity filters.
+    if (scope.identity === "bot") clauses.push(Prisma.sql`s."query"->>'applicationSource' = 'BOT'`);
+    if (scope.identity === "registered" || scope.identity === "guest") {
+      clauses.push(Prisma.sql`s."query"->>'applicationSource' IS DISTINCT FROM 'BOT'`);
+      clauses.push(scope.identity === "registered" ? Prisma.sql`s."userId" IS NOT NULL` : Prisma.sql`s."userId" IS NULL`);
+    }
+  } else if (registeredDrilldown) {
     const userId = scope.userId;
     clauses.push(Prisma.sql`(
       s."userId" = ${userId}
@@ -511,11 +526,11 @@ function exactProviderFilteredSearchSql(scope: AdminSearchScope, cursor: { at: s
         )
       )`);
     }
-    if (scope.userId) clauses.push(Prisma.sql`s."userId" = ${scope.userId}`);
-    if (scope.visitorId) {
-      clauses.push(Prisma.sql`s."visitorId" = ${scope.visitorId}`);
-      clauses.push(eligible);
-    }
+  }
+  if (scope.userId && !registeredDrilldown) clauses.push(Prisma.sql`s."userId" = ${scope.userId}`);
+  if (scope.visitorId) {
+    clauses.push(Prisma.sql`s."visitorId" = ${scope.visitorId}`);
+    clauses.push(eligible);
   }
 
   if (cursor) {
@@ -526,6 +541,10 @@ function exactProviderFilteredSearchSql(scope: AdminSearchScope, cursor: { at: s
     )`);
   }
   return Prisma.sql`WHERE ${Prisma.join(clauses, " AND ")}`;
+}
+
+function usesExactSearchFilter(scope: SearchScope) {
+  return Boolean(scope.provider || scope.applicationSource || (scope.surface === "activity" && scope.identity !== "all"));
 }
 
 function searchDto(row: SearchRow, environment: PublicEnvironment, exactLogs: readonly ProviderExecution[] = []): AdminSearchRead {
@@ -552,6 +571,26 @@ function searchDto(row: SearchRow, environment: PublicEnvironment, exactLogs: re
     currency: text(query.currency, 12),
     environment,
     createdAt: row.createdAt.toISOString(),
+  };
+}
+
+function searchActivityDto(search: AdminSearchRead): AdminSearchActivityRead {
+  const { userId, visitorId } = search.identity;
+  const identity: AdminSearchActivityRead["identity"] = search.applicationSource === "BOT"
+    ? { kind: "bot", userId: null, visitorId: null }
+    : { kind: userId === null ? "guest" : "registered", userId, visitorId };
+  return { ...search, identity };
+}
+
+function searchActivityDetailDto(search: AdminSearchActivityRead & SearchDetailFields, row: SearchRow, inCurrentEnvironment: boolean): AdminSearchActivityDetail {
+  const session = inCurrentEnvironment && search.identity.kind === "guest" && row.userId === null && row.visitorId === null
+    ? handoffOperationalSessionId(row.query) : null;
+  return {
+    ...search,
+    searcher: {
+      ...search.searcher,
+      activity: session ? { kind: "operationalGuest", id: session } : search.searcher.activity,
+    },
   };
 }
 
@@ -611,23 +650,23 @@ function deletionDto(row: DeletionRow): AdminDeletionListItem {
   };
 }
 
-function searchWhere(scope: AdminSearchScope, cursor?: { at: string; id: string } | null): Prisma.SearchHistoryWhereInput {
+function searchWhere(scope: SearchScope, cursor?: { at: string; id: string } | null): Prisma.SearchHistoryWhereInput {
   return {
-    ...identityWhere({ ...scope, identity: scope.identity === "guest" ? "all" : scope.identity }),
+    ...identityWhere({ ...scope, identity: scope.surface === "activity" || scope.identity === "guest" ? "all" : scope.identity }),
     countAsSearch: true,
     ...(scope.product ? { type: scope.product } : {}),
     ...(scope.status ? { status: scope.status } : {}),
     ...(dateRange(scope.from, scope.to) ? { createdAt: dateRange(scope.from, scope.to) } : {}),
     query: { path: ["environment"], equals: scope.environment },
     AND: [
-      ...(scope.identity === "guest" ? [{
+      ...(scope.surface !== "activity" && scope.identity === "guest" ? [{
         userId: null,
         OR: [
           { visitor: { is: { consentStatus: "GRANTED" as const, trackingDisabledAt: null } } },
           { query: { path: ["operationalSessionId"], not: Prisma.DbNull } },
         ],
       }] : []),
-      ...(scope.identity === "unattributed" ? [{
+      ...(scope.surface !== "activity" && scope.identity === "unattributed" ? [{
         query: { path: ["operationalSessionId"], equals: Prisma.DbNull },
       }] : []),
       ...(cursor ? [{ OR: [{ createdAt: { lt: new Date(cursor.at) } }, { createdAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : []),
@@ -659,14 +698,20 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
     }
   }
 
-  return {
-    searches: {
-      list(params: URLSearchParams): Promise<AdminOperationalResult<AdminOperationalList<AdminSearchRead, AdminSearchScope>>> {
+  function searchReads<Scope extends SearchScope, Read extends AdminSearchRead | AdminSearchActivityRead, Detail>(
+    parseQuery: (params: URLSearchParams, environment: PublicEnvironment) => AdminOperationalResult<{
+      scope: Scope; cursor: { at: string; id: string } | null; limit: number;
+    }>,
+    toRead: (search: AdminSearchRead) => Read,
+    toDetail: (search: Read & SearchDetailFields, row: SearchRow, inCurrentEnvironment: boolean) => Detail,
+  ) {
+    return {
+      list(params: URLSearchParams): Promise<AdminOperationalResult<AdminOperationalList<Read, Scope>>> {
         return authorized(async db => {
-          const parsed = parseAdminSearchQuery(params, dependencies.environment());
+          const parsed = parseQuery(params, dependencies.environment());
           if (parsed.status !== "ok") return parsed;
           const { scope, cursor, limit } = parsed.data;
-          const filteredIds = scope.provider || scope.applicationSource
+          const filteredIds = usesExactSearchFilter(scope)
             ? (await db.$queryRaw<Array<{ id: string }>>(Prisma.sql`
                 SELECT s."id" FROM "SearchHistory" s
                 ${exactProviderFilteredSearchSql(scope, cursor)}
@@ -696,20 +741,21 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           const byRequest = logs.length <= 2000
             ? correlatedProviderLogs(page.page, logs, scope.environment)
             : new Map<string, ProviderExecutionLog[]>();
-          return { status: "ok", data: { scope, items: page.page.map(row => searchDto(row, scope.environment, row.requestId ? byRequest.get(row.requestId) ?? [] : [])), nextCursor: page.next } };
+          const items = page.page.map(row => toRead(searchDto(row, scope.environment, row.requestId ? byRequest.get(row.requestId) ?? [] : [])));
+          return { status: "ok", data: { scope, items, nextCursor: page.next } };
         });
       },
-      summary(params: URLSearchParams): Promise<AdminOperationalResult<AdminSearchSummary>> {
+      summary(params: URLSearchParams): Promise<AdminOperationalResult<AdminSearchSummary<Scope>>> {
         return authorized(async db => {
           const sanitized = new URLSearchParams(params);
           sanitized.delete("cursor");
           sanitized.delete("limit");
           sanitized.set("limit", "1");
-          const parsed = parseAdminSearchQuery(sanitized, dependencies.environment());
+          const parsed = parseQuery(sanitized, dependencies.environment());
           if (parsed.status !== "ok") return parsed;
           const { scope } = parsed.data;
           const counts = { total: 0, success: 0, partial: 0, failed: 0 };
-          if (scope.provider || scope.applicationSource) {
+          if (usesExactSearchFilter(scope)) {
             const groups = await db.$queryRaw<Array<{ status: string; count: bigint }>>(Prisma.sql`
               SELECT s."status"::text AS "status", COUNT(*) AS "count"
               FROM "SearchHistory" s
@@ -740,37 +786,14 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           return { status: "ok", data: { scope, ...counts } };
         });
       },
-      detail(id: string, params: URLSearchParams): Promise<AdminOperationalResult<AdminSearchDetail>> {
-        return authorized<AdminSearchDetail>(async db => {
+      detail(id: string, params: URLSearchParams): Promise<AdminOperationalResult<Detail>> {
+        return authorized<Detail>(async db => {
           const parsedId = parseAdminOperationalId(id);
           if (parsedId.status !== "ok") return parsedId;
           const env = parseAdminOperationalEnvironment(params, dependencies.environment());
           if (env.status !== "ok") return env;
           const row = await db.searchHistory.findFirst({ where: { id: parsedId.data, query: { path: ["environment"], equals: env.data } }, select: searchSelect });
           if (!row) return { status: "not_found" };
-          const eligibleVisitorId = attributableVisitorId(row.visitorId, row.visitor);
-          // The Users activity reader is scoped to this deployment's environment.
-          // Never offer a link that would silently show activity from another environment.
-          const activityInCurrentEnvironment = env.data === dependencies.environment();
-          // A direct userId is the only authority for a registered search.
-          // Never attach a guest search to a later-linked account by inference.
-          const account = row.userId
-            ? await db.user.findUnique({ where: { id: row.userId }, select: { id: true, name: true, email: true } })
-            : null;
-          const guest = activityInCurrentEnvironment && !row.userId && eligibleVisitorId
-            ? await db.visitor.findFirst({
-                where: eligibleGuestVisitorWhere(eligibleVisitorId),
-                select: { id: true },
-              })
-            : null;
-          const searcher: AdminSearchDetail["searcher"] = {
-            name: account ? text(account.name, 160) : null,
-            email: account ? text(account.email, 320) : null,
-            activity: activityInCurrentEnvironment
-              ? account ? { kind: "user", id: account.id }
-                : guest ? { kind: "guest", id: guest.id } : null
-              : null,
-          };
           let providers: AdminSearchProviderDiagnostic[] = [];
           if (row.requestId) {
             const logs = await db.apiProviderLog.findMany({
@@ -790,19 +813,47 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
             });
             providers = logs.map(providerDiagnostic);
           }
+          const search = toRead(searchDto(row, env.data, providers));
+          const { userId, visitorId } = search.identity;
+          // These IDs come from the exact search and are omitted for bots.
+          // Never attach a guest search to a later-linked account by inference.
+          const account = userId
+            ? await db.user.findUnique({ where: { id: userId }, select: { id: true, name: true, email: true } })
+            : null;
+          // The Users activity reader is scoped to this deployment's environment.
+          const activityInCurrentEnvironment = env.data === dependencies.environment();
+          const guest = activityInCurrentEnvironment && !userId && visitorId
+            ? await db.visitor.findFirst({
+                where: eligibleGuestVisitorWhere(visitorId),
+                select: { id: true },
+              })
+            : null;
+          const searcher: AdminSearchDetail["searcher"] = {
+            name: account ? text(account.name, 160) : null,
+            email: account ? text(account.email, 320) : null,
+            activity: activityInCurrentEnvironment
+              ? account ? { kind: "user", id: account.id }
+                : guest ? { kind: "guest", id: guest.id } : null
+              : null,
+          };
           return {
             status: "ok",
-            data: {
-              ...searchDto(row, env.data, providers),
+            data: toDetail({
+              ...search,
               diagnostic: exactSearchDiagnostic(row, providers),
               network: recordedSearchNetwork(row.query),
               crawler: recordedSearchCrawler(row.query),
               searcher,
-            },
+            }, row, activityInCurrentEnvironment),
           };
         });
       },
-    },
+    };
+  }
+
+  return {
+    searches: searchReads(parseAdminSearchQuery, search => search, detail => detail),
+    searchActivity: searchReads(parseAdminSearchActivityQuery, searchActivityDto, searchActivityDetailDto),
     handoffs: {
       list(params: URLSearchParams): Promise<AdminOperationalResult<AdminOperationalList<AdminHandoffRead, AdminHandoffScope>>> {
         return authorized(async db => {

@@ -317,6 +317,13 @@ test("authorized search detail returns crawler name and verification without inv
   assert.deepEqual(result.data.crawler, { name: "GOOGLEBOT", evidence: "VERIFIED_DNS" });
   assert.equal(result.data.identity.kind, "unattributed");
   assert.equal(result.data.searcher.activity, null);
+
+  const activity = await service.searchActivity.detail("bot-search-123", new URLSearchParams("environment=staging"));
+  assert.equal(activity.status, "ok");
+  if (activity.status !== "ok") return;
+  assert.deepEqual(activity.data.identity, { kind: "bot", userId: null, visitorId: null });
+  assert.deepEqual(activity.data.crawler, result.data.crawler);
+  assert.equal(activity.data.searcher.activity, null);
 });
 
 test("search detail renders the reorganized read-only diagnostics without the visible admin header", () => {
@@ -326,8 +333,8 @@ test("search detail renders the reorganized read-only diagnostics without the vi
   assert.match(page, /Search information/);
   assert.doesNotMatch(page, /<Field label="Bot name"/);
   assert.match(page, /<Field label="Verification" value=\{searchDetailCrawlerEvidenceLabel/);
-  assert.match(page, /isBot \? botName/);
-  assert.match(page, /!isBot && search.searcher.activity/);
+  assert.match(page, /isBot \? searchDetailCrawlerName\(search\.crawler\?\.name\)/);
+  assert.match(page, /isBot \? null : search\.searcher\.activity/);
   assert.match(page, /Provider outcomes/);
   assert.doesNotMatch(page, /What happened/);
   assert.match(page, /What to check/);
@@ -614,22 +621,57 @@ test("hotel display currency changes cannot restart inventory searches", () => {
 test("search detail identifies the searcher without guessing from guest IDs", () => {
   const core = readFileSync("src/services/adminOperationalReadCore.ts", "utf8");
   const page = readFileSync("src/app/admin/searches/[id]/page.tsx", "utf8");
-  assert.match(core, /row\.userId\s*\?\s*await db\.user\.findUnique/);
-  assert.match(core, /eligibleGuestVisitorWhere\(eligibleVisitorId\)/);
-  assert.match(core, /activityInCurrentEnvironment && !row\.userId && eligibleVisitorId/);
+  assert.match(core, /const \{ userId, visitorId \} = search\.identity/);
+  assert.match(core, /userId\s*\?\s*await db\.user\.findUnique\(\{ where: \{ id: userId \}/);
+  assert.match(core, /eligibleGuestVisitorWhere\(visitorId\)/);
+  assert.match(core, /activityInCurrentEnvironment && !userId && visitorId/);
   assert.match(core, /activityInCurrentEnvironment = env\.data === dependencies\.environment\(\)/);
   assert.match(core, /activity: activityInCurrentEnvironment/);
   assert.match(core, /name: account \? text\(account\.name, 160\) : null/);
   assert.match(core, /email: account \? text\(account\.email, 320\) : null/);
   assert.match(page, /Searched by/);
   assert.match(page, /search\.searcher\.activity/);
-  assert.match(page, /Unidentified visitor/);
+  assert.match(page, /searchActivityIdentityLabels\[identityKind\]/);
+  assert.match(page, /activity && validActivityIdentity\(activityKind, activity\.id\)/);
+  assert.doesNotMatch(page, /Unidentified visitor|Unattributed/);
   assert.match(page, /<Field label="User ID"/);
   assert.match(page, /<Field label="Visitor ID"/);
 });
 
 const operationalSession = "38d77b62-f43d-40d5-9597-a6ff76f02c28";
 const originalSearchRequest = "6dd45e11-7e92-4381-a4ac-a681541808da";
+
+test("Search Activity links only an exact guest session with no other attached identity", async () => {
+  const base = {
+    id: "guest-search-123", requestId: null, userId: null,
+    type: "HOTEL", origin: null, destination: "Bangkok",
+    checkIn: null, checkOut: null, resultCount: 1, latencyMs: 420, status: "SUCCESS",
+    createdAt: new Date("2026-11-23T16:07:58.632Z"), journeyEvents: [],
+  };
+  const fixtures = [
+    { visitorId: null, visitor: null, environment: "staging", session: operationalSession, linked: true },
+    { visitorId: null, visitor: null, environment: "staging", session: " " + operationalSession, linked: false },
+    { visitorId: null, visitor: null, environment: "production", session: operationalSession, linked: false },
+    {
+      visitorId: "withdrawn-visitor",
+      visitor: { consentStatus: "WITHDRAWN", trackingDisabledAt: null },
+      environment: "staging", session: operationalSession, linked: false,
+    },
+  ];
+  for (const { visitorId, visitor, environment, session, linked } of fixtures) {
+    const row = { ...base, visitorId, visitor, query: { environment, operationalSessionId: session } };
+    const service = createAdminOperationalReadService({
+      authorize: async () => true,
+      environment: () => "staging",
+      database: () => ({ searchHistory: { findFirst: async () => row } }) as never,
+    });
+    const result = await service.searchActivity.detail(row.id, new URLSearchParams({ environment }));
+    assert.equal(result.status, "ok");
+    if (result.status !== "ok") return;
+    assert.deepEqual(result.data.identity, { kind: "guest", userId: null, visitorId: null });
+    assert.deepEqual(result.data.searcher.activity, linked ? { kind: "operationalGuest", id: operationalSession } : null);
+  }
+});
 
 test("operational guest evidence is a valid server-issued session ID, not arbitrary metadata", () => {
   assert.equal(handoffOperationalSessionId({ operationalSessionId: operationalSession }), operationalSession);

@@ -3,6 +3,7 @@ import type { PublicEnvironment } from "@/lib/stagingSafety";
 
 export type AdminOperationalKind = "searches" | "handoffs" | "support" | "deletions";
 export type AdminIdentityFilter = "all" | "guest" | "registered" | "unattributed";
+export type AdminSearchActivityIdentityFilter = "all" | "registered" | "guest" | "bot";
 export type AdminSearchProduct = "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE";
 export type AdminSearchStatus = "SUCCESS" | "PARTIAL" | "FAILED";
 export type AdminSupportStatus = "OPEN" | "WAITING_ON_USER" | "WAITING_ON_TEAM" | "RESOLVED" | "CLOSED";
@@ -25,6 +26,7 @@ type ScopeBase = {
 };
 
 export type AdminSearchScope = ScopeBase & {
+  surface?: never;
   applicationSource?: ApplicationSource | null;
   environment: PublicEnvironment;
   product: AdminSearchProduct | null;
@@ -33,6 +35,11 @@ export type AdminSearchScope = ScopeBase & {
   userId: string | null;
   visitorId: string | null;
   provider: string | null;
+};
+export type AdminSearchActivityScope = Omit<AdminSearchScope, "surface" | "applicationSource" | "identity"> & {
+  surface: "activity";
+  applicationSource: Exclude<ApplicationSource, "BOT"> | null;
+  identity: AdminSearchActivityIdentityFilter;
 };
 export type AdminHandoffScope = ScopeBase & {
   environment: PublicEnvironment;
@@ -56,6 +63,7 @@ export type AdminDeletionScope = ScopeBase & {
 };
 
 export type AdminSearchQuery = { scope: AdminSearchScope; limit: number; cursor: CursorPosition | null };
+export type AdminSearchActivityQuery = Omit<AdminSearchQuery, "scope"> & { scope: AdminSearchActivityScope };
 export type AdminHandoffQuery = { scope: AdminHandoffScope; limit: number; cursor: CursorPosition | null };
 export type AdminSupportQuery = { scope: AdminSupportScope; limit: number; cursor: CursorPosition | null };
 export type AdminDeletionQuery = { scope: AdminDeletionScope; limit: number; cursor: CursorPosition | null };
@@ -97,8 +105,14 @@ export type AdminSearchRead = {
   createdAt: string;
 };
 
-export type AdminSearchSummary = {
-  scope: AdminSearchScope;
+export type AdminSearchActivityRead = Omit<AdminSearchRead, "identity"> & {
+  identity: Omit<AdminOperationalIdentity, "kind"> & {
+    kind: Exclude<AdminSearchActivityIdentityFilter, "all">;
+  };
+};
+
+export type AdminSearchSummary<Scope = AdminSearchScope> = {
+  scope: Scope;
   total: number;
   success: number;
   partial: number;
@@ -136,6 +150,12 @@ export type AdminSearchDetail = AdminSearchRead & {
     email: string | null;
     /** Link only when the existing Users activity reader can open this identity. */
     activity: { kind: "user" | "guest"; id: string } | null;
+  };
+};
+
+export type AdminSearchActivityDetail = AdminSearchActivityRead & Omit<AdminSearchDetail, keyof AdminSearchRead | "searcher"> & {
+  searcher: Omit<AdminSearchDetail["searcher"], "activity"> & {
+    activity: AdminSearchDetail["searcher"]["activity"] | { kind: "operationalGuest"; id: string };
   };
 };
 
@@ -306,26 +326,56 @@ function finish<T extends { scope: object }>(kind: AdminOperationalKind, raw: Re
 }
 
 export function parseAdminSearchQuery(params: URLSearchParams, fallbackEnvironment: PublicEnvironment): ParseResult<AdminSearchQuery> {
+  return parseSearchQuery(params, fallbackEnvironment);
+}
+
+export function parseAdminSearchActivityQuery(params: URLSearchParams, fallbackEnvironment: PublicEnvironment): ParseResult<AdminSearchActivityQuery> {
+  return parseSearchQuery(params, fallbackEnvironment, "activity");
+}
+
+function parseSearchQuery(params: URLSearchParams, fallbackEnvironment: PublicEnvironment): ParseResult<AdminSearchQuery>;
+function parseSearchQuery(params: URLSearchParams, fallbackEnvironment: PublicEnvironment, surface: "activity"): ParseResult<AdminSearchActivityQuery>;
+function parseSearchQuery(params: URLSearchParams, fallbackEnvironment: PublicEnvironment, surface?: "activity"): ParseResult<AdminSearchQuery | AdminSearchActivityQuery> {
   const raw = values(params, SEARCH_KEYS);
   if (raw.status !== "ok") return raw;
   const base = baseScope(raw.data);
   if (base.status !== "ok") return base;
   const env = environment(raw.data.environment, fallbackEnvironment);
-  const applicationSource = enumValue(raw.data.applicationSource, "applicationSource", applicationSources);
-  if (applicationSource.status !== "ok") return applicationSource;
+  const filters = surface === "activity"
+    ? {
+        surface,
+        // UNKNOWN remains addressable by the existing Overview investigation link.
+        applicationSource: enumValue(raw.data.applicationSource, "applicationSource", ["WEB", "IOS", "ANDROID", "UNKNOWN"] as const),
+        identity: enumValue(raw.data.identity, "identity", ["all", "registered", "guest", "bot"] as const),
+      }
+    : {
+        surface: undefined,
+        applicationSource: enumValue(raw.data.applicationSource, "applicationSource", applicationSources),
+        identity: identity(raw.data.identity),
+      };
+  if (filters.applicationSource.status !== "ok") return filters.applicationSource;
   const product = enumValue(raw.data.product, "product", ["FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const);
   const status = enumValue(raw.data.status, "status", ["SUCCESS", "PARTIAL", "FAILED"] as const);
-  const idFilter = identity(raw.data.identity);
   const userId = optionalId(raw.data.userId, "userId");
   const visitorId = optionalId(raw.data.visitorId, "visitorId");
   const provider = optionalText(raw.data.provider, "provider", 100);
   if (env.status !== "ok") return env;
   if (product.status !== "ok") return product;
   if (status.status !== "ok") return status;
-  if (idFilter.status !== "ok") return idFilter;
+  if (filters.identity.status !== "ok") return filters.identity;
   if (userId.status !== "ok") return userId;
   if (visitorId.status !== "ok") return visitorId;
   if (provider.status !== "ok") return provider;
+  if (filters.surface === "activity") {
+    if (filters.identity.data === "guest" && userId.data) return invalid("userId", "userId conflicts with this identity filter.");
+    const scope: AdminSearchActivityScope = {
+      ...base.data, surface: filters.surface, applicationSource: filters.applicationSource.data, environment: env.data,
+      product: product.data, status: status.data, identity: filters.identity.data ?? "all",
+      userId: userId.data, visitorId: visitorId.data, provider: provider.data,
+    };
+    return finish("searches", raw.data, { scope });
+  }
+  const { applicationSource, identity: idFilter } = filters;
   if ((idFilter.data === "guest" || idFilter.data === "unattributed") && userId.data) return invalid("userId", "userId conflicts with this identity filter.");
   if (idFilter.data === "unattributed" && visitorId.data) return invalid("visitorId", "visitorId conflicts with this identity filter.");
   const scope: AdminSearchScope = { ...base.data, applicationSource: applicationSource.data, environment: env.data, product: product.data, status: status.data, identity: idFilter.data, userId: userId.data, visitorId: visitorId.data, provider: provider.data };

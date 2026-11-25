@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { applicationLabel } from "@/lib/platformHealthPresentation";
+import { searchActivityIdentityLabels, searchActivityPlatformLabel } from "@/lib/adminSearchDetailPresentation";
 import { searchRoutePreview } from "@/lib/adminSearchRoutePreview";
 import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { useEffect, useRef, useState } from "react";
 
-import type { AdminSearchRead } from "@/services/adminOperationalReadContract";
+import type { AdminSearchActivityRead } from "@/services/adminOperationalReadContract";
 
 function SearchMonitorTableState({
   initialItems,
@@ -16,7 +16,7 @@ function SearchMonitorTableState({
   referenceNow,
   detailQuery,
 }: {
-  initialItems: AdminSearchRead[];
+  initialItems: AdminSearchActivityRead[];
   initialCursor: string | null;
   query: string;
   referenceNow: string;
@@ -69,7 +69,7 @@ function SearchMonitorTableState({
         const params = new URLSearchParams(query);
         params.set("limit", "100");
         params.set("cursor", cursor!);
-        const response = await fetch("/api/admin/searches?" + params.toString(), {
+        const response = await fetch("/api/admin/searches/activity?" + params.toString(), {
           credentials: "include",
           cache: "no-store",
           signal: controller.signal,
@@ -77,7 +77,7 @@ function SearchMonitorTableState({
         if (!response.ok) throw new Error("Unable to load more searches");
         const body = await response.json() as {
           status: string;
-          data?: { items?: AdminSearchRead[]; nextCursor?: string | null };
+          data?: { items?: AdminSearchActivityRead[]; nextCursor?: string | null };
         };
         if (body.status !== "ok" || !body.data || !Array.isArray(body.data.items)) {
           throw new Error("Invalid search response");
@@ -116,11 +116,12 @@ function SearchMonitorTableState({
           <colgroup>
             {[13, 8, 11, 11, 9, 8, 10, 9, 10, 11].map((width, index) => <col key={index} style={{ width: `${width}%` }} />)}
           </colgroup>
-          <caption className="sr-only">Search records in the selected application and filter scope</caption>
+          <caption className="sr-only">Search records matching the selected filters</caption>
           <thead>
             <tr className="border-b border-[#E5E7EB] text-[11px] uppercase tracking-[0.08em] text-[#6B7280]">
               <th scope="col" className="px-2 py-3 font-semibold">Created</th>
-              <th scope="col" className="px-2 py-3 font-semibold">Product</th><th scope="col" className="px-2 py-3 font-semibold">Application</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Product</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Platform</th>
               <th scope="col" className="px-2 py-3 font-semibold">Route / stay</th>
               <th scope="col" className="px-2 py-3 font-semibold">Currency</th>
               <th scope="col" className="px-2 py-3 font-semibold">Results</th>
@@ -134,7 +135,11 @@ function SearchMonitorTableState({
             {items.map((search) => (
               <tr key={search.id} className="group relative cursor-pointer border-b border-[#E5E7EB] text-[13px] text-[#374151] hover:bg-[#FAFAFA] focus-within:bg-[#F8FAFC]">
                 <td data-label="Created" className="px-2 py-3 align-top">{formatViewerTimestamp(search.createdAt, viewerTimeZone, referenceNow)}</td>
-                <td data-label="Product" className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td><td data-label="Application" className="break-words px-2 py-3 align-top">{applicationLabel(search.applicationSource)}{search.appVersion?<span className="mt-0.5 block text-[11px] text-slate-500">v{search.appVersion}</span>:null}</td>
+                <td data-label="Product" className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td>
+                <td data-label="Platform" className="break-words px-2 py-3 align-top">
+                  {searchActivityPlatformLabel(search.applicationSource)}
+                  {search.appVersion ? <span className="mt-0.5 block text-[11px] text-slate-500">v{search.appVersion}</span> : null}
+                </td>
                 <td data-label="Route / stay" className="min-w-0 px-2 py-3 align-top">
                   <p data-search-route-preview className="overflow-hidden text-ellipsis whitespace-nowrap font-semibold text-[#111827]"
                      title={routeLabel(search.origin, search.destination)}
@@ -151,7 +156,7 @@ function SearchMonitorTableState({
                 <td data-label="Currency" className="px-2 py-3 align-top">{search.currency || "—"}</td>
                 <td data-label="Results" className="px-2 py-3 align-top">{formatNumber(search.resultCount)}</td>
                 <td data-label="Providers" className="px-2 py-3 align-top" title={search.providerTelemetry ? [search.providers.join(", "), search.providerTelemetry.successful + " successful", search.providerTelemetry.failed + " failed", search.providerTelemetry.degraded + " degraded", search.providerTelemetry.disabled + " disabled"].filter(Boolean).join(" · ") : "No exact provider telemetry recorded"}>{search.providerTelemetry ? search.providerTelemetry.total : "—"}</td>
-                <td data-label="Identity" className="px-2 py-3 align-top">{identityLabel(search.identity.kind)}</td>
+                <td data-label="Identity" className="px-2 py-3 align-top">{searchActivityIdentityLabels[search.identity.kind]}</td>
                 <td data-label="Status" className="px-2 py-3 align-top"><MonitorStatus status={search.status} /></td>
                 <td data-label="Action" className="px-2 py-3 align-top">
                   <Link
@@ -224,12 +229,10 @@ function formatSearchDates(checkIn: string | null, checkOut: string | null) {
   return format(checkIn) + (checkOut ? " → " + format(checkOut) : "");
 }
 
-function identityLabel(kind: "registered" | "guest" | "unattributed") {
-  return kind === "registered" ? "Registered" : kind === "guest" ? "Guest" : "Unattributed";
-}
-
-function detailHref(search: AdminSearchRead, detailQuery: string) {
-  return "/admin/searches/" + search.id + "?" + (detailQuery ? detailQuery + "&" : "") + "environment=" + encodeURIComponent(search.environment);
+function detailHref(search: AdminSearchActivityRead, detailQuery: string) {
+  const params = new URLSearchParams(detailQuery);
+  params.set("environment", search.environment);
+  return "/admin/searches/" + search.id + "?" + params.toString();
 }
 
 export function SearchMonitorTable(props: Parameters<typeof SearchMonitorTableState>[0]) {
