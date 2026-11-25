@@ -41,7 +41,8 @@ const orchestrator = new PreviewOrchestrator({
 
 try {
   const authorization = parseAuthorizedAbandonedAndroidRecovery();
-  if (authorization) {
+  if (authorization && !config.nativeDeliveryAllowed) console.warn(JSON.stringify({ event: "native-recovery-authorization-held", platform: "android", reason: "native-delivery-not-authorized" }));
+  if (authorization && config.nativeDeliveryAllowed) {
     if (config.mode !== "active") throw new Error("Android abandoned-reservation recovery authorization is configured while Preview release mode is not active.");
     const recovery = await runAuthorizedAbandonedAndroidRecovery({ authorization, mode: config.mode, ledger, github, eas, orchestrator });
     console.log(JSON.stringify({ event: "authorized-android-recovery-result", ...recovery }));
@@ -54,7 +55,8 @@ try {
 
 try {
   const authorization = parseAuthorizedAbandonedIosRecovery();
-  if (authorization) {
+  if (authorization && !config.nativeDeliveryAllowed) console.warn(JSON.stringify({ event: "native-recovery-authorization-held", platform: "ios", reason: "native-delivery-not-authorized" }));
+  if (authorization && config.nativeDeliveryAllowed) {
     if (config.mode !== "active") throw new Error("iOS abandoned-reservation recovery authorization is configured while Preview release mode is not active.");
     const recovery = await runAuthorizedAbandonedIosRecovery({ authorization, mode: config.mode, ledger, github, eas, orchestrator });
     console.log(JSON.stringify({ event: "authorized-ios-recovery-result", ...recovery }));

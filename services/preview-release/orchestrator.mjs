@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
-import { planPlatformOta } from "./platform-ota.mjs";
+import { planPlatformOta, resolveRootDependencyEvaluation } from "./platform-ota.mjs";
 import { PREVIEW_IDENTITY, assertPreviewIdentity } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmissionHistory, inspectHistoricalAndroidBuilds } from "./eas-state.mjs";
 import { exactChangeSet, exactCheckout, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, nativeFingerprints, prepareCheckout } from "./remote-clients.mjs";
@@ -234,7 +234,7 @@ export class PreviewOrchestrator {
       }
     }
     const deliveredChangeTargets = previous?.source_sha === currentDevSha
-      ? await this.nativeChangeTargets(currentDevSha, deliveredNative)
+      ? await this.nativeChangeTargets(currentDevSha, deliveredNative, currentFingerprints)
       : [];
     const pendingNative = previous?.source_sha === currentDevSha
       ? [...new Set([...nativeDriftTargets(currentFingerprints, deliveredNative), ...deliveredChangeTargets])]
@@ -296,6 +296,7 @@ export class PreviewOrchestrator {
       const fingerprints = await this.fingerprintsFactory(checkout.directory);
       await lease.checkpoint();
       const nativeBaselines = deliveredNative ?? await this.deliveredNativeBaselines();
+      classification = resolveRootDependencyEvaluation(classification, fingerprints, nativeBaselines);
       classification = enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative: nativeBaselines, requiredNativeTargets });
       const otaPlan = planPlatformOta({ classification, fingerprints, deliveredNative: nativeBaselines, previous, pendingOta });
       classification = otaPlan.classification;
@@ -382,13 +383,13 @@ export class PreviewOrchestrator {
     return result;
   }
 
-  async nativeChangeTargets(sourceSha, deliveredNative) {
+  async nativeChangeTargets(sourceSha, deliveredNative, fingerprints) {
     const targets = [];
     for (const [platform, target] of [["ios", "IOS_NATIVE"], ["android", "ANDROID_NATIVE"]]) {
       const deliveredSha = deliveredNative?.[platform]?.sourceSha;
       if (!deliveredSha || deliveredSha === sourceSha) continue;
       const files = await this.github.compare(deliveredSha, sourceSha);
-      const classification = classifyChangeSet(files).classification;
+      const classification = resolveRootDependencyEvaluation(classifyChangeSet(files), fingerprints, deliveredNative).classification;
       if (classification === "UNSAFE") throw new Error(`Native delivery baseline comparison failed closed for ${platform}.`);
       if (classification.split("+").includes(target)) targets.push(target);
     }
@@ -396,6 +397,7 @@ export class PreviewOrchestrator {
   }
 
   async reconcileIosDistribution(record, lease) {
+    assertNativeDeliveryAllowed(this.config);
     const sha = record.source_sha;
     await lease.checkpoint();
     // This is provider/ledger reconciliation, not a rebuild. Historical package
@@ -593,6 +595,7 @@ export class PreviewOrchestrator {
   }
 
   async deliverIos(sha, cwd, lease, fingerprint) {
+    assertNativeDeliveryAllowed(this.config);
     const eas = this.easFactory(join(cwd, "apps/mobile"));
     const buildIdentityKey = fingerprint ? nativeBuildIdentityKey("ios", fingerprint) : `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`;
     const reservation = typeof this.ledger.reserveNativeBuild === "function"
@@ -689,6 +692,7 @@ export class PreviewOrchestrator {
   }
 
   async deliverAndroid(sha, cwd, lease, fingerprint) {
+    assertNativeDeliveryAllowed(this.config);
     const eas = this.easFactory(join(cwd, "apps/mobile"));
     const identityKey = fingerprint ? nativeBuildIdentityKey("android", fingerprint) : `${sha}:${PREVIEW_IDENTITY.easProjectId}:android:preview`;
     const reservation = typeof this.ledger.reserveNativeBuild === "function"
@@ -734,6 +738,12 @@ export class PreviewOrchestrator {
       await this.sleep(30_000);
     }
     throw new Error(`EAS Android build ${build.id} exceeded its bounded monitoring window.`);
+  }
+}
+
+export function assertNativeDeliveryAllowed(config) {
+  if (config.nativeDeliveryAllowed === false) {
+    throw new Error("Native delivery requires separate operator authorization; compatible Preview OTA delivery remains enabled.");
   }
 }
 
