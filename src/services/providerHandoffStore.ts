@@ -15,7 +15,10 @@ export type ProviderHandoffActivity = {
   destinationUrl: string;
   sourcePage: string;
   resultId: string;
+  /** Optional journey reference; never substitute the operational reference for it. */
   requestId?: string;
+  /** Candidate for direct operational correlation, not an analytics event. */
+  operationalRequestId?: string;
   handoffId?: string;
 };
 export type AttributedHandoff = ProviderHandoffActivity & ApplicationAttribution & { userId: string | null; visitorId: string | null; operationalSessionId?: string | null; operationalSessionExpiresAtMs?: number };
@@ -75,6 +78,10 @@ export function createProviderHandoffStore(
       const db = getDatabase();
       if (!db) return null;
       const requestId = handoffTrackingId(input.requestId);
+      // Only record a candidate when the server verified a short-lived session.
+      // Admin verifies the exact original search against session, owner, product
+      // and environment even if SearchHistory is committed after this handoff.
+      const operationalRequestId = input.operationalSessionId ? handoffTrackingId(input.operationalRequestId) : undefined;
       let correlationInput = { ...input, requestId };
       let receipt = await db.$transaction(async tx => {
         const visitorId = input.visitorId && await lockConsentedVisitor(tx, input.visitorId, input.userId)
@@ -90,6 +97,7 @@ export function createProviderHandoffStore(
             || existing.type !== (input.type === "flight" ? "FLIGHT" : input.type === "hotel" ? "HOTEL" : "CAR")
             || existing.provider !== input.provider || metadata.resultId !== input.resultId
             || (visitorId && requestId && metadata.requestId !== requestId)
+            || (operationalRequestId && metadata.operationalRequestId !== operationalRequestId)
             || (input.operationalSessionId && metadata.operationalSessionId !== input.operationalSessionId)) return null;
           // Context changes may omit optional correlation on a retry. Preserve
           // the original attempt's reference, then recheck its current owner.
@@ -103,7 +111,7 @@ export function createProviderHandoffStore(
           provider: input.provider, route: input.route, price: input.price, currency: input.currency,
           destinationUrl: input.destinationUrl, userType: input.userId ? "user" : "guest",
           sourcePage: journeySourcePath(input.sourcePage) ?? "unknown",
-          metadata: withEnvironmentMetadata({ ...applicationMetadata(input), resultId: input.resultId, ...(requestId && (visitorId || input.operationalSessionId) ? { requestId } : {}), ...(input.operationalSessionId ? { operationalSessionId: input.operationalSessionId, ...(Number.isSafeInteger(input.operationalSessionExpiresAtMs) ? { operationalSessionExpiresAtMs: input.operationalSessionExpiresAtMs } : {}) } : {}) }),
+          metadata: withEnvironmentMetadata({ ...applicationMetadata(input), resultId: input.resultId, ...(requestId && (visitorId || input.operationalSessionId) ? { requestId } : {}), ...(operationalRequestId ? { operationalRequestId } : {}), ...(input.operationalSessionId ? { operationalSessionId: input.operationalSessionId, ...(Number.isSafeInteger(input.operationalSessionExpiresAtMs) ? { operationalSessionExpiresAtMs: input.operationalSessionExpiresAtMs } : {}) } : {}) }),
         }, select: { id: true } });
         return { id: redirect.id, created: true, visitorId, userId: input.userId,
           ...await correlate(tx, input, visitorId) };

@@ -251,3 +251,19 @@ test("operational guest events appear directly in Activity without a second-page
   assert.match(overview, /!operational \? <section/);
   assert.match(legacy, /loadAdminIdentityActivity\(kind, id, parsed\.filters, undefined, "all"\)/);
 });
+
+test("operational search and handoff share a search card without creating a behavioural journey", () => {
+  const at = new Date("2026-11-25T10:00:00Z");
+  const summary = activityOverviewRows([
+    { ...row("search", undefined, "SEARCH_COMPLETED", at, "FLIGHT"), searchHistoryId: "original", detail: "FLIGHT · LOS → DXB · SUCCESS", resultCount: 535 },
+    { ...row("handoff", undefined, "PROVIDER_HANDOFF_STARTED", new Date(+at + 60000), "FLIGHT"), searchHistoryId: "original", redirectLogId: "redirect" },
+    { ...row("unverified", undefined, "PROVIDER_HANDOFF_STARTED", new Date(+at + 120000), "FLIGHT"), redirectLogId: "other" },
+  ]);
+  assert.equal(summary.matchingJourneyCount, 0);
+  assert.equal(summary.searches.length, 1);
+  assert.equal(summary.searches[0].resultCount, 535);
+  assert.equal(summary.searches[0].handoffs, 1);
+  assert.equal(summary.searches[0].offersSelected, 0);
+  assert.equal(summary.searches[0].resultsViewed, 0);
+  assert.equal(summary.unlinkedStageCount, 1);
+});

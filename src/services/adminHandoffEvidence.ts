@@ -32,13 +32,23 @@ const eligibleVisitor = Prisma.sql`EXISTS (
  * a registered account, consented visitor or matching operational session.
  * Never infer a search from provider, route or creation time.
  */
-function verifiedSearchJoin(): Prisma.Sql {
+function verifiedSearchJoin(includeCanonical = true): Prisma.Sql {
   return Prisma.sql`LEFT JOIN LATERAL (
     SELECT COALESCE(
-      (SELECT e."searchHistoryId" FROM "JourneyEvent" e
+      ${includeCanonical ? Prisma.sql`(SELECT e."searchHistoryId" FROM "JourneyEvent" e
         WHERE e."redirectLogId" = r."id"
           AND e."type"::text = 'PROVIDER_HANDOFF_STARTED'
-          AND e."searchHistoryId" IS NOT NULL LIMIT 1),
+          AND e."searchHistoryId" IS NOT NULL LIMIT 1)` : Prisma.sql`NULL::text`},
+      (SELECT s."id" FROM "SearchHistory" s
+        WHERE r."metadata"->>'operationalRequestId' ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+          AND s."requestId" = r."metadata"->>'operationalRequestId'
+          AND s."query"->>'environment' = r."metadata"->>'environment'
+          AND s."type"::text = r."type"::text
+          AND s."userId" IS NOT DISTINCT FROM r."userId"
+          AND ${sessionEvidence}
+          AND s."query"->>'operationalSessionId' = r."metadata"->>'operationalSessionId'
+          AND (r."userId" IS NOT NULL OR s."visitorId" IS NOT DISTINCT FROM r."visitorId")
+        LIMIT 1),
       (SELECT s."id" FROM "SearchHistory" s
         WHERE r."metadata"->>'requestId' ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
           AND s."requestId" = r."metadata"->>'requestId'
@@ -52,6 +62,9 @@ function verifiedSearchJoin(): Prisma.Sql {
             OR (${sessionEvidence} AND s."query"->>'operationalSessionId' = r."metadata"->>'operationalSessionId')
           )
           AND (r."userId" IS NOT NULL OR r."visitorId" IS NULL OR ${eligibleVisitor})
+          ${includeCanonical ? Prisma.sql`` : Prisma.sql`AND r."metadata"->>'operationalRequestId' IS NULL
+            AND ${sessionEvidence}
+            AND s."query"->>'operationalSessionId' = r."metadata"->>'operationalSessionId'`}
         LIMIT 1)
     ) AS "searchHistoryId"
   ) correlation ON TRUE`;
@@ -114,4 +127,15 @@ export function handoffEvidenceDetailSql(id: string, environment: PublicEnvironm
     FROM "RedirectLog" r ${verifiedSearchJoin()}
     WHERE r."id" = ${id} AND r."metadata"->>'environment' = ${environment}
     LIMIT 1`;
+}
+
+/** IDs originate from the already authorized, filtered activity read in the
+ * same repeatable-read transaction. Exclude historical canonical journey
+ * evidence here: optional events have their own current-consent checks.
+ * A direct operational match does not grant access to a visitor journey. */
+export function handoffEvidenceForActivitySql(ids: string[], environment: PublicEnvironment): Prisma.Sql {
+  return Prisma.sql`SELECT r."id", correlation."searchHistoryId"
+    FROM "RedirectLog" r ${verifiedSearchJoin(false)}
+    WHERE r."metadata"->>'environment' = ${environment}
+      AND r."id" IN (${Prisma.join(ids)})`;
 }

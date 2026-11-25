@@ -1,6 +1,7 @@
 "use client";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+import { useOperationalHandoff } from "@/components/auth/OperationalHandoffProvider";
 import { rememberResultsScroll } from "@/lib/results/resultsReturnScroll";
 import { markResultsReturn } from "@/lib/results/resultsReturnIntent";
 
@@ -65,6 +66,7 @@ export function FlightCard({
   searchRequestId?: string | null;
 }) {
   const journeyEvents = useJourneyEvents();
+  const operationalHandoff = useOperationalHandoff();
   const rememberDetailsContext = () => {
     // A guided selection may have a default details URL yet call onAction
     // instead of navigating. Never report an unobserved details opening.
@@ -74,6 +76,7 @@ export function FlightCard({
         currency: flight.currency, priceBasis: "total" as const,
       } } : {}),
     });
+    if (resolvedDetailsHref && !onAction) operationalHandoff.remember("flight", flight.id, searchRequestId ?? null);
     journeyEvents.rememberDetailsContext("flight", flight.id, searchRequestId ?? null);
     if (typeof window !== "undefined" && window.location.pathname === "/flights/results" &&
       (resolvedDetailsHref?.startsWith("/flights/details/") || resolvedDetailsHref?.startsWith("/sandbox/kayak/details"))) {

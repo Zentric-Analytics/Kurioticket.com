@@ -37,6 +37,9 @@ function activityDetail(row: ActivityRow) {
     const outcome = searchOutcomeLabels.get(parts[last]);
     if (outcome) parts[last] = outcome;
   }
+  if (row.stage === "SEARCH_COMPLETED" && typeof row.resultCount === "number" && Number.isSafeInteger(row.resultCount) && row.resultCount >= 0) {
+    parts.push(new Intl.NumberFormat("en-US").format(row.resultCount) + (row.resultCount === 1 ? " result returned" : " results returned"));
+  }
   return parts.join(" · ");
 }
 
@@ -65,7 +68,7 @@ function detailHref(row: ActivityRow, environment: string, now: Date, returnHref
   }
   return null;
 }
-function RecordedEvent({ row, timeZone }: { row: ActivityRow; timeZone: string }) {
+function RecordedEvent({ row, timeZone, environment }: { row: ActivityRow; timeZone: string; environment: string }) {
   return <li data-activity-id={row.id} className="flex min-w-0 flex-col gap-1.5 py-3 sm:flex-row sm:items-start sm:gap-4">
     <span aria-hidden="true" className="mt-0.5 hidden shrink-0 text-[#64748B] sm:block"><EventIcon stage={row.stage} /></span>
     <div className="min-w-0 flex-1">
@@ -74,6 +77,7 @@ function RecordedEvent({ row, timeZone }: { row: ActivityRow; timeZone: string }
         <time dateTime={row.at.toISOString()} className="shrink-0 text-[12px] font-normal text-[#64748B]">{hourLabel(row.at, timeZone)}</time>
       </div>
       {row.pageView ? <PageViewDetails row={row}/> : <p className="mt-1 break-words text-[12px] leading-5 text-[#64748B]">{activityDetail(row) || "No additional details recorded"}</p>}
+      {row.stage === "PROVIDER_HANDOFF_STARTED" && !row.journeyId && row.searchHistoryId ? <Link href={"/admin/searches/" + encodeURIComponent(row.searchHistoryId) + "?" + new URLSearchParams({ environment }).toString()} className="focus-ring mt-1 inline-flex items-center gap-1 rounded-sm text-[12px] font-medium text-[#004BB8] hover:underline">View original search<ChevronRight size={13} aria-hidden="true"/></Link> : null}
     </div>
   </li>;
 }
@@ -132,7 +136,7 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
                 {href ? <Link href={href} aria-label={"View journey for " + title} className="focus-ring inline-flex shrink-0 items-center gap-1 rounded-sm py-1 text-[13px] font-medium text-[#004BB8] hover:underline">View journey<ChevronRight size={14} aria-hidden="true" /></Link> : null}
               </div> : null}
               <ol className={"divide-y divide-[#E2E8F0] pl-3 sm:pl-8 " + (group.journeyId ? "border-t border-[#E2E8F0]" : "")}>
-                {group.events.map(row => <RecordedEvent key={row.id} row={row} timeZone={timeZone}/>)}
+                {group.events.map(row => <RecordedEvent key={row.id} row={row} timeZone={timeZone} environment={environment}/>)}
               </ol>
             </div>;
           })}

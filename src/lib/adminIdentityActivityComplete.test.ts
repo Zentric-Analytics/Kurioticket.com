@@ -71,7 +71,7 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     ...owner, id: "qa-search-" + String(index).padStart(6, "0"),
     createdAt: new Date(+baseTime - Math.floor(index / 17) * 1000), // ties cross batch boundaries
     type: products[index % products.length], origin: "LOS", destination: index % 2 ? "Accra" : "London",
-    status: "SUCCESS", countAsSearch: true, query: metadata, journeyEvents: [],
+    status: "SUCCESS", resultCount: index === 0 ? 0 : 535, countAsSearch: true, query: metadata, journeyEvents: [],
   }));
   const handoffRows: Row[] = Array.from({ length: 53 }, (_, index) => ({
     ...owner, id: "qa-handoff-" + String(index).padStart(6, "0"),
@@ -195,7 +195,14 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     searchJourney: { async count(args: Row) {
       return [...journeysById.values()].filter(journey => matches(journey, args.where)).length;
     } },
-    async $queryRaw() { return [{ firstSeenAt: baseTime, lastSeenAt: baseTime }]; },
+    async $queryRaw(query?: Row) {
+      if (query?.activityHandoffIds) {
+        const firstMatchingSearch = searchRows.find(row => row.type === handoffProduct);
+        return kind === "operational" && firstMatchingSearch && query.activityHandoffIds.includes(handoffRows[0].id)
+          ? [{ id: handoffRows[0].id, searchHistoryId: firstMatchingSearch.id }] : [];
+      }
+      return [{ firstSeenAt: baseTime, lastSeenAt: baseTime }];
+    },
     async $transaction(action: (tx: Row) => Promise<unknown>, options: Row) {
       transactions++;
       transactionOptions.push(options);
@@ -207,6 +214,7 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     "server-only": {},
     "@/generated/prisma/client": { Prisma: { TransactionIsolationLevel: { RepeatableRead: "RepeatableRead" }, sql: () => ({}) } },
     "@/lib/prisma": { getOptionalPrisma: () => db },
+    "@/services/adminHandoffEvidence": { handoffEvidenceForActivitySql: (ids: string[], environment: string) => { assert.equal(environment, "staging"); assert.ok(ids.length <= 500 && ids.every(id => handoffRows.some(row => row.id === id))); return { activityHandoffIds: ids }; } },
     "@/lib/stagingSafety": { getPublicEnvironment: () => "staging" },
     "@/lib/adminIdentityDirectory": { escapePrismaContainsQuery: (value: string) => value },
   });
@@ -444,4 +452,18 @@ test("operational guest sessions cannot acquire optional page history", async ()
   assert.equal(result.data.summary.pagesVisited, 0);
   assert.equal(result.data.events.length, 0);
   assert.ok(!scenario.calls.some(call => call.source === "analytics"));
+});
+
+test("operational activity carries only verified search links and existing result counts", async () => {
+  const scenario = setup("operational", 3, ["FLIGHT", "HOTEL"]);
+  const result = await scenario.load();
+  assert.equal(result.status, "ok");
+  const events = result.data.events as Row[];
+  assert.equal(events.find(row => row.id === "s-qa-search-000000")?.resultCount, 0);
+  assert.equal(events.find(row => row.id === "s-qa-search-000001")?.resultCount, 535);
+  assert.equal(events.find(row => row.id === "r-qa-handoff-000000")?.searchHistoryId, "qa-search-000001");
+  assert.equal(events.find(row => row.id === "r-qa-handoff-000001")?.searchHistoryId, null);
+  assert.equal(result.data.summary.journeysTracked, 0);
+  assert.equal(result.data.summary.resultsViewed, 0);
+  assert.equal(result.data.summary.offersSelected, 0);
 });

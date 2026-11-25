@@ -5,6 +5,7 @@ import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 import { shareProductLink } from "@/lib/shareProductLink";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+import { useOperationalHandoff } from "@/components/auth/OperationalHandoffProvider";
 
 import Image from "next/image";
 import { flightBaggageTerms, flightFareDetailCabins, flightOnboardFeatureLabel } from "@/lib/flights/flightFareInformation";
@@ -60,6 +61,7 @@ const fareTabs: Array<{ id: FareTab; label: string }> = [
 
 export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resultsHref: string }) {
   const journeyEvents = useJourneyEvents();
+  const operationalHandoff = useOperationalHandoff();
   const searchParams = useSearchParams();
   const { status: sessionStatus } = useSession();
   const detailsQuery = searchParams.toString();
@@ -210,11 +212,12 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     setRedirecting(true);
     setError("");
     const handoff = journeyEvents.prepareHandoff("flight", id);
+    const operationalReference = operationalHandoff.prepare("flight", id);
     try {
       const result = await fetch("/api/redirect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: offerId, type: "flight", sourcePage: "flight_details", ...handoff() }),
+        body: JSON.stringify({ id: offerId, type: "flight", sourcePage: "flight_details", ...handoff(), ...operationalReference() }),
       });
       const data = (await result.json()) as { url?: string; error?: string; code?: string };
       if (result.status === 409 && data.code === "offer_changed") {
