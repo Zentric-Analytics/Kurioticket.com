@@ -116,7 +116,7 @@ try {
     await page.goto(root + "/admin/journeys", { waitUntil: "networkidle" });
     const journeyFilters = page.getByRole("form", { name: "Filter visitor journeys" });
     await expect(journeyFilters).toBeVisible();
-    await expect(journeyFilters.getByRole("button", { name: "Date range: Today" })).toBeVisible();
+    await expect(journeyFilters.getByRole("button", { name: "Date range: Today · WAT (UTC+1)", exact: true })).toBeVisible();
     await expect(journeyFilters.getByRole("button", { name: "Provider: All providers" })).toBeVisible();
     await expect(journeyFilters.getByRole("button", { name: "Apply filters" })).toBeVisible();
     await expect(journeyFilters.getByRole("button", { name: /Environment/ })).toHaveCount(0);
