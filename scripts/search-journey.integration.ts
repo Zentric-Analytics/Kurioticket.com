@@ -439,9 +439,7 @@ test("withdrawal during handoff correlation suppresses new visitor events while 
   assert.deepEqual(pauses, [120]);
   assert.equal(current.redirects.length, 1);
   assert.equal(current.redirects[0].visitorId, guest.id, "this redirect committed while consent was valid, before the pause");
-  assert.equal(current.events.length, 1);
-  assert.equal(current.events[0].visitorId, null, "the later analytics write must recheck withdrawal");
-  assert.equal(current.events[0].userId, owner.id);
+  assert.equal(current.events.length, 0, "the later analytics write must stop after withdrawal");
   assert.equal(current.funnel.length, 0);
   assert.deepEqual(await handoffRecords(previous.provider), historical);
 });
@@ -605,7 +603,7 @@ test("queued stale merge and activity writers cannot revive a retired visitor af
   assert.equal((await db.visitor.findUniqueOrThrow({ where: { id: guest.id } })).consentStatus, "WITHDRAWN");
 });
 
-test("legacy analytics and redirect writers strip stale withdrawn visitors while retaining a valid independent account", async () => {
+test("withdrawn visitors produce no optional analytics while independent operational records remain", async () => {
   const guest = await visitor();
   const owner = await account();
   await identity.mergeAnalyticsVisitor({ token: guest.token, userId: owner.id, source: "SIGN_IN" });
@@ -613,21 +611,17 @@ test("legacy analytics and redirect writers strip stale withdrawn visitors while
   await identity.withdrawAnalyticsConsent(guest.token);
   const name = `withdrawn-legacy-${randomUUID()}`;
   await analytics({ visitorId: guest.id, userId: owner.id, type: "SEARCH", name });
-  const legacy = await db.analyticsEvent.findFirstOrThrow({ where: { name } });
-  assert.equal(legacy.visitorId, null);
-  assert.equal(legacy.userId, owner.id);
+  assert.equal(await db.analyticsEvent.count({ where: { name } }), 0);
   const input = handoff({ requestId: history.requestId! });
   await recordHandoff(input, guest.id, owner.id);
   await recordHandoff(input, guest.id, owner.id);
   const records = await handoffRecords(input.provider);
   assert.equal(records.redirects.length, 1);
-  assert.equal(records.events.length, 1);
+  assert.equal(records.events.length, 0);
   assert.equal(records.funnel.length, 0);
   assert.equal(records.redirects[0].visitorId, null);
   assert.equal(records.redirects[0].userId, owner.id);
   assert.equal((records.redirects[0].metadata as Record<string, unknown>).requestId, undefined);
-  assert.equal(records.events[0].visitorId, null);
-  assert.equal(records.events[0].userId, owner.id);
 });
 
 test("repeated terminal FAILED history with one request UUID produces one row and one completed-search event", async () => {
@@ -645,4 +639,29 @@ test("repeated terminal FAILED history with one request UUID produces one row an
   const events = await db.journeyEvent.findMany({ where: { searchHistoryId: history[0].id, type: "SEARCH_COMPLETED" } });
   assert.equal(events.length, 1);
   assert.equal((events[0].metadata as Record<string, unknown>).status, "FAILED");
+});
+
+test("essential search and handoff writes survive absent analytics consent for guests and accounts", async () => {
+  const owner = await account();
+  for (const userId of [null, owner.id]) {
+    const requestId = randomUUID();
+    const history = await journey.recordSearchHistory({
+      userId, visitorId: null, requestId, type: "HOTEL", query: {}, resultCount: 2, latencyMs: 20, status: "SUCCESS",
+    });
+    assert.ok(history);
+    const stored = await db.searchHistory.findUniqueOrThrow({ where: { requestId } });
+    assert.equal(stored.userId, userId);
+    assert.equal(stored.visitorId, null);
+    const name = `essential-only-${randomUUID()}`;
+    await analytics({ userId, visitorId: null, type: "SEARCH", name });
+    assert.equal(await db.analyticsEvent.count({ where: { name } }), 0);
+    const input = handoff({ requestId });
+    await recordHandoff(input, null, userId);
+    const records = await handoffRecords(input.provider);
+    assert.equal(records.redirects.length, 1);
+    assert.equal(records.redirects[0].userId, userId);
+    assert.equal(records.redirects[0].visitorId, null);
+    assert.equal(records.events.length, 0);
+    assert.equal(records.funnel.length, 0);
+  }
 });

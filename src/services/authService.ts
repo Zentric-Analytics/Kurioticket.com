@@ -9,7 +9,7 @@ import {
   resetPasswordSchema,
   signupSchema,
 } from "@/lib/validation";
-import { trackAnalyticsEvent } from "@/services/analyticsService";
+import { recordOperationalAccountAudit } from "@/services/operationalAccountAuditService";
 import { EmailDeliveryError, passwordResetEmail, sendTransactionalEmail } from "@/services/emailService";
 import { canUseStagingCredentials } from "@/lib/previewTesterAccess";
 
@@ -139,7 +139,7 @@ export async function createPasswordUser(
         },
       );
 
-    await trackAnalyticsEvent(
+    await recordOperationalAccountAudit(
       {
         userId: user.id,
         type: "SIGNUP",

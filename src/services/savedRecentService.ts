@@ -2,7 +2,7 @@ import { z } from "zod";
 import { resolveSavedFlightTime } from "@/shared/flights/savedFlightTime";
 import { createHash } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
-import { withEnvironmentMetadata } from "@/lib/stagingSafety";
+import { writeOperationalAccountAudit } from "@/services/operationalAccountAuditService";
 import { confirmedSavedActivityMetadata } from "@/lib/savedActivityMetadata";
 import type { ApplicationAttribution } from "@/lib/application-source";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
@@ -82,13 +82,13 @@ function savedActivityProduct(input: CreateSavedItemInput) {
   return (input.type === "search" ? input.searchType : input.type).toUpperCase() as "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE";
 }
 function savedActivityEventMetadata(input: CreateSavedItemInput, itemId: string, attribution: ApplicationAttribution) {
-  return withEnvironmentMetadata(confirmedSavedActivityMetadata({
+  return confirmedSavedActivityMetadata({
     product: savedActivityProduct(input),
     savedType: input.type,
     savedItemId: itemId,
     payload: input.type !== "search" ? input.payload : undefined,
     resultId: input.type === "car" ? input.resultId : undefined,
-  }, attribution)) as Prisma.InputJsonValue;
+  }, attribution);
 }
 /** Transactional save + audit. The public writer accepts the same inputs as the
  * existing sync contract; an explicit opt-in creates the account event in the
@@ -113,10 +113,10 @@ export function createSavedItemWriter(database: () => Pick<PrismaClient, "$trans
       if (existing) return existing;
     }
     const item = await createSavedItemInTransaction(tx, userId, input);
-    if (audit) await tx.analyticsEvent.create({ data: {
+    if (audit) await writeOperationalAccountAudit(tx, {
       userId, type: "SAVE", name: "saved_item_confirmed",
       metadata: savedActivityEventMetadata(input, item.id, attribution),
-    } });
+    });
     return item;
   });
 }
@@ -158,15 +158,15 @@ export function createSavedItemRemover(database: () => Pick<PrismaClient, "$tran
       if (deleted.count !== 1) throw new SavedItemNotFoundError("Saved item was not found.");
       const product = input.type === "search" ? (existing as { type: string }).type as "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE"
         : input.type.toUpperCase() as "FLIGHT" | "HOTEL" | "CAR";
-      await tx.analyticsEvent.create({ data: {
+      await writeOperationalAccountAudit(tx, {
         userId, type: "SAVE", name: "saved_item_removed",
-        metadata: withEnvironmentMetadata(confirmedSavedActivityMetadata({
+        metadata: confirmedSavedActivityMetadata({
           savedType: input.type,
           savedItemId: input.id,
           product,
           payload: input.type === "search" ? undefined : (existing as { payload: unknown }).payload,
-        }, attribution)) as Prisma.InputJsonValue,
-      } });
+        }, attribution),
+      });
     });
 }
 const removeUserSavedItem = createSavedItemRemover(getPrisma);

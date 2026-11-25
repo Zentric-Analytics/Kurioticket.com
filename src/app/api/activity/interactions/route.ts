@@ -123,6 +123,7 @@ export async function POST(request: Request) {
           userId: identity.userId, visitorId: identity.visitorId,
           type, name,
           metadata: withEnvironmentMetadata({
+            recordPurpose: "optional_analytics",
             product: parsed.data.product,
             resultId: parsed.data.resultId,
             eventId: parsed.data.eventId,

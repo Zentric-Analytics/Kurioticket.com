@@ -51,7 +51,9 @@ test("confirmed account mutation events are separate from guest-only local save 
   assert.match(saves, /name: "saved_item_confirmed"/);
   assert.match(saves, /name: "saved_item_removed"/);
   assert.match(saves, /createSavedItemWriter\(getPrisma, true\)/);
-  assert.match(saves, /tx\.analyticsEvent\.create/);
+  assert.match(saves, /writeOperationalAccountAudit\(tx,/);
+  assert.match(alerts, /recordOperationalAccountAudit\(/);
+  assert.doesNotMatch(alerts, /trackAnalyticsEvent\(/);
   assert.match(saves, /confirmedSavedActivityMetadata/);
   assert.doesNotMatch(saves, /trackAnalyticsEvent\(/);
   for (const name of ["price_alert_created", "price_alert_paused", "price_alert_reactivated", "price_alert_deleted"]) {

@@ -1,5 +1,5 @@
 import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
-import { trackAnalyticsEvent } from "@/services/analyticsService";
+import { recordOperationalAccountAudit } from "@/services/operationalAccountAuditService";
 import { flightPriceAlertDuplicateKey } from "@/lib/price-alerts/flightPriceAlerts";
 import { hotelPriceAlertDuplicateKey } from "@/lib/price-alerts/hotelPriceAlerts";
 import { carPriceAlertDuplicateKey } from "@/lib/price-alerts/carPriceAlerts";
@@ -222,7 +222,7 @@ export async function createPriceAlert(input: {
       },
     });
 
-    await trackAnalyticsEvent({
+    await recordOperationalAccountAudit({
       userId: input.userId,
       type: "ALERT_CREATED",
       name: "price_alert_created",
@@ -258,7 +258,7 @@ export async function updateUserPriceAlertStatus(input: { id: string; userId: st
     }
     const alert = await db.priceAlert.findFirst({ where: { id: input.id, userId: input.userId }, select: alertSelect });
     if (!alert) throw new PriceAlertNotFoundError();
-    await trackAnalyticsEvent({
+    await recordOperationalAccountAudit({
       userId: input.userId, type: "ALERT_CREATED",
       name: input.status === "ACTIVE" ? "price_alert_reactivated" : "price_alert_paused",
       metadata: { product: alert.type, alertId: alert.id, mode: alert.mode, outcome: "confirmed" },
@@ -285,7 +285,7 @@ export async function deleteUserPriceAlert(input: { id: string; userId: string }
     if (!result.count) throw new PriceAlertNotFoundError();
     // Only the authenticated owner may delete the alert. A safe product label
     // comes from the pre-deletion record, not a client-supplied identifier.
-    if (existing) await trackAnalyticsEvent({
+    if (existing) await recordOperationalAccountAudit({
       userId: input.userId, type: "ALERT_CREATED", name: "price_alert_deleted",
       metadata: { product: existing.type, alertId: input.id, mode: existing.mode, outcome: "confirmed" },
     });

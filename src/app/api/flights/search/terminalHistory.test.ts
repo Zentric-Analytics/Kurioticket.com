@@ -36,11 +36,11 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
     "@/lib/searchCache": { toPublicFlight: (value: unknown) => value, toPublicHotel: (value: unknown) => value },
     "@/lib/validation": { flightSearchSchema: schema, hotelSearchSchema: schema },
     "@/lib/travel/searchContract": { classifyFlights: (results: unknown[]) => ({ results }), classifyHotels: () => ({ results: [] }) },
-    "@/services/analyticsService": {
+    "@/services/operationalActivityService": {
       logSearchHistory: async (input: History) => { if (options.loggingFails) throw new Error("storage unavailable"); histories.push(structuredClone(input)); },
       logProviderCall: async (input: typeof providerCalls[number]) => { providerCalls.push(structuredClone(input)); },
-      trackAnalyticsEvent: async (input: unknown) => { analyticsEvents.push(input); },
     },
+    "@/services/analyticsService": { trackAnalyticsEvent: async (input: unknown) => { analyticsEvents.push(input); } },
     "@/services/travel/flightAggregator": { searchFlights: async () => aggregate },
     "@/services/travel/hotelAggregator": { searchHotels: async (criteria: unknown) => { providerCriteria.push(criteria); return aggregate; }, searchHotelsByProvider: async (criteria: unknown) => { providerCriteria.push(criteria); return aggregate; } },
     "@/lib/feature-controls/service": { isFeatureEnabled: async () => true },
@@ -221,7 +221,7 @@ for (const [applicationSource, anonymous] of [["WEB", false], ["IOS", false], ["
     assert.equal(fixture.histories[0].requestId, requestId);
     assert.equal(fixture.histories[0].userId, anonymous ? null : "verified-account");
     assert.equal(fixture.histories[0].visitorId, anonymous ? null : "consented-visitor");
-    assert.equal(fixture.analyticsEvents.length, 1);
+    assert.equal(fixture.analyticsEvents.length, anonymous ? 0 : 1);
     assert.equal(fixture.providerCalls.length, 10);
     assert.deepEqual(fixture.providerCalls[0].metadata, { requestId, applicationSource });
     assert.equal(new Set(childIds).size, 9);

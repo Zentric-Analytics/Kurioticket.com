@@ -5,7 +5,8 @@ import { attachOperationalSearchSession, prepareOperationalSearchSession, operat
 import { identifySearchCrawler, searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
-import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
+import { logProviderCall, logSearchHistory } from "@/services/operationalActivityService";
+import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { validateCarsForm, type CarsFormValues } from "@/lib/cars/carsSearchUtils";
 import type { LocationBoundCarSearchParams } from "@/lib/cars/types";
 import { searchCars } from "@/services/travel/carAggregator";
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
             origin: search.pickupLocation, destination: search.dropoffLocation,
             query: recordedSearch, resultCount, latencyMs: Math.max(0, Math.round(performance.now() - started)), status,
           }),
-          ...(crawler ? [] : [trackAnalyticsEvent({ ...application,
+          ...(crawler || !visitorId ? [] : [trackAnalyticsEvent({ ...application,
             userId, visitorId, type: "SEARCH", name: "car_search",
             metadata: { resultCount },
           })]),
