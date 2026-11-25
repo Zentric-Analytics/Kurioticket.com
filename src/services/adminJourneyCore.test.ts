@@ -10,7 +10,7 @@ function journey(id = "journey-002") {
   return {
     id, visitorId: "visitor-001", userId: null, startedAt: at, firstEventAt: at, lastEventAt: at,
     products: ["FLIGHT"], providers: ["Example Air"], providerCount: BigInt(1), eventCount: BigInt(4), searchCount: BigInt(1),
-    searchCompleted: BigInt(1), resultsViewed: BigInt(1), offerSelected: BigInt(1), handoffStarted: BigInt(1),
+    searchCompleted: BigInt(1), resultsViewed: BigInt(1), flightDetailsViewed: BigInt(0), offerSelected: BigInt(1), providerDealSelected: BigInt(0), handoffStarted: BigInt(1),
   };
 }
 function event(id = "event-001") {
@@ -27,7 +27,9 @@ function summary() {
     identities: BigInt(3), guests: BigInt(1), registered: BigInt(2), registeredAccounts: BigInt(1), journeys: BigInt(4), rawEvents: BigInt(12),
     searchCompletedIdentities: BigInt(3), searchCompletedJourneys: BigInt(4), searchCompletedEvents: BigInt(5),
     resultsViewedIdentities: BigInt(2), resultsViewedJourneys: BigInt(3), resultsViewedEvents: BigInt(3),
+    flightDetailsViewedIdentities: BigInt(0), flightDetailsViewedJourneys: BigInt(0), flightDetailsViewedEvents: BigInt(0),
     offerSelectedIdentities: BigInt(1), offerSelectedJourneys: BigInt(1), offerSelectedEvents: BigInt(2),
+    providerDealSelectedIdentities: BigInt(0), providerDealSelectedJourneys: BigInt(0), providerDealSelectedEvents: BigInt(0),
     handoffStartedIdentities: BigInt(1), handoffStartedJourneys: BigInt(1), handoffStartedEvents: BigInt(2),
     searches: BigInt(5), successfulSearches: BigInt(3), partialSearches: BigInt(1), failedSearches: BigInt(1), exactHandoffs: BigInt(1), uncorrelatedHandoffs: BigInt(1),
   };
@@ -139,6 +141,48 @@ test("detail redacts URLs and metadata while keeping exact versus legacy handoff
   assert.doesNotMatch(JSON.stringify(result), /tokenHash|destinationUrl|metadata|query|secret|private|attacker/);
 });
 
+test("verified save and share details retain exact event order and redact unsafe result references", async () => {
+  const linked = [
+    { ...event("save-step"), type: "RESULT_SAVED", action: "local_saved",
+      resultReference: "flight-ref", redirectLogId: null, destinationUrl: null },
+    { ...event("share-step"), type: "RESULT_SHARED", action: "share_link_copied",
+      resultReference: "private@provider.example/sensitive", redirectLogId: null, destinationUrl: null },
+    { ...event("unsave-step"), type: "RESULT_UNSAVED", action: "local_unsaved",
+      resultReference: "flight-ref", redirectLogId: null, destinationUrl: null },
+  ];
+  const f = fixture([[journey()], linked]);
+  const result = await f.service.detail("journey-002");
+  assert.equal(result.status, "ok");
+  if (result.status !== "ok") return;
+  assert.deepEqual(result.data.events.map(row => row.type), ["RESULT_SAVED", "RESULT_SHARED", "RESULT_UNSAVED"]);
+  assert.equal(result.data.events[0].action, "local_saved");
+  assert.equal(result.data.events[0].resultReference, "flight-ref");
+  assert.equal(result.data.events[1].action, "share_link_copied");
+  assert.equal(result.data.events[1].resultReference, null);
+  assert.doesNotMatch(JSON.stringify(result), /private@provider|sensitive|tokenHash/);
+});
+
+test("new flight stages are preserved separately from offer selection and expose only safe references", async () => {
+  const f = fixture([[journey()], [
+    { ...event("opened"), type: "FLIGHT_DETAILS_VIEWED", redirectLogId: null,
+      destinationUrl: null, sourcePage: "/flight-results", resultReference: "flight_01" },
+    { ...event("fare"), type: "OFFER_SELECTED", redirectLogId: null,
+      destinationUrl: null, sourcePage: "/flight-details", resultReference: "fare_01" },
+    { ...event("deal"), type: "PROVIDER_DEAL_SELECTED", redirectLogId: null,
+      destinationUrl: null, sourcePage: "/flight-details", resultReference: "deal_01" },
+    { ...event("invalid"), type: "PROVIDER_DEAL_SELECTED", redirectLogId: null,
+      destinationUrl: null, sourcePage: "/flight-details", resultReference: "https://private.invalid/redirect?token=secret" },
+  ]]);
+  const result = await f.service.detail("journey-002");
+  assert.equal(result.status, "ok");
+  if (result.status !== "ok") return;
+  assert.deepEqual(result.data.events.map(x => x.type),
+    ["FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_DEAL_SELECTED"]);
+  assert.deepEqual(result.data.events.map(x => x.resultReference),
+    ["flight_01", "fare_01", "deal_01", null]);
+  assert.doesNotMatch(JSON.stringify(result), /private.invalid|token=secret/);
+});
+
 test("detail continuation uses event timestamp and ID and is bound to the requested journey", async () => {
   const f = fixture([[journey()], [event(), event("event-002")]]);
   const result = await f.service.detail("journey-002", { limit: "1" });
@@ -172,6 +216,9 @@ test("summary keeps distinct identities, stage observations, search outcomes and
     exactSearchLinks: 5, eligibleWithoutExactSearch: 0, withRequestId: 5, flights: 4, hotels: 3, cars: 2,
   });
   assert.deepEqual(result.data.operationalSearches, { scope: "environment_and_date_only", total: 20, success: 15, partial: 3, failed: 2, partialWithResults: 1, partialWithoutResults: 2 });
+  const operationalSearchSql = f.queries.find(query => query.sql.includes('FROM "SearchHistory"'));
+  assert.ok(operationalSearchSql);
+  assert.match(operationalSearchSql.sql, /"countAsSearch" = TRUE/, "Search Performance counts canonical searches only");
   assert.doesNotThrow(() => JSON.stringify(result));
 });
 

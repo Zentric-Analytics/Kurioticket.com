@@ -131,9 +131,11 @@ enum RedirectType {
 }
 
 enum AnalyticsEventType {
+  PAGE_VIEW
   SEARCH
   REDIRECT
   SAVE
+  SHARE
   ALERT_CREATED
   SIGNUP
   SUPPORT_TICKET
@@ -158,8 +160,19 @@ enum VisitorIdentityLinkSource {
 enum JourneyEventType {
   SEARCH_COMPLETED
   RESULTS_VIEWED
+  FLIGHT_DETAILS_VIEWED
   OFFER_SELECTED
+  PROVIDER_DEAL_SELECTED
   PROVIDER_HANDOFF_STARTED
+  RESULT_SAVED
+  RESULT_UNSAVED
+  RESULT_SHARED
+  PRICE_ALERT_CREATED
+  SEARCH_EDIT_APPLIED
+  SEARCH_FILTER_APPLIED
+  SEARCH_SORT_CHANGED
+  RESULT_DETAILS_OPENED
+  RATE_DETAILS_OPENED
 }
 
 enum LegalDocumentStatus {
@@ -611,6 +624,7 @@ model SearchHistory {
   userId      String?
   visitorId   String?
   requestId   String?      @unique
+  countAsSearch Boolean    @default(true)
   type        SearchType
   origin      String?
   destination String?

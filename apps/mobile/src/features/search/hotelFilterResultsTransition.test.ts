@@ -52,7 +52,7 @@ test("successive chip clears compose against the latest queued filter state", ()
 
 test("changed Hotel Sort Apply updates ordering immediately and resets scroll position", () => {
   const sheet = screen.slice(screen.indexOf("<HotelResultsQuickFilterSheet"), screen.indexOf("/> : null", screen.indexOf("<HotelResultsQuickFilterSheet")));
-  assert.match(sheet, /onSortChange=\{\(next\) => \{ if\(next===hotelSort\)return;setHotelSort\(next\);startHotelResultsTransition\(\); \}\}/);
+  assert.match(sheet, /onSortChange=\{\(next\) => \{ if\(next===hotelSort\)return;journeyEvents\.workflowDecision\("SEARCH_SORT_CHANGED", resultsRequestId, "\/hotel-results", \{ sortMode: normalizeJourneySortMode\(next\), sortChoice: normalizeJourneySortChoice\(next\) \}\);setHotelSort\(next\);startHotelResultsTransition\(\); \}\}/);
   assert.doesNotMatch(sheet, /setHotelFilters|travelApi|setStatus|setRetry|router|load\(/);
 });
 

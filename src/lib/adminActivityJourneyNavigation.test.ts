@@ -36,3 +36,32 @@ test("compact context round-trips international filters and rejects invalid dest
     assert.equal(decodeActivityJourneyReturn(value),null);
   }
 });
+
+test("history detail links may return only to a scoped identity journey page", () => {
+  const href = "/admin/users/guest/qa-visitor-0001/journeys?range=all&product=FLIGHT&provider=Duffel";
+  assert.equal(activityJourneyReturnHref(href), href);
+  const token = encodeActivityJourneyReturn(href);
+  assert.ok(token);
+  assert.equal(decodeActivityJourneyReturn(token), href);
+  for (const unsafe of [
+    "/admin/journeys?userId=other-account",
+    "/admin/users/guest/qa-visitor-0001/journeys/../../other",
+    "https://other.test/admin/users/guest/qa-visitor-0001/journeys",
+  ]) {
+    assert.equal(activityJourneyReturnHref(unsafe), null);
+  }
+  const filtered = activityJourneyReturnHref("/admin/users/user/qa-account-0001/journeys?userId=other&environment=production&range=7d");
+  assert.equal(filtered, "/admin/users/user/qa-account-0001/journeys?range=7d");
+});
+
+test("filtered Activity origin survives Journey History -> detail -> History navigation", () => {
+  const activity = "/admin/users/user/qa-account-0001/activity?range=today&product=CAR&q=CDG";
+  const origin = encodeActivityJourneyReturn(activity);
+  assert.ok(origin);
+  const history = "/admin/users/user/qa-account-0001/journeys?range=today&product=CAR&activityReturn=" + origin;
+  assert.equal(activityJourneyReturnHref(history), history);
+  const detailToken = encodeActivityJourneyReturn(history);
+  assert.ok(detailToken);
+  assert.equal(decodeActivityJourneyReturn(detailToken), history);
+  assert.equal(decodeActivityJourneyReturn(new URL(decodeActivityJourneyReturn(detailToken)!, "https://example.test").searchParams.get("activityReturn")),activity);
+});

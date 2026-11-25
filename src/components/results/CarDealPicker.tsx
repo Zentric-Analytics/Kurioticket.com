@@ -298,7 +298,7 @@ export function CarDealPicker({
               </div>
               <div data-car-rate-provider-alert-row className="mt-1 flex min-w-0 flex-col items-stretch gap-1">
                 <p className="min-w-0 break-words text-[13px] font-medium leading-5 text-[#475569]">Booking provider · {selectedGroup.providerName}</p>
-                <CarPriceAlertControl key={car.id + ":" + selectedOffer.id} search={search} car={car} offer={selectedOffer} />
+                <CarPriceAlertControl key={car.id + ":" + selectedOffer.id} search={search} car={car} offer={selectedOffer} requestId={requestId} />
               </div>
             </div>
             <div data-car-rate-scroll className="min-h-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-contain bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 [-webkit-overflow-scrolling:touch] md:px-5 md:pb-5">

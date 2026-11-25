@@ -2,14 +2,22 @@ import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { getOptionalPrisma } from "@/lib/prisma";
 import {
   clientJourneyEventTypes,
+  clientJourneyDecisionTypes,
   getJourneyActivityCutoff,
   journeyEventKey,
   type ClientJourneyEventType,
   type JourneyEventReceipt,
+  type JourneyFilterGroup,
+  type JourneySortMode,
+  type JourneySortChoice,
+  type JourneyFilterSelection,
+  type JourneyObservedResult,
 } from "@/lib/search-journey";
-import { withEnvironmentMetadata } from "@/lib/stagingSafety";
+import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
 import { applicationMetadata, type ApplicationAttribution } from "@/lib/application-source";
+import { completeSearchNetworkObservation, recordedSearchNetwork } from "@/lib/searchNetworkObservation";
+import { carFilterGroups } from "@/lib/cars/carFilterPresentation";
 
 export { clientJourneyEventTypes, journeyEventKey, type ClientJourneyEventType };
 export type SearchJourneyDatabase = Pick<PrismaClient, "$transaction">;
@@ -34,12 +42,19 @@ export type ClientJourneyEventInput = ApplicationAttribution & {
   requestId: string;
   provider?: string;
   sourcePage?: string;
+  /** Canonical offer reference from the validated search response. Not an arbitrary URL. */
+  offerId?: string;
+  filterGroup?: JourneyFilterGroup;
+  sortMode?: JourneySortMode;
+  sortChoice?: JourneySortChoice;
+  filterSelections?: JourneyFilterSelection[];
+  observedResult?: JourneyObservedResult;
 };
 export type SearchHistoryInput = ApplicationAttribution & {
   userId?: string | null;
   visitorId?: string | null;
   requestId?: string | null;
-  type: "FLIGHT" | "HOTEL" | "CAR";
+  type: "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE";
   origin?: string | null;
   destination?: string | null;
   checkIn?: Date | null;
@@ -51,6 +66,46 @@ export type SearchHistoryInput = ApplicationAttribution & {
   progressive?: boolean;
   completed?: boolean;
 };
+
+/** Optional geolocation, only after the search row and journey event exist.
+ * Never delay search recording or overwrite later verified network evidence. */
+async function enrichRecordedSearchCountry(
+  db: SearchJourneyDatabase,
+  history: { id: string; query: Prisma.JsonValue },
+  countryLookup?: (ip: string) => Promise<string | null>,
+) {
+  const observed = recordedSearchNetwork(history.query);
+  if (!observed.ipAddress || observed.countryCode) return;
+  const original = history.query;
+  if (!original || typeof original !== "object" || Array.isArray(original)) return;
+  const enriched = countryLookup
+    ? await completeSearchNetworkObservation(original as Record<string, unknown>, countryLookup)
+    : await completeSearchNetworkObservation(original as Record<string, unknown>);
+  const country = recordedSearchNetwork(enriched).countryCode;
+  if (!country) return;
+  try {
+    await db.$transaction(async tx => {
+      const current = await tx.searchHistory.findUnique({
+        where: { id: history.id },
+        select: { query: true },
+      });
+      if (!current || !current.query || typeof current.query !== "object" || Array.isArray(current.query)) return;
+      const currentNetwork = recordedSearchNetwork(current.query);
+      if (currentNetwork.ipAddress !== observed.ipAddress || currentNetwork.countryCode) return;
+      await tx.searchHistory.update({
+        where: { id: history.id },
+        data: {
+          query: {
+            ...(current.query as Record<string, unknown>),
+            searchNetwork: { ipAddress: observed.ipAddress, countryCode: country },
+          } as Prisma.InputJsonValue,
+        },
+      });
+    });
+  } catch {
+    // Search history was already committed; a failed country lookup is optional.
+  }
+}
 
 type OwnedActivity = { visitorId: string | null; userId: string | null };
 function ownsActivity(activity: OwnedActivity, visitorId: string, userId: string | null) {
@@ -102,7 +157,11 @@ async function appendEvent(tx: Prisma.TransactionClient, input: JourneyEventInpu
 }
 
 /** The same transactional implementation is used by production and lifecycle tests. */
-export function createSearchJourneyService(getDatabase: () => SearchJourneyDatabase | null, now = () => new Date()) {
+export function createSearchJourneyService(
+  getDatabase: () => SearchJourneyDatabase | null,
+  now = () => new Date(),
+  countryLookup?: (ip: string) => Promise<string | null>,
+) {
   async function recordJourneyEvent(input: JourneyEventInput) {
     const visitorId = input.visitorId;
     if (!visitorId) return null;
@@ -146,12 +205,23 @@ export function createSearchJourneyService(getDatabase: () => SearchJourneyDatab
         if (!(await lockConsentedVisitor(tx, visitorId, input.userId ?? null))) return { accepted: false };
         const search = await tx.searchHistory.findUnique({
           where: { requestId: input.requestId },
-          select: { id: true, type: true, visitorId: true, userId: true },
+          select: { id: true, type: true, visitorId: true, userId: true, query: true },
         });
         // Search responses are deliberately sent before optional history writes.
         // Retry this race, but never retry an already-known ownership mismatch.
         if (!search) return { accepted: false, retryable: true };
         if (!ownsActivity(search, visitorId, input.userId ?? null)) return { accepted: false };
+        if (search.type === "CAR" && input.filterSelections?.some(choice =>
+          !carFilterGroups.some(group => group.id === choice.group && group.options.some(option => option.id === choice.option))
+        )) return { accepted: false };
+        if ((clientJourneyDecisionTypes as readonly string[]).includes(input.type)) {
+          const query = search.query;
+          if (!query || typeof query !== "object" || Array.isArray(query) || query.environment !== getPublicEnvironment()) return { accepted: false };
+        }
+        // These stages are specific to native flight navigation. Do not allow
+        // other product searches to be recast as a flight action.
+        if ((input.type === "FLIGHT_DETAILS_VIEWED" || input.type === "PROVIDER_DEAL_SELECTED")
+          && search.type !== "FLIGHT") return { accepted: false };
         const result = await appendEvent(tx, {
           visitorId,
           userId: input.userId,
@@ -160,7 +230,13 @@ export function createSearchJourneyService(getDatabase: () => SearchJourneyDatab
           product: search.type,
           provider: input.provider,
           searchHistoryId: search.id,
-          metadata: { ...applicationMetadata(input), ...(input.sourcePage ? { sourcePage: input.sourcePage } : {}) },
+          metadata: { ...applicationMetadata(input), ...(input.sourcePage ? { sourcePage: input.sourcePage } : {}),
+            ...(input.offerId ? { resultId: input.offerId } : {}),
+            ...(input.filterGroup ? { filterGroup: input.filterGroup } : {}),
+            ...(input.sortMode ? { sortMode: input.sortMode } : {}),
+            ...(input.sortChoice ? { sortChoice: input.sortChoice } : {}),
+            ...(input.filterSelections ? { filterSelections: input.filterSelections } : {}),
+            ...(input.observedResult ? { observedResult: input.observedResult, observedSource: "customer_display" } : {}) },
         }, now());
         return { accepted: Boolean(result) };
       });
@@ -227,6 +303,7 @@ export function createSearchJourneyService(getDatabase: () => SearchJourneyDatab
           metadata: { requestId: input.requestId || undefined, resultCount: history.resultCount, status: history.status, ...applicationMetadata(input) },
         });
       }
+      if (history) await enrichRecordedSearchCountry(db, history, countryLookup);
       return history ? { id: history.id } : null;
     } catch {
       return null;

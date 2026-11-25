@@ -345,7 +345,7 @@ test("desktop and mobile car rates share an inline tracking control inside rate 
     compiled = compiled.replace(/require\("([^"]+)"\)/g, (_call, dependency: string) => {
       if (Object.hasOwn(modules, dependency)) return `require(${JSON.stringify(dependency)})`;
       const location = dependency.startsWith("@/") ? `src/${dependency.slice(2)}` : dependency.startsWith(".") ? posix.normalize(posix.join(posix.dirname(file), dependency)) : relative(process.cwd(), require.resolve(dependency, { paths: [dirname(`${process.cwd()}/${file}`)] })).replaceAll("\\", "/");
-      const resolved = [location, `${location}.ts`, `${location}.tsx`, `${location}/index.ts`, `${location}/index.js`].find((path) => existsSync(path) && statSync(path).isFile());
+      const resolved = [location, `${location}.js`, `${location}.ts`, `${location}.tsx`, `${location}/index.ts`, `${location}/index.js`].find((path) => existsSync(path) && statSync(path).isFile());
       assert.ok(resolved, `unexpected fixture dependency: ${dependency}`);
       const id = `file:${resolved}`;
       add(id, resolved);
@@ -354,7 +354,7 @@ test("desktop and mobile car rates share an inline tracking control inside rate 
     modules[name] = compiled;
   }
   add("card", "src/components/results/CarResultCard.tsx");
-  const bundle = `const registry={${Object.entries(modules).map(([name, code]) => `${JSON.stringify(name)}:function(require,module,exports){${code}\n}`).join(",")}},cache={};function require(name){if(cache[name])return cache[name].exports;if(!registry[name])throw Error(name);const module={exports:{}};cache[name]=module;registry[name](require,module,module.exports);return module.exports;}`;
+  const bundle = `const process={env:{NODE_ENV:"production"}};const registry={${Object.entries(modules).map(([name, code]) => `${JSON.stringify(name)}:function(require,module,exports){${code}\n}`).join(",")}},cache={};function require(name){if(cache[name])return cache[name].exports;if(!registry[name])throw Error(name);const module={exports:{}};cache[name]=module;registry[name](require,module,module.exports);return module.exports;}`;
   const fixture = `
     const React=require('react'),{createRoot}=require('react-dom/client'),{flushSync}=require('react-dom'),{CarResultCard}=require('card');
     window.calls=[];window.alerts=[];window.redirects=[];window.failLookup=false;

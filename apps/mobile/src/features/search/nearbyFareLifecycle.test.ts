@@ -9,19 +9,25 @@ const lifecycle = screen.slice(screen.indexOf("const [nearbyFares"), screen.inde
 test("nearby requests have isolated generation, controller registry, and canonical API ownership", () => {
   assert.match(lifecycle, /nearbyFareGeneration = useRef\(0\)/);
   assert.match(lifecycle, /nearbyFareRequests = useRef\(new Map<string, AbortController>\(\)\)/);
-  assert.match(lifecycle, /travelApi\.searchFlights\(buildNearbyFarePayload\(payload, date\)/);
+  assert.match(lifecycle, /travelApi\.lookupNearbyFlightFare\(buildNearbyFarePayload\(payload, date\)/);
   assert.match(lifecycle, /nearbyFareGeneration\.current === generation/);
   assert.match(lifecycle, /controller\.signal\.aborted/);
   assert.doesNotMatch(lifecycle.slice(lifecycle.indexOf("void runNearbyFareQueue")), /setResults|setStatus|activeSearch|searchSequence/);
 });
 
+test("selected inventory comes from the current date's primary search", () => {
+  assert.match(lifecycle, /flightResultsOwner !== plan.plan\?\.key/);
+  assert.match(lifecycle, /comparableResults=ownedFlightResults\.filter\(result=>!hasDisplayOnlyInventory\(result\)\)/);
+  assert.match(lifecycle, /fares: comparableResults\.map/);
+});
+
 test("selected inventory seeds immediately and neighbors remain progressive", () => {
-  assert.match(lifecycle, /selectedResult = selectNearbyFareResult\(results as FlightResult\[\], normalizeFlightPrice\)/);
+  assert.match(lifecycle, /date === flightDate \? selected : freshNearbyFare/);
   assert.match(lifecycle, /date: flightDate, status: "success"/);
   assert.match(lifecycle, /date: flightDate, status: "unavailable"/);
   assert.match(lifecycle, /\?\? \{ date, status: "loading" as const \}/);
   assert.match(lifecycle, /status: "unavailable"[\s\S]*?status: "error"/);
-  assert.match(lifecycle, /selectNearbyFareResult\(response\.results as FlightResult\[\], normalizeFlightPrice\)/);
+  assert.match(lifecycle, /selectNearbyFareResult\(state\.fares, normalizeFlightPrice\)/);
 });
 
 test("search changes and blur abort only nearby-owned requests and refocus resumes unresolved work", () => {
@@ -29,7 +35,7 @@ test("search changes and blur abort only nearby-owned requests and refocus resum
   assert.match(screen, /nearbyFareRequests\.current\.forEach\(\(controller\) => controller\.abort\("screen-blur"\)\)/);
   assert.match(lifecycle, /controller\.abort\("search-context-changed"\)/);
   assert.match(lifecycle, /return \(\) => \{[\s\S]*?active = false;[\s\S]*?nearbyFareRequests\.current\.forEach/);
-  assert.match(lifecycle, /\[currencyState, flightDate, nearbyFareResume,/);
+  assert.match(lifecycle, /\[flightDate, nearbyFareCurrency, nearbyFareResume,/);
 });
 
 test("app background aborts nearby work and returning active resumes only the nearby lifecycle", () => {

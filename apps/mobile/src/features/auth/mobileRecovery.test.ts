@@ -21,7 +21,9 @@ test("all ordinary root navigation is owned by the recovery boundary without cha
 test("recovery restoration cannot report ordinary authenticated bootstrap success", () => {
   const api = readFileSync("src/features/auth/authApi.ts", "utf8");
   const restore = api.slice(api.indexOf("export async function restoreAuthenticatedSession"));
-  assert.match(restore, /if \(result\.recovery\) \{ await writeSession\(\{ \.\.\.session, recovery: result\.recovery \}\); return false; \}/);
+  assert.match(api, /if \(result\.recovery\) return applySessionRevocation\(session\.token, result\.recovery\)/);
+  assert.match(restore, /if \(!session \|\| session\.recovery\) return false/);
+  assert.match(restore, /!verified\.recovery && verified\.token === session\.token/);
   const storage = readFileSync("src/storage/sessionStorage.ts", "utf8");
   assert.match(storage, /recovery\?: \{ deadline: string \}/);
 });
@@ -32,9 +34,9 @@ test("ordinary deletion Keep action requires fresh authentication; only the reco
   assert.match(action, /await clearSession\(\)/); assert.match(action, /router\.replace\(signInHref\("\/security"\)\)/);
   assert.doesNotMatch(action, /reactivateDeletion/);
   const api = readFileSync("src/api/travelApi.ts", "utf8");
-  assert.match(api, /reactivateDeletion:[^\n]*JSON\.stringify\(\{confirmed:true\}\)/);
+  assert.match(api, /reactivateDeletion:[\s\S]*?JSON\.stringify\(\{ confirmed: true \}\)/);
   const boundary = readFileSync("src/features/auth/MobileRecoveryBoundary.tsx", "utf8");
-  assert.match(boundary, /if \(!verified \|\| busy \|\| complete\) return/);
-  assert.equal((boundary.match(/await travelApi\.reactivateDeletion\(\)/g) || []).length, 1);
+  assert.match(boundary, /if \(!verified \|\| verifiedUntil <= Date\.now\(\) \|\| busy \|\| complete\) return/);
+  assert.equal((boundary.match(/await travelApi\.reactivateDeletion\(recoveryToken\)/g) || []).length, 1);
   assert.match(boundary, /"Keep account", \(\) => void recover\(\)/);
 });

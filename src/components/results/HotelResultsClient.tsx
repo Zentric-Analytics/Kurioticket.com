@@ -2,6 +2,7 @@
 import { useSandboxResultState } from "./useSandboxResults";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+import { normalizeJourneySortMode, normalizeJourneySortChoice, boundedJourneyFilterSelections, type JourneyFilterSelectionGroup } from "@/lib/search-journey";
 import { displayedJourneyRequest, journeyRequestId } from "@/lib/journeyEventClient";
 import { resultIdKey, VirtualResultsList } from "./VirtualResultsList";
 import { readHotelDestinationSelection } from "@/lib/hotels/destinationSelection";
@@ -36,6 +37,7 @@ import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { MobileHotelPriceText } from "./MobileHotelPriceText";
 import { saveMobileHotelResultsState, takeMobileHotelResultsState } from "@/lib/hotels/mobileHotelResultsState";
+import { takeResultsReturn } from "@/lib/results/resultsReturnIntent";
 import { createMobileHotelBudget } from "@/lib/hotels/mobileHotelBudget";
 import type { ExchangeRates } from "@/lib/currency/exchangeRates";
 import { compareHotelsByAvailablePrice, getComparableHotelTotalUsd, hasHotelPrice } from "@/lib/hotels/hotelResultAvailability";
@@ -582,17 +584,36 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }, [filtersOpen]);
 
   const returnStateRef = useRef<{ key: string; value: ReturnType<typeof takeMobileHotelResultsState> } | null>(null);
+  const returnIntentRef = useRef<{ key: string; returning: boolean } | null>(null);
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
     const pendingReturn = !guided ? takeMobileHotelResultsState(bodySearchKey) : null;
+    if (returnIntentRef.current?.key !== bodySearchKey) {
+      returnIntentRef.current = { key: bodySearchKey, returning: !guided && takeResultsReturn("hotel", window.location.href) };
+    }
+    const returning = returnIntentRef.current.returning && retryKey === 0;
     if (pendingReturn || returnStateRef.current?.key !== bodySearchKey) {
       // A retained route can be reactivated more than once for the same search.
       // Prefer the latest departure state while retaining it for effect replay.
       returnStateRef.current = { key: bodySearchKey, value: pendingReturn };
     }
     const restored = retryKey === 0 ? returnStateRef.current.value : null;
-    const snapshot = restored ? readHotelReturnSnapshot(bodySearchKey) : null;
+    const snapshot = (restored || returning) && retryKey === 0 ? readHotelReturnSnapshot(bodySearchKey) : null;
+    if (returning && !snapshot) {
+      // Returning is never a new search. Require explicit re-query once the
+      // existing in-tab provider snapshot is unavailable or has expired.
+      const timer = window.setTimeout(() => {
+        if (!active) return;
+        setResults([]);
+        setVisibleFiltered([]);
+        setJourneyResponse(null);
+        setError("Your previous hotel results have expired. Search again to check current prices.");
+        setCompletedSearchKey(bodySearchKey);
+        setLoading(false);
+      }, 0);
+      return () => { active = false; window.clearTimeout(timer); controller.abort(); };
+    }
     let timedOut = false;
     const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, 60_000);
     const request = snapshot ? Promise.resolve(snapshot) : fetch("/api/hotels/search", {
@@ -798,6 +819,15 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
     selectedFilters.roomTypes,
     filterOptions.roomTypes,
   );
+
+  const selectedJourneyHotelFilters = (overrides?: Partial<HotelFilterSelections>, stars = selectedHotelClasses) =>
+    boundedJourneyFilterSelections([
+      ...Object.entries({ ...selectedFilters, ...overrides }).map(([group, options]) => ({
+        group: (group === "cancellationPolicies" ? "cancellation" : group) as JourneyFilterSelectionGroup,
+        options,
+      })),
+      { group: "stars" as const, options: stars.map(star => String(star)) },
+    ]);
 
   const activeFilterChips = useMemo(() => buildActiveFilterChips(selectedFilters, propertyNameQuery, minPrice, maxPrice, resultMaxPrice, priceFilterActive, selectedHotelClasses, formatHotelFilterPrice, t, locale, filterOptions.facilities, filterOptions.locations, filterOptions.roomTypes), [formatHotelFilterPrice, locale, maxPrice, minPrice, selectedHotelClasses, resultMaxPrice, priceFilterActive, selectedFilters, propertyNameQuery, t, filterOptions.facilities, filterOptions.locations, filterOptions.roomTypes]);
 
@@ -1067,7 +1097,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   };
 
   const updateHotelSummarySortMode = (sortMode: HotelSummarySortMode) => {
-
+    if (hotelSummarySortMode !== sortMode) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", journeyResponse?.searchKey === bodySearchKey ? journeyResponse.requestId : null, { sortMode: normalizeJourneySortMode(sortMode), sortChoice: normalizeJourneySortChoice(sortMode) });
     setHotelSummarySortMode(sortMode);
   };
 
@@ -1378,6 +1408,14 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                       className="h-11 w-[32%] shrink-0 rounded-lg bg-[#004BB8] px-4 text-sm font-semibold text-white"
                       onClick={() => {
                         if (mobileShortcutMenu === "sort") { updateHotelSummarySortMode(mobileDraftSort); closeMobileShortcutMenu(true); return; }
+                        journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", journeyResponse?.searchKey === bodySearchKey ? journeyResponse.requestId : null, {
+                          filterGroup: mobileShortcutMenu === "amenities" ? "facilities" : mobileShortcutMenu === "price" ? "price" : mobileShortcutMenu === "stars" ? "stars" : "roomTypes",
+                          filterSelections: selectedJourneyHotelFilters(
+                            mobileShortcutMenu === "amenities" ? { facilities: mobileShortcutDraftFacilities }
+                            : mobileShortcutMenu === "roomTypes" ? { roomTypes: mobileShortcutDraftRoomTypes } : {},
+                            mobileShortcutMenu === "stars" ? mobileShortcutDraftStars : selectedHotelClasses,
+                          ),
+                        });
                         triggerFilterApplying();
                         if (mobileShortcutMenu === "price") { setMinPrice(mobileShortcutDraftMinPrice); setMaxPrice(mobileShortcutDraftMaxPrice); }
                         else if (mobileShortcutMenu === "stars") setSelectedHotelClasses(mobileShortcutDraftStars);
@@ -1842,7 +1880,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           </div>
           <div className="flex shrink-0 items-center gap-3 border-t border-[#D8DEE8] bg-[#F2F4F8] px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.08)] sm:px-5 sm:pb-4 sm:pt-4">
             {activeFilterCount > 0 ? <button type="button" aria-label="Reset hotel filters" className="focus-ring h-11 w-[30%] shrink-0 rounded-lg border border-[#D8DEE8] bg-[#F2F4F8] px-5 text-sm font-semibold text-slate-700 sm:hidden" onClick={resetFilters}>Reset</button> : null}
-            <Button type="button" disabled={sortedVisibleHotels.length === 0} aria-live="polite" className="h-11 min-w-0 flex-1 rounded-lg bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:h-12 sm:rounded-xl sm:text-base sm:font-bold disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none" onClick={() => { triggerFilterApplying(); setFiltersOpen(false); }}>
+            <Button type="button" disabled={sortedVisibleHotels.length === 0} aria-live="polite" className="h-11 min-w-0 flex-1 rounded-lg bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:h-12 sm:rounded-xl sm:text-base sm:font-bold disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none" onClick={() => { journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", journeyResponse?.searchKey === bodySearchKey ? journeyResponse.requestId : null, { filterGroup: "all", filterSelections: selectedJourneyHotelFilters() }); triggerFilterApplying(); setFiltersOpen(false); }}>
               <span className={locale.startsWith("en") ? "hidden sm:inline" : undefined}>{sortedVisibleHotels.length === 0 ? t("hotelResults.noStaysMatchFiltersTitle") : `${t("deals.results.package.view.hotel")} (${new Intl.NumberFormat(locale).format(sortedVisibleHotels.length)})`}</span>
               {locale.startsWith("en") ? <span className="sm:hidden">{sortedVisibleHotels.length === 0 ? "No matching stays" : activeFilterCount > 0 ? `View ${sortedVisibleHotels.length} matching ${sortedVisibleHotels.length === 1 ? "stay" : "stays"}` : `View all ${sortedVisibleHotels.length} stays`}</span> : null}
             </Button>

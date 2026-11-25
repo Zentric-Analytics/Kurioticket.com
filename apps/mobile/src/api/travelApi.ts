@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "../config/apiUrl";
-import { readSession, subscribeSession } from "../storage/sessionStorage";
+import { applySessionRevocation, readSession, readStoredSession, subscribeSession, type StoredSession } from "../storage/sessionStorage";
 import { Platform } from "react-native";
 import type { CanonicalLocation } from "@/lib/locations/types";
 import Constants from "expo-constants";
@@ -15,6 +15,7 @@ import { logFlightSearchCheckpoint } from "../features/search/flightSearchDiagno
 import { visitorIdentity } from "../features/privacy/visitorIdentity";
 import type { JourneyEvent, JourneyEventResponse } from "../features/privacy/journeyEventCoordinator";
 import { rememberJourneyResponseContext } from "../features/privacy/journeyResponseContext";
+import { reconcileOrdinarySession } from "../features/auth/authApi";
 import { createProviderHandoffMetadata, type ProviderHandoffMetadataReader } from "../../../../src/lib/providerHandoffClient";
 
 export class TravelApiError extends Error {
@@ -22,6 +23,8 @@ export class TravelApiError extends Error {
 }
 
 export type FlightResult = ContractResult<PublicFlightResult>;
+export type NearbyFlightFare = Pick<PublicFlightResult, "price" | "currency">;
+type FlightSearchResponse = TravelSearchResponse<PublicFlightResult> & { resultsCacheValidUntil?: number };
 export type MobileFlightDetailsResponse = FlightDetailsResponse;
 export type FlightRedirectResponse = { url: string };
 export type HotelResult = ContractResult<PublicHotelResult>;
@@ -108,35 +111,39 @@ export function carSearchClientHeaders(platform: string, version?: string): Reco
   if (platform !== "android" || !version || !/^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(version)) return {};
   return { "User-Agent": `KurioticketMobile/${version} (Android; Native) OkHttp` };
 }
-const operationalCredentialPattern = /^v1\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)\.[A-Za-z0-9_-]{43}$/;
+const operationalCredentialPattern = /^v(?:1\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)|2\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)\.(?:ios|android))\.[A-Za-z0-9_-]{43}$/;
 let accountEpoch = 0;
 let observedSessionToken: string | null | undefined;
+const accountPath = /^\/api\/mobile\/v1\/(?:profile|email-change|saved|recent-searches|price-alerts|trips|travel-preferences|customization-preferences|email-preferences|notifications|security)(?:[/?]|$)/;
 subscribeSession?.(session => {
   const token = session?.token ?? null;
   if (token !== observedSessionToken) accountEpoch++;
   observedSessionToken = token;
 });
 
-async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string; sandboxDisplay?: boolean; visitorContext?: number; body?: () => unknown; expectedUserId?: string } = {}) {
+async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string; sandboxDisplay?: boolean; visitorContext?: number; body?: () => unknown; expectedUserId?: string; session?: StoredSession } = {}) {
   const requestStartedAt = Date.now();
   const base = getApiBaseUrl(Platform.OS, __DEV__);
   if (!base.ok) throw new TravelApiError(base.message, 0, "configuration");
-  const session = await readSession().catch(() => null);
-  const actor = session?.user?.id ?? null;
-  if (observedSessionToken === undefined) observedSessionToken = session?.token ?? null;
+  const session = options.session ?? await readSession().catch(() => null);
+  const ordinarySession = session?.recovery ? null : session;
+  const actor = ordinarySession?.user?.id ?? null;
+  if (observedSessionToken === undefined) observedSessionToken = ordinarySession?.token ?? null;
   const epoch = accountEpoch;
+  const accountOwned = accountPath.test(path);
   if (options.expectedUserId && actor !== options.expectedUserId) throw new TravelApiError("Account changed. Refresh before trying again.", 0, "cancelled");
   if (operationalSearchActor !== actor) {
     operationalSearchCredential = null;
     operationalSearchActor = actor;
   }
-  const visitorHeaders = await visitorIdentity.headers(path, session).catch(() => ({}));
+  const visitorHeaders = await visitorIdentity.headers(path, ordinarySession).catch(() => ({}));
   const requestVisitorContext = "x-kt-visitor" in visitorHeaders ? visitorIdentity.trackingContext() : null;
   // Session/storage work may have changed consent or account ownership since an
   // optional event was queued. Never send it under the replacement identity.
   if (options.signal?.aborted || (options.visitorContext !== undefined && visitorIdentity.trackingContext() !== options.visitorContext)) {
     throw new TravelApiError("Request cancelled.", 0, "cancelled");
   }
+  if (accountOwned && epoch !== accountEpoch) throw new TravelApiError("Account changed. Discarding the previous request.", 0, "cancelled");
   const controller = new AbortController();
   const onAbort = () => controller.abort("cancelled");
   options.signal?.addEventListener("abort", onAbort, { once: true });
@@ -152,6 +159,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
         "Content-Type": "application/json",
         ...((path === "/api/cars/search" || (/^https:\/\/(?:www\.)?kurioticket\.com$/.test(base.baseUrl) && ["/api/flights/search","/api/hotels/search","/api/mobile/v1/hotels/progressive"].includes(path))) ? carSearchClientHeaders(Platform.OS, Constants.expoConfig?.version) : {}),
         "X-Mobile-Platform": Platform.OS,
+        ...(operationalPaths.has(path) && (Platform.OS === "android" || Platform.OS === "ios") ? { "X-Kt-Search-Protocol": "v2" } : {}),
         ...(Constants.expoConfig?.version ? { "X-Mobile-App-Version": Constants.expoConfig.version } : {}),
         ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
         ...visitorHeaders,
@@ -183,7 +191,6 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
       throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-response");
     }
     const data = parsed as Record<string, unknown>;
-    const accountOwned = /^\/api\/mobile\/v1\/(?:saved|recent-searches|price-alerts|trips|travel-preferences|customization-preferences|email-preferences|notifications|security)(?:[/?]|$)/.test(path);
     if ((accountOwned || options.expectedUserId) && epoch !== accountEpoch) throw new TravelApiError("Account changed. Discarding the previous response.", 0, "cancelled");
     const responseJsonMs = performance.now() - jsonStartedAt;
     if (path === "/api/flights/search") {
@@ -195,6 +202,10 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
       });
     }
     if (!response.ok) {
+      if (response.status === 401 && accountOwned && ordinarySession) {
+        await reconcileOrdinarySession(ordinarySession).catch(() => undefined);
+        if (epoch !== accountEpoch) throw new TravelApiError("Account changed. Discarding the previous response.", 0, "cancelled");
+      }
       const code = response.status === 400 ? "validation" : response.status === 429 ? "rate-limit" : response.status === 503 ? "unavailable" : response.status >= 500 ? "server" : "network";
       throw new TravelApiError(apiErrorMessage(data), response.status, code, data);
     }
@@ -249,7 +260,19 @@ export const travelApi = {
   homepageContent: (market: string, locale: string) => request<unknown>(`/api/content/homepage?market=${encodeURIComponent(market)}&locale=${encodeURIComponent(locale)}`),
   faqContent: (locale: string) => request<unknown>(`/api/content/faqs?locale=${encodeURIComponent(locale)}`),
   journeyEvent: (body: JourneyEvent, options: { signal: AbortSignal; visitorContext: number }) => request<JourneyEventResponse>("/api/journey/events", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: 4000 }),
-  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  pageView: (body: { eventId: string; pageKey: string; previousPageKey?: string; requestId?: string }, options: { visitorContext: number; signal?: AbortSignal }) =>
+    request<{ accepted: boolean; retryable?: boolean }>("/api/activity/page-views", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: 4000 }),
+  customerInteraction: (body: {
+    action: "share_sheet_completed" | "saved_item_confirmed" | "saved_item_removed"; product: "FLIGHT" | "HOTEL" | "CAR";
+    resultId: string; eventId: string; requestId?: string;
+    observedResult?: { label: string; provider: string; amount: number; currency: string;
+      priceBasis: "total" | "per_night" | "per_day"; totalAmount?: number };
+  }, options: { visitorContext: number }) =>
+    request<{ accepted: boolean }>("/api/activity/interactions", {
+      method: "POST", body: JSON.stringify(body),
+    }, { ...options, timeoutMs: 4000 }),
+  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<FlightSearchResponse>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  lookupNearbyFlightFare: (body: Record<string, unknown>, options?: { signal?: AbortSignal }) => request<{ fares: NearbyFlightFare[]; requestId: string; resultsCacheValidUntil?: number }>("/api/flights/nearby-fare", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   flightDetails: (id: string, options: { signal?: AbortSignal } = {}) => request<FlightDetailsResponse>(`/api/flights/details?id=${encodeURIComponent(id)}`, {}, options),
   flightRedirect: (id: string, options: RedirectOptions = {}) => providerRedirect(id, "flight", options),
   searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<HotelSearchResponse>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
@@ -289,8 +312,39 @@ export const travelApi = {
   confirmTwoFactor: (code:string) => request<{ok:true;twoFactor:TwoFactorStatus;recoveryCodes:string[]}>("/api/mobile/v1/security/two-factor/confirm",{method:"POST",body:JSON.stringify({code})}),
   disableTwoFactor: (verification:{code?:string;password?:string}) => request<{ok:true;twoFactor:TwoFactorStatus}>("/api/mobile/v1/security/two-factor/disable",{method:"POST",body:JSON.stringify(verification)}),
   getDeletionRequest: () => request<{request:AccountDeletionRequest|null}>("/api/mobile/v1/security/deletion-request"),
-  requestDeletion: () => request<{request:AccountDeletionRequest;created:boolean}>("/api/mobile/v1/security/deletion-request",{method:"POST",body:JSON.stringify({confirmed:true})}),
-  reactivateDeletion: () => request<{success:true;request:{id:string;status:string;cancelledAt:string|null}}>("/api/mobile/v1/security/deletion-request/reactivate",{method:"POST",body:JSON.stringify({confirmed:true})}),
+  requestDeletion: async () => {
+    const session = await readSession();
+    if (!session) throw new TravelApiError("Authentication required.", 401);
+    const result = await request<{ request: AccountDeletionRequest; created: boolean }>(
+      "/api/mobile/v1/security/deletion-request",
+      { method: "POST", body: JSON.stringify({ confirmed: true }) },
+      { session },
+    );
+    const deletion = result.request;
+    if (!deletion?.id || !["PENDING", "READY_FOR_REVIEW"].includes(deletion.status) || !Number.isFinite(Date.parse(deletion.deletionScheduledAt))) {
+      throw new TravelApiError("Unable to confirm the account deletion request.", 0, "invalid-response");
+    }
+    await applySessionRevocation(session.token, { deadline: deletion.deletionScheduledAt });
+    return result;
+  },
+  reactivateDeletion: async (verifiedToken: string) => {
+    const session = await readStoredSession();
+    if (!session?.recovery || session.token !== verifiedToken || !(Math.min(Date.parse(session.expires), Date.parse(session.recovery.deadline)) > Date.now())) {
+      throw new TravelApiError("Recovery sign-in expired. Sign in again.", 401);
+    }
+    const result = await request<{ success: true; request: { id: string; status: string; cancelledAt: string | null } }>(
+      "/api/mobile/v1/security/deletion-request/reactivate",
+      { method: "POST", body: JSON.stringify({ confirmed: true }) },
+      { session },
+    );
+    if (result.success !== true || result.request?.status !== "CANCELLED") {
+      throw new TravelApiError("Unable to confirm account recovery.", 0, "invalid-response");
+    }
+    if ((await readStoredSession())?.token !== verifiedToken) {
+      throw new TravelApiError("Account changed. Discarding the previous response.", 0, "cancelled");
+    }
+    return result;
+  },
   updateProfile: (profile: MobileProfile) => request<{ profile: MobileProfile }>("/api/mobile/v1/profile", { method: "PATCH", body: JSON.stringify(profile) }),
   requestCurrentEmailCode: () => request<{ cooldownSeconds: number; resendLimitReached?: boolean }>("/api/mobile/v1/email-change/current-request", { method: "POST", body: JSON.stringify({}) }),
   verifyCurrentEmailCode: (code: string) => request<{ ownershipProof: string }>("/api/mobile/v1/email-change/current-confirm", { method: "POST", body: JSON.stringify({ code }) }),
@@ -311,7 +365,7 @@ export const travelApi = {
   deleteRecentSearch: (id: string) => request<{ success: true }>("/api/mobile/v1/recent-searches", { method: "DELETE", body: JSON.stringify({ id }) }),
   clearRecentSearches: () => request<{ success: true }>("/api/mobile/v1/recent-searches?clear=all", { method: "DELETE" }),
   priceAlerts: () => request<{ alerts: MobilePriceAlert[] }>("/api/mobile/v1/price-alerts"),
-  createPriceAlert: (body: CreateFlightPriceAlert | CreateHotelPriceAlert | CreateCarPriceAlert) => request<{ alert: MobilePriceAlert }>("/api/mobile/v1/price-alerts", { method: "POST", body: JSON.stringify(body) }),
+  createPriceAlert: (body: CreateFlightPriceAlert | CreateHotelPriceAlert | CreateCarPriceAlert, journeyRequestId?: string | null) => request<{ alert: MobilePriceAlert }>("/api/mobile/v1/price-alerts", { method: "POST", body: JSON.stringify({ ...body, ...(journeyRequestId ? { journeyRequestId } : {}) }) }),
   updatePriceAlertStatus: (id: string, status: "ACTIVE" | "PAUSED") => request<{ alert: MobilePriceAlert }>(`/api/mobile/v1/price-alerts/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ status }) }),
   deletePriceAlert: (id: string) => request<{ deleted: true; id: string }>(`/api/mobile/v1/price-alerts/${encodeURIComponent(id)}`, { method: "DELETE" }),
   notifications: (cursor?: string) => request<MobileNotificationPage>(`/api/mobile/v1/notifications${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`),

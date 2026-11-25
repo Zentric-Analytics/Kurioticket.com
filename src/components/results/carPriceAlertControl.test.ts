@@ -123,7 +123,7 @@ test("Cars tracking appears only inside Rate details on phone and desktop", () =
   const results = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
   assert.match(picker, /data-car-rate-provider-alert-row/);
   assert.match(picker, /Booking provider · \{selectedGroup\.providerName\}/);
-  assert.match(picker, /<CarPriceAlertControl key=\{car\.id \+ ":" \+ selectedOffer\.id\} search=\{search\} car=\{car\} offer=\{selectedOffer\} \/>/);
+  assert.match(picker, /<CarPriceAlertControl key=\{car\.id \+ ":" \+ selectedOffer\.id\} search=\{search\} car=\{car\} offer=\{selectedOffer\} requestId=\{requestId\} \/>/);
   assert.doesNotMatch(results, /<CarPriceAlertControl|data-cars-price-alert-sidebar-slot/);
   assert.doesNotMatch(source, /desktopPortalTarget|createPortal|matchMedia/);
   assert.match(source, /data-cars-price-alert/);

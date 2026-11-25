@@ -1,4 +1,4 @@
-export type AdminAlertSeverity = "CRITICAL" | "WARNING";
+export type AdminAlertSeverity = "CRITICAL" | "WARNING" | "INFO";
 
 export type AdminAlertSource =
   | "SYSTEM"

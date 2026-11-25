@@ -8,6 +8,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, type Prisma } from "../src/generated/prisma/client";
 import { createAdminJourneyService } from "../src/services/adminJourneyCore";
 import { createAdminJourneyHttpHandlers } from "../src/services/adminJourneyHttp";
+import { createAdminOperationalReadService } from "../src/services/adminOperationalReadCore";
 import type { AdminJourneyResult, AdminJourneyStage } from "../src/services/adminJourneyContract";
 
 // Require a new, explicitly named localhost database. Never reuse or clear an existing database.
@@ -356,6 +357,72 @@ test("handoff reads reject explicit environment conflicts and inconsistent exact
   assert.deepEqual(detail.events.map(e => e.id), [good.id, old.id]);
   assert.deepEqual(detail.events.map(e => e.handoff!.searchCorrelation), ["exact", "unavailable"]);
   assert.deepEqual(ok(await service.summary(window(12))).handoffCorrelation, { exactEvents: 1, uncorrelatedEvents: 1 });
+});
+
+
+test("Provider Handoffs PostgreSQL reads classify operational guests and link only the original verified search", async () => {
+  const handoffs = createAdminOperationalReadService({
+    authorize: async () => true, database: () => db, environment: () => "staging",
+  });
+  const sessionId = randomUUID();
+  const requestId = randomUUID();
+  const at = time(14);
+  const original = await search(null, at, {
+    requestId, query: { environment: "staging", operationalSessionId: sessionId },
+  });
+  const linked = await redirect(null, new Date(+at + 60_000), {
+    metadata: { environment: "staging", operationalSessionId: sessionId, requestId },
+  });
+  const noEvidence = await redirect(null, new Date(+at + 120_000), {
+    metadata: { environment: "staging" },
+  });
+  const wrongSession = await redirect(null, new Date(+at + 180_000), {
+    metadata: { environment: "staging", operationalSessionId: randomUUID(), requestId },
+  });
+  const wrongProduct = await redirect(null, new Date(+at + 240_000), {
+    type: "FLIGHT", metadata: { environment: "staging", operationalSessionId: sessionId, requestId },
+  });
+  const malformed = await redirect(null, new Date(+at + 300_000), {
+    metadata: { environment: "staging", operationalSessionId: "invalid-session", requestId },
+  });
+  const otherEnv = await redirect(null, new Date(+at + 360_000), {
+    metadata: { environment: "production", operationalSessionId: sessionId, requestId },
+  });
+
+  const scoped = new URLSearchParams({ environment: "staging", ...window(14) });
+  scoped.set("identity", "guest");
+  scoped.set("correlation", "exact");
+  const exact = await handoffs.handoffs.list(scoped);
+  assert.equal(exact.status, "ok");
+  if (exact.status !== "ok") return;
+  assert.deepEqual(exact.data.items.map(item => item.id), [linked.id]);
+  assert.deepEqual(exact.data.items[0].identity, { kind: "guest", userId: null, visitorId: null });
+  assert.deepEqual(exact.data.items[0].searchCorrelation, { kind: "exact", searchHistoryId: original.id });
+  assert.equal(await db.journeyEvent.count({ where: { redirectLogId: linked.id } }), 0,
+    "exact operational correlation never needs an optional visitor journey");
+
+  scoped.set("correlation", "unavailable");
+  const unmatched = await handoffs.handoffs.list(scoped);
+  assert.equal(unmatched.status, "ok");
+  if (unmatched.status !== "ok") return;
+  assert.deepEqual(new Set(unmatched.data.items.map(item => item.id)), new Set([wrongSession.id, wrongProduct.id]));
+  assert.ok(unmatched.data.items.every(item => item.identity.kind === "guest" && item.searchCorrelation.searchHistoryId === null));
+
+  scoped.set("identity", "unattributed");
+  const unknown = await handoffs.handoffs.list(scoped);
+  assert.equal(unknown.status, "ok");
+  if (unknown.status !== "ok") return;
+  assert.deepEqual(new Set(unknown.data.items.map(item => item.id)), new Set([noEvidence.id, malformed.id]));
+  assert.ok(unknown.data.items.every(item => item.identity.kind === "unattributed"));
+  assert.ok(!unknown.data.items.some(item => item.id === linked.id || item.id === otherEnv.id));
+
+  const detail = await handoffs.handoffs.detail(linked.id, new URLSearchParams("environment=staging"));
+  assert.equal(detail.status, "ok");
+  if (detail.status !== "ok") return;
+  assert.deepEqual(detail.data.searchCorrelation, exact.data.items[0].searchCorrelation);
+  assert.equal(detail.data.identity.kind, "guest");
+  assert.doesNotMatch(JSON.stringify(detail.data), /operationalSessionId|requestId|destinationUrl/);
+  assert.equal((await handoffs.handoffs.detail(otherEnv.id, new URLSearchParams("environment=staging"))).status, "not_found");
 });
 
 test("a real missing-table outage is unavailable and does not masquerade as an empty cohort", async () => {

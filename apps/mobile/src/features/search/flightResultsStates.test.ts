@@ -21,7 +21,7 @@ test("local sort and filters only derive displayed results and never set request
   const sortBinding = screen.slice(screen.indexOf("<FlightSortSheet"), screen.indexOf("<FlightFilterSheet"));
   assert.match(sortedBlock, /filterAndSortFlights/);
   assert.doesNotMatch(sortedBlock, /setStatus|setRetry|load\(/);
-  assert.match(sortBinding, /onApply=\{\(next\) => \{ setSort\(next\); setSortOpen\(false\); scrollToFlightResultsBeginning\(\); \}\}/);
+  assert.match(sortBinding, /onApply=\{\(next\) => \{ if \(next !== sort\) journeyEvents\.workflowDecision\("SEARCH_SORT_CHANGED", resultsRequestId, "\/flight-results", \{ sortMode: normalizeJourneySortMode\(next\), sortChoice: normalizeJourneySortChoice\(next\) \}\); setSort\(next\); setSortOpen\(false\); scrollToFlightResultsBeginning\(\); \}\}/);
   assert.doesNotMatch(sortBinding, /setFlightPage\(1\)|setStatus|setRetry|load\(/);
   assert.match(screen, /onChange=\{filterSection === "all" \? handleFullFlightFiltersChange : handleQuickFlightFiltersChange\}/);
   assert.match(fullFilterChangeBlock, /setFilters\(next\)/);

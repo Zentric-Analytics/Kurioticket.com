@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { readBoundedJsonBody } from "@/lib/bounded-json-body";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
-import { clientJourneyEventTypes, isJourneySourcePath, type JourneyEventReceipt } from "@/lib/search-journey";
+import { clientJourneyDecisionTypes, clientJourneyEventTypes, isJourneySourcePath, journeyFilterGroups, journeySortModes, journeySortChoices, journeyFilterSelectionGroups, type JourneyEventReceipt } from "@/lib/search-journey";
 import { isSameOriginRequest } from "@/lib/visitor-identity";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { recordClientJourneyEvent } from "@/services/searchJourneyService";
@@ -12,8 +12,51 @@ const clientEventSchema = z.object({
   type: z.enum(clientJourneyEventTypes),
   requestId: z.string().uuid(),
   provider: z.string().trim().min(1).max(100).regex(/^[^\u0000-\u001f\u007f]+$/).optional(),
+  /** Optional for old clients. Required for newly differentiated flight stages. */
+  offerId: z.string().min(1).max(128).regex(/^[A-Za-z0-9._:+~=-]+$/).optional(),
   sourcePage: z.string().max(240).refine(isJourneySourcePath).optional(),
-}).strict();
+  filterGroup: z.enum(journeyFilterGroups).optional(),
+  sortMode: z.enum(journeySortModes).optional(),
+  sortChoice: z.enum(journeySortChoices).optional(),
+  observedResult: z.object({
+    label: z.string().trim().min(1).max(120).regex(/^[^\u0000-\u001f\u007f<>]+$/),
+    provider: z.string().trim().min(1).max(100).regex(/^[^\u0000-\u001f\u007f<>]+$/),
+    amount: z.number().finite().positive().max(1_000_000_000),
+    currency: z.string().regex(/^[A-Z]{3}$/),
+    priceBasis: z.enum(["total", "per_night", "per_day"]),
+    totalAmount: z.number().finite().positive().max(1_000_000_000).optional(),
+  }).strict().optional(),
+  filterSelections: z.array(z.object({
+    group: z.enum(journeyFilterSelectionGroups),
+    option: z.string().trim().min(1).max(72).regex(/^[\p{L}\p{N} ._:+\-']+$/u),
+  }).strict()).max(20).optional(),
+}).strict().superRefine((event, ctx) => {
+  const isDecision = (clientJourneyDecisionTypes as readonly string[]).includes(event.type);
+  if (isDecision && (!event.sourcePage || !/^\/(?:flights\/results|hotels\/results|cars\/results|flight-results|hotel-results|car-results|flight-details|hotel-details|car-details)$/.test(event.sourcePage))) {
+    ctx.addIssue({ code: "custom", path: ["sourcePage"], message: "A normalized travel results screen is required." });
+  }
+  if ((event.type === "RESULT_DETAILS_OPENED" || event.type === "RATE_DETAILS_OPENED") && !event.offerId) {
+    ctx.addIssue({ code: "custom", path: ["offerId"], message: "Result reference required." });
+  }
+  if (event.type === "SEARCH_FILTER_APPLIED" ? !event.filterGroup : Boolean(event.filterGroup)) {
+    ctx.addIssue({ code: "custom", path: ["filterGroup"], message: "Filter group must match the applied-filter action." });
+  }
+  if (event.observedResult && !["RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED", "FLIGHT_DETAILS_VIEWED"].includes(event.type)) {
+    ctx.addIssue({ code: "custom", path: ["observedResult"], message: "Result evidence requires an actual details opening." });
+  }
+  if (event.type !== "SEARCH_FILTER_APPLIED" && event.filterSelections !== undefined) {
+    ctx.addIssue({ code: "custom", path: ["filterSelections"], message: "Selections belong only to applied filters." });
+  }
+  if (event.type === "SEARCH_SORT_CHANGED" ? !event.sortMode : Boolean(event.sortMode)) {
+    ctx.addIssue({ code: "custom", path: ["sortMode"], message: "Sort mode must match the sort action." });
+  }
+  if (event.type !== "SEARCH_SORT_CHANGED" && event.sortChoice) {
+    ctx.addIssue({ code: "custom", path: ["sortChoice"], message: "Sort choice is only valid for a sort action." });
+  }
+  if ((event.type === "FLIGHT_DETAILS_VIEWED" || event.type === "PROVIDER_DEAL_SELECTED") && !event.offerId) {
+    ctx.addIssue({ code: "custom", path: ["offerId"], message: "Offer reference required." });
+  }
+});
 
 type Dependencies = {
   identity: typeof resolveRequestActivityIdentity;

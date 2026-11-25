@@ -953,7 +953,11 @@ test("Flight Details mobile web uses the native hero asset, geometry, curve, and
   assert.match(actionBar, /w-\[92px\] gap-1/);
   assert.match(actionBar, /min-h-\[calc\(env\(safe-area-inset-top\)\+60px\)\]/);
   assert.doesNotMatch(actionBar, /bg-\[#F5F7FB\]|backdrop-blur/);
-  const controls = source.slice(source.indexOf("<MobileFlightDetailsActionBar"), source.indexOf('      <span className="sr-only" role="status"', source.indexOf("<MobileFlightDetailsActionBar")));
+  const tree=ts.createSourceFile("StandaloneFlightDetails.tsx",source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
+  let controls="";
+  function findMobileControls(node:ts.Node){if(ts.isJsxSelfClosingElement(node)&&node.tagName.getText(tree)==="MobileFlightDetailsActionBar")controls=node.getText(tree);ts.forEachChild(node,findMobileControls);}
+  findMobileControls(tree);
+  assert.ok(controls);
   assert.equal(controls.match(/className="h-5 w-5" strokeWidth=\{2\}/g)?.length, 3);
   assert.doesNotMatch(controls, /translate-x/);
   assert.ok(source.indexOf("<MobileFlightDetailsActionBar") < source.indexOf('data-testid="flight-details-hero"'));
@@ -1331,7 +1335,7 @@ test("desktop selected deal drives fare information and the Compare deals action
 test("Flight Details invalidates shared saved-flight result state after account mutations", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   assert.match(source, /invalidateSavedFlightsClientCache/);
-  assert.match(source, /setSavedFlightBackendId\(null\); invalidateSavedFlightsClientCache\(\)/);
+  assert.match(source, /setSavedFlightBackendId\(null\);[\s\S]*invalidateSavedFlightsClientCache\(\)/);
 });
 
 

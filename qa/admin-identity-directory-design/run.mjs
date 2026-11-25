@@ -32,6 +32,8 @@ await put("next.config.mjs",
   'config.resolve.alias["@/lib/prisma"]=path.resolve("mocks/prisma.js");\n' +
   'config.resolve.alias["@/lib/env"]=path.resolve("mocks/env.js");\n' +
   'config.resolve.alias["@/services/adminJourneyService$"]=path.resolve("mocks/admin-journeys.js");\n' +
+  'config.resolve.alias["@/services/onlinePresenceService$"]=path.resolve("mocks/online-presence.js");\n' +
+  'config.resolve.alias["@/services/adminOnlineUsersService$"]=path.resolve("mocks/online-users.js");\n' +
   'config.resolve.alias["@/services/travel/providerIntegrationStatus$"]=path.resolve("mocks/provider-status.js");\n' +
   'config.resolve.alias["@"]=' + JSON.stringify(source) + ';return config;}};');
 await put("postcss.config.mjs", 'export default {plugins:{"@tailwindcss/postcss":{}}};');
@@ -53,14 +55,39 @@ await put(
   'export async function GET(){return Response.json({generatedAt:"2026-01-01T00:00:00.000Z",activeCount:0,unreadCount:0,criticalCount:0,warningCount:0});}',
 );
 await put("app/admin/users/page.tsx", await readFile(path.join(source, "app/admin/users/page.tsx"), "utf8"));
+await put("app/admin/users/online/page.tsx", await readFile(path.join(source, "app/admin/users/online/page.tsx"), "utf8"));
 await put("app/admin/journeys/page.tsx", await readFile(path.join(source, "app/admin/journeys/page.tsx"), "utf8"));
 await put("mocks/admin-journeys.js", await readFile(path.join(qa, "journey-fixture.js"), "utf8"));
+// A deterministic, verified 90-second snapshot tests four live cards, including
+// a web union of two account devices without multiplying the total.
+await put("mocks/online-presence.js",
+  'export async function getOnlinePresenceSnapshot(){return {status:"ok",total:3,registeredAccounts:2,guestSessions:1,' +
+  'platforms:{desktop_web:2,mobile_web:2,website:3,ios:1,android:0,unclassified:0},' +
+  'windowSeconds:90,observedAt:"2026-11-21T09:00:00.000Z"};}');
+await put("mocks/online-users.js", await readFile(path.join(qa, "online-users-fixture.js"), "utf8"));
+await put("app/api/admin/users/online/route.js",
+  'import {readAdminOnlineUsers} from "@/services/adminOnlineUsersService";' +
+  'export async function GET(){return Response.json(await readAdminOnlineUsers(),{headers:{"Cache-Control":"private, no-store"}});}');
+await put("app/api/admin/overview/online-presence/route.js",
+  'import {getOnlinePresenceSnapshot} from "@/services/onlinePresenceService";' +
+  'export async function GET(){return Response.json(await getOnlinePresenceSnapshot(),{headers:{"Cache-Control":"private, no-store"}});}');
 // The Journeys filter reads a provider catalogue; keep the isolated navbar
 // screenshot fixture independent of live Duffel/KAYAK credentials and gates.
 await put("mocks/provider-status.js",
   'export function getProviderIntegrationStatuses(){return [{provider:"Duffel"},{provider:"KAYAK sandbox"}];}');
 // Render a real Overview route for the Admin shell's background exception QA.
 await put("app/admin/page.jsx", 'export default function Overview(){return <div><h1>Admin Overview QA</h1></div>;}');
+// Exercise the current Platform and Users workspace navigation with synthetic
+// route bodies. The production data services are covered separately by CI.
+await put("app/admin/platform-health/page.jsx",
+  'export default function Health(){return <main><h1>Platform Health QA</h1></main>;}');
+await put("app/admin/platforms/devices/page.jsx",
+  'export default function PlatformsDevices(){return <main><h1>Platform Metrics QA</h1></main>;}');
+await put("app/admin/users/user/[id]/devices/page.jsx",
+  'export default function UserDeviceHistory(){return <main><h1>User Device History QA</h1></main>;}');
+// The real legacy route should redirect without losing validated query inputs.
+await put("app/admin/users/platforms-devices/page.tsx",
+  await readFile(path.join(source, "app/admin/users/platforms-devices/page.tsx"), "utf8"));
 await put("mocks/auth-guards.js", 'export async function requireAdminSession(){return {user:{id:"qa-admin-001",role:"ADMIN"}};}');
 await put("mocks/env.js", 'export function getAdminEmails(){return ["alana@example.invalid"];}');
 await put("mocks/prisma.js", await readFile(path.join(qa, "data-fixture.js"), "utf8"));

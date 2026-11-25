@@ -1,3 +1,5 @@
+import type { Prisma, JourneyEventType } from "@/generated/prisma/client";
+
 /** Safe, read-only presentation of server-recorded journey events in Admin.
  * Never expose raw event metadata, search query JSON, or destination URLs.
  */
@@ -11,21 +13,26 @@ export type ActivityRow = {
   journeyId?: string;
   journeyStartedAt?: Date;
   dedupeKey?: string;
-  stage?: "SEARCH_COMPLETED" | "RESULTS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_HANDOFF_STARTED" | "ACCOUNT_ACTIVITY";
+  stage?: JourneyEventType | "ACCOUNT_ACTIVITY" | "PAGE_VIEW";
+  pageView?: { path: string; previousPath: string | null; transport: "web" | "native"; platform: string; href: string | null };
   product?: string | null;
   provider?: string | null;
   searchHistoryId?: string | null;
   redirectLogId?: string | null;
+  /** Sanitized, server-attributed search platform only. */
+  platform?: "WEB" | "IOS" | "ANDROID" | null;
+  resultCount?: number | null;
 };
 
 export type JourneyEventRecord = {
   id: string;
-  type: "SEARCH_COMPLETED" | "RESULTS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_HANDOFF_STARTED";
+  type: JourneyEventType;
   product: string | null;
   provider: string | null;
   createdAt: Date;
   searchHistoryId: string | null;
   redirectLogId: string | null;
+  metadata?: unknown;
   journey: { id: string; visitorId: string; startedAt: Date };
   searchHistory: {
     visitorId: string | null;
@@ -75,6 +82,31 @@ export function eligibleJourneyLinkedVisitorWhere(userId: string) {
     currentUser: { is: { status: "ACTIVE" as const, emailVerified: { not: null } } },
   };
 }
+/**
+ * A safe superset of visitors who can contribute canonical events to the
+ * selected window. The final event count still enforces the full consent,
+ * ownership, environment, stage, product and query predicates.
+ *
+ * Preselecting by event existence prevents large registered accounts with
+ * many inactive/empty visitor links from building hundreds of complex,
+ * per-visitor OR branches. It does not cap or discard historical events.
+ */
+export function eligibleJourneyEventCandidateWhere(
+  userId: string,
+  stages: ReadonlyArray<JourneyEventRecord["type"]>,
+  createdAt: Prisma.DateTimeFilter,
+): Prisma.VisitorWhereInput {
+  return {
+    AND: [
+      eligibleJourneyLinkedVisitorWhere(userId),
+      { journeys: { some: { events: { some: {
+        type: { in: [...stages] },
+        createdAt,
+      } } } } },
+    ],
+  };
+}
+
 
 function relatedRecordAllowed(
   record: { visitorId: string | null; userId: string | null } | null,
@@ -90,8 +122,19 @@ function relatedRecordAllowed(
 const eventLabels = {
   SEARCH_COMPLETED: "Search completed",
   RESULTS_VIEWED: "Results viewed",
+  FLIGHT_DETAILS_VIEWED: "Flight details viewed",
   OFFER_SELECTED: "Offer selected",
+  PROVIDER_DEAL_SELECTED: "Provider deal selected",
   PROVIDER_HANDOFF_STARTED: "Provider handoff started",
+  RESULT_SAVED: "Result saved",
+  RESULT_UNSAVED: "Result unsaved",
+  RESULT_SHARED: "Result shared",
+  PRICE_ALERT_CREATED: "Price alert created",
+  SEARCH_EDIT_APPLIED: "Search edit submitted",
+  SEARCH_FILTER_APPLIED: "Results filter applied",
+  SEARCH_SORT_CHANGED: "Results sort changed",
+  RESULT_DETAILS_OPENED: "Result details opened",
+  RATE_DETAILS_OPENED: "Rate details opened",
 } satisfies Record<JourneyEventRecord["type"], string>;
 
 function displayProduct(product: string | null) {
@@ -119,11 +162,32 @@ export function toAdminJourneyActivity(event: JourneyEventRecord, kind: Identity
     : searchRoute(event.searchHistory?.origin, event.searchHistory?.destination);
   const provider = isHandoff ? (event.redirectLog?.provider ?? event.provider) : event.provider;
   const status = event.type === "SEARCH_COMPLETED" ? event.searchHistory?.status : null;
+  // Read only a closed list of actions from server-owned event metadata.
+  // Never put raw client metadata or a complete URL into an admin timeline.
+  const rawAction = event.metadata && typeof event.metadata === "object" && !Array.isArray(event.metadata)
+    ? (event.metadata as Record<string, unknown>).action : null;
+  const allowedActions: Partial<Record<JourneyEventRecord["type"], Record<string, string>>> = {
+    RESULT_SAVED: { local_saved: "Saved locally", saved_item_confirmed: "Saved to account" },
+    RESULT_UNSAVED: { local_unsaved: "Removed local save", saved_item_removed: "Removed saved item" },
+    RESULT_SHARED: { share_link_copied: "Result link copied", share_sheet_completed: "Share sheet completed" },
+    PRICE_ALERT_CREATED: { price_alert_created: "Price alert created" },
+  };
+  const action = typeof rawAction === "string" ? allowedActions[event.type]?.[rawAction] : undefined;
+  const metadata = event.metadata && typeof event.metadata === "object" && !Array.isArray(event.metadata)
+    ? event.metadata as Record<string, unknown> : null;
+  const fareIsExplicit = event.type === "OFFER_SELECTED" && event.product === "FLIGHT"
+    && metadata?.sourcePage === "/flight-details"
+    && typeof metadata.resultId === "string"
+    && /^[A-Za-z0-9._:+~=-]{1,128}$/.test(metadata.resultId);
+  const label = fareIsExplicit ? "Fare selected"
+    : event.type === "RESULT_SAVED" || event.type === "RESULT_UNSAVED"
+      || event.type === "RESULT_SHARED" || event.type === "PRICE_ALERT_CREATED"
+      ? action ?? eventLabels[event.type] : eventLabels[event.type];
   const detail = [product, route, provider, status].filter(Boolean).join(" · ");
 
   return {
     id: "j-" + event.id,
-    label: eventLabels[event.type],
+    label,
     detail: detail || "No additional details recorded",
     at: event.createdAt,
     journeyId: event.journey.id,

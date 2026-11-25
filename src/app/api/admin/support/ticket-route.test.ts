@@ -128,10 +128,10 @@ test("POST /api/admin/support/[id] creates reply and writes audit log", async ()
 
   assert.equal(response.status, 201);
   assert.equal(body.message.author, "admin");
-  assert.equal(body.emailStatus, "accepted");
+  assert.equal(body.emailStatus, "skipped");
   assert.equal(audits[0].action, "support_ticket.reply");
   assert.equal(audits[0].targetId, "ticket-1");
-  assert.deepEqual(audits[0].metadata, { messageId: "message-1", status: "OPEN", emailStatus: "accepted" });
+  assert.deepEqual(audits[0].metadata, { messageId: "message-1", status: "OPEN", emailStatus: "skipped" });
 });
 
 test("PATCH /api/admin/support/[id] updates valid status and writes audit log", async () => {

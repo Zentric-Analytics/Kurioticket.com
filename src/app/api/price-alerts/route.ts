@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireWebApiSession } from "@/lib/web-api-auth";
 import { priceAlertSchema } from "@/lib/validation";
+import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
+import { linkCreatedPriceAlertToJourney } from "@/services/priceAlertJourneyLinkService";
 import {
   createPriceAlert,
   DuplicatePriceAlertError,
@@ -48,6 +50,13 @@ export async function POST(request: Request) {
     const alert = await createPriceAlert({
       userId: session.user.id,
       ...parsed.data,
+    });
+    const attribution = await resolveRequestActivityIdentity(request);
+    if (attribution.userId === session.user.id) await linkCreatedPriceAlertToJourney({
+      userId: session.user.id, visitorId: attribution.visitorId,
+      alertId: alert.id,
+      requestId: typeof (payload as { journeyRequestId?: unknown }).journeyRequestId === "string"
+        ? (payload as { journeyRequestId: string }).journeyRequestId : null,
     });
     return NextResponse.json({ alert }, { status: 201 });
   } catch (error) {

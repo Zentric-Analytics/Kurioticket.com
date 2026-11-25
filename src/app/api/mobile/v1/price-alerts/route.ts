@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getMobileSession } from "@/lib/mobile-auth";
 import { priceAlertSchema } from "@/lib/validation";
+import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
+import { linkCreatedPriceAlertToJourney } from "@/services/priceAlertJourneyLinkService";
 import { createPriceAlert, DuplicatePriceAlertError, listUserPriceAlerts, PriceAlertUnavailableError } from "@/services/priceTrackingService";
 
 export async function GET(request: Request) {
@@ -25,6 +27,13 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Please check the alert details." }, { status: 400 });
   try {
     const alert = await createPriceAlert({ userId: session.user.id, ...parsed.data });
+    const attribution = await resolveRequestActivityIdentity(request);
+    if (attribution.userId === session.user.id) await linkCreatedPriceAlertToJourney({
+      userId: session.user.id, visitorId: attribution.visitorId,
+      alertId: alert.id,
+      requestId: typeof (payload as { journeyRequestId?: unknown }).journeyRequestId === "string"
+        ? (payload as { journeyRequestId: string }).journeyRequestId : null,
+    });
     return NextResponse.json({ alert }, { status: 201 });
   } catch (error) {
     if (error instanceof PriceAlertUnavailableError) return NextResponse.json({ error: error.message, code: "FEATURE_DISABLED" }, { status: 503 });

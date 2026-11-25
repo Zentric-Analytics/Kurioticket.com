@@ -15,7 +15,7 @@ export type AdminNotificationSnapshot = AdminNotificationSummary & {
     title: string;
     message: string;
     source: string;
-    severity: "CRITICAL" | "WARNING";
+    severity: "CRITICAL" | "WARNING" | "INFO";
     acknowledged: boolean;
     signalAt: string | null;
     actionHref: string | null;
@@ -43,7 +43,7 @@ export function readAdminNotificationSummary(value: unknown): AdminNotificationS
     criticalCount: raw.criticalCount as number,
     warningCount: raw.warningCount as number,
   };
-  if (summary.unreadCount > summary.activeCount || summary.criticalCount + summary.warningCount !== summary.activeCount) {
+  if (summary.unreadCount > summary.activeCount || summary.criticalCount + summary.warningCount > summary.activeCount) {
     throw new Error("Inconsistent notification counts");
   }
   return summary;
@@ -62,7 +62,7 @@ export function readAdminNotificationSnapshot(value: unknown): AdminNotification
         throw new Error("Invalid notification");
       }
     }
-    if ((alert.severity !== "CRITICAL" && alert.severity !== "WARNING") || typeof alert.acknowledged !== "boolean" || typeof alert.actionHref !== "string") {
+    if ((alert.severity !== "CRITICAL" && alert.severity !== "WARNING" && alert.severity !== "INFO") || typeof alert.acknowledged !== "boolean" || typeof alert.actionHref !== "string") {
       throw new Error("Invalid notification state");
     }
     return {
@@ -79,7 +79,8 @@ export function readAdminNotificationSnapshot(value: unknown): AdminNotification
     };
   });
   if (alerts.filter(alert => !alert.acknowledged).length !== summary.unreadCount
-    || alerts.filter(alert => alert.severity === "CRITICAL").length !== summary.criticalCount) {
+    || alerts.filter(alert => alert.severity === "CRITICAL").length !== summary.criticalCount
+    || alerts.filter(alert => alert.severity === "WARNING").length !== summary.warningCount) {
     throw new Error("Inconsistent notification list");
   }
   return { ...summary, alerts };

@@ -40,7 +40,7 @@ export function componentBundle(entries: Record<string, string>, boundaries: Rec
     compiled = compiled.replace(/require\("([^"]+)"\)/g, (_call, dependency: string) => {
       if (Object.hasOwn(modules, dependency)) return `require(${JSON.stringify(dependency)})`;
       const location = dependency.startsWith("@/") ? `src/${dependency.slice(2)}` : dependency.startsWith(".") ? posix.normalize(posix.join(posix.dirname(file), dependency)) : relative(process.cwd(), require.resolve(dependency, { paths: [dirname(`${process.cwd()}/${file}`)] })).replaceAll("\\", "/");
-      const resolved = [location, `${location}.ts`, `${location}.tsx`, `${location}/index.ts`, `${location}/index.js`].find((candidate) => existsSync(candidate) && statSync(candidate).isFile());
+      const resolved = [location, `${location}.js`, `${location}.ts`, `${location}.tsx`, `${location}/index.ts`, `${location}/index.js`].find((candidate) => existsSync(candidate) && statSync(candidate).isFile());
       assert.ok(resolved, `Unconfigured component dependency: ${dependency} from ${file}`);
       const id = `file:${resolved}`;
       add(id, resolved);
@@ -49,7 +49,7 @@ export function componentBundle(entries: Record<string, string>, boundaries: Rec
     modules[name] = compiled;
   }
   for (const [name, file] of Object.entries(entries)) add(name, file);
-  return `const registry={${Object.entries(modules).map(([name, code]) => `${JSON.stringify(name)}:function(require,module,exports){${code}\n}`).join(",")}},cache={};function require(name){if(cache[name])return cache[name].exports;if(!registry[name])throw Error('Unconfigured module '+name);const module={exports:{}};cache[name]=module;registry[name](require,module,module.exports);return module.exports;}`;
+  return `const process={env:{NODE_ENV:"production"}};const registry={${Object.entries(modules).map(([name, code]) => `${JSON.stringify(name)}:function(require,module,exports){${code}\n}`).join(",")}},cache={};function require(name){if(cache[name])return cache[name].exports;if(!registry[name])throw Error('Unconfigured module '+name);const module={exports:{}};cache[name]=module;registry[name](require,module,module.exports);return module.exports;}`;
 }
 
 export async function withComponentBrowser(bundle: string, setup: string, run: (page: Page) => Promise<void>, width = 1280) {

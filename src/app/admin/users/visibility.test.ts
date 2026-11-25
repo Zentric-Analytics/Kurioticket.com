@@ -7,7 +7,7 @@ const db = readFileSync("src/lib/prisma.ts", "utf8");
 const alerts = readFileSync("src/components/admin/ConfirmedTripDeliveryAlerts.tsx", "utf8");
 
 test("Users distinguishes database-read failures from truly empty account and guest directories", () => {
-  assert.match(users, /withOptionalDb<\{ rows: IdentityRow\[\]; registeredCount: number; guestCount: number \} \| null>/);
+  assert.match(users, /withOptionalDb<\{ rows: IdentityRow\[\]; registeredCount: number; guestCount: number; operationalAllTimeCount: number \| null; operationalNewCount: number \| null \} \| null>/);
   assert.match(users, /\}, null\);/);
   assert.doesNotMatch(users, /\}, \{ rows: \[\] as IdentityRow\[\], registeredCount: 0, guestCount: 0 \}\);/);
   assert.match(users, /if \(result === null\) \{/);

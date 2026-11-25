@@ -5,29 +5,33 @@ import { test } from "node:test";
 const resultsClientPath = new URL("./FlightResultsClient.tsx", import.meta.url);
 const detailsClientPath = new URL("./FlightDetailsClient.tsx", import.meta.url);
 
-test("FlightResultsClient restores a matching snapshot before its no-cache request path", async () => {
+test("FlightResultsClient reuses a fresh result snapshot without another search", async () => {
   const source = await readFile(resultsClientPath, "utf8");
   const keyIndex = source.indexOf("buildFlightResultsSearchKey(body)");
   const readIndex = source.indexOf("readFlightResultsSessionSnapshotForRefresh(searchKey)");
-  const clearIndex = source.indexOf("setResults([]);", readIndex);
+  const restoreIndex = source.indexOf("if (snapshot) {", readIndex);
   const fetchIndex = source.indexOf('fetch("/api/flights/search"', readIndex);
-  const restoreBlock = source.slice(readIndex, clearIndex);
-
-  assert.ok(keyIndex >= 0 && keyIndex < readIndex);
-  assert.ok(readIndex < clearIndex && clearIndex < fetchIndex);
-  assert.match(
-    restoreBlock,
-    /filterResultsByRequestedOutboundDate\([\s\S]*snapshot\.results/,
-  );
-  // Restoring cached offers neither renders diagnostic text nor restarts a fresh search.
+  const restoreBlock = source.slice(restoreIndex, fetchIndex);
+  assert.ok(keyIndex >= 0 && keyIndex < readIndex && readIndex < restoreIndex && restoreIndex < fetchIndex);
+  assert.match(restoreBlock, /filterResultsByRequestedOutboundDate\([\s\S]*snapshot\.results/);
   assert.match(restoreBlock, /setError\(""\)/);
   assert.match(restoreBlock, /setLoading\(refreshingStaleSnapshot\)/);
   assert.match(restoreBlock, /setBackgroundRefreshing\(refreshingStaleSnapshot\)/);
-  assert.match(restoreBlock, /if \(!refreshingStaleSnapshot\) \{\s*mainInventoryReadyRef.current = true;\s*return;/);
-  assert.match(restoreBlock, /activeFlightSearchKeyRef\.current !== searchKey/);
-  assert.match(restoreBlock, /return;/);
+  assert.match(restoreBlock, /if \(!refreshingStaleSnapshot\) \{\s*mainInventoryReadyRef\.current = true;\s*return;/);
 });
-
+test("Back navigation with expired or missing flight results asks before calling providers", async () => {
+  const source = await readFile(resultsClientPath, "utf8");
+  const guardIndex = source.indexOf("if (!shouldBypassSnapshot && returnIntentRef.current?.returning");
+  const fetchIndex = source.indexOf('fetch("/api/flights/search"', guardIndex);
+  assert.ok(guardIndex > 0 && guardIndex < fetchIndex);
+  const guard = source.slice(guardIndex, fetchIndex);
+  assert.match(guard, /!snapshotState\?\.isFresh/);
+  assert.match(guard, /setJourneyResponse\(null\)/);
+  assert.match(guard, /setLoading\(false\)/);
+  assert.match(guard, /setError\("Your previous flight results have expired/);
+  assert.match(guard, /return;/);
+  assert.match(source, /onClick=\{retryMainInventorySearch\}/);
+});
 test("stale results stay retained but blocked from scrolling until refresh settles", async () => {
   const source = await readFile(resultsClientPath, "utf8");
   const staleIndex = source.indexOf("const refreshingStaleSnapshot");
@@ -40,7 +44,9 @@ test("stale results stay retained but blocked from scrolling until refresh settl
 
   assert.ok(staleIndex >= 0 && staleIndex < emptySnapshotIndex && emptySnapshotIndex < fetchIndex);
   assert.ok(fetchIndex < catchIndex && catchIndex < finallyIndex);
-  assert.doesNotMatch(staleRestore, /setResults\(\[\]\)/);
+  assert.match(staleRestore, /returnIntentRef\.current\?\.returning[\s\S]*setLoading\(refreshingStaleSnapshot\)/);
+  assert.match(staleRestore, /if \(!shouldBypassSnapshot && returnIntentRef\.current\?\.returning/);
+  assert.match(staleRestore, /!snapshotState\?\.isFresh/);
   assert.match(staleRestore, /setLoading\(refreshingStaleSnapshot\)/);
   assert.match(staleRestore, /setBackgroundRefreshing\(refreshingStaleSnapshot\)/);
   assert.match(failure, /if \(!refreshingStaleSnapshot\)/);

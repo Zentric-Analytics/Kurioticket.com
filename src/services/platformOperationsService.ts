@@ -21,7 +21,7 @@ export async function readPlatformSearchActivity(from: Date, to: Date) {
           status::text, COUNT(*) AS count, 0 AS latency
         FROM "SearchHistory"
         WHERE "createdAt" >= ${from} AND "createdAt" < ${to}
-          AND query->>'environment' = ${environment}
+          AND query->>'environment' = ${environment} AND "countAsSearch" = TRUE
         GROUP BY 1, 2, 3
       `;
       searches = partitionOperationalGroups(rows).searches;
@@ -45,13 +45,14 @@ export async function readPlatformOperations(hours = 24, period: "today" | "roll
     const [rows, runs] = await db.$transaction(async tx => Promise.all([
       tx.$queryRaw<OperationalGroup[]>`
         SELECT 'searches' AS kind, query->>'applicationSource' AS source, status::text, COUNT(*) AS count, COALESCE(SUM("latencyMs"),0) AS latency, COUNT("latencyMs") AS "latencyCount"
-        FROM "SearchHistory" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND query->>'environment' = ${environment} GROUP BY 1,2,3
+        FROM "SearchHistory" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND query->>'environment' = ${environment} AND "countAsSearch" = TRUE GROUP BY 1,2,3
         UNION ALL
         SELECT 'handoffs', metadata->>'applicationSource', 'SUCCESS', COUNT(*), 0, 0
         FROM "RedirectLog" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND metadata->>'environment' = ${environment} GROUP BY 1,2,3
         UNION ALL
         SELECT 'providerCalls', metadata->>'applicationSource', status::text, COUNT(*), COALESCE(SUM(CASE WHEN status::text <> 'DISABLED' THEN "latencyMs" ELSE 0 END),0), COUNT(CASE WHEN status::text <> 'DISABLED' THEN "latencyMs" END)
-        FROM "ApiProviderLog" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND metadata->>'environment' = ${environment} AND service <> 'scheduled-job' GROUP BY 1,2,3
+        FROM "ApiProviderLog" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND metadata->>'environment' = ${environment} AND service NOT IN ('scheduled-job','crawler-blocked-search') GROUP BY 1,2,3
+
       `,
       tx.apiProviderLog.findMany({ where: { service: "scheduled-job", metadata: { path: ["environment"], equals: environment }, createdAt: { gte: from, lt: to } }, select: { provider: true, status: true, createdAt: true, metadata: true, latencyMs: true }, orderBy: { createdAt: "desc" }, take: 100 }),
     ]), { isolationLevel: "RepeatableRead" });
@@ -65,6 +66,7 @@ export async function readPlatformOperations(hours = 24, period: "today" | "roll
   return {
     environment, window: { from: from.toISOString(), to: to.toISOString() },
     activity: { state: activity ? "AVAILABLE" : "MONITORING_UNAVAILABLE", data: activity },
+    botSearches: activity?.searches.applications.BOT.total ?? null,
     database: { state: !system ? "MONITORING_UNAVAILABLE" : system.databaseConnected ? "HEALTHY" : system.databaseConfigured ? "FAILING" : "UNKNOWN" },
     providerHealth: providers,
     email: email?.dataAvailable ? { state: !email.last24Hours ? "UNKNOWN" : email.failures || email.delayed ? "DEGRADED" : "HEALTHY", windowHours: 24, deliveries: email.last24Hours, failures: email.failures, delayed: email.delayed } : { state: "MONITORING_UNAVAILABLE" },

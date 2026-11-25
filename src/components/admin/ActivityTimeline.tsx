@@ -8,6 +8,7 @@ import {
 import { groupContiguousActivityRows } from "@/lib/adminIdentityActivity";
 import { encodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
+import { PageViewDetails } from "@/components/admin/PageViewRecords";
 
 const dayLabel = (at: Date) => new Intl.DateTimeFormat("en", {
   month: "short", day: "numeric", year: "numeric", timeZone: "UTC",
@@ -20,7 +21,7 @@ const productLabels = new Map([
   ["FLIGHT", "Flight"], ["HOTEL", "Hotel"], ["CAR", "Car"], ["PACKAGE", "Package"],
 ]);
 const searchOutcomeLabels = new Map([
-  ["SUCCESS", "Success"], ["PARTIAL", "Partial"], ["FAILED", "Failed"],
+  ["SUCCESS", "Success"], ["PARTIAL", "Partial provider coverage"], ["FAILED", "Failed"],
 ]);
 
 /** Format only known display tokens; keep routes, provider brands and stored rows intact. */
@@ -46,8 +47,8 @@ function ProductIcon({ product }: { product: string | null | undefined }) {
 }
 function EventIcon({ stage }: { stage: ActivityRow["stage"] }) {
   if (stage === "SEARCH_COMPLETED") return <Search size={15} aria-hidden="true" />;
-  if (stage === "RESULTS_VIEWED") return <ListChecks size={15} aria-hidden="true" />;
-  if (stage === "OFFER_SELECTED") return <MousePointerClick size={15} aria-hidden="true" />;
+  if (stage === "RESULTS_VIEWED" || stage === "FLIGHT_DETAILS_VIEWED") return <ListChecks size={15} aria-hidden="true" />;
+  if (stage === "OFFER_SELECTED" || stage === "PROVIDER_DEAL_SELECTED") return <MousePointerClick size={15} aria-hidden="true" />;
   if (stage === "PROVIDER_HANDOFF_STARTED") return <ExternalLink size={15} aria-hidden="true" />;
   return <CircleDot size={15} aria-hidden="true" />;
 }
@@ -71,7 +72,7 @@ function RecordedEvent({ row }: { row: ActivityRow }) {
         <p className="text-[13px] font-medium text-[#0F172A]">{row.label}</p>
         <time dateTime={row.at.toISOString()} className="shrink-0 text-[12px] font-normal text-[#64748B]">{hourLabel(row.at)}</time>
       </div>
-      <p className="mt-1 break-words text-[12px] leading-5 text-[#64748B]">{activityDetail(row) || "No additional details recorded"}</p>
+      {row.pageView ? <PageViewDetails row={row}/> : <p className="mt-1 break-words text-[12px] leading-5 text-[#64748B]">{activityDetail(row) || "No additional details recorded"}</p>}
     </div>
   </li>;
 }

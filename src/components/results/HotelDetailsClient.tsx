@@ -1,6 +1,7 @@
 "use client";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+import { useResultsReturnIntent } from "@/components/results/useResultsReturnIntent";
 
 import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -380,6 +381,7 @@ export function HotelDetailsClient({
   });
 
   const resultsHref = buildHotelDetailsResultsHref(searchContext);
+  useResultsReturnIntent("hotel", mode === "guided" ? "" : resultsHref);
   const backToResultsText =
     t("hotelResults.backToResults") || "Back to Hotels results";
 
@@ -883,6 +885,8 @@ export function HotelDetailsClient({
           <div className="mx-auto w-full max-w-[1400px] px-0 lg:max-w-[1080px] lg:px-[30px]" data-hotel-details-page-shell>
             <div>
               <StandaloneHotelDetails
+                hotelResultId={hotel.id}
+                searchRequestId={journeyEvents.interactionRequestId("hotel", hotel.id)}
                 locationIsSimulated={hotel.provider === "KAYAK sandbox"}
                 hotelName={hotel.name}
                 starRating={starRating}

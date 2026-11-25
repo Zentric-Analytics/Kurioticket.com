@@ -25,7 +25,7 @@ test("Cars result transition is local and reuses accessible skeletons", () => {
   assert.match(screen, /carResultsApplying\?<CarSkeletons/);
   assert.match(screen, /accessibilityLabel="Updating car results"/);
   assert.doesNotMatch(helper, /searchCars|setStatus|setRetry|router|load\(/);
-  assert.match(sortCallback, /if\(next!==sort\)\{setSort\(next\);startCarResultsTransition\(\);\}/);
+  assert.match(sortCallback, /if\(next!==sort\)\{journeyEvents\.workflowDecision\("SEARCH_SORT_CHANGED",resultsRequestId,"\/car-results",\{sortMode:\s*normalizeJourneySortMode\(next\),\s*sortChoice:\s*normalizeJourneySortChoice\(next\)\}\);setSort\(next\);startCarResultsTransition\(\);\}/);
   assert.doesNotMatch(sortCallback, /searchCars|setStatus|setRetry|router|load\(|scrollTo/);
 });
 

@@ -36,6 +36,17 @@ const newerRecorded = [
     stage: "SEARCH_COMPLETED", product: "FLIGHT", searchHistoryId: "qa-newer-search",
   }),
 ];
+// These are fictional, non-consented operational records. They have no
+// JourneyEvent, user ID, analytics consent, or linked visitor identity.
+const operationalRecorded = [
+  { id: "s-qa-operational-flight", at: time(51), label: "Search completed",
+    detail: "FLIGHT · ATL → MCO · PARTIAL", stage: "SEARCH_COMPLETED", product: "FLIGHT", searchHistoryId: "qa-operational-flight" },
+  { id: "s-qa-operational-hotel", at: time(45), label: "Search completed",
+    detail: "HOTEL · Abuja · SUCCESS", stage: "SEARCH_COMPLETED", product: "HOTEL", searchHistoryId: "qa-operational-hotel" },
+  { id: "r-qa-operational-handoff", at: time(40), label: "Provider handoff started",
+    detail: "FLIGHT · ATL → MCO · Example provider", stage: "PROVIDER_HANDOFF_STARTED", product: "FLIGHT",
+    provider: "Example provider", redirectLogId: "qa-operational-handoff" },
+];
 const completeHistory = Array.from({ length: 1005 }, (_, index) => ({
   id: "s-qa-complete-" + String(index).padStart(4, "0"),
   at: new Date(Date.parse("2026-10-22T18:00:00Z") - index * 60000),
@@ -44,11 +55,21 @@ const completeHistory = Array.from({ length: 1005 }, (_, index) => ({
   searchHistoryId: "qa-complete-search-" + index,
 }));
 
-export async function loadAdminIdentityActivity(kind, id, filters, cursor, readMode = "page") {
+const pageVisitHistory = Array.from({ length: 45 }, (_, index) => {
+  const native = index % 3 !== 2;
+  const platform = index % 3 === 0 ? "iOS app" : index % 3 === 1 ? "Android app" : "Mobile web";
+  const path = index % 2 ? "/support" : "/";
+  return { id: "e-qa-page-" + String(index).padStart(3, "0"), at: new Date(Date.parse("2026-10-22T18:00:00Z") - index * 60000),
+    stage: "PAGE_VIEW", label: path === "/" ? "Homepage" : "Support", detail: path + " · " + platform,
+    pageView: { path, previousPath: null, transport: native ? "native" : "web", platform, href: native ? null : "https://staging.kurioticket.com" + path } };
+});
+
+export async function loadAdminIdentityActivity(kind, id, filters, cursor, readMode = "page", pageHistory) {
   if (!/^[a-z0-9_-]{6,80}$/i.test(id)) return { status: "not_found" };
   if (kind === "user" && id === "qa-registered-unavailable-0001") return { status: "unavailable" };
   if (readMode !== "all" && cursor && !["older-qa-page", "oldest-current-qa-page", "newer-qa-page"].includes(cursor)) return { status: "invalid_cursor" };
   const tabMatch = stage => filters.tab === "all"
+    || (filters.tab === "pages" && stage === "PAGE_VIEW")
     || (filters.tab === "journeys" && stage !== "ACCOUNT_ACTIVITY")
     || (filters.tab === "searches" && ["SEARCH_COMPLETED", "RESULTS_VIEWED"].includes(stage))
     || (filters.tab === "selections" && stage === "OFFER_SELECTED")
@@ -61,10 +82,13 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     && (filters.product === "all" || row.product === filters.product)
     && (!filters.q || (row.detail + row.label).toLowerCase().includes(filters.q.toLowerCase()))
     && (!fromBound || row.at >= fromBound)
-    && (!toBound || row.at < toBound);
-  const sourceRows = id === "qa-complete-history-0001" ? completeHistory : [...recorded, ...olderRecorded, ...newerRecorded];
+    && (!toBound || row.at < toBound)
+    && (!pageHistory || pageHistory.platform === "all" || row.pageView?.platform === ({ios:"iOS app",android:"Android app",mobile:"Mobile web",desktop:"Desktop web"})[pageHistory.platform]);
+  const sourceRows = id === "qa-operational-guest-0001" ? operationalRecorded
+    : id === "qa-complete-history-0001" ? completeHistory : id === "qa-page-history-0001" ? pageVisitHistory : [...recorded, ...olderRecorded, ...newerRecorded];
   const allMatched = id === "qa-no-events-0001" ? [] : sourceRows.filter(matches);
   const summary = {
+    pagesVisited: allMatched.filter(row => row.stage === "PAGE_VIEW").length,
     searchProducts: {
       flights: allMatched.filter(row => row.stage === "SEARCH_COMPLETED" && row.product === "FLIGHT").length,
       hotels: allMatched.filter(row => row.stage === "SEARCH_COMPLETED" && row.product === "HOTEL").length,
@@ -87,12 +111,14 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     { cursor: "newer-qa-page", rows: newerRows },
   ].filter(page => page.rows.length);
   const selected = cursor ? ascendingPages.findIndex(page => page.cursor === cursor) : 0;
-  const rows = readMode === "all"
-    ? [...allMatched].sort((a,b) => (filters.order === "oldest" ? a.at - b.at : b.at - a.at) || a.id.localeCompare(b.id))
+  const ordered = [...allMatched].sort((a,b) => (filters.order === "oldest" ? a.at - b.at : b.at - a.at) || a.id.localeCompare(b.id));
+  const rows = pageHistory ? ordered.slice((pageHistory.page - 1) * 20, pageHistory.page * 20)
+    : readMode === "summary" ? [...ordered.filter(row => row.stage !== "PAGE_VIEW"), ...ordered.filter(row => row.stage === "PAGE_VIEW").slice(0, 5)]
+    : readMode === "all" ? ordered
     : filters.order === "oldest"
       ? (selected < 0 ? [] : ascendingPages[selected]?.rows ?? [])
       : (cursor === "older-qa-page" ? olderRows : currentRows);
-  const nextCursor = readMode === "all" ? null : filters.order === "oldest"
+  const nextCursor = pageHistory || readMode === "all" || readMode === "summary" ? null : filters.order === "oldest"
     ? (selected >= 0 ? ascendingPages[selected + 1]?.cursor ?? null : null)
     : (!cursor && olderRows.length ? "older-qa-page" : null);
   return { status: "ok", data: {

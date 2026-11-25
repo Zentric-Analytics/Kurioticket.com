@@ -1,8 +1,10 @@
 import { z } from "zod";
 
-export const adminJourneyStages = ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED"] as const;
+export const adminJourneyStages = ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED"] as const;
 export const adminJourneyProducts = ["FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const;
 export type AdminJourneyStage = (typeof adminJourneyStages)[number];
+export type AdminJourneyEventType = AdminJourneyStage | "RESULT_SAVED" | "RESULT_UNSAVED" | "RESULT_SHARED" | "PRICE_ALERT_CREATED"
+  | "SEARCH_EDIT_APPLIED" | "SEARCH_FILTER_APPLIED" | "SEARCH_SORT_CHANGED" | "RESULT_DETAILS_OPENED" | "RATE_DETAILS_OPENED" | "PAGE_VIEW";
 export type AdminJourneyProduct = (typeof adminJourneyProducts)[number];
 export type AdminJourneyEnvironment = "staging" | "production";
 export type AdminJourneyIdentity = { kind: "guest" | "registered"; visitorId: string; userId: string | null };
@@ -39,6 +41,14 @@ export type AdminJourneyRow = {
   stages: Record<AdminJourneyStage, number>;
 };
 
+/** Allowlisted values extracted from an actual recorded search. No raw query JSON or network metadata. */
+export type AdminJourneySearchDetails =
+  | { product: "FLIGHT"; tripType?: "one-way" | "round-trip" | "multi-city"; departureDate?: string; returnDate?: string;
+      cabinClass?: "economy" | "premium-economy" | "business" | "first"; adults?: number; children?: number; infants?: number; travelers?: number;
+      legs?: Array<{ origin: string; destination: string; departureDate: string }> }
+  | { product: "HOTEL"; checkIn?: string; checkOut?: string; rooms?: number; guests?: number; adults?: number; children?: number }
+  | { product: "CAR"; pickupDate?: string; pickupTime?: string; dropoffDate?: string; dropoffTime?: string; driverAge?: string };
+
 export type AdminJourneySearch = {
   id: string;
   requestId: string | null;
@@ -50,15 +60,34 @@ export type AdminJourneySearch = {
   status: "SUCCESS" | "PARTIAL" | "FAILED";
   resultCount: number;
   latencyMs: number | null;
+  details?: AdminJourneySearchDetails | null;
 };
 
 export type AdminJourneyEvent = {
   id: string;
-  type: AdminJourneyStage;
+  type: AdminJourneyEventType;
   createdAt: string;
+  action?: "local_saved" | "local_unsaved" | "saved_item_confirmed" | "saved_item_removed" | "share_link_copied" | "share_sheet_completed" | null;
+  resultReference?: string | null;
+  filterGroup?: string | null;
+  filterSelections?: Array<{ group: string; option: string }> | null;
+  sortMode?: string | null;
+  sortChoice?: string | null;
+  alertDetails?: { mode: "TARGET" | "AUTOMATIC"; currency: string; targetPrice: string | null; baselinePrice: string | null } | null;
+  /** Optional result card information observed on the customer device, not server-confirmed. */
+  observedResult?: {
+    label: string;
+    provider: string;
+    amount: number;
+    currency: string;
+    priceBasis: "total" | "per_night" | "per_day";
+    totalAmount?: number;
+    provenance: "customer_display";
+  } | null;
   product: AdminJourneyProduct | null;
   provider: string | null;
   sourcePage: string | null;
+  pageView?: { label: string; path: string; previousPath: string | null; transport: "web" | "native"; platform: string; href: string | null };
   search: AdminJourneySearch | null;
   handoff: {
     id: string;

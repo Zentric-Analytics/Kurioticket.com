@@ -6,6 +6,7 @@ const page = readFileSync(new URL("../app/admin/users/[kind]/[id]/activity/page.
 const timeline = readFileSync(new URL("../components/admin/ActivityTimeline.tsx", import.meta.url), "utf8");
 const reader = readFileSync(new URL("../services/adminIdentityActivityService.ts", import.meta.url), "utf8");
 const filters = readFileSync(new URL("./adminIdentityActivity.ts", import.meta.url), "utf8");
+const dateQuery = readFileSync(new URL("./adminActivityDateQuery.ts", import.meta.url), "utf8");
 const shell = readFileSync(new URL("../components/admin/AdminHorizontalShell.tsx", import.meta.url), "utf8");
 
 test("Activity Explorer distinguishes consented visitors and operational guests without inventing identity", () => {
@@ -37,7 +38,8 @@ test("Activity summary counts filter-wide records instead of paginated timeline 
   assert.match(reader, /tx\.searchHistory\.count\(\{ where: searchWhere \}\)/);
   assert.match(reader, /tx\.redirectLog\.count\(\{ where: handoffWhere \}\)/);
   assert.match(reader, /tx\.searchJourney\.count\(/);
-  assert.match(reader, /events: \{ some: validEvents \}/);
+  assert.match(reader, /events: \{ some: funnelEvents \}/);
+  assert.match(reader, /AND: \[validEvents, \{ type: \{ in: \[/);
   assert.match(reader, /Prisma\.TransactionIsolationLevel\.RepeatableRead/);
   assert.match(reader, /canonicalForVisitor\(visitorId\)/);
   assert.match(reader, /visitorIds\.map\(visitorId => canonicalForVisitor\(visitorId\)\)/);
@@ -69,7 +71,8 @@ test("Activity and Support use white non-Overview workspaces while preserving au
   assert.match(page, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
   assert.match(page, /text-\[12px\] font-normal text-\[#64748B\]/);
   assert.match(page, /data-testid="activity-body-card"/);
-  assert.match(page, /if \(raw\.tab === "journeys"\) delete raw\.tab/);
+  assert.match(page, /normalizeUserActivityQuery\(await searchParams, new Date\(\)\)/);
+  assert.match(dateQuery, /if \(raw\.tab === "journeys"\) delete raw\.tab/);
   assert.doesNotMatch(page, /Related records|const related =|label="Journeys"|value: "journeys"/);
   assert.doesNotMatch(timeline, /Show all|Hide all|Not linked to a journey/);
 });
@@ -80,15 +83,18 @@ test("User Activity renders exactly two nested white workspace cards with a flat
   const identity = page.indexOf('aria-label="Customer identity"');
   const summary = page.indexOf('aria-label="Activity summary"');
   const body = page.indexOf('data-testid="activity-body-card"');
-  const history = page.indexOf('<ActivityTimeline');
+  const history = page.indexOf('<AdminActivityOverview');
   assert.ok(breadcrumb !== -1 && breadcrumb < mainCard, "breadcrumb stays outside the page card");
   assert.ok(mainCard < identity && identity < summary && summary < body && body < history,
-    "identity, flat summary and activity body stay in order inside the main card");
+    "identity, flat metrics and compact overview stay in order inside the main card");
   assert.equal((page.match(/data-testid="activity-page-card"/g) ?? []).length, 1);
   assert.equal((page.match(/data-testid="activity-body-card"/g) ?? []).length, 1);
+  assert.match(page, /<AdminActivityOverview/);
+  assert.doesNotMatch(page, /<ActivityTimeline/);
   const mainCardMarkup = page.slice(mainCard, identity);
   assert.match(mainCardMarkup, /rounded-2xl border border-\[#E2E8F0\] bg-white/);
-  const summaryMarkup = page.slice(summary, body);
+  // Inspect only the summary section, not unrelated sibling links between it and the body card.
+  const summaryMarkup = page.slice(summary, page.indexOf("</section>", summary));
   assert.doesNotMatch(summaryMarkup, /bg-(?:blue|sky|emerald|amber|\[#)/,
     "Activity summary uses no colored background or metric dots");
   assert.match(summaryMarkup, /data\.summary\.searches/);

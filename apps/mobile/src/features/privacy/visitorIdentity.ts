@@ -5,7 +5,9 @@ import { readSession, subscribeSession } from "../../storage/sessionStorage";
 import { VisitorIdentityCoordinator, type IdentitySession, type StoredVisitorIdentity } from "./visitorIdentityCoordinator";
 
 const STORAGE_KEY = "kurioticket.analytics-visitor.v1";
-const POLICY_VERSION = "analytics-visitor-v1";
+// A new review is requested once on existing installations and new users.
+// Keep the original storage key and previously issued visitor credential.
+const POLICY_VERSION = "analytics-visitor-v2";
 const webStorage = () => (globalThis as { localStorage?: Storage }).localStorage;
 
 async function readIdentity() {
@@ -47,6 +49,7 @@ async function identityRequest(path: "visitor" | "merge", method: "POST" | "DELE
 }
 
 export const visitorIdentity = new VisitorIdentityCoordinator({
+  reviewVersion: POLICY_VERSION,
   read: readIdentity,
   write: writeIdentity,
   grant: async (token, session) => {
@@ -70,7 +73,8 @@ export function startVisitorIdentity() {
   const unsubscribe = subscribeSession(session => { sessionEvents += 1; void visitorIdentity.transition(session); });
   const refresh = async () => {
     const revision = sessionEvents;
-    const session = await readSession().catch(() => null);
+    let session: Awaited<ReturnType<typeof readSession>>;
+    try { session = await readSession(); } catch { return; }
     if (!active || revision !== sessionEvents) return;
     await visitorIdentity.transition(session);
     await visitorIdentity.refresh();

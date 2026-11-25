@@ -1,9 +1,10 @@
 import { searchHotelBatch, hotelSearchRequiresCanonicalResponse } from "@/services/travel/hotelAggregator";
 import { productionSandboxHost } from "@/lib/productionSandboxPolicy";
 import { POST as canonicalHotelSearch } from "@/app/api/hotels/search/route";
+import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { after, NextResponse } from "next/server";
-import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
+import { attachOperationalSearchSession, prepareOperationalSearchSession, operationalSessionMetadata } from "@/lib/operationalSearchSession";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { hotelSearchSchema } from "@/lib/validation";
@@ -84,7 +85,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid hotel search." }, { status: 400 });
   const search = parsed.data;
   const operationalSession = prepareOperationalSearchSession(request);
-  const recordedSearch = { ...search, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) };
+  const recordedSearch = { ...search, ...searchNetworkObservation(request), ...(operationalSession ? operationalSessionMetadata(operationalSession.reference) : {}) };
   const startedAt = state?.startedAt ?? Date.now();
   const trackId = state?.trackId ?? randomUUID();
   const snapshot = state?.snapshot ?? randomUUID();
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
     const outcome = await searchHotelBatch(search,{clientIp:getKayakClientIp(request),userAgent:request.headers.get("user-agent")??undefined,trackId,requestId:trackId,signal:request.signal},snapshot,state?.checkpoint);
     if (!outcome.supported) {
       after(async () => {
-        const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
+        const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request, undefined, operationalSession);
         await Promise.all([
           logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
             checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
       startedAt, issuedAt: now, expiresAt: now + TTL_MS,
     }, key) : null;
     after(async () => {
-      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
+      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request, undefined, operationalSession);
       // Persist each displayed batch under the signed cursor's stable request ID.
       // Early result/offer events can then resolve ownership before the last page.
       await logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true,
@@ -137,7 +138,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const unavailable = error instanceof KayakError ? error.code : "unavailable";
     after(async () => {
-      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
+      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request, undefined, operationalSession);
       await Promise.all([
         logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
           checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),

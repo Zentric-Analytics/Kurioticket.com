@@ -98,6 +98,7 @@ test("hotel list enforces product, current environment, 24h window and all three
   assert.equal(result.data.items[0].outcome, "FAILED");
   const where = (calls.list[0] as { where: Record<string, unknown> }).where;
   assert.equal(where.type, "HOTEL");
+  assert.equal(where.countAsSearch, true, "product history lists only canonical searches");
   assert.deepEqual(where.query, { path: ["environment"], equals: "staging" });
   const time = where.createdAt as { gte: Date; lte: Date };
   assert.equal(time.lte.toISOString(), current.toISOString());

@@ -5,7 +5,7 @@ import { presentSearchResults } from "./searchFailurePresentation";
 
 const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const api = readFileSync("src/api/travelApi.ts", "utf8");
-const route = readFileSync("../../src/app/api/flights/search/route.ts", "utf8");
+const route = readFileSync("../../src/app/api/flights/search/handler.ts", "utf8");
 
 test("flight results bound LOS to JFK and every other request with abort and stale guards", () => {
   assert.match(screen, /new AbortController\(\)/);

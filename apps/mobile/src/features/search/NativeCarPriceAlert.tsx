@@ -17,7 +17,7 @@ export const CAR_PRICE_ALERT_SNACKBAR_DURATION_MS = 3_600;
 export type CarPriceAlertFeedback = "active" | "paused" | null;
 type MatchingCarAlertState = { planKey: string; alert: MobilePriceAlert };
 
-export function NativeCarPriceAlert({ plan, resultId, offer, available, onFeedback }: { plan?: SearchPlan; resultId: string; offer: CarOffer; available: boolean; onFeedback?: (feedback: CarPriceAlertFeedback) => void }) {
+export function NativeCarPriceAlert({ plan, resultId, offer, available, journeyRequestId, onFeedback }: { plan?: SearchPlan; resultId: string; offer: CarOffer; available: boolean; journeyRequestId?: string | null; onFeedback?: (feedback: CarPriceAlertFeedback) => void }) {
   const { theme } = useAppTheme();
   const scope: CarPriceAlertOfferScope = useMemo(() => ({ resultId, offerId: offer.id, providerName: offer.bookingProviderName.trim() || offer.rentalCompanyName.trim() }), [resultId, offer.id, offer.bookingProviderName, offer.rentalCompanyName]);
   const baseline = plan && Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 ? offer : undefined;
@@ -82,7 +82,7 @@ export function NativeCarPriceAlert({ plan, resultId, offer, available, onFeedba
         if (next && matchingAlert?.status === "PAUSED") {
           saved = (await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert;
         } else if (next) {
-          saved = (await travelApi.createPriceAlert(buildAutomaticCarPriceAlertPayload(plan, baseline.totalPrice, baseline.currency, scope))).alert;
+          saved = (await travelApi.createPriceAlert(buildAutomaticCarPriceAlertPayload(plan, baseline.totalPrice, baseline.currency, scope), journeyRequestId)).alert;
         } else {
           saved = (await travelApi.updatePriceAlertStatus(matchingAlert!.id, "PAUSED")).alert;
         }

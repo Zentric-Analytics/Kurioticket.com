@@ -36,7 +36,7 @@ test("saved transport refuses wrong-owner work and discards a response after sig
     "react-native": { Platform: { OS: "ios" } }, "expo-constants": { default: { expoConfig: { version: "0.3.0" } } }, "expo-crypto": { randomUUID: () => "request" },
     "./exploreCatalogueContract": {}, "../features/search/flightSearchDiagnostics": {},
     "../features/privacy/visitorIdentity": { visitorIdentity: { headers: async () => ({}), trackingContext: () => null } },
-    "../features/privacy/journeyResponseContext": {}, "../../../../src/lib/providerHandoffClient": {},
+    "../features/privacy/journeyResponseContext": {}, "../features/auth/authApi": {}, "../../../../src/lib/providerHandoffClient": {},
   };
   const exports: { travelApi: { savedItems: (owner?: string) => Promise<unknown> } } = {} as never;
   runInNewContext(ts.transpileModule(readFileSync("src/api/travelApi.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {

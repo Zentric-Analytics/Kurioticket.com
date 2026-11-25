@@ -7,6 +7,7 @@ import type { SearchPlan } from "../flow/travelSearchModel";
 import { FlowIcon } from "../flow/FlowIcon";
 import { ui } from "./SearchUi";
 import { useSavedCar } from "./carSavedState";
+import { shareNativeResult } from "../privacy/nativeShareTracking";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { getPrimaryCarOffer } from "../../../../../src/lib/cars/carResults";
@@ -20,14 +21,14 @@ import type { CarResultBadge } from "../../../../../src/lib/cars/carResults";
 
 const carBadgeIcons = { "Best value": Award, Cheapest: Tag, "Top rated": Star } as const;
 
-export function CarResultCard({ result, rank, badge, imageUri, searchParams, resultBackgroundColor, plan, priceAlertsAvailable }: {
+export function CarResultCard({ result, rank, badge, imageUri, searchParams, resultBackgroundColor, plan, priceAlertsAvailable, journeyRequestId }: {
   result: CarResult; rank: number; badge?: CarResultBadge; imageUri?: string;
   searchParams: Record<string, unknown>; resultBackgroundColor: string;
-  plan?: SearchPlan; priceAlertsAvailable: boolean;
+  plan?: SearchPlan; priceAlertsAvailable: boolean; journeyRequestId?: string | null;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => setImageFailed(false), [imageUri]);
-  const savedState = useSavedCar(result, searchParams);
+  const savedState = useSavedCar(result, searchParams, journeyRequestId);
   const { displayCurrency, rates } = useCarDisplayCurrency();
   const offer = getPrimaryCarOffer(result);
   const BadgeIcon = badge ? carBadgeIcons[badge] : null;
@@ -48,7 +49,7 @@ export function CarResultCard({ result, rank, badge, imageUri, searchParams, res
     : /automatic/i.test(specLabels.transmission)
       ? "transmissionAutomatic"
       : null;
-  const share = () => void Share.share({ message: result.modelName, title: result.modelName });
+  const share = () => void shareNativeResult({share:()=>Share.share({ message: result.modelName, title: result.modelName }),product:"CAR",resultId:result.id,requestId:journeyRequestId}).catch(() => undefined);
   return <View style={[c.card,{backgroundColor:carInformationSurface,borderColor:theme.dark?theme.border:"#D8E1EC",shadowColor:theme.dark?"#000000":"#18305B"}]}>
     <View style={c.topSection}>
       <View style={[c.visualColumn,{backgroundColor:theme.surface}]}><View style={c.visual}>{imageUri && !imageFailed ? <Image source={{ uri: imageUri }} resizeMode={imageResizeMode} style={[c.image,curatedImage&&c.curatedImage]} accessibilityLabel={result.imageAlt} onError={() => setImageFailed(true)} /> : <View accessibilityLabel={`${result.modelName} vehicle image unavailable`} style={c.imageFallback}><FlowIcon name="car" size={48} color="#315A7D" /><Text style={c.fallbackText}>Vehicle image unavailable</Text></View>}</View></View>
@@ -86,7 +87,7 @@ export function CarResultCard({ result, rank, badge, imageUri, searchParams, res
     </View>
     <View style={[c.lowerBand,{backgroundColor:carInformationSurface,borderTopColor:carDividerColor}]}>
       <View style={c.detailsColumn}>
-        <NativeCarResultOfferPicker result={result} displayCurrency={displayCurrency} rates={rates} plan={plan} priceAlertsAvailable={priceAlertsAvailable}/>
+        <NativeCarResultOfferPicker result={result} displayCurrency={displayCurrency} rates={rates} plan={plan} priceAlertsAvailable={priceAlertsAvailable} journeyRequestId={journeyRequestId}/>
       </View>
     </View>
   </View>;

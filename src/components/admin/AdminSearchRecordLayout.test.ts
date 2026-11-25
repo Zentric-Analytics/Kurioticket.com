@@ -32,6 +32,8 @@ test("Search Records fits its workspace with all ten fields visible and compact 
   assert.match(searchTable, /searchRoutePreview\(routeLabel\(search.origin, search.destination\)\)/);
   assert.match(searchTable, /title=\{routeLabel\(search.origin, search.destination\)\}/);
   assert.match(searchTable, /aria-label=\{routeLabel\(search.origin, search.destination\)\}/);
+  assert.doesNotMatch(searchTable, /data-label="Duration"/);
+  assert.match(searchTable, /data-label="Status"[\s\S]*?data-label="Action"[\s\S]*?View details <ChevronRight/);
   assert.match(searchTable, /detailHref\(search, detailQuery\)/);
   assert.match(css, /@container \(max-width: 800px\)/);
   assert.match(css, /\.admin-search-records td \[data-search-route-preview\]/);
@@ -42,7 +44,7 @@ test("Search Records metric headings and identity values stay on one line withou
   const css = readFileSync("src/app/globals.css", "utf8");
   const widthsMatch = searchTable.match(/\[13, 8, 11, 11, 9, 8, 10, 9, 10, 11\]/);
   assert.ok(widthsMatch, "Table columns must reserve sufficient width for metric headings");
-  for (const column of ["Currency", "Results", "Providers", "Duration", "Identity"]) {
+  for (const column of ["Currency", "Results", "Providers", "Identity", "Action"]) {
     assert.ok(css.includes(`.admin-search-records td[data-label="${column}"]`), `${column} must not break its values`);
     assert.ok(searchTable.includes(`data-label="${column}"`), `${column} must remain in the table`);
   }

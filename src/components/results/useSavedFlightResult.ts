@@ -1,6 +1,7 @@
 "use client";
 
 import { savedFlightTimeFields, SavedFlightTimeError } from "@/shared/flights/savedFlightTime";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -81,6 +82,7 @@ function matchingSavedFlight(items: SavedFlightItem[] | null, flightId: string) 
 export function useSavedFlightResult(
   flight: PublicFlightResult,
   detailsHref: string | null,
+  searchRequestId?: string | null,
 ) {
   const { data: session, status } = useSession();
   const owner = session?.user?.email ?? "authenticated-user";
@@ -114,6 +116,11 @@ export function useSavedFlightResult(
     };
   }, [flight.id, owner, status]);
 
+  const observedResult = Number.isFinite(flight.price) && flight.price > 0 && /^[A-Z]{3}$/.test(flight.currency)
+    ? { label: flight.airlineName, provider: flight.provider, amount: flight.price,
+        currency: flight.currency, priceBasis: "total" as const }
+    : undefined;
+
   async function toggleSavedFlight() {
     if (pending || status === "loading") return;
     setPending(true);
@@ -130,6 +137,7 @@ export function useSavedFlightResult(
           });
           if (response.ok) {
             publishSavedFlights((savedFlightsCache ?? []).filter((item) => item.id !== previous.id));
+            recordCustomerInteraction({ action: "saved_item_removed", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId, observedResult });
           } else {
             setSavedItem(previous);
           }
@@ -161,7 +169,10 @@ export function useSavedFlightResult(
 
         if (response.ok) {
           const data = await response.json() as { item?: SavedFlightItem };
-          if (data.item) publishSavedFlights([...(savedFlightsCache ?? []), data.item]);
+          if (data.item) {
+            publishSavedFlights([...(savedFlightsCache ?? []), data.item]);
+            recordCustomerInteraction({ action: "saved_item_confirmed", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId, observedResult });
+          }
         } else if (response.status === 409) {
           clearSavedFlightsCache(owner);
           const refreshed = await loadSavedFlights(owner);
@@ -173,6 +184,7 @@ export function useSavedFlightResult(
       const next = toggleSavedItemId(readSavedItemIds(), flight.id);
       writeSavedItemIds(next);
       setLocalSaved(next.includes(flight.id));
+      recordCustomerInteraction({ action: next.includes(flight.id) ? "local_saved" : "local_unsaved", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId, observedResult });
       window.dispatchEvent(new Event(LOCAL_SAVED_FLIGHTS_CHANGED_EVENT));
     } catch (error) {
       setSavedFlightError(error instanceof SavedFlightTimeError ? error.message : "Unable to save flight. Please try again.");

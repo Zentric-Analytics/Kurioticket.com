@@ -14,6 +14,8 @@ import type { StandaloneHotelDetailsProps } from "./StandaloneHotelDetails";
 import { formatMobileHotelPrice, mobileHotelAbout, mobileHotelAmenityGroups, mobileHotelStay } from "./mobileHotelDetailsPresentation";
 import { MobileHotelStayEditor } from "./MobileHotelStayEditor";
 import { HotelPriceAlertControl } from "../HotelPriceAlertControl";
+import { shareProductLink } from "@/lib/shareProductLink";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 import type { HotelDetailsProviderOffer } from "./hotelDetailsPresentation";
 import { MobileProviderOffer } from "./HotelPriceComparisonSection";
 import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScrollLock";
@@ -115,12 +117,18 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
   }
 
   async function share() {
-    try {
-      if (navigator.share) await navigator.share({ title: props.hotelName, url: window.location.href });
-      else { await navigator.clipboard.writeText(window.location.href); setShareStatus("Link copied"); }
-    } catch (error) {
-      if (!(error instanceof DOMException && error.name === "AbortError")) setShareStatus("Unable to share. Please try again.");
+    const outcome = await shareProductLink({ title: props.hotelName, url: window.location.href });
+    if (outcome === "shared" || outcome === "copied") {
+      recordCustomerInteraction({
+        action: outcome === "shared" ? "share_sheet_completed" : "share_link_copied",
+        product: "HOTEL", resultId: props.hotelResultId, requestId: props.searchRequestId,
+      });
     }
+    if (outcome === "cancelled") return;
+    setShareStatus(outcome === "shared" ? "Share sheet completed"
+      : outcome === "copied" ? "Link copied"
+      : "Sharing unavailable. Copy this page's link from the address bar.");
+    window.setTimeout(() => setShareStatus(""), 3000);
   }
 
   function selectProviderOffer(offerId: string) {
@@ -235,7 +243,7 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
       </> : null}
       {tab === "reviews" ? <section className={styles.reviews} aria-label="Guest reviews" data-hotel-reviews-section>{props.reviewScore && props.reviewCountText ? <div className={styles.reviewCard}><div className={styles.reviewScore}><strong>{props.reviewScore.split("/")[0].trim()}</strong><span>/{props.mobileReviewScale ?? 10}</span></div><div className={styles.reviewMeta}><h2>{props.reviewLabel}</h2><p>{props.reviewCountText}</p>{props.reviewSource ? <small>Source: {props.reviewSource}</small> : null}</div></div> : <><h2>Guest reviews</h2><p>Verified guest reviews are not connected for this property yet.</p></>}</section> : null}
     </div>
-    <span role="status" className="sr-only">{shareStatus}</span>
+    {shareStatus ? <p role="status" aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-[calc(7rem+env(safe-area-inset-bottom))] z-[100] mx-auto w-fit max-w-[calc(100%-2rem)] rounded-xl bg-[#07133B] px-4 py-2 text-center text-sm font-semibold text-white shadow-lg">{shareStatus}</p> : null}
     {rateInfo && rateAnchor ? <HotelRatePopover offer={rateInfo} anchor={rateAnchor} onClose={() => setRateInfo(null)} /> : null}
 
     {overlay && overlay !== "stay" ? <DetailsDialog compact={overlay === "amenities"} title={overlay === "gallery" ? "Photos" : overlay === "photo" ? `${gallery.activePosition} / ${gallery.usableIndices.length}` : overlay === "amenities" ? "All amenities" : overlay === "map" ? "Location" : "Room options"} full={overlay === "gallery" || overlay === "photo" || overlay === "map"} back={overlay === "photo" ? () => setOverlay("gallery") : undefined} onClose={() => setOverlay(null)}>

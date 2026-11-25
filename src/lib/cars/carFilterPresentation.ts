@@ -1,3 +1,5 @@
+import type { JourneyFilterSelection, JourneyFilterSelectionGroup } from "@/lib/search-journey";
+
 export type CarFilterOption = {
   id: string;
   labelKey: string;
@@ -62,3 +64,17 @@ export const carFilterGroups: CarFilterGroup[] = [
 ];
 
 export const carQuickFilterGroupIds = ["pricePerDay", "vehicleType", "transmission", "seats", "cancellation", "pickupLocationType"] as const;
+
+/** Record only exact option IDs published by the shared car filter catalog.
+ * No free-typed location, search text or generated labels enter analytics.
+ */
+export function carJourneyFilterSelections(selected: Record<string, string[]>): JourneyFilterSelection[] | undefined {
+  const entries = Object.entries(selected).flatMap(([groupId, options]) => {
+    const group = carFilterGroups.find(item => item.id === groupId);
+    if (!group) return [];
+    return options.flatMap(optionId => group.options.some(option => option.id === optionId)
+      ? [{ group: groupId as JourneyFilterSelectionGroup, option: optionId }] : []);
+  });
+  // Do not present a partial list as a complete applied selection.
+  return entries.length <= 20 ? entries : undefined;
+}

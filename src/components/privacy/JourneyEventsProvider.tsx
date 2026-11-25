@@ -2,9 +2,12 @@
 
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
+import { createPageViewCapture } from "@/lib/pageViewCatalog";
 import { analyticsConsentAccountKey, analyticsConsentChangedEvent, analyticsConsentStorageKey, hasAnalyticsDenial, parseAnalyticsConsent } from "@/lib/analyticsConsentClient";
 import { createJourneyEventSender, forgetJourneySelections, journeyRequestId, readJourneySelection, rememberJourneySelection } from "@/lib/journeyEventClient";
 import { createProviderHandoffMetadata, type ProviderHandoffMetadataReader } from "@/lib/providerHandoffClient";
+import type { ClientJourneyDecisionType, JourneyFilterGroup, JourneySortMode, JourneySortChoice, JourneyFilterSelection, JourneyObservedResult } from "@/lib/search-journey";
 
 function browserAllowsAnalytics() {
   try { return !hasAnalyticsDenial(document.cookie) && parseAnalyticsConsent(window.localStorage.getItem(analyticsConsentStorageKey)) === "granted"; }
@@ -16,9 +19,13 @@ type Recorder = {
   offerSelected: (product: "flight" | "hotel", resultId: string, provider?: string, requestId?: string | null) => void;
   rememberDetailsContext: (product: "flight" | "hotel", resultId: string, requestId: string | null) => void;
   prepareHandoff: (product: "flight" | "hotel", resultId: string) => ProviderHandoffMetadataReader;
+  interactionRequestId: (product: "flight" | "hotel", resultId: string, explicit?: string | null) => string | null;
+  workflowDecision: (type: ClientJourneyDecisionType, requestId: string | null | undefined, detail?: {
+    sourcePage?: string; offerId?: string; filterGroup?: JourneyFilterGroup; sortMode?: JourneySortMode; sortChoice?: JourneySortChoice; filterSelections?: JourneyFilterSelection[]; observedResult?: JourneyObservedResult;
+  }) => void;
 };
 const browserActionId = () => crypto.randomUUID();
-const quiet: Recorder = { resultsViewed: () => undefined, offerSelected: () => undefined, rememberDetailsContext: () => undefined, prepareHandoff: () => createProviderHandoffMetadata(() => null, browserActionId) };
+const quiet: Recorder = { resultsViewed: () => undefined, offerSelected: () => undefined, rememberDetailsContext: () => undefined, prepareHandoff: () => createProviderHandoffMetadata(() => null, browserActionId), interactionRequestId: () => null, workflowDecision: () => undefined };
 const JourneyEventsContext = createContext<Recorder>(quiet);
 
 /** Keep valid user-action delivery alive across internal navigation, but never across an account/consent change. */
@@ -26,7 +33,9 @@ export function JourneyEventsProvider({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const actor = analyticsConsentAccountKey(status, session?.user);
   const previousActor = useRef(actor);
-  const [, setConfirmation] = useState<{ actor: string | null; enabled: boolean }>({ actor: null, enabled: false });
+  const [confirmation, setConfirmation] = useState<{ actor: string | null; enabled: boolean }>({ actor: null, enabled: false });
+  const pathname = usePathname();
+  const [observePage] = useState(() => createPageViewCapture(() => crypto.randomUUID()));
   const [sender] = useState(() => createJourneyEventSender({
     request: (url, init) => fetch(url, init),
     allowed: browserAllowsAnalytics,
@@ -70,16 +79,62 @@ export function JourneyEventsProvider({ children }: { children: ReactNode }) {
     };
   }, [actor, sender]);
 
+  // Observe the currently visible, allowlisted route only after canonical
+  // visitor consent is confirmed. Do not replay routes viewed before consent.
+  useEffect(() => {
+    const observe = () => {
+      const confirmed = confirmation.actor === actor && confirmation.enabled && browserAllowsAnalytics();
+      if (typeof crypto.randomUUID !== "function") return;
+      const event = observePage({
+        requestId: new URLSearchParams(window.location.search).get("requestId"),
+        pathname, transport: "web", context: confirmed ? actor : null,
+        visible: document.visibilityState === "visible",
+      });
+      if (!event || typeof crypto.randomUUID !== "function" || !browserAllowsAnalytics()) return;
+      void fetch("/api/activity/page-views", {
+        method: "POST", cache: "no-store", credentials: "same-origin", keepalive: true,
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(event),
+      }).catch(() => undefined);
+    };
+    observe();
+    document.addEventListener("visibilitychange", observe);
+    return () => document.removeEventListener("visibilitychange", observe);
+  }, [actor, confirmation, pathname, observePage]);
+
   // Refresh observers after a consent change. The sender owns impression
   // deduplication and holds explicitly consented actions until confirmation.
   const recorder: Recorder = !actor ? quiet : {
+    interactionRequestId(product, resultId, explicit) {
+      if (!browserAllowsAnalytics()) return null;
+      try { return journeyRequestId(explicit) ?? readJourneySelection(product, resultId, actor, window.sessionStorage); }
+      catch { return null; }
+    },
     prepareHandoff(product, resultId) {
       const context = sender.captureContext();
       return createProviderHandoffMetadata(() => context !== null && sender.captureContext() === context
         ? readJourneySelection(product, resultId, actor, window.sessionStorage) : null, browserActionId);
     },
     resultsViewed(requestId) {
-      if (requestId) sender.send({ type: "RESULTS_VIEWED", requestId, sourcePage: window.location.pathname });
+      if (requestId) {
+        sender.send({ type: "RESULTS_VIEWED", requestId, sourcePage: window.location.pathname });
+        if (confirmation.actor === actor && confirmation.enabled && browserAllowsAnalytics() && typeof crypto.randomUUID === "function") {
+          const event = observePage({ pathname: window.location.pathname, transport: "web", context: actor, visible: document.visibilityState === "visible", requestId });
+          if (event) void fetch("/api/activity/page-views", { method: "POST", credentials: "same-origin", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify(event) }).catch(() => undefined);
+        }
+      }
+    },
+    workflowDecision(type, requestId, detail) {
+      if (!browserAllowsAnalytics()) return;
+      const verifiedRequestId = journeyRequestId(requestId);
+      if (!verifiedRequestId) return;
+      sender.send({ type, requestId: verifiedRequestId, sourcePage: detail?.sourcePage ?? window.location.pathname,
+        ...(detail?.offerId ? { offerId: detail.offerId } : {}),
+        ...(detail?.filterGroup ? { filterGroup: detail.filterGroup } : {}),
+        ...(detail?.sortMode ? { sortMode: detail.sortMode } : {}),
+        ...(detail?.sortChoice ? { sortChoice: detail.sortChoice } : {}),
+        ...(detail?.filterSelections ? { filterSelections: detail.filterSelections } : {}),
+        ...(detail?.observedResult ? { observedResult: detail.observedResult } : {}) });
     },
     rememberDetailsContext(product, resultId, requestId) {
       if (!browserAllowsAnalytics()) return;

@@ -1,4 +1,6 @@
+import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { applicationMetadata } from "@/lib/application-source";
+import { handoffEvidenceDetailSql, handoffEvidenceListSql, handoffOperationalSessionId, type HandoffEvidenceRow } from "./adminHandoffEvidence";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { eligibleGuestVisitorWhere, eligibleLinkedVisitorWhere } from "@/lib/adminIdentityJourney";
 import { isJourneySourcePath, journeySourcePath } from "@/lib/search-journey";
@@ -79,6 +81,33 @@ function text(value: unknown, max = 256) {
 
 function jsonRecord(value: Prisma.JsonValue | null | undefined): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+/** Use only stored crawler attribution, never infer a bot from IP or missing identity. */
+function recordedSearchCrawler(value: Prisma.JsonValue | null): AdminSearchDetail["crawler"] {
+  const query = jsonRecord(value);
+  if (applicationMetadata(query).applicationSource !== "BOT") return null;
+
+  const safeName = (raw: unknown) => {
+    if (typeof raw !== "string") return null;
+    const name = raw.trim().toUpperCase();
+    return name.length >= 2 && name.length <= 64
+      && /^[A-Z0-9][A-Z0-9_-]*$/.test(name)
+      && name !== "UNKNOWN" && name !== "BOT" ? name : null;
+  };
+  const identified = safeName(query.identifiedCrawler);
+  const verified = safeName(query.verifiedCrawler);
+  const name = identified ?? verified;
+  // An old DNS-verified row may contain only verifiedCrawler. Never promote
+  // User-Agent-only or contradictory metadata to verified status.
+  const evidence = name && verified === name
+    && (query.crawlerEvidence === "VERIFIED_DNS"
+      || (query.crawlerEvidence == null && verified))
+    ? "VERIFIED_DNS" as const
+    : name && query.crawlerEvidence === "DECLARED_USER_AGENT"
+      ? "DECLARED_USER_AGENT" as const
+      : null;
+  return { name, evidence };
 }
 
 function identity(userId: string | null, visitorId: string | null, operationalSessionId?: string | null): AdminOperationalIdentity {
@@ -406,6 +435,7 @@ function providerLogsForPageSql(requestIds: readonly string[], services: readonl
 function exactProviderFilteredSearchSql(scope: AdminSearchScope, cursor: { at: string; id: string } | null = null): Prisma.Sql {
   const clauses: Prisma.Sql[] = [
     Prisma.sql`s."query"->>'environment' = ${scope.environment}`,
+    Prisma.sql`s."countAsSearch" = TRUE`,
     ...(scope.provider ? [Prisma.sql`s."requestId" IS NOT NULL`,
     Prisma.sql`EXISTS (
       SELECT 1 FROM "ApiProviderLog" p
@@ -428,7 +458,7 @@ function exactProviderFilteredSearchSql(scope: AdminSearchScope, cursor: { at: s
         )
     )`] : []),
   ];
-  if (scope.applicationSource) clauses.push(Prisma.sql`(CASE WHEN s."query"->>'applicationSource' IN ('WEB','IOS','ANDROID','UNKNOWN') THEN s."query"->>'applicationSource' ELSE 'UNKNOWN' END) = ${scope.applicationSource}`);
+  if (scope.applicationSource) clauses.push(Prisma.sql`(CASE WHEN s."query"->>'applicationSource' IN ('WEB','IOS','ANDROID','BOT','UNKNOWN') THEN s."query"->>'applicationSource' ELSE 'UNKNOWN' END) = ${scope.applicationSource}`);
   if (scope.product) clauses.push(Prisma.sql`s."type"::text = ${scope.product}`);
   if (scope.status) clauses.push(Prisma.sql`s."status"::text = ${scope.status}`);
   if (scope.from) clauses.push(Prisma.sql`s."createdAt" >= ${new Date(scope.from)}`);
@@ -525,12 +555,12 @@ function searchDto(row: SearchRow, environment: PublicEnvironment, exactLogs: re
   };
 }
 
-function handoffDto(row: HandoffRow, environment: PublicEnvironment): AdminHandoffRead {
-  const searchHistoryId = row.journeyEvents[0]?.searchHistoryId ?? null;
+function handoffDto(row: HandoffRow, environment: PublicEnvironment, verifiedSearchId: string | null = null): AdminHandoffRead {
+  const searchHistoryId = row.journeyEvents[0]?.searchHistoryId ?? verifiedSearchId;
   const visitorId = attributableVisitorId(row.visitorId, row.visitor);
   return {
     id: row.id,
-    identity: identity(row.userId, visitorId),
+    identity: identity(row.userId, visitorId, handoffOperationalSessionId(row.metadata)),
     product: row.type,
     provider: text(row.provider, 100) ?? "Unknown provider",
     route: text(row.route, 200),
@@ -584,6 +614,7 @@ function deletionDto(row: DeletionRow): AdminDeletionListItem {
 function searchWhere(scope: AdminSearchScope, cursor?: { at: string; id: string } | null): Prisma.SearchHistoryWhereInput {
   return {
     ...identityWhere({ ...scope, identity: scope.identity === "guest" ? "all" : scope.identity }),
+    countAsSearch: true,
     ...(scope.product ? { type: scope.product } : {}),
     ...(scope.status ? { status: scope.status } : {}),
     ...(dateRange(scope.from, scope.to) ? { createdAt: dateRange(scope.from, scope.to) } : {}),
@@ -764,6 +795,8 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
             data: {
               ...searchDto(row, env.data, providers),
               diagnostic: exactSearchDiagnostic(row, providers),
+              network: recordedSearchNetwork(row.query),
+              crawler: recordedSearchCrawler(row.query),
               searcher,
             },
           };
@@ -776,34 +809,25 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           const parsed = parseAdminHandoffQuery(params, dependencies.environment());
           if (parsed.status !== "ok") return parsed;
           const { scope, cursor, limit } = parsed.data;
-          const where: Prisma.RedirectLogWhereInput = {
-            ...identityWhere(scope),
-            ...(scope.product ? { type: scope.product } : {}),
-            ...(scope.provider ? { provider: { equals: scope.provider, mode: "insensitive" } } : {}),
-            ...(dateRange(scope.from, scope.to) ? { createdAt: dateRange(scope.from, scope.to) } : {}),
-            metadata: { path: ["environment"], equals: scope.environment },
-            ...(scope.correlation === "exact" ? { journeyEvents: { some: { type: "PROVIDER_HANDOFF_STARTED", searchHistoryId: { not: null } } } } : {}),
-            ...(scope.correlation === "unavailable" ? { journeyEvents: { none: { type: "PROVIDER_HANDOFF_STARTED", searchHistoryId: { not: null } } } } : {}),
-            AND: [
-              ...(scope.sourcePage ? [{
-                OR: [
-                  { sourcePage: scope.sourcePage },
-                  { sourcePage: { startsWith: scope.sourcePage + "?" } },
-                  { sourcePage: { startsWith: scope.sourcePage + "#" } },
-                  // Legacy short names were stored without the leading slash.
-                  ...(scope.sourcePage.slice(1).includes("/") ? [] : [
-                    { sourcePage: scope.sourcePage.slice(1) },
-                    { sourcePage: { startsWith: scope.sourcePage.slice(1) + "?" } },
-                    { sourcePage: { startsWith: scope.sourcePage.slice(1) + "#" } },
-                  ]),
-                ],
-              }] : []),
-              ...(cursor ? [{ OR: [{ createdAt: { lt: new Date(cursor.at) } }, { createdAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : []),
-            ],
-          };
-          const records = await db.redirectLog.findMany({ where, select: handoffSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1 });
-          const page = nextCursor("handoffs", scope, records, limit);
-          return { status: "ok", data: { scope, items: page.page.map(row => handoffDto(row, scope.environment)), nextCursor: page.next } };
+          // Filter using the same verified evidence shown in the table, before
+          // cursor paging. Do not hide operational guests in Unattributed.
+          const candidates = await db.$queryRaw<HandoffEvidenceRow[]>(handoffEvidenceListSql(scope, cursor, limit));
+          const page = nextCursor("handoffs", scope, candidates, limit);
+          const records = page.page.length
+            ? await db.redirectLog.findMany({
+                where: { id: { in: page.page.map(candidate => candidate.id) }, metadata: { path: ["environment"], equals: scope.environment } },
+                select: handoffSelect,
+              })
+            : [];
+          const recordsById = new Map(records.map(row => [row.id, row]));
+          return { status: "ok", data: {
+            scope,
+            items: page.page.flatMap(candidate => {
+              const row = recordsById.get(candidate.id);
+              return row ? [handoffDto(row, scope.environment, candidate.searchHistoryId)] : [];
+            }),
+            nextCursor: page.next,
+          } };
         });
       },
       detail(id: string, params: URLSearchParams): Promise<AdminOperationalResult<AdminHandoffRead>> {
@@ -813,7 +837,9 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           const env = parseAdminOperationalEnvironment(params, dependencies.environment());
           if (env.status !== "ok") return env;
           const row = await db.redirectLog.findFirst({ where: { id: parsedId.data, metadata: { path: ["environment"], equals: env.data } }, select: handoffSelect });
-          return row ? { status: "ok", data: handoffDto(row, env.data) } : { status: "not_found" };
+          if (!row) return { status: "not_found" };
+          const matches = await db.$queryRaw<Array<{ searchHistoryId: string | null }>>(handoffEvidenceDetailSql(row.id, env.data));
+          return { status: "ok", data: handoffDto(row, env.data, matches[0]?.searchHistoryId ?? null) };
         });
       },
     },
@@ -904,12 +930,15 @@ export const __adminOperationalReadCoreTest = {
   identity,
   attributableVisitorId,
   identityWhere,
+  handoffDto,
   fallbackSearchDiagnostic,
   providerDiagnostic,
   exactSearchDiagnostic,
   exactProviderSummary,
   correlatedProviderLogs,
   exactProviderFilteredSearchSql,
+  searchWhere,
+  recordedSearchCrawler,
   providerLogWhere,
   providerLogsForPageSql,
 };

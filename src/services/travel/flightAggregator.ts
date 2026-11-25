@@ -11,7 +11,7 @@ import type {
 } from "@/lib/types";
 import { getItineraryDateKey } from "@/lib/utils";
 import { getSearchLegs } from "@/lib/flights/flightSearchJourney";
-import { rememberFlights } from "@/lib/searchCache";
+import { FLIGHT_CACHE_TTL_MS, rememberFlights } from "@/lib/searchCache";
 import {
   deduplicateFlightOffers,
   isFlightProviderOfferUsableAt,
@@ -22,7 +22,7 @@ import { providerSearchWarnings } from "./providerSearchOutcome";
 /** The sole production flight pipeline. Provider policy is deliberately not configurable. */
 export async function searchFlights(
   search: FlightSearchParams,
-  options: { signal?: AbortSignal; deadlineMs?: number; onProviderStart?: () => void; requestId?: string; kayak?: KayakRequestContext; providers?: readonly ProviderRegistration<"flights">[] } = {},
+  options: { signal?: AbortSignal; deadlineMs?: number; onProviderStart?: () => void; requestId?: string; kayak?: KayakRequestContext; fareOnly?: boolean; providers?: readonly ProviderRegistration<"flights">[] } = {},
 ): Promise<AggregatedResult<NormalizedFlightResult> & {
   performance: {
     supplierMs: number;
@@ -61,15 +61,15 @@ export async function searchFlights(
   const liveResults = results.filter(result=>!productionSandboxInventory(result));
   const groups=new Map<string,NormalizedFlightResult[]>();
   for(const row of liveResults) { const group=groups.get(row.provider);if(group)group.push(row);else groups.set(row.provider,[row]); }
-  const certifications=await Promise.all([...groups.values()].map(async rows=>{
+  const certifications=await Promise.all((options.fareOnly?[]:[...groups.values()]).map(async rows=>{
     try { return {rows,certificate:await rememberFlights(rows,now,search,options.requestId)}; }
     catch {return {rows,certificate:{persisted:false,validForMs:0}};}
   }));
   const certifiedIds=new Set(certifications.flatMap(item=>item.certificate.persisted?item.rows.map(row=>row.id):[]));
   const validCertificates=certifications.filter(item=>item.certificate.persisted);
-  const cacheResult={persisted:certifications.every(item=>item.certificate.persisted),validForMs:validCertificates.length?Math.min(...validCertificates.map(item=>item.certificate.validForMs)):0};
-  const actionableResults = results.filter(row=>productionSandboxInventory(row)||certifiedIds.has(row.id));
-  const cacheUnavailable = liveResults.some(row=>!certifiedIds.has(row.id));
+  const cacheResult={persisted:certifications.every(item=>item.certificate.persisted),validForMs:options.fareOnly?results.reduce((remaining,row)=>Math.min(remaining,(row.providerExpiresAt??Infinity)-now),FLIGHT_CACHE_TTL_MS):validCertificates.length?Math.min(...validCertificates.map(item=>item.certificate.validForMs)):0};
+  const actionableResults = options.fareOnly?results:results.filter(row=>productionSandboxInventory(row)||certifiedIds.has(row.id));
+  const cacheUnavailable = !options.fareOnly && liveResults.some(row=>!certifiedIds.has(row.id));
   console.info("[search:inventory-accounting]",{requestId:options.requestId,product:"flights",stages:inventoryAccounting([{stage:"normalized",rows:providerStatuses.flatMap(provider=>provider.results)},{stage:"deduplicated",rows:results},{stage:"policy-eligible",rows:actionableResults}])});
   return {
     results: actionableResults,

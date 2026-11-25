@@ -78,6 +78,9 @@ import {
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { journeyEvents } from "../privacy/journeyEvents";
+import { recordNativeResultsPage } from "../privacy/useNativePageViews";
+import { normalizeJourneySortMode, normalizeJourneySortChoice, boundedJourneyFilterSelections } from "../../../../../src/lib/search-journey";
+import { shareNativeResult } from "../privacy/nativeShareTracking";
 import { journeyResponseContext } from "../privacy/journeyResponseContext";
 import { flightEditSearchParams, flightSearchRouteParamPatch } from "../flow/flightSearchModel";
 import { hotelSearchRouteParamPatch } from "../flow/hotelSearchModel";
@@ -99,6 +102,7 @@ import { FlightResultsQuickControls } from "./FlightResultsQuickControls";
 import { DetailGlassSurface } from "./DetailGlassSurface";
 import { FlightSortSheet } from "./FlightSortSheet";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
+import { subscribeSession } from "../../storage/sessionStorage";
 import {
   convertAmount,
   currencyMarketSymbol,
@@ -281,6 +285,8 @@ function ResultsScreen({ product }: { product: Product }) {
   const [sort, setSort] = useState<FlightSort>("price");
   const [sortOpen, setSortOpen] = useState(false);
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
+  // Only emit an applied-filter decision if the completed sheet actually changed filters.
+  const flightFiltersAtOpen = useRef<string | null>(null);
   const [serverFlightResultCount, setServerFlightResultCount] = useState(0);
   const [filterOpen, setFilterOpen] = useState(false);
   const [editSearchOpen, setEditSearchOpen] = useState(false);
@@ -316,6 +322,9 @@ function ResultsScreen({ product }: { product: Product }) {
   const nearbyFareRequests = useRef(new Map<string, AbortController>());
   const nearbyFareGeneration = useRef(0);
   const nearbyFareAppState = useRef(AppState.currentState);
+  const nearbyFareFocused = useRef(false);
+  const nearbyFareSessionRevision = useRef(0);
+  const mainFlightFareFreshness = useRef<{ fetchedAt: number; validUntil?: number; sessionRevision?: number }>({ fetchedAt: 0 });
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   const previousComparisonCurrency = useRef<string | null>(null);
   const previousFlightSearchKey = useRef<string | undefined>(undefined);
@@ -397,6 +406,7 @@ function ResultsScreen({ product }: { product: Product }) {
       return;
     }
     const searchKey = plan.plan.key;
+    const sessionRevision = nearbyFareSessionRevision.current;
     if (product === "flight" && flightResultsOwnerKey.current !== searchKey) {
       setResults([]);
       setResultsRequestId(undefined);
@@ -508,6 +518,11 @@ function ResultsScreen({ product }: { product: Product }) {
       if (product === "flight") {
         flightResultsOwnerKey.current = searchKey;
         setFlightResultsOwner(searchKey);
+        mainFlightFareFreshness.current = {
+          fetchedAt: Date.now(),
+          sessionRevision,
+          validUntil: "resultsCacheValidUntil" in response ? response.resultsCacheValidUntil : undefined,
+        };
       }
       const presentation = presentSearchResults(product, valid.length, response);
       setStatus(presentation.status);
@@ -616,8 +631,10 @@ function ResultsScreen({ product }: { product: Product }) {
     };
   }, [load, plan.plan?.key, product, retry, visualTest]);
   useFocusEffect(useCallback(() => {
+    nearbyFareFocused.current = true;
     setNearbyFareResume((value) => value + 1);
     return () => {
+      nearbyFareFocused.current = false;
       nearbyFareGeneration.current += 1;
       nearbyFareRequests.current.forEach((controller) => controller.abort("screen-blur"));
       nearbyFareRequests.current.clear();
@@ -640,6 +657,16 @@ function ResultsScreen({ product }: { product: Product }) {
     });
     return () => subscription.remove();
   }, [flightResults]);
+  useEffect(() => {
+    if (!flightResults) return;
+    return subscribeSession(() => {
+      nearbyFareSessionRevision.current += 1;
+      nearbyFareGeneration.current += 1;
+      nearbyFareCache.current.clear();
+      setVerifiedDateFareMemory(undefined);
+      setNearbyFareResume((value) => value + 1);
+    });
+  }, [flightResults]);
   const submitFlightEditSearch = useCallback((nextParams: Record<string, string | undefined>) => {
     const nextPlan = buildSearchPlan("flight", nextParams);
     if (!nextPlan.plan) return;
@@ -649,8 +676,9 @@ function ResultsScreen({ product }: { product: Product }) {
       return;
     }
     pendingFlightEditTargetKey.current = nextPlan.plan.key;
+    journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", resultsRequestId, "/flight-results");
     router.setParams(flightSearchRouteParamPatch(nextParams));
-  }, [plan.plan?.key]);
+  }, [plan.plan?.key, resultsRequestId]);
   const closeFlightEditSearch = useCallback(() => {
     pendingFlightEditTargetKey.current = null;
     setEditSearchOpen(false);
@@ -665,8 +693,9 @@ function ResultsScreen({ product }: { product: Product }) {
     const nextPlan = buildSearchPlan("hotel", nextParams);
     if (!nextPlan.plan) return;
     pendingHotelEditParams.current = nextPlan.plan.key === plan.plan?.key ? null : nextParams;
+    if (pendingHotelEditParams.current) journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", resultsRequestId, "/hotel-results");
     setHotelEditSearchOpen(false);
-  }, [plan.plan?.key]);
+  }, [plan.plan?.key, resultsRequestId]);
   const finishAndroidHotelEdit = useCallback(() => {
     const nextParams = pendingHotelEditParams.current;
     if (!nextParams) return;
@@ -694,7 +723,7 @@ function ResultsScreen({ product }: { product: Product }) {
     setHotelEditPresentation((presentation) => presentation + 1);
     setHotelEditSearchOpen(true);
   };
-  const normalizeFlightPrice = useCallback((result: FlightResult) => currencyState
+  const normalizeFlightPrice = useCallback((result: Pick<FlightResult, "price" | "currency">) => currencyState
     ? convertAmount(result.price, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates)
     : result.price, [currencyState]);
   const ownedFlightResults = useMemo(() => product === "flight" && plan.plan?.key
@@ -725,8 +754,9 @@ function ResultsScreen({ product }: { product: Product }) {
   }, [filteredHotelResults, ownedFlightResults, filters, hotelSort, sort, product, flightPriceContext, normalizeFlightPrice, currencyState?.rates]);
   useFocusEffect(useCallback(() => {
     const recordDisplayedResults = () => {
-      if (!visualTest && status === "ready" && AppState.currentState === "active") {
-        journeyEvents.resultsViewed(resultsRequestId, product === "flight" ? "/flight-results" : "/hotel-results", sorted.length);
+      if (!visualTest && (status === "ready" || status === "empty") && AppState.currentState === "active") {
+        recordNativeResultsPage(product === "flight" ? "flight" : "hotel", resultsRequestId);
+        if (status === "ready") journeyEvents.resultsViewed(resultsRequestId, product === "flight" ? "/flight-results" : "/hotel-results", sorted.length);
       }
     };
     recordDisplayedResults();
@@ -823,6 +853,7 @@ function ResultsScreen({ product }: { product: Product }) {
   }, []);
   const openFlightFilters = (section: FlightFilterSectionName) => {
     if (filterOpen) return;
+    flightFiltersAtOpen.current = JSON.stringify(filters);
     setSortOpen(false);
     setFilterSection(section);
     setFilterOpen(true);
@@ -860,7 +891,21 @@ function ResultsScreen({ product }: { product: Product }) {
     startHotelFilterTransition(() => setHotelFilters(next));
   };
   const transitionHotelFilters = (next: SetStateAction<HotelFilters>) => { startHotelFilterTransition(() => setHotelFilters(next)); startHotelResultsTransition(false); };
-  const completeHotelFilterSession = () => { setHotelFilterOpen(false); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;startHotelResultsTransition(false);} };
+  const completeHotelFilterSession = () => { setHotelFilterOpen(false); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", resultsRequestId, "/hotel-results", {
+        filterGroup: "all",
+        filterSelections: boundedJourneyFilterSelections([
+          { group: "areas", options: hotelFilters.areas },
+          { group: "propertyTypes", options: hotelFilters.propertyTypes },
+          { group: "roomTypes", options: hotelFilters.roomTypes },
+          { group: "bedTypes", options: hotelFilters.bedTypes },
+          { group: "meals", options: hotelFilters.meals },
+          { group: "cancellation", options: hotelFilters.cancellationPolicies },
+          { group: "facilities", options: hotelFilters.facilities },
+          { group: "travellerFeatures", options: hotelFilters.travellerFeatures },
+          { group: "accessibility", options: hotelFilters.accessibility },
+          { group: "stars", options: hotelFilters.starRatings.map(value => String(value)) },
+        ]),
+      });startHotelResultsTransition(false);} };
   const openHotelFilters = (section: HotelFilterSectionName) => {
     hotelFilterSessionDirtyRef.current=false;
     setHotelFilterSection(section);
@@ -909,9 +954,23 @@ function ResultsScreen({ product }: { product: Product }) {
     scrollToFlightResultsBeginning();
   }, [scrollToFlightResultsBeginning]);
   const completeFullFlightFilters = useCallback(() => {
+    if (flightFiltersAtOpen.current !== null && flightFiltersAtOpen.current !== JSON.stringify(filters)) {
+      journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED", resultsRequestId, "/flight-results", {
+        filterGroup: "all",
+        filterSelections: boundedJourneyFilterSelections([
+          { group: "stops", options: filters.stops },
+          { group: "airlines", options: filters.airlines },
+          { group: "fromAirports", options: filters.fromAirports },
+          { group: "toAirports", options: filters.toAirports },
+          { group: "baggage", options: filters.baggageIncluded ? ["included"] : [] },
+          { group: "cancellation", options: filters.refundable ? ["refundable"] : [] },
+        ]),
+      });
+    }
+    flightFiltersAtOpen.current = null;
     setFilterOpen(false);
     scrollToFlightResultsBeginning();
-  }, [scrollToFlightResultsBeginning]);
+  }, [scrollToFlightResultsBeginning, resultsRequestId, filters]);
   const canonicalHotelDestination = String(payload.destination || "");
   const hotelDestinationDisplay = getHotelLocationFieldDisplay(canonicalHotelDestination, locale);
   const hotelSummary = buildHotelResultsSummary({
@@ -939,8 +998,9 @@ function ResultsScreen({ product }: { product: Product }) {
     return verifiedDateFareContextKey(plan.plan.payload, currencyState.resolution.resolvedCurrency);
   }, [currencyState, plan.plan, product]);
   const currentVerifiedDateFares = useMemo<DateStripPriceCandidate[]>(() => {
-    if (product !== "flight" || status !== "ready" || !results.length || !currencyState) return [];
-    return (results as FlightResult[]).flatMap((result) => {
+    if (status !== "ready" || !currencyState
+      || mainFlightFareFreshness.current.sessionRevision !== nearbyFareSessionRevision.current) return [];
+    return ownedFlightResults.flatMap((result) => {
       const departureDate = calendarIsoFromTimestamp(result.departureTime);
       const displayed = flightDisplayPrices.get(result.id);
       return departureDate === flightDate && displayed && Number.isFinite(displayed.amount) ? [{
@@ -950,7 +1010,7 @@ function ResultsScreen({ product }: { product: Product }) {
         accessibilityLabel: displayed.formatted,
       }] : [];
     });
-  }, [currencyState, flightDate, flightDisplayPrices, product, results, status]);
+  }, [currencyState, flightDate, flightDisplayPrices, nearbyFareResume, ownedFlightResults, status]);
   useEffect(() => {
     if (!verifiedFareContextKey) {
       setVerifiedDateFareMemory(undefined);
@@ -965,16 +1025,18 @@ function ResultsScreen({ product }: { product: Product }) {
   const flightDateStripPriceByDate = useMemo<Record<string, DateStripPrice>>(() => (
     (nearbyFareIdentity === plan.plan?.key ? nearbyFares : []).reduce<Record<string, DateStripPrice>>((fares, state) => {
       if (state.status !== "success" || !currencyState) return fares;
-      const displayed = displayPrice(state.amount, state.currency, currencyState.resolution.resolvedCurrency, currencyState.rates);
+      const lowest = selectNearbyFareResult(state.fares, normalizeFlightPrice);
+      const displayed = lowest && displayPrice(lowest.price, lowest.currency, currencyState.resolution.resolvedCurrency, currencyState.rates);
       if (displayed) fares[state.date] = displayed;
       return fares;
     }, verifiedFareContextKey && verifiedDateFareMemory?.contextKey === verifiedFareContextKey
       ? { ...verifiedDateFareMemory.priceByDate } : {})
-  ), [currencyState, nearbyFareIdentity, nearbyFares, plan.plan?.key, verifiedDateFareMemory, verifiedFareContextKey]);
+  ), [currencyState, nearbyFareIdentity, nearbyFares, normalizeFlightPrice, plan.plan?.key, verifiedDateFareMemory, verifiedFareContextKey]);
   const nearbyFareStateByDate = useMemo(() => Object.fromEntries(
     (nearbyFareIdentity === plan.plan?.key ? nearbyFares : []).map((fare) => [fare.date, fare]),
   ), [nearbyFareIdentity, nearbyFares, plan.plan?.key]);
 
+  const nearbyFareCurrency = currencyState?.resolution.resolvedCurrency;
   useEffect(() => {
     const generation = ++nearbyFareGeneration.current;
     nearbyFareRequests.current.forEach((controller) => controller.abort("search-context-changed"));
@@ -982,50 +1044,48 @@ function ResultsScreen({ product }: { product: Product }) {
     const supported = product === "flight"
       && (payload.tripType === "one-way" || payload.tripType === "round-trip")
       && typeof payload.departureDate === "string";
-    if (!supported || visualTest || !currencyState || (status !== "ready" && status !== "empty")) {
+    if (!supported || visualTest || !nearbyFareCurrency || flightResultsOwner !== plan.plan?.key
+      || (status !== "ready" && status !== "empty")) {
       setNearbyFares([]);
       setNearbyFareIdentity(undefined);
       return;
     }
 
+    if (!nearbyFareFocused.current || nearbyFareAppState.current === "background" || nearbyFareAppState.current === "inactive") return;
+
     let active = true;
-    const dates = getNearbyFareDates(String(payload.departureDate));
-    const displayCurrency = currencyState.resolution.resolvedCurrency;
-    const selectedResult = selectNearbyFareResult(results as FlightResult[], normalizeFlightPrice);
-    if (selectedResult) {
-      nearbyFareCache.current.set(nearbyFareCacheKey(payload, flightDate, displayCurrency), {
-        date: flightDate, status: "success", amount: selectedResult.price,
-        currency: selectedResult.currency, fetchedAt: Date.now(),
-      });
-    } else {
-      nearbyFareCache.current.set(nearbyFareCacheKey(payload, flightDate, displayCurrency), {
-        date: flightDate, status: "unavailable", fetchedAt: Date.now(),
-      });
+    const dates = getNearbyFareDates(flightDate);
+    const { fetchedAt, validUntil, sessionRevision } = mainFlightFareFreshness.current;
+    const comparableResults=ownedFlightResults.filter(result=>!hasDisplayOnlyInventory(result));
+    const selected: NearbyFareState = comparableResults.length
+      ? { date: flightDate, status: "success", fares: comparableResults.map(({ price, currency }) => ({ price, currency })), fetchedAt, validUntil }
+      : { date: flightDate, status: "unavailable", fetchedAt };
+    const selectedKey = nearbyFareCacheKey(payload, flightDate, nearbyFareCurrency);
+    const cachedSelected = freshNearbyFare(nearbyFareCache.current, selectedKey);
+    if (sessionRevision === nearbyFareSessionRevision.current && (!cachedSelected || cachedSelected.fetchedAt <= fetchedAt)) {
+      nearbyFareCache.current.set(selectedKey, selected);
     }
-    const initial = dates.map((date) => freshNearbyFare(
-      nearbyFareCache.current, nearbyFareCacheKey(payload, date, displayCurrency),
+    const initial = dates.map((date) => date === flightDate ? selected : freshNearbyFare(
+      nearbyFareCache.current, nearbyFareCacheKey(payload, date, nearbyFareCurrency),
     ) ?? { date, status: "loading" as const });
     setNearbyFareIdentity(plan.plan?.key);
     setNearbyFares(initial);
     const pending = prioritizeNearbyDates(dates, flightDate).filter((date) =>
-      !freshNearbyFare(nearbyFareCache.current, nearbyFareCacheKey(payload, date, displayCurrency)));
+      date !== flightDate && !freshNearbyFare(nearbyFareCache.current, nearbyFareCacheKey(payload, date, nearbyFareCurrency)));
     const isCurrent = () => active && nearbyFareGeneration.current === generation;
 
     void runNearbyFareQueue(pending, async (date) => {
       if (!isCurrent()) return;
-      const key = nearbyFareCacheKey(payload, date, displayCurrency);
+      const key = nearbyFareCacheKey(payload, date, nearbyFareCurrency);
       const controller = new AbortController();
       nearbyFareRequests.current.set(key, controller);
       try {
-        const response = await travelApi.searchFlights(buildNearbyFarePayload(payload, date), {
-          signal: controller.signal,
-          requestId: `mobile-nearby-${generation}-${date}`,
-        });
+        const response = await travelApi.lookupNearbyFlightFare(buildNearbyFarePayload(payload, date), { signal: controller.signal });
         if (!isCurrent()) return;
-        const lowest = selectNearbyFareResult(response.results as FlightResult[], normalizeFlightPrice);
-        const next: NearbyFareState = lowest
-          ? { date, status: "success", amount: lowest.price, currency: lowest.currency, fetchedAt: Date.now() }
-          : { date, status: "unavailable", fetchedAt: Date.now() };
+        const fetchedAt = Date.now();
+        const next: NearbyFareState = response.fares.length
+          ? { date, status: "success", fares: response.fares, fetchedAt, validUntil: response.resultsCacheValidUntil }
+          : { date, status: "unavailable", fetchedAt };
         nearbyFareCache.current.set(key, next);
         setNearbyFares((current) => current.map((fare) => fare.date === date ? next : fare));
       } catch {
@@ -1043,7 +1103,7 @@ function ResultsScreen({ product }: { product: Product }) {
       nearbyFareRequests.current.forEach((controller) => controller.abort("search-context-changed"));
       nearbyFareRequests.current.clear();
     };
-  }, [currencyState, flightDate, nearbyFareResume, normalizeFlightPrice, plan.plan?.key, product, results, status, visualTest]);
+  }, [flightDate, nearbyFareCurrency, nearbyFareResume, flightResultsOwner, ownedFlightResults, plan.plan?.key, product, status, visualTest]);
 
   const selectNearbyDate = useCallback((nextDepartureDate: string) => {
     if (nextDepartureDate === flightDate) return;
@@ -1215,7 +1275,7 @@ function ResultsScreen({ product }: { product: Product }) {
           renderItem={({ item, index }) => item === null ? (
             <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}>
               {flightDateStrip}
-              {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><FlightPriceAlert plan={plan.plan} flightResults={results as FlightResult[]} available={availability.priceAlerts} displayCurrency={currencyState?.resolution.resolvedCurrency ?? String(plan.plan.payload.currency ?? "USD")} rates={currencyState?.rates ?? {}} onFeedback={setFlightPriceAlertFeedback} /></View> : null}
+              {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><FlightPriceAlert plan={plan.plan} journeyRequestId={resultsRequestId} flightResults={results as FlightResult[]} available={availability.priceAlerts} displayCurrency={currencyState?.resolution.resolvedCurrency ?? String(plan.plan.payload.currency ?? "USD")} rates={currencyState?.rates ?? {}} onFeedback={setFlightPriceAlertFeedback} /></View> : null}
               <FlightResultsSummaryRow count={sorted.length} />
             </View>
           ) : (
@@ -1356,7 +1416,7 @@ function ResultsScreen({ product }: { product: Product }) {
       )}
       {product === "flight" ? (
         <>
-          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { setSort(next); setSortOpen(false); scrollToFlightResultsBeginning(); }} onClose={() => setSortOpen(false)} />
+          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { if (next !== sort) journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", resultsRequestId, "/flight-results", { sortMode: normalizeJourneySortMode(next), sortChoice: normalizeJourneySortChoice(next) }); setSort(next); setSortOpen(false); scrollToFlightResultsBeginning(); }} onClose={() => setSortOpen(false)} />
           <FlightFilterSheet
             visible={filterOpen}
             section={filterSection}
@@ -1374,7 +1434,7 @@ function ResultsScreen({ product }: { product: Product }) {
       ) : (
         <>
           <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} totalCount={results.length} matchingCount={sorted.length} onChange={changeHotelFilters} onClose={completeHotelFilterSession}/>
-          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { if(next===hotelSort)return;setHotelSort(next);startHotelResultsTransition(); }} onChange={changeHotelQuickFilters} onClose={closeHotelQuickFilter} /> : null}
+          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { if(next===hotelSort)return;journeyEvents.workflowDecision("SEARCH_SORT_CHANGED", resultsRequestId, "/hotel-results", { sortMode: normalizeJourneySortMode(next), sortChoice: normalizeJourneySortChoice(next) });setHotelSort(next);startHotelResultsTransition(); }} onChange={changeHotelQuickFilters} onClose={closeHotelQuickFilter} /> : null}
         </>
       )}
       {!flightResults ? (
@@ -1642,7 +1702,11 @@ function FlightCard({ result, requestId, displayPrice: fare, displayCurrencyCont
   const mainPriceBasis = flightMainPriceBasis(fare, labels);
   const fareAccessibility = `${fare?.accessibilityLabel ?? "price unavailable"}${mainPriceBasis ? `, ${mainPriceBasis.accessibilityText}` : ""}${providerFare ? `, provider price ${providerFare.accessibilityLabel}` : ""}`;
   const openDetails = () => {
-    journeyEvents.offerSelected(requestId, result.id, result.provider, "/flight-results");
+    journeyEvents.flightDetailsViewed(requestId, result.id, result.provider,
+      Number.isFinite(result.price) && result.price > 0 && /^[A-Z]{3}$/.test(result.currency)
+        ? { label: result.airlineName, provider: result.provider, amount: result.price,
+            currency: result.currency, priceBasis: "total" }
+        : undefined);
     router.push({ pathname: "/flight-details", params: buildFlightDetailParams({ searchParams: params, result, requestId }) });
   };
   const cardAccessibilityLabel = `View flight details for ${result.airlineName}, ${journeys.map((journey) => flightCardJourneyAccessibility(journey, clock)).join(", ")}, ${fareAccessibility}`;
@@ -1850,8 +1914,21 @@ const HotelCard = memo(function HotelCard({
   const mealPlan=result.catalogueProfile?.mealPlan?.trim();
   const policy=[result.catalogueProfile?.cancellationPolicy,result.catalogueProfile?.paymentPolicy].filter((value):value is string=>Boolean(value?.trim()));
   const openHotel = () => {
-    journeyEvents.offerSelected(requestId, result.id, result.provider, "/hotel-results");
+    if (result.searchPolicy.action.kind !== "provider") journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", requestId, "/hotel-results", {
+      offerId: result.id,
+      ...(typeof result.pricePerNight === "number" && result.pricePerNight > 0
+        && typeof result.currency === "string" && /^[A-Z]{3}$/.test(result.currency) ? {
+          observedResult: {
+            label: result.name, provider: result.provider,
+            amount: result.pricePerNight, currency: result.currency, priceBasis: "per_night" as const,
+            ...(typeof result.totalPrice === "number" && result.totalPrice > 0 ? { totalAmount: result.totalPrice } : {}),
+          },
+        } : {}),
+    });
     if (result.searchPolicy.action.kind === "provider") {
+      // A direct provider action is a selection; opening internal hotel
+      // details is only a view and must not inflate selected-offer counts.
+      journeyEvents.offerSelected(requestId, result.id, result.provider, "/hotel-results");
       void Linking.openURL(result.searchPolicy.action.href);
       return;
     }
@@ -1873,7 +1950,7 @@ const HotelCard = memo(function HotelCard({
     const message = hasPrice
       ? `${result.name} — ${result.location} — ${displayPrices?.nightly?.formatted ?? money(result.currency, result.pricePerNight)}/night`
       : `${result.name} — ${result.location} — Price unavailable`;
-    void Share.share({ message }).catch(() => undefined);
+    void shareNativeResult({share:()=>Share.share({ message }),product:"HOTEL",resultId:result.id,requestId}).catch(() => undefined);
   };
   return (
     <Pressable disabled={hasDisplayOnlyInventory(result)}
@@ -1923,7 +2000,7 @@ const HotelCard = memo(function HotelCard({
             accessibilityLabel={saved ? `Remove ${result.name} from saved` : `Save ${result.name}`}
             accessibilityState={{ selected: saved }}
             disabled={hasDisplayOnlyInventory(result) || (!hasPrice && !saved)}
-            onPress={(event) => { event.stopPropagation(); void canonical.toggleHotel(result, params); }}
+            onPress={(event) => { event.stopPropagation(); void canonical.toggleHotel(result, params, requestId); }}
             style={[s0.hotelAction, s0.hotelSaveAction]}
           >
             <Heart

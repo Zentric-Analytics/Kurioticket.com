@@ -131,8 +131,12 @@ test("actual database-backed session and admin boundaries reject stale, invalid,
   session = { user: { ...validSession.user, email: "unlisted@zentricanalytics.com" } };
   assert.equal((await admin.requireAdminApiSession() as { response: Response }).response.status, 403);
 
+  let recoveryAllowed = false;
   const pages = load("src/lib/auth-guards.ts", {
-    "@/lib/web-deletion-recovery": { readWebDeletionRecoverySession: async () => assert.fail("ACTIVE fixtures must not use recovery authorization") },
+    "@/lib/web-deletion-recovery": { readWebDeletionRecoverySession: async () => {
+      assert.equal(session?.user.status, "PENDING_DELETION");
+      return recoveryAllowed;
+    } },
     "next-auth": { getServerSession: async () => session }, "@/lib/auth": { authOptions: {} },
     "next/navigation": { redirect: (url: string) => { throw new Error(`Redirect:${url}`); } },
     "@/lib/env": { getAdminEmails: () => [user.email] },
@@ -149,7 +153,25 @@ test("actual database-backed session and admin boundaries reject stale, invalid,
   session = validSession;
   record = { ...validRecord, revokedAt: new Date() };
   await assert.rejects(async () => pages.requireAdminSession("/admin"), /error=SessionExpired$/);
+  await assert.rejects(async () => pages.requireUserSession("/dashboard/account"), /error=SessionExpired$/);
+  assert.equal(await web.requireWebApiSession(), null);
+
+  session = { user: { ...validSession.user, status: "PENDING_DELETION" } };
+  recoveryAllowed = true;
+  await assert.rejects(async () => pages.requireUserSession("/dashboard"), /Redirect:\/account\/pending-deletion$/);
+  assert.equal(await web.requireWebApiSession(), null);
+  recoveryAllowed = false;
+  await assert.rejects(async () => pages.requireUserSession("/dashboard"), /error=SessionExpired$/);
+
   record = validRecord;
   session = null;
   await assert.rejects(async () => pages.requireAdminSession("/admin"), /Redirect:\/auth\/signin\?callbackUrl=%2Fadmin$/);
+});
+
+test("dashboard profile reads enforce the account guard even when Next reuses the layout", () => {
+  for (const path of ["/dashboard", "/dashboard/account"]) {
+    const page = readFileSync(`src/app${path}/page.tsx`, "utf8");
+    const guard = page.indexOf(`await requireUserSession("${path}")`);
+    assert.ok(guard >= 0 && guard < page.indexOf("db.userProfile.findUnique"));
+  }
 });

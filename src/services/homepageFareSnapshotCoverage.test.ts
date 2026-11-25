@@ -87,6 +87,108 @@ test("market coverage targets count replacement-ready backup candidates", () => 
   assert.equal(targets.US.targetMet, true);
 });
 
+test("market coverage allocates backups to visible gaps before counting reserve", () => {
+  const routes = __homepageFareCoverageTest.getRefreshRoutes("all-phase-3a");
+  const jpRoutes = routes.filter((route) => route.market === "JP");
+  const popular = jpRoutes.find((route) => route.isPopular && route.visibility === "visible");
+  const visibleDiscovery = jpRoutes.filter((route) => route.isDiscover && route.visibility === "visible");
+  const backups = jpRoutes.filter((route) => route.isDiscover && route.visibility === "backup").slice(0, 4);
+  assert.ok(popular && visibleDiscovery[0]);
+  assert.equal(backups.length, 4, "test needs at least four real JP backup candidates");
+  const budget = __homepageFareCoverageTest.getHomepageFareSmartRefreshBudget();
+
+  const available = new Set([popular.id, visibleDiscovery[0].id, ...backups.map((route) => route.id)]);
+  const targets = __homepageFareCoverageTest.computeHomepageFareMarketTargets(routes, available, budget);
+  const backupsUsedForVisible = Math.min(
+    Math.max(0, targets.JP.discoveryVisibleTarget - 1), backups.length,
+  );
+  assert.equal(targets.JP.popularVisibleFresh, 1);
+  assert.equal(targets.JP.discoveryVisibleFresh, 1 + backupsUsedForVisible);
+  assert.equal(targets.JP.backupFresh, backups.length - backupsUsedForVisible);
+  assert.equal(targets.JP.discoveryVisibleFresh + targets.JP.backupFresh, 1 + backups.length,
+    "every discovered fare is assigned to one bucket only");
+  assert.equal(targets.JP.freshCount, available.size, "each route contributes once to the market total");
+  assert.equal(
+    targets.JP.missingCount,
+    Math.max(0, targets.JP.popularVisibleTarget - 1) +
+    Math.max(0, targets.JP.discoveryVisibleTarget - targets.JP.discoveryVisibleFresh) +
+    Math.max(0, targets.JP.backupTarget - targets.JP.backupFresh),
+  );
+
+  const completeVisible = new Set([
+    popular.id,
+    ...visibleDiscovery.map((route) => route.id),
+    ...backups.map((route) => route.id),
+  ]);
+  const full = __homepageFareCoverageTest.computeHomepageFareMarketTargets(routes, completeVisible, budget);
+  assert.equal(full.JP.discoveryVisibleFresh, full.JP.discoveryVisibleTarget);
+  assert.equal(full.JP.backupFresh, backups.length,
+    "backups remain in reserve when visible discovery slots are already covered");
+  assert.equal(full.JP.freshCount, completeVisible.size);
+});
+
+test("snapshot readiness excludes last-known-good routes from fresh market coverage", () => {
+  const routes = __homepageFareCoverageTest.getRefreshRoutes("all-phase-3a");
+  const us = routes.filter((route) => route.market === "US");
+  const [first, second] = us;
+  assert.ok(first && second);
+  const statusRoutes = [
+    { id: first.id, status: "last_known_good" },
+    { id: second.id, status: "last_known_good" },
+  ] as Parameters<typeof __homepageFareCoverageTest.getFreshHomepageFareStatusRouteIds>[0];
+  const fresh = __homepageFareCoverageTest.getFreshHomepageFareStatusRouteIds(statusRoutes);
+  assert.equal(fresh.size, 0);
+  const targets = __homepageFareCoverageTest.computeHomepageFareMarketTargets(
+    routes,
+    fresh,
+    __homepageFareCoverageTest.getHomepageFareSmartRefreshBudget(),
+    { lastKnownGoodByMarket: { US: 2 } },
+  );
+  assert.equal(targets.US.freshCount, 0);
+  assert.equal(targets.US.lastKnownGoodCount, 2);
+  assert.equal(targets.US.popularVisibleFresh, 0);
+  assert.equal(targets.US.discoveryVisibleFresh, 0);
+  assert.equal(targets.US.backupFresh, 0);
+  assert.equal(targets.US.targetMet, false);
+
+  const freshStatusRoutes = [
+    ...statusRoutes,
+    { id: first.id, status: "fresh" },
+  ] as Parameters<typeof __homepageFareCoverageTest.getFreshHomepageFareStatusRouteIds>[0];
+  assert.deepEqual(
+    [...__homepageFareCoverageTest.getFreshHomepageFareStatusRouteIds(freshStatusRoutes)],
+    [first.id],
+  );
+});
+
+test("refresh executor excludes last-known-good snapshots and never promotes retained stale fares", () => {
+  const routes = __homepageFareCoverageTest.getRefreshRoutes("all-phase-3a").filter((route) => route.market === "US");
+  const [freshRoute, staleRoute] = routes;
+  assert.ok(freshRoute && staleRoute);
+  const now = new Date("2026-06-09T00:00:00.000Z");
+  const fresh = snapshot({
+    origin: freshRoute.origin, destination: freshRoute.destination,
+    searchedAt: "2026-06-08T23:00:00.000Z", expiresAt: "2026-06-09T23:00:00.000Z",
+  });
+  const stale = snapshot({
+    origin: staleRoute.origin, destination: staleRoute.destination,
+    searchedAt: "2026-06-05T00:00:00.000Z", expiresAt: "2026-06-06T00:00:00.000Z",
+  });
+  const snapshotMap = new Map([[freshRoute.id, fresh], [staleRoute.id, stale]]) as Parameters<typeof __homepageFareCoverageTest.getFreshHomepageFareSnapshotRouteIds>[1];
+  const freshIds = __homepageFareCoverageTest.getFreshHomepageFareSnapshotRouteIds(
+    routes, snapshotMap, now, HOMEPAGE_FARE_DEFAULT_CURRENCY,
+  );
+  assert.deepEqual([...freshIds], [freshRoute.id]);
+  assert.equal(__homepageFareCoverageTest.shouldCountHomepageFareRefreshResultAsFresh("retained", stale, now), false);
+  assert.equal(__homepageFareCoverageTest.shouldCountHomepageFareRefreshResultAsFresh("retained", fresh, now), true);
+  assert.equal(__homepageFareCoverageTest.shouldCountHomepageFareRefreshResultAsFresh("refreshed", stale, now), true);
+  assert.equal(__homepageFareCoverageTest.shouldCountHomepageFareRefreshResultAsFresh("unavailable", fresh, now), false);
+  const targets = __homepageFareCoverageTest.computeHomepageFareMarketTargets(
+    routes, freshIds, __homepageFareCoverageTest.getHomepageFareSmartRefreshBudget(),
+  );
+  assert.equal(targets.US.targetMet, false, "retained stale snapshots must not skip provider refresh");
+});
+
 test("admin readiness reports underfilled markets precisely", () => {
   const routes = __homepageFareCoverageTest.getRefreshRoutes("all-phase-3a");
   const budget = {
@@ -572,6 +674,23 @@ test("display readiness never claims usable public fares when public visible far
   assert.equal(readiness.globalReadinessStatus, "not_ready");
   assert.equal(readiness.label, "Global homepage not ready");
   assert.equal(readiness.message, "No fresh provider-backed fares available.");
+});
+
+test("global not-ready copy does not claim zero fresh fares when only coverage targets are unmet", () => {
+  const routes = __homepageFareCoverageTest.getRefreshRoutes("all-phase-3a");
+  const first = routes.find((route) => route.market === "US" && route.isPopular);
+  assert.ok(first);
+  const marketTargets = __homepageFareCoverageTest.computeHomepageFareMarketTargets(
+    routes, new Set([first.id]), __homepageFareCoverageTest.getHomepageFareSmartRefreshBudget(),
+  );
+  const readiness = __homepageFareCoverageTest.classifyHomepageFareDisplayReadiness(
+    [{ id: first.id, status: "fresh" }] as never,
+    __homepageFareCoverageTest.getHomepageFareSmartRefreshBudget(),
+    marketTargets,
+  );
+  assert.equal(readiness.globalReadinessStatus, "not_ready");
+  assert.equal(readiness.message, "No public market meets the required homepage fare targets.");
+  assert.equal(readiness.popularFresh, 1);
 });
 
 test("snapshot status derives next-run need from underfilled market targets", () => {

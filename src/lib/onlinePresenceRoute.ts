@@ -4,6 +4,7 @@ import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { isSameOriginRequest } from "@/lib/visitor-identity";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 import type { OnlinePresencePlatform } from "./onlinePresence";
+import { sessionDeviceObservation, type SessionDeviceObservation } from "./sessionDeviceObservation";
 import {
   equalPresenceSignatures,
   presenceTokenHeader,
@@ -17,6 +18,8 @@ export type OnlinePresenceHeartbeat = {
   platform: OnlinePresencePlatform;
   accountSessionId: string | null;
   now: Date;
+  /** Only attached to a verified account session, never an anonymous presence ID. */
+  device?: SessionDeviceObservation;
 };
 
 type Dependencies = {
@@ -118,11 +121,13 @@ export function createOnlinePresenceHandler(transport: PresenceTransport, depend
       if (signedIn && !account) return response(401);
       // A lost response or blocked cookie must not create a phantom session.
       if (!credential.newSource) {
+        const verifiedPlatform = transport === "native" && account ? nativePlatform(account.platform) ?? platform : platform;
         await dependencies.record({
           environment,
           sourceId: credential.sourceId,
-          platform: transport === "native" && account ? nativePlatform(account.platform) ?? platform : platform,
+          platform: verifiedPlatform,
           accountSessionId: account?.id ?? null,
+          ...(account ? { device: sessionDeviceObservation(request, verifiedPlatform) } : {}),
           now,
         });
       }

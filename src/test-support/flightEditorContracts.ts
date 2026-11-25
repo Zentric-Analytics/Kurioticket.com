@@ -46,7 +46,7 @@ export function verifyMobileFlightSubmission(source: string) {
       setAdultCount: (value: number) => events.push(value), setChildCount: (value: number) => events.push(value), setInfantCount: (value: number) => events.push(value), normalizeCabinClass: (value: string) => value, cabinClass: "business", multiCityLegs: [], projectSearchLegs, appendFlightLegParams,
       fromCode: "LAX", toCode: "JFK", from: "Los Angeles", to: "New York", departureDate: "2026-12-01", returnDate: "2026-12-09", URLSearchParams,
       findDiscoveryImageForFlight: () => undefined, buildFlightRecentSearch: () => ({ type: "FLIGHT" }), sessionStatus: "unauthenticated", upsertRecentSearch: () => events.push("recent"), syncBackendRecentSearch: () => { throw Error("unauthenticated submit must not sync account history"); },
-      setIsFlightSubmitting: (value: boolean) => events.push(value), startRouteProgress: () => events.push("progress"), router: { push: (url: string) => navigation.push(url) },
+      clearResultsReturn:()=>{},setIsFlightSubmitting: (value: boolean) => events.push(value), startRouteProgress: () => events.push("progress"), router: { push: (url: string) => navigation.push(url) },
     });
     let prevented = false; submit({ preventDefault: () => { prevented = true; } }); assert.equal(prevented, true);
     assert.equal(navigation.length, disabled ? 0 : 1);

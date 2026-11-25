@@ -71,6 +71,31 @@ export async function recordOnlinePresence(heartbeat: OnlinePresenceHeartbeat) {
   const db = getOptionalPrisma();
   if (!db) throw new Error("Online presence storage unavailable");
   await writeOnlinePresence(db, heartbeat);
+  // Device context is an optional enhancement to an authenticated canonical
+  // session. Never associate anonymous presence credentials with a visitor.
+  if (heartbeat.accountSessionId && heartbeat.device) {
+    const minuteAgo = new Date(heartbeat.now.getTime() - 60_000);
+    try {
+      await db.accountSession.updateMany({
+        where: {
+          id: heartbeat.accountSessionId,
+          revokedAt: null,
+          expiresAt: { gt: heartbeat.now },
+          OR: [{ lastSeenAt: { lt: minuteAgo } }, { deviceLabel: null }],
+        },
+        data: {
+          lastSeenAt: heartbeat.now,
+          ...(heartbeat.device.deviceLabel ? { deviceLabel: heartbeat.device.deviceLabel } : {}),
+          ...(heartbeat.device.browser ? { browser: heartbeat.device.browser } : {}),
+          ...(heartbeat.device.os ? { os: heartbeat.device.os } : {}),
+          ...(heartbeat.device.locationLabel ? { locationLabel: heartbeat.device.locationLabel } : {}),
+        },
+      });
+    } catch {
+      // Optional device details must never break operational presence accounting.
+      console.warn("[online-presence] session device observation unavailable");
+    }
+  }
   await pruneExpiredPresence(heartbeat.environment, heartbeat.now);
 }
 
@@ -103,20 +128,45 @@ export async function getOnlinePresenceSnapshot(
         DELETE FROM "OnlinePresenceSession" WHERE "environment" = ${environment} AND "sourceId" = ${sourceId}
       `;
       if (removed !== 1) throw new Error("Online presence probe could not be removed");
-      return tx.$queryRaw<Array<{ registered: bigint; guests: bigint }>>`
+      return tx.$queryRaw<Array<{
+        registered: bigint; guests: bigint;
+        desktop_web: bigint; mobile_web: bigint; ios: bigint; android: bigint;
+        website: bigint; unclassified: bigint;
+      }>>`
+        WITH observed AS (
+          -- Verified accounts of all roles share the same user ID across
+          -- admin, customer web and native sessions; count each once overall.
+          SELECT p."platform", p."accountSessionId",
+            CASE WHEN u."status" = 'ACTIVE' AND u."role" IN ('USER', 'SUPPORT', 'ADMIN')
+                AND u."emailVerified" IS NOT NULL
+                AND s."revokedAt" IS NULL AND s."expiresAt" > ${now}
+                AND s."sessionVersion" = u."sessionVersion"
+                AND (NOT COALESCE(security."twoFactorEnabled", false) OR s."assuranceLevel" <> 'PRIMARY')
+              THEN u."id" ELSE NULL END AS "registeredUserId"
+          FROM "OnlinePresenceSession" p
+          LEFT JOIN "AccountSession" s ON s."id" = p."accountSessionId"
+          LEFT JOIN "User" u ON u."id" = s."userId"
+          LEFT JOIN "UserSecuritySettings" security ON security."userId" = u."id"
+          WHERE p."environment" = ${environment}
+            AND p."lastSeenAt" > ${cutoff} AND p."lastSeenAt" <= ${now}
+        )
         SELECT
-          COUNT(DISTINCT u."id") FILTER (
-            WHERE u."status" = 'ACTIVE' AND u."emailVerified" IS NOT NULL
-              AND s."revokedAt" IS NULL AND s."expiresAt" > ${now}
-              AND s."sessionVersion" = u."sessionVersion"
-              AND (NOT COALESCE(security."twoFactorEnabled", false) OR s."assuranceLevel" <> 'PRIMARY')
-          ) AS "registered",
-          COUNT(*) FILTER (WHERE p."accountSessionId" IS NULL) AS "guests"
-        FROM "OnlinePresenceSession" p
-        LEFT JOIN "AccountSession" s ON s."id" = p."accountSessionId"
-        LEFT JOIN "User" u ON u."id" = s."userId"
-        LEFT JOIN "UserSecuritySettings" security ON security."userId" = u."id"
-        WHERE p."environment" = ${environment} AND p."lastSeenAt" > ${cutoff} AND p."lastSeenAt" <= ${now}
+          COUNT(DISTINCT "registeredUserId") AS "registered",
+          COUNT(*) FILTER (WHERE "accountSessionId" IS NULL) AS "guests",
+          (COUNT(DISTINCT "registeredUserId") FILTER (WHERE "platform" = 'desktop_web')
+            + COUNT(*) FILTER (WHERE "accountSessionId" IS NULL AND "platform" = 'desktop_web')) AS "desktop_web",
+          (COUNT(DISTINCT "registeredUserId") FILTER (WHERE "platform" = 'mobile_web')
+            + COUNT(*) FILTER (WHERE "accountSessionId" IS NULL AND "platform" = 'mobile_web')) AS "mobile_web",
+          (COUNT(DISTINCT "registeredUserId") FILTER (WHERE "platform" = 'ios')
+            + COUNT(*) FILTER (WHERE "accountSessionId" IS NULL AND "platform" = 'ios')) AS "ios",
+          (COUNT(DISTINCT "registeredUserId") FILTER (WHERE "platform" = 'android')
+            + COUNT(*) FILTER (WHERE "accountSessionId" IS NULL AND "platform" = 'android')) AS "android",
+          (COUNT(DISTINCT "registeredUserId") FILTER (WHERE "platform" IN ('desktop_web', 'mobile_web'))
+            + COUNT(*) FILTER (WHERE "accountSessionId" IS NULL
+              AND "platform" IN ('desktop_web', 'mobile_web'))) AS "website",
+          (COUNT(DISTINCT "registeredUserId") FILTER (WHERE "platform" IS NULL OR "platform" NOT IN ('desktop_web', 'mobile_web', 'ios', 'android'))
+            + COUNT(*) FILTER (WHERE "accountSessionId" IS NULL AND ("platform" IS NULL OR "platform" NOT IN ('desktop_web', 'mobile_web', 'ios', 'android')))) AS "unclassified"
+        FROM observed
       `;
     });
     await pruneExpiredPresence(environment, now);
@@ -124,8 +174,20 @@ export async function getOnlinePresenceSnapshot(
     const registeredAccounts = Number(row.registered);
     const guestSessions = Number(row.guests);
     const total = registeredAccounts + guestSessions;
-    if (![registeredAccounts, guestSessions, total].every(value => Number.isSafeInteger(value) && value >= 0)) return unavailable;
-    return { status: "ok", total, registeredAccounts, guestSessions, ...window };
+    const platforms = {
+      desktop_web: Number(row.desktop_web), mobile_web: Number(row.mobile_web),
+      ios: Number(row.ios), android: Number(row.android), website: Number(row.website),
+      unclassified: Number(row.unclassified),
+    };
+    const measures = [registeredAccounts, guestSessions, total, ...Object.values(platforms)];
+    const platformSum = Object.values(platforms).reduce((sum, count) => sum + count, 0);
+    if (!measures.every(value => Number.isSafeInteger(value) && value >= 0)
+        || !Number.isSafeInteger(platformSum) || platformSum < total
+        || Object.values(platforms).some(value => value > total)
+        || platforms.website < Math.max(platforms.desktop_web, platforms.mobile_web)
+        || platforms.website > platforms.desktop_web + platforms.mobile_web
+        || platforms.website + platforms.ios + platforms.android + platforms.unclassified < total) return unavailable;
+    return { status: "ok", total, registeredAccounts, guestSessions, platforms, ...window };
   } catch {
     return unavailable;
   }

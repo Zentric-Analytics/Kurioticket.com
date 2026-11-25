@@ -14,8 +14,9 @@ test("combined counts reconcile with all platform partitions including historica
   for (const metric of ["total", "successful", "failed", "partial", "disabled"] as const) {
     assert.equal(result.combined[metric], Object.values(result.applications).reduce((sum, value) => sum + value[metric], 0));
   }
-  assert.equal(result.applications.UNKNOWN.total, 15);
-  assert.equal(result.combined.total, 48);
+  assert.equal(result.applications.BOT.total, 13);
+  assert.equal(result.applications.UNKNOWN.total, 16);
+  assert.equal(result.combined.total, 62);
 });
 test("no observations and small samples are UNKNOWN; explicit disabled is distinct", () => {
   assert.equal(summarizeOperationalGroups([], "searches").state, "UNKNOWN");
@@ -73,7 +74,14 @@ test("operational service scopes aggregate SQL to its environment and outages re
       if (offline) throw new Error("private database error");
       return task({ $queryRaw: async (_strings: TemplateStringsArray, ...values: unknown[]) => {
         assert.equal(values.filter(value => value === "staging").length, 3);
-        assert.ok(!values.includes("production")); return [];
+        assert.ok(!values.includes("production"));
+        assert.match(_strings.join("?"), /service NOT IN \('scheduled-job','crawler-blocked-search'\)/);
+        assert.doesNotMatch(_strings.join("?"), /SELECT 'crawlerBlocks'/);
+        assert.match(_strings.join("?"), /"countAsSearch" = TRUE/, "historical nearby child searches are not aggregate searches");
+        return [
+          { kind: "searches", source: "WEB", status: "SUCCESS", count: 2, latency: 0 },
+          { kind: "searches", source: "BOT", status: "SUCCESS", count: 17, latency: 0 },
+        ];
       }, apiProviderLog: { findMany: async (query: { where: { metadata: { equals: string } } }) => { assert.equal(query.where.metadata.equals, "staging"); return []; } } });
     } }) },
     "@/lib/stagingSafety": { getPublicEnvironment: () => "staging", getStagingReleaseReadiness: () => null },
@@ -84,10 +92,13 @@ test("operational service scopes aggregate SQL to its environment and outages re
     "./platformOperationsContract": { partitionOperationalGroups },
     "./adminAlertService": { getAdminAlertSnapshot: async () => null },
   };
-  const exports: { readPlatformOperations: () => Promise<{ activity: { state: string; data: unknown }; nativeApplicationHealth: { state: string } }> } = {} as never;
+  const exports: { readPlatformOperations: () => Promise<{ activity: { state: string; data: unknown }; nativeApplicationHealth: { state: string }; botSearches: number | null }> } = {} as never;
   runInNewContext(ts.transpileModule(readFileSync("src/services/platformOperationsService.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, Date, require: (name: string) => { assert.ok(name in modules, name); return modules[name]; } });
   const observed = await exports.readPlatformOperations();
   assert.equal(observed.activity.state, "AVAILABLE"); assert.equal(observed.nativeApplicationHealth.state, "UNKNOWN");
+  assert.equal(observed.botSearches, 17);
+  assert.equal((observed.activity.data as { searches: { combined: { total: number } } }).searches.combined.total, 19,
+    "All Platforms includes the 17 executed Bots alongside 2 Website searches");
   offline = true;
   const unavailable = await exports.readPlatformOperations();
   assert.equal(unavailable.activity.state, "MONITORING_UNAVAILABLE"); assert.equal(unavailable.activity.data, null);
@@ -102,12 +113,14 @@ test("Overview search activity observes exact bounds in the deployment and disti
     "server-only": {},
     "@/lib/prisma": { getOptionalPrisma: () => ({ $queryRaw: async (sql: TemplateStringsArray, ...params: unknown[]) => {
       assert.match(sql.join("?"), /FROM "SearchHistory"[\s\S]*"createdAt" >= \? AND "createdAt" < \?/);
-      assert.doesNotMatch(sql.join("?"), /RedirectLog|ApiProviderLog/);
+      assert.doesNotMatch(sql.join("?"), /ApiProviderLog|crawler-blocked-search/);
+      assert.match(sql.join("?"), /"countAsSearch" = TRUE/, "Overview counts one parent search only");
       assert.deepEqual(params, [from, to, "staging"]);
       if (state === "unavailable") throw new Error("database down");
       return state === "empty" ? [] : [
         { kind: "searches", source: "WEB", status: "SUCCESS", count: 3, latency: 0 },
         { kind: "searches", source: null, status: "FAILED", count: 2, latency: 0 },
+        { kind: "searches", source: "BOT", status: "SUCCESS", count: 7, latency: 0 },
       ];
     } }) },
     "@/lib/stagingSafety": { getPublicEnvironment: () => "staging" },
@@ -129,14 +142,18 @@ test("Overview search activity observes exact bounds in the deployment and disti
   const result = await exports.readPlatformSearchActivity(from, to);
   assert.equal(result.window.from, from.toISOString());
   assert.equal(result.window.to, to.toISOString());
-  assert.equal(result.searches?.combined.total, 5);
+  assert.equal(result.searches?.combined.total, 12);
   assert.equal(result.searches?.applications.WEB.total, 3);
   assert.equal(result.searches?.applications.UNKNOWN.total, 2);
+  assert.equal(result.searches?.applications.BOT.total, 7, "Bots includes only executed BOT searches");
 
   state = "empty";
-  assert.equal((await exports.readPlatformSearchActivity(from, to)).searches?.combined.total, 0);
+  const empty = await exports.readPlatformSearchActivity(from, to);
+  assert.equal(empty.searches?.combined.total, 0);
+  assert.equal(empty.searches?.applications.BOT.total, 0);
   state = "unavailable";
-  assert.equal((await exports.readPlatformSearchActivity(from, to)).searches, null);
+  const unavailable = await exports.readPlatformSearchActivity(from, to);
+  assert.equal(unavailable.searches, null);
 });
 
 test("job projections require coherent persisted completion evidence and never turn RUNNING into failure", () => {

@@ -34,6 +34,7 @@ import {
 import { canReuseHotelDisplayPrices, createHotelDisplayPrices, type HotelDisplayPriceSnapshot } from "./hotelDetailCurrency";
 import { createHotelRoomDisplayPrice } from "./hotelDetailCurrency";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
+import { shareNativeResult } from "../privacy/nativeShareTracking";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { HOTEL_LIMITS } from "../flow/hotelSearchModel";
 import { homepageAirports } from "../home/homepageAirports";
@@ -403,9 +404,9 @@ function HotelDetail({
     }
   };
   const shareHotel = () =>
-    void Share.share({
+    void shareNativeResult({share:()=>Share.share({
       message: `${result.name} — ${address}${nightlyPrice ? ` — ${nightlyPrice.formatted}/night` : ""}`,
-    });
+    }),product:"HOTEL",resultId:result.id,requestId:Array.isArray(params.journeyRequestId)?params.journeyRequestId[0]:params.journeyRequestId}).catch(() => undefined);
   const returnToHotelResults = () => {
     if (hotelResultsStack) {
       const dismissCount = hotelResultsDismissCount(navigation.getState());
@@ -501,7 +502,7 @@ function HotelDetail({
               accessibilityRole="button"
               accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
               accessibilityState={{ selected: saved }}
-              onPress={() => void canonical.toggleHotel(result, params)}
+              onPress={() => void canonical.toggleHotel(result, params, Array.isArray(params.journeyRequestId) ? params.journeyRequestId[0] : params.journeyRequestId)}
               style={d.hotelHeroAction}
             >
               <Heart size={22} strokeWidth={androidFavoriteColors.strokeWidth} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved ? androidFavoriteColors.savedFill : androidFavoriteColors.unsavedFill} />

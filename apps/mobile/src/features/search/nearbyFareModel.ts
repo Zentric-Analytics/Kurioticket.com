@@ -1,4 +1,5 @@
 import { hasDisplayOnlyInventory } from "../../../../../src/shared/presentation/sandboxInventory";
+import type { NearbyFlightFare } from "../../api/travelApi";
 import { shiftCalendarDate } from "./dateStripModel";
 
 export const NEARBY_FARE_RANGE_SIZE = 10;
@@ -8,7 +9,7 @@ export const NEARBY_FARE_CACHE_TTL_MS = 10 * 60 * 1000;
 
 export type NearbyFareState =
   | { date: string; status: "loading" }
-  | { date: string; status: "success"; amount: number; currency: string; fetchedAt: number }
+  | { date: string; status: "success"; fares: readonly NearbyFlightFare[]; fetchedAt: number; validUntil?: number }
   | { date: string; status: "unavailable" | "error"; fetchedAt: number };
 
 export function localTodayIso(now = new Date()) {
@@ -84,7 +85,8 @@ export function freshNearbyFare(
   now = Date.now(),
 ) {
   const value = cache.get(key);
-  if (!value || value.status === "loading" || now - value.fetchedAt > NEARBY_FARE_CACHE_TTL_MS) {
+  if (!value || value.status === "loading" || now - value.fetchedAt > NEARBY_FARE_CACHE_TTL_MS
+    || (value.status === "success" && value.validUntil !== undefined && value.validUntil <= now)) {
     if (value) cache.delete(key);
     return undefined;
   }

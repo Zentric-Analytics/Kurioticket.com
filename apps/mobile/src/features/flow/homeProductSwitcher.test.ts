@@ -9,7 +9,7 @@ test("Home exposes all four in-place products in their canonical order", () => {
   const options = [...home.matchAll(/\{ id: "([^"]+)", label: "([^"]+)", route: "([^"]+)"/g)];
   assert.deepEqual(options.map((match) => match[2]), ["Flights", "Hotels", "Cars", "Packages"]);
   assert.match(home, /useState<HomeProduct>\("flights"\)/);
-  assert.match(home, /onPress=\{\(\) => setActiveProduct\(product\.id\)\}/);
+  assert.match(home, /onPress=\{\(\) => \{ if \(!selected\) recordNativeHomeSection\(product\.id\); setActiveProduct\(product\.id\); \}\}/);
   assert.doesNotMatch(home, /router\.push\(product\.route\)/);
 });
 

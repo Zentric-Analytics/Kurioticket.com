@@ -5,6 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { deleteBackendCar, fetchBackendSavedCars, saveBackendCar, type SavedCarApiItem } from "@/lib/saved-items-api";
 import { SAVED_CARS_INVALIDATED_EVENT } from "@/lib/saved-car-events";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 
 const SAVED_CARS_CHANGED_EVENT = "kurioticket:saved-cars-changed";
 let savedCarsOwner = "";
@@ -64,7 +65,7 @@ function savedCarIdentity(item: SavedCarApiItem) {
   return id ? carIdentity(id, item.provider, item.modelName, params) : null;
 }
 
-export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams) {
+export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams, requestId?: string | null) {
   const { data: session, status } = useSession();
   const owner = session?.user?.email ?? "authenticated-user";
   const offer = car.offers[0];
@@ -82,6 +83,12 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams) {
     return () => { window.removeEventListener(SAVED_CARS_CHANGED_EVENT, update); window.removeEventListener(SAVED_CARS_INVALIDATED_EVENT, invalidate); };
   }, [identity, owner, status]);
 
+  const observedResult = offer && Number.isFinite(offer.totalPrice) && offer.totalPrice > 0
+    && /^[A-Z]{3}$/.test(offer.currency) ? {
+      label: car.modelName, provider: offer.bookingProviderName || offer.rentalCompanyName || car.rentalCompanyName,
+      amount: offer.totalPrice, currency: offer.currency, priceBasis: "total" as const,
+    } : undefined;
+
   async function toggleSavedCar() {
     if (pending) return;
     if (status !== "authenticated") { await signIn(undefined, { callbackUrl: window.location.href }); return; }
@@ -91,7 +98,10 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams) {
     try {
       if (previous) {
         const response = await deleteBackendCar(previous.id);
-        if (response.ok) publishSavedCars((savedCarsCache ?? []).filter((item) => item.id !== previous.id));
+        if (response.ok) {
+          publishSavedCars((savedCarsCache ?? []).filter((item) => item.id !== previous.id));
+          recordCustomerInteraction({ action: "saved_item_removed", product: "CAR", resultId: car.id, requestId, observedResult });
+        }
         else setSavedItem(previous);
         return;
       }
@@ -115,6 +125,7 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams) {
       if (response.ok && response.item) {
         const item = { ...response.item, type: "car" as const, resultId: car.id };
         publishSavedCars([...(savedCarsCache ?? []), item]);
+        recordCustomerInteraction({ action: "saved_item_confirmed", product: "CAR", resultId: car.id, requestId, observedResult });
       }
       else if (response.duplicate) {
         clearSavedCarsCache(owner);

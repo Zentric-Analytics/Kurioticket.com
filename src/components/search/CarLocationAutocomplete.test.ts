@@ -93,5 +93,33 @@ test("desktop pickup and return use one input-anchored request and selection lif
     source,
     /const selectSuggestion = \(suggestion: CarLocationSuggestion\) => \{[\s\S]*?onValueChange\(suggestion\.value\);[\s\S]*?onSelect\?\.\(suggestion\);[\s\S]*?close\(\);/,
   );
-  assert.match(source, /onClick=\{\(\) => selectSuggestion\(suggestion\)\}/);
+  assert.match(source, /onClick=\{\(event\) => onOptionClick\(event, suggestion\)\}/);
+});
+
+test("sticky Cars Edit Search suggestion portal clears the modal backdrop without affecting normal popovers", () => {
+  assert.match(source, /id\.startsWith\("sticky-cars-search"\) \? \{ zIndex: 1150 \} : \{\}/);
+  assert.match(source, /data-cars-sticky-location-suggestions/);
+  assert.match(source, /document\.body/);
+  assert.match(contract, /z-\[1100\]/);
+  assert.match(source, /onClick=\{\(event\) => onOptionClick\(event, suggestion\)\}/);
+});
+
+test("desktop car suggestions commit primary mouse selection before a blur can dismiss the portaled option", () => {
+  assert.match(
+    source,
+    /const onOptionPointerDown = [\s\S]*?event\.pointerType !== "mouse" \|\| event\.button !== 0[\s\S]*?event\.preventDefault\(\);[\s\S]*?selectSuggestion\(suggestion\);/,
+  );
+  assert.match(
+    source,
+    /const onOptionClick = [\s\S]*?event\.detail > 0[\s\S]*?selectSuggestion\(suggestion\);/,
+  );
+  // Both desktop results and standard autocomplete rows use the same safe lifecycle.
+  assert.equal(
+    (source.match(/onPointerDown=\{\(event\) => onOptionPointerDown\(event, suggestion\)\}/g) ?? []).length,
+    2,
+  );
+  assert.equal(
+    (source.match(/onClick=\{\(event\) => onOptionClick\(event, suggestion\)\}/g) ?? []).length,
+    2,
+  );
 });

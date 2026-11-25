@@ -5,6 +5,7 @@ import { componentBundle, withComponentBrowser } from "../../test-support/compon
 // Execute the actual native component/hooks in a DOM host. This is not a
 // physical-device or React Native renderer certification.
 const nativeHost = `const React=require('react');
+exports.AppState={addEventListener:()=>({remove:()=>{}})};
 exports.View=({children,style})=>React.createElement('div',{style},children);
 exports.ScrollView=({children,contentContainerStyle})=>React.createElement('div',{style:contentContainerStyle},children);
 exports.Text=({children,style,accessibilityRole})=>React.createElement(accessibilityRole==='header'?'h2':'p',{style,role:accessibilityRole==='alert'?'alert':undefined},children);
@@ -15,10 +16,13 @@ const bundle = () => componentBundle({ recovery: "apps/mobile/src/features/auth/
   "react-native-safe-area-context": "exports.SafeAreaView=({children,style})=>require('react').createElement('div',{'data-safe-area':'true',style},children);",
   "expo-router": "exports.router={replace:url=>window.fixtureNavigation.push(url)};",
   "expo-splash-screen": "exports.hideAsync=async()=>{window.fixtureSplashHidden=true;};",
-  "./authApi": "exports.authApi={recoveryStatus:()=>window.fixtureStatus()};",
+  "./authApi": "exports.authApi={recoveryStatus:()=>window.fixtureStatus()};exports.reconcileOrdinarySession=async session=>session;",
   "../../api/travelApi": "exports.travelApi={reactivateDeletion:()=>{window.fixtureRecoveries++;return window.fixtureRecovery();}};",
-  "../../storage/sessionStorage": "exports.readSession=async()=>window.fixtureSession;exports.subscribeSession=listener=>{window.fixtureListener=listener;return()=>{window.fixtureListener=null;};};exports.clearSession=async()=>{window.fixtureSession=null;window.fixtureListener?.(null);};",
+  "../../storage/sessionStorage": "exports.readStoredSession=async()=>window.fixtureSession;exports.subscribeStoredSession=listener=>{window.fixtureListener=listener;return()=>{window.fixtureListener=null;};};exports.clearSession=async()=>{window.fixtureSession=null;window.fixtureListener?.(null);};",
+  "../../storage/profileNameCache": "exports.writeProfileName=async()=>{};",
+  "../../storage/savedRepository": "exports.discardSavedCache=async()=>{};",
   "../../theme/AppTheme": "exports.useAppTheme=()=>({theme:{background:'#FAFBFF',text:'#071A48',muted:'#56658E',border:'#E7ECF5'}});",
+  "../launch/LaunchScreens": "exports.RecoveryScreen=()=>require('react').createElement('p',null,'Unable to connect');",
 });
 const setup = (extra = "") => `const React=require('react'),{createRoot}=require('react-dom/client'),{MobileRecoveryBoundary}=require('recovery');
 window.fixtureRecoveries=0;window.fixtureSession={token:'synthetic-only',expires:new Date(Date.now()+60000).toISOString(),recovery:{deadline:new Date(Date.now()+86400000).toISOString()},user:{id:'fixture',email:'fixture@example.invalid'}};
@@ -56,7 +60,7 @@ test("native recovery host retains explicit error/retry and disables duplicate s
 });
 
 test("native recovery expiry cannot be undone by a late successful status response", async () => {
-  await withComponentBrowser(bundle(), setup("window.fixtureSession.expires=new Date(Date.now()+50).toISOString();window.fixtureStatus=()=>new Promise(resolve=>{window.fixtureResolveStatus=()=>resolve({expires:window.fixtureSession.expires,recovery:window.fixtureSession.recovery});});"), async page => {
+  await withComponentBrowser(bundle(), setup("window.fixtureSession.expires=new Date(Date.now()+1500).toISOString();window.fixtureStatus=()=>new Promise(resolve=>{window.fixtureResolveStatus=()=>resolve({expires:window.fixtureSession.expires,recovery:window.fixtureSession.recovery});});"), async page => {
     await page.getByRole("alert").waitFor();
     await page.evaluate(() => (window as unknown as { fixtureResolveStatus: () => void }).fixtureResolveStatus());
     assert.equal(await page.getByRole("button", { name: "Keep account", exact: true }).isDisabled(), true);

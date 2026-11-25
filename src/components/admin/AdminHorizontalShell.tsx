@@ -95,7 +95,7 @@ function WorkspaceSidebar({ pathname, role, showPreviewTesters }: { pathname: st
               const active = link.href === "/admin/providers?view=attribution"
                 ? providerAttribution || pathname === "/admin/referral-attribution"
                 : !(providerAttribution && link.href === "/admin/providers")
-                  && isAdminWorkspaceSectionActive(pathname, link.href);
+                  && isAdminWorkspaceSectionActive(pathname, link.href, searchParams.get("activityReturn"));
               return (
                 <Link key={link.href} href={link.href} aria-current={active ? "page" : undefined}
                   className={"flex min-h-10 min-w-0 items-center gap-2.5 rounded-r-md border-l-2 px-3 py-2 text-[13px] font-medium leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 " +
@@ -175,8 +175,6 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const pathname = usePathname();
   const isOverview = pathname === "/admin" || pathname === "/admin/";
   const isSettings = pathname === "/admin/settings" || pathname.startsWith("/admin/settings/") || pathname === "/admin/preview-testers";
-  // Platform Health is a standalone top-level destination, not a System subsection.
-  const isStandalonePlatformHealth = pathname === "/admin/platform-health" || pathname === "/admin/platform-health/";
   const overviewGroups = groups.map(group => ({ ...group, links: group.links.filter(entry => entry.item.href === "/admin") })).filter(group => group.links.length > 0);
   const contentLanding = pathname === "/admin/content" || pathname === "/admin/content/";
   const workspaceRef = useRef<HTMLDivElement>(null);
@@ -259,7 +257,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
     </header>
     <main className={"mx-auto w-full max-w-[1920px] " + (isOverview ? "px-4 py-5 sm:px-6 lg:px-10" : "px-4 py-5 sm:px-5 lg:px-6")}>
       <AdminSearchContent>
-        {!isOverview && !isSettings && !isStandalonePlatformHealth && role === "ADMIN" ? (
+        {!isOverview && !isSettings && role === "ADMIN" ? (
           <div className="grid min-w-0 grid-cols-1 gap-5 bg-white lg:grid-cols-[196px_minmax(0,1fr)] lg:gap-4">
             <WorkspaceSidebar pathname={pathname} role={role} showPreviewTesters={showPreviewTesters} />
             <div data-admin-page-content className="min-w-0">{children}</div>

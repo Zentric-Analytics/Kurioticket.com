@@ -51,7 +51,7 @@ function matches(value: any, condition: any): boolean {
   });
 }
 
-function setup(kind: "guest" | "user" | "operational", count = 1105, products = ["FLIGHT", "HOTEL"], includeOfferJourneys = false, handoffProduct: "FLIGHT" | "HOTEL" | "CAR" = "HOTEL") {
+function setup(kind: "guest" | "user" | "operational", count = 1105, products = ["FLIGHT", "HOTEL"], includeOfferJourneys = false, handoffProduct: "FLIGHT" | "HOTEL" | "CAR" = "HOTEL", registeredLinkedVisitors = 1, eventBearingVisitors = 1, pageViews = 0) {
   const userId = "qa-complete-account";
   const visitorId = "qa-complete-visitor";
   const id = kind === "user" ? userId : kind === "operational" ? "qa-operational-session" : visitorId;
@@ -71,7 +71,7 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     ...owner, id: "qa-search-" + String(index).padStart(6, "0"),
     createdAt: new Date(+baseTime - Math.floor(index / 17) * 1000), // ties cross batch boundaries
     type: products[index % products.length], origin: "LOS", destination: index % 2 ? "Accra" : "London",
-    status: "SUCCESS", query: metadata, journeyEvents: [],
+    status: "SUCCESS", countAsSearch: true, query: metadata, journeyEvents: [],
   }));
   const handoffRows: Row[] = Array.from({ length: 53 }, (_, index) => ({
     ...owner, id: "qa-handoff-" + String(index).padStart(6, "0"),
@@ -82,6 +82,23 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     ...owner, id: "qa-analytics-" + String(index).padStart(6, "0"),
     createdAt: new Date(+baseTime - index * 1700), type: "SAVE", metadata,
   }));
+  // Mix historical platform declarations and current labels. Invalid routes,
+  // foreign ownership and production rows must not inflate page counts.
+  if (kind !== "operational" && pageViews) {
+    const platforms = ["iOS app (reported)", "iOS app", "Mobile web (reported)", "Android app"];
+    for (let index = 0; index < pageViews; index++) {
+      analyticsRows.push({ ...owner, id: "qa-page-" + String(index).padStart(6, "0"),
+        createdAt: new Date(+baseTime - index * 1000), type: "PAGE_VIEW", name: "page_viewed",
+        metadata: { environment: "staging", pageKey: "support", transport: index % 4 === 2 ? "web" : "native", platform: platforms[index % 4] } });
+    }
+    const sample = analyticsRows.at(-1)!;
+    analyticsRows.push(
+      { ...sample, id: "qa-page-foreign", userId: "other-account", visitorId: "other-visitor",
+        visitor: { ...visitor, id: "other-visitor", currentUserId: "other-account", identityLinks: [{ userId: "other-account" }] } },
+      { ...sample, id: "qa-page-production", metadata: { ...sample.metadata, environment: "production" } },
+      { ...sample, id: "qa-page-bad-route", metadata: { ...sample.metadata, pageKey: "trips", transport: "web" } },
+    );
+  }
   const journeyRows: Row[] = [];
   if (kind !== "operational") {
     for (const [index, search] of searchRows.slice(0, 603).entries()) {
@@ -120,12 +137,12 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     if (!journeysById.has(journey.id)) journeysById.set(journey.id, { ...journey, events: [] });
     journeysById.get(journey.id)!.events.push(event);
   }
-  const calls: Array<{ source: string; take: number }> = [];
+  const calls: Array<{ source: string; take: number; skip?: number }> = [];
   let failAfterFirstBatch = false;
   const delegate = (source: string, rows: Row[]) => ({
     async findMany(args: Row) {
       if (failAfterFirstBatch && source === "search" && calls.some(call => call.source === source)) throw new Error("Batch unavailable");
-      calls.push({ source, take: args.take });
+      calls.push({ source, take: args.take, skip: args.skip });
       const matching = rows.filter(row => matches(row, args.where));
       const order = Array.isArray(args.orderBy) ? args.orderBy : [args.orderBy];
       matching.sort((a, b) => {
@@ -136,7 +153,7 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
         }
         return 0;
       });
-      return matching.slice(0, args.take);
+      return matching.slice(args.skip ?? 0, (args.skip ?? 0) + args.take);
     },
     async count(args: Row) { return rows.filter(row => matches(row, args.where)).length; },
     async groupBy(args: Row) {
@@ -147,12 +164,31 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
   });
   let transactions = 0;
   const transactionOptions: Row[] = [];
+  const candidateQueries: Row[] = [];
+  const activeVisitorIds = [visitorId, ...Array.from({ length: Math.max(0, eventBearingVisitors - 1) },
+    (_, n) => "qa-extra-visitor-" + String(n).padStart(3, "0"))].sort();
   const db: Row = {
     user: { async findUnique() { return { id: userId, name: "Test account", role: "USER", status: "ACTIVE", createdAt: baseTime }; } },
     visitor: {
       async findFirst() { return kind === "operational" ? null : visitor; },
-      async findMany() { return kind === "user" ? [{ id: visitorId }] : []; },
-      async count() { return kind === "user" ? 1 : 0; },
+      async findMany(args: Row) {
+        if (kind !== "user") return [];
+        candidateQueries.push(args.where);
+        assert.equal(args.take, 100);
+        assert.ok(registeredLinkedVisitors >= eventBearingVisitors);
+        // Simulate a database with 150 eligible links but only 6 visitor
+        // identities carrying stage/time-matching journey events. The
+        // candidate DB predicate must be used; returning all 150 would
+        // expand the per-visitor ownership OR clauses unnecessarily.
+        assert.ok(args.where.AND.some((part: Row) => part.journeys?.some?.events?.some));
+        const from = args.cursor ? activeVisitorIds.indexOf(args.cursor.id) + 1 : 0;
+        return activeVisitorIds.slice(from, from + args.take).map(id => ({ id }));
+      },
+      async count(args: Row) {
+        if (kind !== "user") return 0;
+        assert.ok(args.where.AND.some((part: Row) => part.journeys?.some?.events?.some));
+        return eventBearingVisitors;
+      },
     },
     journeyEvent: delegate("journey", journeyRows), searchHistory: delegate("search", allSearchRows),
     redirectLog: delegate("handoff", handoffRows), analyticsEvent: delegate("analytics", analyticsRows),
@@ -175,9 +211,10 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     "@/lib/adminIdentityDirectory": { escapePrismaContainsQuery: (value: string) => value },
   });
   return {
-    load: (filters = allFilters, cursor?: string, mode: "page" | "all" = "all") =>
-      service.loadAdminIdentityActivity(kind === "user" ? "user" : "guest", id, filters, cursor, mode),
-    transactionOptions, calls, failNextBatch: () => { failAfterFirstBatch = true; }, transactions: () => transactions,
+    load: (filters = allFilters, cursor?: string, mode: "page" | "all" | "summary" = "all", pageHistory?: { page: number; platform: string }) =>
+      service.loadAdminIdentityActivity(kind === "user" ? "user" : "guest", id, filters, cursor, mode, pageHistory),
+    transactionOptions, calls, candidateQueries,
+    failNextBatch: () => { failAfterFirstBatch = true; }, transactions: () => transactions,
     expected: count + handoffRows.length + analyticsRows.length,
   };
 }
@@ -344,3 +381,67 @@ for (const kind of ["guest", "user", "operational"] as const) {
     assert.equal(Object.values(result.data.summary.searchProducts).reduce((sum: number, n) => sum + Number(n), 0), result.data.summary.searches);
   });
 }
+
+test("registered account with 150 eligible links checks only 6 event-bearing visitors without hiding history", async () => {
+  const scenario = setup("user", 113, ["FLIGHT", "HOTEL"], true, "HOTEL", 150, 6);
+  const result = await scenario.load();
+  assert.equal(result.status, "ok");
+  assert.equal(result.data.events.length, scenario.expected + 2);
+  assert.equal(result.data.summary.searches, 113);
+  assert.equal(result.data.summary.offersSelected, 2);
+  assert.equal(result.data.summary.journeysTracked, 2);
+  assert.equal(scenario.candidateQueries.length, 1);
+  assert.equal(scenario.transactionOptions.length, 1);
+  assert.equal(scenario.transactionOptions[0].isolationLevel, "RepeatableRead");
+  assert.deepEqual(scenario.candidateQueries[0].AND[0].identityLinks, {
+    some: { userId: "qa-complete-account" },
+    none: { userId: { not: "qa-complete-account" } },
+  });
+  assert.deepEqual(scenario.candidateQueries[0].AND[1].journeys.some.events.some.type.in, [
+    "SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED",
+    "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED",
+  ]);
+});
+
+test("compact page visits retain exact totals and full travel history; separate history pages match authorized records", async () => {
+  for (const kind of ["guest", "user"] as const) {
+    const scenario = setup(kind, 40, ["FLIGHT", "HOTEL"], false, "HOTEL", 1, 1, 46);
+    const summary = await scenario.load(allFilters, undefined, "summary");
+    assert.equal(summary.status, "ok");
+    assert.equal(summary.data.summary.searches, 40);
+    assert.equal(summary.data.summary.pagesVisited, 46);
+    const recent = summary.data.events.filter((event: Row) => event.stage === "PAGE_VIEW");
+    assert.equal(recent.length, 5);
+    assert.deepEqual(recent.map((row: Row) => row.id), Array.from({ length: 5 }, (_, i) => "e-qa-page-" + String(i).padStart(6, "0")));
+    assert.ok(scenario.calls.some(call => call.source === "analytics" && call.take === 5));
+    const pageFilters = { ...allFilters, tab: "pages" };
+    const full = await scenario.load(pageFilters, undefined, "all");
+    assert.equal(full.data.events.length, 46);
+    const ids: string[] = [];
+    for (const page of [1, 2, 3]) {
+      const history = await scenario.load(pageFilters, undefined, "page", { page, platform: "all" });
+      assert.equal(history.status, "ok");
+      assert.equal(history.data.summary.pagesVisited, 46);
+      assert.equal(history.data.events.length, page === 3 ? 6 : 20);
+      ids.push(...history.data.events.map((row: Row) => row.id));
+    }
+    assert.deepEqual(ids, full.data.events.map((row: Row) => row.id));
+    assert.ok(scenario.calls.some(call => call.source === "analytics" && call.skip === 40 && call.take === 20));
+    const filtered = await scenario.load({ ...pageFilters, q: "Support" }, undefined, "page", { page: 1, platform: "ios" });
+    assert.equal(filtered.status, "ok");
+    assert.equal(filtered.data.summary.pagesVisited, 24);
+    assert.ok(filtered.data.events.every((row: Row) => row.pageView.platform === "iOS app"));
+    const missing = await scenario.load({ ...pageFilters, q: "No matching page" }, undefined, "page", { page: 1, platform: "all" });
+    assert.equal(missing.data.summary.pagesVisited, 0);
+    assert.equal(missing.data.events.length, 0);
+  }
+});
+
+test("operational guest sessions cannot acquire optional page history", async () => {
+  const scenario = setup("operational", 3);
+  const result = await scenario.load({ ...allFilters, tab: "pages" }, undefined, "page", { page: 1, platform: "all" });
+  assert.equal(result.status, "ok");
+  assert.equal(result.data.summary.pagesVisited, 0);
+  assert.equal(result.data.events.length, 0);
+  assert.ok(!scenario.calls.some(call => call.source === "analytics"));
+});

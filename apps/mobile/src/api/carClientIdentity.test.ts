@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import {nativeTravelApiHarness as fixture} from "./testsupport/travelApiHarness";
+import {nativeTravelApiHarness} from "./testsupport/travelApiHarness";
+function fixture(platform="android",version="0.3.0",baseOrRegistered:string|boolean=true,signedSearchCredential?:string){return nativeTravelApiHarness(platform,version,typeof baseOrRegistered==="string"?baseOrRegistered:"https://staging.kurioticket.com",undefined,{registered:typeof baseOrRegistered==="boolean"?baseOrRegistered:true,signedSearchCredential});}
 
 test("actual car transport identifies application/version/Android and keeps native transport identity and payload", async () => {
   const h = fixture();
@@ -59,4 +60,47 @@ test("hotel destination discovery opts into production sandbox policy without ch
     assert.equal(headers.get("User-Agent"), null);
     assert.equal(headers.get("Authorization"), "Bearer test-session");
   }
+});
+
+for (const platform of ["android", "ios"]) {
+  for (const registered of [true, false]) {
+    test(`${platform} ${registered ? "registered" : "guest"} fares use the comparison API without generating journey context`, async () => {
+      const h = fixture(platform, "0.3.0", registered);
+      const criteria = { origin: "LOS", destination: "JFK", departureDate: "2099-05-01", tripType: "one-way" };
+      await h.api.searchFlights(criteria);
+      const nearby = { ...criteria, departureDate: "2099-05-02" };
+      await h.api.lookupNearbyFlightFare(nearby);
+      assert.equal(h.calls[0].url, "https://staging.kurioticket.com/api/flights/search");
+      assert.equal(h.calls[1].url, "https://staging.kurioticket.com/api/flights/nearby-fare");
+      assert.deepEqual(JSON.parse(h.calls[1].init.body as string), nearby);
+      const headers = new Headers(h.calls[1].init.headers);
+      assert.equal(headers.get("X-Mobile-Platform"), platform);
+      assert.equal(headers.get("Authorization"), registered ? "Bearer test-session" : null);
+      assert.equal(h.journeyResponses.length, 1);
+    });
+  }
+}
+
+for (const platform of ["ios", "android"] as const) {
+  test(`${platform} guest carries platform-bound operational credential between searches without login`, async () => {
+    const credential = `v2.00000000-0000-4000-8000-000000000001.1800000000000.staging.${platform}.${"A".repeat(43)}`;
+    const h = fixture(platform, "0.3.0", false, credential);
+    await h.api.searchFlights({ tripType: "one-way", origin: "LOS", destination: "JFK", departureDate: "2099-05-01" });
+    await h.api.searchHotels({ destination: "London", checkIn: "2099-05-01", checkOut: "2099-05-02" });
+    const first = new Headers(h.calls[0].init.headers);
+    const second = new Headers(h.calls[1].init.headers);
+    assert.equal(first.get("authorization"), null);
+    assert.equal(first.get("X-Kt-Search-Protocol"), "v2");
+    assert.equal(first.get("X-Kt-Search-Session"), null);
+    assert.equal(second.get("authorization"), null);
+    assert.equal(second.get("X-Mobile-Platform"), platform);
+    assert.equal(second.get("X-Kt-Search-Session"), credential);
+  });
+}
+
+test("native guest client never stores invalid server continuity credentials", async () => {
+  const h = fixture("android", "0.3.0", false, "v2.malformed");
+  await h.api.searchFlights({});
+  await h.api.searchHotels({});
+  assert.equal(new Headers(h.calls[1].init.headers).get("X-Kt-Search-Session"), null);
 });

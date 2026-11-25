@@ -1,10 +1,9 @@
 import { cookies } from "next/headers";
-import { getServerSession } from "next-auth";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { AccountDetailShell } from "@/components/dashboard/AccountDetailShell";
 import { DashboardOverview } from "@/components/dashboard/DashboardGrid";
-import { authOptions } from "@/lib/auth";
+import { requireUserSession } from "@/lib/auth-guards";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { serializeUserProfile } from "@/lib/userProfile";
 import { getTranslations } from "@/lib/i18n";
@@ -29,7 +28,7 @@ function getInitials(name?: string | null, email?: string | null) {
 }
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
+  const session = await requireUserSession("/dashboard");
   const sessionUserName = session?.user?.name?.trim();
   const userEmail = session?.user?.email?.trim();
   const db = getOptionalPrisma();

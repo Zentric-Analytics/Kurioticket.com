@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { ChevronRight, UserRound } from "lucide-react";
 import { CopyIdentityId } from "./CopyIdentityId";
-import type { AdminIdentitySort as IdentitySort } from "@/lib/adminIdentityDirectory";
+import type { AdminIdentitySort as IdentitySort, GuestDirectoryStatus } from "@/lib/adminIdentityDirectory";
 
 export type IdentityRow =
   | {
       kind: "user";
+      lastSeenAt?: Date | null;
       record: {
         id: string;
         name: string | null;
@@ -17,6 +18,9 @@ export type IdentityRow =
     }
   | {
       kind: "guest";
+      guestStatus?: GuestDirectoryStatus;
+      guestSource?: "visitor" | "operational";
+      lastSeenAt?: Date | null;
       record: { id: string; firstSeenAt: Date; lastSeenAt: Date };
     };
 
@@ -74,16 +78,17 @@ export function AdminIdentityTable({
         aria-labelledby="identity-directory-title"
         tabIndex={0}
       >
-        <table className="w-full min-w-[960px] table-fixed text-left text-[13px]">
+        <table className="w-full min-w-[1080px] table-fixed text-left text-[13px]">
           <caption className="sr-only">
-            Registered accounts and consent-eligible guest identities, sorted by {sort.replaceAll("_", " ")}
+            Registered accounts and consent-eligible guest identities, sorted by {sort === "newest" ? "latest recorded activity" : sort.replaceAll("_", " ")}
           </caption>
           <colgroup>
-            <col className="w-[38%]" />
+            <col className="w-[30%]" />
+            <col className="w-[15%]" />
+            <col className="w-[10%]" />
+            <col className="w-[17%]" />
             <col className="w-[16%]" />
             <col className="w-[12%]" />
-            <col className="w-[19%]" />
-            <col className="w-[15%]" />
           </colgroup>
           <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
             <tr>
@@ -92,6 +97,7 @@ export function AdminIdentityTable({
                 "Type",
                 "Status",
                 "Joined / First Seen",
+                "Last Seen",
                 "Activity",
               ].map((heading) => (
                 <th
@@ -107,6 +113,7 @@ export function AdminIdentityTable({
           <tbody className="divide-y divide-[#E7ECF5]">
             {rows.map((row) => {
               const record = row.record;
+              const lastSeen = row.lastSeenAt ?? (row.kind === "guest" ? row.record.lastSeenAt : null);
               const user = row.kind === "user" ? row.record : null;
               const name = user ? user.name || "Unnamed user" : "Guest visitor";
               const secondary = user
@@ -165,7 +172,14 @@ export function AdminIdentityTable({
                         {label(user.status)}
                       </span>
                     ) : (
-                      <span aria-label="No account status for guest visitor" className="text-[13px] text-[#64748B]">—</span>
+                      <span data-testid="guest-directory-status"
+                        title={row.kind === "guest" && row.guestStatus === "ACTIVE"
+                          ? row.guestSource === "visitor" ? "Eligible consented guest identity; not live presence" : "Recorded session has not expired; not live presence"
+                          : row.kind === "guest" && row.guestStatus === "INACTIVE" ? "Recorded session has expired"
+                          : "No verified session expiry is recorded"}
+                        className={`text-[13px] font-medium ${row.kind === "guest" && row.guestStatus === "ACTIVE" ? "text-[#047857]" : "text-[#64748B]"}`}>
+                        {label(row.kind === "guest" ? row.guestStatus ?? "UNAVAILABLE" : "UNAVAILABLE")}
+                      </span>
                     )}
                   </td>
                   <td data-label="Joined / First Seen" className="px-3 py-1.5">
@@ -176,6 +190,11 @@ export function AdminIdentityTable({
                           : row.record.firstSeenAt
                       }
                     />
+                  </td>
+                  <td data-label="Last Seen" className="px-3 py-1.5">
+                    {lastSeen
+                      ? <IdentityDate at={lastSeen} />
+                      : <span aria-label="No recorded last seen" className="text-[13px] text-[#64748B]">—</span>}
                   </td>
                   <td data-label="Activity" className="px-3 py-1.5">
                     <Link
@@ -194,7 +213,7 @@ export function AdminIdentityTable({
             {!rows.length ? (
               <tr>
                 <td data-empty-row data-label="Identity"
-                  colSpan={5}
+                  colSpan={6}
                   className="px-4 py-12 text-center text-[13px] text-[#475569]"
                 >
                   <p className="font-medium text-foreground">No users match your filters</p>

@@ -15,5 +15,5 @@ test("Hotel cards use one display price for visible, accessible, shared, and det
   assert.match(card, /displayPrices\?\.nightly\?\.formatted/);
   assert.match(card, /accessibilityLabel=\{displayPrices\?\.nightly\?\.accessibilityLabel\}/);
   assert.match(card, /hotelDisplayPrices: displayPrices \? JSON\.stringify\(displayPrices\)/);
-  assert.match(card, /canonical\.toggleHotel\(result, params\)/);
+  assert.match(card, /canonical\.toggleHotel\(result, params, requestId\)/);
 });

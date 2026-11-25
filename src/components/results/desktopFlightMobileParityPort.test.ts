@@ -18,7 +18,7 @@ test("desktop Flight Results moves price tracking into the sidebar without repla
   assert.match(results, /className="max-sm:pt-2 max-sm:pb-1 sm:mb-4 lg:hidden"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
   assert.match(results, /data-flight-price-alert-sidebar-slot/);
   assert.match(results, /desktopPortalTarget=\{desktopFlightPriceAlertTarget\}/);
-  assert.match(results, /data-flight-results-card-list className="space-y-3 sm:space-y-4"/);
+  assert.match(results, /data-flight-results-card-list onClickCapture={rememberVisibleFlightResults} className="space-y-3 sm:space-y-4"/);
   assert.match(alert, /data-flight-price-alert-sidebar/);
   const desktop = bindingExpression(alert, "desktopControl");
   assert.match(desktop, /data-flight-price-alert-sidebar/);

@@ -2870,7 +2870,7 @@ textarea {
 .admin-search-records td[data-label="Currency"],
 .admin-search-records td[data-label="Results"],
 .admin-search-records td[data-label="Providers"],
-.admin-search-records td[data-label="Duration"],
+.admin-search-records td[data-label="Action"],
 .admin-search-records td[data-label="Identity"],
 .admin-journey-records td[data-label="Searches"] {
   white-space: nowrap;
@@ -2891,7 +2891,7 @@ textarea {
   .admin-search-records td[data-label="Currency"],
   .admin-search-records td[data-label="Results"],
   .admin-search-records td[data-label="Providers"],
-  .admin-search-records td[data-label="Duration"],
+  .admin-search-records td[data-label="Action"],
   .admin-search-records td[data-label="Identity"] {
     padding-inline: 4px;
     font-size: 11px;
@@ -2996,5 +2996,50 @@ textarea {
 @media (min-width: 1024px) and (max-width: 1535px) {
   .admin-cms-editor {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Consent overlays use fixed edges and short, paint-only transitions. Never
+   translate the full sheet height or animate its viewport-dependent geometry. */
+.cookie-consent-dialog {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  overscroll-behavior: contain;
+}
+
+.cookie-consent-banner,
+.cookie-consent-preferences {
+  max-height: min(100%, 100svh);
+}
+
+@media (min-width: 640px) {
+  .cookie-consent-preferences {
+    max-height: min(100%, 85svh);
+  }
+}
+
+@keyframes cookie-banner-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cookie-preferences-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cookie-preferences-desktop-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cookie-consent-banner { animation: cookie-banner-enter 180ms ease-out both; }
+  .cookie-consent-preferences { animation: cookie-preferences-enter 200ms ease-out both; }
+  @media (min-width: 640px) {
+    .cookie-consent-preferences { animation-name: cookie-preferences-desktop-enter; }
   }
 }

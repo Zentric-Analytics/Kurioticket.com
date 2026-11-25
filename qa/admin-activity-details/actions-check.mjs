@@ -6,112 +6,52 @@ const base = process.env.ADMIN_ACTIVITY_QA_URL;
 const output = process.env.ADMIN_ACTIVITY_QA_OUTPUT;
 assert.ok(base && output, "Use the isolated labelled Activity QA fixture");
 await mkdir(output, { recursive: true });
-const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
-const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+const browser = await chromium.launch({headless:true,args:["--no-sandbox"]});
+const page = await browser.newPage({viewport:{width:1280,height:900}});
 page.setDefaultTimeout(25000);
 const errors = [];
-page.on("pageerror", error => errors.push(error.message));
-
-async function revealBaselineEvents() {
-  const collapsed = page.locator('button[aria-controls^="journey-"][aria-expanded="false"]');
-  while (await collapsed.count()) await collapsed.first().click();
-  const runs = page.getByRole("button", { name: "Show all", exact: true });
-  while (await runs.count()) await runs.first().click();
-}
-
-async function headingDestinations(baseline = false) {
-  if (baseline && await page.locator('button[aria-controls^="journey-"]').count()) return page.locator('button[aria-controls^="journey-"]').evaluateAll(buttons =>
-    buttons.map(button => button.parentElement.querySelector("a")?.getAttribute("href")));
-  return page.getByRole("link", {name:/^View (?:activity|journey) for /}).evaluateAll(links =>
-    links.map(link => link.getAttribute("href")));
-}
-
-function journeyScope(href) {
-  const url = new URL(href, base);
-  url.searchParams.delete("activityReturn");
-  return url.pathname + url.search;
-}
-
-async function capture(filename) {
-  // Focused links, smooth scrolling and scroll anchoring can move narrow
-  // browser viewports after a scrollTo(0, 0). Normalize only the QA capture
-  // environment; never change the application styles for this assertion.
-  await page.evaluate(async () => {
-    const active = document.activeElement;
-    if (active instanceof HTMLElement) active.blur();
-    const html = document.documentElement;
-    const body = document.body;
-    const htmlBehavior = html.style.scrollBehavior;
-    const bodyBehavior = body.style.scrollBehavior;
-    const htmlAnchor = html.style.overflowAnchor;
-    const bodyAnchor = body.style.overflowAnchor;
-    html.style.scrollBehavior = "auto";
-    body.style.scrollBehavior = "auto";
-    html.style.overflowAnchor = "none";
-    body.style.overflowAnchor = "none";
-    try {
-      window.scrollTo(0, 0);
-      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      window.scrollTo(0, 0);
-    } finally {
-      html.style.scrollBehavior = htmlBehavior;
-      body.style.scrollBehavior = bodyBehavior;
-      html.style.overflowAnchor = htmlAnchor;
-      body.style.overflowAnchor = bodyAnchor;
-    }
-  });
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(2);
-  await page.screenshot({caret:"initial", path: output + "/" + filename, fullPage: true });
-}
-
+page.on("pageerror",e=>errors.push(e.message));
 try {
-  let originalDestinations;
-  for (const width of [1280, 320]) {
-    await page.setViewportSize({ width, height: 900 });
-    await page.goto(base + "/before");
-    await expect(page.getByTestId("fixture-label")).toContainText("synthetic activity");
-    await revealBaselineEvents();
-    originalDestinations = (await headingDestinations(true)).map(journeyScope);
-    assert.equal(originalDestinations.length, 6);
-    await capture("actions-before-guest-" + width + ".png");
-
-    for (const kind of ["guest", "user"]) {
+  for (const width of [1280,320]) {
+    await page.setViewportSize({width,height:900});
+    for (const kind of ["guest","user"]) {
       const id = kind === "guest" ? "qa-guest-activity-0001" : "qa-registered-0001";
-      await page.goto(base + "/admin/users/" + kind + "/" + id + "/activity?range=all");
-      const history = page.getByRole("region", { name: "Activity history", exact: true });
-      await expect(history.locator("[data-activity-id]")).toHaveCount(14);
-      await expect(page.getByRole("button", {name:"Show all"})).toHaveCount(0);
-      await expect(page.getByTestId("activity-body-card")).toBeVisible();
-      await expect(history.getByRole("link", { name: /Open search|Open journey/ })).toHaveCount(0);
-      await expect(history.locator('[data-activity-id] a, [data-activity-id] [role="link"]')).toHaveCount(0);
-      const views = history.getByRole("link", { name: /^View (?:activity|journey) for / });
-      await expect(views).toHaveCount(6);
-      assert.deepEqual(await views.allTextContents(), Array(6).fill("View journey"));
-      assert.deepEqual((await headingDestinations()).map(journeyScope), originalDestinations, "Same journey targets and date/environment scope");
-      await expect(history.locator('[data-activity-id="j-qa-hotel-search"]')).toContainText("Hotel · Johannesburg, South Africa · Success");
-      await expect(history.locator('[data-activity-id="j-qa-flight-search"]')).toContainText("Flight · LOS → IST · Success");
-      await expect(history.locator('[data-activity-id="j-qa-flight-offer"]')).toContainText("Flight · LOS → IST · Jetabroad");
-      await expect(history.locator('[data-activity-id="j-qa-flight-handoff"]')).toContainText("Flight · LOS → IST · Duffel");
-      await expect(history).not.toContainText(/\b(?:FLIGHT|HOTEL|CAR|PACKAGE) ·| · SUCCESS\b/);
-      await views.first().focus();
-      await expect(views.first()).toBeFocused();
-      const widths = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
-      assert.ok(widths.document <= widths.viewport + 1, "No horizontal overflow: " + JSON.stringify(widths));
-      await capture("actions-after-" + kind + "-" + width + ".png");
-      console.log("PASS Activity actions, readable labels and unchanged destinations", kind, width);
+      const path = "/admin/users/"+kind+"/"+id+"/activity?range=all";
+      await page.goto(base+path);
+      await expect(page.getByTestId("activity-overview")).toBeVisible();
+      await expect(page.getByTestId("activity-journey-row")).toHaveCount(5);
+      await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
+      await expect(page.locator("[data-activity-id]")).toHaveCount(0);
+      await expect(page.getByRole("link",{name:/^View journey for /})).toHaveCount(0);
+      await expect(page.getByRole("link",{name:/View Journey History/})).toBeVisible();
+      const overflow = await page.evaluate(()=>document.documentElement.scrollWidth > innerWidth+1);
+      assert.equal(overflow,false,"Activity summary must fit "+width+"px");
+      await page.screenshot({path:output+"/activity-summary-"+kind+"-"+width+".png",fullPage:true});
+      const other = "/admin/users/"+kind+"/"+id+"/other?range=all";
+      assert.ok(other.includes("/other?"));
+      await page.goto(base+other);
+      await expect(page.getByRole("heading",{name:"Other recorded activity"})).toBeVisible();
+      await expect(page.locator("[data-activity-id]")).toHaveCount(1);
+      await expect(page.getByText("Price alert created")).toBeVisible();
+      await page.getByRole("link",{name:"Back to Activity"}).click();
+      await expect(page).toHaveURL(/\/activity\?/);
+      await expect(page.getByTestId("activity-overview")).toBeVisible();
+      console.log("PASS summary and full other activity",kind,width);
     }
   }
-
-  for (const kind of ["guest", "user"]) {
-    await page.goto(base + "/admin/users/" + kind + "/qa-complete-history-0001/activity?range=all");
-    const history = page.getByRole("region", { name: "Activity history", exact: true });
-    await expect(history.locator("[data-activity-id]")).toHaveCount(1005);
-    await expect(history.locator("[data-activity-id] a")).toHaveCount(0);
-    await expect(history.getByRole("link", { name: /^View (?:activity|journey) for / })).toHaveCount(0);
-    await expect(history.getByRole("link", { name: /Open search|Open journey|Load (older|newer) activity/ })).toHaveCount(0);
-    console.log("PASS standalone full search history has no replacement links", kind);
+  for(const kind of ["guest","user"]) {
+    await page.goto(base+"/admin/users/"+kind+"/qa-complete-history-0001/activity?range=all");
+    await expect(page.getByTestId("activity-journey-row")).toHaveCount(10);
+    await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
+    await expect(page.locator("[data-activity-id]")).toHaveCount(0);
+    const other = "/admin/users/"+kind+"/qa-complete-history-0001/other?range=all";
+    await page.goto(base+other);
+    await expect(page.locator("[data-activity-id]")).toHaveCount(1005);
+    const ids=await page.locator("[data-activity-id]").evaluateAll(nodes=>nodes.map(n=>n.dataset.activityId));
+    assert.equal(new Set(ids).size,1005,"Complete other-event history is not truncated");
+    assert.equal(ids[0],"s-qa-complete-0000");
+    assert.equal(ids.at(-1),"s-qa-complete-1004");
+    console.log("PASS complete separate non-journey event history",kind);
   }
-  assert.deepEqual(errors, [], "No client exceptions");
-} finally {
-  await browser.close();
-}
+  assert.deepEqual(errors,[],"No browser exceptions");
+} finally { await browser.close(); }

@@ -78,8 +78,8 @@ test("save and share stay wired once and desktop actions remain available", () =
   assert.match(client, /useSavedCar\(car, search\)/);
   assert.match(client, /onClick=\{toggleSavedCar\}/);
   assert.match(client, /aria-pressed=\{isSaved\}/);
-  assert.match(client, /navigator\.share/);
-  assert.match(client, /navigator\.clipboard\.writeText/);
+  assert.match(client, /shareProductLink/);
+  assert.match(client, /shareProductLink/);
   assert.match(client, /desktopOverlay=/);
   assert.match(client, /desktop\s*\/\>/);
   assert.match(

@@ -1,4 +1,4 @@
-import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
+import { withProductionSandboxRequest, captureFinalSearchHistory, productionSandboxInventory } from "@/lib/productionSandboxPolicy";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -7,70 +7,114 @@ import test from "node:test";
 import ts from "typescript";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
+import { operationalSessionMetadata } from "@/lib/operationalSearchSession";
 
 const providerDiagnostic = "KAYAK HTTP 403: synthetic provider authentication failure";
 const requestId = "78e1de9e-6dfe-494f-9fdb-83726d83bf64";
 type History = { requestId: string; type: string; status: string; userId: string | null; visitorId: string | null; resultCount: number; query: unknown; latencyMs: number };
 
-function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string } = {}) {
+function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; operationalGuest?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string; withOffers?: boolean; rateLimited?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT"; declaredCrawler?: string; applicationSource?: "WEB" | "IOS" | "ANDROID" | "UNKNOWN" } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: History[] = [];
-  const providerCalls: unknown[] = [];
+  const providerCalls: Array<{ metadata: Record<string, unknown>; status: string; errorMessage?:string }> = [];
+  const analyticsEvents: unknown[] = [];
+  const rates: Array<[string, number, number]> = [];
   const errors: unknown[] = [];
   let identityLookups = 0;
   const providerCriteria: unknown[] = [];
   const aggregate = {
-    results: [], warnings: [providerDiagnostic], latencyMs: 42,
+    results: options.withOffers ? [{ id: "actionable-offer", price: 199, currency: "USD" }] : [],
+    warnings: [providerDiagnostic], latencyMs: 42,
     ...(options.available ? {} : { unavailableMessage: providerDiagnostic }),
     providerStatuses: [{ provider: "provider", status: options.available && !options.providerFailed ? "success" : "failed", latencyMs: 40, results: [], error: options.available && !options.providerFailed ? undefined : providerDiagnostic }],
     performance: { supplierMs: 40, normalizationMs: 0, deduplicationMs: 0, aggregationMs: 2, offerCount: 0, connectingOfferCount: 0 },
   };
   const schema = { safeParse: (data: unknown) => ({ success: true, data }) };
   const dependencies: Record<string, unknown> = {
-    "@/lib/productionSandboxPolicy": {withProductionSandboxRequest,captureFinalSearchHistory},
+    "@/lib/productionSandboxPolicy": {withProductionSandboxRequest,captureFinalSearchHistory,productionSandboxInventory},
     "next/server": { NextResponse: { json: Response.json }, after: (callback: () => Promise<unknown>) => { deferred.push(callback); } },
     "node:crypto": { createHash },
-    "@/lib/rate-limit": { getClientIp: () => "192.0.2.1", checkRateLimit: () => ({ allowed: true }) },
+    "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
+    "@/lib/rate-limit": { getClientIp: () => "192.0.2.1", checkRateLimit: (key: string, limit: number, period: number) => { rates.push([key, limit, period]); return { allowed: !options.rateLimited }; } },
     "@/lib/searchCache": { toPublicFlight: (value: unknown) => value, toPublicHotel: (value: unknown) => value },
     "@/lib/validation": { flightSearchSchema: schema, hotelSearchSchema: schema },
-    "@/lib/travel/searchContract": { classifyFlights: () => ({ results: [] }), classifyHotels: () => ({ results: [] }) },
+    "@/lib/travel/searchContract": { classifyFlights: (results: unknown[]) => ({ results }), classifyHotels: () => ({ results: [] }) },
     "@/services/analyticsService": {
       logSearchHistory: async (input: History) => { if (options.loggingFails) throw new Error("storage unavailable"); histories.push(structuredClone(input)); },
-      logProviderCall: async (input: unknown) => { providerCalls.push(input); },
-      trackAnalyticsEvent: async () => undefined,
+      logProviderCall: async (input: typeof providerCalls[number]) => { providerCalls.push(structuredClone(input)); },
+      trackAnalyticsEvent: async (input: unknown) => { analyticsEvents.push(input); },
     },
     "@/services/travel/flightAggregator": { searchFlights: async () => aggregate },
     "@/services/travel/hotelAggregator": { searchHotels: async (criteria: unknown) => { providerCriteria.push(criteria); return aggregate; }, searchHotelsByProvider: async (criteria: unknown) => { providerCriteria.push(criteria); return aggregate; } },
     "@/lib/feature-controls/service": { isFeatureEnabled: async () => true },
-    "@/lib/operationalSearchSession": { prepareOperationalSearchSession: () => null, attachOperationalSearchSession: (response: Response) => response },
+    "@/lib/operationalSearchSession": {
+      operationalSessionMetadata,
+      prepareOperationalSearchSession: () => options.operationalGuest ? ({
+        reference: { id: "38d77b62-f43d-40d5-9597-a6ff76f02c28",
+          environment: "staging", expiresAt: new Date("2099-05-01") },
+        credential: "synthetic-test-only", transport: "web", newCredential: true,
+      }) : null,
+      attachOperationalSearchSession: (response: Response, prepared: {reference:{id:string}} | null) => {
+        if (prepared) response.headers.set("X-Synthetic-Operational-Session", "issued");
+        return response;
+      },
+    },
     "@/services/requestActivityIdentity": { resolveRequestActivityIdentity: async () => {
       identityLookups += 1;
-      return options.anonymous ? { userId: null, visitorId: null } : { userId: "verified-account", visitorId: "consented-visitor" };
+      const attribution = options.applicationSource ? { applicationSource: options.applicationSource } : {};
+      return options.anonymous
+        ? { userId: null, visitorId: null, ...attribution }
+        : { userId: "verified-account", visitorId: "consented-visitor", ...attribution };
     } },
+    "@/lib/searchCrawlerGate": {
+      identifySearchCrawler: async () => options.verifiedCrawler
+        ? { name: options.verifiedCrawler, evidence: "VERIFIED_DNS" }
+        : options.declaredCrawler ? { name: options.declaredCrawler, evidence: "DECLARED_USER_AGENT" } : null,
+      searchCrawlerMetadata: (crawler: { name: string; evidence: string } | null) => crawler ? ({
+        identifiedCrawler: crawler.name, crawlerEvidence: crawler.evidence,
+        ...(crawler.evidence === "VERIFIED_DNS" ? { verifiedCrawler: crawler.name } : {}),
+      }) : {},
+    },
     "@/lib/kayak-client-ip": { getKayakClientIp: () => "192.0.2.1" },
     "./providerDiagnostics": { logNativeFlightProviderDiagnostics: () => undefined },
     "@/services/travel/kayakSandbox": { isKayakSandboxEnabled: () => false },
     "@/lib/search-journey": { resolveSearchRequestId },
     "@/lib/hotelSearchRecordedStatus": { hotelSearchRecordedStatus },
   };
-  const route = new URL(product === "flight" ? "./route.ts" : "../../hotels/search/route.ts", import.meta.url);
-  const compiled = ts.transpileModule(readFileSync(route, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const exported: { POST?: (request: Request) => Promise<Response> } = {};
-  runInNewContext(compiled, {
-    exports: exported,
-    require: (name: string) => { assert.ok(name in dependencies, `unexpected dependency ${name}`); return dependencies[name]; },
-    Response, URL, Date, Buffer, performance,
-    console: { info: () => undefined, error: (...args: unknown[]) => { errors.push(args); } },
-  });
+  function loadModule<T>(path: string): T {
+    const route = new URL(path, import.meta.url);
+    const compiled = ts.transpileModule(readFileSync(route, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+    const exported = {};
+    runInNewContext(compiled, {
+      exports: exported,
+      require: (name: string) => { assert.ok(name in dependencies, `unexpected dependency ${name}`); return dependencies[name]; },
+      Response, URL, Date, Buffer, performance,
+      console: { info: () => undefined, error: (...args: unknown[]) => { errors.push(args); } },
+    });
+    return exported as T;
+  }
+  type Route = { POST: (request: Request) => Promise<Response> };
+  if (product === "flight") {
+    const handler = loadModule("./handler.ts");
+    dependencies["./handler"] = handler;
+    dependencies["../search/handler"] = handler;
+  }
+  const exported = loadModule<Route>(product === "flight" ? "./route.ts" : "../../hotels/search/route.ts");
+  const nearby = product === "flight" ? loadModule<Route>("../nearby-fare/route.ts") : undefined;
   const criteria = product === "flight"
     ? { origin: "BOS", destination: "JFK", departureDate: "2099-05-01", tripType: "one-way", adults: 1 }
     : { destination: "London", checkIn: "2099-05-01", checkOut: "2099-05-02", rooms: 1, guests: 1 };
   if (product === "hotel" && options.currency) Object.assign(criteria, { currency: options.currency });
   return {
-    deferred, histories, providerCalls, providerCriteria, errors, criteria,
+    deferred, histories, providerCalls, providerCriteria, errors, criteria, analyticsEvents, rates,
     lookups: () => identityLookups,
-    post: () => exported.POST!(new Request(`https://staging.kurioticket.com/api/${product}s/search`, {
-      method: "POST", headers: { "content-type": "application/json", "x-search-request-id": requestId }, body: JSON.stringify(criteria),
+    post: (headers: Record<string, string> = {}) => exported.POST(new Request(`https://staging.kurioticket.com/api/${product}s/search`, {
+      method: "POST", headers: { "content-type": "application/json", "x-search-request-id": requestId, ...headers }, body: JSON.stringify(criteria),
+    })),
+    postNearby: (day: number) => nearby!.POST(new Request("https://staging.kurioticket.com/api/flights/nearby-fare", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-search-request-id": requestId },
+      body: JSON.stringify({ ...criteria, departureDate: `2099-05-${String(day).padStart(2, "0")}`, searchPurpose: "customer" }),
     })),
   };
 }
@@ -107,6 +151,19 @@ for (const product of ["flight", "hotel"] as const) {
     assert.equal(fixture.histories[0].userId, null);
     assert.equal(fixture.histories[0].visitorId, null);
     assert.equal(fixture.histories[0].status, "FAILED");
+  });
+
+  test(`${product} records a fresh non-consented guest session without a visitor identity`, async () => {
+    const fixture = routeFixture(product, { anonymous: true, operationalGuest: true });
+    const response = await fixture.post();
+    assert.equal(response.headers.get("X-Synthetic-Operational-Session"), "issued");
+    await fixture.deferred[0]();
+    assert.equal(fixture.histories[0].userId, null);
+    assert.equal(fixture.histories[0].visitorId, null);
+    assert.equal((fixture.histories[0].query as Record<string, unknown>).operationalSessionId,
+      "38d77b62-f43d-40d5-9597-a6ff76f02c28");
+    assert.equal((fixture.histories[0].query as Record<string, unknown>).operationalSessionExpiresAtMs, Date.parse("2099-05-01"));
+    assert.ok(!JSON.stringify(fixture.histories).includes("synthetic-test-only"));
   });
 
   test(`${product} optional failure-history storage errors leave the response and deferred task safe`, async () => {
@@ -152,4 +209,131 @@ test("hotel display currency is recorded but never reaches provider criteria on 
   assert.equal((fixture.providerCriteria[0] as { currency?: string }).currency, undefined);
   await fixture.deferred[0]();
   assert.equal((fixture.histories[0].query as { currency?: string }).currency, "EUR");
+});
+
+for (const [applicationSource, anonymous] of [["WEB", false], ["IOS", false], ["ANDROID", false], ["UNKNOWN", true]] as const) {
+  test(`${applicationSource} records one customer flight search for nine automatic fare lookups`, async () => {
+    const fixture = routeFixture("flight", { available: true, withOffers: true, applicationSource, anonymous });
+    const primary = await fixture.post({ "x-search-purpose": "nearby-fare" });
+    assert.equal(primary.status, 200);
+    assert.equal((await primary.json()).results[0].id, "actionable-offer");
+    const childIds = await Promise.all(Array.from({ length: 9 }, async (_, index) => {
+      const response = await fixture.postNearby(index + 2);
+      assert.equal(response.status, 200);
+      const body = await response.json();
+      assert.deepEqual(body.fares, [{ price: 199, currency: "USD" }]);
+      assert.equal(body.results, undefined);
+      return body.requestId as string;
+    }));
+    await Promise.all(fixture.deferred.map(run => run()));
+    assert.equal(fixture.histories.length, 1);
+    assert.equal(fixture.histories[0].requestId, requestId);
+    assert.equal(fixture.histories[0].userId, anonymous ? null : "verified-account");
+    assert.equal(fixture.histories[0].visitorId, anonymous ? null : "consented-visitor");
+    assert.equal(fixture.analyticsEvents.length, 1);
+    assert.equal(fixture.providerCalls.length, 10);
+    assert.deepEqual(fixture.providerCalls[0].metadata, { requestId, applicationSource });
+    assert.equal(new Set(childIds).size, 9);
+    for (const id of childIds) {
+      assert.notEqual(id, requestId);
+      assert.ok(fixture.providerCalls.some(call => call.metadata.requestId === id &&
+        call.metadata.searchPurpose === "nearby-fare" && call.metadata.applicationSource === applicationSource));
+    }
+    assert.equal(fixture.rates.length, 10);
+    for (const rate of fixture.rates) assert.deepEqual(rate, ["flight-search:192.0.2.1", 35, 60_000]);
+  });
+}
+
+test("a provider-unavailable nearby lookup preserves diagnostics without a failed customer search", async () => {
+  const fixture = routeFixture("flight");
+  const response = await fixture.postNearby(2);
+  assert.equal(response.status, 503);
+  const failure = await response.json();
+  await fixture.deferred[0]();
+  assert.deepEqual(fixture.histories, []);
+  assert.deepEqual(fixture.analyticsEvents, []);
+  assert.equal(fixture.providerCalls[0].status, "FAILED");
+  assert.equal(fixture.providerCalls[0].metadata.searchPurpose, "nearby-fare");
+  assert.equal(fixture.providerCalls[0].metadata.requestId, failure.requestId);
+});
+
+test("replaying a nearby request ID cannot attach its provider logs to a customer search", async () => {
+  const fixture = routeFixture("flight", { available: true });
+  const nearby = await fixture.postNearby(2);
+  const { requestId: nearbyId } = await nearby.json();
+  await fixture.post({ "x-search-request-id": nearbyId });
+  await Promise.all(fixture.deferred.map(run => run()));
+  assert.equal(fixture.histories.length, 1);
+  assert.notEqual(fixture.histories[0].requestId, nearbyId);
+  assert.equal(fixture.providerCalls.filter(call => call.metadata.requestId === nearbyId).length, 1);
+});
+
+test("nearby and primary flight requests share the rate limit and schedule no work when denied", async () => {
+  const fixture = routeFixture("flight", { rateLimited: true });
+  assert.equal((await fixture.post()).status, 429);
+  assert.equal((await fixture.postNearby(2)).status, 429);
+  assert.deepEqual(fixture.deferred, []);
+  assert.deepEqual(fixture.rates, Array.from({ length: 2 }, () => ["flight-search:192.0.2.1", 35, 60_000]));
+});
+
+for (const product of ["flight", "hotel"] as const) {
+  test(`${product} lets verified crawler execute one BOT search without any customer activity`, async () => {
+    const fixture = routeFixture(product, {
+      verifiedCrawler: "GOOGLEBOT", available: true, withOffers: true,
+      operationalGuest: true,
+    });
+    const response = await fixture.post({ "user-agent": "Googlebot/2.1" });
+    assert.equal(response.status, 200, "a verified bot search is not blocked");
+    assert.equal(response.headers.get("X-Synthetic-Operational-Session"), null);
+    if (product === "flight") {
+      for (let day = 2; day <= 10; day++) {
+        assert.equal((await fixture.postNearby(day)).status, 200);
+      }
+    }
+    await Promise.all(fixture.deferred.map(run => run()));
+    assert.equal(fixture.histories.length, 1, "one main search plus nine nearby fares is one BOT search");
+    const history = fixture.histories[0] as History & { applicationSource: string };
+    assert.equal(history.applicationSource, "BOT");
+    assert.equal(history.userId, null);
+    assert.equal(history.visitorId, null);
+    assert.equal((history.query as Record<string, unknown>).verifiedCrawler, "GOOGLEBOT");
+    assert.equal((history.query as Record<string, unknown>).operationalSessionId, undefined);
+    assert.equal(fixture.lookups(), 0, "bots never enter the user identity pipeline");
+    assert.deepEqual(fixture.analyticsEvents, [], "bot searches are not human engagement events");
+    assert.equal(fixture.providerCalls.length, product === "flight" ? 10 : 1);
+    assert.ok(fixture.providerCalls.every(call => call.metadata.applicationSource === "BOT"));
+  });
+}
+
+test("failed verified bot flight searches are counted once, but rate-limited requests are not", async () => {
+  const failed = routeFixture("flight", { verifiedCrawler: "BINGBOT" });
+  assert.equal((await failed.post()).status, 503);
+  await Promise.all(failed.deferred.map(run => run()));
+  assert.equal(failed.histories.length, 1);
+  assert.equal((failed.histories[0] as History & { applicationSource: string }).applicationSource, "BOT");
+  assert.equal(failed.histories[0].status, "FAILED");
+  const rateLimited = routeFixture("flight", { verifiedCrawler: "GOOGLEBOT", rateLimited: true });
+  assert.equal((await rateLimited.post()).status, 429);
+  assert.equal((await rateLimited.postNearby(2)).status, 429);
+  assert.deepEqual(rateLimited.histories, []);
+  assert.deepEqual(rateLimited.deferred, []);
+});
+
+test("PerplexityBot executes one search despite nine nearby fares, marked as declared and not DNS-verified", async () => {
+  const fixture = routeFixture("flight", {
+    declaredCrawler: "PERPLEXITYBOT", operationalGuest: true, available: true,
+    withOffers: true,
+  });
+  assert.equal((await fixture.post({ "user-agent": "PerplexityBot/1.0" })).status, 200);
+  for (let day = 2; day <= 10; day++) assert.equal((await fixture.postNearby(day)).status, 200);
+  await Promise.all(fixture.deferred.map(run => run()));
+  assert.equal(fixture.histories.length, 1);
+  const history = fixture.histories[0] as History & { applicationSource: string };
+  assert.equal(history.applicationSource, "BOT");
+  assert.equal((history.query as Record<string, unknown>).identifiedCrawler, "PERPLEXITYBOT");
+  assert.equal((history.query as Record<string, unknown>).crawlerEvidence, "DECLARED_USER_AGENT");
+  assert.equal((history.query as Record<string, unknown>).verifiedCrawler, undefined);
+  assert.equal(fixture.lookups(), 0);
+  assert.deepEqual(fixture.analyticsEvents, []);
+  assert.equal(fixture.providerCalls.length, 10);
 });

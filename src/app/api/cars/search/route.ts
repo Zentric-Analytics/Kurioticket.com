@@ -1,7 +1,9 @@
 import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
+import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { applicationMetadata } from "@/lib/application-source";
 import { after } from "next/server";
-import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
+import { attachOperationalSearchSession, prepareOperationalSearchSession, operationalSessionMetadata } from "@/lib/operationalSearchSession";
+import { identifySearchCrawler, searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { logProviderCall, logSearchHistory as persistSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
@@ -43,17 +45,22 @@ export async function POST(request: Request) {
   const projectHistory=captureFinalSearchHistory();
   const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(input));
 
+  const crawler = await identifySearchCrawler(request);
   const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("CAR_SEARCH_ENABLED"))) return Response.json({ error: "Car search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503, headers: noStore });
   let body: unknown;
   try { body = await request.json(); } catch { return Response.json({ error: "Invalid JSON request body.", requestId }, { status: 400, headers: noStore }); }
   const search = canonicalSearch(body);
   if (!search) return Response.json({ error: "Invalid car search parameters.", requestId }, { status: 400, headers: noStore });
-  const operationalSession = prepareOperationalSearchSession(request);
-  const recordedSearch = { ...search, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) };
+  const operationalSession = crawler ? null : prepareOperationalSearchSession(request);
+  const recordedSearch = { ...search, ...searchNetworkObservation(request),
+    ...(operationalSession ? operationalSessionMetadata(operationalSession.reference) : {}),
+    ...searchCrawlerMetadata(crawler) };
   const started = performance.now();
   let activityIdentity: ReturnType<typeof resolveRequestActivityIdentity> | undefined;
-  const requestActivityIdentity = () => activityIdentity ??= resolveRequestActivityIdentity(request);
+  const requestActivityIdentity = () => activityIdentity ??= crawler
+    ? Promise.resolve({ userId: null, visitorId: null, applicationSource: "BOT" as const })
+    : resolveRequestActivityIdentity(request, undefined, operationalSession);
   const recordSearch = (resultCount: number, status: "SUCCESS" | "PARTIAL" | "FAILED") => {
     after(async () => {
       try {
@@ -64,10 +71,10 @@ export async function POST(request: Request) {
             origin: search.pickupLocation, destination: search.dropoffLocation,
             query: recordedSearch, resultCount, latencyMs: Math.max(0, Math.round(performance.now() - started)), status,
           }),
-          trackAnalyticsEvent({ ...application,
+          ...(crawler ? [] : [trackAnalyticsEvent({ ...application,
             userId, visitorId, type: "SEARCH", name: "car_search",
             metadata: { resultCount },
-          }),
+          })]),
         ]);
       } catch {
         // Optional analytics cannot affect results or disclose search criteria.

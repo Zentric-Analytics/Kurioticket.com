@@ -59,10 +59,16 @@ test("rolling activity windows accept strict UTC instants while legacy calendar 
 test("every tab exposes only its own recorded stages", () => {
   const stages = (tab: ActivityFilters["tab"], stage: ActivityFilters["stage"] = "all") =>
     [...allowedActivityStages({ ...filters, tab, stage })];
-  assert.deepEqual(stages("searches"), ["SEARCH_COMPLETED", "RESULTS_VIEWED"]);
-  assert.deepEqual(stages("selections"), ["OFFER_SELECTED"]);
-  assert.deepEqual(stages("journeys"), ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED"]);
+  assert.deepEqual(stages("searches"), ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED"]);
+  assert.deepEqual(stages("selections"), ["OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"]);
+  assert.deepEqual(stages("journeys"), ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED",
+    "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED"]);
   assert.deepEqual(stages("handoffs"), ["PROVIDER_HANDOFF_STARTED"]);
+  assert.deepEqual(stages("interactions"), ["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "ACCOUNT_ACTIVITY"]);
+  assert.deepEqual(stages("interactions", "RESULT_SHARED"), ["RESULT_SHARED"]);
+  assert.deepEqual(stages("interactions", "PROVIDER_HANDOFF_STARTED"), []);
+  assert.deepEqual(stages("journeys", "ACCOUNT_ACTIVITY"), []);
+  assert.equal(parseActivityFilters({ tab: "interactions", stage: "RESULT_SAVED", product: "HOTEL" }).ok, true);
   assert.deepEqual(stages("searches", "OFFER_SELECTED"), []);
   assert.ok(stages("all").includes("ACCOUNT_ACTIVITY"));
   assert.ok(!stages("selections").includes("ACCOUNT_ACTIVITY"));
@@ -319,7 +325,11 @@ test("contiguous journey grouping preserves interleaved event chronology", () =>
 test("User Activity removes redundant journey navigation and related records but keeps handoff filters", () => {
   const source = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx","utf8");
   assert.match(source, /value: "handoffs", label: "Provider handoffs"/);
-  assert.match(source, /if \(raw\.tab === "journeys"\) delete raw\.tab/);
+  assert.match(source, /normalizeUserActivityQuery/);
+  const helper = readFileSync("src/lib/adminActivityDateQuery.ts","utf8");
+  assert.match(helper, /if \(raw\.tab === "journeys"\) delete raw\.tab/);
   assert.match(source, /data-testid="activity-body-card"/);
+  assert.match(source, /<AdminActivityOverview/);
+  assert.doesNotMatch(source, /<ActivityTimeline/);
   assert.doesNotMatch(source, /value: "journeys", label: "Journeys"|Related records|const related =|searchesHref|journeysHref/);
 });

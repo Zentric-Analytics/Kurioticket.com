@@ -96,6 +96,14 @@ export function summarizePlatformHealthAttention(data: PlatformOperations, appli
     }
   }
 
+  if (activity && activity.searches.applications.UNKNOWN.total > 0) {
+    gaps.push({
+      key: "unverified-search-source", label: "Unverified search sources", state: "UNKNOWN",
+      detail: `${activity.searches.applications.UNKNOWN.total.toLocaleString()} search record(s) lack verified platform proof; do not assume they are crawlers. Investigate their origin.`,
+      href: searchInvestigationHref(data.window, "UNKNOWN"), scope: "Shared service",
+    });
+  }
+
   const failedJobs = data.scheduledJobs.runs?.filter(run => run.outcome === "FAILED" || run.outcome === "DEGRADED") ?? [];
   if (failedJobs.length) {
     issues.push({

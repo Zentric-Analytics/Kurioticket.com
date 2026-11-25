@@ -1,4 +1,5 @@
 import type React from "react";
+import { activityJourneyReturnHref } from "./adminActivityJourneyNavigation";
 
 import {
   Activity,
@@ -13,6 +14,7 @@ import {
   Mail,
   Search,
   Settings,
+  MonitorSmartphone,
   Users,
   UserCheck,
 } from "lucide-react";
@@ -41,6 +43,9 @@ export const adminNavigation: AdminNavDefinition[] = [
   {href:"/admin/provider-management",label:"Provider Management",icon:Activity,roles:["ADMIN"],section:"readiness",description:"Control display-only sandbox inventory across the production platform."},
   { href: "/admin", label: "Overview", icon: LayoutDashboard, roles: ["ADMIN"], section: "operations", description: "Operations dashboard and platform health." },
   { href: "/admin/users", label: "Users", icon: Users, roles: ["ADMIN"], section: "operations", description: "Manage customer accounts, roles and status." },
+  { href: "/admin/users/online", parentHref: "/admin/users", label: "Online Users", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Review verified current account and guest presence across platforms." },
+  { href: "/admin/users/devices", parentHref: "/admin/users", label: "Device & Access", icon: MonitorSmartphone, roles: ["ADMIN"], section: "operations", description: "Find registered users and their recorded device sessions." },
+  { href: "/admin/users/pages", parentHref: "/admin/users", label: "Pages Visited", icon: FileText, roles: ["ADMIN"], section: "operations", description: "Find registered users and consented guests with recorded page visits." },
   { href: "/admin/providers", label: "Providers", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Monitor provider configuration and health." },
   { href: "/admin/searches/activity", label: "Search Activity", icon: Search, roles: ["ADMIN"], section: "operations", description: "Review platform-wide search records, outcomes, and diagnostics." },
   { href: "/admin/confirmed-trips", label: "Trips", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Monitor provider-confirmed trips and their flight-status readiness." },
@@ -57,11 +62,11 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/account-deletions", parentHref: "/admin/support", label: "Deletion Requests", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Review account deletion request lifecycles." },
   { href: "/admin/logs", parentHref: "/admin/system", label: "Audit Logs", icon: BookOpen, roles: ["ADMIN"], section: "controls", description: "Review administrative and security-sensitive actions." },
   { href: "/admin/system", label: "System", icon: LockKeyhole, roles: ["ADMIN"], section: "controls", description: "Review safe runtime health and deployment configuration status." },
-  { href: "/admin/platform-health", label: "Platform Health", icon: Activity, roles: ["ADMIN"], section: "controls", description: "Combined and application-specific operational observations and shared service health." },
+  { href: "/admin/platform-health", label: "Platforms", icon: MonitorSmartphone, roles: ["ADMIN"], section: "controls", description: "Platform Health, online presence, mobile app distribution and operational diagnostics." },
   { href: "/admin/system/cms-health", parentHref: "/admin/system", label: "CMS Health", icon: FileText, roles: ["ADMIN"], section: "controls", description: "Monitor content integrity, fallback policy and publishing health." },
   { href: "/admin/email-delivery", parentHref: "/admin/system", label: "Email Delivery", icon: Mail, roles: ["ADMIN"], section: "controls", description: "Monitor transactional email delivery health and test sending readiness." },
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls", description: "Manage authoritative persisted platform controls." },
-  { href: "/admin/journeys", parentHref: "/admin/users", label: "Visitor Journeys", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Inspect recorded consented journey events." },
+  { href: "/admin/platforms/devices", parentHref: "/admin/platform-health", label: "Platform Metrics", icon: MonitorSmartphone, roles: ["ADMIN"], section: "controls", description: "Platform checks, live online presence, mobile app reporting and aggregate account sessions." },
   { href: "/admin/redirects", parentHref: "/admin/searches/activity", label: "Provider Handoffs", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Investigate verified outbound provider handoffs." },
   { href: "/admin/referral-attribution", parentHref: "/admin/providers", label: "Referral Attribution", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Review provider referral-attribution reporting." },
 ];
@@ -107,7 +112,7 @@ export function getAdminHeaderGroups(role: AdminRole, includePreviewTesters = fa
 /**
  * Each secondary destination has one parent workspace. These are page-level
  * navigation groups; none of these links are repeated in the global header.
- * Keep the routes themselves unchanged for bookmarks and deep links.
+ * Keep legacy URLs working through explicit redirects for bookmarks and deep links.
  */
 const workspaceSections: ReadonlyArray<{
   label: string;
@@ -119,7 +124,17 @@ const workspaceSections: ReadonlyArray<{
     paths: ["/admin/users", "/admin/journeys"],
     links: [
       { href: "/admin/users", label: "Users Directory" },
-      { href: "/admin/journeys", label: "Visitor Journeys" },
+      { href: "/admin/users/online", label: "Online Users" },
+      { href: "/admin/users/devices", label: "Device & Access" },
+      { href: "/admin/users/pages", label: "Pages Visited" },
+    ],
+  },
+  {
+    label: "Platforms",
+    paths: ["/admin/platform-health", "/admin/platforms"],
+    links: [
+      { href: "/admin/platform-health", label: "Platform Health" },
+      { href: "/admin/platforms/devices", label: "Platform Metrics" },
     ],
   },
   {
@@ -189,11 +204,23 @@ const workspaceSections: ReadonlyArray<{
  * Highlight exactly one section at a time, including legacy search detail URLs.
  * Providers renders its query-driven Attribution tab locally on the landing page.
  */
-export function isAdminWorkspaceSectionActive(pathname: string, href: string): boolean {
+export function isAdminWorkspaceSectionActive(pathname: string, href: string, activityReturn?: string | null): boolean {
   const destination = href.split("?")[0];
   if (href.includes("?")) return pathname === "/admin/referral-attribution";
   if (destination === "/admin/searches/activity"
     && /^\/admin\/searches\/(?!activity(?:\/|$))[^/]+\/?$/.test(pathname)) return true;
+  // The same history route is reachable from both global directories and Activity.
+  // A validated same-identity Activity return keeps the Users Directory selected.
+  const history = /^\/admin\/users\/(?:user|guest)\/[^/]+\/(devices|pages)\/?$/.exec(pathname);
+  if (history && ["/admin/users", "/admin/users/devices", "/admin/users/pages"].includes(destination)) {
+    const activityPath = pathname.replace(/\/(devices|pages)\/?$/, "/activity");
+    const returnPath = activityJourneyReturnHref(activityReturn)?.split("?")[0];
+    return destination === (returnPath === activityPath ? "/admin/users" : "/admin/users/" + history[1]);
+  }
+  // Only platform-wide monitoring belongs to the separate Platforms workspace.
+  if (destination === "/admin/users") return (pathname === destination
+    || pathname === "/admin/journeys" || pathname.startsWith("/admin/journeys/")
+    || /^\/admin\/users\/(?:user|guest)\/[^/]+(?:\/.*)?$/.test(pathname));
   if (destination === "/admin/providers" || destination === "/admin/content"
     || destination === "/admin/system") return pathname === destination;
   if (destination === "/admin/confirmed-trips") {

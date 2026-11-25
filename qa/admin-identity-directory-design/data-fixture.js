@@ -2,8 +2,8 @@
 const day = 86_400_000;
 const pivot = Date.parse("2026-10-22T15:00:00.000Z");
 const users = [
-  { id: "qa-admin-001", name: "Alana Example", email: "alana@example.invalid", role: "ADMIN", status: "ACTIVE", createdAt: new Date(pivot - 2 * day) },
-  { id: "qa-support-001", name: "Zara Example", email: "zara@example.invalid", role: "SUPPORT", status: "ACTIVE", createdAt: new Date(pivot - 15 * day) },
+  { id: "qa-admin-001", name: "Alana Example", email: "alana@example.invalid", role: "ADMIN", status: "ACTIVE", createdAt: new Date(pivot - 2 * day), lastSeenAt: new Date(pivot + 2 * 3_600_000) },
+  { id: "qa-support-001", name: "Zara Example", email: "zara@example.invalid", role: "SUPPORT", status: "ACTIVE", createdAt: new Date(pivot - 15 * day), lastSeenAt: new Date(pivot + 3_600_000) },
 ];
 const guests = Array.from({ length: 28 }, (_, index) => ({
   id: "qa-guest-" + String(index + 1).padStart(3, "0"),
@@ -14,8 +14,20 @@ let filteredUsers = users;
 let filteredGuests = guests;
 
 function matchSearch(where, record) {
-  const term = where?.OR?.[0]?.email?.contains || where?.OR?.[0]?.id?.contains || where?.id?.contains;
-  return !term || [record.name, record.email, record.id].some(value => (value || "").toLowerCase().includes(String(term).toLowerCase()));
+  // The live Users query groups creation/session/search activity eligibility
+  // and name/email/ID search in separate AND conditions. This synthetic
+  // fixture does not emulate temporal database activity, but it must honor
+  // the actual search predicate so browser QA still checks Apply correctly.
+  const searchGroup = [where, ...(Array.isArray(where?.AND) ? where.AND : [])]
+    .find(group => Array.isArray(group?.OR) && group.OR.some(condition =>
+      condition.email?.contains || condition.name?.contains || condition.id?.contains));
+  const search = searchGroup?.OR ?? [];
+  const term = search.find(condition => condition.email?.contains)?.email?.contains
+    ?? search.find(condition => condition.name?.contains)?.name?.contains
+    ?? search.find(condition => condition.id?.contains)?.id?.contains
+    ?? where?.id?.contains;
+  return !term || [record.name, record.email, record.id].some(value =>
+    (value || "").toLowerCase().includes(String(term).toLowerCase()));
 }
 const db = {
   user: {
@@ -29,6 +41,24 @@ const db = {
       return users.filter(user => where.id.in.includes(user.id) && matchSearch(where, user));
     },
   },
+  // Synthetic observations cover newer account sessions and a distinct
+  // account search. No guest identity is merged into these records.
+  accountSession: {
+    async groupBy({ where }) {
+      return where.userId.in.includes("qa-admin-001")
+        ? [{ userId: "qa-admin-001", _max: { lastSeenAt: new Date(pivot + 1000) } }]
+        : [];
+    },
+  },
+  searchHistory: {
+    async groupBy({ where }) {
+      return where.userId.in.includes("qa-support-001")
+        ? [{ userId: "qa-support-001", _max: { createdAt: new Date(pivot + 2000) } }]
+        : [];
+    },
+  },
+  redirectLog: { async groupBy() { return []; } },
+  analyticsEvent: { async groupBy() { return []; } },
   visitor: {
     async count({ where }) {
       filteredGuests = guests.filter(guest => matchSearch(where, guest));
@@ -40,6 +70,20 @@ const db = {
   },
   async $queryRaw(sql) {
     const statement = sql.strings.join("?");
+    // The new population read is one statement snapshot over durable records.
+    // Keep fixture counts independent of prior directory-filtered queries.
+    if (statement.includes('SELECT accounts."registered"')) {
+      const dates = sql.values.filter(value => value instanceof Date);
+      const from = dates[0] ?? null;
+      const to = dates.length > 1 ? dates[1] : null;
+      const inWindow = recordDate => !from || (recordDate >= from && (!to || recordDate < to));
+      return [{
+        registered: BigInt(users.length),
+        newRegistrations: BigInt(users.filter(user => inWindow(user.createdAt)).length),
+        guests: BigInt(guests.length),
+        newGuests: BigInt(guests.filter(guest => inWindow(guest.firstSeenAt)).length),
+      }];
+    }
     // The isolated fixture has no essential-only operational sessions.
     // The production directory returns counts and timestamps in one read.
     if (statement.includes('COUNT(*)::bigint AS "count"')) return [{ count: 0n }];
@@ -58,14 +102,26 @@ const db = {
         return name(b).localeCompare(name(a)) || created(b) - created(a) || a.record.id.localeCompare(b.record.id);
       }
       if (statement.includes('ORDER BY "joinedAt" ASC')) return created(a) - created(b) || a.record.id.localeCompare(b.record.id);
+      if (statement.includes('ORDER BY "lastSeenAt" DESC NULLS LAST')) {
+        const latest = item => item.record.lastSeenAt ? +item.record.lastSeenAt : Number.NEGATIVE_INFINITY;
+        return latest(b) - latest(a) || created(b) - created(a) ||
+          a.kind.localeCompare(b.kind) || b.record.id.localeCompare(a.record.id);
+      }
       return created(b) - created(a) || a.record.id.localeCompare(b.record.id);
     });
+    if (!all.length && statement.includes("operational_summary AS")) {
+      return [{ id: null, kind: null, firstSeenAt: null, lastSeenAt: null,
+        operationalGuestCount: 0n, operationalAllTimeCount: 0n, operationalNewCount: 0n }];
+    }
     const hasPage = statement.includes("LIMIT");
     const limit = hasPage ? sql.values.at(-2) : all.length;
     const offset = hasPage ? sql.values.at(-1) : 0;
     return all.slice(offset, offset + limit).map(item => ({
       id: item.record.id, kind: item.kind,
-      firstSeenAt: null, lastSeenAt: null, operationalGuestCount: 0n,
+      firstSeenAt: item.kind === "guest" ? item.record.firstSeenAt : null,
+      lastSeenAt: item.record.lastSeenAt ?? null, guestSource: item.kind === "guest" ? "visitor" : null,
+      guestStatus: item.kind === "guest" ? "ACTIVE" : null, operationalGuestCount: 0n,
+      operationalAllTimeCount: 0n, operationalNewCount: 0n,
     }));
   },
 };

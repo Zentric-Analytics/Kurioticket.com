@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Alert, Image, LayoutAnimation, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CarFront, ChevronRight, IdCard, Info, MapPin, ShieldCheck, Wallet, X } from "lucide-react-native";
+import { journeyEvents } from "../privacy/journeyEvents";
 import { SvgUri } from "react-native-svg";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import type { CarResult } from "../../api/travelApi";
@@ -61,13 +62,14 @@ function RateSectionHeading({
 const MIN_VIEW_DEAL_ACTION_WIDTH = 88;
 const INITIAL_VISIBLE_OFFER_COUNT = 3;
 export function NativeCarResultOfferPicker({
-  result, displayCurrency, rates, plan, priceAlertsAvailable,
+  result, displayCurrency, rates, plan, priceAlertsAvailable, journeyRequestId,
 }: {
   result: CarResult;
   displayCurrency: string;
   rates: ExchangeRates;
   plan?: SearchPlan;
   priceAlertsAvailable: boolean;
+  journeyRequestId?: string | null;
 }) {
   const { theme } = useAppTheme();
   const [rowWidth, setRowWidth] = useState(0);
@@ -96,8 +98,11 @@ export function NativeCarResultOfferPicker({
 
   // Keep Rate details mounted while the provider browser is presented.
   // Dismissing the sheet here returns users to Cars results when Safari closes.
-  const continueRateDeal = (url: string) => {
+  const continueRateDeal = (offerId: string, providerName: string, url: string) => {
     if (dealOpeningRef.current) return;
+    // This records the actual provider selection, not a rate-details preview.
+    // The shared coordinator enforces consent, search ownership and deduplication.
+    journeyEvents.offerSelected(journeyRequestId ?? undefined, `car:${result.id}:${offerId}`, providerName, "/car-results");
     void openProviderInApp(url);
   };
   const choices = nativeCarResultDealChoices(result);
@@ -151,7 +156,7 @@ export function NativeCarResultOfferPicker({
             accessibilityLabel={"View deal from " + providerName}
             accessibilityState={{ disabled: !bookingUrl }}
             disabled={!bookingUrl}
-            onPress={bookingUrl ? () => void openProviderInApp(bookingUrl) : undefined}
+            onPress={bookingUrl ? () => continueRateDeal(offer.id, providerName, bookingUrl) : undefined}
             style={styles.action}
           >
             <Text style={[styles.link, { color: actionColor }]}>View deal</Text>
@@ -197,7 +202,7 @@ export function NativeCarResultOfferPicker({
             <View style={styles.sellerRow}>
               <Text numberOfLines={2} style={[styles.seller, { color: theme.textSecondary }]}>Booking provider · {selectedChoice?.providerName ?? ""}</Text>
               {selectedChoice && plan ? (
-                <NativeCarPriceAlert key={result.id + ":" + selectedChoice.key} plan={plan} resultId={result.id} offer={selectedChoice.offer} available={priceAlertsAvailable} onFeedback={setPriceAlertFeedback} />
+                <NativeCarPriceAlert key={result.id + ":" + selectedChoice.key} plan={plan} resultId={result.id} offer={selectedChoice.offer} available={priceAlertsAvailable} journeyRequestId={journeyRequestId} onFeedback={setPriceAlertFeedback} />
               ) : null}
             </View>
           </View>
@@ -236,7 +241,7 @@ export function NativeCarResultOfferPicker({
               accessibilityLabel={selectedChoice ? "View deal from " + selectedChoice.providerName : "View deal"}
               accessibilityState={{ disabled: !selectedRateBookingUrl }}
               disabled={!selectedRateBookingUrl}
-              onPress={selectedRateBookingUrl ? () => continueRateDeal(selectedRateBookingUrl) : undefined}
+              onPress={selectedRateBookingUrl && selectedChoice ? () => continueRateDeal(selectedChoice.offer.id, selectedChoice.providerName, selectedRateBookingUrl) : undefined}
               style={({ pressed }) => [
                 styles.sheetViewDeal,
                 !selectedRateBookingUrl && styles.sheetViewDealDisabled,

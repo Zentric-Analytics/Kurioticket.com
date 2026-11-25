@@ -79,10 +79,7 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
       <div className={caseColumnsClass}>
         <div className={caseMainClass}>
           <section aria-labelledby="support-conversation-heading" className="min-w-0">
-            <div className="flex items-center justify-between gap-3 border-b border-[#E7ECF5] pb-3">
-              <h2 id="support-conversation-heading" className="text-[14px] font-semibold leading-5 text-[#0F172A]">Conversation</h2>
-              <span className="shrink-0 text-[12px] text-[#64748B]">{ticket.messages.length} {ticket.messages.length === 1 ? "message" : "messages"}</span>
-            </div>
+            <h2 id="support-conversation-heading" className="border-b border-[#E7ECF5] pb-3 text-[14px] font-semibold leading-5 text-[#0F172A]">Conversation</h2>
             {ticket.messages.length === 0 ? (
               <p className="py-5 text-[13px] text-[#64748B]">No messages have been recorded for this ticket.</p>
             ) : (

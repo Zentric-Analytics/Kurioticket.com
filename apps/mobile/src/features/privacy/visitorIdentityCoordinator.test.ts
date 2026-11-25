@@ -18,13 +18,15 @@ function harness(initial: unknown = null) {
   const calls: { operation: string; token: string | null; userId: string | null }[] = [];
   const controls = {
     failWithdrawal: false,
+    failRead: false,
     failWrite: false,
     failMerge: false,
     waitGrant: null as ReturnType<typeof deferred<void>> | null,
     waitMerge: null as ReturnType<typeof deferred<void>> | null,
   };
-  const coordinator = new VisitorIdentityCoordinator({
-    read: async () => saved,
+  const restart = (reviewVersion?: string) => new VisitorIdentityCoordinator({
+    reviewVersion,
+    read: async () => { if (controls.failRead) throw new Error("storage temporarily unavailable"); return saved; },
     write: async value => { if (controls.failWrite) throw new Error("storage unavailable"); saved = structuredClone(value); },
     grant: async (token, session) => {
       calls.push({ operation: "grant", token, userId: session?.user.id ?? null });
@@ -52,7 +54,7 @@ function harness(initial: unknown = null) {
     },
     now: () => 0,
   });
-  return { coordinator, records, calls, controls, saved: () => saved as StoredVisitorIdentity };
+  return { coordinator: restart(), restart, records, calls, controls, saved: () => saved as StoredVisitorIdentity };
 }
 
 test("unknown and declined consent never create or attach a visitor", async () => {
@@ -292,4 +294,183 @@ test("malformed stored identifiers are discarded and a saved refusal never react
   assert.equal(state.visitorToken, null);
   assert.equal(state.userId, null);
   assert.deepEqual(state.pendingWithdrawals, [visitorToken(1)]);
+});
+
+test("already-consented first native searches reuse the verified account visitor after pending linkage", async () => {
+  // iOS and Android share this coordinator. Every native product search must
+  // capture the same authenticated/consented visitor as the server search row.
+  for (const path of ["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive"]) {
+    const h = harness({ choice: "granted", visitorToken: null, userId: null, pendingToken: null, pendingUserId: null, pendingWithdrawals: [] });
+    h.controls.waitGrant = deferred<void>();
+    const transition = h.coordinator.transition(user("native-account"));
+    await turn();
+    const requestHeaders = h.coordinator.headers(path, user("native-account"));
+    let settled = false;
+    void requestHeaders.then(() => { settled = true; });
+    await turn();
+    assert.equal(settled, false, path + " should await consented identity linkage briefly");
+    h.controls.waitGrant.resolve();
+    await transition;
+    assert.deepEqual(await requestHeaders, { "x-kt-visitor": visitorToken(1) }, path);
+    assert.equal(h.records.get(visitorToken(1))?.userId, "native-account");
+  }
+});
+
+test("a slow first native search does not block indefinitely or retroactively link unverified activity", async () => {
+  const h = harness({ choice: "granted", visitorToken: null, userId: null, pendingToken: null, pendingUserId: null, pendingWithdrawals: [] });
+  h.controls.waitGrant = deferred<void>();
+  const transition = h.coordinator.transition(user("native-account"));
+  await turn();
+  assert.deepEqual(await h.coordinator.headers("/api/cars/search", user("native-account")), {},
+    "after the short wait, travel continues without optional analytics if the visitor is unverified");
+  assert.equal(h.coordinator.trackingContext(), null);
+  h.controls.waitGrant.resolve();
+  await transition;
+  assert.deepEqual(await h.coordinator.headers("/api/cars/search", user("native-account")),
+    { "x-kt-visitor": visitorToken(1) }, "only a new search after linkage has the visitor");
+});
+
+test("an account switch during native visitor linkage cannot attach the previous account's visitor", async () => {
+  const h = harness({ choice: "granted", visitorToken: null, userId: null, pendingToken: null, pendingUserId: null, pendingWithdrawals: [] });
+  h.controls.waitGrant = deferred<void>();
+  const first = h.coordinator.transition(user("account-a"));
+  await turn();
+  const pending = h.coordinator.headers("/api/flights/search", user("account-a"));
+  await turn();
+  const switched = h.coordinator.transition(user("account-b"));
+  await turn();
+  h.controls.waitGrant.resolve();
+  await Promise.all([first, switched]);
+  assert.deepEqual(await pending, {}, "the stale request cannot use the new account's visitor");
+  assert.deepEqual(await h.coordinator.headers("/api/flights/search", user("account-b")),
+    { "x-kt-visitor": visitorToken(2) });
+});
+
+test("a declined or unknown visitor never waits for or attempts native analytics", async () => {
+  for (const choice of ["unknown", "declined"] as const) {
+    const h = harness({ choice, visitorToken: null, userId: null, pendingToken: null, pendingUserId: null, pendingWithdrawals: [] });
+    await h.coordinator.transition(user("native-account"));
+    for (const path of ["/api/flights/search", "/api/hotels/search", "/api/cars/search"]) {
+      assert.deepEqual(await h.coordinator.headers(path, user("native-account")), {});
+    }
+    assert.deepEqual(h.calls, []);
+  }
+});
+
+test("a returning consented guest restores the same identity after repeated native restarts", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  await h.coordinator.choose(true);
+  const original = h.saved().visitorToken;
+  assert.ok(original);
+  for (let visit = 0; visit < 3; visit += 1) {
+    const returning = h.restart();
+    await returning.transition(null);
+    assert.equal(returning.snapshot().choice, "granted");
+    assert.deepEqual(await returning.headers("/api/flights/search", null), { "x-kt-visitor": original });
+    assert.deepEqual(await returning.headers("/api/hotels/search", null), { "x-kt-visitor": original });
+    assert.deepEqual(await returning.headers("/api/cars/search", null), { "x-kt-visitor": original });
+    assert.equal(h.saved().visitorToken, original);
+  }
+  assert.equal(h.records.size, 1);
+  assert.equal(h.calls.filter(call => call.operation === "grant").length, 1);
+});
+
+test("temporary native identity storage failure cannot overwrite a returning guest or start analytics", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  await h.coordinator.choose(true);
+  const before = structuredClone(h.saved());
+  const returning = h.restart();
+  h.controls.failRead = true;
+  await returning.transition(null);
+  assert.equal(returning.snapshot().loaded, false);
+  assert.equal(returning.snapshot().error, true);
+  assert.deepEqual(await returning.headers("/api/flights/search", null), {});
+  await assert.rejects(returning.choose(true), /Unable to read existing analytics preferences/);
+  await assert.rejects(returning.choose(false), /Unable to read existing analytics preferences/);
+  assert.deepEqual(h.saved(), before);
+  assert.equal(h.calls.length, 1);
+  h.controls.failRead = false;
+  await returning.transition(null);
+  assert.equal(returning.snapshot().loaded, true);
+  assert.equal(returning.snapshot().error, false);
+  assert.equal(returning.snapshot().choice, "granted");
+  assert.deepEqual(await returning.headers("/api/cars/search", null), { "x-kt-visitor": before.visitorToken });
+  assert.equal(h.records.size, 1);
+  assert.equal(h.calls.length, 1);
+});
+
+test("recovering storage preserves a returning visitor's previous refusal", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  await h.coordinator.choose(false);
+  const returning = h.restart();
+  h.controls.failRead = true;
+  await returning.load();
+  assert.equal(returning.snapshot().loaded, false);
+  h.controls.failRead = false;
+  await returning.transition(null);
+  assert.equal(returning.snapshot().choice, "declined");
+  assert.deepEqual(await returning.headers("/api/redirect", null), {});
+  assert.deepEqual(h.calls, []);
+});
+
+test("existing testers review the new notice once without losing their consented guest identity", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  await h.coordinator.choose(true);
+  const original = h.saved().visitorToken;
+  const upgraded = h.restart("analytics-visitor-v2");
+  await upgraded.transition(null);
+  assert.equal(upgraded.snapshot().reviewRequired, true);
+  assert.equal(upgraded.snapshot().tracking, false);
+  assert.deepEqual(await upgraded.headers("/api/activity/page-views", null), {});
+  assert.equal(h.calls.filter(call => call.operation === "grant").length, 1);
+  await upgraded.choose(true);
+  assert.equal(h.saved().reviewVersion, "analytics-visitor-v2");
+  assert.equal(h.saved().confirmedReviewVersion, "analytics-visitor-v2");
+  assert.equal(h.saved().visitorToken, original);
+  assert.equal(h.records.size, 1);
+  assert.deepEqual(await upgraded.headers("/api/activity/page-views", null), { "x-kt-visitor": original });
+  const returning = h.restart("analytics-visitor-v2");
+  await returning.transition(null);
+  assert.equal(returning.snapshot().reviewRequired, false);
+  assert.equal(returning.snapshot().tracking, true);
+  assert.equal(h.records.size, 1);
+});
+
+test("prior refusal remains off during the review and a saved refusal is not repeatedly prompted", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  await h.coordinator.choose(false);
+  const upgraded = h.restart("analytics-visitor-v2");
+  await upgraded.transition(null);
+  assert.equal(upgraded.snapshot().choice, "declined");
+  assert.equal(upgraded.snapshot().reviewRequired, true);
+  assert.deepEqual(h.calls, []);
+  await upgraded.choose(false);
+  const returning = h.restart("analytics-visitor-v2");
+  await returning.transition(null);
+  assert.equal(returning.snapshot().reviewRequired, false);
+  assert.deepEqual(await returning.headers("/api/activity/page-views", null), {});
+  assert.deepEqual(h.calls, []);
+});
+
+test("a failed review save cannot authorize page views or replace an existing token", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  await h.coordinator.choose(true);
+  const original = h.saved().visitorToken;
+  const upgraded = h.restart("analytics-visitor-v2");
+  await upgraded.transition(null);
+  h.controls.failWrite = true;
+  await assert.rejects(upgraded.choose(true), /Unable to save the analytics choice/);
+  assert.equal(upgraded.snapshot().reviewRequired, true);
+  assert.equal(upgraded.trackingContext(), null);
+  assert.equal(h.saved().visitorToken, original);
+  h.controls.failWrite = false;
+  await upgraded.choose(true);
+  assert.equal(h.saved().visitorToken, original);
+  assert.equal(upgraded.snapshot().tracking, true);
 });

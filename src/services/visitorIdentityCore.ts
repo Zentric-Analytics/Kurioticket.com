@@ -78,6 +78,14 @@ export function createVisitorIdentityService(getDatabase: () => VisitorIdentityD
         await lockVisitorCredential(tx, tokenHash);
         const visitor = await tx.visitor.findUnique({ where: { tokenHash }, select: identitySelect });
         if (visitor && hasConsent(visitor) && belongsToContext(visitor, input.userId ?? null)) {
+          // A returning visit belongs to the existing identity. Refresh its
+          // activity timestamp without changing firstSeenAt or counting a new grant.
+          const touched = await tx.visitor.updateMany({
+            where: { id: visitor.id, tokenHash, consentStatus: "GRANTED", trackingDisabledAt: null, ...contextWhere(input.userId ?? null) },
+            data: { lastSeenAt: new Date() },
+          });
+          // A stale or retired identity must not be reactivated by this request.
+          if (touched.count !== 1) throw new Error("Visitor identity changed.");
           // Repeated synchronisation is not a new grant. Record only an explicit policy change.
           if (input.policyVersion && input.policyVersion !== visitor.consentRecords[0]?.policyVersion) {
             await tx.visitorConsent.create({ data: { visitorId: visitor.id, purpose: "ANALYTICS", status: "GRANTED", policyVersion: input.policyVersion } });

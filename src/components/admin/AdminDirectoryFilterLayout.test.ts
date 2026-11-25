@@ -11,6 +11,12 @@ test("Users Directory places search, date, role, status, and Apply on one deskto
   assert.match(users, /data-testid="users-directory-filter-row"/);
   assert.match(users, /lg:grid-cols-\[minmax\(0,2fr\)_repeat\(3,minmax\(0,1fr\)\)_128px\]/);
   assert.match(users, /onClick=\{applyFilters\}/);
+  assert.match(users, /initialServerSync\.current = false;/);
+  assert.match(users, /if \(initialServerSync\.current\) \{/);
+  assert.match(users, /const appliedStateKey = JSON\.stringify\(/);
+  assert.match(users, /if \(appliedStateKey === lastAppliedStateKey\.current\) return;/);
+  assert.match(users, /lastAppliedStateKey\.current = appliedStateKey;/);
+  assert.match(users, /q: searchText\.trim\(\)\.slice\(0, 120\)/);
   assert.match(users, /type="button" onClick=\{applyFilters\}/);
   assert.match(users, /function onSearchSubmit\(event: FormEvent<HTMLFormElement>\) \{\s*\/\/ Enter must not submit a draft\.[\s\S]*?event\.preventDefault\(\)/);
   assert.doesNotMatch(users, /setTimeout|setInterval|router\.replace/);
@@ -21,7 +27,8 @@ test("Users Directory places search, date, role, status, and Apply on one deskto
   assert.match(users, /<nav aria-label="User types"/);
   assert.ok(users.indexOf('data-testid="users-directory-filter-row"') < users.indexOf('<nav aria-label="User types"'));
   assert.match(users, /tab === "GUEST"/);
-  assert.match(users, /Status not applicable/);
+  assert.match(users, /Guest status/);
+  assert.doesNotMatch(users, /Status not applicable/);
   assert.match(users, /name="sort" value=\{sort\}/);
   assert.match(users, /href=\{href\(\{ tab: item.value \}\)\}/);
 });

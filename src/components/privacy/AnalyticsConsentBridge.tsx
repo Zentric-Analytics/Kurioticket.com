@@ -1,12 +1,11 @@
 "use client";
-import Link from "next/link";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { X } from "lucide-react";
 
-import { Button } from "@/components/ui/Button";
+import { CookieConsentPresentation } from "./CookieConsentPresentation";
+import { isCookiePolicyFromPreferences } from "@/lib/cookieConsentCopy";
 import { isPublicWebsitePresenceRoute, websitePresenceHeartbeatMs } from "@/lib/website-presence";
 import {
   analyticsConsentStorageKey,
@@ -77,10 +76,11 @@ export function AnalyticsConsentBridge() {
 function WebsiteAnalyticsConsentBridge() {
   const { data: session, status } = useSession();
   const [choice, setChoice] = useState<AnalyticsConsentChoice>(null);
-  const [draftAnalytics, setDraftAnalytics] = useState(false);
+  // A new visitor may see a suggested On draft, but actual consent remains null
+  // until an explicit choice. Never persist or sync this draft as consent.
+  const [draftAnalytics, setDraftAnalytics] = useState(true);
   const [ready, setReady] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
   const [decisionPending, setDecisionPending] = useState(false);
   const [syncState, setSyncState] = useState<VisitorConsentSyncState>("idle");
   const choiceRef = useRef<AnalyticsConsentChoice>(null);
@@ -88,8 +88,6 @@ function WebsiteAnalyticsConsentBridge() {
   const decisionPendingRef = useRef(false);
   const revisionRef = useRef(0);
   const activeRef = useRef(false);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const returnFocusRef = useRef<HTMLElement | null>(null);
   const synchronizerRef = useRef<ReturnType<typeof createVisitorConsentSynchronizer> | null>(null);
 
   const accountKey = analyticsConsentAccountKey(status, session?.user);
@@ -115,9 +113,7 @@ function WebsiteAnalyticsConsentBridge() {
           if (!activeRef.current || !decisionPendingRef.current || confirmed.choice !== choiceRef.current) return;
           decisionPendingRef.current = false;
           setEditing(false);
-          setDismissed(true);
           setDecisionPending(false);
-          returnFocusRef.current?.focus();
         },
         exclusively: async (work) => {
           // Web Locks serialise cookie changes across tabs where supported. The
@@ -161,7 +157,7 @@ function WebsiteAnalyticsConsentBridge() {
         choiceRef.current = initialChoice;
         if (initialChoice) saveFailedRef.current = !saveChoice(initialChoice);
         setChoice(initialChoice);
-        setDraftAnalytics(initialChoice === "granted");
+        setDraftAnalytics(initialChoice !== "declined");
       }
       setReady(true);
     }
@@ -178,12 +174,10 @@ function WebsiteAnalyticsConsentBridge() {
       saveFailedRef.current = false;
       setChoice(nextChoice);
       setDraftAnalytics(nextChoice === "granted");
-      setDismissed(false);
     }
     function openSettings() {
-      returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       if (isDenied()) { choiceRef.current = "declined"; setChoice("declined"); }
-      setDraftAnalytics(choiceRef.current === "granted");
+      setDraftAnalytics(choiceRef.current !== "declined");
       setEditing(true);
     }
     window.addEventListener("storage", handleStorage);
@@ -249,24 +243,16 @@ function WebsiteAnalyticsConsentBridge() {
     };
   }, [retry, syncState]);
 
-  useEffect(() => {
-    if (editing && ready) titleRef.current?.focus();
-  }, [editing, ready]);
-
   const close = useCallback(() => {
-    decisionPendingRef.current = false;
     setEditing(false);
-    setDismissed(true);
-    setDecisionPending(false);
-    returnFocusRef.current?.focus();
+    setDraftAnalytics(choiceRef.current !== "declined");
   }, []);
 
-  useEffect(() => {
-    if (!editing) return;
-    function handleKey(event: KeyboardEvent) { if (event.key === "Escape") close(); }
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [editing, close]);
+  function openPreferences() {
+    if (isDenied()) { choiceRef.current = "declined"; setChoice("declined"); }
+    setDraftAnalytics(choiceRef.current !== "declined");
+    setEditing(true);
+  }
 
   function choose(nextChoice: Exclude<AnalyticsConsentChoice, null>) {
     revisionRef.current += 1;
@@ -278,72 +264,35 @@ function WebsiteAnalyticsConsentBridge() {
     saveFailedRef.current = !saveChoice(nextChoice);
     setChoice(nextChoice);
     setDraftAnalytics(nextChoice === "granted");
-    setDismissed(false);
+    setEditing(false);
     decisionPendingRef.current = true;
     setDecisionPending(true);
     void synchronizerRef.current!.sync({ choice: nextChoice, accountKey }, true);
   }
 
-  if (!ready || (!editing && !(choice === null && !dismissed) && !decisionPending)) return null;
+  // Keep first-visit decisions explicit, but permit policy access and avoid
+  // blocking essential services while an explicit decision is synchronising.
+  // A policy opened from preferences is read-only access, not a second consent
+  // decision. The original tab keeps its unsaved draft. Footer controls remain usable.
+  const readingPolicy = ready && typeof window !== "undefined" && isCookiePolicyFromPreferences(pathname, window.location.search);
+  const showBanner = choice === null && !decisionPending && !readingPolicy;
+  const isLegalPage = pathname === "/legal" || pathname?.startsWith("/legal/");
+  const modal = editing || (choice === null && !isLegalPage && !decisionPending);
+  if (!ready || (!editing && !showBanner && !decisionPending)) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/30 p-3 sm:p-6">
-      <section
-        role="dialog"
-        aria-modal="false"
-        aria-labelledby="analytics-consent-title"
-        className="flex max-h-[min(86dvh,670px)] w-full max-w-[520px] flex-col overflow-hidden rounded-xl border border-border bg-surface text-navy shadow-xl"
-      >
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <h2 id="analytics-consent-title" ref={titleRef} tabIndex={-1} className="text-lg font-semibold outline-none">Cookie preferences</h2>
-          <button type="button" aria-label="Close cookie preferences" onClick={close} className="focus-ring rounded-md p-1.5"><X className="size-4" aria-hidden="true" /></button>
-        </div>
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
-          <p className="text-sm leading-6 text-slate-600">
-            Essential cookies are always active for security, requested searches, operational search records and provider handoff continuity. Optional analytics measures engagement and usage patterns across visits and can be switched off.
-          </p>
-          <Button type="button" variant="primary" size="sm" className="w-full" onClick={() => choose("granted")}>Accept all optional cookies</Button>
-          <h3 className="text-sm font-semibold">Manage consent preferences</h3>
-          <details className="border-b border-slate-200 pb-3">
-            <summary className="flex cursor-pointer items-center justify-between gap-3 py-2 text-sm font-semibold">
-              <span>Essential cookies</span>
-              <span className="text-xs font-medium text-slate-500">Always active</span>
-            </summary>
-            <p className="pt-2 text-sm leading-5 text-slate-600">
-              Always active for secure sign-in, requested flight, hotel and car searches, operational search records, troubleshooting and the necessary connection between a search and a provider handoff. The operational credential is short-lived; retained records follow our data-retention policy. This does not enable optional behavioural analytics.
-            </p>
-          </details>
-          <details className="border-b border-slate-200 pb-3">
-            <summary className="flex cursor-pointer items-center justify-between gap-3 py-2 text-sm font-semibold">
-              <span>Analytics cookies</span>
-              <span className="text-xs font-medium text-slate-500">Optional</span>
-            </summary>
-            <p className="pt-2 text-sm leading-5 text-slate-600">
-              With your permission, measures visitor engagement, browsing patterns and feature usage across visits to improve Kurioticket. Turning this off does not stop necessary searches or operational records.
-            </p>
-          </details>
-          <label className="flex cursor-pointer items-center justify-between gap-3 text-sm font-medium">
-            <span>Allow optional analytics</span>
-            <input
-              type="checkbox"
-              checked={draftAnalytics}
-              onChange={event => setDraftAnalytics(event.target.checked)}
-              className="h-5 w-5 accent-violet-700"
-            />
-          </label>
-          {editing && syncState === "saved" ? <p className="text-xs text-slate-600">Analytics: {choice === "granted" ? "allowed" : "disabled"}.</p> : null}
-          <p role="status" aria-live="polite" className="text-sm text-slate-600">
-            {syncState === "saving" ? "Saving your choice…" : syncState === "error" ? "We could not update your preferences. Please retry." : null}
-          </p>
-        </div>
-        <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-5 py-4">
-          <Link href="/legal/cookie-policy" className="text-xs font-medium text-violet-700 underline underline-offset-2">Cookie policy</Link>
-          <div className="flex gap-2">
-            {syncState === "error" ? <Button type="button" variant="secondary" size="sm" onClick={retry}>Retry</Button> : null}
-            <Button type="button" variant="primary" size="sm" onClick={() => choose(draftAnalytics ? "granted" : "declined")}>Save preferences</Button>
-          </div>
-        </div>
-      </section>
-    </div>
+    <CookieConsentPresentation
+      showBanner={showBanner}
+      editing={editing}
+      modal={modal}
+      draftAnalytics={draftAnalytics}
+      decisionPending={decisionPending}
+      syncState={syncState}
+      onOpen={openPreferences}
+      onClose={close}
+      onDraftChange={setDraftAnalytics}
+      onChoose={choose}
+      onRetry={retry}
+    />
   );
 }

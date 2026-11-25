@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { searchDetailDuration, searchDetailHeadline, searchDetailIdentityLabel, searchDetailOutcomeLabel, searchDetailDiagnosisSummary, searchDetailNextChecks } from "./adminSearchDetailPresentation";
+import { searchDetailDuration, searchDetailHeadline, searchDetailIdentityLabel, searchDetailOutcomeLabel, searchDetailDiagnosisSummary, searchDetailNextChecks, searchDetailCrawlerName, searchDetailCrawlerEvidenceLabel } from "./adminSearchDetailPresentation";
 
 test("search detail titles reflect product and available locations", () => {
   assert.equal(searchDetailHeadline({ product: "FLIGHT", origin: "LOS", destination: "LHR" }), "Flight · LOS → LHR");
@@ -24,4 +24,18 @@ test("diagnosis does not repeat an exact provider reason", () => {
   assert.equal(searchDetailDiagnosisSummary({ reason: "Authentication / configuration", providers: providers.map(p => ({ ...p, retryable: false, latencyMs: null, observedAt: "2026-10-27T00:00:00Z" })) }), null);
   assert.equal(searchDetailDiagnosisSummary({ reason: "No available provider completed the search successfully.", providers: providers.map(p => ({ ...p, retryable: false, latencyMs: null, observedAt: "2026-10-27T00:00:00Z" })) }), "No available provider completed the search successfully.");
   assert.deepEqual(searchDetailNextChecks([providers[0], providers[0]]), [{ provider: "KAYAK sandbox", guidance: "Check the provider integration's authentication and configuration." }]);
+});
+
+test("crawler labels distinguish verified DNS, declared agents and unavailable evidence", () => {
+  assert.equal(searchDetailCrawlerName("GOOGLEBOT"), "Googlebot");
+  assert.equal(searchDetailCrawlerName("BINGBOT"), "Bingbot");
+  assert.equal(searchDetailCrawlerName("PERPLEXITYBOT"), "PerplexityBot");
+  assert.equal(searchDetailCrawlerName("PERPLEXITY_USER"), "Perplexity-User");
+  assert.equal(searchDetailCrawlerName("META_WEBINDEXER"), "Meta Web Indexer");
+  assert.equal(searchDetailCrawlerName("GPTBOT"), "GPTBot");
+  assert.equal(searchDetailCrawlerName("SOMENEWBOT"), "SOMENEWBOT");
+  assert.equal(searchDetailCrawlerName(null), "Unknown bot");
+  assert.equal(searchDetailCrawlerEvidenceLabel("VERIFIED_DNS"), "DNS verified");
+  assert.equal(searchDetailCrawlerEvidenceLabel("DECLARED_USER_AGENT"), "User-Agent identified");
+  assert.equal(searchDetailCrawlerEvidenceLabel(null), "Not recorded");
 });

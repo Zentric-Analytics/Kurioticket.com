@@ -6,7 +6,13 @@ import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
 import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
-import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
+import { AdminActivityOverview } from "@/components/admin/AdminActivityOverview";
+import { PageViewRecords } from "@/components/admin/PageViewRecords";
+import { AdminIdentityDeviceAccess } from "@/components/admin/AdminIdentityDeviceAccess";
+import { loadAdminDeviceSessions } from "@/services/adminDeviceSessionsService";
+import { journeyHistoryHrefFromActivity } from "@/lib/adminActivityOverview";
+import { pageHistoryHrefFromActivity } from "@/lib/adminPageHistory";
+import { normalizeUserActivityQuery, safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
 import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
@@ -25,6 +31,7 @@ const tabs = [
   { value: "searches", label: "Searches" },
   { value: "selections", label: "Selections" },
   { value: "handoffs", label: "Provider handoffs" },
+  { value: "interactions", label: "Saved, shared & alerts" },
 ] as const;
 // Keep the UTC instant, but use a compact, unambiguous header label so
 // each date stays on one line beside the workspace sidebar at desktop zoom.
@@ -33,7 +40,7 @@ const format = (at: Date) => new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC",
 }).format(at);
 // One common desktop grid: guest/customer identity spans two fifths, while
-// First seen/Joined, Last active and Events each occupy one fifth.
+// First seen/Joined, Last seen and Events each occupy one fifth.
 const activityColumns = "grid min-w-0 w-full gap-y-4 lg:grid-cols-5 lg:gap-y-0";
 const buttonClass = "focus-ring inline-flex items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
 
@@ -56,14 +63,6 @@ function safeDirectoryHref(raw: RawQuery) {
     if (safe.get("date") === "custom") safe.set("date", "all");
   }
   return "/admin/users" + (safe.size ? "?" + safe.toString() : "");
-}
-function activityParams(raw: RawQuery) {
-  const result: Record<string, string> = {};
-  for (const key of ["tab", "range", "stage", "product", "from", "to", "q", "order", "directory"]) {
-    const value = raw[key];
-    if (typeof value === "string" && value.length <= 1100) result[key] = value;
-  }
-  return result;
 }
 function HeaderTime({ at }: { at: Date }) {
   const label = format(at);
@@ -114,31 +113,15 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const { kind, id } = await params;
   if (!validActivityIdentity(kind, id)) notFound();
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
-  const raw = { ...(await searchParams) };
-  // The customer activity reader now supports exact UTC instants for rolling
-  // presets; legacy bookmarked UTC calendar dates remain unchanged.
-  const selectedRange = typeof raw.range === "string" ? raw.range : "";
-  const reportingRange = selectedRange || "today";
-  if (!raw.from && !raw.to && ["today", "24h", "7d", "30d"].includes(reportingRange)) {
-    const to = new Date();
-    const days = reportingRange === "30d" ? 30 : reportingRange === "7d" ? 7 : 1;
-    raw.from = reportingRange === "today"
-      ? new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate())).toISOString()
-      : new Date(to.getTime() - days * 86_400_000).toISOString();
-    raw.to = to.toISOString();
-    raw.range = reportingRange;
-  }
-  // Existing Journeys bookmarks now display the unfiltered activity tab.
-  // Preserve their other filters without leaving an invisible selected tab.
-  if (raw.tab === "journeys") delete raw.tab;
-  // Old paginated bookmarks now open the complete newest-first history.
-  delete raw.cursor;
-  delete raw.order;
-  delete raw.sort;
+  const raw = normalizeUserActivityQuery(await searchParams, new Date());
+  // Legacy activity bookmarks still open this workspace; page views now have their own section.
+  if (raw.tab === "pages") delete raw.tab;
+  if (raw.stage === "PAGE_VIEW") delete raw.stage;
+  if (raw.type === "PAGE_VIEW") delete raw.type;
   const filtersResult = parseActivityFilters(raw);
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
   const backHref = safeDirectoryHref(raw);
-  const queryParams = activityParams(raw);
+  const queryParams = safeActivityQueryParams(raw);
   if (!filtersResult.ok) return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <Link href={backHref} className={buttonClass}><ArrowLeft size={16} /> Back to Users</Link>
@@ -148,7 +131,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       action={<Link className={buttonClass} href={basePath}>Reset activity filters</Link>} />
   </div>;
   const filters: ActivityFilters = filtersResult.filters;
-  const result = await loadAdminIdentityActivity(kind, id, filters, undefined, "all");
+  const result = await loadAdminIdentityActivity(kind, id, filters, undefined, "summary");
   if (result.status === "not_found") notFound();
   if (result.status !== "ok") return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -160,9 +143,23 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       action={<Link className={buttonClass} href={activityHref(basePath, queryParams, { cursor: null, order: null })}>Return to newest activity</Link>} />
   </div>;
   const data = result.data;
+  const deviceSessions = kind === "user" ? await loadAdminDeviceSessions(id) : null;
   const environment = data.environment;
   const operational = data.source === "operational";
   const order = filters.order === "oldest" ? "oldest" : "newest";
+  const activityReturn = activityHref(basePath, queryParams, {});
+  // Keep the selected UTC window, but do not let travel-specific filters hide page visits.
+  const pageFilters: ActivityFilters = { ...filters, tab: "pages", stage: "all", product: "all", q: "", order: "newest" };
+  const pagesHref = pageHistoryHrefFromActivity(kind, id, pageFilters, typeof raw.range === "string" ? raw.range : undefined, activityReturn);
+  // The unfiltered overview already includes the five newest page records and total.
+  // Only issue a separate compact, owner-scoped read when travel filters exclude them.
+  const pageSummaryResult = operational ? null
+    : filters.tab === "all" && filters.stage === "all" && filters.product === "all" && !filters.q
+      ? result
+      : await loadAdminIdentityActivity(kind, id, pageFilters, undefined, "summary");
+  const pageSummary = pageSummaryResult?.status === "ok" ? pageSummaryResult.data : null;
+  const journeyHistoryHref = journeyHistoryHrefFromActivity(kind, id, filters,
+    typeof raw.range === "string" ? raw.range : undefined, activityReturn);
 
   return <div className="min-w-0 space-y-6 bg-white pb-2 text-[#0F172A]">
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[13px] text-[#475569]">
@@ -211,10 +208,10 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
 
           <dl className="grid min-w-0 grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:contents">
             <Fact label={kind === "guest" ? "First seen" : "Joined"} className="lg:border-l-0 lg:pl-2 2xl:pl-6"><HeaderTime at={data.firstSeenAt}/></Fact>
-            <Fact label="Last active" className="lg:border-l-0 lg:pl-2 2xl:pl-6">{data.lastSeenAt ? <HeaderTime at={data.lastSeenAt}/> : "—"}</Fact>
+            <Fact label="Last seen" className="lg:border-l-0 lg:pl-2 2xl:pl-6">{data.lastSeenAvailable === false ? "Unavailable" : data.lastSeenAt ? <HeaderTime at={data.lastSeenAt}/> : "—"}</Fact>
             <Fact label="Events" testId="activity-events-fact"
               className={"lg:border-l-0 lg:pl-6 " + (kind === "user" || data.source === "visitor" ? "lg:pr-28" : "")}>
-              {data.events.length}
+              {data.events.length - data.events.filter(event => event.stage === "PAGE_VIEW").length + (data.summary.pagesVisited ?? 0)}
             </Fact>
           </dl>
 
@@ -260,6 +257,21 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       </section>
       </div>
 
+      {kind === "user" ? <AdminIdentityDeviceAccess kind={kind} result={deviceSessions}
+        historyHref={"/admin/users/user/" + encodeURIComponent(id) + "/devices?range=all&activityReturn=" + encodeURIComponent(activityReturn)} /> : null}
+
+      {!operational ? <div data-testid="activity-page-visits-summary" className="min-w-0 space-y-2 border-t border-[#E2E8F0] pt-4">
+        {pageSummary && pageSummary.source !== "operational" ? <>
+          <p className="text-[12px] text-[#64748B]">Page visits use the selected date range only.</p>
+          <PageViewRecords key={pagesHref} events={pageSummary.events} count={pageSummary.summary.pagesVisited ?? 0}
+            full={false} href={pagesHref} operational={false}/>
+        </> : <section aria-label="Pages visited" className="space-y-2">
+          <h2 className="text-[15px] font-semibold">Pages visited</h2>
+          <p className="text-[13px] text-[#64748B]">Page visit history is unavailable. This does not mean there are no recorded visits.</p>
+          <Link href={pagesHref} className={buttonClass}>View all pages visited</Link>
+        </section>}
+      </div> : null}
+
       <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
         <section aria-label="Activity filters" className="min-w-0">
           <ActivityFiltersBar path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
@@ -267,7 +279,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
               from:filters.from,to:filters.to,range:typeof raw.range === "string" && ["today","24h","7d","30d","all","custom"].includes(raw.range) ? raw.range : (filters.from || filters.to ? "custom" : "today")}}
             tabs={<nav aria-label="Activity tabs" className="flex max-w-full shrink-0 gap-7 overflow-x-auto">
               {tabs.map(tab => <Link key={tab.value}
-                href={activityHref(basePath, queryParams, { tab: tab.value, cursor: null })}
+                href={activityHref(basePath, queryParams, { tab: tab.value, cursor: null, stage: null })}
                 aria-current={filters.tab === tab.value ? "page" : undefined}
                 className={"focus-ring relative shrink-0 whitespace-nowrap rounded-sm py-3 text-[13px] font-medium text-[#475569] " +
                   (filters.tab === tab.value ? "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#004BB8]" : "")}>
@@ -276,9 +288,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             </nav>} />
         </section>
 
-        <ActivityTimeline events={data.events} nextHref={null} environment={environment} order={order}
-          returnHref={activityHref(basePath, queryParams, {})}
-          clearHref={activityHref(basePath, queryParams, {q:null,from:null,to:null,range:null,product:null,stage:null,order:null,cursor:null})}/>
+        <AdminActivityOverview events={data.events} journeyHistoryHref={journeyHistoryHref}
+          environment={environment} operational={operational}/>
       </div>
     </section>
   </div>;

@@ -1,5 +1,7 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { isJourneySourcePath, journeySourcePath } from "@/lib/search-journey";
+import { toAdminPageView } from "@/lib/adminPageView";
+import { safeAdminJourneySearchDetails } from "./adminJourneySearchDetails";
 import {
   adminJourneyProducts,
   adminJourneyStages,
@@ -8,6 +10,7 @@ import {
   type AdminJourneyDetail,
   type AdminJourneyEnvironment,
   type AdminJourneyEvent,
+  type AdminJourneyEventType,
   type AdminJourneyList,
   type AdminJourneyProduct,
   type AdminJourneyQuery,
@@ -33,13 +36,17 @@ type JourneyRecord = {
   id: string; visitorId: string; userId: string | null;
   startedAt: Date; firstEventAt: Date; lastEventAt: Date;
   products: string[]; providers: string[]; providerCount: Count; eventCount: Count; searchCount: Count;
-  searchCompleted: Count; resultsViewed: Count; offerSelected: Count; handoffStarted: Count;
+  searchCompleted: Count; resultsViewed: Count; flightDetailsViewed: Count; offerSelected: Count; providerDealSelected: Count; handoffStarted: Count;
 };
 type EventRecord = {
-  id: string; type: AdminJourneyStage; createdAt: Date; product: AdminJourneyProduct | null;
+  id: string; type: AdminJourneyEventType; createdAt: Date; product: AdminJourneyProduct | null;
+  action: string | null; resultReference: string | null; filterGroup: string | null; sortMode: string | null; sortChoice?: string | null; filterSelections?: unknown;
+  alertMode?: string | null; alertCurrency?: string | null; alertTargetPrice?: string | null; alertBaselinePrice?: string | null;
+  observedResult?: unknown;
+  pageViewMetadata?: unknown;
   provider: string | null; sourcePage: string | null;
   searchHistoryId: string | null; requestId: string | null; searchProduct: AdminJourneyProduct | null;
-  origin: string | null; destination: string | null; checkIn: Date | null; checkOut: Date | null;
+  origin: string | null; destination: string | null; checkIn: Date | null; checkOut: Date | null; searchQuery?: unknown;
   searchStatus: "SUCCESS" | "PARTIAL" | "FAILED" | null; resultCount: number | null; latencyMs: number | null;
   redirectLogId: string | null; redirectProvider: string | null; route: string | null; destinationUrl: string | null;
 };
@@ -47,7 +54,9 @@ type SummaryRecord = {
   identities: Count; guests: Count; registered: Count; registeredAccounts: Count; journeys: Count; rawEvents: Count;
   searchCompletedIdentities: Count; searchCompletedJourneys: Count; searchCompletedEvents: Count;
   resultsViewedIdentities: Count; resultsViewedJourneys: Count; resultsViewedEvents: Count;
+  flightDetailsViewedIdentities: Count; flightDetailsViewedJourneys: Count; flightDetailsViewedEvents: Count;
   offerSelectedIdentities: Count; offerSelectedJourneys: Count; offerSelectedEvents: Count;
+  providerDealSelectedIdentities: Count; providerDealSelectedJourneys: Count; providerDealSelectedEvents: Count;
   handoffStartedIdentities: Count; handoffStartedJourneys: Count; handoffStartedEvents: Count;
   searches: Count; successfulSearches: Count; partialSearches: Count; failedSearches: Count;
   exactHandoffs: Count; uncorrelatedHandoffs: Count;
@@ -74,9 +83,13 @@ function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
   return Prisma.sql`
     WITH eligible_events AS (
       SELECT e."id", e."journeyId", e."type"::text AS "type", e."product"::text AS "product", e."provider", e."createdAt",
-        e."metadata"->>'sourcePage' AS "sourcePage", j."visitorId", v."currentUserId" AS "userId", j."startedAt",
+        e."metadata"->>'sourcePage' AS "sourcePage", e."metadata"->>'action' AS "action", e."metadata"->>'resultId' AS "resultReference",
+        e."metadata"->'observedResult' AS "observedResult",
+        e."metadata"->>'filterGroup' AS "filterGroup", e."metadata"->'filterSelections' AS "filterSelections", e."metadata"->>'sortMode' AS "sortMode", e."metadata"->>'sortChoice' AS "sortChoice",
+        e."metadata"->>'alertMode' AS "alertMode", e."metadata"->>'alertCurrency' AS "alertCurrency",
+        e."metadata"->>'alertTargetPrice' AS "alertTargetPrice", e."metadata"->>'alertBaselinePrice' AS "alertBaselinePrice", j."visitorId", v."currentUserId" AS "userId", j."startedAt",
         s."id" AS "searchHistoryId", s."requestId", s."type"::text AS "searchProduct", s."origin", s."destination",
-        s."checkIn", s."checkOut", s."status"::text AS "searchStatus", s."resultCount", s."latencyMs",
+        s."checkIn", s."checkOut", s."query" AS "searchQuery", s."status"::text AS "searchStatus", s."resultCount", s."latencyMs",
         r."id" AS "redirectLogId", r."provider" AS "redirectProvider", r."route", r."destinationUrl"
       FROM "JourneyEvent" e
       JOIN "SearchJourney" j ON j."id" = e."journeyId"
@@ -110,7 +123,7 @@ function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
           AND (e."searchHistoryId" IS NULL OR (s."requestId" IS NOT NULL AND r."metadata"->>'requestId' = s."requestId"))
         ))
         AND (
-          (e."type" IN ('SEARCH_COMPLETED', 'RESULTS_VIEWED', 'OFFER_SELECTED') AND s."id" IS NOT NULL AND e."redirectLogId" IS NULL)
+          (e."type" IN ('SEARCH_COMPLETED', 'RESULTS_VIEWED', 'FLIGHT_DETAILS_VIEWED', 'OFFER_SELECTED', 'PROVIDER_DEAL_SELECTED', 'RESULT_SAVED', 'RESULT_UNSAVED', 'RESULT_SHARED', 'PRICE_ALERT_CREATED', 'SEARCH_EDIT_APPLIED', 'SEARCH_FILTER_APPLIED', 'SEARCH_SORT_CHANGED', 'RESULT_DETAILS_OPENED', 'RATE_DETAILS_OPENED') AND s."id" IS NOT NULL AND e."redirectLogId" IS NULL)
           OR (e."type" = 'PROVIDER_HANDOFF_STARTED' AND r."id" IS NOT NULL)
         )
         ${identity}
@@ -135,7 +148,9 @@ function journeyRollups() {
       count(DISTINCT "provider") AS "providerCount", count(*) AS "eventCount", count(DISTINCT "searchHistoryId") AS "searchCount",
       count(*) FILTER (WHERE "type" = 'SEARCH_COMPLETED') AS "searchCompleted",
       count(*) FILTER (WHERE "type" = 'RESULTS_VIEWED') AS "resultsViewed",
+      count(*) FILTER (WHERE "type" = 'FLIGHT_DETAILS_VIEWED') AS "flightDetailsViewed",
       count(*) FILTER (WHERE "type" = 'OFFER_SELECTED') AS "offerSelected",
+      count(*) FILTER (WHERE "type" = 'PROVIDER_DEAL_SELECTED') AS "providerDealSelected",
       count(*) FILTER (WHERE "type" = 'PROVIDER_HANDOFF_STARTED') AS "handoffStarted"
     FROM scoped_events GROUP BY "journeyId", "visitorId", "userId"
   )`;
@@ -155,7 +170,36 @@ function listSql(query: AdminJourneyQuery, journeyId?: string) {
 }
 
 function detailSql(query: AdminJourneyQuery, journeyId: string) {
-  return Prisma.sql`${scopedEvents(query.scope, journeyId)} SELECT * FROM scoped_events
+  // Navigation observations remain single AnalyticsEvent records. Include
+  // only those with an exact canonical search link in this authorized
+  // journey; never inflate the existing funnel rollups or guess a match.
+  return Prisma.sql`${scopedEvents(query.scope, journeyId)},
+    exact_searches AS (
+      SELECT DISTINCT ON ("journeyId", "searchHistoryId") *
+      FROM scoped_events WHERE "type" = 'SEARCH_COMPLETED'
+      ORDER BY "journeyId", "searchHistoryId", "createdAt", "id"
+    ), detail_events AS (
+      SELECT *, NULL::jsonb AS "pageViewMetadata" FROM scoped_events
+      UNION ALL
+      SELECT 'pv-' || a."id", s."journeyId", 'PAGE_VIEW', s."product", NULL, a."createdAt",
+        NULL, NULL, NULL, NULL::jsonb, NULL, NULL::jsonb, NULL, NULL, NULL, NULL, NULL, NULL,
+        s."visitorId", s."userId", s."startedAt",
+        s."searchHistoryId", s."requestId", s."searchProduct", s."origin", s."destination",
+        s."checkIn", s."checkOut", s."searchQuery", s."searchStatus", s."resultCount", s."latencyMs",
+        NULL, NULL, NULL, NULL, a."metadata"
+      FROM "AnalyticsEvent" a
+      JOIN exact_searches s ON s."visitorId" = a."visitorId"
+        AND s."journeyId" = a."metadata"->>'linkedJourneyId'
+        AND s."searchHistoryId" = a."metadata"->>'linkedSearchHistoryId'
+      WHERE a."type" = 'PAGE_VIEW' AND a."name" = 'page_viewed'
+        AND (a."userId" IS NULL OR a."userId" = s."userId")
+        AND a."metadata"->>'environment' = ${query.scope.environment}
+        AND a."createdAt" >= ${new Date(query.scope.from)} AND a."createdAt" < ${new Date(query.scope.to)}
+        AND a."metadata"->>'transport' IN ('web', 'native')
+        AND ((s."product" = 'FLIGHT' AND a."metadata"->>'pageKey' IN ('flight_results', 'flight_details'))
+          OR (s."product" = 'HOTEL' AND a."metadata"->>'pageKey' IN ('hotel_results', 'hotel_details'))
+          OR (s."product" = 'CAR' AND a."metadata"->>'pageKey' IN ('car_results', 'car_details')))
+    ) SELECT * FROM detail_events
     WHERE "journeyId" = ${journeyId}
       ${query.cursor ? Prisma.sql`AND ("createdAt", "id") > (${new Date(query.cursor.at)}, ${query.cursor.id})` : Prisma.empty}
     ORDER BY "createdAt" ASC, "id" ASC LIMIT ${query.limit + 1}`;
@@ -173,9 +217,15 @@ function summarySql(scope: AdminJourneyScope) {
     count(DISTINCT "visitorId") FILTER (WHERE "type" = 'RESULTS_VIEWED') AS "resultsViewedIdentities",
     count(DISTINCT "journeyId") FILTER (WHERE "type" = 'RESULTS_VIEWED') AS "resultsViewedJourneys",
     count(*) FILTER (WHERE "type" = 'RESULTS_VIEWED') AS "resultsViewedEvents",
+    count(DISTINCT "visitorId") FILTER (WHERE "type" = 'FLIGHT_DETAILS_VIEWED') AS "flightDetailsViewedIdentities",
+    count(DISTINCT "journeyId") FILTER (WHERE "type" = 'FLIGHT_DETAILS_VIEWED') AS "flightDetailsViewedJourneys",
+    count(*) FILTER (WHERE "type" = 'FLIGHT_DETAILS_VIEWED') AS "flightDetailsViewedEvents",
     count(DISTINCT "visitorId") FILTER (WHERE "type" = 'OFFER_SELECTED') AS "offerSelectedIdentities",
     count(DISTINCT "journeyId") FILTER (WHERE "type" = 'OFFER_SELECTED') AS "offerSelectedJourneys",
     count(*) FILTER (WHERE "type" = 'OFFER_SELECTED') AS "offerSelectedEvents",
+    count(DISTINCT "visitorId") FILTER (WHERE "type" = 'PROVIDER_DEAL_SELECTED') AS "providerDealSelectedIdentities",
+    count(DISTINCT "journeyId") FILTER (WHERE "type" = 'PROVIDER_DEAL_SELECTED') AS "providerDealSelectedJourneys",
+    count(*) FILTER (WHERE "type" = 'PROVIDER_DEAL_SELECTED') AS "providerDealSelectedEvents",
     count(DISTINCT "visitorId") FILTER (WHERE "type" = 'PROVIDER_HANDOFF_STARTED') AS "handoffStartedIdentities",
     count(DISTINCT "journeyId") FILTER (WHERE "type" = 'PROVIDER_HANDOFF_STARTED') AS "handoffStartedJourneys",
     count(*) FILTER (WHERE "type" = 'PROVIDER_HANDOFF_STARTED') AS "handoffStartedEvents",
@@ -196,7 +246,8 @@ function operationalSql(scope: AdminJourneyScope) {
     count(*) FILTER (WHERE "status" = 'PARTIAL' AND "resultCount" <= 0) AS "partialWithoutResults",
     count(*) FILTER (WHERE "status" = 'FAILED') AS "failed"
     FROM "SearchHistory" WHERE "createdAt" >= ${new Date(scope.from)} AND "createdAt" < ${new Date(scope.to)}
-      AND "query"->>'environment' = ${scope.environment}`;
+      AND "query"->>'environment' = ${scope.environment}
+      AND "countAsSearch" = TRUE`;
 }
 
 /**
@@ -267,17 +318,66 @@ function journeyDto(row: JourneyRecord): AdminJourneyRow {
     products: (row.products ?? []).filter((product): product is AdminJourneyProduct => adminJourneyProducts.includes(product as AdminJourneyProduct)),
     providers: row.providers.slice(0, 10).map(provider => text(provider, 100)).filter((provider): provider is string => Boolean(provider)),
     providerCount: count(row.providerCount), eventCount: count(row.eventCount), searchCount: count(row.searchCount),
-    stages: { SEARCH_COMPLETED: count(row.searchCompleted), RESULTS_VIEWED: count(row.resultsViewed), OFFER_SELECTED: count(row.offerSelected), PROVIDER_HANDOFF_STARTED: count(row.handoffStarted) },
+    stages: { SEARCH_COMPLETED: count(row.searchCompleted), RESULTS_VIEWED: count(row.resultsViewed),
+      FLIGHT_DETAILS_VIEWED: count(row.flightDetailsViewed), OFFER_SELECTED: count(row.offerSelected),
+      PROVIDER_DEAL_SELECTED: count(row.providerDealSelected), PROVIDER_HANDOFF_STARTED: count(row.handoffStarted) },
+  };
+}
+function safeObservedResult(value: unknown): AdminJourneyEvent["observedResult"] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const result = value as Record<string, unknown>;
+  const label = typeof result.label === "string" ? result.label.trim() : "";
+  const provider = typeof result.provider === "string" ? result.provider.trim() : "";
+  const amount = result.amount;
+  const currency = result.currency;
+  const basis = result.priceBasis;
+  if (!label || label.length > 120 || !provider || provider.length > 100
+    || /[\u0000-\u001f\u007f<>]/.test(label + provider)
+    || typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0 || amount > 1e9
+    || typeof currency !== "string" || !/^[A-Z]{3}$/.test(currency)
+    || !["total", "per_night", "per_day"].includes(String(basis))) return null;
+  const total = result.totalAmount;
+  return {
+    label, provider, amount, currency, priceBasis: basis as "total" | "per_night" | "per_day",
+    ...(typeof total === "number" && Number.isFinite(total) && total > 0 && total <= 1e9 ? { totalAmount: total } : {}),
+    provenance: "customer_display",
   };
 }
 function eventDto(row: EventRecord): AdminJourneyEvent {
+  const page = row.type === "PAGE_VIEW" ? toAdminPageView({ id: row.id, createdAt: row.createdAt, metadata: row.pageViewMetadata }, (row.pageViewMetadata as { environment?: string } | null)?.environment === "staging" ? "staging" : "production") : null;
   return {
     id: row.id, type: row.type, createdAt: row.createdAt.toISOString(), product: row.product,
+    ...(page?.pageView ? { pageView: { ...page.pageView, label: page.label } } : {}),
+    observedResult: ["RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED", "FLIGHT_DETAILS_VIEWED", "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED"].includes(row.type) ? safeObservedResult(row.observedResult) : null,
+    filterGroup: row.type === "SEARCH_FILTER_APPLIED" && ["all", "price", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "transmission", "other"].includes(row.filterGroup ?? "") ? row.filterGroup : null,
+    sortMode: row.type === "SEARCH_SORT_CHANGED" && ["price", "best", "fastest", "stops", "rating", "recommended", "other"].includes(row.sortMode ?? "") ? row.sortMode : null,
+    sortChoice: row.type === "SEARCH_SORT_CHANGED" && ["best", "cheapest", "fastest", "stops", "bestValue", "topRated", "recommended", "lowestTotal", "price", "duration", "departure-asc", "departure-desc"].includes(row.sortChoice ?? "") ? row.sortChoice : null,
+    filterSelections: row.type === "SEARCH_FILTER_APPLIED" && Array.isArray(row.filterSelections)
+      ? row.filterSelections.slice(0, 20).flatMap((choice: unknown) => {
+          if (!choice || typeof choice !== "object" || Array.isArray(choice)) return [];
+          const entry = choice as Record<string, unknown>;
+          if (typeof entry.group !== "string" || typeof entry.option !== "string") return [];
+          if (!/^[A-Za-z][A-Za-z0-9]{0,30}$/.test(entry.group) || !/^[\p{L}\p{N} ._:+\-']{1,72}$/u.test(entry.option)) return [];
+          return [{ group: entry.group, option: entry.option }];
+        }) : null,
+    ...(row.type === "PRICE_ALERT_CREATED" && /^(TARGET|AUTOMATIC)$/.test(row.alertMode ?? "")
+      && /^[A-Z]{3}$/.test(row.alertCurrency ?? "")
+      ? { alertDetails: {
+          mode: row.alertMode as "TARGET" | "AUTOMATIC", currency: row.alertCurrency!,
+          targetPrice: row.alertTargetPrice && /^\d{1,12}(?:\.\d{1,2})?$/.test(row.alertTargetPrice) ? row.alertTargetPrice : null,
+          baselinePrice: row.alertBaselinePrice && /^\d{1,12}(?:\.\d{1,2})?$/.test(row.alertBaselinePrice) ? row.alertBaselinePrice : null,
+        } } : {}),
+    ...(["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"].includes(row.type) ? {
+      action: ["local_saved", "local_unsaved", "saved_item_confirmed", "saved_item_removed", "share_link_copied", "share_sheet_completed"].includes(row.action ?? "")
+        ? row.action as AdminJourneyEvent["action"] : null,
+      resultReference: row.resultReference && /^[A-Za-z0-9._:+~=-]{1,128}$/.test(row.resultReference) ? row.resultReference : null,
+    } : {}),
     provider: text(row.provider, 100), sourcePage: safePath(row.sourcePage),
     search: row.searchHistoryId && row.searchProduct && row.searchStatus ? {
       id: row.searchHistoryId, requestId: row.requestId, product: row.searchProduct,
       origin: text(row.origin), destination: text(row.destination), checkIn: row.checkIn?.toISOString() ?? null, checkOut: row.checkOut?.toISOString() ?? null,
       status: row.searchStatus, resultCount: count(row.resultCount ?? 0), latencyMs: row.latencyMs,
+      details: safeAdminJourneySearchDetails(row.searchProduct, row.searchQuery),
     } : null,
     handoff: row.redirectLogId ? {
       id: row.redirectLogId, provider: text(row.redirectProvider, 100) ?? "Unknown provider", route: text(row.route),
@@ -291,7 +391,7 @@ function summaryDto(
   operational: OperationalRecord,
   handoffs: OperationalHandoffRecord,
 ): AdminJourneySummary {
-  const prefixes = ["searchCompleted", "resultsViewed", "offerSelected", "handoffStarted"] as const;
+  const prefixes = ["searchCompleted", "resultsViewed", "flightDetailsViewed", "offerSelected", "providerDealSelected", "handoffStarted"] as const;
   const stages = Object.fromEntries(adminJourneyStages.map((stage, index) => {
     const prefix = prefixes[index];
     return [stage, { identities: count(row[`${prefix}Identities`]), journeys: count(row[`${prefix}Journeys`]), events: count(row[`${prefix}Events`]) }];

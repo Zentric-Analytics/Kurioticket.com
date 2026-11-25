@@ -7,6 +7,8 @@ export type StoredVisitorIdentity = {
   pendingToken: string | null;
   pendingUserId: string | null;
   pendingWithdrawals: string[];
+  reviewVersion?: string;
+  confirmedReviewVersion?: string;
 };
 export type AnalyticsSnapshot = {
   loaded: boolean;
@@ -14,6 +16,7 @@ export type AnalyticsSnapshot = {
   tracking: boolean;
   pending: boolean;
   error: boolean;
+  reviewRequired: boolean;
 };
 type Dependencies = {
   read: () => Promise<unknown>;
@@ -22,6 +25,8 @@ type Dependencies = {
   merge: (token: string, session: NonNullable<IdentitySession>) => Promise<{ merged: boolean; visitorToken?: string }>;
   withdraw: (token: string) => Promise<void>;
   now?: () => number;
+  /** Required presentation version, independent of the storage key. */
+  reviewVersion?: string;
 };
 
 const tokenPattern = /^[A-Za-z0-9_-]{43}$/;
@@ -45,12 +50,23 @@ export function parseStoredVisitorIdentity(value: unknown): StoredVisitorIdentit
     pendingToken: choice === "granted" ? pendingToken : null,
     pendingUserId: choice === "granted" && pendingToken && typeof stored.pendingUserId === "string" ? stored.pendingUserId : null,
     pendingWithdrawals: [...new Set(pendingWithdrawals)],
+    ...(typeof stored.reviewVersion === "string" ? { reviewVersion: stored.reviewVersion } : {}),
+    ...(typeof stored.confirmedReviewVersion === "string" ? { confirmedReviewVersion: stored.confirmedReviewVersion } : {}),
   };
 }
 
+// A short, bounded bridge covers a previously granted identity still being
+// restored or linked when the user's first native search starts. This is never
+// used for visitors who have not expressly opted in.
+export const nativeJourneySearchPaths = new Set([
+  "/api/flights/search", "/api/hotels/search", "/api/cars/search",
+  "/api/mobile/v1/hotels/progressive",
+]);
+export const nativeSearchIdentityWaitMs = 750;
+
 /** Only these first-party producers receive the optional visitor reference. */
 export function isVisitorTrackedPath(path: string) {
-  return ["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive", "/api/redirect", "/api/journey/events"].includes(path);
+  return ["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive", "/api/redirect", "/api/journey/events", "/api/activity/interactions", "/api/activity/page-views"].includes(path);
 }
 
 export class VisitorIdentityCoordinator {
@@ -72,12 +88,17 @@ export class VisitorIdentityCoordinator {
 
   constructor(private readonly dependencies: Dependencies) {}
 
+  private reviewRequired() {
+    return this.state.choice === "unknown" || Boolean(this.dependencies.reviewVersion && this.state.reviewVersion !== this.dependencies.reviewVersion);
+  }
+
   snapshot = (): AnalyticsSnapshot => ({
     loaded: this.loaded,
     choice: this.state.choice,
-    tracking: this.state.choice === "granted" && Boolean(this.state.visitorToken) && this.sessionKnown && this.state.userId === (this.session?.user.id ?? null),
+    tracking: this.loaded && !this.reviewRequired() && (!this.dependencies.reviewVersion || (!this.storageDirty && this.state.confirmedReviewVersion === this.dependencies.reviewVersion)) && this.state.choice === "granted" && Boolean(this.state.visitorToken) && this.sessionKnown && this.state.userId === (this.session?.user.id ?? null),
     pending: Boolean(this.task) || this.state.pendingWithdrawals.length > 0,
     error: this.failed,
+    reviewRequired: this.reviewRequired(),
   });
 
   /** Local generation only; never an identity credential or a value sent to the server. */
@@ -87,9 +108,22 @@ export class VisitorIdentityCoordinator {
   private publish() { this.listeners.forEach(listener => listener()); }
 
   async load() {
-    if (!this.loadTask) this.loadTask = this.dependencies.read().then(value => {
-      this.state = parseStoredVisitorIdentity(value);
-    }).catch(() => { this.failed = true; }).then(() => { this.loaded = true; this.publish(); });
+    if (this.loaded) return;
+    if (!this.loadTask) {
+      // A temporary SecureStore read failure is not a new installation.
+      // Do not publish "unknown" as a loaded choice or overwrite an existing
+      // identity until the original storage has actually been read.
+      this.loadTask = Promise.resolve().then(() => this.dependencies.read()).then(value => {
+        this.state = parseStoredVisitorIdentity(value);
+        this.loaded = true;
+        this.failed = false;
+      }).catch(() => {
+        this.failed = true;
+      }).finally(() => {
+        this.loadTask = undefined;
+        this.publish();
+      });
+    }
     await this.loadTask;
   }
 
@@ -138,13 +172,21 @@ export class VisitorIdentityCoordinator {
 
   async transition(session: IdentitySession) {
     await this.load();
+    if (!this.loaded) return;
     if (this.adoptSession(session)) await this.refresh();
   }
 
   async choose(enabled: boolean) {
     await this.load();
+    if (!this.loaded) throw new Error("Unable to read existing analytics preferences.");
     this.revision += 1;
+    const previousChoice = this.state.choice;
+    const version = this.dependencies.reviewVersion;
     this.state.choice = enabled ? "granted" : "declined";
+    if (version) {
+      this.state.reviewVersion = version;
+      this.state.confirmedReviewVersion = undefined;
+    }
     this.failed = false;
     if (!enabled) {
       this.queueWithdrawal(this.state.visitorToken);
@@ -155,11 +197,17 @@ export class VisitorIdentityCoordinator {
       this.state.pendingToken = null;
       this.state.pendingUserId = null;
     }
+    // Queue the durable write before publishing; a grant cannot become active while saving.
+    const write = this.persist();
     this.publish();
-    try { await this.persist(); }
+    try { await write; }
     catch {
       // Never enable tracking if the explicit choice could not be retained.
-      if (enabled) { this.state.choice = "declined"; this.state.visitorToken = null; this.state.userId = null; }
+      if (version) {
+        this.state.reviewVersion = undefined;
+        this.state.confirmedReviewVersion = undefined;
+        if (enabled) this.state.choice = previousChoice;
+      } else if (enabled) { this.state.choice = "declined"; this.state.visitorToken = null; this.state.userId = null; }
       this.failed = true;
       this.publish();
       if (!enabled) await this.refresh();
@@ -171,10 +219,32 @@ export class VisitorIdentityCoordinator {
   async headers(path: string, session: IdentitySession): Promise<Record<string, string>> {
     if (!isVisitorTrackedPath(path)) return {};
     await this.load();
+    if (!this.loaded) return {};
     const changed = this.adoptSession(session);
-    // Network analytics work never delays search results or opening a deal.
-    void this.refresh(changed);
-    return this.snapshot().tracking ? { "x-kt-visitor": this.state.visitorToken! } : {};
+    const pendingSearchIdentity = nativeJourneySearchPaths.has(path)
+      && this.state.choice === "granted" && !this.reviewRequired() && !this.snapshot().tracking;
+    // Retry when an already-consented search starts, even if an earlier
+    // background identity connection failed. Unknown/declined consent never
+    // starts a visitor request.
+    const sync = this.refresh(changed || pendingSearchIdentity);
+    if (pendingSearchIdentity) {
+      // Give an in-flight grant/account merge a small opportunity to finish
+      // before the search. On slow/offline networks the search still proceeds
+      // without optional visitor analytics, and no past search is relinked.
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          sync,
+          new Promise<void>(resolve => { timer = setTimeout(resolve, nativeSearchIdentityWaitMs); }),
+        ]);
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    }
+    // A different account may have signed in while this request waited.
+    // Never attach its visitor credential to the previous account's request.
+    return this.snapshot().tracking && this.session?.token === session?.token
+      ? { "x-kt-visitor": this.state.visitorToken! } : {};
   }
 
   refresh(force = true): Promise<void> {
@@ -198,6 +268,7 @@ export class VisitorIdentityCoordinator {
 
   private async synchronize() {
     await this.load();
+    if (!this.loaded) throw new Error("Unable to read existing analytics preferences.");
     // Save a local refusal as soon as storage recovers, even while the server is
     // offline. A storage failure must not prevent attempted remote withdrawal.
     if (this.storageDirty) await this.persist().catch(() => undefined);
@@ -207,7 +278,7 @@ export class VisitorIdentityCoordinator {
       await this.persist();
     }
     if (this.storageDirty) throw new Error("The analytics choice is not saved yet.");
-    if (this.state.choice !== "granted" || !this.sessionKnown) { this.failed = false; return; }
+    if (this.state.choice !== "granted" || this.reviewRequired() || !this.sessionKnown) { this.failed = false; return; }
     if (this.snapshot().tracking) { this.failed = false; return; }
 
     const revision = this.revision;
@@ -248,6 +319,7 @@ export class VisitorIdentityCoordinator {
       this.state.userId = session?.user.id ?? null;
       this.state.pendingToken = null;
       this.state.pendingUserId = null;
+      if (this.dependencies.reviewVersion) this.state.confirmedReviewVersion = this.dependencies.reviewVersion;
       await this.persist();
       this.failed = false;
     } finally {

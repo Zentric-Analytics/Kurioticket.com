@@ -153,7 +153,9 @@ test("native KAYAK Cars details use the standard accessible save and share contr
   assert.match(sandboxDetail, /const saved = useSavedCar\(result, params\)/);
   assert.match(sandboxDetail, /accessibilityLabel=\{saved\.saved \? "Remove car from saved" : "Save car"\}/);
   assert.match(sandboxDetail, /accessibilityState=\{\{ selected: saved\.saved \}\} onPress=\{saved\.toggle\}/);
-  assert.match(sandboxDetail, /accessibilityLabel="Share car" onPress=\{\(\) => void Share\.share/);
+  assert.match(sandboxDetail, /accessibilityLabel="Share car" onPress=\{\(\) => void shareNativeResult/);
+  assert.match(sandboxDetail, /share:\(\)=>Share\.share/);
+  assert.match(sandboxDetail, /product:"CAR",resultId:result\.id/);
   assert.match(sandboxDetail, /<Heart size=\{22\}/);
   assert.match(sandboxDetail, /<Share2 size=\{21\}/);
 });

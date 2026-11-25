@@ -20,6 +20,18 @@ test("homepage fare status distinguishes loading, telemetry outage, and real mis
   assert.match(component, /operationsAvailable=\{statusPayload\.dataAvailable\}/);
 });
 
+test("scheduled and manual refresh use fresh-only coverage and do not promote retained stale fares", () => {
+  const executor = service.slice(
+    service.indexOf("async function runPhase3AHomepageFareRefresh("),
+    service.indexOf("async function executeHomepageFareRefreshRoute("),
+  );
+  assert.match(executor, /const freshRouteIds = getFreshHomepageFareSnapshotRouteIds\(/);
+  assert.doesNotMatch(executor, /isUsableHomepageFareSnapshotRecord\(/);
+  assert.match(executor, /shouldCountHomepageFareRefreshResultAsFresh\(\s*result,/);
+  assert.match(executor, /shouldCountHomepageFareRefreshResultAsFresh\(\s*replacementResult,/);
+  assert.match(service, /result === "retained" && isFreshHomepageFareSnapshotRecord\(/);
+});
+
 test("homepage fare reload preserves snapshot-derived failure and unavailable counts", () => {
   assert.match(service, /failedByMarket,/);
   assert.match(service, /unavailableByMarket,/);
@@ -104,6 +116,17 @@ test("homepage fare readiness keeps only core customer-facing summary metrics", 
   assert.doesNotMatch(component, /SummaryMetricCard label="Cron credential"/);
   assert.match(component, /CompactDetail label="Provider calls" value=\{refreshState\.counts\.providerCalls\}/);
   assert.match(component, /formatCronStatus\(statusPayload\)/);
+});
+
+test("market attention matches public rows while fallback pools stay in diagnostics", () => {
+  const operations = component.slice(component.indexOf('view === "operations"'), component.indexOf('view === "diagnostics"'));
+  assert.match(component, /const publicMarketsNeedingAttention = publicMarkets\.filter\(/);
+  assert.match(component, /market\.status !== "ready"/);
+  assert.match(operations, /label="Markets needing attention" value=\{statusPayload\.dataAvailable \? publicMarketsNeedingAttention/);
+  assert.doesNotMatch(operations, /marketsNeedingAnotherRun\.filter\(\(market\) => market\.needed\)\.length/);
+  assert.match(component, /market\.lastKnownGoodCount \?\? 0/);
+  assert.match(component, /\+ " last-known-good"/);
+  assert.match(component, /\+ " coverage gaps"/);
 });
 
 test("fare diagnostics uses four standalone sections rather than redundant wrapper headings", () => {
@@ -412,7 +435,9 @@ test("homepage fares uses the same flat section language as Providers", () => {
 test("homepage fare readiness copy stays short and state-focused", () => {
   assert.match(service, /message: "All public markets meet homepage fare targets\."/);
   assert.match(service, /message: "Some public markets have usable fares; coverage is incomplete\."/);
-  assert.match(service, /message: "No fresh provider-backed fares available\."/);
+  assert.match(service, /message: routes\.some\(\(route\) => route\.status === "fresh"\)/);
+  assert.match(service, /"No public market meets the required homepage fare targets\."/);
+  assert.match(service, /"No fresh provider-backed fares available\."/);
 });
 
 test("homepage fare operator warnings remain concise but truthful", () => {
@@ -494,7 +519,7 @@ test("readiness metrics display loading instead of Unavailable while status is p
   assert.match(readiness, /tone=\{statusPayload\.dataAvailable \? "info" : readinessFallbackTone\}/);
   assert.match(readiness, /statusPayload\.summary\.missing \? "warning" : "neutral"/);
   assert.match(readiness, /statusPayload\.summary\.failed \+ statusPayload\.summary\.unavailable \? "warning" : "neutral"/);
-  assert.match(readiness, /marketsNeedingAnotherRun\.some\(\(market\) => market\.needed\) \? "warning" : "good"/);
+  assert.match(readiness, /publicMarketsNeedingAttention \? "warning" : "good"/);
 });
 
 test("saved status and scheduler wait for the result, while real outages stay visible", () => {
@@ -526,14 +551,14 @@ test("Readiness is a flat metrics strip with neutral status dots and authoritati
   assert.match(component, /max-w-full overflow-x-auto overscroll-x-contain/);
   assert.match(component, /grid min-w-0 grid-cols-2 gap-px border-y border-\[#D8E1EC\] bg-\[#E7ECF5\] sm:grid-cols-3 lg:grid-cols-5/);
   assert.match(component, /tabIndex=\{0\}/);
-  assert.doesNotMatch(component, /grid-cols-2 gap-px border-y border-\[#D8E1EC\] bg-\[#E7ECF5\] sm:grid-cols-3 xl:grid-cols-5/);
+  assert.doesNotMatch(component, /grid min-w-\[920px\] grid-cols-5/);
   assert.match(component, /whitespace-nowrap text-\[11px\] font-medium leading-5/);
   assert.doesNotMatch(component, /rounded-lg border border-\[#D8E1EC\] bg-white px-3 py-2\.5/);
   assert.match(component, /summary\.fresh/);
   assert.match(component, /summary\.last_known_good/);
   assert.match(component, /summary\.missing/);
   assert.match(component, /summary\.failed \+ statusPayload\.summary\.unavailable/);
-  assert.match(component, /marketsNeedingAnotherRun\.filter\(\(market\) => market\.needed\)\.length/);
+  assert.match(component, /const publicMarketsNeedingAttention = publicMarkets\.filter\(/);
   assert.match(component, /Telemetry unavailable\. Snapshot data could not be read; coverage counts are hidden\./);
 });
 
@@ -541,7 +566,7 @@ test("Market coverage retains public market inspection without redundant diagnos
   assert.match(component, /<ul aria-label="Public market coverage"/);
   assert.doesNotMatch(component, /displayedCodes = new Set\(markets\.map|outsidePublicCount|outside the public country table/);
   assert.doesNotMatch(component, /Review fallback diagnostics|View fare diagnostics|For fallback coverage, refresh execution and scheduler diagnostics/);
-  assert.match(component, /marketsNeedingAnotherRun\.filter\(\(market\) => market\.needed\)\.length/);
+  assert.match(component, /const publicMarketsNeedingAttention = publicMarkets\.filter\(/);
   assert.match(component, /hidden=\{!showDetails\}/);
   assert.match(component, /href=\{onInspectMarket\(market\.marketCode\)\}/);
   assert.match(component, /href=\{onInspectMarket\(pool\.marketCode\)\}/);
@@ -655,9 +680,8 @@ test("fare subpages share Providers-style tabs with back navigation above the ta
   assert.match(nav, /aria-current=\{active === tab\.key \? "page" : undefined\}/);
   assert.match(nav, /active === tab\.key \? "border-\[#004BB8\]"/);
   assert.match(nav, /flex min-w-0 flex-wrap items-end gap-x-6 border-b/);
-  assert.match(readFileSync("src/lib/adminNavigation.ts", "utf8"), /href: "\/admin\/providers\?view=attribution"/);
-  assert.match(provider, /<ProviderDirectoryTable rows={directoryRows}/);
-  assert.match(provider, /<ProviderHealthWindowFilter/);
+  assert.match(provider, /aria-label="Filter providers by product"/);
+  assert.match(provider, /border-b-2 px-1 text-\[13px\]/);
   assert.ok(nav.indexOf("Back to Homepage Fare Operations") < nav.indexOf('aria-label="Homepage fare sections"'));
   for (const page of [routes, diagnostics]) {
     assert.doesNotMatch(page, /<nav aria-label="Homepage fares pages"|<header className="flex flex-wrap items-start justify-between/);

@@ -285,3 +285,21 @@ test("source paths exclude query data, fragments, and external URLs", () => {
   assert.equal(journeySourcePath("/\\provider.example/checkout"), undefined);
   assert.equal(journeySourcePath("/hotels/private details"), undefined);
 });
+
+test("Phase 2 committed decisions preserve safe metadata and genuine repeated actions", async () => {
+  const f = fixture(); f.enable();
+  const event = { requestId, sourcePage: "/flights/results?email=private@example.test" } as const;
+  assert.equal(f.sender.send({ ...event, type: "SEARCH_FILTER_APPLIED", filterGroup: "airlines" }), true);
+  assert.equal(f.sender.send({ ...event, type: "SEARCH_FILTER_APPLIED", filterGroup: "airlines" }), true);
+  assert.equal(f.sender.send({ ...event, type: "SEARCH_SORT_CHANGED", sortMode: "price" }), true);
+  assert.equal(f.sender.send({ ...event, type: "RESULT_DETAILS_OPENED", offerId: "opaque-result-1" }), true);
+  await tick();
+  assert.equal(f.calls.length, 4);
+  assert.deepEqual(f.calls.map(call => call.body.type), ["SEARCH_FILTER_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED", "RESULT_DETAILS_OPENED"]);
+  assert.notEqual(f.calls[0].body.eventId, f.calls[1].body.eventId);
+  assert.equal(f.calls[0].body.sourcePage, "/flights/results");
+  assert.equal(f.calls[0].body.filterGroup, "airlines");
+  assert.equal(f.calls[2].body.sortMode, "price");
+  assert.equal(f.calls[3].body.offerId, "opaque-result-1");
+  assert.ok(f.calls.every(call => !JSON.stringify(call.body).includes("private@example")));
+});

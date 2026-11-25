@@ -2,6 +2,8 @@
 import { sandboxCardAction } from "./sandboxCardActions";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+import { rememberResultsScroll } from "@/lib/results/resultsReturnScroll";
+import { markResultsReturn } from "@/lib/results/resultsReturnIntent";
 
 
 import Image from "next/image";
@@ -32,6 +34,7 @@ import { formatFlightCardPrice } from "@/components/results/flightCardPrice";
 import { MobileFlightCard } from "@/components/results/MobileFlightCard";
 import { formatDesktopBaggageValue } from "@/components/results/flightCardBaggage";
 import { useSavedFlightResult } from "@/components/results/useSavedFlightResult";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 
 type DetailItem = {
   label: string;
@@ -63,7 +66,24 @@ export function FlightCard({
   searchRequestId?: string | null;
 }) {
   const journeyEvents = useJourneyEvents();
-  const rememberDetailsContext = () => journeyEvents.rememberDetailsContext("flight", flight.id, searchRequestId ?? null);
+  const rememberDetailsContext = () => {
+    // A guided selection may have a default details URL yet call onAction
+    // instead of navigating. Never report an unobserved details opening.
+    if (resolvedDetailsHref && !onAction) journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", searchRequestId, { offerId: flight.id, sourcePage: "/flights/results",
+      ...(Number.isFinite(flight.price) && flight.price > 0 && /^[A-Z]{3}$/.test(flight.currency) ? { observedResult: {
+        label: flight.airlineName, provider: flight.provider, amount: flight.price,
+        currency: flight.currency, priceBasis: "total" as const,
+      } } : {}),
+    });
+    journeyEvents.rememberDetailsContext("flight", flight.id, searchRequestId ?? null);
+    if (typeof window !== "undefined" && window.location.pathname === "/flights/results" &&
+      (resolvedDetailsHref?.startsWith("/flights/details/") || resolvedDetailsHref?.startsWith("/sandbox/kayak/details"))) {
+      rememberResultsScroll("flight", window.scrollY);
+      // Mark at the departure point: mobile hardware Back does not reliably
+      // fire popstate in the details page that is being left.
+      markResultsReturn("flight", window.location.href);
+    }
+  };
   const { t: dictionary, locale } = useLocale();
   const router = useRouter();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -105,8 +125,13 @@ export function FlightCard({
   const { isSaved, pending: savedFlightPending, toggleSavedFlight, savedFlightError } = useSavedFlightResult(
     flight,
     resolvedDetailsHref,
+    searchRequestId,
   );
   const [shareConfirmation, setShareConfirmation] = useState("");
+
+  const observedShareResult = Number.isFinite(flight.price) && flight.price > 0 && /^[A-Z]{3}$/.test(flight.currency)
+      ? { label: flight.airlineName, provider: flight.provider, amount: flight.price, currency: flight.currency, priceBasis: "total" as const }
+      : undefined;
 
   async function shareFlight() {
     const relativeUrl = resolvedDetailsHref ?? window.location.href;
@@ -115,9 +140,11 @@ export function FlightCard({
     try {
       if (navigator.share) {
         await navigator.share({ title: route, text: flight.airlineName, url });
+        recordCustomerInteraction({ action: "share_sheet_completed", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId, observedResult: observedShareResult });
         return;
       }
       await navigator.clipboard.writeText(url);
+      recordCustomerInteraction({ action: "share_link_copied", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId, observedResult: observedShareResult });
       setShareConfirmation(t("linkCopied") || "Flight link copied");
       window.setTimeout(() => setShareConfirmation(""), 2200);
     } catch (error) {

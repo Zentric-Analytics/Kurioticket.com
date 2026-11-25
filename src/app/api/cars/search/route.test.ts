@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import test, { type TestContext } from "node:test";
 import ts from "typescript";
-import { attachOperationalSearchSession, type PreparedOperationalSession } from "@/lib/operationalSearchSession";
+import { attachOperationalSearchSession, operationalSessionMetadata, type PreparedOperationalSession } from "@/lib/operationalSearchSession";
 
 const requestId = "78e1de9e-6dfe-494f-9fdb-83726d83bf64";
 const query = {
@@ -14,7 +14,7 @@ const query = {
   dropoffDate: "2099-05-02", dropoffTime: "10:00", driverAge: "30",
 };
 
-function fixture(t: TestContext, options: { status?: "available" | "unavailable"; consent?: boolean; failingLog?: boolean; failingProviderLog?: boolean; session?: boolean } = {}) {
+function fixture(t: TestContext, options: { status?: "available" | "unavailable"; consent?: boolean; failingLog?: boolean; failingProviderLog?: boolean; session?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT" } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: Array<Record<string, unknown>> = [];
   const analytics: Array<Record<string, unknown>> = [];
@@ -33,7 +33,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
   let attachCalls = 0;
   let providerLogCalls = 0;
   const request = new Request("https://staging.kurioticket.com/api/cars/search", {
-    method: "POST", headers: { "content-type": "application/json", "x-search-request-id": requestId },
+    method: "POST", headers: { "content-type": "application/json", "x-search-request-id": requestId, ...(options.verifiedCrawler ? { "user-agent": options.verifiedCrawler } : {}) },
     body: JSON.stringify(query),
   });
   const session: PreparedOperationalSession | null = options.session === false ? null : {
@@ -47,15 +47,24 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
   };
   const dependencies: Record<string, unknown> = {
     "@/lib/productionSandboxPolicy": {withProductionSandboxRequest,captureFinalSearchHistory},
+    "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
     "@/lib/application-source": { applicationMetadata },
+    "@/lib/searchCrawlerGate": {
+      identifySearchCrawler: async () => options.verifiedCrawler ? { name: options.verifiedCrawler, evidence: "VERIFIED_DNS" } : null,
+      searchCrawlerMetadata: (crawler: { name: string; evidence: string } | null) => crawler ? ({
+        identifiedCrawler: crawler.name, crawlerEvidence: crawler.evidence,
+        ...(crawler.evidence === "VERIFIED_DNS" ? { verifiedCrawler: crawler.name } : {}),
+      }) : {},
+    },
     "next/server": { after: (callback: () => Promise<unknown>) => { deferred.push(callback); } },
     "@/lib/operationalSearchSession": {
+      operationalSessionMetadata,
       prepareOperationalSearchSession: (value: Request) => {
         check(value === request && ++prepareCalls === 1, "prepare exactly one session for the actual request");
         return session;
       },
       attachOperationalSearchSession: (response: Response, value: PreparedOperationalSession | null) => {
-        check(value === session && ++attachCalls === 1, "attach the prepared session exactly once");
+        check(value === (options.verifiedCrawler ? null : session) && ++attachCalls === 1, "attach the expected session exactly once");
         return attachOperationalSearchSession(response, value);
       },
     },
@@ -119,7 +128,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
       assert.equal(deferred.length, 2, "history/analytics and provider diagnostics remain separate post-response tasks");
       for (const callback of deferred) await callback();
       assert.equal(searchCalls, 1);
-      assert.equal(prepareCalls, 1);
+      assert.equal(prepareCalls, options.verifiedCrawler ? 0 : 1);
       assert.equal(attachCalls, 1);
       assert.equal(providerLogCalls, 1);
     },
@@ -146,6 +155,7 @@ test("car search records a consented history after returning provider results", 
   assert.equal(f.histories[0].resultCount, 1);
   assert.equal(f.histories[0].status, "SUCCESS");
   assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionId, f.session!.reference.id);
+  assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionExpiresAtMs, f.session!.reference.expiresAt.getTime());
   assert.equal(f.analytics[0].name, "car_search");
   assert.equal(f.histories[0].applicationSource, "WEB");
   assert.equal(f.analytics[0].applicationSource, "WEB");
@@ -168,6 +178,20 @@ test("unconsented car searches never invent a visitor identity", async (t) => {
   assert.equal(f.analytics[0].visitorId, null);
   assert.equal(f.analytics[0].userId, null);
   assert.ok(!Object.hasOwn(f.histories[0].query as object, "operationalSessionId"));
+});
+
+test("new non-consented car search has a recorded session without granting visitor consent", async (t) => {
+  const f = fixture(t, { consent: false, session: true });
+  const response = await f.post();
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("X-Kt-Search-Session"), f.session!.credential);
+  await f.flush();
+  assert.equal(f.histories.length, 1);
+  assert.equal(f.histories[0].userId, null);
+  assert.equal(f.histories[0].visitorId, null);
+  assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionId, f.session!.reference.id);
+  assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionExpiresAtMs, f.session!.reference.expiresAt.getTime());
+  assert.ok(!JSON.stringify(f.histories).includes(f.session!.credential));
 });
 
 test("unavailable car provider records a failed search without affecting the response", async (t) => {
@@ -203,4 +227,22 @@ test("optional provider diagnostics failures do not interrupt search history or 
   assert.equal(f.histories.length, 1);
   assert.equal(f.histories[0].status, "SUCCESS");
   assert.equal(f.providerLogs.length, 0);
+});
+
+test("verified bot makes a real car search counted once under BOT, with no guest session", async (t) => {
+  const f = fixture(t, { verifiedCrawler: "GOOGLEBOT" });
+  const response = await f.post();
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("X-Kt-Search-Session"), null);
+  await f.flush();
+  assert.equal(f.calls(), 0);
+  assert.equal(f.histories.length, 1);
+  assert.equal(f.histories[0].applicationSource, "BOT");
+  assert.equal(f.histories[0].userId, null);
+  assert.equal(f.histories[0].visitorId, null);
+  assert.equal((f.histories[0].query as Record<string, unknown>).verifiedCrawler, "GOOGLEBOT");
+  assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionId, undefined);
+  assert.deepEqual(f.analytics, []);
+  assert.equal(f.providerLogs.length, 1);
+  assert.equal((f.providerLogs[0].metadata as Record<string, unknown>).applicationSource, "BOT");
 });

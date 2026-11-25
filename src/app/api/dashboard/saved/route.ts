@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireWebApiSession } from "@/lib/web-api-auth";
+import { resolveApplicationSource } from "@/lib/application-source";
 import { ZodError } from "zod";
 
 import {
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const item = await createUserSavedItem(session.user.id, parsed.data);
+    const item = await createUserSavedItem(session.user.id, parsed.data, resolveApplicationSource(request, { client: "WEB" }));
     return NextResponse.json({ item }, { status: 201 });
   } catch (error) {
     if (error instanceof DuplicateSavedItemError) {
@@ -106,7 +107,7 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    await deleteUserSavedItem(session.user.id, parsed.data);
+    await deleteUserSavedItem(session.user.id, parsed.data, resolveApplicationSource(request, { client: "WEB" }));
     return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof SavedItemNotFoundError) {

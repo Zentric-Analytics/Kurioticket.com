@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const aggregatorPath = new URL("./flightAggregator.ts", import.meta.url);
-const searchRoutePath = new URL("../../app/api/flights/search/route.ts", import.meta.url);
+const searchRoutePath = new URL("../../app/api/flights/search/handler.ts", import.meta.url);
 const resultsClientPath = new URL("../../components/results/FlightResultsClient.tsx", import.meta.url);
 
 test("Flight Search propagates its response request ID into cache persistence", async () => {
@@ -13,7 +13,7 @@ test("Flight Search propagates its response request ID into cache persistence", 
   ]);
 
   assert.match(route, /searchFlights\(parsed\.data,[\s\S]*requestId,/);
-  assert.match(route, /resolveRequestActivityIdentity\(request\)/);
+  assert.match(route, /resolveRequestActivityIdentity\(request, undefined, operationalSession\)/);
   assert.doesNotMatch(route, /getServerSession\(/);
   assert.match(aggregator, /rememberFlights\(rows,now,search,options\.requestId\)/);
 });

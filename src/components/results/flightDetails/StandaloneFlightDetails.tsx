@@ -1,6 +1,8 @@
 "use client";
 
 import { savedFlightTimeFields, SavedFlightTimeError } from "@/shared/flights/savedFlightTime";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
+import { shareProductLink } from "@/lib/shareProductLink";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 
@@ -272,7 +274,12 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify({ type: "flight", id: savedFlightBackendId }),
           });
-          if (response.ok) { setSavedFlightBackendId(null); invalidateSavedFlightsClientCache(); }
+          if (response.ok) {
+            setSavedFlightBackendId(null);
+            invalidateSavedFlightsClientCache();
+            recordCustomerInteraction({ action: "saved_item_removed", product: "FLIGHT", resultId: savedFlightKey,
+              requestId: journeyEvents.interactionRequestId("flight", id) });
+          }
           return;
         }
 
@@ -303,6 +310,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
           const data = await response.json() as { item?: { id?: string } };
           setSavedFlightBackendId(data.item?.id ?? selectedOffer.id);
           invalidateSavedFlightsClientCache();
+          if (data.item?.id) recordCustomerInteraction({ action: "saved_item_confirmed", product: "FLIGHT", resultId: savedFlightKey,
+            requestId: journeyEvents.interactionRequestId("flight", id) });
         } else if (response.status === 409) {
           const existing = await fetch("/api/dashboard/saved?type=flight", {
             headers: { Accept: "application/json" },
@@ -316,11 +325,10 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         return;
       }
 
-      setLocalSavedFlightIds((current) => {
-        const next = toggleSavedItemId(current, savedFlightKey);
-        writeSavedItemIds(next);
-        return next;
-      });
+      const next = toggleSavedItemId(readSavedItemIds(), savedFlightKey);
+      writeSavedItemIds(next);
+      setLocalSavedFlightIds(next);
+      recordCustomerInteraction({ action: next.includes(savedFlightKey) ? "local_saved" : "local_unsaved", product: "FLIGHT", resultId: savedFlightKey, requestId: journeyEvents.interactionRequestId("flight", id) });
     } catch (error) {
       setSavedFlightError(error instanceof SavedFlightTimeError ? error.message : "Unable to save flight. Please try again.");
     } finally {
@@ -329,25 +337,21 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   }
 
   async function shareFlight() {
-    const url = window.location.href;
-    const shareData = {
-      title: route,
-      text: `${route} · ${tripLine}`,
-      url,
-    };
-
-    try {
-      if (navigator.share) await navigator.share(shareData);
-      else {
-        await navigator.clipboard.writeText(url);
-        setShareFeedback("Flight link copied");
-        window.setTimeout(() => setShareFeedback(""), 1800);
-      }
-    } catch (shareError) {
-      if (shareError instanceof DOMException && shareError.name === "AbortError") return;
-      setShareFeedback("Unable to share this flight");
-      window.setTimeout(() => setShareFeedback(""), 1800);
+    const outcome = await shareProductLink({
+      title: route, text: `${route} · ${tripLine}`, url: window.location.href,
+    });
+    if (outcome === "shared" || outcome === "copied") {
+      recordCustomerInteraction({
+        action: outcome === "shared" ? "share_sheet_completed" : "share_link_copied",
+        product: "FLIGHT", resultId: savedFlightKey,
+        requestId: journeyEvents.interactionRequestId("flight", id),
+      });
     }
+    if (outcome === "cancelled") return;
+    setShareFeedback(outcome === "shared" ? "Share sheet completed"
+      : outcome === "copied" ? "Flight link copied"
+      : "Sharing unavailable. Copy this page's link from the address bar.");
+    window.setTimeout(() => setShareFeedback(""), 3000);
   }
 
   const flightSaved = sessionStatus === "authenticated"
@@ -373,7 +377,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
           </>
         )}
       />
-      <span className="sr-only" role="status" aria-live="polite">{shareFeedback}</span>
+      {shareFeedback ? <p role="status" aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-[100] mx-auto w-fit max-w-[calc(100%-2rem)] rounded-xl bg-[#07133B] px-4 py-2 text-center text-sm font-semibold text-white shadow-lg sm:bottom-6">{shareFeedback}</p> : null}
       {savedFlightError ? <p role="alert" className="mx-auto max-w-[1080px] px-4 py-2 text-sm text-red-700">{savedFlightError}</p> : null}
       <div className="mx-auto w-full max-w-[1080px] px-0 sm:px-6 lg:px-[30px]">
         <div className="min-w-0">

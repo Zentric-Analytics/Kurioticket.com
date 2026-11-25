@@ -21,6 +21,8 @@ import { MobileLocalizationProvider } from "../src/localization/MobileLocalizati
 import { createForegroundUpdateHandler, ensureLatestUpdate } from "../src/updates/ensureLatestUpdate";
 import { startVisitorIdentity } from "../src/features/privacy/visitorIdentity";
 import { useNativePresence } from "../src/features/privacy/useNativePresence";
+import { useNativePageViews } from "../src/features/privacy/useNativePageViews";
+import { NativeFirstVisitPrivacyPrompt } from "../src/features/privacy/AnalyticsConsentControl";
 import { MobileRecoveryBoundary } from "../src/features/auth/MobileRecoveryBoundary";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -62,6 +64,7 @@ export default function RootLayout() {
 function ThemedRootLayout() {
   const { theme } = useAppTheme();
   useNativePresence();
+  useNativePageViews();
   return (
     <View style={{ flex: 1 }}>
       <StatusBar style={theme.dark ? "light" : "dark"} backgroundColor={theme.background} />
@@ -80,6 +83,7 @@ function ThemedRootLayout() {
         <Stack.Screen name="hotel-results" options={{ gestureEnabled: true }} />
         <Stack.Screen name="flight-details" options={{ animation: "ios_from_right", gestureEnabled: true }} />
       </Stack></MobileRecoveryBoundary>
+      <NativeFirstVisitPrivacyPrompt />
     </View>
   );
 }

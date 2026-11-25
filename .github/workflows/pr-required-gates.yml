@@ -105,6 +105,8 @@ jobs:
           await import("./src/lib/website-presence.test.ts");
           await import("./src/lib/onlinePresenceRoute.test.ts");
           await import("./src/lib/websiteOnlinePresenceClient.test.ts");
+          await import("./src/lib/onlinePresencePlatformMetrics.test.ts");
+          await import("./src/services/adminUserPopulationMetrics.test.ts");
           await import("./src/app/admin/page.test.ts");'
       - name: Validate admin handoff hardening contracts
         env:
@@ -138,6 +140,17 @@ jobs:
       - name: Validate admin CMS contracts and interactions
         run: npm run test:cms
 
+      - name: Validate Homepage Fare snapshot coverage and operations
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/services/homepageFareSnapshotCoverage.test.ts");
+          await import("./src/app/admin/homepage-fares/operations.test.ts");'
+
+      - name: Validate Render web build
+        run: npm run build
       - name: Install native dependencies
         run: npm --prefix apps/mobile ci
       - name: Validate semantic web, iOS, and Android travel parity

@@ -80,10 +80,10 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
             <>
               <div className="admin-responsive-records overflow-x-auto">
                 <table className="w-full min-w-[1100px] table-fixed text-left text-[13px]">
-                  <colgroup><col className="w-[18%]" /><col className="w-[29%]" /><col className="w-[9%]" /><col className="w-[12%]" /><col className="w-[8%]" /><col className="w-[12%]" /><col className="w-[12%]" /></colgroup>
+                  <colgroup><col className="w-[26%]" /><col className="w-[29%]" /><col className="w-[9%]" /><col className="w-[12%]" /><col className="w-[12%]" /><col className="w-[12%]" /></colgroup>
                   <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
                     <tr>
-                      {["Ticket", "Requester", "Priority", "Status", "Messages", "Last updated", "Action"].map((label) => (
+                      {["Ticket", "Requester", "Priority", "Status", "Last updated", "Action"].map((label) => (
                         <th key={label} scope="col" className="px-3 py-3 font-medium">{label.toUpperCase()}</th>
                       ))}
                     </tr>
@@ -116,7 +116,6 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                               {status.label}
                             </span>
                           </td>
-                          <td data-label="Messages" className="px-3 py-1.5 align-middle">{ticket.messageCount}</td>
                           <td data-label="Last updated" className="px-3 py-1.5 align-middle">
                             <time dateTime={updatedAt.toISOString()} className="block whitespace-nowrap text-[13px] font-medium text-[#374151]">
                               {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(updatedAt)}

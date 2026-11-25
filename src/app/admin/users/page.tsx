@@ -3,9 +3,11 @@ import { redirect } from "next/navigation";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminIdentityTable";
 import { AdminUsersToolbar } from "@/components/admin/AdminUsersToolbar";
+import { AdminUserPopulationCards } from "@/components/admin/AdminUserPopulationCards";
+import { readUserPopulationMetrics } from "@/services/adminUserPopulationMetrics";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
-import { adminIdentityPageSql, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityDirectoryRow } from "@/lib/adminIdentityDirectory";
+import { adminIdentityPageSql, adminRegisteredActivityDateWhere, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityDirectoryRow } from "@/lib/adminIdentityDirectory";
 
 export const metadata = { title: "Admin Users" };
 type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; tab?: string; identity?: string; activity?: string; page?: string; sort?: string; date?: string; from?: string; to?: string }> };
@@ -16,7 +18,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const q = (params?.q || "").trim().slice(0, 120);
   const prismaQuery = escapePrismaContainsQuery(q);
   const role = ["ALL", "USER", "SUPPORT", "ADMIN"].includes(params?.role || "") ? params!.role! : "ALL";
-  const status = ["ALL", "ACTIVE", "SUSPENDED", "DELETED", "PENDING_DELETION"].includes(params?.status || "") ? params!.status! : "ALL";
+  const status = ["ALL", "ACTIVE", "INACTIVE", "UNAVAILABLE", "SUSPENDED", "DELETED", "PENDING_DELETION"].includes(params?.status || "") ? params!.status! : "ALL";
   // New shareable URLs use tab=; preserve older identity= bookmarks.
   const selectedTab = params?.tab ?? params?.identity;
   const tab: "ALL" | "REGISTERED" | "GUEST" =
@@ -30,6 +32,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const now = new Date();
   const bounds = adminIdentityDateBounds(date, now, from, to);
   const dateWhere = bounds ? { gte: bounds.from, ...(bounds.to ? { lt: bounds.to } : {}) } : undefined;
+  const environment = getPublicEnvironment();
   // Existing bookmarked drawer URLs remain functional; only the presentation changes.
   const legacy = /^(user|guest):([a-z0-9_-]{6,80})$/i.exec(params?.activity || "");
   if (legacy) {
@@ -40,41 +43,67 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     redirect("/admin/users/" + legacy[1].toLowerCase() + "/" + encodeURIComponent(legacy[2])
       + "/activity?directory=" + encodeURIComponent(directory));
   }
+  const registeredEligibleForFilters = status !== "INACTIVE" && status !== "UNAVAILABLE";
   const where = {
-    ...(dateWhere ? { createdAt: dateWhere } : {}),
-    ...(q ? { OR: [{ email: { contains: prismaQuery, mode: "insensitive" as const } }, { name: { contains: prismaQuery, mode: "insensitive" as const } }, { id: { contains: prismaQuery, mode: "insensitive" as const } }] } : {}),
+    // Date means a recorded account/session/search/handoff in this window,
+    // not only the date the account was originally registered.
+    AND: [
+      adminRegisteredActivityDateWhere(bounds, environment),
+      ...(q ? [{ OR: [{ email: { contains: prismaQuery, mode: "insensitive" as const } }, { name: { contains: prismaQuery, mode: "insensitive" as const } }, { id: { contains: prismaQuery, mode: "insensitive" as const } }] }] : []),
+    ],
     ...(role !== "ALL" ? { role: role as never } : {}),
-    ...(status !== "ALL" ? { status: status as never } : {}),
+    ...(registeredEligibleForFilters && status !== "ALL" ? { status: status as never } : {}),
   };
   // The existing User model remains the authority for registered accounts.
   // Guests remain distinct records and only consent-eligible, unlinked guests are listed.
-  const guestWhere = { ...(dateWhere ? { firstSeenAt: dateWhere } : {}), consentStatus: "GRANTED" as const, trackingDisabledAt: null, currentUserId: null, identityLinks: { none: {} }, ...(q ? { id: { contains: prismaQuery, mode: "insensitive" as const } } : {}) };
-  const showUsers = tab !== "GUEST";
-  // Role/status are account-only filters. Guest identities never have either.
-  const guestsEligibleForFilters = role === "ALL" && status === "ALL";
-  const showGuests = tab !== "REGISTERED" && guestsEligibleForFilters;
-  const environment = getPublicEnvironment();
+  // Returning consented visitors qualify by either their original visit or
+  // their latest valid observation. Mirror the ordered SQL cohort exactly.
+  const guestWhere = {
+    ...(dateWhere ? { OR: [{ firstSeenAt: dateWhere }, { lastSeenAt: dateWhere }] } : {}),
+    consentStatus: "GRANTED" as const, trackingDisabledAt: null,
+    currentUserId: null, identityLinks: { none: {} },
+    ...(q ? { id: { contains: prismaQuery, mode: "insensitive" as const } } : {}),
+  };
+  const showUsers = tab !== "GUEST" && registeredEligibleForFilters;
+  // Role filters still apply only to accounts. Active can match both kinds,
+  // while Inactive/Unavailable are operational guest statuses, not User enums.
+  const guestsEligibleForFilters = role === "ALL" && ["ALL", "ACTIVE", "INACTIVE", "UNAVAILABLE"].includes(status);
+  const consentedGuestsEligible = guestsEligibleForFilters && (status === "ALL" || status === "ACTIVE");
+  const showGuests = tab !== "REGISTERED" && consentedGuestsEligible;
+  const showOperationalGuests = tab !== "REGISTERED" && guestsEligibleForFilters;
+
   // Operational sessions are not accounts or analytics visitor identities.
   // A single identity query supplies the operational guest cohort, timestamps,
   // and total. Account and consented visitor counts remain independent of tab.
-  const result = await withOptionalDb<{ rows: IdentityRow[]; registeredCount: number; guestCount: number } | null>(async db => {
+  const result = await withOptionalDb<{ rows: IdentityRow[]; registeredCount: number; guestCount: number; operationalAllTimeCount: number | null; operationalNewCount: number | null } | null>(async db => {
     const [registeredCount, consentedGuestCount] = await Promise.all([
-      db.user.count({ where }),
-      guestsEligibleForFilters ? db.visitor.count({ where: guestWhere }) : Promise.resolve(0),
+      registeredEligibleForFilters ? db.user.count({ where }) : Promise.resolve(0),
+      consentedGuestsEligible ? db.visitor.count({ where: guestWhere }) : Promise.resolve(0),
     ]);
     const countBeforeOperational = (showUsers ? registeredCount : 0) + (showGuests ? consentedGuestCount : 0);
     const sql = adminIdentityPageSql({
       query: q, role, status, showUsers, showGuests,
-      showOperationalGuests: showGuests, withOperationalSummary: guestsEligibleForFilters,
+      showOperationalGuests, withOperationalSummary: true,
       environment, sort, date, from, to, now,
       limit: Math.max(1, countBeforeOperational), offset: 0, allIdentities: true,
     });
     const fetched: AdminIdentityDirectoryRow[] = sql ? await db.$queryRaw<AdminIdentityDirectoryRow[]>(sql) : [];
-    const operationalGuestCount = Number(fetched[0]?.operationalGuestCount ?? BigInt(0));
+    // Directory guest tabs may be filtered by search, role, status and last activity.
+    // Metrics are independent of these filters, except the New card's date range.
+    // The SQL derives both metrics from one environment-scoped session grouping.
+    const scopedOperationalGuestCount = Number(fetched[0]?.operationalGuestCount);
+    const operationalAllTimeCount = Number(fetched[0]?.operationalAllTimeCount);
+    const operationalNewCount = Number(fetched[0]?.operationalNewCount);
+    if (!fetched.length || ![scopedOperationalGuestCount, operationalAllTimeCount, operationalNewCount]
+      .every(value => Number.isSafeInteger(value) && value >= 0)
+      || operationalNewCount > operationalAllTimeCount
+      || (guestsEligibleForFilters && !q && scopedOperationalGuestCount > operationalAllTimeCount)) {
+      throw new Error("Invalid or missing operational guest summaries");
+    }
     const identities = fetched.filter((item): item is AdminIdentityDirectoryRow & { kind: "user" | "guest"; id: string } =>
       item.kind !== null && item.id !== null);
     const userIds = identities.filter(item => item.kind === "user").map(item => item.id);
-    const guestIds = identities.filter(item => item.kind === "guest").map(item => item.id);
+    const guestIds = identities.filter(item => item.kind === "guest" && item.guestSource === "visitor").map(item => item.id);
     const [users, guests] = await Promise.all([
       userIds.length ? db.user.findMany({
         where: { ...where, id: { in: userIds } },
@@ -85,22 +114,32 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         select: { id: true, firstSeenAt: true, lastSeenAt: true },
       }) : Promise.resolve([]),
     ]);
+    // Use the same computed Last Seen value for sorting and rendering.
+    // Never recompute it after ordering or infer a timestamp from registration.
+    const observed = new Map(identities.map(item => [item.kind + ":" + item.id, item.lastSeenAt]));
     const userMap = new Map(users.map(user => [user.id, user]));
-    const guestMap = new Map([
-      ...identities.filter(item => item.kind === "guest" && item.firstSeenAt && item.lastSeenAt)
-        .map(item => [item.id, { id: item.id, firstSeenAt: item.firstSeenAt!, lastSeenAt: item.lastSeenAt! }] as const),
-      ...guests.map(guest => [guest.id, guest] as const),
-    ]);
+    const guestMap = new Map(guests.map(guest => [guest.id, guest]));
     const rows = identities.flatMap<IdentityRow>(identity => {
       if (identity.kind === "user") {
         const record = userMap.get(identity.id);
-        return record ? [{ kind: "user" as const, record }] : [];
+        return record ? [{ kind: "user" as const, record, lastSeenAt: observed.get("user:" + identity.id) ?? null }] : [];
       }
-      const record = guestMap.get(identity.id);
-      return record ? [{ kind: "guest" as const, record }] : [];
+      // A withdrawn/linked visitor cannot reappear via an operational fallback.
+      const record = identity.guestSource === "visitor" ? guestMap.get(identity.id)
+        : identity.guestSource === "operational" && identity.firstSeenAt && identity.lastSeenAt
+          ? { id: identity.id, firstSeenAt: identity.firstSeenAt, lastSeenAt: identity.lastSeenAt } : null;
+      return record ? [{ kind: "guest" as const, record, lastSeenAt: observed.get("guest:" + identity.id) ?? record.lastSeenAt,
+        guestSource: identity.guestSource ?? undefined, guestStatus: identity.guestStatus ?? "UNAVAILABLE" }] : [];
     });
-    return { rows, registeredCount, guestCount: consentedGuestCount + operationalGuestCount };
+    return { rows, registeredCount, guestCount: consentedGuestCount +
+      (guestsEligibleForFilters ? scopedOperationalGuestCount : 0),
+      operationalAllTimeCount, operationalNewCount };
   }, null);
+  const population = await readUserPopulationMetrics(date, now, from, to);
+  const periodLabel = date === "today" ? "Today (UTC)" : date === "last7" ? "Last 7 days"
+    : date === "last30" ? "Last 30 days" : date === "all" ? "All time"
+    : date === "custom" ? "Custom range (UTC)" : date === "24h" ? "Last 24 hours"
+    : date === "thisMonth" ? "This month" : date === "lastMonth" ? "Last month" : "Last 3 months";
   const link = "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date, ...(from && to ? {from,to} : {}) }).toString();
   if (result === null) {
     return (
@@ -123,6 +162,9 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   return (
     <div className="w-full min-w-0 bg-white">
       <h1 className="sr-only">Users</h1>
+      <AdminUserPopulationCards metrics={population} period={periodLabel}
+        operationalAllTimeCount={result.operationalAllTimeCount}
+        operationalNewCount={result.operationalNewCount} />
       <AdminUsersToolbar query={q} role={role} status={status} tab={tab} sort={sort} date={date} from={from || ""} to={to || ""}
         registeredCount={result.registeredCount} guestCount={result.guestCount} pageHref={link}>
         <AdminIdentityTable rows={result.rows} pageHref={link} sort={sort} />

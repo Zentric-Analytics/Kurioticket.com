@@ -52,7 +52,7 @@ test("mobile and desktop flights retain complete continuous lists", () => {
   const mobileStart = flights.indexOf("data-mobile-continuous-flight-results");
   const desktopStart = flights.indexOf('ref={paginationListRef}');
   const mobileRegion = flights.slice(mobileStart, desktopStart);
-  const desktopList = flights.indexOf('<div data-flight-results-card-list className="space-y-3 sm:space-y-4">', desktopStart);
+  const desktopList = flights.indexOf('<div data-flight-results-card-list onClickCapture={rememberVisibleFlightResults} className="space-y-3 sm:space-y-4">', desktopStart);
   assert.ok(mobileStart >= 0 && desktopStart > mobileStart && desktopList > desktopStart);
   assert.match(mobileRegion, /items=\{sortedResults\}/);
   assert.doesNotMatch(mobileRegion, /<FlightResultsPagination/);

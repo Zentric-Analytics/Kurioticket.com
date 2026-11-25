@@ -77,7 +77,8 @@ test("Journeys directory shares Users styling without modifying consent-aware da
   assert.match(datesView, /appearance="fare" align="end"/);
   assert.match(datesView, /<AdminCalendarInput mode="datetime-local"/);
   assert.match(history, /aria-label="Journey event history"/);
-  assert.match(history, /events\.map\(event =>/);
+  assert.match(history, /events\.map\(\(event, index\) =>/);
+  assert.match(history, /Step \{index \+ 1\}/);
 });
 
 test("Visitor Journeys defaults to Today UTC, keeps responsive filters on one desktop row and isolates environment", () => {

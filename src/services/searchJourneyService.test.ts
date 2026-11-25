@@ -22,9 +22,9 @@ test("journey activity expires after thirty minutes of inactivity", () => {
 type Visitor = { id: string; consentStatus: string; trackingDisabledAt: Date | null; currentUserId: string | null; identityLinks: Array<{ userId: string }> };
 type History = { id: string; visitorId: string | null; userId: string | null; requestId: string; type: "FLIGHT" | "HOTEL"; resultCount: number; latencyMs: number; status: "SUCCESS" | "PARTIAL" | "FAILED"; query: unknown };
 type Journey = { id: string; visitorId: string; startedAt: Date; lastActivityAt: Date };
-type Event = { journeyId: string; eventKey: string; type: string; searchHistoryId: string | null; redirectLogId: string | null; provider: string | null };
+type Event = { journeyId: string; eventKey: string; type: string; searchHistoryId: string | null; redirectLogId: string | null; provider: string | null; metadata?: unknown };
 
-function fixture() {
+function fixture(countryLookup?: (ip: string) => Promise<string | null>) {
   const visitors: Visitor[] = [];
   const histories: History[] = [];
   const journeys: Journey[] = [];
@@ -131,7 +131,7 @@ function fixture() {
     histories.push(row);
     return row;
   }
-  return { service: createSearchJourneyService(() => db as unknown as SearchJourneyDatabase, () => currentTime),
+  return { service: createSearchJourneyService(() => db as unknown as SearchJourneyDatabase, () => currentTime, countryLookup),
     visitor, search, visitors, histories, journeys, events,
     setTime: (value: Date) => { currentTime = value; }, onLock: (value: () => void) => { onLock = value; } };
 }
@@ -183,6 +183,45 @@ test("wrong-visitor, unowned, and other-account searches are permanent rejection
   assert.equal(f.events.length, 0);
 });
 
+test("flight details, fare and provider selections remain distinct exact-search canonical stages", async () => {
+  const f = fixture();
+  const visitor = f.visitor();
+  const search = f.search(visitor.id);
+  for (const [type, offerId, provider] of [
+    ["FLIGHT_DETAILS_VIEWED", "flight.01", "KAYAK sandbox"],
+    ["OFFER_SELECTED", "fare.01", "Duffel"],
+    ["PROVIDER_DEAL_SELECTED", "deal.01", "Trip.com"],
+  ] as const) {
+    const accepted = await f.service.recordClientJourneyEvent({
+      ...client(visitor.id, search.requestId), eventId: randomUUID(),
+      type, offerId, provider,
+      sourcePage: type === "FLIGHT_DETAILS_VIEWED" ? "/flight-results" : "/flight-details",
+    });
+    assert.deepEqual(accepted, { accepted: true });
+  }
+  assert.deepEqual(f.events.map(row => row.type),
+    ["FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"]);
+  assert.deepEqual(f.events.map(row => (row.metadata as {resultId?:string})?.resultId),
+    ["flight.01", "fare.01", "deal.01"]);
+  assert.equal(new Set(f.events.map(row => row.eventKey)).size, 3);
+  assert.ok(f.events.every(row => row.searchHistoryId === search.id));
+});
+
+test("flight-only stages never attach to hotel searches even with matching consent", async () => {
+  const f = fixture();
+  const visitor = f.visitor();
+  const search = f.search(visitor.id);
+  search.type = "HOTEL";
+  for (const type of ["FLIGHT_DETAILS_VIEWED", "PROVIDER_DEAL_SELECTED"] as const) {
+    const response = await f.service.recordClientJourneyEvent({
+      ...client(visitor.id, search.requestId), eventId: randomUUID(), type,
+      offerId: "offer_01", sourcePage: "/flight-details",
+    });
+    assert.deepEqual(response, { accepted: false });
+  }
+  assert.equal(f.events.length, 0);
+});
+
 test("simultaneous first events and retry duplicates create one journey and preserve distinct events", async () => {
   const f = fixture();
   const visitor = f.visitor();
@@ -224,6 +263,53 @@ test("retries do not extend sessions and a reused UUID cannot claim a different 
   assert.deepEqual(await f.service.recordClientJourneyEvent({ ...event, requestId: f.search(visitor.id).requestId }), { accepted: false });
   assert.deepEqual(await f.service.recordClientJourneyEvent({ ...event, eventId: randomUUID(), type: "OFFER_SELECTED" }), { accepted: true });
   assert.equal(f.journeys.length, 2);
+});
+
+test("search IP is committed before country enrichment; the exact record gains only verified country", async () => {
+  let calls = 0;
+  let stateAtLookup: unknown;
+  const f: ReturnType<typeof fixture> = fixture(async ip => {
+    calls++;
+    assert.equal(ip, "8.8.8.8");
+    assert.equal(f.histories.length, 1, "save original search before geolocation lookup");
+    assert.equal(f.events.length, 1, "search milestone exists before enrichment");
+    stateAtLookup = structuredClone(f.histories[0].query);
+    return "US";
+  });
+  const visitor = f.visitor();
+  const query = { environment: "staging", destination: "ACC", searchNetwork: { ipAddress: "8.8.8.8", countryCode: null } };
+  const history: SearchHistoryInput = {
+    visitorId: visitor.id, requestId: randomUUID(), type: "FLIGHT", query,
+    resultCount: 125, latencyMs: 2200, status: "SUCCESS",
+  };
+  assert.ok(await f.service.recordSearchHistory(history));
+  assert.equal(calls, 1);
+  assert.deepEqual((stateAtLookup as {searchNetwork: unknown}).searchNetwork, query.searchNetwork);
+  assert.equal((stateAtLookup as {destination: string}).destination, "ACC");
+  assert.deepEqual((f.histories[0].query as {searchNetwork: unknown}).searchNetwork,
+    { ipAddress: "8.8.8.8", countryCode: "US" });
+  assert.equal((f.histories[0].query as {destination:string}).destination, "ACC");
+  assert.equal(f.events.filter(event => event.type === "SEARCH_COMPLETED").length, 1);
+  await f.service.recordSearchHistory(history);
+  assert.equal(calls, 1, "a completed search with a country must not be looked up again");
+});
+
+test("an exact country from the trusted edge is retained without a lookup", async () => {
+  const f = fixture(async () => { throw new Error("must not use IPinfo when Cloudflare country exists"); });
+  const query = { searchNetwork: { ipAddress: "8.8.8.8", countryCode: "NG" }, destination: "ACC" };
+  assert.ok(await f.service.recordSearchHistory({
+    requestId: randomUUID(), type: "FLIGHT", query, resultCount: 1, latencyMs: 1, status: "SUCCESS",
+  }));
+  assert.deepEqual((f.histories[0].query as {searchNetwork: unknown}).searchNetwork, query.searchNetwork);
+});
+
+test("a failed country lookup leaves the original search and network observation intact", async () => {
+  const f = fixture(async () => { throw new Error("provider down"); });
+  const query = { searchNetwork: { ipAddress: "8.8.8.8", countryCode: null } };
+  assert.ok(await f.service.recordSearchHistory({
+    requestId: randomUUID(), type: "FLIGHT", query, resultCount: 1, latencyMs: 1, status: "SUCCESS",
+  }));
+  assert.deepEqual((f.histories[0].query as {searchNetwork: unknown}).searchNetwork, query.searchNetwork);
 });
 
 test("progressive first-batch history accepts early clicks and completes once without regressing later", async () => {

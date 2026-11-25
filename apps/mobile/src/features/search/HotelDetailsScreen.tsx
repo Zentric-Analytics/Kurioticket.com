@@ -26,6 +26,7 @@ import { hotelAlertPresentation } from "../flow/hotelPriceAlertModel";
 import { buildSearchPlan } from "../flow/travelSearchModel";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { journeyEvents } from "../privacy/journeyEvents";
+import { shareNativeResult } from "../privacy/nativeShareTracking";
 import {
   resolveDisplayCurrencyContext,
   type DisplayCurrencyResolution,
@@ -478,9 +479,9 @@ function HotelDetail({
   };
 
   const shareHotel = () =>
-    void Share.share({
+    void shareNativeResult({share:()=>Share.share({
       message: `${result.name} — ${address}${nightlyPrice ? ` — ${nightlyPrice.formatted}/night` : ""}`,
-    });
+    }),product:"HOTEL",resultId:result.id,requestId:journeyRequestId}).catch(() => undefined);
 
   const returnToHotelResults = () => {
     if (hotelResultsStack) {
@@ -685,6 +686,7 @@ function HotelDetail({
             <View style={s.hotelPriceAlert}>
               <HotelPriceAlert
                 plan={hotelAlertPlan}
+                journeyRequestId={journeyRequestId}
                 hotel={result}
                 hotelResults={[result]}
                 available={availability.priceAlerts}
@@ -775,7 +777,7 @@ function HotelDetail({
           accessibilityRole="button"
           accessibilityLabel={saved ? `Remove ${result.name} hotel from saved` : `Save ${result.name} hotel`}
           accessibilityState={{ selected: saved }}
-          onPress={() => void canonical.toggleHotel(result, params)}
+          onPress={() => void canonical.toggleHotel(result, params, journeyRequestId)}
           style={s.heroAction}
         >
           <View pointerEvents="none" style={s.heroHeartIcon}>

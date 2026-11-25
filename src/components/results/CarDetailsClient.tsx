@@ -18,6 +18,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useResultsReturnIntent } from "@/components/results/useResultsReturnIntent";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
@@ -50,6 +51,8 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { getDealsGuidedConfirmationActionId } from "@/lib/deals/dealsConfirmationIds";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
 import { recordCarHandoffClick } from "@/lib/cars/carHandoffTracking";
+import { shareProductLink } from "@/lib/shareProductLink";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 
 export type CarDetailsPrimaryAction =
   | { kind: "standalone-disabled-provider"; label: string }
@@ -296,20 +299,20 @@ export function CarDetailsExperience({
       isFallbackRate: rates.isFallback,
     });
   async function shareCar() {
-    const url = window.location.href;
-    try {
-      if (navigator.share) await navigator.share({ title: car.modelName, url });
-      else {
-        await navigator.clipboard.writeText(url);
-        setShareConfirmation(
-          `${car.modelName} ${copy("carDetails.linkCopied")}`,
-        );
-        window.setTimeout(() => setShareConfirmation(""), 2200);
-      }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
+    const outcome = await shareProductLink({ title: car.modelName, url: window.location.href });
+    if (outcome === "shared" || outcome === "copied") {
+      recordCustomerInteraction({
+        action: outcome === "shared" ? "share_sheet_completed" : "share_link_copied",
+        product: "CAR", resultId: car.id, requestId,
+      });
     }
+    if (outcome === "cancelled") return;
+    setShareConfirmation(outcome === "shared" ? "Share sheet completed"
+      : outcome === "copied" ? `${car.modelName} ${copy("carDetails.linkCopied")}`
+      : "Sharing unavailable. Copy this page's link from the address bar.");
+    window.setTimeout(() => setShareConfirmation(""), 3000);
   }
+
   useEffect(() => {
     if (presentation !== "standalone-content") return;
 
@@ -1006,6 +1009,7 @@ export function CarDetailsClient({
   requestId?: string | null;
 }) {
   const { t } = useLocale();
+  useResultsReturnIntent("car", resultsHref);
   const { start: startRouteProgress } = useRouteProgress();
   const [mobileResultsPending, setMobileResultsPending] = useState(false);
   const copy = (key: string) => t[key] || enTranslations[key] || key;

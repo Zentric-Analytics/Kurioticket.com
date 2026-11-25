@@ -129,7 +129,6 @@ export function LinkedCasePreview({ origin, sourceId }: Props) {
                   <Field label="Ticket subject" value={preview.subject || "Unavailable"} />
                   <Field label="Ticket status" value={supportStatus[preview.status] ?? preview.status} />
                   <Field label="Priority" value={preview.priority.toLowerCase()} />
-                  <Field label="Messages" value={preview.messageCount.toLocaleString()} />
                   <Field label="Last updated" value={dateLabel(preview.updatedAt)} />
                 </dl>
                 <p className="border-t border-[#E7ECF5] pt-2 text-[11px] leading-4 text-[#64748B]">

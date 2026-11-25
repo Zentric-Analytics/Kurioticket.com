@@ -11,28 +11,25 @@ const reader = readFileSync("src/services/adminSearchScopedActivityCore.ts", "ut
 const protectedService = readFileSync("src/services/adminSearchScopedActivityService.ts", "utf8");
 const endpoint = readFileSync("src/app/api/admin/searches/[id]/activity/route.ts", "utf8");
 
-test("Search Detail View activity initially renders as a collapsed accessible button", () => {
+test("Search Detail renders an inline interaction section without a View activity disclosure", () => {
   const html = renderToStaticMarkup(createElement(SearchDetailActivityPanel, {
     searchId: "search_123456",
     environment: "staging",
-    searchedAt: "2026-11-16T12:34:00.000Z",
-    status: "SUCCESS",
   }));
-  assert.match(html, /View activity/);
-  assert.match(html, /aria-expanded="false"/);
-  assert.match(html, /aria-controls=/);
-  assert.match(html, /hidden=""/);
-  assert.doesNotMatch(html, /href="\/admin\/users\//);
-  assert.doesNotMatch(html, /Loading verified search activity/);
+  assert.match(html, /User interactions/);
+  assert.doesNotMatch(html, /Search recorded/);
+  assert.match(html, /Loading verified user interactions/);
+  assert.doesNotMatch(html, /View activity|aria-expanded|href="\/admin\/users\//);
 });
 
-test("both guest session and linked-account View activity links are replaced in Search Detail", () => {
+test("Search Detail shows scoped activity separately from verified account navigation", () => {
   assert.match(detailPage, /<SearchDetailActivityPanel/);
-  assert.match(detailPage, /search\.operationalSessionId && search\.environment === getPublicEnvironment\(\)/);
-  assert.match(detailPage, /Boolean\(search\.searcher\.activity\)/);
   assert.match(detailPage, /searchId=\{search\.id\}/);
-  assert.doesNotMatch(detailPage, /href=\{"\/admin\/users\//);
-  assert.doesNotMatch(detailPage, /encodeURIComponent\(search\.searcher\.activity\.id\)/);
+  assert.match(detailPage, /View user details/);
+  assert.match(detailPage, /search\.searcher\.activity/);
+  assert.match(detailPage, /Country/);
+  assert.match(detailPage, /IP address/);
+  assert.doesNotMatch(detailPage, /search\.searcher\.activity\.id\)\}\s*<SearchDetailActivityPanel/);
 });
 
 test("Search Activity endpoint independently requires admin authorization and never reads Users activity", () => {

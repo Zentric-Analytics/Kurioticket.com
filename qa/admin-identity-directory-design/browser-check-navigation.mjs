@@ -27,7 +27,11 @@ try {
     const workspace = page.getByRole("navigation", { name: "Users subsections" });
     await expect(page.getByRole("complementary", { name: "Users navigation" }).getByRole("heading", { name: "Users", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toBeVisible();
-    await expect(workspace.getByRole("link", { name: "Visitor Journeys", exact: true })).toBeVisible();
+    await expect(workspace.getByRole("link", { name: "Online Users", exact: true })).toBeVisible();
+    await expect(workspace.getByRole("link", { name: "Device & Access", exact: true })).toBeVisible();
+    await expect(workspace.getByRole("link", { name: "Pages Visited", exact: true })).toBeVisible();
+    await expect(workspace.getByRole("link", { name: "Visitor Journeys", exact: true })).toHaveCount(0);
+    await expect(workspace.getByRole("link", { name: "Platform Metrics", exact: true })).toHaveCount(0);
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
     for (const unrelated of ["Trips", "Support", "Settings", "System"]) {
       await expect(workspace.getByRole("link", { name: unrelated, exact: true })).toHaveCount(0);
@@ -70,6 +74,41 @@ try {
     checks.push("Admin navbar responsive at " + width + "px");
   }
 
+  // Platforms reuses the old health navbar entry while owning two subsection
+  // routes. Account-specific device history must remain with the Users workspace.
+  for (const width of [1440, 1280, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const [path, selected] of [
+      ["/admin/platform-health", "Platform Health"],
+      ["/admin/platforms/devices", "Platform Metrics"],
+    ]) {
+      await page.goto(root + path, { waitUntil: "networkidle" });
+      const platforms = page.getByRole("navigation", { name: "Platforms subsections" });
+      await expect(page.getByRole("complementary", { name: "Platforms navigation" })).toBeVisible();
+      await expect(platforms.getByRole("link", { name: "Platform Health", exact: true })).toBeVisible();
+      await expect(platforms.getByRole("link", { name: "Platform Metrics", exact: true })).toBeVisible();
+      await expect(platforms.getByRole("link", { name: selected, exact: true }))
+        .toHaveAttribute("aria-current", "page");
+      await expect(platforms.getByRole("link", { name: "Users Directory", exact: true })).toHaveCount(0);
+      assert.equal(await platforms.locator('[aria-current="page"]').count(), 1,
+        "Exactly one Platforms subpage active on " + path);
+      const documentWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+      assert.ok(documentWidth <= width + 1, "Platforms navigation must not overflow at " + width + "px");
+    }
+    await page.goto(root + "/admin/users/user/example123/devices", { waitUntil: "networkidle" });
+    await expect(page.getByRole("complementary", { name: "Users navigation" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Users subsections" })
+      .getByRole("link", { name: "Device & Access", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("navigation", { name: "Platforms subsections" })).toHaveCount(0);
+    checks.push("Platforms workspace and account device history navigation at " + width + "px");
+  }
+
+  await page.goto(root + "/admin/users/platforms-devices?range=7d&platform=ios&page=3", { waitUntil: "networkidle" });
+  await expect(page).toHaveURL(/\/admin\/platforms\/devices\?range=7d&platform=ios&page=3$/);
+  await expect(page.getByRole("navigation", { name: "Platforms subsections" })
+    .getByRole("link", { name: "Platform Metrics", exact: true })).toHaveAttribute("aria-current", "page");
+  checks.push("Legacy device URL preserves range, platform and page during redirect");
+
   // The real Visitor Journeys page uses synthetic QA-only rows; preserve
   // all eight data fields and keep each Action visible at 100% zoom.
   for (const width of [1024, 1280, 1366, 1440, 1920, 768, 390]) {
@@ -77,7 +116,7 @@ try {
     await page.goto(root + "/admin/journeys", { waitUntil: "networkidle" });
     const journeyFilters = page.getByRole("form", { name: "Filter visitor journeys" });
     await expect(journeyFilters).toBeVisible();
-    await expect(journeyFilters.getByRole("button", { name: "Date range: Last 24 hours" })).toBeVisible();
+    await expect(journeyFilters.getByRole("button", { name: "Date range: Today" })).toBeVisible();
     await expect(journeyFilters.getByRole("button", { name: "Provider: All providers" })).toBeVisible();
     await expect(journeyFilters.getByRole("button", { name: "Apply filters" })).toBeVisible();
     await expect(journeyFilters.getByRole("button", { name: /Environment/ })).toHaveCount(0);
@@ -134,13 +173,15 @@ try {
       ), "Dropdowns and Apply filters must not overlap: " + JSON.stringify(filterLayout));
       assert.ok(filterLayout.controls[4].width <= 140,
         "Apply filters must remain compact at " + width + "px");
-      assert.ok(Math.abs(filterLayout.headingTop - filterLayout.dateTop) < 36,
-        "Date range stays in the header at " + width + "px");
+      assert.ok(Math.abs(filterLayout.dateTop - filterLayout.filterTops[0]) < 2,
+        "Date range stays on the same horizontal filter row at " + width + "px");
     }
     const journeys = page.getByRole("region", { name: "Journey records" });
     await expect(journeys).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Users subsections" })
-      .getByRole("link", { name: "Visitor Journeys", exact: true })).toHaveAttribute("aria-current", "page");
+      .getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("navigation", { name: "Users subsections" })
+      .getByRole("link", { name: "Visitor Journeys", exact: true })).toHaveCount(0);
     await expect(journeys.locator("thead th")).toHaveCount(8);
     await expect(journeys.locator("tbody tr")).toHaveCount(4);
     await expect(journeys.locator("tbody tr:first-child td")).toHaveCount(8);
@@ -182,7 +223,7 @@ try {
   assert.equal(overviewBg, "rgb(241, 245, 251)", "Overview retains its original background");
   await page.screenshot({ path: output + "/overview-navbar-1280.png", fullPage: false });
   checks.push("Overview retains its original canvas");
-  const expectedLabels = ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Platform Health", "Settings"];
+  const expectedLabels = ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Platforms", "Settings"];
   for (const width of [1280, 1366, 1440, 1920, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(root + "/admin", { waitUntil: "networkidle" });

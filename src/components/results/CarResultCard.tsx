@@ -28,6 +28,8 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOverlay";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSavedCar } from "@/components/results/useSavedCar";
+import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
+import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import {
   getCarSpecificationIcon,
   getMobileCarPrimarySpecs,
@@ -124,7 +126,8 @@ export function CarResultCard({
     orSimilar: string;
   };
 }) {
-  const { isSaved, toggleSavedCar } = useSavedCar(car, search);
+  const journeyEvents = useJourneyEvents();
+  const { isSaved, toggleSavedCar } = useSavedCar(car, search, requestId);
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? key;
   const { start: startRouteProgress } = useRouteProgress();
@@ -221,6 +224,16 @@ export function CarResultCard({
   const handleMobileDetailsNavigation = (
     event: ReactMouseEvent<HTMLAnchorElement>,
   ) => {
+    if (!event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && detailsHref) {
+      journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", requestId, { offerId: car.id, sourcePage: "/cars/results",
+        ...(Number.isFinite(offer.pricePerDay) && offer.pricePerDay > 0
+          && /^[A-Z]{3}$/.test(offer.currency) ? { observedResult: {
+            label: car.modelName, provider: offer.bookingProviderName,
+            amount: offer.pricePerDay, currency: offer.currency, priceBasis: "per_day" as const,
+            ...(Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 ? { totalAmount: offer.totalPrice } : {}),
+          } } : {}),
+      });
+    }
     if (
       event.defaultPrevented ||
       event.button !== 0 ||
@@ -242,15 +255,21 @@ export function CarResultCard({
     startRouteProgress();
   };
 
+  const observedShareResult = Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && /^[A-Z]{3}$/.test(offer.currency)
+      ? { label: car.modelName, provider: offer.bookingProviderName, amount: offer.totalPrice, currency: offer.currency, priceBasis: "total" as const }
+      : undefined;
+
   async function shareCar() {
     const relativeUrl = detailsHref ?? window.location.href;
     const url = new URL(relativeUrl, window.location.origin).toString();
     try {
       if (navigator.share) {
         await navigator.share({ title: car.modelName, url });
+        recordCustomerInteraction({ action: "share_sheet_completed", product: "CAR", resultId: car.id, requestId, observedResult: observedShareResult });
         return;
       }
       await navigator.clipboard.writeText(url);
+      recordCustomerInteraction({ action: "share_link_copied", product: "CAR", resultId: car.id, requestId, observedResult: observedShareResult });
       setShareConfirmation(`${car.modelName} link copied`);
       window.setTimeout(() => setShareConfirmation(""), 2200);
     } catch (error) {

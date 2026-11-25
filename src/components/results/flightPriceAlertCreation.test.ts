@@ -8,7 +8,7 @@ const hotel = readFileSync("src/components/results/HotelPriceAlertControl.tsx", 
 
 test("Flight Results passes unfiltered provider inventory into its one alert control", () => {
   assert.equal(results.match(/<FlightPriceAlertControl/g)?.length, 1);
-  assert.match(results, /<FlightPriceAlertControl query=\{mobileFlightPriceAlertQuery\} results=\{providerResults\} desktopPortalTarget=\{desktopFlightPriceAlertTarget\}/);
+  assert.match(results, /<FlightPriceAlertControl query=\{mobileFlightPriceAlertQuery\} results=\{providerResults\} desktopPortalTarget=\{desktopFlightPriceAlertTarget\} searchRequestId=\{visibleJourneyRequestId\}/);
   assert.doesNotMatch(results, /results=\{filtered|results=\{sortedResults/);
 });
 

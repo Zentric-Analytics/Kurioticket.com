@@ -35,6 +35,8 @@ const roles = [
 const statuses = [
   { value: "ALL", label: "All statuses" },
   { value: "ACTIVE", label: "Active" },
+  { value: "INACTIVE", label: "Inactive" },
+  { value: "UNAVAILABLE", label: "Unavailable" },
   { value: "SUSPENDED", label: "Suspended" },
   { value: "PENDING_DELETION", label: "Pending deletion" },
   { value: "DELETED", label: "Deleted" },
@@ -88,21 +90,31 @@ export function AdminUsersToolbar({
   const [dateError, setDateError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const paramsRef = useRef(new URLSearchParams(pageHref.split("?")[1] || ""));
+  const initialServerSync = useRef(true);
+  // Canonical URL normalization can change pageHref without changing applied
+  // filters. Do not erase user-typed drafts during that transition.
+  const appliedStateKey = JSON.stringify([query, role, status, tab, sort, date, from, to]);
+  const lastAppliedStateKey = useRef(appliedStateKey);
 
   // Navigations (tabs, Back/Forward, Apply) restore the authoritative URL.
   // Editing the search field or a dropdown never updates paramsRef or reloads data.
-  useEffect(() => { paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || ""); }, [pageHref]);
-  const CommittedUsersScope = JSON.stringify([pageHref, query, date, role, status, from, to]);
-  const [previousCommittedUsersScope, setPreviousCommittedUsersScope] = useState(CommittedUsersScope);
-  if (previousCommittedUsersScope !== CommittedUsersScope) {
-    setPreviousCommittedUsersScope(CommittedUsersScope);
+  useEffect(() => {
+    // Initial draft state already comes from server props. A late hydration
+    // effect must not erase an administrator's first typed search before Apply.
+    if (initialServerSync.current) {
+      initialServerSync.current = false;
+      return;
+    }
+    paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
+    if (appliedStateKey === lastAppliedStateKey.current) return;
+    lastAppliedStateKey.current = appliedStateKey;
     setSearchText(query);
     setDraftDate(date);
     setDraftRole(role);
     setDraftStatus(status);
     setDraftDates({ from, to });
     setDateError(null);
-  }
+  }, [pageHref, query, date, role, status, from, to, appliedStateKey]);
 
   useEffect(() => {
     const onHistoryNavigation = () => {
@@ -173,7 +185,6 @@ export function AdminUsersToolbar({
       className="grid w-full min-w-0 grid-cols-1 items-center gap-2 border-b border-[#D8E1EC] pb-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_128px]">
       <input type="hidden" name="sort" value={sort} readOnly />
       <input type="hidden" name="tab" value={tab} readOnly />
-      {tab === "GUEST" ? <input type="hidden" name="status" value={status} readOnly /> : null}
       {draftDate === "custom" && validCustom ? <>
         <input type="hidden" name="from" value={draftDates.from} readOnly />
         <input type="hidden" name="to" value={draftDates.to} readOnly />
@@ -196,14 +207,10 @@ export function AdminUsersToolbar({
         <AdminDirectorySelect name="role" label="Account role" value={draftRole} options={roles}
           compact onValueChange={setDraftRole} />
       </div>
-      {tab !== "GUEST" ? <div className="min-w-0">
-        <AdminDirectorySelect name="status" label="Account status" value={draftStatus} options={statuses}
+      <div className="min-w-0">
+        <AdminDirectorySelect name="status" label={tab === "GUEST" ? "Guest status" : tab === "REGISTERED" ? "Account status" : "Status"} value={draftStatus} options={statuses}
           compact onValueChange={setDraftStatus} />
-      </div> : <div className="min-w-0" aria-label="Account status does not apply to guests">
-        <div className="flex h-10 items-center rounded-lg border border-[#E5E7EB] bg-[#F8FAFC] px-3 text-[13px] text-[#64748B]">
-          Status not applicable
-        </div>
-      </div>}
+      </div>
       <button type="button" onClick={applyFilters} disabled={isPending}
         className="focus-ring inline-flex h-10 w-full min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-2 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60">
         Apply filters

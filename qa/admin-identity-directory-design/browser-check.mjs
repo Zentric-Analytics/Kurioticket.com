@@ -30,14 +30,70 @@ try {
   for (const width of [1440,1280,768,390,320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(url);
+    await expect(page.locator('section[aria-label="Online Users"]')).toHaveCount(0);
+    await expect(page.getByRole("navigation",{name:"Users subsections"})
+      .getByRole("link",{name:"Online Users",exact:true})).toBeVisible();
+    const population = page.locator('section[aria-label="User population metrics"]');
+    await expect(population).toContainText("Consented guest");
+    await expect(population).not.toContainText("Non consented guest");
+    await expect(population).not.toContainText("New non consented guest");
+    await expect(population.locator('[data-testid="user-population-metric"]').nth(3)
+      .getByText("Guest", {exact:true})).toBeVisible();
+    await expect(population.locator('[data-testid="user-population-metric"]').nth(6)
+      .getByText("New guest", {exact:true})).toBeVisible();
+    await expect(population).not.toContainText("Consented guest identities");
+    await expect(population).toContainText("Total recorded accounts & guest sessions");
+    await expect(population.getByRole("note")).toHaveCount(0);
+    await expect(population.locator('[data-testid="user-population-metric"] [title]')).toHaveCount(0);
+    await expect(population.locator('[data-testid="user-population-metric"]').nth(3)).toContainText("Recorded sessions · All time");
+    await expect(population.locator('[data-testid="user-population-metric"]').nth(6)).toContainText("New recorded sessions · Today (UTC)");
+    await expect(population).not.toContainText("Registered counts include all account roles");
+    await expect(population.locator('[data-testid="user-population-metric"]')).toHaveCount(7);
+    const rows = population.locator('[data-testid="user-population-row"]');
+    await expect(rows).toHaveCount(2);
+    await expect(rows.nth(0).locator('[data-testid="user-population-metric"]')).toHaveCount(4);
+    await expect(rows.nth(1).locator('[data-testid="user-population-metric"]')).toHaveCount(3);
+    const rowLayout = await rows.evaluateAll(nodes => nodes.map(node => {
+      const cards = [...node.querySelectorAll('[data-testid="user-population-metric"]')];
+      return cards.map(card => {
+        const rect = card.getBoundingClientRect();
+        return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
+      });
+    }));
+    assert.ok(Math.min(...rowLayout[1].map(card => card.top)) >= Math.max(...rowLayout[0].map(card => card.bottom)) + 6,
+      "New metrics row follows recorded metrics row with a clear gutter");
+    if (width >= 1200) {
+      assert.ok(rowLayout[0].every(card => Math.abs(card.top - rowLayout[0][0].top) <= 1),
+        "Recorded metrics must occupy one row of four cards at desktop width");
+      assert.ok(rowLayout[1].every(card => Math.abs(card.top - rowLayout[1][0].top) <= 1),
+        "New metrics must occupy one row of three cards at desktop width");
+      assert.ok(rowLayout.every(row => row.every((card, index) =>
+        index === 0 || card.left - row[index - 1].right >= 6)),
+        "Every metric in a horizontal row keeps a visible gap");
+    }
+    const cardLayout = await population.evaluate(section => {
+      const cards = [...section.querySelectorAll('[data-testid="user-population-metric"]')];
+      const first = cards[0].getBoundingClientRect();
+      const second = cards[1].getBoundingClientRect();
+      const style = getComputedStyle(cards[0]);
+      return { firstRight: first.right, secondLeft: second.left, firstTop: first.top,
+        secondTop: second.top, radius: style.borderTopLeftRadius };
+    });
+    if (Math.abs(cardLayout.firstTop - cardLayout.secondTop) < 2) {
+      assert.ok(cardLayout.secondLeft - cardLayout.firstRight >= 6,
+        "Separate metric cards must have an actual visible gutter");
+    }
+    assert.notEqual(cardLayout.radius, "0px", "Metric cards are rounded");
+    assert.deepEqual((await population.locator("p.tabular-nums").allTextContents()).map(value => value.trim()),
+      ["30", "2", "28", "0", "0", "0", "0"], "Verified synthetic totals include all-time and new operational sessions separately");
     await expect(search()).toHaveAttribute("placeholder", "Search by name, email, user ID, or guest ID");
     await expect(combo("Sort by")).toHaveCount(0);
     await expect(combo("Date range")).toContainText("Today");
     await expect(combo("Account role")).toContainText("All roles");
-    await expect(combo("Account status")).toContainText("All statuses");
+    await expect(combo("Status")).toContainText("All statuses");
     await expect(tabs().getByRole("link", {name:"All (30)"})).toHaveAttribute("aria-current","page");
     assert.deepEqual((await page.locator("thead th").allTextContents()).map(x=>x.trim()),
-      ["IDENTITY","TYPE","STATUS","JOINED / FIRST SEEN","ACTIVITY"]);
+      ["IDENTITY","TYPE","STATUS","JOINED / FIRST SEEN","LAST SEEN","ACTIVITY"]);
     const geometry = await page.evaluate(() => {
       const search = document.getElementById("admin-user-search").getBoundingClientRect();
       const filter = document.querySelector('form[aria-label="Filter users"]').getBoundingClientRect();
@@ -62,9 +118,74 @@ try {
     console.log("PASS responsive premium users toolbar",width);
   }
   await page.setViewportSize({width:1280,height:900});
+  await page.goto(base + "/admin/users/online");
+  const live = page.locator('section[aria-label="Online Users"]');
+  await expect(live).toBeVisible();
+  await expect(live.locator('[data-testid="online-platform-metric"]')).toHaveCount(4);
+  assert.deepEqual((await live.locator('p.tabular-nums').allTextContents()).map(text => text.trim()),
+    ["3","1","0","3"]);
+  await expect(page.getByRole("navigation",{name:"Users subsections"}).getByRole("link",{name:"Online Users"}))
+    .toHaveAttribute("aria-current","page");
+  await expect(page.getByTestId("online-user-row")).toHaveCount(3);
+  await expect(page.getByRole("columnheader",{name:"LOCATION"})).toBeVisible();
+  await expect(page.getByTestId("online-user-row").first()).toContainText("Alana Example");
+  await expect(page.getByTestId("online-user-row").first().getByTestId("online-user-location")).toHaveText("Lagos, Nigeria");
+  await expect(page.getByTestId("online-user-row").nth(1).getByTestId("online-user-location")).toHaveText("Unavailable");
+  await expect(page.getByTestId("online-user-row").nth(2).getByTestId("online-user-location")).toHaveText("Unavailable");
+  const filters = page.locator('[data-testid="online-users-filter-row"]');
+  const filterRects = await filters.evaluate(form => {
+    const items = [...form.children].map(child => child.getBoundingClientRect());
+    const parent = form.getBoundingClientRect();
+    return { items: items.map(item => ({top:item.top,left:item.left,right:item.right,width:item.width})),
+      left: parent.left, right: parent.right };
+  });
+  assert.equal(filterRects.items.length,5);
+  assert.ok(filterRects.items.every(item => Math.abs(item.top - filterRects.items[0].top) < 2),
+    "All five Online Users filters must stay in one balanced horizontal row on desktop");
+  assert.ok(filterRects.items.every((item,index) => index === 0 || item.left >= filterRects.items[index-1].right + 4),
+    "Filter controls must not overlap");
+  assert.ok(filterRects.items.every(item => item.left >= filterRects.left && item.right <= filterRects.right + 2),
+    "All filters must remain inside content width");
+  assert.ok(filterRects.items[0].width > filterRects.items[1].width,
+    "Online user search should be wider than dropdowns");
+  await page.screenshot({path:output+"/online-users-desktop-1280.png",fullPage:true});
+  await expect(page.getByText("Guest session")).toHaveCount(1);
+  await expect(page.getByTestId("online-user-row").filter({hasText:"Guest session"})
+    .getByRole("link",{name:"View Activity"})).toHaveCount(0);
+  await expect(page.getByTestId("online-user-row").filter({hasText:"Alana Example"})
+    .getByRole("link",{name:"View Activity"})).toHaveCount(1);
+  await page.getByRole("combobox",{name:"Platform"}).click();
+  await page.getByRole("listbox",{name:"Platform"}).getByRole("option",{name:"iOS"}).click();
+  await expect(page.getByTestId("online-user-row")).toHaveCount(3);
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
+  await expect(page.getByTestId("online-user-row")).toHaveCount(1);
+  await expect(page.getByTestId("online-user-row").first()).toContainText("Alana Example");
+  await page.setViewportSize({width:320,height:800});
+  await page.goto(base + "/admin/users/online");
+  await expect(page.getByRole("heading",{name:"Online Users",exact:true})).toBeVisible();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),true);
+  await page.screenshot({path:output+"/online-users-mobile-320.png",fullPage:true});
+  await page.setViewportSize({width:1280,height:900});
   await page.goto(url);
   await expect(page.getByRole("navigation",{name:"Identity pagination"})).toHaveCount(0);
   await expect(page.locator("tbody tr")).toHaveCount(30);
+  // A returning registered account must outrank a more recently created guest
+  // when its recorded last observation is newer. Sorting is never based on
+  // account type alone; the mock SQL returns mixed identities in one order.
+  await expect(page.locator("tbody tr").nth(0)).toContainText("Alana Example");
+  await expect(page.locator("tbody tr").nth(1)).toContainText("Zara Example");
+  await expect(page.locator("tbody tr").nth(2)).toContainText("Guest visitor");
+  const observedTimes = await page.locator('td[data-label="Last Seen"] time').evaluateAll(
+    nodes => nodes.map(node => Date.parse(node.getAttribute("dateTime"))),
+  );
+  assert.ok(observedTimes.every((at, index) => index === 0 || observedTimes[index - 1] >= at),
+    "Last Seen must be descending across registered and guest records");
+  // Registered accounts can be older than their latest recorded session.
+  // Confirm the new column preserves actual evidence for both registered
+  // and consented guest rows without becoming an online-status indicator.
+  await expect(page.locator('td[data-label="Last Seen"]')).toHaveCount(30);
+  await expect(page.locator('td[data-label="Last Seen"] time')).toHaveCount(30);
+  await expect(page.locator('td[data-label="Last Seen"] time').first()).toHaveAttribute("dateTime", /2026-/);
   await search().fill("Zara");
   await expect(page).not.toHaveURL(/q=Zara/);
   await expect(page.locator("tbody tr")).toHaveCount(30);
@@ -114,7 +235,7 @@ try {
   await expect(page).toHaveURL(/to=2026-10-23/);
   await choose("Date range","All time");
   await choose("Account role","Support");
-  await choose("Account status","Active");
+  await choose("Status","Active");
   await expect(page).not.toHaveURL(/role=SUPPORT/);
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page).toHaveURL(/date=all/);
@@ -125,7 +246,7 @@ try {
   await expect(page.getByRole("link",{name:"Clear filters"})).toHaveCount(0);
   await choose("Date range","All time");
   await choose("Account role","All roles");
-  await choose("Account status","All statuses");
+  await choose("Status","All statuses");
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page).toHaveURL(/role=ALL/);
   await expect(page).toHaveURL(/status=ALL/);
@@ -134,10 +255,14 @@ try {
     await choose("Date range",label);
     await page.getByRole("button",{name:"Apply filters",exact:true}).click();
     await expect(page).toHaveURL(new RegExp("date="+date));
+    await expect(page.locator('[data-testid="user-population-metric"]').nth(3)).toContainText("Recorded sessions · All time");
+    await expect(page.locator('[data-testid="user-population-metric"]').nth(6)).toContainText(
+      date === "all" ? "New recorded sessions · All time" : `New recorded sessions · ${label}`);
   }
   await tabs().getByRole("link",{name:/Guests/}).click();
   await expect(page).toHaveURL(/tab=GUEST/);
-  await expect(combo("Account status")).toHaveCount(0);
+  await expect(combo("Guest status")).toBeVisible();
+  await expect(page.getByTestId("guest-directory-status").first()).toHaveText("Active");
   await expect(combo("Date range")).toBeVisible();
   console.log("PASS date options and guest tab");
   const noJS = await browser.newContext({javaScriptEnabled:false});

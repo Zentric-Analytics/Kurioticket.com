@@ -1,4 +1,5 @@
 import { getMobileSession } from "@/lib/mobile-auth";
+import { readOperationalSearchSession, type PreparedOperationalSession } from "@/lib/operationalSearchSession";
 import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { isNativeVisitorRequest, readVisitorToken, visitorTrackingDenied } from "@/lib/visitor-identity";
 import { resolveApplicationSource, type ApplicationAttribution } from "@/lib/application-source";
@@ -18,10 +19,16 @@ const dependencies: IdentityDependencies = {
   },
 };
 
+function declaresSearchCrawler(request: Request): boolean {
+  const agent = request.headers.get("user-agent") ?? "";
+  return /\b(?:[a-z0-9_-]*(?:bot|crawler|spider)|GoogleOther|Google-InspectionTool|Mediapartners-Google|facebookexternalhit|Slurp|ia_archiver|ChatGPT-User|Perplexity-User|Claude-User)\b/i.test(agent);
+}
+
 /** Optional attribution only. Call after the response; never trust client user IDs. */
 export async function resolveRequestActivityIdentity(
   request: Request,
   resolve: IdentityDependencies = dependencies,
+  operationalSession?: PreparedOperationalSession | null,
 ): Promise<{ userId: string | null; visitorId: string | null } & ApplicationAttribution> {
   let userId: string | null = null;
   let application = resolveApplicationSource(request);
@@ -29,13 +36,45 @@ export async function resolveRequestActivityIdentity(
     if (isNativeVisitorRequest(request)) {
       const session = await resolve.mobile(request);
       if (session?.user.status === "ACTIVE") { userId = session.user.id; application = resolveApplicationSource(request, { client: "MOBILE", platform: session.platform, appVersion: session.appVersion }); }
+      else {
+        // A revoked bearer is not an account identity. A previously signed,
+        // platform-bound operational credential may still establish the native
+        // search transport, but cannot authenticate the caller or a visitor.
+        // A NEW credential is eligible only for an unauthenticated guest search:
+        // an invalid bearer must never bootstrap platform attribution.
+        const hasBearer = request.headers.has("authorization");
+        const reference = operationalSession === undefined
+          ? readOperationalSearchSession(request)
+          : operationalSession?.transport === "native" && operationalSession.guestNativeAttribution
+            && (!hasBearer || !operationalSession.newCredential)
+            ? operationalSession.reference : null;
+        const declared = request.headers.get("x-mobile-platform");
+        if (reference?.nativePlatform && reference.nativePlatform === declared) {
+          application = { applicationSource: reference.nativePlatform === "ios" ? "IOS" : "ANDROID" };
+        }
+      }
     } else {
       userId = (await resolve.web())?.userId ?? null;
       if (userId) application = resolveApplicationSource(request, { client: "WEB" });
+      else if (operationalSession?.transport === "web" && !operationalSession.newCredential
+        && !request.headers.has("authorization") && !request.headers.has("x-mobile-platform")) {
+        // Only previously signed, server-verified web continuity proves website
+        // origin when a browser omits Sec-Fetch-Site. A caller can forge Origin
+        // on its FIRST request; newly minted sessions confer no attribution.
+        // This does not create visitor consent or authenticate an account.
+        application = { applicationSource: "WEB" };
+      }
     }
   } catch {
     // A failed session lookup cannot establish ownership of this activity.
     return { userId: null, visitorId: null, applicationSource: "UNKNOWN" };
+  }
+
+  // Search clients can send browser headers or carry a valid guest session.
+  // A crawler declaration excludes platform credit but never grants authorization
+  // or counts as a verified crawler block.
+  if (operationalSession !== undefined && declaresSearchCrawler(request)) {
+    application = { applicationSource: "UNKNOWN" };
   }
 
   let visitorId: string | null = null;

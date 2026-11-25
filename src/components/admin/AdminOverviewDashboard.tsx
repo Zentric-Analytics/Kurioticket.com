@@ -247,7 +247,7 @@ export function AdminOverviewDashboard({ data, system, activity, incidents }: {
           </section>
           <div aria-label="Account snapshot" className="grid min-w-0 grid-cols-1 grid-rows-2 items-stretch gap-2">
             <SnapshotLink href="/admin/users" label="Total accounts" value={data.users.total} icon={Users} hint="Current account records" />
-            <SnapshotLink href="/admin/users" label="Online Users" value={<OnlineUsersValue initial={data.onlinePresence} />} icon={Activity}
+            <SnapshotLink href="/admin/users/online" label="Online Users" value={<OnlineUsersValue initial={data.onlinePresence} />} icon={Activity}
               info={(
                 <ActivityDataInfo label="How Online Users are counted">
                   Activity in the last {data.onlinePresence.windowSeconds} seconds on the website, Admin panel, Android, and iOS.
