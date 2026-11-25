@@ -95,6 +95,7 @@ export async function POST(request: Request) {
       await tx.analyticsEvent.create({ data: {
         type: "PAGE_VIEW", name: "page_viewed", userId: identity.userId, visitorId: identity.visitorId,
         metadata: withEnvironmentMetadata({
+          recordPurpose: "optional_analytics",
           eventId: parsed.data.eventId, pageKey: parsed.data.pageKey,
           ...(parsed.data.previousPageKey ? { previousPageKey: parsed.data.previousPageKey } : {}),
           transport: native ? "native" : "web", platform,

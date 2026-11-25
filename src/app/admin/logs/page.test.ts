@@ -5,6 +5,7 @@ import { namedFunction } from "../../../test-support/sourceStructure";
 
 const page = readFileSync("src/app/admin/logs/page.tsx", "utf8");
 const toolbar = readFileSync("src/components/admin/AdminAuditLogsToolbar.tsx", "utf8");
+const reportingRanges = readFileSync("src/lib/adminReportingRanges.ts", "utf8");
 const nav = readFileSync("src/lib/adminNavigation.ts", "utf8");
 const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
 
@@ -85,25 +86,30 @@ test("Audit Logs search, range, action and target filters wait for explicit Appl
   assert.ok(toolbar.includes("router.push(href, { scroll: false })"));
 });
 
-test("Audit Logs uses four standard ranges and retains legacy custom-date deep links", () => {
-  for (const label of ["Last 24 hrs", "Last 7 days", "Last 30 days", "All time", "Custom range"]) {
-    assert.ok((toolbar + readFileSync("src/lib/adminReportingRanges.ts", "utf8")).includes(label));
+test("Audit Logs preserves standard and legacy reporting ranges and announces the active time zone", () => {
+  for (const label of ["Today", "Last 7 days", "Last 30 days", "All time", "Custom range"]) {
+    assert.ok(reportingRanges.includes(label));
   }
+  assert.ok(toolbar.includes("Last 24 hrs (legacy)"));
   assert.ok(toolbar.includes("Last 90 days (legacy)"));
   assert.ok(toolbar.includes("ADMIN_REPORTING_RANGE_OPTIONS"));
   for (const label of ["All actions", "CMS actions", "Provider actions", "User actions", "Support actions", "Email actions", "Alert actions"]) {
-    assert.ok((toolbar + readFileSync("src/lib/adminReportingRanges.ts", "utf8")).includes(label));
+    assert.ok(toolbar.includes(label));
   }
   for (const label of ["All target types", "User", "Visitor", "Provider", "Support ticket", "Email delivery", "CMS content item"]) {
-    assert.ok((toolbar + readFileSync("src/lib/adminReportingRanges.ts", "utf8")).includes(label));
+    assert.ok(toolbar.includes(label));
   }
-  assert.ok(toolbar.includes('ariaLabel="Custom start date UTC"'));
-  assert.ok(toolbar.includes('ariaLabel="Custom end date UTC"'));
+  assert.match(toolbar, /ariaLabel=\{"Custom start date \(" \+ timeZoneLabel/);
+  assert.match(toolbar, /ariaLabel=\{"Custom end date \(" \+ timeZoneLabel/);
+  assert.match(toolbar, /timeZoneLabel=\{timeZoneLabel\}/);
   assert.ok(toolbar.includes("Set custom dates"));
   assert.ok(page.includes('params.set("limit", "100")'));
   assert.ok(page.includes('params.has("cursor")'));
   assert.ok(page.includes('range === "all"'));
-  assert.ok(page.includes('params.set("from", "1970-01-01T00:00:00.000Z")'));
+  assert.ok(page.includes('from = "1970-01-01T00:00:00.000Z"'));
+  assert.match(page, /adminRollingRange\(range, now, timeZone\)\.from/);
+  assert.match(page, /adminCustomDateRange\(fromDate, toDate, now, timeZone\)/);
+  assert.match(page, /formatViewerTimestamp\(log\.createdAt, timeZone\)/);
   assert.equal(namedFunction(page, "auditParams").includes('params.set("range"'), false);
   assert.match(namedFunction(page, "currentHref"), /params\.set\("range", range\)/);
   assert.ok(page.includes('searchEmail={one(raw.searchEmail)}'));
@@ -111,7 +117,7 @@ test("Audit Logs uses four standard ranges and retains legacy custom-date deep l
 });
 
 test("Audit Logs forwards malformed reader parameters so the safe reader can reject them", () => {
-  assert.ok(page.includes('const pageOnlyKeys = new Set(["range", "fromDate", "toDate"])'));
+  assert.ok(page.includes('const pageOnlyKeys = new Set(["range", "fromDate", "toDate", "cursorTimeZone"])'));
   assert.ok(page.includes("for (const [key, value] of Object.entries(raw))"));
   assert.ok(page.includes("if (pageOnlyKeys.has(key) || value === undefined) continue"));
   assert.ok(page.includes("if (Array.isArray(value)) value.forEach(item => params.append(key, item))"));

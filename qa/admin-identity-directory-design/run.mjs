@@ -29,6 +29,7 @@ await put("next.config.mjs",
   'import path from "node:path";\n' +
   'export default {devIndicators:false,agentRules:false,experimental:{externalDir:true},webpack(config){\n' +
   'config.resolve.alias["@/lib/auth-guards"]=path.resolve("mocks/auth-guards.js");\n' +
+  'config.resolve.alias["@/lib/adminViewerTimeZone.server$"]=path.resolve("mocks/reporting-time-zone.js");\n' +
   'config.resolve.alias["@/lib/prisma"]=path.resolve("mocks/prisma.js");\n' +
   'config.resolve.alias["@/lib/env"]=path.resolve("mocks/env.js");\n' +
   'config.resolve.alias["@/services/adminJourneyService$"]=path.resolve("mocks/admin-journeys.js");\n' +
@@ -89,6 +90,7 @@ await put("app/admin/users/user/[id]/devices/page.jsx",
 await put("app/admin/users/platforms-devices/page.tsx",
   await readFile(path.join(source, "app/admin/users/platforms-devices/page.tsx"), "utf8"));
 await put("mocks/auth-guards.js", 'export async function requireAdminSession(){return {user:{id:"qa-admin-001",role:"ADMIN"}};}');
+await put("mocks/reporting-time-zone.js", 'export async function getAdminViewerTimeZone(){return "Africa/Lagos";}');
 await put("mocks/env.js", 'export function getAdminEmails(){return ["alana@example.invalid"];}');
 await put("mocks/prisma.js", await readFile(path.join(qa, "data-fixture.js"), "utf8"));
 

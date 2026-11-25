@@ -22,7 +22,7 @@ type CreateArgs = {
 afterEach(() => {
   __supportServiceTest.setPrismaClientForTesting(null);
   __supportServiceTest.setSendSupportEmailForTesting(null);
-  __supportServiceTest.setTrackAnalyticsForTesting(null);
+  __supportServiceTest.setRecordAuditForTesting(null);
 });
 
 test("createSupportTicket creates guest SupportTicket and SupportMessage before emailing", async () => {
@@ -259,8 +259,8 @@ test("support mutations reject invalid ticket ids", async () => {
   await assert.rejects(updateSupportTicketStatus({ ticketId: "missing", status: "CLOSED" }), /Support ticket not found/);
 });
 
-test("createSupportTicket returns persisted ticket even if optional analytics fails", async () => {
-  __supportServiceTest.setTrackAnalyticsForTesting(async () => { throw new Error("analytics unavailable"); });
+test("createSupportTicket returns persisted ticket even if account audit fails", async () => {
+  __supportServiceTest.setRecordAuditForTesting(async () => { throw new Error("audit unavailable"); });
   __supportServiceTest.setPrismaClientForTesting({
     async $transaction(work) { return work(this); },
     supportTicket: {
@@ -272,7 +272,7 @@ test("createSupportTicket returns persisted ticket even if optional analytics fa
     supportMessage: { async create() { throw new Error("not used"); } },
   });
   __supportServiceTest.setSendSupportEmailForTesting(async () => ({ id: "email-accepted" }));
-  const ticket = await createSupportTicket({ email: "guest@example.com", subject: "Need help", category: "search-help", body: "Flight results unavailable." });
+  const ticket = await createSupportTicket({ userId: "account-a", email: "guest@example.com", subject: "Need help", category: "search-help", body: "Flight results unavailable." });
   assert.equal(ticket.id, "ticket-analytics");
 });
 

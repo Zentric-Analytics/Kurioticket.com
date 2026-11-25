@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   if (productionSandboxHost() && process.env.DUFFEL_API_KEY?.startsWith("duffel_test_")) return NextResponse.json({error:"Sandbox inventory is display-only."},{status:403});
   const staging = isStagingEnvironment();
   const body = await request.json().catch(() => ({})) as {
-    id?: string; type?: "flight" | "hotel"; sourcePage?: string; requestId?: unknown; handoffId?: unknown;
+    id?: string; type?: "flight" | "hotel"; sourcePage?: string; requestId?: unknown; operationalRequestId?: unknown; handoffId?: unknown;
   };
   if (productionSandboxHost() && body.id?.startsWith("kayak-sandbox:")) return NextResponse.json({error:"Sandbox inventory is display-only."},{status:403});
   if (staging && !previewAllowsKayakSandboxHandoff(body)) {
@@ -135,7 +135,8 @@ export async function POST(request: Request) {
   const activity = {
     type: body.type, provider, route, price, currency,
     destinationUrl: url.toString(), sourcePage: body.sourcePage || "unknown", resultId: body.id,
-    requestId: handoffTrackingId(body.requestId), handoffId: handoffTrackingId(body.handoffId),
+    requestId: handoffTrackingId(body.requestId), operationalRequestId: handoffTrackingId(body.operationalRequestId),
+    handoffId: handoffTrackingId(body.handoffId),
   };
   after(() => recordProviderHandoffActivity(request, activity));
 

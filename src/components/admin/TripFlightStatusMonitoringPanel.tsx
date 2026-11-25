@@ -3,13 +3,14 @@ import {
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import {
   getFlightStatusIntegrationReadiness,
   getFlightStatusOperationsSnapshot,
 } from "@/services/adminFlightStatusOperationsService";
 
 /** Authenticated by the canonical Trip monitoring page before rendering. */
-export async function TripFlightStatusMonitoringPanel() {
+export async function TripFlightStatusMonitoringPanel({ timeZone }: { timeZone: string }) {
   const readiness = getFlightStatusIntegrationReadiness();
   const operations = await getFlightStatusOperationsSnapshot(undefined, readiness);
 
@@ -106,7 +107,7 @@ export async function TripFlightStatusMonitoringPanel() {
                       trip.origin ? trip.origin + " → " + trip.destination : trip.destination,
                       trip.providerName,
                       trip.providerConfirmationCode,
-                      formatDateTime(new Date(trip.confirmedAt)),
+                      formatViewerTimestamp(trip.confirmedAt, timeZone),
                     ],
                   }))}
                 />
@@ -132,7 +133,7 @@ export async function TripFlightStatusMonitoringPanel() {
                 rows={operations.recentSnapshots.map((snapshot) => ({
                   id: snapshot.id,
                   cells: [
-                    formatDateTime(new Date(snapshot.observedAt)),
+                    formatViewerTimestamp(snapshot.observedAt, timeZone),
                     snapshot.carrierCode + " " + snapshot.flightNumber,
                     snapshot.originAirport + " → " + snapshot.destinationAirport,
                     <AdminStatusBadge key="status" tone={snapshot.status === "DELAYED" || snapshot.status === "CANCELLED" ? "warn" : snapshot.status === "UNKNOWN" ? "neutral" : "info"}>{snapshot.status}</AdminStatusBadge>,

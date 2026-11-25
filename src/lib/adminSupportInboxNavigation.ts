@@ -59,7 +59,7 @@ export function supportInboxHref(base: URLSearchParams, changes: Record<string, 
 
 
 /** Keep inbox return links on the Support route; never accept an arbitrary URL. */
-const INBOX_RETURN_KEYS = ["status", "priority", "category", "q", "from", "to", "limit", "cursor"] as const;
+const INBOX_RETURN_KEYS = ["status", "priority", "category", "q", "range", "from", "to", "limit", "cursor"] as const;
 
 function scopedInboxReturnQuery(params: URLSearchParams) {
   const scoped = new URLSearchParams();

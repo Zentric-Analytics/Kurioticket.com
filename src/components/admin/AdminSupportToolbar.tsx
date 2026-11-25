@@ -34,18 +34,20 @@ type Props = {
   from: string;
   to: string;
   pageHref: string;
+  timeZone: string;
+  timeZoneLabel: string;
   children: ReactNode;
 };
 
 /** Search above a responsive tabs/filters row. Applied filters stay separate from drafts. */
-export function AdminSupportToolbar({ query, status, priority, category, range, from, to, pageHref, children }: Props) {
+export function AdminSupportToolbar({ query, status, priority, category, range, from, to, pageHref, timeZone, timeZoneLabel, children }: Props) {
   const router = useRouter();
   const [searchText, setSearchText] = useState(query);
   const [draftPriority, setDraftPriority] = useState(priority);
   const [draftCategory, setDraftCategory] = useState(category);
   const [draftRange, setDraftRange] = useState<AdminQueueRange>(range);
-  const [customFrom, setCustomFrom] = useState(localQueueDateTime(from));
-  const [customTo, setCustomTo] = useState(localQueueDateTime(to));
+  const [customFrom, setCustomFrom] = useState(localQueueDateTime(from, timeZone));
+  const [customTo, setCustomTo] = useState(localQueueDateTime(to, timeZone));
   const [dateError, setDateError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   // Draft edits must not mark records as loading until Apply is submitted.
@@ -55,18 +57,21 @@ export function AdminSupportToolbar({ query, status, priority, category, range, 
   const lastSubmittedRef = useRef<string | null>(null);
   const paramsRef = useRef(new URLSearchParams(pageHref.split("?")[1] || ""));
 
-  useEffect(() => { paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || ""); }, [pageHref]);
-  const CommittedSupportScope = JSON.stringify([pageHref, priority, category, range, from, to]);
-  const [previousCommittedSupportScope, setPreviousCommittedSupportScope] = useState(CommittedSupportScope);
-  if (previousCommittedSupportScope !== CommittedSupportScope) {
-    setPreviousCommittedSupportScope(CommittedSupportScope);
+  const appliedScope = JSON.stringify([pageHref, priority, category, range, from, to, timeZone]);
+  const [previousScope, setPreviousScope] = useState(appliedScope);
+  if (previousScope !== appliedScope) {
+    setPreviousScope(appliedScope);
     setDraftPriority(priority);
     setDraftCategory(category);
     setDraftRange(range);
-    setCustomFrom(localQueueDateTime(from));
-    setCustomTo(localQueueDateTime(to));
+    setCustomFrom(localQueueDateTime(from, timeZone));
+    setCustomTo(localQueueDateTime(to, timeZone));
     setDateError(null);
   }
+
+  useEffect(() => {
+    paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
+  }, [pageHref]);
 
   // Keep the search input synchronized on Back/Forward, as on Users.
   useEffect(() => {
@@ -109,14 +114,14 @@ export function AdminSupportToolbar({ query, status, priority, category, range, 
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (draftRange === "custom") {
-      const error = validateCustomQueueWindow(customFrom, customTo);
+      const error = validateCustomQueueWindow(customFrom, customTo, timeZone);
       if (error) { setDateError(error); return; }
     }
-    const customWindow = draftRange === "custom" ? {
+    const customWindow = resolveAdminQueueWindow({
       range: draftRange,
-      from: new Date(customFrom).toISOString(),
-      to: new Date(customTo).toISOString(),
-    } : resolveAdminQueueWindow({ range: draftRange });
+      from: draftRange === "custom" ? customFrom : undefined,
+      to: draftRange === "custom" ? customTo : undefined,
+    }, new Date(), timeZone);
     setDateError(null);
     navigate({ q: searchText.trim().slice(0, 160), priority: draftPriority, category: draftCategory,
       range: draftRange, from: customWindow.from, to: customWindow.to });
@@ -157,7 +162,7 @@ export function AdminSupportToolbar({ query, status, priority, category, range, 
               placeholder="Search by subject, name or email"
               className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-foreground placeholder:text-muted outline-none transition-colors hover:border-[#94A3B8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
           </div>
-          <AdminQueueDateSelect range={draftRange} onChange={value => { setDraftRange(value); setDateError(null); }} />
+          <AdminQueueDateSelect range={draftRange} timeZoneLabel={timeZoneLabel} onChange={value => { setDraftRange(value); setDateError(null); }} />
           <div data-testid="support-filter-controls" className="contents">
             <div className="min-w-0">
               <AdminDirectorySelect key={"priority-" + priority} name="priority" label="Ticket priority"
@@ -176,6 +181,7 @@ export function AdminSupportToolbar({ query, status, priority, category, range, 
           </div>
         </div>
         <AdminQueueCustomDates range={draftRange} from={customFrom} to={customTo}
+          timeZone={timeZone} timeZoneLabel={timeZoneLabel}
           setFrom={setCustomFrom} setTo={setCustomTo} error={dateError} />
         <div data-testid="support-status-filter-row" className="mt-3 border-t border-[#E5E7EB] pt-2">
           <nav aria-label="Support ticket status" className="flex min-w-0 max-w-full flex-wrap items-center gap-x-4 gap-y-1 2xl:flex-nowrap">

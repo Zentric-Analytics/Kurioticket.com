@@ -14,6 +14,9 @@ import { recordProviderHandoffActivity } from "../src/services/providerHandoffAc
 import { createProviderHandoffStore, type ProviderHandoffActivity } from "../src/services/providerHandoffStore";
 import { retireAccountVisitors } from "../src/services/visitorAccountRetirement";
 import { lockVisitorAccount } from "../src/services/visitorActivityIdentity";
+import { prepareOperationalSearchSession, operationalSessionMetadata, operationalSessionCookieName } from "../src/lib/operationalSearchSession";
+import { getPublicEnvironment } from "../src/lib/stagingSafety";
+import { handoffEvidenceForActivitySql } from "../src/services/adminHandoffEvidence";
 
 // This suite creates its own disposable database and refuses every remote target.
 const target = new URL(process.env.DATABASE_URL || "http://invalid");
@@ -439,9 +442,7 @@ test("withdrawal during handoff correlation suppresses new visitor events while 
   assert.deepEqual(pauses, [120]);
   assert.equal(current.redirects.length, 1);
   assert.equal(current.redirects[0].visitorId, guest.id, "this redirect committed while consent was valid, before the pause");
-  assert.equal(current.events.length, 1);
-  assert.equal(current.events[0].visitorId, null, "the later analytics write must recheck withdrawal");
-  assert.equal(current.events[0].userId, owner.id);
+  assert.equal(current.events.length, 0, "the later analytics write must stop after withdrawal");
   assert.equal(current.funnel.length, 0);
   assert.deepEqual(await handoffRecords(previous.provider), historical);
 });
@@ -605,7 +606,7 @@ test("queued stale merge and activity writers cannot revive a retired visitor af
   assert.equal((await db.visitor.findUniqueOrThrow({ where: { id: guest.id } })).consentStatus, "WITHDRAWN");
 });
 
-test("legacy analytics and redirect writers strip stale withdrawn visitors while retaining a valid independent account", async () => {
+test("withdrawn visitors produce no optional analytics while independent operational records remain", async () => {
   const guest = await visitor();
   const owner = await account();
   await identity.mergeAnalyticsVisitor({ token: guest.token, userId: owner.id, source: "SIGN_IN" });
@@ -613,21 +614,17 @@ test("legacy analytics and redirect writers strip stale withdrawn visitors while
   await identity.withdrawAnalyticsConsent(guest.token);
   const name = `withdrawn-legacy-${randomUUID()}`;
   await analytics({ visitorId: guest.id, userId: owner.id, type: "SEARCH", name });
-  const legacy = await db.analyticsEvent.findFirstOrThrow({ where: { name } });
-  assert.equal(legacy.visitorId, null);
-  assert.equal(legacy.userId, owner.id);
+  assert.equal(await db.analyticsEvent.count({ where: { name } }), 0);
   const input = handoff({ requestId: history.requestId! });
   await recordHandoff(input, guest.id, owner.id);
   await recordHandoff(input, guest.id, owner.id);
   const records = await handoffRecords(input.provider);
   assert.equal(records.redirects.length, 1);
-  assert.equal(records.events.length, 1);
+  assert.equal(records.events.length, 0);
   assert.equal(records.funnel.length, 0);
   assert.equal(records.redirects[0].visitorId, null);
   assert.equal(records.redirects[0].userId, owner.id);
   assert.equal((records.redirects[0].metadata as Record<string, unknown>).requestId, undefined);
-  assert.equal(records.events[0].visitorId, null);
-  assert.equal(records.events[0].userId, owner.id);
 });
 
 test("repeated terminal FAILED history with one request UUID produces one row and one completed-search event", async () => {
@@ -645,4 +642,86 @@ test("repeated terminal FAILED history with one request UUID produces one row an
   const events = await db.journeyEvent.findMany({ where: { searchHistoryId: history[0].id, type: "SEARCH_COMPLETED" } });
   assert.equal(events.length, 1);
   assert.equal((events[0].metadata as Record<string, unknown>).status, "FAILED");
+});
+
+test("essential search and handoff writes survive absent analytics consent for guests and accounts", async () => {
+  const owner = await account();
+  for (const userId of [null, owner.id]) {
+    const requestId = randomUUID();
+    const history = await journey.recordSearchHistory({
+      userId, visitorId: null, requestId, type: "HOTEL", query: {}, resultCount: 2, latencyMs: 20, status: "SUCCESS",
+    });
+    assert.ok(history);
+    const stored = await db.searchHistory.findUniqueOrThrow({ where: { requestId } });
+    assert.equal(stored.userId, userId);
+    assert.equal(stored.visitorId, null);
+    const name = `essential-only-${randomUUID()}`;
+    await analytics({ userId, visitorId: null, type: "SEARCH", name });
+    assert.equal(await db.analyticsEvent.count({ where: { name } }), 0);
+    const input = handoff({ requestId });
+    await recordHandoff(input, null, userId);
+    const records = await handoffRecords(input.provider);
+    assert.equal(records.redirects.length, 1);
+    assert.equal(records.redirects[0].userId, userId);
+    assert.equal(records.redirects[0].visitorId, null);
+    assert.equal(records.events.length, 0);
+    assert.equal(records.funnel.length, 0);
+  }
+});
+
+test("signed Essential-only handoffs keep operational evidence without optional Analytics writes", async () => {
+  const previous = process.env.AUTH_SECRET;
+  process.env.AUTH_SECRET = "synthetic-integration-secret-not-a-real-key-12345";
+  try {
+    const owner = await account();
+    const environment = getPublicEnvironment();
+    for (const userId of [null, owner.id]) {
+      const url = "https://fixture.example/api/redirect";
+      const headers = { origin: "https://fixture.example", "sec-fetch-site": "same-origin" };
+      const prepared = prepareOperationalSearchSession(new Request(url, { method: "POST", headers }));
+      assert.ok(prepared);
+      const requestId = randomUUID();
+      const history = await journey.recordSearchHistory({
+        userId, visitorId: null, requestId, type: "HOTEL",
+        query: operationalSessionMetadata(prepared.reference), resultCount: 535, status: "SUCCESS", latencyMs: 10,
+      });
+      assert.ok(history);
+      const original = await db.searchHistory.findUniqueOrThrow({ where: { requestId } });
+      const dependencies = {
+        identity: async () => ({ userId, visitorId: null }),
+        redirect: handoffs.recordRedirect, event: analytics, journey: journey.recordJourneyEvent,
+      };
+      const input = handoff({ operationalRequestId: requestId });
+      const cookie = operationalSessionCookieName + "=" + prepared.credential;
+      const request = new Request(url, { method: "POST", headers: { ...headers, cookie } });
+      await recordProviderHandoffActivity(request, input, dependencies);
+      await recordProviderHandoffActivity(request, input, dependencies);
+      const records = await handoffRecords(input.provider);
+      assert.equal(records.redirects.length, 1);
+      assert.equal(records.redirects[0].visitorId, null);
+      assert.equal(records.events.length, 0);
+      assert.equal(records.funnel.length, 0);
+      const metadata = records.redirects[0].metadata as Record<string, unknown>;
+      assert.equal(metadata.operationalRequestId, requestId);
+      assert.equal(metadata.requestId, undefined, "no optional journey reference");
+      assert.equal(metadata.operationalSessionId, prepared.reference.id);
+      assert.ok(!JSON.stringify(metadata).includes(prepared.credential), "never retain the signed credential");
+      const ids = [records.redirects[0].id];
+      const links = await db.$queryRaw<Array<{ id: string; searchHistoryId: string | null }>>(handoffEvidenceForActivitySql(ids, environment));
+      assert.deepEqual(links, [{ id: ids[0], searchHistoryId: original.id }]);
+      assert.equal(await db.journeyEvent.count({ where: { searchHistoryId: original.id } }), 0);
+      for (const badCookie of [undefined, cookie + "tampered"]) {
+        const unverified = handoff({ operationalRequestId: requestId });
+        await recordProviderHandoffActivity(new Request(url, { method: "POST", headers: { ...headers, ...(badCookie ? { cookie: badCookie } : {}) } }), unverified, dependencies);
+        const rejected = await handoffRecords(unverified.provider);
+        assert.equal(rejected.redirects.length, 1, "missing evidence does not block the operational receipt");
+        assert.equal((rejected.redirects[0].metadata as Record<string, unknown>).operationalRequestId, undefined);
+        assert.equal(rejected.events.length, 0);
+        assert.equal(rejected.funnel.length, 0);
+      }
+    }
+  } finally {
+    if (previous === undefined) delete process.env.AUTH_SECRET;
+    else process.env.AUTH_SECRET = previous;
+  }
 });

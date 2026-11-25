@@ -1,3 +1,7 @@
+import { activityCustomDateBound, validActivityUtcInstant } from "./adminActivityDateQuery";
+import { adminLocalDate } from "./adminLocalTime";
+import { adminCustomDateRange, adminRollingRange } from "./adminReportingRanges";
+
 /** UI-only date range selection for Admin Journeys.
  * The journey service still receives only its documented ISO UTC bounds.
  */
@@ -8,6 +12,7 @@ export const JOURNEY_ALL_TIME_FROM = "1970-01-01T00:00:00.000Z";
 export type JourneyDateParams = Record<string, string | string[] | undefined>;
 
 const dayMs = 86_400_000;
+const calendarDate = /^\d{4}-\d{2}-\d{2}$/;
 
 function one(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
@@ -21,38 +26,56 @@ export function selectedJourneyRange(raw: JourneyDateParams): JourneyDateRange {
   return one(raw.from) || one(raw.to) || one(raw.cursor) ? "custom" : "today";
 }
 
-export function journeyWindow(raw: JourneyDateParams, now: Date): { from?: string; to?: string } {
-  // Preserve either explicit bound and the signed scope in a pagination cursor.
-  // A new preset submission excludes previous custom inputs entirely.
-  if (one(raw.cursor) || one(raw.from) || one(raw.to)) return {};
+/** Only date-only selections can request civil-day validation from the server reader. */
+export function journeyCalendarTimeZone(raw: JourneyDateParams, timeZone: string): string | undefined {
+  return selectedJourneyRange(raw) === "custom" && calendarDate.test(one(raw.from)) && calendarDate.test(one(raw.to))
+    ? timeZone
+    : undefined;
+}
+
+export function journeyWindow(raw: JourneyDateParams, now: Date, timeZone = "UTC"): { from?: string; to?: string } {
   const range = selectedJourneyRange(raw);
-  // A bare custom URL is displayed with the backend's default window and
-  // editable fields; the actual form never submits custom without ISO bounds.
-  if (range === "custom") return {};
+  const cursor = one(raw.cursor);
+  const fromValue = one(raw.from);
+  const toValue = one(raw.to);
+  if (Array.isArray(raw.from) || Array.isArray(raw.to)) return {};
+  if (range === "today") {
+    const bounds = adminRollingRange(range, now, timeZone);
+    const matchingCutoff = fromValue === bounds.from && validActivityUtcInstant(toValue)
+      && toValue > bounds.from && toValue <= bounds.to;
+    return { from: bounds.from, to: cursor ? undefined : matchingCutoff ? toValue : bounds.to };
+  }
+  if (range === "custom") {
+    const calendarZone = journeyCalendarTimeZone(raw, timeZone);
+    const calendar = calendarZone ? adminCustomDateRange(fromValue, toValue, now, calendarZone) : null;
+    // Leave invalid date-only input to the reader's strict timestamp validation.
+    if (calendarZone && !calendar) return {};
+    const from = calendar ? calendar.from.toISOString() : fromValue && activityCustomDateBound(fromValue, "from", timeZone);
+    const to = calendar ? calendar.to.toISOString() : toValue && activityCustomDateBound(toValue, "to", timeZone, now);
+    // A continuation already carries the fixed upper cutoff of a partial present day.
+    const useCursorCutoff = cursor && to !== toValue && to === now.toISOString();
+    return {
+      ...(from ? { from } : {}),
+      ...(to ? { to: useCursorCutoff ? undefined : to } : {}),
+    };
+  }
+  // Preserve explicit investigation windows and the fixed scope of a continuation.
+  if (cursor || fromValue || toValue) return {};
   const to = now.toISOString();
   const from = range === "all" ? JOURNEY_ALL_TIME_FROM
-    : range === "today" ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString()
-    : new Date(now.getTime() - (range === "24h" ? 1 : range === "90d" ? 90 : range === "30d" ? 30 : 7) * dayMs).toISOString();
+    : range === "90d" ? new Date(now.getTime() - 90 * dayMs).toISOString()
+    : adminRollingRange(range, now, timeZone).from;
   return { from, to };
 }
 
-/** Render an ISO instant as a UTC datetime-local control, not browser-local time. */
-export function utcDateTimeInput(value: string): string {
-  if (!value) return "";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 16);
-}
-
-/** Convert a UTC-labelled datetime-local control into the strict backend ISO format. */
-export function utcDateTimeIso(value: string): string {
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return "";
-  const date = new Date(value + ":00.000Z");
-  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 16) !== value) return "";
-  return date.toISOString();
-}
-
-export function offsetUtcDateTime(value: string, minutes: number): string {
-  const iso = utcDateTimeIso(value);
-  if (!iso) return "";
-  return new Date(Date.parse(iso) + minutes * 60_000).toISOString().slice(0, 16);
+/** A detail opened from a partial day keeps the observed upper bound of its list. */
+export function journeyDetailCalendarWindow(raw: JourneyDateParams, now: Date, timeZone: string) {
+  const window = journeyWindow(raw, now, timeZone);
+  const asOf = one(raw.asOf);
+  if (!journeyCalendarTimeZone(raw, timeZone) || !validActivityUtcInstant(asOf) || !window.from
+      || asOf <= window.from || asOf > now.toISOString() || raw.to !== adminLocalDate(now, timeZone)
+      || adminLocalDate(new Date(asOf), timeZone) !== raw.to) {
+    return window;
+  }
+  return { ...window, to: asOf };
 }

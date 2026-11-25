@@ -1,3 +1,5 @@
+import { adminCalendarRange, adminLocalDate, viewerTodayStart } from "./adminLocalTime";
+
 /** Provider-health history is observational; older windows never imply a live incident. */
 export const providerHealthWindows = [
   { hours: 24, label: "Last 24 hrs" },
@@ -10,19 +12,20 @@ export function parseProviderHealthHours(value: string | string[] | undefined): 
     ? Number(value) : 24;
 }
 
-export type ProviderHealthRange = { from: Date; to: Date; fromDate: string; toDate: string };
+export type ProviderHealthRange = { from: Date; to: Date; fromDate: string; toDate: string; timeZone?: string };
 
-/** Date-only inputs are interpreted as complete UTC calendar days. Bounded to
+/** Date-only inputs are interpreted as local calendar days. Bounded to
  * 90 days to avoid unbounded telemetry scans. Presets keep their rolling hours. */
 export function parseProviderHealthRange(
   raw: Record<string, string | string[] | undefined>,
   now: Date = new Date(),
+  timeZone = "UTC",
 ): { hours: number; range: ProviderHealthRange | null; error: string | null } {
   const hours = parseProviderHealthHours(raw.hours);
   const today = raw.period === "today" || (raw.period === undefined && raw.hours === undefined);
   if (today) {
-    const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    const day = from.toISOString().slice(0, 10);
+    const from = new Date(viewerTodayStart(now, timeZone));
+    const day = adminLocalDate(now, timeZone);
     return { hours, range: { from, to: now, fromDate: day, toDate: day }, error: null };
   }
   if (raw.period !== "custom") return { hours, range: null, error: null };
@@ -32,16 +35,14 @@ export function parseProviderHealthRange(
       !/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {
     return { hours, range: null, error: "Select both dates and apply the custom range." };
   }
-  const from = new Date(start + "T00:00:00.000Z");
-  const to = new Date(end + "T23:59:59.999Z");
-  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) ||
-      from.toISOString().slice(0, 10) !== start ||
-      to.toISOString().slice(0, 10) !== end ||
-      to < from || end > now.toISOString().slice(0, 10) ||
-      to.getTime() - from.getTime() > 90 * 86_400_000) {
+  const bounds = adminCalendarRange(start, end, timeZone);
+  if (!bounds || end > adminLocalDate(now, timeZone) ||
+      Date.parse(end) - Date.parse(start) >= 90 * 86_400_000) {
     return { hours, range: null, error: "Choose a valid date range of up to 90 days, ending no later than today." };
   }
-  return { hours, range: { from, to: to > now ? now : to, fromDate: start, toDate: end }, error: null };
+  // The telemetry reader uses an inclusive upper bound.
+  const to = new Date(Math.min(now.getTime(), bounds.to.getTime() - 1));
+  return { hours, range: { from: bounds.from, to, fromDate: start, toDate: end, timeZone }, error: null };
 }
 
 export function providerHealthRangeHref(

@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { Prisma } from "@/generated/prisma/client";
+import { viewerTodayStart } from "@/lib/adminLocalTime";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
 import { classifyProviderIssue } from "@/services/searchFailureDiagnostics";
@@ -67,6 +68,7 @@ export async function getCarOperationsSnapshot(
   windowHours = 24,
   environment: PublicEnvironment = getPublicEnvironment(),
   period: "today" | "rolling" = "rolling",
+  timeZone = "UTC",
 ): Promise<CarOperationsSnapshot | null> {
   const db = getOptionalPrisma();
   if (!db) return null;
@@ -74,7 +76,7 @@ export async function getCarOperationsSnapshot(
   const hours = Number.isInteger(windowHours) && windowHours >= 1 && windowHours <= 168 ? windowHours : 24;
   const now = new Date();
   const since = period === "today"
-    ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+    ? new Date(viewerTodayStart(now, timeZone))
     : new Date(now.getTime() - hours * 60 * 60 * 1000);
   const searchWhere: Prisma.SearchHistoryWhereInput = {
     type: "CAR",

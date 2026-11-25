@@ -1,6 +1,8 @@
 import { AdminHorizontalShell } from "@/components/admin/AdminHorizontalShell";
+import { AdminReportingTimeZoneProvider } from "@/components/admin/AdminSearchTimeZoneSync";
 import { getSafeSystemStatus } from "@/lib/admin-data";
 import { getCurrentDatabaseOutageAdminToken } from "@/lib/adminDatabaseOutageAccess";
+import { getAdminReportingTimeZonePreference } from "@/lib/adminViewerTimeZone.server";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { isStagingEnvironment } from "@/lib/stagingSafety";
 
@@ -39,7 +41,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </AdminHorizontalShell>
     );
   }
-    return (
+  const reportingTimeZone = await getAdminReportingTimeZonePreference(session.user.id);
+  return (
+    <AdminReportingTimeZoneProvider preference={reportingTimeZone}>
       <AdminHorizontalShell
         adminEmail={session.user.email}
         adminName={session.user.name}
@@ -48,6 +52,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       >
         {children}
       </AdminHorizontalShell>
-    );
-
+    </AdminReportingTimeZoneProvider>
+  );
 }

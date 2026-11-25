@@ -13,7 +13,7 @@ export type {
 export async function getProviderOperationalStatuses(
   windowHours = 24,
   environment: PublicEnvironment = getPublicEnvironment(),
-  customRange?: { from: Date; to: Date },
+  customRange?: { from: Date; to: Date; timeZone?: string },
 ) {
   const db = getOptionalPrisma();
   if (!db) return null;

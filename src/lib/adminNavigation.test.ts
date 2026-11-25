@@ -152,7 +152,7 @@ test("Platform device history keeps one canonical route and a guarded legacy red
   const health = readFileSync("src/components/admin/PlatformHealthDashboard.tsx", "utf8");
   assert.match(canonical, /requireAdminSession\("\/admin\/platforms\/devices"\)/);
   assert.match(canonical, /<form action="\/admin\/platforms\/devices"/);
-  assert.match(canonical, /loadPlatformAccess\(query\)/);
+  assert.match(canonical, /loadPlatformAccess\(query, timeZone\)/);
   assert.match(links, /"\/admin\/platforms\/devices\?"/);
   assert.match(health, /href="\/admin\/platforms\/devices"/);
   assert.match(legacy, /requireAdminSession\("\/admin\/users\/platforms-devices"\)/);

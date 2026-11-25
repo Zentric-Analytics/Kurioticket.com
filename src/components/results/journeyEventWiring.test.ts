@@ -52,11 +52,24 @@ test("handoffs carry the original result selection context for alternate fares a
   const flight = source("./flightDetails/StandaloneFlightDetails.tsx");
   const hotel = source("./HotelDetailsClient.tsx");
   assert.match(flight, /const handoff = journeyEvents.prepareHandoff\("flight", id\)/);
-  assert.match(flight, /JSON.stringify\(\{ id: offerId, type: "flight", sourcePage: "flight_details", \.\.\.handoff\(\) \}\)/);
+  assert.match(flight, /JSON.stringify\(\{ id: offerId, type: "flight", sourcePage: "flight_details", \.\.\.handoff\(\), \.\.\.operationalReference\(\) \}\)/);
   assert.match(hotel, /const handoff = journeyEvents.prepareHandoff\("hotel", id\)/);
   assert.match(hotel, /id: offerId,[\s\S]*?type: "hotel",[\s\S]*?\.\.\.handoff\(\)/);
   const redirect = source("./RedirectClient.tsx");
   assert.match(redirect, /action.current\?\.key !== key/);
   assert.match(redirect, /\.\.\.action.current.metadata\(\)/);
   assert.doesNotMatch(redirect, /params.get\("(?:requestId|handoffId|visitorToken)"\)/);
+});
+
+test("requested provider continuity is independent from optional analytics and is sent only on handoff", () => {
+  const auth = readFileSync(new URL("../auth/AuthProvider.tsx", import.meta.url), "utf8");
+  const operational = readFileSync(new URL("../auth/OperationalHandoffProvider.tsx", import.meta.url), "utf8");
+  assert.match(auth, /<OperationalHandoffProvider>\s*<JourneyEventsProvider>/);
+  assert.doesNotMatch(operational, /browserAllowsAnalytics|captureContext|analyticsConsent|sessionStorage|localStorage|fetch\(/i, "provider has no analytics or persistence dependency");
+  for (const [card, detail, product] of [["./FlightCard.tsx","./flightDetails/StandaloneFlightDetails.tsx","flight"],["./HotelCard.tsx","./HotelDetailsClient.tsx","hotel"]]) {
+    assert.ok(source(card).includes('operationalHandoff.remember("' + product + '"'));
+    assert.ok(source(detail).includes('operationalHandoff.prepare("' + product + '", id)'));
+    assert.match(source(detail), /\.\.\.operationalReference\(\)/);
+  }
+  assert.match(source("./RedirectClient.tsx"), /\.\.\.action.current.operational\(\)/);
 });

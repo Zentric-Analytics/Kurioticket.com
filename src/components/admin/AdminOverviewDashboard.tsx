@@ -185,7 +185,7 @@ function RecentActivity({ activity }: { activity: AuditActivity }) {
             <p className="text-[13px] font-semibold text-slate-900">{humanize(item.title)}{item.source === "system" ? " (System)" : ""}</p>
             <p className="min-w-0 truncate text-[12px] leading-5 text-slate-600" title={item.detail}>{item.detail}</p>
           </div>
-          <time className="shrink-0 text-[11px] text-slate-600">{item.timestamp}</time>
+          <time dateTime={item.timestampIso} className="shrink-0 text-[11px] text-slate-600">{item.timestamp}</time>
         </li>
       ))}
     </ol>

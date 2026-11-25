@@ -1,11 +1,11 @@
 import { Info, Package, Users } from "lucide-react";
 
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import type { ConfirmedTripsOperationsSnapshot } from "@/services/adminConfirmedTripsOperationsService";
 
-type Props = { operations: ConfirmedTripsOperationsSnapshot | null };
+type Props = { operations: ConfirmedTripsOperationsSnapshot | null; timeZone: string };
 
 const countFormat = new Intl.NumberFormat("en-US");
-const timestampFormat = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" });
 const productLabels: Record<string, string> = {
   FLIGHT: "Flight",
   HOTEL: "Hotel",
@@ -39,7 +39,7 @@ function BreakdownMessage({ title, text, icon: Icon }: {
 }
 
 /** No placeholder records are generated: a null snapshot and an empty snapshot are different states. */
-export function ConfirmedTripsBreakdowns({ operations }: Props) {
+export function ConfirmedTripsBreakdowns({ operations, timeZone }: Props) {
   return (
     <div className="grid items-start gap-3 lg:grid-cols-2">
       <section aria-labelledby="trips-by-product-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
@@ -85,7 +85,7 @@ export function ConfirmedTripsBreakdowns({ operations }: Props) {
                 <div className="min-w-0 flex-1">
                   <p className="break-words text-[13px] font-medium leading-5 text-slate-800">{item.provider}</p>
                   <p className="mt-0.5 break-words text-xs leading-4 text-slate-600">
-                    {item.lastConfirmationAt ? "Last confirmation " + timestampFormat.format(new Date(item.lastConfirmationAt)) : "No timestamp"}
+                    {item.lastConfirmationAt ? "Last confirmation " + formatViewerTimestamp(item.lastConfirmationAt, timeZone) : "No timestamp"}
                   </p>
                 </div>
                 <BreakdownCount count={item.count} />

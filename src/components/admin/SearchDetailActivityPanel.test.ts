@@ -4,7 +4,10 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { SearchDetailActivityPanel } from "./SearchDetailActivityPanel";
+import { createJiti } from "jiti";
+
+const jiti = createJiti(import.meta.url, { jsx: { runtime: "automatic" }, fsCache: false });
+const { SearchDetailActivityPanel } = jiti("./SearchDetailActivityPanel") as typeof import("./SearchDetailActivityPanel");
 
 const detailPage = readFileSync("src/app/admin/searches/[id]/page.tsx", "utf8");
 const reader = readFileSync("src/services/adminSearchScopedActivityCore.ts", "utf8");
@@ -14,7 +17,7 @@ const endpoint = readFileSync("src/app/api/admin/searches/[id]/activity/route.ts
 test("Search Detail renders an inline interaction section without a View activity disclosure", () => {
   const html = renderToStaticMarkup(createElement(SearchDetailActivityPanel, {
     searchId: "search_123456",
-    environment: "staging",
+    environment: "staging", timeZone: "UTC",
   }));
   assert.match(html, /User interactions/);
   assert.doesNotMatch(html, /Search recorded/);

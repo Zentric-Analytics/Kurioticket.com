@@ -30,7 +30,21 @@ test("mismatched windows, wrong shape, and inconsistent totals are not applied t
   assert.equal(parsePlatformRefreshSnapshot({ ...base, activity: { state: "AVAILABLE", data: invalidActivity } }, 24), null);
 });
 
-test("last refreshed is displayed in stable UTC, not an unverified local time", () => {
+test("last refreshed uses the verified reporting time zone", () => {
   assert.equal(formatPlatformRefreshTime("2026-11-19T16:25:15.000Z"), "16:25 UTC");
+  assert.equal(formatPlatformRefreshTime("2026-11-19T23:25:15.000Z", "Africa/Lagos"), "00:25 WAT (UTC+1)");
   assert.equal(formatPlatformRefreshTime("invalid"), "Not available");
+});
+
+test("Today refresh accepts the exact reporting zone and its midnight", () => {
+  const sample = {
+    ...platformFixture(),
+    timeZone: "Africa/Lagos",
+    window: { from: "2026-11-24T23:00:00.000Z", to: "2026-11-25T04:25:15.000Z" },
+  };
+  assert.equal(parsePlatformRefreshSnapshot(sample, 24, "today", "Africa/Lagos"), sample);
+  assert.equal(parsePlatformRefreshSnapshot(sample, 24, "today", "UTC"), null);
+  assert.equal(parsePlatformRefreshSnapshot({
+    ...sample, window: { ...sample.window, from: "2026-11-25T00:00:00.000Z" },
+  }, 24, "today", "Africa/Lagos"), null);
 });

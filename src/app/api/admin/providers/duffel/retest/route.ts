@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
 import { getPrisma } from "@/lib/prisma";
 import { checkDuffelHealth } from "@/services/travel/providers/duffelProvider";
-import { logProviderCall } from "@/services/analyticsService";
+import { logProviderCall } from "@/services/operationalActivityService";
 
 export const runtime = "nodejs";
 

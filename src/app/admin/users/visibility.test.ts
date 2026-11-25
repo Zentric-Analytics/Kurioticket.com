@@ -15,7 +15,7 @@ test("Users distinguishes database-read failures from truly empty account and gu
   assert.match(users, /User and guest counts and records are unavailable/);
   assert.match(users, /Retry directory/);
   assert.match(users, /href=\{link\}/);
-  assert.match(users, /<AdminUsersToolbar query=\{q\} role=\{role\} status=\{status\} tab=\{tab\}/);
+  assert.match(users, /<AdminUsersToolbar timeZone=\{timeZone\} now=\{now\.toISOString\(\)\} query=\{q\} role=\{role\} status=\{status\} tab=\{tab\}/);
   assert.match(users, /<AdminIdentityTable rows=\{result\.rows\}/);
   assert.match(db, /catch \(error\) \{[\s\S]*?return fallback/);
 });

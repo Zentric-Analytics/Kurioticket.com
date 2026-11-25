@@ -25,6 +25,8 @@ export function AdminDeletionFilters({
   range,
   from,
   to,
+  timeZone,
+  timeZoneLabel,
   children,
 }: {
   query: string;
@@ -33,26 +35,28 @@ export function AdminDeletionFilters({
   range: AdminQueueRange;
   from: string;
   to: string;
+  timeZone: string;
+  timeZoneLabel: string;
   children: ReactNode;
 }) {
   const router = useRouter();
   const [search, setSearch] = useState(query);
   const [draftStatus, setDraftStatus] = useState(status);
   const [draftRange, setDraftRange] = useState<AdminQueueRange>(range);
-  const [customFrom, setCustomFrom] = useState(localQueueDateTime(from));
-  const [customTo, setCustomTo] = useState(localQueueDateTime(to));
+  const [customFrom, setCustomFrom] = useState(localQueueDateTime(from, timeZone));
+  const [customTo, setCustomTo] = useState(localQueueDateTime(to, timeZone));
   const [dateError, setDateError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const CommittedDeletionScope = JSON.stringify([query, status, range, from, to]);
-  const [previousCommittedDeletionScope, setPreviousCommittedDeletionScope] = useState(CommittedDeletionScope);
-  if (previousCommittedDeletionScope !== CommittedDeletionScope) {
-    setPreviousCommittedDeletionScope(CommittedDeletionScope);
+  const appliedScope = JSON.stringify([query, status, range, from, to, timeZone]);
+  const [previousScope, setPreviousScope] = useState(appliedScope);
+  if (previousScope !== appliedScope) {
+    setPreviousScope(appliedScope);
     setSearch(query);
     setDraftStatus(status);
     setDraftRange(range);
-    setCustomFrom(localQueueDateTime(from));
-    setCustomTo(localQueueDateTime(to));
+    setCustomFrom(localQueueDateTime(from, timeZone));
+    setCustomTo(localQueueDateTime(to, timeZone));
     setDateError(null);
   }
 
@@ -63,14 +67,14 @@ export function AdminDeletionFilters({
     if (draftStatus) params.set("status", draftStatus);
     if (limit) params.set("limit", limit);
     if (draftRange === "custom") {
-      const error = validateCustomQueueWindow(customFrom, customTo);
+      const error = validateCustomQueueWindow(customFrom, customTo, timeZone);
       if (error) { setDateError(error); return; }
     }
-    const selectedWindow = draftRange === "custom" ? {
+    const selectedWindow = resolveAdminQueueWindow({
       range: draftRange,
-      from: new Date(customFrom).toISOString(),
-      to: new Date(customTo).toISOString(),
-    } : resolveAdminQueueWindow({ range: draftRange });
+      from: draftRange === "custom" ? customFrom : undefined,
+      to: draftRange === "custom" ? customTo : undefined,
+    }, new Date(), timeZone);
     params.set("range", selectedWindow.range);
     if (selectedWindow.from) params.set("from", selectedWindow.from);
     if (selectedWindow.to) params.set("to", selectedWindow.to);
@@ -95,7 +99,7 @@ export function AdminDeletionFilters({
               placeholder="Search by email or account name"
               className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-[#374151] outline-none placeholder:text-[#64748B] transition-colors hover:border-[#94A3B8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
           </div>
-          <AdminQueueDateSelect range={draftRange} onChange={value => { setDraftRange(value); setDateError(null); }} />
+          <AdminQueueDateSelect range={draftRange} timeZoneLabel={timeZoneLabel} onChange={value => { setDraftRange(value); setDateError(null); }} />
           <div className="min-w-0">
             <AdminDirectorySelect key={"deletion-status-" + status} name="status"
               label="Request status" value={draftStatus} options={statusOptions}
@@ -107,6 +111,7 @@ export function AdminDeletionFilters({
           </button>
         </div>
         <AdminQueueCustomDates range={draftRange} from={customFrom} to={customTo}
+          timeZone={timeZone} timeZoneLabel={timeZoneLabel}
           setFrom={setCustomFrom} setTo={setCustomTo} error={dateError} />
       </form>
       <div className="min-w-0" aria-busy={isPending}>

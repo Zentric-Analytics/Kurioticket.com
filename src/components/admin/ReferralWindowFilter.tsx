@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
+import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 
 const presetWindows = [
@@ -16,9 +17,10 @@ const presetWindows = [
  * beside the reporting tabs and never creates an additional toolbar row.
  * The form remains as a progressive, no-JavaScript fallback.
  */
-export function ReferralWindowFilter({ days, embedded, period = "rolling" }: { days: number; embedded: boolean; period?: "today" | "rolling" }) {
+export function ReferralWindowFilter({ days, embedded, period = "rolling", timeZone = "UTC" }: { days: number; embedded: boolean; period?: "today" | "rolling"; timeZone?: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const timeZoneLabel = formatAdminTimeZoneLabel(timeZone);
   const options = [...presetWindows,
     ...(period === "rolling" && days === 1 ? [{ value: "1", label: "Last 24 hrs (legacy)" }] : []),
     ...(![1, 7, 30].includes(days) ? [{ value: String(days), label: "Last " + days + " days (legacy)" }] : [])];
@@ -36,7 +38,7 @@ export function ReferralWindowFilter({ days, embedded, period = "rolling" }: { d
     <div className="inline-flex min-w-0 items-center">
       <div className="referral-window-enhanced">
         <SearchMonitorSelect label="Date range" name="days" value={selectedValue}
-          options={options} appearance="plain" align="end"
+          options={options} appearance="plain" align="end" timeZoneLabel={timeZoneLabel}
           onValueChange={applyPreset} />
       </div>
       <noscript>
@@ -44,11 +46,14 @@ export function ReferralWindowFilter({ days, embedded, period = "rolling" }: { d
         <form action={embedded ? "/admin/providers" : "/admin/referral-attribution"} method="get"
           className="inline-flex items-center gap-2">
           {embedded ? <input type="hidden" name="view" value="attribution" /> : null}
-          <label htmlFor="referral-window-fallback" className="sr-only">Date range</label>
-          <select id="referral-window-fallback" name="days" defaultValue={selectedValue}
-            className="h-9 border-0 bg-transparent text-[13px]">
-            {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
+          <div className="min-w-0">
+            <label htmlFor="referral-window-fallback" className="sr-only">Date range</label>
+            <select id="referral-window-fallback" name="days" defaultValue={selectedValue}
+              aria-describedby="referral-window-fallback-zone" className="h-8 border-0 bg-transparent text-[13px]">
+              {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+            <span id="referral-window-fallback-zone" className="block text-[10px] text-[#475569]">{timeZoneLabel}</span>
+          </div>
           <button type="submit" className="text-[13px] font-medium text-[#004BB8]">Apply</button>
         </form>
       </noscript>

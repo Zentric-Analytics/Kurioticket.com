@@ -8,8 +8,8 @@ const identity = readFileSync("src/features/privacy/visitorIdentityCoordinator.t
 
 test("native Car search receives the visitor identity and keeps its original response consent context", () => {
   assert.match(identity, /"\/api\/cars\/search"/);
-  assert.match(nativeApi, /\["\/api\/flights\/search", "\/api\/hotels\/search", "\/api\/cars\/search", "\/api\/mobile\/v1\/hotels\/progressive"\]\.includes\(path\)/);
-  assert.match(nativeApi, /rememberJourneyResponseContext\(data, requestVisitorContext\)/);
+  assert.match(nativeApi, /const operationalSearchPaths = new Set\(\["\/api\/flights\/search", "\/api\/hotels\/search", "\/api\/cars\/search", "\/api\/mobile\/v1\/hotels\/progressive"\]\)/);
+  assert.match(nativeApi, /if \(operationalSearchPaths\.has\(path\)\) \{\s*rememberOperationalSearchResponse\(data\.requestId, epoch, responseOperationalCredential\);\s*rememberJourneyResponseContext\(data, requestVisitorContext\);\s*\}/);
   assert.match(carResults, /journeyEvents\.rememberSearch\(response\.requestId,journeyResponseContext\(response\)\)/);
   assert.match(carResults, /setResultsRequestId\(response\.requestId\)/);
   assert.doesNotMatch(carResults, /rememberSearch\(requestId,/);

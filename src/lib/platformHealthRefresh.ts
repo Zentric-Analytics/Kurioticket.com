@@ -1,4 +1,5 @@
 import type { PlatformOperations } from "@/components/admin/PlatformHealthDashboard";
+import { adminLocalDateTime, formatAdminTimeZoneLabel, viewerTodayStart } from "./adminLocalTime";
 
 const sources = ["WEB", "IOS", "ANDROID", "UNKNOWN"] as const;
 const groups = ["searches", "providerCalls", "handoffs"] as const;
@@ -20,14 +21,15 @@ function isOperationalTotals(value: unknown): boolean {
 
 /** Reject malformed / unrelated results before replacing the visible snapshot.
  * Unknown or unavailable *service* states remain valid observations. */
-export function parsePlatformRefreshSnapshot(payload: unknown, hours: number, period: "today" | "rolling" = "rolling"): PlatformOperations | null {
+export function parsePlatformRefreshSnapshot(payload: unknown, hours: number, period: "today" | "rolling" = "rolling", timeZone = "UTC"): PlatformOperations | null {
   if (!isRecord(payload) || ![24, 168, 720].includes(hours)) return null;
   if (payload.environment !== "staging" && payload.environment !== "production") return null;
+  if (payload.timeZone !== timeZone) return null;
   if (!isRecord(payload.window) || typeof payload.window.from !== "string" || typeof payload.window.to !== "string") return null;
   const from = Date.parse(payload.window.from), to = Date.parse(payload.window.to);
   if (!Number.isFinite(from) || !Number.isFinite(to)) return null;
   const expectedFrom = period === "today"
-    ? Date.UTC(new Date(to).getUTCFullYear(), new Date(to).getUTCMonth(), new Date(to).getUTCDate())
+    ? Date.parse(viewerTodayStart(new Date(to), timeZone))
     : to - hours * 3_600_000;
   if (Math.abs(from - expectedFrom) > 1_000) return null;
   if (!isRecord(payload.activity) || !["AVAILABLE", "MONITORING_UNAVAILABLE"].includes(String(payload.activity.state))) return null;
@@ -53,8 +55,10 @@ export function parsePlatformRefreshSnapshot(payload: unknown, hours: number, pe
   return payload as unknown as PlatformOperations;
 }
 
-/** Explicit UTC avoids a server/client hydration timezone mismatch. */
-export function formatPlatformRefreshTime(timestamp: string) {
+/** Explicit reporting time zone avoids a server/client hydration mismatch. */
+export function formatPlatformRefreshTime(timestamp: string, timeZone = "UTC") {
   const parsed = new Date(timestamp);
-  return Number.isFinite(parsed.getTime()) ? parsed.toISOString().slice(11, 16) + " UTC" : "Not available";
+  if (!Number.isFinite(parsed.getTime())) return "Not available";
+  const zoneLabel = timeZone === "UTC" ? "UTC" : formatAdminTimeZoneLabel(timeZone, parsed);
+  return adminLocalDateTime(parsed, timeZone).slice(11, 16) + " " + zoneLabel;
 }

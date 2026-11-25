@@ -112,12 +112,35 @@ export function carSearchClientHeaders(platform: string, version?: string): Reco
   return { "User-Agent": `KurioticketMobile/${version} (Android; Native) OkHttp` };
 }
 const operationalCredentialPattern = /^v(?:1\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)|2\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)\.(?:ios|android))\.[A-Za-z0-9_-]{43}$/;
+// Only successful first-party search responses can supply this temporary
+// handoff context. No analytics identity, event queue or disk persistence.
+const operationalSearchReferences = new Map<string, { epoch: number; credential: string; expiresAt: number }>();
+const operationalRequestPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const operationalSearchPaths = new Set(["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive"]);
+function rememberOperationalSearchResponse(value: unknown, epoch: number, credential: string | null) {
+  if (epoch !== accountEpoch || !credential || credential !== operationalSearchCredential || typeof value !== "string" || !operationalRequestPattern.test(value)) return;
+  const now = Date.now();
+  const expiresAt = Number(credential.split(".")[2]);
+  if (!Number.isSafeInteger(expiresAt) || expiresAt <= now) return;
+  for (const [id, reference] of operationalSearchReferences) {
+    if (reference.expiresAt <= now || reference.credential !== credential) operationalSearchReferences.delete(id);
+  }
+  const id = value.toLowerCase();
+  operationalSearchReferences.delete(id);
+  while (operationalSearchReferences.size >= 64) operationalSearchReferences.delete(operationalSearchReferences.keys().next().value!);
+  operationalSearchReferences.set(id, { epoch, credential, expiresAt });
+}
+
 let accountEpoch = 0;
 let observedSessionToken: string | null | undefined;
 const accountPath = /^\/api\/mobile\/v1\/(?:profile|email-change|saved|recent-searches|price-alerts|trips|travel-preferences|customization-preferences|email-preferences|notifications|security)(?:[/?]|$)/;
 subscribeSession?.(session => {
   const token = session?.token ?? null;
-  if (token !== observedSessionToken) accountEpoch++;
+  if (token !== observedSessionToken) {
+    accountEpoch++;
+    operationalSearchCredential = null;
+    operationalSearchReferences.clear();
+  }
   observedSessionToken = token;
 });
 
@@ -134,6 +157,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   if (options.expectedUserId && actor !== options.expectedUserId) throw new TravelApiError("Account changed. Refresh before trying again.", 0, "cancelled");
   if (operationalSearchActor !== actor) {
     operationalSearchCredential = null;
+    operationalSearchReferences.clear();
     operationalSearchActor = actor;
   }
   const visitorHeaders = await visitorIdentity.headers(path, ordinarySession).catch(() => ({}));
@@ -149,6 +173,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   options.signal?.addEventListener("abort", onAbort, { once: true });
   const timeout = setTimeout(() => controller.abort("timeout"), options.timeoutMs ?? 20000);
   try {
+    const sentOperationalCredential = operationalPaths.has(path) && epoch === accountEpoch && actor === operationalSearchActor ? operationalSearchCredential : null;
     const response = await fetch(`${base.baseUrl}${path}`, {
       ...init,
       ...(options.body ? { body: JSON.stringify(options.body()) } : {}),
@@ -163,14 +188,19 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
         ...(Constants.expoConfig?.version ? { "X-Mobile-App-Version": Constants.expoConfig.version } : {}),
         ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
         ...visitorHeaders,
-        ...(operationalPaths.has(path) && operationalSearchCredential ? { "X-Kt-Search-Session": operationalSearchCredential } : {}),
+        ...(sentOperationalCredential ? { "X-Kt-Search-Session": sentOperationalCredential } : {}),
         ...(options.requestId ? { "X-Search-Request-Id": options.requestId } : {}),
         ...init.headers,
       },
     });
-    if (operationalPaths.has(path) && (session?.user?.id ?? null) === operationalSearchActor) {
+    let responseOperationalCredential = sentOperationalCredential;
+    if (operationalPaths.has(path) && epoch === accountEpoch && actor === operationalSearchActor) {
       const credential = response.headers.get("X-Kt-Search-Session");
-      if (credential && operationalCredentialPattern.test(credential)) operationalSearchCredential = credential;
+      if (credential && operationalCredentialPattern.test(credential)) {
+        if (operationalSearchCredential !== credential) operationalSearchReferences.clear();
+        operationalSearchCredential = credential;
+        responseOperationalCredential = credential;
+      }
     }
     if (path === "/api/flights/search") {
       logFlightSearchCheckpoint("flight-search:response-received", {
@@ -221,7 +251,8 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
         server: data.performance,
       });
     }
-    if (["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive"].includes(path)) {
+    if (operationalSearchPaths.has(path)) {
+      rememberOperationalSearchResponse(data.requestId, epoch, responseOperationalCredential);
       rememberJourneyResponseContext(data, requestVisitorContext);
     }
     return data as T;
@@ -235,14 +266,25 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   } finally { clearTimeout(timeout); options.signal?.removeEventListener("abort", onAbort); }
 }
 
-type RedirectOptions = { signal?: AbortSignal; sourcePage?: string; handoff?: ProviderHandoffMetadataReader };
+type RedirectOptions = { signal?: AbortSignal; sourcePage?: string; handoff?: ProviderHandoffMetadataReader; operationalRequestId?: string };
 
 function providerRedirect(id: string, type: "flight" | "hotel", options: RedirectOptions = {}) {
   const handoff = options.handoff ?? createProviderHandoffMetadata(() => null, randomUUID);
+  const idFromSearch = typeof options.operationalRequestId === "string" && operationalRequestPattern.test(options.operationalRequestId)
+    ? options.operationalRequestId.toLowerCase() : null;
+  const reference = idFromSearch ? operationalSearchReferences.get(idFromSearch) : undefined;
+  // Recheck after async identity/session restoration. Missing context is fine:
+  // the customer's verified provider link must still work.
+  let eligible = Boolean(reference && reference.expiresAt > Date.now());
+  const operationalReference = () => {
+    eligible = eligible && Boolean(idFromSearch && reference && operationalSearchReferences.get(idFromSearch) === reference
+      && reference.epoch === accountEpoch && reference.credential === operationalSearchCredential && reference.expiresAt > Date.now());
+    return eligible && idFromSearch ? { operationalRequestId: idFromSearch } : {};
+  };
   return request<FlightRedirectResponse>("/api/redirect", { method: "POST" }, {
     signal: options.signal,
     // Resolve correlation after the transport restores/synchronizes its identity.
-    body: () => ({ id, type, sourcePage: options.sourcePage ?? `native_${type}_details`, ...handoff() }),
+    body: () => ({ id, type, sourcePage: options.sourcePage ?? `native_${type}_details`, ...handoff(), ...operationalReference() }),
   });
 }
 

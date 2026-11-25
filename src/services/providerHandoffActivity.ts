@@ -36,6 +36,8 @@ export async function recordProviderHandoffActivity(
   const receipt = redirect && typeof redirect === "object" && "id" in redirect
     ? redirect as HandoffReceipt : null;
   const attribution = receipt ? { userId: receipt.userId, visitorId: receipt.visitorId } : identity;
+  // The operational redirect is complete; only a consented visitor may produce optional events.
+  if (!attribution.visitorId) return;
   if (receipt?.created !== false) {
     await Promise.allSettled([record.event({
       ...attribution,

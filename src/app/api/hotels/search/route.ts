@@ -9,7 +9,8 @@ import { toPublicHotel } from "@/lib/searchCache";
 import { hotelSearchSchema } from "@/lib/validation";
 import { classifyHotels } from "@/lib/travel/searchContract";
 import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
-import { logProviderCall, logSearchHistory as persistSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
+import { logProviderCall, logSearchHistory as persistSearchHistory } from "@/services/operationalActivityService";
+import { trackAnalyticsEvent } from "@/services/analyticsService";
 import {
   searchHotels,
   searchHotelsByProvider,
@@ -167,7 +168,7 @@ export async function POST(request: Request) {
       latencyMs: aggregate.latencyMs,
       status,
     }),
-    ...(crawler ? [] : [trackAnalyticsEvent({ ...application,
+    ...(crawler || !visitorId ? [] : [trackAnalyticsEvent({ ...application,
       userId,
       visitorId,
       type: "SEARCH",

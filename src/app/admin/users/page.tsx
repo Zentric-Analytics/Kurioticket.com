@@ -6,6 +6,8 @@ import { AdminUsersToolbar } from "@/components/admin/AdminUsersToolbar";
 import { AdminUserPopulationCards } from "@/components/admin/AdminUserPopulationCards";
 import { readUserPopulationMetrics } from "@/services/adminUserPopulationMetrics";
 import { withOptionalDb } from "@/lib/prisma";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
+import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { adminIdentityPageSql, adminRegisteredActivityDateWhere, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityDirectoryRow } from "@/lib/adminIdentityDirectory";
 
@@ -13,7 +15,8 @@ export const metadata = { title: "Admin Users" };
 type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; tab?: string; identity?: string; activity?: string; page?: string; sort?: string; date?: string; from?: string; to?: string }> };
 // Keep each SQL query bounded; fetch all matches in chunks for a continuous directory.
 export default async function AdminUsersPage({ searchParams }: PageProps) {
-  await requireAdminSession("/admin/users");
+  const session = await requireAdminSession("/admin/users");
+  const timeZone = await getAdminViewerTimeZone(session.user.id);
   const params = await searchParams;
   const q = (params?.q || "").trim().slice(0, 120);
   const prismaQuery = escapePrismaContainsQuery(q);
@@ -25,12 +28,12 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     selectedTab === "REGISTERED" || selectedTab === "GUEST" ? selectedTab : "ALL";
   const sort = parseAdminIdentitySort(params?.sort);
   const requestedDate = parseAdminIdentityDate(params?.date);
-  const custom = validAdminIdentityCustomDates(params?.from, params?.to);
+  const custom = validAdminIdentityCustomDates(params?.from, params?.to, timeZone);
   const date = requestedDate === "custom" && !custom ? "today" : requestedDate;
   const from = date === "custom" ? params?.from : undefined;
   const to = date === "custom" ? params?.to : undefined;
   const now = new Date();
-  const bounds = adminIdentityDateBounds(date, now, from, to);
+  const bounds = adminIdentityDateBounds(date, now, from, to, timeZone);
   const dateWhere = bounds ? { gte: bounds.from, ...(bounds.to ? { lt: bounds.to } : {}) } : undefined;
   const environment = getPublicEnvironment();
   // Existing bookmarked drawer URLs remain functional; only the presentation changes.
@@ -84,7 +87,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     const sql = adminIdentityPageSql({
       query: q, role, status, showUsers, showGuests,
       showOperationalGuests, withOperationalSummary: true,
-      environment, sort, date, from, to, now,
+      environment, sort, date, from, to, now, timeZone,
       limit: Math.max(1, countBeforeOperational), offset: 0, allIdentities: true,
     });
     const fetched: AdminIdentityDirectoryRow[] = sql ? await db.$queryRaw<AdminIdentityDirectoryRow[]>(sql) : [];
@@ -135,10 +138,10 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       (guestsEligibleForFilters ? scopedOperationalGuestCount : 0),
       operationalAllTimeCount, operationalNewCount };
   }, null);
-  const population = await readUserPopulationMetrics(date, now, from, to);
-  const periodLabel = date === "today" ? "Today (UTC)" : date === "last7" ? "Last 7 days"
+  const population = await readUserPopulationMetrics(date, now, from, to, timeZone);
+  const periodLabel = date === "today" ? "Today · " + formatAdminTimeZoneLabel(timeZone, now) : date === "last7" ? "Last 7 days"
     : date === "last30" ? "Last 30 days" : date === "all" ? "All time"
-    : date === "custom" ? "Custom range (UTC)" : date === "24h" ? "Last 24 hours"
+    : date === "custom" ? "Custom range · " + formatAdminTimeZoneLabel(timeZone, now) : date === "24h" ? "Last 24 hours"
     : date === "thisMonth" ? "This month" : date === "lastMonth" ? "Last month" : "Last 3 months";
   const link = "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date, ...(from && to ? {from,to} : {}) }).toString();
   if (result === null) {
@@ -165,9 +168,9 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       <AdminUserPopulationCards metrics={population} period={periodLabel}
         operationalAllTimeCount={result.operationalAllTimeCount}
         operationalNewCount={result.operationalNewCount} />
-      <AdminUsersToolbar query={q} role={role} status={status} tab={tab} sort={sort} date={date} from={from || ""} to={to || ""}
+      <AdminUsersToolbar timeZone={timeZone} now={now.toISOString()} query={q} role={role} status={status} tab={tab} sort={sort} date={date} from={from || ""} to={to || ""}
         registeredCount={result.registeredCount} guestCount={result.guestCount} pageHref={link}>
-        <AdminIdentityTable rows={result.rows} pageHref={link} sort={sort} />
+        <AdminIdentityTable rows={result.rows} pageHref={link} sort={sort} timeZone={timeZone} />
       </AdminUsersToolbar>
     </div>
   );

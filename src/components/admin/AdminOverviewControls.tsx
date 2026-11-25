@@ -106,7 +106,19 @@ export function AdminOverviewAutoRefresh() {
 
 const standardRangeOptions: OverviewRange[] = ["today", "7d", "30d", "custom"];
 
-export function AdminOverviewRangeSelect({ period, nowDate }: { period: OverviewPeriod; nowDate: string }) {
+export function AdminOverviewRangeSelect({
+  period,
+  nowDate,
+  timeZone = "UTC",
+  timeZoneLabel = "UTC",
+  timeZoneControl,
+}: {
+  period: OverviewPeriod;
+  nowDate: string;
+  timeZone?: string;
+  timeZoneLabel?: string;
+  timeZoneControl?: ReactNode;
+}) {
   const transition = useContext(RangeTransitionContext);
   if (!transition) throw new Error("AdminOverviewRangeSelect must be inside AdminOverviewRangeTransitionProvider");
   const pending = transition.isUpdating;
@@ -123,6 +135,7 @@ export function AdminOverviewRangeSelect({ period, nowDate }: { period: Overview
     setOpen(false);
   }
   const datePanelId = useId();
+  const zoneLabelId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -191,7 +204,6 @@ export function AdminOverviewRangeSelect({ period, nowDate }: { period: Overview
       event.preventDefault();
       optionRefs.current[targetIndex]?.focus();
     }
-    if (event.key === "Tab") setOpen(false);
   };
 
   const validDraft = draftDates !== null && validOverviewCustomDates(draftDates, nowDate);
@@ -205,6 +217,7 @@ export function AdminOverviewRangeSelect({ period, nowDate }: { period: Overview
         ref={triggerRef}
         type="button"
         aria-label={pending && requestedRange ? "Updating Overview to " + rangeLabels[requestedRange] : "Overview reporting range: " + selectionLabel}
+        aria-describedby={zoneLabelId}
         aria-busy={pending || undefined}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -217,13 +230,16 @@ export function AdminOverviewRangeSelect({ period, nowDate }: { period: Overview
             openMenu();
           }
         }}
-        className="inline-flex h-9 min-w-[145px] items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-medium leading-none text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:border-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-300 disabled:cursor-wait disabled:opacity-60"
+        className="inline-flex min-h-10 min-w-[145px] max-w-full items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:border-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-300 disabled:cursor-wait disabled:opacity-60"
       >
         {pending
           ? <LoaderCircle size={14} className="shrink-0 text-indigo-600 motion-safe:animate-spin" aria-hidden="true" />
           : <CalendarDays size={14} className="shrink-0 text-indigo-600" aria-hidden="true" />
         }
-        <span className="min-w-0 flex-1 text-left">{pending ? "Updating…" : selectionLabel}</span>
+        <span className="min-w-0 flex-1 text-left">
+          <span className="block text-xs font-semibold leading-4">{pending ? "Updating…" : selectionLabel}</span>
+          <span id={zoneLabelId} className="block text-[10px] leading-3 text-slate-600">{timeZoneLabel}</span>
+        </span>
         <ChevronDown size={13} className={"ml-1 shrink-0 text-slate-500 transition-transform " + (open ? "rotate-180" : "")} aria-hidden="true" />
       </button>
 
@@ -236,32 +252,30 @@ export function AdminOverviewRangeSelect({ period, nowDate }: { period: Overview
         </span>
       ) : null}
       {open ? (
-        <div
-          id={menuId}
-          role="listbox"
-          aria-label="Overview reporting range options"
-          className="absolute right-0 top-full z-50 mt-1.5 w-[170px] rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg shadow-slate-900/10"
-        >
-          {rangeOptions.map((option, index) => {
-            const selected = option === range;
-            return (
-              <button
-                key={option}
-                ref={(element) => { optionRefs.current[index] = element; }}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                tabIndex={-1}
-                onClick={() => selectRange(option)}
-                onKeyDown={(event) => handleOptionKeyDown(event, index)}
-                className={"flex h-9 w-full items-center justify-between gap-2 rounded-lg px-2.5 text-left text-[11px] font-medium transition-colors focus:bg-slate-100 focus:outline-none " +
-                  (selected ? "bg-indigo-50 text-indigo-700" : "text-slate-700 hover:bg-slate-50")}
-              >
-                <span>{rangeLabels[option]}</span>
-                {selected ? <Check size={14} className="shrink-0 text-indigo-600" aria-hidden="true" /> : null}
-              </button>
-            );
-          })}
+        <div className="absolute right-0 top-full z-50 mt-1.5 w-56 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg shadow-slate-900/10">
+          <div id={menuId} role="listbox" aria-label="Overview reporting range options">
+            {rangeOptions.map((option, index) => {
+              const selected = option === range;
+              return (
+                <button
+                  key={option}
+                  ref={(element) => { optionRefs.current[index] = element; }}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  tabIndex={-1}
+                  onClick={() => selectRange(option)}
+                  onKeyDown={(event) => handleOptionKeyDown(event, index)}
+                  className={"flex h-9 w-full items-center justify-between gap-2 rounded-lg px-2.5 text-left text-[11px] font-medium transition-colors focus:bg-slate-100 focus:outline-none " +
+                    (selected ? "bg-indigo-50 text-indigo-700" : "text-slate-700 hover:bg-slate-50")}
+                >
+                  <span>{rangeLabels[option]}</span>
+                  {selected ? <Check size={14} className="shrink-0 text-indigo-600" aria-hidden="true" /> : null}
+                </button>
+              );
+            })}
+          </div>
+          {timeZoneControl}
         </div>
       ) : null}
 
@@ -281,16 +295,16 @@ export function AdminOverviewRangeSelect({ period, nowDate }: { period: Overview
             }
           }}
         >
-          <span className="sr-only" id={datePanelId}>Custom reporting dates</span>
+          <span id={datePanelId} className="basis-full text-right text-[11px] text-slate-600">Custom reporting dates · {timeZoneLabel}</span>
           <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-600">
-            From (UTC)
-            <AdminCalendarInput ariaLabel="From (UTC)" value={draftDates.fromDate} max={draftDates.toDate || nowDate}
+            From
+            <AdminCalendarInput ariaLabel="From" timeZone={timeZone} value={draftDates.fromDate} max={draftDates.toDate || nowDate}
               onChange={(event) => setDraftDates({ ...draftDates, fromDate: event.target.value })}
               className="w-[180px] max-w-full" />
           </label>
           <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-600">
-            To (UTC)
-            <AdminCalendarInput ariaLabel="To (UTC)" value={draftDates.toDate} min={draftDates.fromDate || undefined} max={nowDate}
+            To
+            <AdminCalendarInput ariaLabel="To" timeZone={timeZone} value={draftDates.toDate} min={draftDates.fromDate || undefined} max={nowDate}
               onChange={(event) => setDraftDates({ ...draftDates, toDate: event.target.value })}
               className="w-[180px] max-w-full" />
           </label>

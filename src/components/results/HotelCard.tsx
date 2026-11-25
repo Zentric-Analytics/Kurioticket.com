@@ -2,6 +2,7 @@
 import { sandboxCardAction } from "./sandboxCardActions";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+import { useOperationalHandoff } from "@/components/auth/OperationalHandoffProvider";
 
 
 import Image from "next/image";
@@ -153,6 +154,7 @@ export function HotelCard({
   searchRequestId,
 }: HotelCardProps) {
   const journeyEvents = useJourneyEvents();
+  const operationalHandoff = useOperationalHandoff();
   const rememberDetailsContext = () => {
     if (resolvedDetailsHref) journeyEvents.workflowDecision("RESULT_DETAILS_OPENED", searchRequestId, { offerId: hotel.id, sourcePage: "/hotels/results",
       ...(typeof hotel.pricePerNight === "number" && Number.isFinite(hotel.pricePerNight)
@@ -164,6 +166,7 @@ export function HotelCard({
           ? { totalAmount: hotel.totalPrice } : {}),
       } } : {}),
     });
+    if (resolvedDetailsHref) operationalHandoff.remember("hotel", hotel.id, searchRequestId ?? null);
     journeyEvents.rememberDetailsContext("hotel", hotel.id, searchRequestId ?? null);
   };
   const { locale, t: dictionary } = useLocale();

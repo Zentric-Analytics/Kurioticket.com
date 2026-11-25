@@ -8,9 +8,12 @@ import {
   AdminOverviewRangeTransitionProvider,
 } from "@/components/admin/AdminOverviewControls";
 import { PlatformOverviewSummary } from "@/components/admin/PlatformOverviewSummary";
+import { AdminReportingTimeZoneControl } from "@/components/admin/AdminSearchTimeZoneSync";
 import { requireAdminApiSession } from "@/lib/admin";
 import { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
+import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { resolveOverviewRange } from "@/lib/adminOverviewRange";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminOverview } from "@/services/adminOverviewService";
 import { getAdminAlertSnapshot } from "@/services/adminAlertService";
@@ -21,16 +24,19 @@ export const metadata = { title: "Admin" };
 type PageProps = { searchParams?: Promise<{ range?: string | string[]; from?: string | string[]; to?: string | string[] }> };
 
 export default async function AdminPage({ searchParams }: PageProps) {
-  await requireAdminSession("/admin");
+  const session = await requireAdminSession("/admin");
   const access = await requireAdminApiSession();
   if ("response" in access && access.response) redirect("/dashboard");
 
-  const reporting = resolveOverviewRange(await searchParams);
+  const timeZone = await getAdminViewerTimeZone(session.user.id);
+  const now = new Date();
+  const reporting = resolveOverviewRange(await searchParams, now, timeZone);
+  const timeZoneLabel = formatAdminTimeZoneLabel(timeZone, now);
   const query = new URLSearchParams({ from: reporting.from.toISOString(), to: reporting.to.toISOString() });
   const [overview, system, activity, platform, incidents] = await Promise.all([
-    getAdminOverview(query),
+    getAdminOverview(query, reporting.period.range === "custom" ? timeZone : undefined),
     getSafeSystemStatus(),
-    getRecentAdminActivity(),
+    getRecentAdminActivity({ timeZone }),
     readPlatformSearchActivity(reporting.from, reporting.to),
     getAdminAlertSnapshot(undefined, new Date(), { forceRefreshCandidates: false }).catch(() => null),
   ]);
@@ -45,12 +51,18 @@ export default async function AdminPage({ searchParams }: PageProps) {
               {platform.environment === "staging" ? "Staging" : "Production"}
             </span>
             <div className="ml-auto min-w-0">
-              <AdminOverviewRangeSelect period={reporting.period} nowDate={reporting.today} />
+              <AdminOverviewRangeSelect
+                period={reporting.period}
+                nowDate={reporting.today}
+                timeZone={timeZone}
+                timeZoneLabel={timeZoneLabel}
+                timeZoneControl={<AdminReportingTimeZoneControl />}
+              />
             </div>
           </div>
           {reporting.invalidCustom ? (
             <p role="alert" className="mb-3 text-xs text-rose-800">
-              Choose valid UTC dates within a 90-day range. Showing today (UTC).
+              Choose valid dates within a 90-day range. Showing today in {timeZoneLabel}.
             </p>
           ) : null}
           <div className="mb-3 grid min-w-0 items-stretch gap-3 lg:grid-cols-2">

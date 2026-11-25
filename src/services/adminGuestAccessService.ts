@@ -17,12 +17,12 @@ type Stored = { guestId: string | null; guestSource: string | null; recordId: st
   total: bigint; firstSeenAt: Date | null; lastSeenAt: Date | null };
 export type GuestAccessHistoryResult = { status: "ok"; records: GuestAccessRecord[]; total: number; firstSeenAt: Date | null; lastSeenAt: Date | null } | { status: "unavailable" | "not_found" };
 
-export async function loadAdminGuestAccessHistory(id: string, query: DeviceHistoryQuery): Promise<GuestAccessHistoryResult> {
+export async function loadAdminGuestAccessHistory(id: string, query: DeviceHistoryQuery, timeZone = "UTC", now = new Date()): Promise<GuestAccessHistoryResult> {
   if (!validActivityIdentity("guest", id)) return { status: "not_found" };
   try {
     const db = getOptionalPrisma();
     if (!db) return { status: "unavailable" };
-    const stored = await db.$queryRaw<Stored[]>(guestAccessHistorySql(id, query, getPublicEnvironment(), new Date()));
+    const stored = await db.$queryRaw<Stored[]>(guestAccessHistorySql(id, query, getPublicEnvironment(), now, timeZone));
     const total = Number(stored[0]?.total);
     if (!Number.isSafeInteger(total) || total < 0 || stored.length > DEVICE_HISTORY_PAGE_SIZE) throw new Error("Invalid guest access history");
     const firstSeenAt = stored[0].firstSeenAt, lastSeenAt = stored[0].lastSeenAt;

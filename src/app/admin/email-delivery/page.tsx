@@ -2,6 +2,9 @@ import Link from "next/link";
 
 import { EmailDeliveryRangeFilter, type EmailDeliveryRange } from "@/components/admin/EmailDeliveryRangeFilter";
 import { EmailDeliveryTestButton } from "@/components/admin/EmailDeliveryTestButton";
+import { adminLocalDate, formatAdminTimeZoneLabel, formatViewerTimestamp } from "@/lib/adminLocalTime";
+import { adminCustomDateRange, adminRollingRange } from "@/lib/adminReportingRanges";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { getEmailDeliveryOperationsSnapshot } from "@/services/emailDeliveryService";
 
 export const metadata = { title: "Admin Email Delivery" };
@@ -32,14 +35,9 @@ const statusLabels: Record<string, string> = {
   QUEUED: "Queued",
 };
 
-function formatDateTime(value: Date | string | null) {
-  if (!value) return "—";
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+function DeliveryTime({ value, timeZone }: { value: Date | null; timeZone: string }) {
+  if (!value || !Number.isFinite(value.getTime())) return "—";
+  return <time dateTime={value.toISOString()}>{formatViewerTimestamp(value, timeZone)}</time>;
 }
 
 function statusTone(status: string): StatusTone {
@@ -60,8 +58,9 @@ function StatusIndicator({ value, tone }: { value: string; tone: StatusTone }) {
 }
 
 export default async function AdminEmailDeliveryPage({ searchParams }: { searchParams: SearchParams }) {
-  const raw = await searchParams;
-  const rangeState = resolveRange(raw);
+  const [raw, timeZone] = await Promise.all([searchParams, getAdminViewerTimeZone()]);
+  const now = new Date();
+  const rangeState = resolveRange(raw, now, timeZone);
   const requestedHistoryPage = parseHistoryPage(one(raw.historyPage));
   const operations = rangeState.error
     ? null
@@ -98,6 +97,9 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
           range={rangeState.range}
           fromDate={rangeState.fromDate}
           toDate={rangeState.toDate}
+          today={adminLocalDate(now, timeZone)}
+          timeZone={timeZone}
+          timeZoneLabel={formatAdminTimeZoneLabel(timeZone, now)}
         />
       </header>
 
@@ -205,9 +207,9 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
                     <td className="px-3 py-3">
                       <StatusIndicator value={statusLabels[delivery.status] || delivery.status} tone={statusTone(delivery.status)} />
                     </td>
-                    <td className="px-3 py-3 text-[12px] text-[#475569]">{formatDateTime(delivery.createdAt)}</td>
-                    <td className="px-3 py-3 text-[12px] text-[#475569]">{formatDateTime(delivery.sentAt)}</td>
-                    <td className="px-3 py-3 text-[12px] text-[#475569]">{formatDateTime(delivery.deliveredAt)}</td>
+                    <td className="px-3 py-3 text-[12px] text-[#475569]"><DeliveryTime value={delivery.createdAt} timeZone={timeZone} /></td>
+                    <td className="px-3 py-3 text-[12px] text-[#475569]"><DeliveryTime value={delivery.sentAt} timeZone={timeZone} /></td>
+                    <td className="px-3 py-3 text-[12px] text-[#475569]"><DeliveryTime value={delivery.deliveredAt} timeZone={timeZone} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -283,63 +285,28 @@ function normalizeRange(value: string): EmailDeliveryRange {
   return value === "today" || value === "24h" || value === "7d" || value === "30d" || value === "90d" || value === "custom" ? value : "today";
 }
 
-function resolveRange(raw: Record<string, string | string[] | undefined>) {
+function resolveRange(raw: Record<string, string | string[] | undefined>, now: Date, timeZone: string) {
   const range = normalizeRange(one(raw.range));
-  const now = new Date();
 
   if (range !== "custom") {
-    const durationMs =
-      range === "7d" ? 7 * 24 * 60 * 60 * 1000
-        : range === "30d" ? 30 * 24 * 60 * 60 * 1000
-          : range === "90d" ? 90 * 24 * 60 * 60 * 1000
-            : 24 * 60 * 60 * 1000;
+    const from = range === "90d" ? new Date(now.getTime() - MAX_RANGE_MS)
+      : new Date(adminRollingRange(range, now, timeZone).from);
     return {
       range,
-      from: range === "today" ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())) : new Date(now.getTime() - durationMs),
+      from,
       to: now,
       fromDate: "",
       toDate: "",
-      label: range === "today" ? "Today" : range === "7d" ? "Last 7 days" : range === "30d" ? "Last 30 days" : range === "90d" ? "Last 90 days" : "Last 24 hrs",
       error: "",
     };
   }
 
   const fromDate = one(raw.fromDate);
   const toDate = one(raw.toDate);
-  if (!validDate(fromDate) || !validDate(toDate)) {
-    return { range, from: now, to: now, fromDate, toDate, label: "Custom range", error: "Choose both a valid start date and end date." };
+  const custom = adminCustomDateRange(fromDate, toDate, now, timeZone);
+  if (!custom) {
+    return { range, from: now, to: now, fromDate, toDate, error: "Choose valid dates up to today for a range of at most 90 days." };
   }
 
-  const from = new Date(fromDate + "T00:00:00.000Z");
-  const requestedEnd = new Date(toDate + "T00:00:00.000Z");
-  requestedEnd.setUTCDate(requestedEnd.getUTCDate() + 1);
-  const to = new Date(Math.min(requestedEnd.getTime(), now.getTime()));
-
-  if (from.getTime() >= to.getTime()) {
-    return { range, from, to, fromDate, toDate, label: "Custom range", error: "The start date must be before the end of the selected range." };
-  }
-  if (to.getTime() - from.getTime() > MAX_RANGE_MS) {
-    return { range, from, to, fromDate, toDate, label: "Custom range", error: "Custom ranges can cover up to 90 days." };
-  }
-
-  const formatter = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
-  return {
-    range,
-    from,
-    to,
-    fromDate,
-    toDate,
-    label: formatter.format(from) + " – " + formatter.format(new Date(to.getTime() - 1)),
-    error: "",
-  };
-}
-
-function validDate(value: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return false;
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+  return { range, ...custom, fromDate, toDate, error: "" };
 }

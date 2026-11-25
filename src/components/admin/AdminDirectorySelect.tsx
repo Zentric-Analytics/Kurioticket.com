@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { CalendarDays, Check, ChevronDown } from "lucide-react";
 import { getCmsDropdownBelow } from "@/lib/adminCmsDropdownPosition";
 
 export type AdminDirectoryOption = { value: string; label: string };
@@ -22,6 +22,7 @@ type Props = {
   compact?: boolean;
   underlined?: boolean;
   plain?: boolean;
+  timeZoneLabel?: string;
   /** Opt-in roomier popover for long labels in an action sidebar. */
   spaciousMenu?: boolean;
   /** Content controls share a compact field and an attached downward list. */
@@ -48,6 +49,7 @@ export function AdminDirectorySelect({
   compact = false,
   underlined = false,
   plain = false,
+  timeZoneLabel,
   spaciousMenu = false,
   field = false,
   attached = false,
@@ -57,6 +59,7 @@ export function AdminDirectorySelect({
   onValueChange,
 }: Props) {
   const listboxId = useId();
+  const descriptionId = timeZoneLabel ? listboxId + "-time-zone" : undefined;
   const hydrated = useSyncExternalStore(subscribe, clientSnapshot, serverSnapshot);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -184,6 +187,7 @@ export function AdminDirectorySelect({
           id={listboxId + "-native"}
           name={name}
           defaultValue={value}
+          aria-describedby={descriptionId}
           disabled={disabled}
           required={required}
           className={field ? fieldClass : plain ? "h-10 w-auto max-w-full border-0 bg-transparent px-0 text-[13px] font-medium text-[#334155] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" : underlined ? "h-10 w-auto max-w-full border-0 border-b border-[#CAD3DF] bg-transparent px-0 pr-1 text-[13px] font-medium text-[#334155] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" : `focus-ring w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#020617] ${compact ? "h-10" : "h-11"}`}
@@ -192,6 +196,7 @@ export function AdminDirectorySelect({
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
+        {timeZoneLabel ? <span id={descriptionId} className="block text-[11px] text-[#475569]">{timeZoneLabel}</span> : null}
         {autoSubmit ? (
           <noscript>
             <button type="submit" className="mt-2 rounded-md border border-[#D8E1EC] px-3 py-2 text-[13px] font-medium text-[#020617]">
@@ -211,6 +216,7 @@ export function AdminDirectorySelect({
         type="button"
         role="combobox"
         aria-label={label}
+        aria-describedby={descriptionId}
         disabled={disabled}
         aria-required={required || undefined}
         aria-haspopup="listbox"
@@ -228,7 +234,17 @@ export function AdminDirectorySelect({
         }}
         className={field ? fieldClass + " flex items-center justify-between gap-2 text-left" + (open ? " rounded-b-none" : "") : plain ? "inline-flex h-10 max-w-full min-w-0 cursor-pointer items-center justify-start gap-[5px] whitespace-nowrap border-0 bg-transparent px-0 text-left text-[13px] font-medium text-[#334155] transition-colors hover:text-[#111827] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" : underlined ? "inline-flex h-10 max-w-full min-w-0 cursor-pointer items-center justify-start gap-[7px] whitespace-nowrap border-b border-[#CAD3DF] bg-transparent px-0 text-left text-[13px] font-medium text-[#334155] transition-colors hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" : `focus-ring flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-[#D8E1EC] bg-white px-3 text-left text-[13px] font-medium text-[#020617] transition-colors hover:border-[#94A3B8] ${compact ? "h-10" : "h-11"}`}
       >
-        <span className={underlined || plain ? "whitespace-nowrap" : "truncate"}>{selectedLabel}</span>
+        {timeZoneLabel ? (
+          <span className="flex min-w-0 items-center gap-2">
+            <CalendarDays size={15} aria-hidden="true" className="shrink-0 text-[#475569]" />
+            <span className="min-w-0">
+              <span className="block truncate leading-4">{selectedLabel}</span>
+              <span id={descriptionId} className="block truncate text-[11px] leading-3 text-[#475569]">{timeZoneLabel}</span>
+            </span>
+          </span>
+        ) : (
+          <span className={underlined || plain ? "whitespace-nowrap" : "truncate"}>{selectedLabel}</span>
+        )}
         {plain ? <svg aria-hidden="true" viewBox="0 0 8 5" className="mt-px h-[5px] w-[8px] shrink-0 text-[#475569]" fill="currentColor"><path d="M0 0h8L4 5z" /></svg> : <ChevronDown size={15} aria-hidden="true" className={`shrink-0 text-[#475569] transition-transform ${open ? "rotate-180" : ""}`} />}
       </button>
       {open && !disabled ? (

@@ -16,7 +16,7 @@ test("Confirmation Delivery Health contains alerts instead of navigating to a du
   assert.ok(start >= 0 && end > start, "Delivery Health must exist");
   const deliveryHealth = operations.slice(start, end);
   assert.match(operations, /import \{ ConfirmedTripDeliveryAlerts \} from "@\/components\/admin\/ConfirmedTripDeliveryAlerts"/);
-  assert.match(deliveryHealth, /\{readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null\}/);
+  assert.match(deliveryHealth, /\{readiness\.feedReady \? <ConfirmedTripDeliveryAlerts timeZone=\{timeZone\} \/> : null\}/);
   assert.doesNotMatch(deliveryHealth, /href="\/admin\/confirmed-trips\/alerts"|href="\/admin\/notifications"|>Confirmation alerts<\/Link>/);
   assert.match(operations, /No delivery telemetry available/);
   assert.match(operations, /Delivery data is unavailable\. No counts are assumed/);
@@ -27,7 +27,7 @@ test("only genuine confirmed-trip alerts appear inline for a configured provider
   assert.match(inline, /await requireAdminSession\("\/admin\/confirmed-trips"\)/);
   assert.match(inline, /!isProtectedAdminEmail\(session\.user\.email\)/);
   assert.match(inline, /redirect\("\/dashboard"\)/);
-  assert.match(operations, /\{readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null\}/);
+  assert.match(operations, /\{readiness\.feedReady \? <ConfirmedTripDeliveryAlerts timeZone=\{timeZone\} \/> : null\}/);
   assert.match(inline, /getAdminAlertSnapshot\(session\.user\.id\)/);
   assert.match(inline, /snapshot\.alerts\.filter\(\(alert\) => alert\.source === "CONFIRMED_TRIPS"\)/);
   assert.match(service, /confirmedTrips: \{/);
@@ -40,7 +40,7 @@ test("only genuine confirmed-trip alerts appear inline for a configured provider
 });
 
 test("inactive or zero-alert states do not create a duplicate informational card", () => {
-  assert.match(operations, /readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null/);
+  assert.match(operations, /readiness\.feedReady \? <ConfirmedTripDeliveryAlerts timeZone=\{timeZone\} \/> : null/);
   assert.match(inline, /if \(alerts\.length === 0\) return null/);
   assert.doesNotMatch(inline, /No confirmation provider feed is configured|Monitoring inactive|No confirmation delivery alerts are currently reported/);
   assert.match(inline, /catch \(error\)/);
@@ -61,7 +61,7 @@ test("genuine alerts expand in place and reuse protected acknowledgement", () =>
   assert.match(inline, /alert\.acknowledged/);
   assert.match(inline, /alert\.title/);
   assert.match(inline, /alert\.message/);
-  assert.match(inline, /formatSignalTime\(alert\.signalAt\)/);
+  assert.match(inline, /formatViewerTimestamp\(alert\.signalAt, timeZone\)/);
   assert.match(inline, /<AdminAlertAcknowledgeButton alertKey=\{alert\.key\} signalToken=\{alert\.signalToken\} acknowledged=\{alert\.acknowledged\} \/>/);
   assert.match(inline, /Acknowledging an alert does not resolve its cause/);
   assert.doesNotMatch(inline, /<form|method:\s*"(?:POST|PATCH|DELETE)"|providerConfirmationSecret/);

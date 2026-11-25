@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent
 import { LoaderCircle, Search } from "lucide-react";
 import { AdminDirectorySelect } from "./AdminDirectorySelect";
 import { useRouter } from "next/navigation";
+import { adminCalendarRange, formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import type { AdminIdentityDate, AdminIdentitySort } from "@/lib/adminIdentityDirectory";
 
 export type UserTab = "ALL" | "REGISTERED" | "GUEST";
@@ -23,6 +24,8 @@ type Props = {
   guestCount: number;
   pageHref: string;
   children: ReactNode;
+  timeZone: string;
+  now: string;
 };
 
 const roles = [
@@ -79,7 +82,7 @@ function urlWith(base: URLSearchParams, values: Record<string, string>) {
  * The server remains authoritative for scoped identity records and counts.
  */
 export function AdminUsersToolbar({
-  query, role, status, tab, sort, date, from, to, registeredCount, guestCount, pageHref, children,
+  query, role, status, tab, sort, date, from, to, registeredCount, guestCount, pageHref, children, timeZone, now,
 }: Props) {
   const router = useRouter();
   const [searchText, setSearchText] = useState(query);
@@ -137,11 +140,7 @@ export function AdminUsersToolbar({
     startTransition(() => router.push(url, { scroll: false }));
   }, [router]);
 
-  const validCustom = /^\d{4}-\d{2}-\d{2}$/.test(draftDates.from)
-    && /^\d{4}-\d{2}-\d{2}$/.test(draftDates.to)
-    && !Number.isNaN(Date.parse(draftDates.from))
-    && !Number.isNaN(Date.parse(draftDates.to))
-    && draftDates.from <= draftDates.to;
+  const validCustom = Boolean(adminCalendarRange(draftDates.from, draftDates.to, timeZone));
 
   function onSearchSubmit(event: FormEvent<HTMLFormElement>) {
     // Enter must not submit a draft. Only clicking Apply filters navigates.
@@ -151,7 +150,7 @@ export function AdminUsersToolbar({
   function applyFilters() {
     if (isPending) return;
     if (draftDate === "custom" && !validCustom) {
-      setDateError("Choose a valid start and end date (UTC).");
+      setDateError("Choose a valid start and end date.");
       return;
     }
     setDateError(null);
@@ -199,7 +198,7 @@ export function AdminUsersToolbar({
           className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-foreground placeholder:text-muted outline-none transition-colors hover:border-[#94A3B8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
       </div>
       <div className="min-w-0">
-        <AdminDirectorySelect name="date" label="Date range" nativeExcludeValues={["custom"]}
+        <AdminDirectorySelect name="date" label="Date range" timeZoneLabel={formatAdminTimeZoneLabel(timeZone, new Date(now))} nativeExcludeValues={["custom"]}
           value={draftDate} options={dateOptions} compact
           onValueChange={next => { setDraftDate(next as AdminIdentityDate); setDateError(null); }} />
       </div>
@@ -223,13 +222,13 @@ export function AdminUsersToolbar({
     </form>
 
     {draftDate === "custom" ? <div data-testid="users-custom-date-fields" className="flex min-w-0 flex-wrap items-end gap-3 border-b border-[#D8E1EC] py-3">
-      <label className="flex min-w-0 flex-col gap-1 text-xs text-[#475569]">From (UTC)
-        <AdminCalendarInput ariaLabel="Custom start date UTC" value={draftDates.from}
+      <label className="flex min-w-0 flex-col gap-1 text-xs text-[#475569]">From
+        <AdminCalendarInput timeZone={timeZone} ariaLabel="Custom start date" value={draftDates.from}
           max={draftDates.to || undefined} onChange={event => { setDraftDates(current => ({ ...current, from: event.target.value })); setDateError(null); }}
           className="w-[210px] max-w-full" />
       </label>
-      <label className="flex min-w-0 flex-col gap-1 text-xs text-[#475569]">To (UTC)
-        <AdminCalendarInput ariaLabel="Custom end date UTC" value={draftDates.to}
+      <label className="flex min-w-0 flex-col gap-1 text-xs text-[#475569]">To
+        <AdminCalendarInput timeZone={timeZone} ariaLabel="Custom end date" value={draftDates.to}
           min={draftDates.from || undefined} onChange={event => { setDraftDates(current => ({ ...current, to: event.target.value })); setDateError(null); }}
           className="w-[210px] max-w-full" />
       </label>

@@ -54,3 +54,17 @@ test("custom monitoring date windows include full UTC dates, bound history, and 
   assert.equal(parseProviderHealthRange({ period: "custom", from: "2026-02-30", to: "2026-03-01" }, now).range, null);
   assert.equal(parseProviderHealthRange({ hours: "72" }, now).hours, 72);
 });
+
+test("provider health includes the first local hour and queries full daylight-saving dates", () => {
+  const afterMidnight = new Date("2026-11-24T23:30:00.000Z");
+  const today = parseProviderHealthRange({}, afterMidnight, "Africa/Lagos");
+  assert.equal(today.range?.fromDate, "2026-11-25");
+  assert.equal(today.range?.from.toISOString(), "2026-11-24T23:00:00.000Z");
+  assert.equal(today.range?.to.toISOString(), afterMidnight.toISOString());
+
+  const now = new Date("2026-11-25T10:00:00.000Z");
+  const custom = parseProviderHealthRange({ period: "custom", from: "2026-11-01", to: "2026-11-01" }, now, "America/New_York");
+  assert.equal(custom.range?.from.toISOString(), "2026-11-01T04:00:00.000Z");
+  assert.equal(custom.range?.to.toISOString(), "2026-11-02T04:59:59.999Z");
+  assert.equal(parseProviderHealthRange({ hours: "72" }, now, "America/New_York").range, null);
+});

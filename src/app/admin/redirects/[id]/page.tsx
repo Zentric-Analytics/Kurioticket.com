@@ -3,7 +3,8 @@ import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
-import { formatDateTime } from "@/lib/admin-data";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { handoffReturnHref } from "@/lib/adminReferralHandoffNavigation";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -17,6 +18,7 @@ export default async function AdminHandoffDetailPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  const timeZone = await getAdminViewerTimeZone();
   const raw = await searchParams;
   const query = new URLSearchParams();
   const environment = typeof raw.environment === "string" ? raw.environment : "";
@@ -65,7 +67,7 @@ export default async function AdminHandoffDetailPage({
               <Field label="Price" value={result.data.price
                 ? result.data.currency + " " + result.data.price : "—"} />
               <div className="min-w-0 md:col-span-2"><Field label={result.data.product.toUpperCase() === "HOTEL" ? "Property" : "Route"} value={result.data.route || "—"} /></div>
-              <Field label="Created" value={formatDateTime(new Date(result.data.createdAt))} />
+              <Field label="Created" value={formatViewerTimestamp(result.data.createdAt, timeZone)} />
             </dl>
           </section>
           <section aria-labelledby="handoff-referral" className="py-4">

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { requireAdminApiSession } from "@/lib/admin";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { createAdminProductSearchRecordsReader } from "./adminProductSearchRecordsCore";
@@ -11,4 +12,5 @@ export const adminProductSearchRecords = createAdminProductSearchRecordsReader({
   database: getOptionalPrisma,
   environment: getPublicEnvironment,
   now: () => new Date(),
+  timeZone: getAdminViewerTimeZone,
 });

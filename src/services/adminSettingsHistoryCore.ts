@@ -1,4 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import { ADMIN_DEFAULT_TIME_ZONE, resolveAdminTimeZone, viewerTodayStart } from "@/lib/adminLocalTime";
+import { adminCustomDateRange } from "@/lib/adminReportingRanges";
 
 export type SettingsHistoryRange = "today" | "24h" | "7d" | "30d" | "90d" | "all" | "custom";
 export type SettingsHistoryCategory = "all" | "product" | "automation" | "team" | "legacy";
@@ -16,7 +18,7 @@ export type SettingsHistoryEntry = {
   details: SettingsHistoryDetail[];
 };
 export type SettingsHistoryResult =
-  | { status: "ok"; items: SettingsHistoryEntry[]; nextCursor: string | null }
+  | { status: "ok"; items: SettingsHistoryEntry[]; nextCursor: string | null; resetCursor?: true }
   | { status: "forbidden" | "unavailable" | "invalid" };
 
 type SettingsQuery = {
@@ -26,11 +28,12 @@ type SettingsQuery = {
   limit?: 6 | 25;
   fromDate?: string;
   toDate?: string;
+  timeZone?: string;
 };
 type Database = Pick<PrismaClient, "adminAuditLog">;
 type Dependencies = { authorize: () => Promise<boolean>; database: () => Database | null; now?: () => Date };
 type Position = { at: string; id: string };
-type Scope = { range: SettingsHistoryRange; category: SettingsHistoryCategory; from: string; to: string };
+type Scope = { range: SettingsHistoryRange; category: SettingsHistoryCategory; from: string; to: string; timeZone?: string };
 const windows: Record<Exclude<SettingsHistoryRange, "all" | "custom" | "today">, number> = {
   "24h": 24 * 60 * 60 * 1000,
   "7d": 7 * 24 * 60 * 60 * 1000,
@@ -130,65 +133,52 @@ function permittedWhere(category: SettingsHistoryCategory): Prisma.AdminAuditLog
   }
   return result;
 }
-function customScopeDates(query: SettingsQuery, now: Date) {
-  const fromDate = query.fromDate ?? "";
-  const toDate = query.toDate ?? "";
-  const isoDay = (value: string) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-    const date = new Date(value + "T00:00:00.000Z");
-    return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value ? date : null;
-  };
-  const from = isoDay(fromDate);
-  const toStart = isoDay(toDate);
-  if (!from || !toStart || from > toStart || toStart > now ||
-      toStart.getTime() - from.getTime() >= 90 * 86_400_000) return null;
-  const to = new Date(Math.min(toStart.getTime() + 86_400_000, now.getTime()));
-  return { from: from.toISOString(), to: to.toISOString() };
-}
-
-function scopeFor(query: SettingsQuery, now: Date): { scope: Scope; position: Position | null } | null {
+function scopeFor(query: SettingsQuery, now: Date): { scope: Scope; position: Position | null; resetCursor?: true } | null {
   if (!(query.range in windows || query.range === "today" || query.range === "all" || query.range === "custom") ||
     !categories.includes(query.category) || (query.limit !== undefined && query.limit !== 6 && query.limit !== 25)) return null;
-  const custom = query.range === "custom" ? customScopeDates(query, now) : null;
+  const timeZone = resolveAdminTimeZone(query.timeZone);
+  const custom = query.range === "custom" ? adminCustomDateRange(query.fromDate ?? "", query.toDate ?? "", now, timeZone) : null;
   if (query.range === "custom" && !custom) return null;
-  let scope: Scope;
-  let position: Position | null = null;
-  if (query.cursor) {
-    if (query.cursor.length > 4096 || !/^[A-Za-z0-9_-]+$/.test(query.cursor)) return null;
-    try {
-      const decoded = JSON.parse(Buffer.from(query.cursor, "base64url").toString("utf8")) as Record<string, unknown>;
-      const payload = decoded.scope as Scope | undefined;
-      if (decoded.v !== 1 || !payload || payload.range !== query.range || payload.category !== query.category ||
-        typeof payload.from !== "string" || typeof payload.to !== "string" ||
-        typeof decoded.at !== "string" || typeof decoded.id !== "string" ||
-        !/^[A-Za-z0-9_-]{6,128}$/.test(decoded.id)) return null;
-      const from = Date.parse(payload.from), to = Date.parse(payload.to), at = Date.parse(decoded.at);
-      if (!Number.isFinite(from) || !Number.isFinite(to) || !Number.isFinite(at) ||
-        to > now.getTime() || from >= to || at < from || at >= to) return null;
-      if (query.range === "all") {
-        if (payload.from !== "1970-01-01T00:00:00.000Z") return null;
-      } else if (query.range === "custom") {
-        if (!custom || payload.from !== custom.from || Date.parse(payload.to) > Date.parse(custom.to)) return null;
-      } else if (query.range === "today") {
-        const utcStart = new Date(Date.UTC(new Date(to).getUTCFullYear(), new Date(to).getUTCMonth(), new Date(to).getUTCDate())).toISOString();
-        if (payload.from !== utcStart) return null;
-      } else if (to - from !== windows[query.range as keyof typeof windows]) return null;
-      scope = payload;
-      position = { at: new Date(at).toISOString(), id: decoded.id };
-    } catch { return null; }
-  } else {
-    const to = now.getTime();
-    scope = query.range === "all"
-      ? { range: "all", category: query.category, from: "1970-01-01T00:00:00.000Z", to: now.toISOString() }
-      : query.range === "custom" && custom
-        ? { range: "custom", category: query.category, ...custom }
-        : { range: query.range, category: query.category,
-            from: (query.range === "today"
-              ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
-              : new Date(to - windows[query.range as keyof typeof windows])).toISOString(),
-            to: now.toISOString() };
-  }
-  return { scope, position };
+  const calendarRange = query.range === "today" || query.range === "custom";
+  const fromIso = custom ? custom.from.toISOString()
+    : query.range === "all" ? "1970-01-01T00:00:00.000Z"
+    : query.range === "today" ? viewerTodayStart(now, timeZone)
+    : new Date(now.getTime() - windows[query.range as keyof typeof windows]).toISOString();
+  const scope: Scope = {
+    range: query.range,
+    category: query.category,
+    from: fromIso,
+    to: (custom?.to ?? now).toISOString(),
+    ...(calendarRange ? { timeZone } : {}),
+  };
+  if (!query.cursor) return { scope, position: null };
+  if (query.cursor.length > 4096 || !/^[A-Za-z0-9_-]+$/.test(query.cursor)) return null;
+
+  try {
+    const decoded = JSON.parse(Buffer.from(query.cursor, "base64url").toString("utf8")) as Record<string, unknown>;
+    const payload = decoded.scope as Scope | undefined;
+    if (decoded.v !== 1 || !payload || payload.range !== query.range || payload.category !== query.category ||
+      typeof payload.from !== "string" || typeof payload.to !== "string" ||
+      typeof decoded.at !== "string" || typeof decoded.id !== "string" ||
+      !/^[A-Za-z0-9_-]{6,128}$/.test(decoded.id)) return null;
+    const from = Date.parse(payload.from), to = Date.parse(payload.to), at = Date.parse(decoded.at);
+    if (!Number.isFinite(from) || !Number.isFinite(to) || !Number.isFinite(at) ||
+      to > now.getTime() || from >= to || at < from || at >= to) return null;
+
+    if (calendarRange && (payload.timeZone ?? ADMIN_DEFAULT_TIME_ZONE) !== timeZone) {
+      return { scope, position: null, resetCursor: true };
+    }
+    if (query.range === "all") {
+      if (payload.from !== scope.from) return null;
+    } else if (query.range === "custom") {
+      if (payload.from !== scope.from || to > Date.parse(scope.to)) return null;
+    } else if (query.range === "today") {
+      if (payload.from !== viewerTodayStart(new Date(to), timeZone)) return null;
+      if (payload.from !== scope.from) return { scope, position: null, resetCursor: true };
+    } else if (to - from !== windows[query.range]) return null;
+
+    return { scope: payload, position: { at: new Date(at).toISOString(), id: decoded.id } };
+  } catch { return null; }
 }
 
 function nextCursor(scope: Scope, position: Position) {
@@ -226,6 +216,7 @@ export function createAdminSettingsHistoryReader(dependencies: Dependencies) {
         return {
           status: "ok",
           items: page.map(describe),
+          ...(parsed.resetCursor ? { resetCursor: true } : {}),
           nextCursor: rows.length > limit && last
             ? nextCursor(scope, { at: last.createdAt.toISOString(), id: last.id }) : null,
         };

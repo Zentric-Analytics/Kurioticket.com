@@ -4,6 +4,7 @@ import { AdminCalendarInput } from "@/components/admin/AdminCalendarInput";
 import { useMemo, useState, type KeyboardEvent } from "react";
 
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
+import { adminCalendarDateField } from "@/lib/adminLocalTime";
 import { ADMIN_REPORTING_RANGE_OPTIONS } from "@/lib/adminReportingRanges";
 import type { AdminTripFilters } from "@/lib/adminConfirmedTripsDirectory";
 import type { AdminTripWorkspaceRange } from "@/lib/adminTripWorkspace";
@@ -12,6 +13,9 @@ type Props = {
   filters: AdminTripFilters;
   range: AdminTripWorkspaceRange;
   providerNames: string[];
+  timeZone: string;
+  timeZoneLabel: string;
+  today: string;
 };
 
 const productOptions = [
@@ -48,19 +52,22 @@ function keepFiltersDraftUntilApply(event: KeyboardEvent<HTMLFormElement>) {
 }
 
 /**
- * One read-only GET form with six compact fields. Preset time ranges use UTC
- * calendar-day boundaries, while legacy custom-date links live in the records
- * directory. Tracked stays disabled until its reporting source is connected.
+ * One read-only GET form with six compact fields. Calendar ranges use the
+ * selected reporting zone. Tracked stays disabled until its reporting source is connected.
  * Dropdowns reuse the accessible popup behavior from Search Activity, but
  * remain draft selections until the administrator explicitly presses Apply.
  */
-export function TripFilterControls({ filters, range, providerNames }: Props) {
+export function TripFilterControls({ filters, range, providerNames, timeZone, timeZoneLabel, today }: Props) {
   const [selectedRange, setSelectedRange] = useState(range);
-  const [customFrom, setCustomFrom] = useState(filters.from.slice(0, 10));
-  const [customTo, setCustomTo] = useState(filters.to.slice(0, 10));
+  const [customFrom, setCustomFrom] = useState(() => adminCalendarDateField(filters.from, timeZone));
+  const [customTo, setCustomTo] = useState(() => adminCalendarDateField(filters.to, timeZone, true));
+  const [fromEdited, setFromEdited] = useState(false);
+  const [toEdited, setToEdited] = useState(false);
+  const preserveFrom = range === "custom" && !fromEdited;
+  const preserveTo = range === "custom" && !toEdited;
   const customValid = /^\d{4}-\d{2}-\d{2}$/.test(customFrom) &&
     /^\d{4}-\d{2}-\d{2}$/.test(customTo) && customFrom <= customTo &&
-    customTo <= new Date().toISOString().slice(0, 10);
+    customTo <= today;
   const providerOptions = useMemo(() => {
     const names = new Set(providerNames.filter(Boolean));
     if (filters.provider) names.add(filters.provider);
@@ -104,7 +111,7 @@ export function TripFilterControls({ filters, range, providerNames }: Props) {
         <div className={fieldLabel + " w-full sm:w-[120px]"}>
           <span>Time range</span>
           <div className="mt-1">
-            <SearchMonitorSelect label="Date range" name="range" value={selectedRange}
+            <SearchMonitorSelect label="Date range" name="range" value={selectedRange} timeZoneLabel={timeZoneLabel}
               onValueChange={value => setSelectedRange(value as AdminTripWorkspaceRange)}
               options={[...rangeOptions, ...(selectedRange === "24h" ? [{ value: "24h", label: "Last 24 hrs (legacy)" }] : [])]}
               appearance="boxed" truncateLabel />
@@ -115,16 +122,18 @@ export function TripFilterControls({ filters, range, providerNames }: Props) {
             className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-md bg-indigo-700 px-2.5 text-[11px] font-semibold text-white hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-40">Apply</button>
         </div>
         {selectedRange === "custom" ? <div className="flex w-full min-w-0 flex-wrap items-end gap-2">
-          <label className="text-xs font-medium text-slate-700">From (UTC)
-            <AdminCalendarInput name="from" required value={customFrom} max={customTo || undefined}
-              onChange={event => setCustomFrom(event.target.value)} className="w-[210px] max-w-full" />
+          <label className="text-xs font-medium text-slate-700">From ({timeZoneLabel})
+            <AdminCalendarInput name="from" timeZone={timeZone} required value={customFrom} max={customTo || today}
+              submitValue={preserveFrom ? filters.from : undefined}
+              onValueChange={value => { setFromEdited(true); setCustomFrom(value); }} className="w-[210px] max-w-full" />
           </label>
-          <label className="text-xs font-medium text-slate-700">To (UTC)
-            <AdminCalendarInput name="to" required value={customTo} min={customFrom || undefined}
-              max={new Date().toISOString().slice(0, 10)} onChange={event => setCustomTo(event.target.value)}
+          <label className="text-xs font-medium text-slate-700">To ({timeZoneLabel})
+            <AdminCalendarInput name="to" timeZone={timeZone} required value={customTo} min={customFrom || undefined}
+              submitValue={preserveTo ? filters.to : undefined}
+              max={today} onValueChange={value => { setToEdited(true); setCustomTo(value); }}
               className="w-[210px] max-w-full" />
           </label>
-          {!customValid ? <span role="alert" className="text-xs text-rose-700">Choose valid UTC dates with From before To.</span> : null}
+          {!customValid ? <span role="alert" className="text-xs text-rose-700">Choose valid reporting dates with From on or before To.</span> : null}
         </div> : null}
       </div>
     </form>

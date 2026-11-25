@@ -6,13 +6,13 @@ test("product records preserve today's applied range and react to an exact bookm
   const bundle = componentBundle({ records: "src/components/admin/ProductSearchRecordsPanel.tsx" });
   await withComponentBrowser(bundle, `const React=require('react'),{createRoot}=require('react-dom/client'),{ProductSearchRecordsPanel}=require('records');
     window.requests=[];
-    window.fetch=async(url,options)=>{window.requests.push({url,method:options.method,credentials:options.credentials});return {json:async()=>({status:'ok',data:{items:[],nextCursor:null,product:'CAR',filter:'EXCEPTIONS',window:'today'}})}};
+    window.fetch=async(url,options)=>{window.requests.push({url,method:options.method,credentials:options.credentials});return {json:async()=>({status:'ok',data:{items:[],nextCursor:null,product:'CAR',filter:'EXCEPTIONS',window:'today',timeZone:'UTC'}})}};
     createRoot(document.getElementById('root')).render(React.createElement(ProductSearchRecordsPanel,{product:'CAR'}));`, async page => {
     const apply = page.getByRole("button", { name: "Apply filters", exact: true });
     await apply.waitFor();
-    assert.equal(await page.getByRole("button", { name: "Date range: Today", exact: true }).count(), 1);
+    assert.equal(await page.getByRole("button", { name: "Date range: Today · UTC", exact: true }).count(), 1);
     await apply.click();
-    assert.equal(await page.getByRole("button", { name: "Date range: Today", exact: true }).count(), 1);
+    assert.equal(await page.getByRole("button", { name: "Date range: Today · UTC", exact: true }).count(), 1);
     const initial = await page.evaluate<Array<{ url: string; method: string; credentials: string }>>("window.requests");
     assert.ok(initial.length >= 2);
     for (const request of initial) {

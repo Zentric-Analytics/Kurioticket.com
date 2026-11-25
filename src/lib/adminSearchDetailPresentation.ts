@@ -1,4 +1,5 @@
-import type { AdminSearchRead, AdminSearchDiagnostic, AdminSearchProviderDiagnostic } from "@/services/adminOperationalReadContract";
+import { applicationLabel } from "./platformHealthPresentation";
+import type { AdminSearchActivityRead, AdminSearchRead, AdminSearchDiagnostic, AdminSearchProviderDiagnostic } from "@/services/adminOperationalReadContract";
 
 type SearchLocation = Pick<AdminSearchRead, "product" | "origin" | "destination">;
 
@@ -66,8 +67,15 @@ export function searchDetailCrawlerEvidenceLabel(evidence: "VERIFIED_DNS" | "DEC
     : "Not recorded";
 }
 
-export function searchDetailIdentityLabel(kind: AdminSearchRead["identity"]["kind"]) {
-  return kind === "registered" ? "Registered" : kind === "guest" ? "Guest" : "Unattributed";
+export const searchActivityIdentityLabels = {
+  registered: "Registered",
+  guest: "Guest",
+  bot: "Bot",
+} satisfies Record<AdminSearchActivityRead["identity"]["kind"], string>;
+
+export function searchActivityPlatformLabel(source: AdminSearchActivityRead["applicationSource"]) {
+  if (!source || source === "UNKNOWN") return "Source not recorded";
+  return source === "BOT" ? "Bot" : applicationLabel(source);
 }
 
 /** The same classified provider reason belongs in the provider table only. */

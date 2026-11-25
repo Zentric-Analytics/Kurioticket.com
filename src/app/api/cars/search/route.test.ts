@@ -77,18 +77,18 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
       identityCalls++;
       return options.consent === false ? { userId: null, visitorId: null, applicationSource: "UNKNOWN" } : { userId: null, visitorId: "consented-guest", applicationSource: "WEB" };
     } },
-    "@/services/analyticsService": {
+    "@/services/operationalActivityService": {
       logSearchHistory: async (value: Record<string, unknown>) => {
         if (options.failingLog) throw new Error("database unavailable");
         histories.push(value);
       },
-      trackAnalyticsEvent: async (value: Record<string, unknown>) => { analytics.push(value); },
       logProviderCall: async (value: Record<string, unknown>) => {
         check(++providerLogCalls === 1 && value.provider === provider.provider && value.service === "car-search", "log the actual provider exactly once");
         if (options.failingProviderLog) throw new Error("provider diagnostics unavailable");
         providerLogs.push(value);
       },
     },
+    "@/services/analyticsService": { trackAnalyticsEvent: async (value: Record<string, unknown>) => { analytics.push(value); } },
     "@/lib/cars/carsSearchUtils": { validateCarsForm: () => ({}) },
     "@/services/travel/carAggregator": { searchCars: async (search: unknown, context: { requestId: string; kayak: { signal: AbortSignal; clientIp: unknown } }) => {
       check(++searchCalls === 1 && JSON.stringify(search) === JSON.stringify(query), "search exactly once with the submitted rental criteria");
@@ -175,8 +175,7 @@ test("unconsented car searches never invent a visitor identity", async (t) => {
   await f.flush();
   assert.equal(f.histories[0].visitorId, null);
   assert.equal(f.histories[0].userId, null);
-  assert.equal(f.analytics[0].visitorId, null);
-  assert.equal(f.analytics[0].userId, null);
+  assert.deepEqual(f.analytics, [], "no optional analytics call without consent");
   assert.ok(!Object.hasOwn(f.histories[0].query as object, "operationalSessionId"));
 });
 
@@ -192,6 +191,7 @@ test("new non-consented car search has a recorded session without granting visit
   assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionId, f.session!.reference.id);
   assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionExpiresAtMs, f.session!.reference.expiresAt.getTime());
   assert.ok(!JSON.stringify(f.histories).includes(f.session!.credential));
+  assert.deepEqual(f.analytics, [], "operational search credentials never grant analytics consent");
 });
 
 test("unavailable car provider records a failed search without affecting the response", async (t) => {

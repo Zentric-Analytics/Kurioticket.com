@@ -28,6 +28,7 @@ type Props = {
   rows: IdentityRow[];
   sort: IdentitySort;
   pageHref: string;
+  timeZone?: string;
 };
 
 const label = (value: string) =>
@@ -35,15 +36,15 @@ const label = (value: string) =>
     .toLowerCase()
     .replaceAll("_", " ")
     .replace(/^\w/, (char) => char.toUpperCase());
-function IdentityDate({ at }: { at: Date }) {
+function IdentityDate({ at, timeZone }: { at: Date; timeZone: string }) {
   return (
     <time
       dateTime={at.toISOString()}
       className="block whitespace-nowrap text-[13px] font-medium text-[#020617]"
     >
-      {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(at)}
+      {new Intl.DateTimeFormat("en", { dateStyle: "medium", timeZone }).format(at)}
       <span className="mt-0.5 block text-[12px] font-normal text-[#64748B]">
-        {new Intl.DateTimeFormat("en", { timeStyle: "short" }).format(at)}
+        {new Intl.DateTimeFormat("en", { timeStyle: "short", timeZone }).format(at)}
       </span>
     </time>
   );
@@ -53,6 +54,7 @@ export function AdminIdentityTable({
   rows,
   sort,
   pageHref,
+  timeZone = "UTC",
 }: Props) {
   function href(values: Record<string, string>) {
     const [path, query] = pageHref.split("?");
@@ -183,7 +185,7 @@ export function AdminIdentityTable({
                     )}
                   </td>
                   <td data-label="Joined / First Seen" className="px-3 py-1.5">
-                    <IdentityDate
+                    <IdentityDate timeZone={timeZone}
                       at={
                         row.kind === "user"
                           ? row.record.createdAt
@@ -193,7 +195,7 @@ export function AdminIdentityTable({
                   </td>
                   <td data-label="Last Seen" className="px-3 py-1.5">
                     {lastSeen
-                      ? <IdentityDate at={lastSeen} />
+                      ? <IdentityDate timeZone={timeZone} at={lastSeen} />
                       : <span aria-label="No recorded last seen" className="text-[13px] text-[#64748B]">—</span>}
                   </td>
                   <td data-label="Activity" className="px-3 py-1.5">

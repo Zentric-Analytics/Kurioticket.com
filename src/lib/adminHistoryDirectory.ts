@@ -60,14 +60,14 @@ export function historyDirectoryReturnHref(section: HistorySection, incoming: un
   return parsed.ok ? historyDirectoryHref(section, parsed.query) : null;
 }
 
-export function historyIdentityHref(section: HistorySection, row: Pick<HistoryDirectoryRow, "kind" | "id">, query: HistoryDirectoryQuery, now: Date): string {
+export function historyIdentityHref(section: HistorySection, row: Pick<HistoryDirectoryRow, "kind" | "id">, query: HistoryDirectoryQuery, now: Date, timeZone = "UTC"): string {
   if (!validActivityIdentity(row.kind, row.id)) throw new Error("Invalid history identity");
   const path = "/admin/users/" + row.kind + "/" + encodeURIComponent(row.id) + "/" + section;
   const back = historyDirectoryHref(section, query);
   if (section === "devices") return deviceHistoryHref(path, { range: query.range, from: query.from, to: query.to, page: 1, platform: query.platform }, {}, back);
   // Identity search belongs only to the directory. The detail's search is
   // about routes/screens and must not inherit a person's name or email.
-  const parsed = parsePageHistoryQuery({ range: query.range, from: query.from, to: query.to, platform: query.platform, page: "1" }, now);
+  const parsed = parsePageHistoryQuery({ range: query.range, from: query.from, to: query.to, platform: query.platform, page: "1" }, now, timeZone);
   if (!parsed.ok) throw new Error("Invalid history window");
   return pageHistoryHref(path, parsed.query, back);
 }

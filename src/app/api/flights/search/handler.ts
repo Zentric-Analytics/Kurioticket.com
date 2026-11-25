@@ -7,7 +7,8 @@ import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicFlight } from "@/lib/searchCache";
 import { flightSearchSchema } from "@/lib/validation";
 import { classifyFlights } from "@/lib/travel/searchContract";
-import { logProviderCall, logSearchHistory as persistSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
+import { logProviderCall, logSearchHistory as persistSearchHistory } from "@/services/operationalActivityService";
+import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { searchFlights } from "@/services/travel/flightAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
@@ -129,7 +130,7 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
           latencyMs: aggregate.latencyMs,
           status,
         }),
-        ...(crawler || status === "FAILED" ? [] : [trackAnalyticsEvent({
+        ...(crawler || !visitorId || status === "FAILED" ? [] : [trackAnalyticsEvent({
           ...application, userId, visitorId, type: "SEARCH", name: "flight_search",
           metadata: {
             origin: parsed.data.origin,

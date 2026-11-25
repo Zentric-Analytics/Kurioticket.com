@@ -22,7 +22,7 @@ Verified and declared-identifiable crawlers may execute ordinary travel searches
 - Hotel or car search: one main search each.
 - Package search: one parent search, never one per flight/hotel/car component.
 
-Rejected, blocked or invalid requests do not count. An executed search with no provider availability is recorded once with its actual result status. Bot searches are included in **All Platforms** but are separate from Website, iOS, Android and Unverified. The Bots tile opens Search Activity filtered to BOT. Merely loading a page or public resource—even thousands of times—never increments Bots.
+Rejected, blocked or invalid requests do not count. An executed search with no provider availability is recorded once with its actual result status. In Search Activity, **All platforms** includes bot searches and searches with no recorded source. The Website, iOS and Android filters show searches attributed to those platforms. The Bots tile opens Search Activity with the Bot identity filter, and the Overview link for unverified platform searches opens the legacy missing-source view. Merely loading a page or public resource—even thousands of times—never increments Bots.
 
 Bot searches do not create fake customer identities, operational guest sessions or human engagement events. Classifying a bot does not permit it to access accounts, private records, or privileged endpoints.
 

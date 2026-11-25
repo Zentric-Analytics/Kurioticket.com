@@ -11,17 +11,16 @@ const overview = readFileSync("src/app/admin/confirmed-trips/page.tsx", "utf8");
 test("admin-only trip directory and detail routes are read-only", () => {
   assert.match(directory, /await requireAdminSession\("\/admin\/confirmed-trips\/records"\)/);
   assert.match(details, /await requireAdminSession\("\/admin\/confirmed-trips\/records\/"/);
-  assert.match(directory, /parseAdminTripFilters\(raw\)/);
+  assert.match(directory, /parseAdminTripFilters\(raw, timeZone\)/);
   assert.match(directory, /listAdminConfirmedTrips\(filters,/);
   assert.match(details, /getAdminConfirmedTripDetails\(id\)/);
   assert.match(details, /if \(result\.status === "not_found"\) notFound\(\)/);
   assert.doesNotMatch(directory + details, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form[^>]*method="post"/);
   // Current dev embeds the directory instead of duplicating its entry link.
   assert.match(overview, /listAdminConfirmedTrips\(filters\)/);
-  assert.match(overview, /<TripDirectoryView rows=\{directory\.rows\} subtle\s*\/>/);
+  assert.match(overview, /<TripDirectoryView rows=\{directory\.rows\} subtle timeZone=\{timeZone\}\s*\/>/);
   assert.doesNotMatch(overview, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form[^>]*method="post"/);
-  assert.match(readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8"), /<WorkspaceSidebar pathname=\{pathname\} role=\{role\}/);
-  assert.match(readFileSync("src/components/admin/TripWorkspaceNavigation.tsx", "utf8"), /href="\/admin\/confirmed-trips"/);
+  assert.match(readFileSync("src/lib/adminNavigation.ts", "utf8"), /href: "\/admin\/confirmed-trips", label: "Trips"/);
 });
 
 test("queries use only signed confirmations, stable keyset paging, bound seek and explicit errors", () => {
@@ -67,8 +66,8 @@ test("trip details never invent history, status, payments or booking authority",
 
 test("Phase 6 directory retains filters and keyset navigation in a compact two-row layout", () => {
   assert.match(directory, /sm:grid-cols-2 lg:grid-cols-4/);
-  assert.match(directory, /<TripDirectoryView rows=\{result\.rows\} \/>/);
-  assert.match(directory, /Dates filter the latest signed provider-confirmation timestamp in UTC/);
+  assert.match(directory, /<TripDirectoryView rows=\{result\.rows\} timeZone=\{timeZone\} \/>/);
+  assert.match(directory, /Reporting dates filter the latest signed provider confirmation/);
   assert.match(directory, /href="\/admin\/confirmed-trips\/records" className="inline-flex h-9/);
   assert.match(directory, /tripDirectoryHref\(filters, result\.nextCursor\)/);
   assert.match(directory, /invalid_cursor/);

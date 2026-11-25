@@ -16,6 +16,8 @@ import {
   tripDirectoryHref,
   type AdminTripFilters,
 } from "@/lib/adminConfirmedTripsDirectory";
+import { adminLocalDate, formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { getConfirmedTripsOperationsSnapshot } from "@/services/adminConfirmedTripsOperationsService";
 import { listAdminConfirmedTrips } from "@/services/adminConfirmedTripsDirectoryService";
 import { parseAdminTripWorkspace } from "@/lib/adminTripWorkspace";
@@ -64,8 +66,9 @@ function TripMetric({
 }
 
 export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
-  const raw = (await searchParams) ?? {};
-  const parsed = parseAdminTripWorkspace(raw);
+  const [raw, timeZone] = await Promise.all([searchParams, getAdminViewerTimeZone()]);
+  const now = new Date();
+  const parsed = parseAdminTripWorkspace(raw ?? {}, now, timeZone);
   // Custom dates are now visible in the directory filter form. Legacy
   // date-only links remain editable and no longer redirect to a different page.
   const filters = parsed.ok ? parsed.filters : blankFilters;
@@ -100,8 +103,9 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
           </section>
 
           <section aria-label="Trip records" id="trip-directory" className="min-w-0">
-            <TripFilterControls filters={filters} range={range}
-              key={[filters.q, filters.provider, filters.product, filters.status, filters.identity, range, filters.from, filters.to].join("|")}
+            <TripFilterControls filters={filters} range={range} timeZone={timeZone}
+              today={adminLocalDate(now, timeZone)} timeZoneLabel={formatAdminTimeZoneLabel(timeZone, now)}
+              key={[filters.q, filters.provider, filters.product, filters.status, filters.identity, range, filters.from, filters.to, timeZone].join("|")}
               providerNames={operations?.byProvider.map(item => item.provider) ?? []} />
 
             <div className="mt-2">
@@ -111,7 +115,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                 <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-4 text-sm text-slate-700">Trip records are temporarily unavailable. No records or counts are assumed.</p>
               ) : directory?.status === "ok" ? (
                 <>
-                  <TripDirectoryView rows={directory.rows} subtle />
+                  <TripDirectoryView rows={directory.rows} subtle timeZone={timeZone} />
                   {directory.nextCursor ? (
                     <div className="mt-3 flex justify-end">
                       <Link href={tripDirectoryHref(filters, directory.nextCursor)} className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 px-3 text-xs font-semibold text-indigo-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">

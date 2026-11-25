@@ -9,7 +9,9 @@ import { PrismaClient, type Prisma } from "../src/generated/prisma/client";
 import { createAdminJourneyService } from "../src/services/adminJourneyCore";
 import { createAdminJourneyHttpHandlers } from "../src/services/adminJourneyHttp";
 import { createAdminOperationalReadService } from "../src/services/adminOperationalReadCore";
+import { handoffEvidenceForActivitySql } from "../src/services/adminHandoffEvidence";
 import type { AdminJourneyResult, AdminJourneyStage } from "../src/services/adminJourneyContract";
+import { declaredSearchCrawler, searchCrawlerMetadata } from "../src/lib/searchCrawlerGate";
 
 // Require a new, explicitly named localhost database. Never reuse or clear an existing database.
 const target = new URL(process.env.DATABASE_URL || "http://invalid");
@@ -435,4 +437,135 @@ test("a real missing-table outage is unavailable and does not masquerade as an e
     await db.$executeRaw`ALTER TABLE "AdminJourneyOutageFixture" RENAME TO "JourneyEvent"`;
   }
   assert.deepEqual(ok(await service.list(window(13))).items, []);
+});
+
+test("Search Activity PostgreSQL pages, totals and details use the same platform and identity classification", async () => {
+  const { searchActivity, searches } = createAdminOperationalReadService({
+    authorize: async () => true, database: () => db, environment: () => "staging",
+  });
+  const owner = await account();
+  const at = time(15);
+  const environment = "staging";
+  const name = declaredSearchCrawler("Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X) Chrome/131.0 Mobile Safari/537.36 (compatible; Googlebot/2.1)");
+  assert.equal(name, "GOOGLEBOT");
+  const botQuery = { environment, applicationSource: "BOT", ...searchCrawlerMetadata({ name, evidence: "DECLARED_USER_AGENT" }) };
+  const bot = await search(null, at, { id: "activity-0004", query: botQuery });
+  const website = await search(null, at, {
+    id: "activity-0003", query: { environment, applicationSource: "WEB" }, userId: owner.id,
+  });
+  const android = await search(null, at, {
+    id: "activity-0002", query: { environment, applicationSource: "ANDROID" }, status: "PARTIAL",
+  });
+  const history = await search(null, at, {
+    id: "activity-0001", query: { environment }, status: "FAILED", resultCount: 0,
+  });
+  await search(null, at, { id: "activity-0005", query: botQuery, countAsSearch: false });
+  await db.apiProviderLog.create({ data: {
+    provider: "Example provider", service: "hotel-search", status: "SUCCESS",
+    metadata: { environment, requestId: website.requestId }, createdAt: at,
+  } });
+
+  const params = new URLSearchParams({ environment, ...window(15), limit: "2" });
+  const first = ok(await searchActivity.list(params));
+  assert.ok(first.nextCursor);
+  assert.deepEqual(first.items.map(item => item.id), [bot.id, website.id]);
+  const continuation = new URLSearchParams(params);
+  continuation.set("cursor", first.nextCursor);
+  const next = ok(await searchActivity.list(continuation));
+  assert.deepEqual(next.items.map(item => item.id), [android.id, history.id]);
+  assert.equal(next.nextCursor, null);
+  assert.equal((await searches.list(continuation)).status, "invalid");
+  continuation.set("identity", "bot");
+  assert.equal((await searchActivity.list(continuation)).status, "invalid");
+
+  const totals = ok(await searchActivity.summary(params));
+  assert.deepEqual([totals.total, totals.success, totals.partial, totals.failed], [4, 2, 1, 1]);
+  const all = [...first.items, ...next.items];
+  assert.deepEqual(all.map(item => [item.identity.kind, item.applicationSource]), [
+    ["bot", "BOT"], ["registered", "WEB"], ["guest", "ANDROID"], ["guest", "UNKNOWN"],
+  ]);
+  for (const [index, item] of all.entries()) {
+    const detail = ok(await searchActivity.detail(item.id, new URLSearchParams({ environment })));
+    assert.deepEqual(detail.identity, item.identity);
+    assert.equal(detail.applicationSource, item.applicationSource);
+    assert.equal(detail.status, item.status);
+    assert.equal(detail.resultCount, item.resultCount);
+    assert.deepEqual(detail.searcher.activity, index === 1 ? { kind: "user", id: owner.id } : null);
+    assert.deepEqual(detail.crawler, index === 0 ? { name: "GOOGLEBOT", evidence: "DECLARED_USER_AGENT" } : null);
+  }
+
+  const cohorts: [string, string[]][] = [
+    ["identity=bot", [bot.id]],
+    ["applicationSource=WEB", [website.id]],
+    ["applicationSource=ANDROID", [android.id]],
+    ["applicationSource=IOS", []],
+    ["applicationSource=UNKNOWN", [history.id]],
+    ["identity=bot&applicationSource=WEB", []],
+    ["identity=bot&applicationSource=ANDROID", []],
+    ["identity=registered&provider=Example+provider&product=HOTEL&status=SUCCESS", [website.id]],
+    ["identity=guest", [android.id, history.id]],
+  ];
+  for (const [filters, expected] of cohorts) {
+    const query = new URLSearchParams(`${params}&${filters}`);
+    assert.deepEqual(ok(await searchActivity.list(query)).items.map(item => item.id), expected, filters);
+    assert.equal(ok(await searchActivity.summary(query)).total, expected.length, filters);
+  }
+  const legacy = ok(await searches.list(new URLSearchParams({ environment, ...window(15) })));
+  assert.deepEqual(legacy.items.map(item => item.identity.kind), ["unattributed", "registered", "unattributed", "unattributed"]);
+});
+
+test("Search Activity gives legacy verified crawlers identity precedence and recognizes anonymous iOS searches", async () => {
+  const { searchActivity } = createAdminOperationalReadService({
+    authorize: async () => true, database: () => db, environment: () => "staging",
+  });
+  const owner = await account();
+  const at = time(16);
+  const environment = "staging";
+  const bot = await search(null, at, {
+    userId: owner.id, query: { environment, applicationSource: "BOT", verifiedCrawler: "GOOGLEBOT" },
+  });
+  const ios = await search(null, at, { query: { environment, applicationSource: "IOS" } });
+  const query = new URLSearchParams({ environment, ...window(16), identity: "registered" });
+  assert.equal(ok(await searchActivity.summary(query)).total, 0);
+  assert.deepEqual(ok(await searchActivity.list(query)).items, []);
+  query.set("identity", "guest");
+  query.set("applicationSource", "IOS");
+  assert.deepEqual(ok(await searchActivity.list(query)).items.map(item => item.id), [ios.id]);
+  assert.equal(ok(await searchActivity.summary(query)).total, 1);
+  const detail = ok(await searchActivity.detail(bot.id, new URLSearchParams({ environment })));
+  assert.equal(detail.identity.kind, "bot");
+  assert.deepEqual(detail.crawler, { name: "GOOGLEBOT", evidence: "VERIFIED_DNS" });
+  assert.deepEqual(detail.searcher, { name: null, email: null, activity: null });
+});
+
+test("Admin operational activity evidence links exact guest/account searches and rejects mismatched evidence", async () => {
+  const at = time(15);
+  const accountA = await account();
+  const accountB = await account();
+  const sessionId = randomUUID();
+  const requestId = randomUUID();
+  const original = await search(null, at, { userId: accountA.id, requestId, query: { environment: "staging", operationalSessionId: sessionId } });
+  const guestRequestId = randomUUID();
+  const guest = await search(null, at, { requestId: guestRequestId, query: { environment: "staging", operationalSessionId: sessionId } });
+  const foreignRequestId = randomUUID();
+  await search(null, at, { userId: accountA.id, requestId: foreignRequestId, query: { environment: "production", operationalSessionId: sessionId } });
+  const reference = { environment: "staging", operationalRequestId: requestId, operationalSessionId: sessionId };
+  const cases = [
+    { data: { userId: accountA.id, metadata: reference }, expected: original.id },
+    { data: { metadata: { ...reference, operationalRequestId: guestRequestId } }, expected: guest.id },
+    { data: { userId: accountB.id, metadata: reference }, expected: null },
+    { data: { metadata: reference }, expected: null },
+    { data: { userId: accountA.id, metadata: { ...reference, operationalSessionId: randomUUID() } }, expected: null },
+    { data: { userId: accountA.id, metadata: { ...reference, operationalSessionId: "invalid-session" } }, expected: null },
+    { data: { userId: accountA.id, type: "FLIGHT" as const, metadata: reference }, expected: null },
+    { data: { userId: accountA.id, metadata: { ...reference, operationalRequestId: foreignRequestId } }, expected: null },
+    { data: { userId: accountA.id, metadata: { environment: "staging", operationalRequestId: requestId } }, expected: null },
+    { data: { userId: accountA.id, metadata: { ...reference, operationalRequestId: randomUUID(), requestId } }, expected: null },
+  ];
+  for (const { data, expected } of cases) {
+    const receipt = await redirect(null, new Date(+at + 60_000), data);
+    const links = await db.$queryRaw<Array<{ id: string; searchHistoryId: string | null }>>(handoffEvidenceForActivitySql([receipt.id], "staging"));
+    assert.deepEqual(links, [{ id: receipt.id, searchHistoryId: expected }]);
+    assert.equal(await db.journeyEvent.count({ where: { redirectLogId: receipt.id } }), 0);
+  }
 });

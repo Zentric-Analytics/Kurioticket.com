@@ -64,3 +64,47 @@ test("datetime calendar preserves time controls, clamps to strict UTC bounds and
     assert.match(await trigger.innerText(), /11\/20\/2026 10:00 AM/);
   });
 });
+
+test("calendar Today follows the reporting zone across a local month boundary", async () => {
+  const setup = `const React=require('react'),{createRoot}=require('react-dom/client'),{AdminCalendarInput}=require('calendar');
+    const root=createRoot(document.getElementById('root'));
+    window.changes=[];
+    window.renderCalendar=timeZone=>root.render(React.createElement(AdminCalendarInput,{
+      key:timeZone,value:'',ariaLabel:'Reporting date',timeZone,
+      onValueChange:date=>window.changes.push(date)
+    }));`;
+  await withComponentBrowser(bundle(), setup, async page => {
+    await page.clock.setFixedTime(new Date("2026-11-30T23:30:00.000Z"));
+    const cases = [
+      { zone: "Africa/Lagos", month: "December 2026", date: "2026-12-01" },
+      { zone: "America/New_York", month: "November 2026", date: "2026-11-30" },
+    ];
+    for (const { zone, month } of cases) {
+      await page.evaluate(value => (window as unknown as { renderCalendar: (zone: string) => void }).renderCalendar(value), zone);
+      await page.getByRole("button", { name: "Reporting date" }).click();
+      const popup = page.getByRole("dialog", { name: "Reporting date" });
+      assert.equal(await popup.getByRole("heading").innerText(), month);
+      await popup.getByRole("button", { name: "Today" }).click();
+      assert.equal(await popup.count(), 0);
+    }
+    assert.deepEqual(await page.evaluate("window.changes"), cases.map(item => item.date));
+  });
+});
+
+test("calendar preserves an explicit submitted instant until the displayed date is edited", async () => {
+  const setup = `const React=require('react'),{createRoot}=require('react-dom/client'),{AdminUncontrolledCalendarInput}=require('calendar');
+    createRoot(document.getElementById('root')).render(React.createElement('form',{id:'filters'},
+      React.createElement(AdminUncontrolledCalendarInput,{
+        name:'from',defaultValue:'2026-11-22',defaultSubmitValue:'2026-11-22T01:20:00.000Z',
+        ariaLabel:'Trip start date',timeZone:'Africa/Lagos'
+      })
+    ));`;
+  await withComponentBrowser(bundle(), setup, async page => {
+    const formValue = () => page.evaluate(() => new FormData(document.querySelector<HTMLFormElement>("#filters")!).getAll("from"));
+    assert.deepEqual(await formValue(), ["2026-11-22T01:20:00.000Z"]);
+    await page.getByRole("button", { name: "Trip start date" }).click();
+    const popup = page.getByRole("dialog", { name: "Trip start date" });
+    await popup.getByRole("gridcell", { name: "Monday, November 23, 2026" }).click();
+    assert.deepEqual(await formValue(), ["2026-11-23"]);
+  });
+});

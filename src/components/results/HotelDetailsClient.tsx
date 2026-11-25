@@ -1,6 +1,7 @@
 "use client";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+import { useOperationalHandoff } from "@/components/auth/OperationalHandoffProvider";
 import { useResultsReturnIntent } from "@/components/results/useResultsReturnIntent";
 
 import { useEffect, useRef, useState } from "react";
@@ -102,6 +103,7 @@ export function HotelDetailsClient({
   onGuidedSelection,
 }: HotelDetailsClientProps) {
   const journeyEvents = useJourneyEvents();
+  const operationalHandoff = useOperationalHandoff();
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -258,6 +260,7 @@ export function HotelDetailsClient({
     setRedirecting(true);
     setRedirectError("");
     const handoff = journeyEvents.prepareHandoff("hotel", id);
+    const operationalReference = operationalHandoff.prepare("hotel", id);
     try {
       const response = await fetch("/api/redirect", {
         method: "POST",
@@ -266,7 +269,7 @@ export function HotelDetailsClient({
           id: offerId,
           type: "hotel",
           sourcePage: "hotel_details",
-          ...handoff(),
+          ...handoff(), ...operationalReference(),
         }),
       });
       const data = (await response.json().catch(() => ({}))) as {

@@ -4,6 +4,7 @@ import type { PrismaClient } from "@/generated/prisma/client";
 
 import { withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { createAnalyticsEventRecorder } from "./analyticsService";
+import { createOperationalAccountAuditRecorder, writeOperationalAccountAudit, type OperationalAccountAuditInput } from "./operationalAccountAuditService";
 import type { LockedVisitorAccount } from "./visitorActivityIdentity";
 
 const originalUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -78,7 +79,7 @@ function recorderFixture() {
   };
 }
 
-test("legacy analytics keep guest attribution only after a consented row is locked", async () => {
+test("optional analytics writes only after a consented row is locked", async () => {
   const f = recorderFixture();
   await f.record({ visitorId: "visitor-a", type: "SEARCH", name: "hotel_search" });
   assert.equal(f.events[0].visitorId, "visitor-a");
@@ -86,25 +87,23 @@ test("legacy analytics keep guest attribution only after a consented row is lock
   assert.deepEqual(f.operations, ["visitor-lock", "consent-read", "event-write"]);
 });
 
-test("withdrawal before the analytics write strips a stale resolved visitor", async () => {
+test("withdrawal before the analytics write blocks the entire optional record", async () => {
   const f = recorderFixture();
   f.beforeVisitorRead(() => {
     f.visitor()!.consentStatus = "WITHDRAWN";
     f.visitor()!.trackingDisabledAt = new Date();
   });
   await f.record({ visitorId: "visitor-a", type: "REDIRECT", name: "hotel_partner_redirect" });
-  assert.equal(f.events.length, 1);
-  assert.equal(f.events[0].visitorId, undefined);
-  assert.equal(f.events[0].userId, undefined);
+  assert.equal(f.events.length, 0);
+  assert.deepEqual(f.operations, ["visitor-lock", "consent-read"]);
 });
 
-test("withdrawal removes visitor attribution while preserving the independent operational account", async () => {
+test("withdrawal blocks analytics even for an authenticated account", async () => {
   const f = recorderFixture();
   f.setVisitor({ currentUserId: null, consentStatus: "WITHDRAWN", trackingDisabledAt: new Date(), identityLinks: [] });
   await f.record({ userId: "account-a", visitorId: "visitor-a", type: "SEARCH", name: "flight_search" });
-  assert.equal(f.events[0].userId, "account-a");
-  assert.equal(f.events[0].visitorId, undefined);
-  assert.deepEqual(f.operations, ["account-lock", "visitor-lock", "consent-read", "event-write"]);
+  assert.equal(f.events.length, 0);
+  assert.deepEqual(f.operations, ["account-lock", "visitor-lock", "consent-read"]);
 });
 
 test("a linked account is accepted only with its own exclusively linked visitor", async () => {
@@ -118,8 +117,7 @@ test("a linked account is accepted only with its own exclusively linked visitor"
     const mixed = recorderFixture();
     mixed.setVisitor({ currentUserId: "account-a", consentStatus: "GRANTED", trackingDisabledAt: null, identityLinks: [{ userId: "account-a" }, { userId: "account-b" }] });
     await mixed.record({ userId, visitorId: "visitor-a", type: "SEARCH", name: "hotel_search" });
-    assert.equal(mixed.events[0].visitorId, undefined);
-    assert.equal(mixed.events[0].userId, userId);
+    assert.equal(mixed.events.length, 0);
   }
 });
 
@@ -129,9 +127,8 @@ test("inactive or unverified accounts cannot attach visitor analytics", async ()
     if (state === "inactive") f.account.status = "DELETED";
     else f.account.emailVerified = null;
     await f.record({ userId: "account-a", visitorId: "visitor-a", type: "SEARCH", name: "hotel_search" });
-    assert.equal(f.events[0].visitorId, undefined);
-    assert.equal(f.events[0].userId, "account-a");
-    assert.deepEqual(f.operations, ["account-lock", "event-write"]);
+    assert.equal(f.events.length, 0);
+    assert.deepEqual(f.operations, ["account-lock"]);
   }
 });
 
@@ -139,9 +136,66 @@ test("missing visitor rows and optional analytics storage failures never reject 
   const f = recorderFixture();
   f.setVisitor(null);
   await f.record({ visitorId: "visitor-a", type: "SEARCH", name: "hotel_search" });
-  assert.equal(f.events[0].visitorId, undefined);
-  f.setFailWrite();
-  await assert.doesNotReject(f.record({ userId: "account-a", type: "SIGNUP", name: "signup" }));
-  await assert.doesNotReject(createAnalyticsEventRecorder(() => null)({ type: "SAVE", name: "saved" }));
-  await assert.doesNotReject(createAnalyticsEventRecorder(() => { throw new Error("database unavailable"); })({ type: "SAVE", name: "saved" }));
+  assert.equal(f.events.length, 0);
+  const valid = recorderFixture();
+  valid.setFailWrite();
+  await assert.doesNotReject(valid.record({ visitorId: "visitor-a", type: "SEARCH", name: "hotel_search" }));
+  assert.equal(valid.events.length, 0);
+  await assert.doesNotReject(createAnalyticsEventRecorder(() => null)({ visitorId: "visitor-a", type: "SEARCH", name: "hotel_search" }));
+  await assert.doesNotReject(createAnalyticsEventRecorder(() => { throw new Error("database unavailable"); })({ visitorId: "visitor-a", type: "SEARCH", name: "hotel_search" }));
+});
+
+test("no analytics consent means zero event writes for guest and signed-in account", async () => {
+  for (const userId of [undefined, "account-a"]) {
+    const f = recorderFixture();
+    await f.record({ userId, type: "SEARCH", name: "flight_search" });
+    await f.record({ userId, visitorId: null, type: "REDIRECT", name: "flight_partner_redirect" });
+    assert.deepEqual(f.events, []);
+    assert.deepEqual(f.operations, [], "no database transaction required without consent");
+  }
+});
+
+test("essential account audit preserves confirmed mutations but cannot accept optional fields or visitor identity", async () => {
+  process.env.NEXT_PUBLIC_APP_URL = "https://staging.kurioticket.com";
+  const writes: Array<Record<string, unknown>> = [];
+  const db = { analyticsEvent: { create: async ({ data }: { data: Record<string, unknown> }) => { writes.push(data); } } };
+  const audit = createOperationalAccountAuditRecorder(() => db as never);
+  const inputs: OperationalAccountAuditInput[] = [
+    { userId: "account-a", type: "SIGNUP", name: "password_signup" },
+    { userId: "account-a", type: "SUPPORT_TICKET", name: "support_ticket_created", metadata: { category: "search-help" } },
+    ...(["price_alert_created", "price_alert_paused", "price_alert_reactivated", "price_alert_deleted"] as const).map(name => ({
+      userId: "account-a", type: "ALERT_CREATED" as const, name,
+      metadata: { product: "FLIGHT" as const, mode: "TARGET" as const, alertId: "alert-a", outcome: "confirmed" as const },
+    })),
+    ...(["saved_item_confirmed", "saved_item_removed"] as const).map(name => ({
+      userId: "account-a", type: "SAVE" as const, name,
+      metadata: { product: "CAR" as const, savedType: "car" as const, savedItemId: "saved-a", resultId: "offer-a", outcome: "confirmed", applicationSource: "IOS" as const },
+    })),
+  ];
+  for (const input of inputs) {
+    const tampered = { ...input, visitorId: "not-audit", metadata: {
+      ...("metadata" in input ? input.metadata : {}), pageKey: "home", linkedJourneyId: "optional", recordPurpose: "optional_analytics",
+    } } as unknown as OperationalAccountAuditInput;
+    await audit(tampered);
+  }
+  assert.equal(writes.length, inputs.length);
+  for (const row of writes) {
+    assert.equal(row.userId, "account-a");
+    assert.equal(row.visitorId, undefined);
+    const metadata = row.metadata as Record<string, unknown>;
+    assert.equal(metadata.recordPurpose, "essential_account_audit");
+    assert.equal(metadata.environment, "staging");
+    assert.equal(metadata.pageKey, undefined);
+    assert.equal(metadata.linkedJourneyId, undefined);
+  }
+  await audit({ userId: "account-a", type: "SHARE", name: "share_link_copied" } as never);
+  await audit({ userId: "", type: "SIGNUP", name: "password_signup" });
+  assert.equal(writes.length, inputs.length, "optional events and missing account owners never enter account audit");
+});
+
+test("account audit failures remain best effort except when the caller requires atomic storage", async () => {
+  const failing = { analyticsEvent: { create: async () => { throw new Error("unavailable"); } } };
+  const input = { userId: "account-a", type: "SIGNUP", name: "password_signup" } as const;
+  await assert.doesNotReject(createOperationalAccountAuditRecorder(() => failing as never)(input));
+  await assert.rejects(writeOperationalAccountAudit(failing as never, input));
 });

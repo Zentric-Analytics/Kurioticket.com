@@ -4,17 +4,21 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { AdminCalendarInput } from "@/components/admin/AdminCalendarInput";
+import { parseProviderHealthRange } from "@/lib/adminProviderAttention";
+import { adminLocalDate, formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 
 type Props = {
   product: string;
   hours: number;
   custom: { fromDate: string; toDate: string } | null;
   period?: "today" | "rolling" | "custom";
+  timeZone?: string;
+  nowIso?: string;
 };
 
 /** Matches the existing User Activity dropdown. Presets navigate immediately,
  * while unfinished custom dates never trigger a telemetry read. */
-export function ProviderHealthWindowFilter({ product, hours, custom, period = "rolling" }: Props) {
+export function ProviderHealthWindowFilter({ product, hours, custom, period = "rolling", timeZone = "UTC", nowIso }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [selection, setSelection] = useState(period === "today" ? "today" : custom ? "custom" : String(hours));
@@ -22,9 +26,11 @@ export function ProviderHealthWindowFilter({ product, hours, custom, period = "r
   const [to, setTo] = useState(custom?.toDate ?? "");
   const [error, setError] = useState("");
   const [customOpen, setCustomOpen] = useState(false);
+  const now = nowIso ? new Date(nowIso) : new Date();
+  const today = adminLocalDate(now, timeZone);
   // URL history and product navigation can update the server scope while
   // preserving this client component instance. Reconcile its displayed draft.
-  const scope = JSON.stringify([period, hours, custom?.fromDate, custom?.toDate]);
+  const scope = JSON.stringify([period, hours, custom?.fromDate, custom?.toDate, timeZone]);
   const [previousScope, setPreviousScope] = useState(scope);
   if (previousScope !== scope) {
     setPreviousScope(scope);
@@ -53,14 +59,9 @@ export function ProviderHealthWindowFilter({ product, hours, custom, period = "r
     }
   }
   function apply() {
-    if (!from || !to || from > to) {
-      setError("Choose a valid start and end date.");
-      return;
-    }
-    const dayCount = (Date.parse(to) - Date.parse(from)) / 86_400_000 + 1;
-    const today = new Date().toISOString().slice(0, 10);
-    if (!Number.isFinite(dayCount) || dayCount > 90 || to > today) {
-      setError("Choose up to 90 days, ending no later than today.");
+    const validated = parseProviderHealthRange({ period: "custom", from, to }, new Date(), timeZone);
+    if (validated.error) {
+      setError(validated.error);
       return;
     }
     setError("");
@@ -72,14 +73,14 @@ export function ProviderHealthWindowFilter({ product, hours, custom, period = "r
   return (
     <div className="relative flex min-w-0 flex-col items-end gap-2">
       <SearchMonitorSelect label="Date range" name="hours" value={selection}
-        options={options} appearance="fare" align="end" onValueChange={select} truncateLabel />
+        options={options} appearance="fare" align="end" onValueChange={select} truncateLabel timeZoneLabel={formatAdminTimeZoneLabel(timeZone, now)} />
       {selection === "custom" && customOpen ? (
         <div className="absolute right-0 top-full z-30 mt-2 flex w-[min(450px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] flex-wrap items-end justify-end gap-2 rounded-xl border border-[#D8E1EC] bg-white p-3 text-[12px] shadow-[0_12px_36px_-12px_rgba(2,6,23,0.24)]">
-          <label className="flex min-w-0 flex-1 flex-col gap-1 text-[#475569]">From (UTC)
-            <AdminCalendarInput value={from} onValueChange={setFrom} max={to || new Date().toISOString().slice(0, 10)} ariaLabel="Provider health start date UTC" className="w-full" />
+          <label className="flex min-w-0 flex-1 flex-col gap-1 text-[#475569]">From
+            <AdminCalendarInput value={from} onValueChange={setFrom} max={to || today} ariaLabel="Provider health start date" className="w-full" timeZone={timeZone} />
           </label>
-          <label className="flex min-w-0 flex-1 flex-col gap-1 text-[#475569]">To (UTC)
-            <AdminCalendarInput value={to} onValueChange={setTo} min={from || undefined} max={new Date().toISOString().slice(0, 10)} ariaLabel="Provider health end date UTC" className="w-full" />
+          <label className="flex min-w-0 flex-1 flex-col gap-1 text-[#475569]">To
+            <AdminCalendarInput value={to} onValueChange={setTo} min={from || undefined} max={today} ariaLabel="Provider health end date" className="w-full" timeZone={timeZone} />
           </label>
           <div className="flex w-full justify-end gap-2 pt-1">
             <button type="button" onClick={() => { setSelection(period === "today" ? "today" : custom ? "custom" : String(hours)); setCustomOpen(false); setError(""); }}

@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { encodeAdminJourneyCursor, parseAdminJourneyQuery } from "@/services/adminJourneyContract";
 import { identityJourneyHistoryHref, identityJourneyHistoryQuery } from "./adminIdentityJourneyHistory";
+import { decodeActivityCursor, encodeActivityCursor, type ActivityFilters } from "./adminIdentityActivity";
+import { journeyCalendarTimeZone } from "./adminJourneyDateRange";
+import { resetStaleJourneyDateCursor } from "./adminJourneyDateCursor";
 
 const now = new Date("2026-11-20T10:00:00.000Z");
 const guest = "qa-visitor-0001";
@@ -91,4 +94,50 @@ test("journey pagination retains scoped filters without accepting identity overr
   assert.equal(url.searchParams.get("cursor"), "cursor-123");
   assert.equal(url.searchParams.get("userId"), null);
   assert.equal(url.searchParams.get("environment"), null);
+});
+
+test("identity Journey History materializes 90 civil dates and preserves them in the next-page scope", () => {
+  const zone = "America/New_York";
+  const selection = { range: "custom", from: "2026-08-07", to: "2026-11-04" };
+  const request = identityJourneyHistoryQuery("guest", guest, selection, now, "staging", zone);
+  assert.ok(request.ok);
+  const calendarZone = journeyCalendarTimeZone(selection, zone);
+  const first = parseAdminJourneyQuery(request.input, "list", now, "staging", undefined, calendarZone);
+  assert.ok(first.status === "ok");
+  assert.equal(first.data.scope.to, "2026-11-05T05:00:00.000Z");
+
+  const cursor = encodeAdminJourneyCursor({
+    version: 1, kind: "list", at: "2026-11-04T23:00:00.000Z",
+    id: "qa-journey-0001", scope: first.data.scope,
+  });
+  const nextHref = new URL(identityJourneyHistoryHref("guest", guest, selection, cursor), "https://kurioticket.test");
+  const nextRaw = Object.fromEntries(nextHref.searchParams);
+  const next = identityJourneyHistoryQuery("guest", guest, nextRaw, now, "staging", zone);
+  assert.ok(next.ok);
+  const nextResult = parseAdminJourneyQuery(next.input, "list", now, "staging", undefined, journeyCalendarTimeZone(nextRaw, zone));
+  assert.ok(nextResult.status === "ok");
+  assert.deepEqual(nextResult.data.scope, first.data.scope);
+});
+
+test("operational guest continuation freezes the cutoff of the last partial civil day", () => {
+  const zone = "America/New_York";
+  const selection = { range: "custom", from: "2026-08-07", to: "2026-11-04" };
+  const initialTime = new Date("2026-11-05T04:45:00.000Z");
+  const refreshedTime = new Date("2026-11-05T04:55:00.000Z");
+  const filters: ActivityFilters = { tab: "all", stage: "all", product: "all", from: "2026-08-07T04:00:00.000Z",
+    to: initialTime.toISOString(), q: "", order: "newest" };
+  const position = { id: "s-activity-001", at: new Date("2026-11-04T23:00:00.000Z") };
+  const activityCursor = encodeActivityCursor(position, "guest", guest, filters, "staging");
+  const raw = { ...selection, activityCursor };
+  assert.equal(resetStaleJourneyDateCursor(raw, refreshedTime, zone), raw);
+  assert.deepEqual(resetStaleJourneyDateCursor(raw, refreshedTime, "America/Chicago"), selection);
+  const request = identityJourneyHistoryQuery("guest", guest, raw, refreshedTime, "staging", zone);
+  assert.ok(request.ok);
+  const parsed = parseAdminJourneyQuery(request.input, "list", refreshedTime, "staging", undefined, zone);
+  assert.ok(parsed.status === "ok");
+  assert.equal(parsed.data.scope.to, initialTime.toISOString());
+  assert.deepEqual(decodeActivityCursor(activityCursor, "guest", guest, { ...filters, ...parsed.data.scope }, "staging"), {
+    id: position.id, at: position.at.toISOString(),
+  });
+  assert.equal(decodeActivityCursor(activityCursor, "guest", "wrong-guest", filters, "staging"), null);
 });

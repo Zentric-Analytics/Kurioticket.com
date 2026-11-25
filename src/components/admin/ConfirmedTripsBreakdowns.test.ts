@@ -15,7 +15,7 @@ const snapshot: Snapshot = {
   byProvider: [],
   recentTrips: [],
 };
-const render = (operations: Snapshot | null) => renderToStaticMarkup(createElement(ConfirmedTripsBreakdowns, { operations }));
+const render = (operations: Snapshot | null) => renderToStaticMarkup(createElement(ConfirmedTripsBreakdowns, { operations, timeZone: "Asia/Dubai" }));
 
 test("product and provider sections remain visible and compact when no trips exist", () => {
   const html = render(snapshot);
@@ -69,6 +69,7 @@ test("populated breakdowns display every product and provider without fabricated
   assert.doesNotMatch(html, /No confirmed trips yet|breakdown unavailable|<table|<form/);
   assert.match(html, /break-words/);
   assert.match(html, /tabular-nums/);
+  assert.match(html, /Last confirmation Oct 27, 2026, 2:00\s+PM/);
 });
 
 test("uneven datasets do not force placeholders or equal-height empty cards", () => {

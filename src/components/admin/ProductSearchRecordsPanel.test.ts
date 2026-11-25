@@ -23,9 +23,10 @@ test("both product pages remove redundant header search links without losing rec
     assert.doesNotMatch(source, /<OperationsProviderIssues|Provider exceptions/);
   }
   assert.doesNotMatch(panelSource, /export function ProductSearchJumpLink/);
-  assert.match(panelSource, /locationHash === "#" \+ sectionId/);
-  assert.match(panelSource, /useSyncExternalStore\(subscribeLocationHash/);
-  assert.match(panelSource, /window.addEventListener\("hashchange", onChange\)/);
+  assert.match(panelSource, /window.location.hash === "#" \+ sectionId/);
+  assert.match(panelSource, /useSyncExternalStore\(subscribeToBookmark/);
+  assert.match(panelSource, /window.addEventListener\("hashchange", notify\)/);
+  assert.match(panelSource, /window.addEventListener\("popstate", notify\)/);
 });
 
 test("both product directories render independently accessible, responsive read-only record tables", () => {
@@ -109,5 +110,5 @@ test("hotel and car search filters keep draft selections until Apply filters", (
   assert.match(panelSource, /sm:grid-cols-\[minmax\(0,180px\)_minmax\(0,180px\)_auto\]/);
   // Requests use applied state and do not depend on the draft values.
   assert.match(panelSource, /new URLSearchParams\(\{ product, filter, window: windowValue \}\)/);
-  assert.match(panelSource, /\[product, filter, windowValue, cursor, reload\]/);
+  assert.match(panelSource, /\[product, filter, windowValue, cursor, reload, timeZone\]/);
 });

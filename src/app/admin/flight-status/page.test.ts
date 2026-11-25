@@ -225,9 +225,7 @@ test("data-availability boundaries remain truthful without explanatory helper co
   assert.match(page, /Recent flight-status data unavailable/);
   assert.match(page, /No status feed configured/);
   assert.match(monitoring, /<AdminPageShell title="Trip monitoring" hideHeader>/);
-  assert.match(readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8"), /<WorkspaceSidebar pathname=\{pathname\} role=\{role\}/);
-  const tabs = readFileSync("src/components/admin/TripWorkspaceNavigation.tsx", "utf8");
-  assert.match(tabs, /href="\/admin\/confirmed-trips"/);
+  assert.match(navigation, /href: "\/admin\/confirmed-trips\/monitoring", parentHref: "\/admin\/confirmed-trips"/);
   assert.doesNotMatch(page, /href="\/admin\/flights"|href="\/admin\/searches\/activity/);
   assert.match(page, /operations\.statusDistribution\.map/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
@@ -276,9 +274,9 @@ test("legacy Flight Status links redirect securely to the expanded monitoring pa
   assert.match(route, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=flight#flight-status-overview-title"\)/);
   assert.doesNotMatch(route, /<AdminPageShell|<AdminSectionCard|<FlightStatusMetric/);
   assert.match(monitoring, /<AdminPageShell title="Trip monitoring" hideHeader>/);
-  assert.match(readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8"), /<WorkspaceSidebar pathname=\{pathname\} role=\{role\}/);
+  assert.match(navigation, /href: "\/admin\/confirmed-trips\/monitoring", parentHref: "\/admin\/confirmed-trips"/);
   assert.doesNotMatch(monitoring, /Back to Trips|Trip monitoring navigation/);
-  assert.match(monitoring, /<TripFlightStatusMonitoringPanel \/>/);
+  assert.match(monitoring, /<TripFlightStatusMonitoringPanel timeZone=\{timeZone\} \/>/);
   assert.match(monitoring, /id="trip-flight-status-panel"/);
   const searchActivity = readFileSync("src/app/admin/searches/activity/page.tsx", "utf8");
   assert.match(searchActivity, /{ label: "Flights", value: "FLIGHT" }/);
@@ -293,8 +291,8 @@ test("unified Trip monitoring owns a single parent while preserving original fli
   assert.match(shell, /hideHeader\s*\?\s*<h1 className="sr-only">\{title\}<\/h1>/);
   assert.match(monitoring, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
   assert.equal((monitoring.match(/<AdminSectionCard /g) || []).length, 1);
-  assert.match(monitoring, /<TripConfirmationsMonitoringPanel \/>/);
-  assert.match(monitoring, /<TripFlightStatusMonitoringPanel \/>/);
+  assert.match(monitoring, /<TripConfirmationsMonitoringPanel timeZone=\{timeZone\} \/>/);
+  assert.match(monitoring, /<TripFlightStatusMonitoringPanel timeZone=\{timeZone\} \/>/);
   assert.match(page, /<div className="min-w-0 space-y-4">/);
   const sections = ["Status-feed readiness", "Latest status distribution", "Awaiting first status snapshot", "Latest trusted flight-status snapshots"];
   const positions = sections.map(label => page.indexOf(">" + label + "</h2>"));

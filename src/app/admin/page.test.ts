@@ -23,11 +23,11 @@ function sectionSource(title: string): string {
 }
 
 test("Overview continues to use canonical authenticated, real data services", () => {
-  assert.match(page, /getAdminOverview\(query\)/);
+  assert.match(page, /getAdminOverview\(query, reporting\.period\.range === "custom" \? timeZone : undefined\)/);
   assert.match(page, /getAdminAlertSnapshot\(undefined, new Date\(\), \{ forceRefreshCandidates: false \}\)\.catch\(\(\) => null\)/);
   assert.match(page, /incidents=\{incidents\}/);
   assert.match(page, /getSafeSystemStatus\(\)/);
-  assert.match(page, /getRecentAdminActivity\(\)/);
+  assert.match(page, /getRecentAdminActivity\(\{ timeZone \}\)/);
   assert.match(page, /overview\.status === "ok"/);
   assert.match(page, /No fallback or mocked operational totals are shown/);
   assert.match(page, /<AdminOverviewSecondary system=\{system\} activity=\{activity\} \/>/);
@@ -319,7 +319,8 @@ test("audit summary limits display to three latest actions, retaining full recor
   assert.doesNotMatch(dashboard, /Latest three actions across all dates/);
   assert.match(dashboard, /href="\/admin\/logs"/);
   assert.match(adminData, /take: limit/);
-  assert.match(adminData, /timeZone: "UTC"/);
+  assert.match(adminData, /formatViewerTimestamp\(log\.createdAt, timeZone\)/);
+  assert.match(audit, /dateTime=\{item\.timestampIso\}/);
 });
 
 test("all summary destinations have actual administrator pages", () => {
@@ -436,7 +437,7 @@ test("reporting presets and custom UTC dates resolve to their exact bounds", () 
   assert.equal(today.to.toISOString(), now.toISOString());
 });
 
-test("invalid or overly wide custom reports fall back to Today UTC with a visible error", () => {
+test("invalid or overly wide custom reports fall back to Today in the reporting zone with a visible error", () => {
   const now = new Date("2026-11-18T12:30:00Z");
   for (const [from, to] of [
     ["2026-02-30", "2026-03-01"],
@@ -446,19 +447,24 @@ test("invalid or overly wide custom reports fall back to Today UTC with a visibl
     [["2026-11-04", "2026-11-05"], "2026-11-06"],
     ["", "2026-11-18"],
   ]) {
-    const result = resolveOverviewRange({ range: "custom", from, to }, now);
+    const result = resolveOverviewRange({ range: "custom", from, to }, now, "Africa/Lagos");
     assert.equal(result.period.range, "today");
+    assert.equal(result.from.toISOString(), "2026-11-17T23:00:00.000Z");
     assert.equal(result.invalidCustom, true);
   }
   assert.match(page, /reporting\.invalidCustom[\s\S]*role="alert"/);
 });
 
 test("the Overview and platform report use the same bounds while live operational reads use their own clocks", () => {
+  assert.match(page, /const timeZone = await getAdminViewerTimeZone\(session.user.id\)/);
+  assert.match(page, /resolveOverviewRange\(await searchParams, now, timeZone\)/);
+  assert.match(page, /timeZoneLabel=\{timeZoneLabel\}/);
   assert.match(page, /const query = new URLSearchParams\(\{ from: reporting\.from\.toISOString\(\), to: reporting\.to\.toISOString\(\) \}\)/);
   assert.match(page, /readPlatformSearchActivity\(reporting\.from, reporting\.to\)/);
   assert.match(controls, /role="listbox"/);
   assert.match(controls, /aria-haspopup="listbox"/);
   assert.match(controls, /aria-expanded=\{open\}/);
+  assert.match(controls, /aria-describedby=\{zoneLabelId\}/);
   assert.match(service, /getProviderOperationalStatuses\(24, environment\)/);
   assert.match(service, /getOnlinePresenceSnapshot\(environment, now\)/);
 });

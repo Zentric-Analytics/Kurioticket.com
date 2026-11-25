@@ -2,6 +2,7 @@ import { ReferralUnlinkedHandoffs } from "@/components/admin/ReferralUnlinkedHan
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { ReferralWindowFilter } from "@/components/admin/ReferralWindowFilter";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { requireAdminApiSession } from "@/lib/admin";
 import {
   currentReferralAttributionEnvironment,
@@ -26,7 +27,7 @@ export default async function AdminReferralAttributionPage({
     </section>;
   }
 
-  const raw = await searchParams;
+  const [raw, timeZone] = await Promise.all([searchParams, getAdminViewerTimeZone(auth.session?.user?.id)]);
   const daysValue = typeof raw.days === "string" ? raw.days : null;
   const period = raw.period === "today" || daysValue === "today" || (daysValue === null && raw.period === undefined) ? "today" : "rolling";
   const days = parseAttributionDays(daysValue === "today" ? null : daysValue);
@@ -39,7 +40,7 @@ export default async function AdminReferralAttributionPage({
   }
 
   const environment = currentReferralAttributionEnvironment();
-  const summary = await getReferralAttributionSummary(days, environment, period);
+  const summary = await getReferralAttributionSummary(days, environment, period, timeZone);
 
   return (
     <section aria-label="Referral Attribution" className="w-full min-w-0 bg-white text-[#0F172A]">
@@ -56,7 +57,7 @@ export default async function AdminReferralAttributionPage({
 
       {!embedded ? (
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[#D8E1EC] pb-2">
-          <ReferralWindowFilter days={days} embedded={false} period={period} />
+          <ReferralWindowFilter days={days} embedded={false} period={period} timeZone={timeZone} />
         </div>
       ) : null}
 
@@ -165,9 +166,10 @@ export default async function AdminReferralAttributionPage({
       )}
       {summary.dataAvailable ? (
         <ReferralUnlinkedHandoffs
-          key={summary.environment + ":" + summary.window.start + ":" + summary.window.end}
+          key={summary.environment + ":" + summary.window.start + ":" + summary.window.end + ":" + timeZone}
           window={{ start: summary.window.start, end: summary.window.end }}
           environment={summary.environment}
+          timeZone={timeZone}
           unlinkedCount={summary.handoffs.notLinkedToSearch}
           providers={summary.providers.map(item => item.provider)}
         />
