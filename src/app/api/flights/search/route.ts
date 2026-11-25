@@ -104,11 +104,11 @@ export async function POST(request: Request) {
 
     return attachOperationalSearchSession(NextResponse.json(
       {
-        error: aggregate.unavailableMessage,
+        error: "Flight search is temporarily unavailable. Please try again.",
         results: [],
         status: "unavailable",
         source: "duffel",
-        warnings: aggregate.warnings,
+        warnings: [],
         partial: false,
         requestId,
       },

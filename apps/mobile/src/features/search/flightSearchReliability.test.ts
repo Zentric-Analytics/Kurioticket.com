@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { presentSearchResults } from "./searchFailurePresentation";
 
 const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const api = readFileSync("src/api/travelApi.ts", "utf8");
@@ -16,7 +17,10 @@ test("flight results bound LOS to JFK and every other request with abort and sta
 });
 
 test("ready, empty, error, visible message, and clean retry remain terminal states", () => {
-  assert.match(screen, /setStatus\(valid\.length \? "ready" : "empty"\)/);
+  assert.match(screen, /presentSearchResults\(product, valid\.length, response\);\s*setStatus\(presentation\.status\)/);
+  assert.equal(presentSearchResults("flight", 1, { status: "partial" }).status, "ready");
+  assert.equal(presentSearchResults("flight", 0, { status: "empty" }).status, "empty");
+  assert.equal(presentSearchResults("flight", 0, { status: "unavailable" }).status, "error");
   assert.match(screen, /setStatus\("error"\)/);
   assert.match(screen, /accessibilityRole="alert"/);
   assert.match(screen, /retry=\{\(\) => setRetry\(\(x\) => x \+ 1\)\}/);

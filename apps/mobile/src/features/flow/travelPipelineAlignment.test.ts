@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { presentSearchResults } from "../search/searchFailurePresentation";
 
 const mobileApi = readFileSync("src/api/travelApi.ts", "utf8");
 const mobileResults = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8") + readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8") + readFileSync("src/features/search/CarResultCard.tsx", "utf8");
@@ -27,7 +28,8 @@ test("Android renders server-owned policy without restoring mobile inventory pol
   assert.match(mobileApi, /TravelSearchResponse<PublicHotelResult>/);
   assert.match(mobileApi, /TravelSearchResponse<NormalizedCarResult>/);
   assert.match(mobileResults, /searchPolicy|onViewDeal/);
-  assert.match(mobileResults, /provider_unavailable|temporarily unavailable/);
+  assert.match(mobileResults, /presentSearchResults\(/);
+  assert.deepEqual(presentSearchResults("hotel", 0, { warningCategory: "provider_unavailable" }), { status: "error", message: "Hotel search is temporarily unavailable. Please try again." });
   assert.match(mobileResults, /canonicalResultsWereSilentlyLost/);
   assert.doesNotMatch(mobileResults, /result\.isDemo/);
   assert.doesNotMatch(mobileResults, /provider response did not contain safe, bookable inventory/i);

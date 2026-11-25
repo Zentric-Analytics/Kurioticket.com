@@ -102,7 +102,7 @@ export async function POST(request: Request) {
             metadata: { ...application, progressive: true, trackId } }),
         ]);
       });
-      return attachOperationalSearchSession(NextResponse.json({ error: resolved.supported ? "Invalid search." : resolved.reason, status: "unavailable", results: [] }, { status: 422 }), operationalSession);
+      return attachOperationalSearchSession(NextResponse.json({ error: "These hotel search options aren't supported. Please change your search.", warningCategory: "unsupported_search", status: "unavailable", results: [] }, { status: 422 }), operationalSession);
     }
     const batch = await client.searchHotelBatch(resolved.search, trackId, state?.checkpoint, request.signal);
     const nights = Math.max(1, Math.round((Date.parse(search.checkOut) - Date.parse(search.checkIn)) / 86_400_000));
@@ -169,6 +169,6 @@ export async function POST(request: Request) {
           metadata: { ...application, progressive: true, trackId } }),
       ]);
     });
-    return attachOperationalSearchSession(NextResponse.json({ error: "Hotel provider is temporarily unavailable.", code: unavailable, status: "unavailable", results: [] }, { status: 503 }), operationalSession);
+    return attachOperationalSearchSession(NextResponse.json({ error: "Hotel search is temporarily unavailable. Please try again.", status: "unavailable", results: [] }, { status: 503 }), operationalSession);
   }
 }

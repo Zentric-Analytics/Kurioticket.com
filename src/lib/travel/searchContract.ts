@@ -12,8 +12,9 @@ export type ContractResult<T>=T&{searchPolicy:TravelResultPolicy};
 export type TravelSearchResponse<T>={results:ContractResult<T>[];status:TravelSearchStatus;source:TravelInventorySource;warnings:string[];partial:boolean;requestId:string};
 
 // A failed/incomplete search is not evidence that no inventory exists.
+// Warnings are used internally to determine status, not returned as public text.
 const status=(count:number,warnings:string[]):TravelSearchStatus=>count?(warnings.length?"partial":"available"):(warnings.length?"unavailable":"empty");
-export function classifyFlights(results:PublicFlightResult[],search:FlightSearchParams,warnings:string[],requestId:string):TravelSearchResponse<PublicFlightResult>{const query=new URLSearchParams({tripType:search.tripType,origin:search.origin,destination:search.destination,departureDate:search.departureDate,adults:String(search.adults),children:String(search.children),infants:String(search.infants),travelers:String(search.travelers),cabinClass:search.cabinClass});if(search.tripType==="round-trip"&&search.returnDate)query.set("returnDate",search.returnDate);if(search.currency)query.set("currency",search.currency);const classified=results.map(result=>{const kayak=result.provider==="KAYAK sandbox";if(hasDisplayOnlyInventory(result))return displayOnlyInventory(result,(result as unknown as {sandboxRevision:string}).sandboxRevision);return {...result,searchPolicy:{source:kayak?"kayak-sandbox" as const:"duffel" as const,bookable:!kayak,action:{kind:"internal-detail" as const,href:`/flights/details/${encodeURIComponent(result.id)}?${query.toString()}`,enabled:true as const}}}});return{results:classified,status:status(classified.length,warnings),source:classified.some(x=>x.searchPolicy.source==="kayak-sandbox")?"metasearch":"duffel",warnings,partial:Boolean(warnings.length),requestId};}
+export function classifyFlights(results:PublicFlightResult[],search:FlightSearchParams,warnings:string[],requestId:string):TravelSearchResponse<PublicFlightResult>{const query=new URLSearchParams({tripType:search.tripType,origin:search.origin,destination:search.destination,departureDate:search.departureDate,adults:String(search.adults),children:String(search.children),infants:String(search.infants),travelers:String(search.travelers),cabinClass:search.cabinClass});if(search.tripType==="round-trip"&&search.returnDate)query.set("returnDate",search.returnDate);if(search.currency)query.set("currency",search.currency);const classified=results.map(result=>{const kayak=result.provider==="KAYAK sandbox";if(hasDisplayOnlyInventory(result))return displayOnlyInventory(result,(result as unknown as {sandboxRevision:string}).sandboxRevision);return {...result,searchPolicy:{source:kayak?"kayak-sandbox" as const:"duffel" as const,bookable:!kayak,action:{kind:"internal-detail" as const,href:`/flights/details/${encodeURIComponent(result.id)}?${query.toString()}`,enabled:true as const}}}});return{results:classified,status:status(classified.length,warnings),source:classified.some(x=>x.searchPolicy.source==="kayak-sandbox")?"metasearch":"duffel",warnings:[],partial:Boolean(warnings.length),requestId};}
 export function classifyHotels(results: PublicHotelResult[], warnings: string[], requestId: string): TravelSearchResponse<PublicHotelResult> {
   const classified = results.filter(isProviderHotelResult).map(result => hasDisplayOnlyInventory(result) ? displayOnlyInventory(result,(result as unknown as {sandboxRevision:string}).sandboxRevision) : ({
     ...result,
@@ -23,7 +24,7 @@ export function classifyHotels(results: PublicHotelResult[], warnings: string[],
       action: { kind: "internal-detail" as const, href: `/hotels/details/${encodeURIComponent(result.id)}`, enabled: true as const },
     },
   }));
-  return { results: classified, status: status(classified.length, warnings), source: classified.length ? "metasearch" : "kayak-sandbox", warnings, partial: Boolean(warnings.length), requestId };
+  return { results: classified, status: status(classified.length, warnings), source: classified.length ? "metasearch" : "kayak-sandbox", warnings: [], partial: Boolean(warnings.length), requestId };
 }
 
 export function classifyCars(results: NormalizedCarResult[], search: CarSearchParams, requestId: string, warnings: string[] = []): TravelSearchResponse<NormalizedCarResult> {
@@ -35,5 +36,5 @@ export function classifyCars(results: NormalizedCarResult[], search: CarSearchPa
       action: { kind: "internal-detail" as const, href: buildCarDetailsHref(result.id, search), enabled: true as const },
     },
   }));
-  return { results: classified, status: status(classified.length, warnings), source: classified.length ? "metasearch" : "kayak-sandbox", warnings, partial: Boolean(warnings.length), requestId };
+  return { results: classified, status: status(classified.length, warnings), source: classified.length ? "metasearch" : "kayak-sandbox", warnings: [], partial: Boolean(warnings.length), requestId };
 }

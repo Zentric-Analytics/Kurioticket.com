@@ -14,6 +14,28 @@ test("empty results with provider failures are unavailable, not confirmed no ava
   assert.equal(classifyHotels([{ id: "kayak-sandbox:h", provider: "KAYAK sandbox", dataSource: "demo" } as never], ["Provider unavailable"], "request").status, "partial");
 });
 
+test("public envelopes preserve partial inventory without serializing provider diagnostics", () => {
+  const flightSearch = { tripType: "one-way", origin: "BOS", destination: "JFK", departureDate: "2027-02-10", adults: 1, children: 0, infants: 0, travelers: 1, cabinClass: "economy" } as const;
+  const carSearch = { pickupLocation: "BOS", dropoffLocation: "BOS", pickupDate: "2027-02-10", dropoffDate: "2027-02-13", pickupTime: "10:30", dropoffTime: "16:00", driverAge: "30" };
+  const diagnostic = "KAYAK HTTP 403: synthetic provider authentication failure";
+  const responses = [
+    classifyFlights([{ id: "duffel-flight", provider: "Duffel" } as never], flightSearch, [diagnostic], "request"),
+    classifyHotels([{ id: "kayak-sandbox:hotel", provider: "KAYAK sandbox", dataSource: "demo" } as never], [diagnostic], "request"),
+    classifyCars([{ id: "car", inventorySource: "kayak-sandbox", offers: [] } as never], carSearch, "request", [diagnostic]),
+  ];
+  for (const response of responses) {
+    assert.equal(response.status, "partial");
+    assert.equal(response.partial, true);
+    assert.equal(response.results.length, 1);
+    assert.deepEqual(response.warnings, []);
+    assert.ok(!JSON.stringify(response).includes(diagnostic));
+  }
+  assert.equal(responses[0].results[0].id, "duffel-flight");
+  assert.equal(responses[0].results[0].searchPolicy.bookable, true);
+  assert.equal(responses[1].results[0].searchPolicy.bookable, false);
+  assert.equal(responses[2].results[0].searchPolicy.bookable, false);
+});
+
 test("authoritative sources and truthful actions", () => {
   const flight = classifyFlights(
     [{ id: "f", provider: "Duffel" } as never],

@@ -36,3 +36,10 @@ test("Android Hotel app renders first verified batch and appends only current se
   assert.match(screen, /Loading more hotels/);
   assert.match(screen, /: await travelApi\.searchHotels\(plan\.plan\.payload/);
 });
+
+test("Android progressive Hotel returns a generic failure but retains the diagnostic in operational logging", () => {
+  const route = read("src/app/api/mobile/v1/hotels/progressive/route.ts");
+  assert.match(route, /errorMessage: unavailable/);
+  assert.match(route, /NextResponse\.json\(\{ error: "Hotel search is temporarily unavailable\. Please try again\.", status: "unavailable", results: \[\] \}/);
+  assert.doesNotMatch(route, /code: unavailable|error: resolved\.reason/);
+});

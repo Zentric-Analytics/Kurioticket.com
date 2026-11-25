@@ -654,7 +654,11 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         }
         setResults([]);
         setJourneyResponse(null);
-        setError(timedOut ? t("hotelResults.searchUnavailableDetailed") : searchError instanceof Error ? searchError.message : t("hotelResults.unableToSearchHotels"));
+        const unavailable = t("hotelResults.searchUnavailableDetailed");
+        const generic = t("hotelResults.unableToSearchHotels");
+        const publicMessages = [unavailable, t("hotelResults.liveSearchUnavailable"), t("hotelResults.unsupportedSearch")];
+        setError(timedOut ? unavailable :
+          searchError instanceof Error && publicMessages.includes(searchError.message) ? searchError.message : generic);
       })
       .finally(() => {
         window.clearTimeout(timeout);
