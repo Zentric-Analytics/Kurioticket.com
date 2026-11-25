@@ -1,3 +1,4 @@
+import { providersFor, executeRegisteredProvider, type ProviderRegistration } from "./providerRegistry";
 import { productionSandboxInventory } from "@/lib/productionSandboxPolicy";
 import type {
   AggregatedResult,
@@ -9,18 +10,17 @@ import type {
 import { getItineraryDateKey } from "@/lib/utils";
 import { getSearchLegs } from "@/lib/flights/flightSearchJourney";
 import { rememberFlights } from "@/lib/searchCache";
-import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
 import {
   deduplicateFlightOffers,
   isFlightProviderOfferUsableAt,
 } from "@/services/travel/flightOfferInventory";
-import { searchKayakFlights, type KayakRequestContext } from "./kayakMetasearchProvider";
+import { type KayakRequestContext } from "./kayakMetasearchProvider";
 import { providerSearchWarnings } from "./providerSearchOutcome";
 
 /** The sole production flight pipeline. Provider policy is deliberately not configurable. */
 export async function searchFlights(
   search: FlightSearchParams,
-  options: { signal?: AbortSignal; deadlineMs?: number; onProviderStart?: () => void; requestId?: string; kayak?: KayakRequestContext } = {},
+  options: { signal?: AbortSignal; deadlineMs?: number; onProviderStart?: () => void; requestId?: string; kayak?: KayakRequestContext; providers?: readonly ProviderRegistration<"flights">[] } = {},
 ): Promise<AggregatedResult<NormalizedFlightResult> & {
   performance: {
     supplierMs: number;
@@ -34,20 +34,18 @@ export async function searchFlights(
   resultsCacheValidUntil?: number;
 }> {
   const startedAt = Date.now();
-  const [provider, kayak] = await Promise.all([runWithFlightSearchDeadline(
-    (signal) => {
-      options.onProviderStart?.();
-      return searchDuffelFlights(search, signal);
-    },
-    options,
-  ), searchKayakFlights(search, options.kayak)]);
+  const providerStatuses = await Promise.all(providersFor("flights", options.providers).map(registration =>
+    registration.id === "duffel" ? runWithFlightSearchDeadline(signal => executeRegisteredProvider(registration, search, {...options, signal}), options)
+      : executeRegisteredProvider(registration, search, options)));
+  const provider = providerStatuses.find(result => result.provider === "Duffel") ?? providerStatuses[0] ?? {provider:"none",results:[],status:"skipped" as const,latencyMs:0};
+  const kayak = providerStatuses.find(result => result.provider === "KAYAK sandbox") ?? {provider:"none",results:[],status:"skipped" as const,latencyMs:0};
   const providerPerformance = (provider as typeof provider & {
     performance?: { supplierMs: number; normalizationMs: number; offerCount: number; connectingOfferCount: number };
   }).performance;
   const now = Date.now();
   const aggregationStartedAt = performance.now();
   const deduplicationStartedAt = performance.now();
-  const usableResults = [...provider.results, ...kayak.results].filter(
+  const usableResults = providerStatuses.flatMap(provider => provider.results).filter(
     (result) =>
       matchesRequestedLegs(result, search) &&
       isFlightProviderOfferUsableAt(result, now),
@@ -69,11 +67,11 @@ export async function searchFlights(
   const cacheUnavailable = results.some(result=>!productionSandboxInventory(result)) && !cacheResult.persisted;
   return {
     results: actionableResults,
-    providerStatuses: [provider, kayak],
+    providerStatuses,
     warnings:
       provider.status === "failed" || kayak.status === "failed" || cacheUnavailable
         ? ["Flight results are temporarily unavailable. Please try again."]
-        : providerSearchWarnings([provider, kayak], actionableResults.length),
+        : providerSearchWarnings(providerStatuses, actionableResults.length),
     latencyMs: Date.now() - startedAt,
     performance: {
       supplierMs: providerPerformance?.supplierMs ?? provider.latencyMs,

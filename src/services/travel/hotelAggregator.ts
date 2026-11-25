@@ -1,3 +1,4 @@
+import { providersFor, executeRegisteredProvider, type ProviderRegistration } from "./providerRegistry";
 import type { AggregatedResult, HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import { rememberHotels } from "@/lib/searchCache";
 import { providerSearchWarnings } from "./providerSearchOutcome";
@@ -5,7 +6,7 @@ import { compareHotelsByAvailablePrice } from "@/lib/hotels/hotelResultAvailabil
 import { searchKayakHotels, type KayakRequestContext } from "./kayakMetasearchProvider";
 import { rememberHotelSearchCohort, rememberProviderResults } from "./providerResultCache";
 import { persistHotelInventory } from "./persistHotelInventory";
-type HotelSearchOptions = { kayak?: KayakRequestContext; defer?: (task: () => Promise<void>) => void;
+type HotelSearchOptions = { providers?: readonly ProviderRegistration<"hotels">[]; kayak?: KayakRequestContext; defer?: (task: () => Promise<void>) => void;
   dependencies?: { searchKayak: typeof searchKayakHotels; persist: typeof persistHotelProviderResults } };
 
 export type HotelProviderMode = "kayak-sandbox";
@@ -40,14 +41,16 @@ export async function searchHotelsByProvider(
     };
   }
 
-  const kayak = await (options.dependencies?.searchKayak ?? searchKayakHotels)(search, options.kayak);
-  const results = [...kayak.results].sort(compareHotelsByAvailablePrice);
+  const providerStatuses = await Promise.all(providersFor("hotels", options.providers).map(registration =>
+    executeRegisteredProvider(options.dependencies && registration.id === "kayak" ? {...registration, execute: (query, context) => options.dependencies!.searchKayak(query, context.kayak)} : registration, search, options)));
+  const inventory = providerStatuses.flatMap(provider => provider.results);
+  const results = [...inventory].sort(compareHotelsByAvailablePrice);
   await (options.dependencies?.persist ?? persistHotelProviderResults)(results, search, options.defer);
 
   return {
     results,
-    providerStatuses: [kayak],
-    warnings: providerSearchWarnings([kayak], results.length),
+    providerStatuses,
+    warnings: providerSearchWarnings(providerStatuses, results.length),
     latencyMs: Date.now() - startedAt,
   };
 }
@@ -58,15 +61,17 @@ export async function searchHotels(
   options: HotelSearchOptions = {},
 ): Promise<AggregatedResult<NormalizedHotelResult>> {
   const startedAt = Date.now();
-  const kayak = await (options.dependencies?.searchKayak ?? searchKayakHotels)(search, options.kayak);
-  const results = dedupeHotels(kayak.results).sort(
+  const providerStatuses = await Promise.all(providersFor("hotels", options.providers).map(registration =>
+    executeRegisteredProvider(options.dependencies && registration.id === "kayak" ? {...registration, execute: (query, context) => options.dependencies!.searchKayak(query, context.kayak)} : registration, search, options)));
+  const inventory = providerStatuses.flatMap(provider => provider.results);
+  const results = dedupeHotels(inventory).sort(
     compareHotelsByAvailablePrice,
   );
   await (options.dependencies?.persist ?? persistHotelProviderResults)(results, search, options.defer);
   return {
     results,
-    providerStatuses: [kayak],
-    warnings: providerSearchWarnings([kayak], results.length),
+    providerStatuses,
+    warnings: providerSearchWarnings(providerStatuses, results.length),
     latencyMs: Date.now() - startedAt,
   };
 }

@@ -1,3 +1,4 @@
+import { providersFor, executeRegisteredProvider, type ProviderRegistration } from "./providerRegistry";
 import type { CarInventoryStatus, LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import type { ProviderResult } from "@/lib/types";
 import { providerSearchWarnings } from "./providerSearchOutcome";
@@ -15,10 +16,13 @@ const carSearchDependencies: CarSearchDependencies = {
   rememberResults: rememberProviderResults,
   rememberCohort: rememberCarSearchCohort,
 };
-export async function searchCars(search:LocationBoundCarSearchParams,options:{kayak?:KayakRequestContext;requestId?:string;dependencies?:CarSearchDependencies}={}):Promise<CarSearchResult>{
+export async function searchCars(search:LocationBoundCarSearchParams,options:{kayak?:KayakRequestContext;requestId?:string;providers?:readonly ProviderRegistration<"cars">[];dependencies?:CarSearchDependencies}={}):Promise<CarSearchResult>{
   if(!search.pickupLocation||!search.pickupDate||!search.dropoffDate)return{results:[],status:"invalid-search",warnings:[],providerStatuses:[]};
   const dependencies = options.dependencies ?? carSearchDependencies;
-  const kayak = await dependencies.searchKayak(search, options.kayak);
+  const providerStatuses = await Promise.all(providersFor("cars", options.providers).map(registration =>
+    executeRegisteredProvider(options.dependencies && registration.id === "kayak" ? {...registration, execute:(query, context) => dependencies.searchKayak(query, context.kayak)} : registration, search, options)));
+  const inventory = providerStatuses.flatMap(provider => provider.results);
+  const kayak = providerStatuses.find(provider => provider.provider === "KAYAK sandbox") ?? providerStatuses[0] ?? {provider:"none",status:"skipped" as const,results:[],latencyMs:0};
   console.info("[car-search:provider-diagnostics]", {
     requestId: options.requestId,
     kayakClientIpPresent: Boolean(options.kayak?.clientIp),
@@ -32,15 +36,15 @@ export async function searchCars(search:LocationBoundCarSearchParams,options:{ka
     errorReason: kayak.errorReason,
   });
   await Promise.all([
-    dependencies.rememberResults("car", kayak.results, search),
-    dependencies.rememberCohort(kayak.results, search),
+    dependencies.rememberResults("car", inventory, search),
+    dependencies.rememberCohort(inventory, search),
   ]);
   const warnings = kayak.errorReason === "pickup_time_past"
     ? ["KAYAK could not search this pick-up time because it has already passed at the rental location. Choose a later pick-up time or date."]
-    : providerSearchWarnings([kayak], kayak.results.length);
+    : providerSearchWarnings(providerStatuses, inventory.length);
   // Static fixture prices must never become apparent rental availability.
-  return{results:kayak.results,status:!kayak.results.length && warnings.length ? "unavailable" : "available",warnings,providerStatuses:[kayak],
-    unsupported: !kayak.results.length && kayak.status === "skipped" && (kayak.errorReason === "unsupported_search" || kayak.errorReason === "unsupported_location")};
+  return{results:inventory,status:!inventory.length && warnings.length ? "unavailable" : "available",warnings,providerStatuses,
+    unsupported: !inventory.length && kayak.status === "skipped" && (kayak.errorReason === "unsupported_search" || kayak.errorReason === "unsupported_location")};
 }
 const KAYAK_CAR_ID_PREFIX = "kayak-sandbox:";
 

@@ -28,7 +28,7 @@ Investigation basis: prior website/Android/iOS forensic evidence, consolidated S
 |---|---|---|
 | U0 | Complete (local) | Existing branch histories preserved; native baseline 2436/2436 and focused backend policy/contract baseline 30/30 passed; full backend baseline 5473/5473 passed |
 | U1 | Implemented; wider acceptance in U7 | Typed identities including metropolitan scope, dynamic native airports, authenticated code/ID admission, shared Unicode/rank, bounded/cancellable discovery and hotel composition/pet restoration. Final combined focused suite 43/43; restoration/catalogue 12/12; native focused 49/49; final web/mobile TypeScript both passed. Discovery cancellation/rapid-input and full cross-consumer acceptance remain U7 checks. |
-| U2 | Pending | Active approved provider registration/context/capabilities |
+| U2 | Implemented; neutral projection in U4 | Active registrations consumed by flight/hotel/car services; existing flight capability module now consumed by registration; authentic context retained and no secrets added. Three centrally injected test adapters execute through product services. Focused 16/16; TypeScript verification recorded separately. |
 | U3 | Pending | Product orchestration and hotel batch ownership |
 | U4 | Pending | Neutral provenance/snapshots/final accounting |
 | U5 | Pending | Shared lifecycle and connected readers |
@@ -42,3 +42,5 @@ Evidence directory: outputs/search-unification-implementation-2026-11-24 outside
 Physical iOS validation and actual supplier acceptance are not available from Windows/local fixture tests. Android KAYAK403 remains open/external-rule unknown; no spoofing or live supplier test permitted. Preserve notice exactly: “Results are not bookable at this time. Live results will be available soon!!!”
 
 U1 decisions: metropolitan selections are representable but are not silently admitted as flight airports; city selection still requires explicit airport refinement. KAYAK unsupported pet, child, room-composition and non-default driver-age criteria remain explicit limitations rather than invented supplier parameters. Native source adoption requires a future authorized release; no installed app has changed. Dynamic-import test harness keeps React Native ambient types outside the server type graph.
+
+U2: criteria needing provider location resolution are admitted inside existing adapters, never by inventing a provider location ID for capability probing. Provider mode/environment declarations do not supersede existing credential, feature, production display-policy or upstream authorization gates. No provider permission is inferred. Test fixtures currently prove service participation; truthful public provenance/actions and web/native inheritance are U4/U7 acceptance, not claimed yet.
