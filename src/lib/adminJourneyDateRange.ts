@@ -1,5 +1,6 @@
 import { activityCustomDateBound, validActivityUtcInstant } from "./adminActivityDateQuery";
-import { adminRollingRange } from "./adminReportingRanges";
+import { adminLocalDate } from "./adminLocalTime";
+import { adminCustomDateRange, adminRollingRange } from "./adminReportingRanges";
 
 /** UI-only date range selection for Admin Journeys.
  * The journey service still receives only its documented ISO UTC bounds.
@@ -11,6 +12,7 @@ export const JOURNEY_ALL_TIME_FROM = "1970-01-01T00:00:00.000Z";
 export type JourneyDateParams = Record<string, string | string[] | undefined>;
 
 const dayMs = 86_400_000;
+const calendarDate = /^\d{4}-\d{2}-\d{2}$/;
 
 function one(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
@@ -22,6 +24,13 @@ export function selectedJourneyRange(raw: JourneyDateParams): JourneyDateRange {
   // Older URLs and identity-activity drill-downs may contain only explicit
   // dates; they should not be silently reinterpreted as a 24-hour preset.
   return one(raw.from) || one(raw.to) || one(raw.cursor) ? "custom" : "today";
+}
+
+/** Only date-only selections can request civil-day validation from the server reader. */
+export function journeyCalendarTimeZone(raw: JourneyDateParams, timeZone: string): string | undefined {
+  return selectedJourneyRange(raw) === "custom" && calendarDate.test(one(raw.from)) && calendarDate.test(one(raw.to))
+    ? timeZone
+    : undefined;
 }
 
 export function journeyWindow(raw: JourneyDateParams, now: Date, timeZone = "UTC"): { from?: string; to?: string } {
@@ -37,8 +46,12 @@ export function journeyWindow(raw: JourneyDateParams, now: Date, timeZone = "UTC
     return { from: bounds.from, to: cursor ? undefined : matchingCutoff ? toValue : bounds.to };
   }
   if (range === "custom") {
-    const from = fromValue && activityCustomDateBound(fromValue, "from", timeZone);
-    const to = toValue && activityCustomDateBound(toValue, "to", timeZone, now);
+    const calendarZone = journeyCalendarTimeZone(raw, timeZone);
+    const calendar = calendarZone ? adminCustomDateRange(fromValue, toValue, now, calendarZone) : null;
+    // Leave invalid date-only input to the reader's strict timestamp validation.
+    if (calendarZone && !calendar) return {};
+    const from = calendar ? calendar.from.toISOString() : fromValue && activityCustomDateBound(fromValue, "from", timeZone);
+    const to = calendar ? calendar.to.toISOString() : toValue && activityCustomDateBound(toValue, "to", timeZone, now);
     // A continuation already carries the fixed upper cutoff of a partial present day.
     const useCursorCutoff = cursor && to !== toValue && to === now.toISOString();
     return {
@@ -53,4 +66,16 @@ export function journeyWindow(raw: JourneyDateParams, now: Date, timeZone = "UTC
     : range === "90d" ? new Date(now.getTime() - 90 * dayMs).toISOString()
     : adminRollingRange(range, now, timeZone).from;
   return { from, to };
+}
+
+/** A detail opened from a partial day keeps the observed upper bound of its list. */
+export function journeyDetailCalendarWindow(raw: JourneyDateParams, now: Date, timeZone: string) {
+  const window = journeyWindow(raw, now, timeZone);
+  const asOf = one(raw.asOf);
+  if (!journeyCalendarTimeZone(raw, timeZone) || !validActivityUtcInstant(asOf) || !window.from
+      || asOf <= window.from || asOf > now.toISOString() || raw.to !== adminLocalDate(now, timeZone)
+      || adminLocalDate(new Date(asOf), timeZone) !== raw.to) {
+    return window;
+  }
+  return { ...window, to: asOf };
 }

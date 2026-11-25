@@ -232,11 +232,10 @@ export function parseAdminJourneyQuery(
   const toDate = new Date(to);
   const start = fromDate.getTime();
   const end = toDate.getTime();
-  // The explicit epoch anchor is reserved for the All time preset. Every other
-  // interval retains the existing 90-day validation boundary.
+  // The epoch anchor is reserved for All time. Only internal callers supply
+  // a validated calendar zone when converting a civil reporting range.
   const isAllTime = from === "1970-01-01T00:00:00.000Z";
-  const overviewZone = kind === "summary" ? calendarTimeZone : undefined;
-  if (start >= end || end > now.getTime() || (!isAllTime && adminReportingWindowExceedsLimit(fromDate, toDate, now, overviewZone))) {
+  if (start >= end || end > now.getTime() || (!isAllTime && adminReportingWindowExceedsLimit(fromDate, toDate, now, calendarTimeZone))) {
     return invalid("from", "Use a past UTC time range of more than zero and at most 90 days, or select All time.");
   }
   if (scope.identity === "guest" && scope.userId) return invalid("userId", "A guest filter cannot name a registered account.");

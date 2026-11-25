@@ -10,8 +10,8 @@ const controls = readFileSync("src/components/admin/JourneyDateRangeFields.tsx",
 const sharedControls = readFileSync("src/components/admin/AdminOperationalDateRangeFields.tsx", "utf8");
 
 test("journey metrics are scoped to one returned list reporting window", () => {
-  assert.match(list, /adminJourneys\.summary\(\{ \.\.\.withoutPagination\(raw\), \.\.\.list\.data\.scope, environment \}\)/);
-  assert.match(list, /adminJourneys\.list\(input\)/);
+  assert.match(list, /adminJourneys\.summary\(\{ \.\.\.withoutPagination\(raw\), \.\.\.list\.data\.scope, environment \}, calendarTimeZone\)/);
+  assert.match(list, /adminJourneys\.list\(input, calendarTimeZone\)/);
   assert.doesNotMatch(list, /Promise\.all\(\[\s*adminJourneys\.list/);
 });
 test("headline metrics report recorded funnel stages, not correlation as a journey stage", () => {
@@ -70,7 +70,7 @@ test("Journeys directory shares Users styling without modifying consent-aware da
   assert.match(list, /buildAdminSearchProviderOptions\(getProviderIntegrationStatuses\(\), one\(raw\.provider\) \|\| null\)/);
   assert.doesNotMatch(list, /name="environment" label="Environment"|name="provider" type="search"/);
   assert.match(list, /clearFieldNamesOnChange=\{\["userId", "visitorId"\]\}/);
-  assert.match(list, /adminJourneys\.list\(input\)/);
+  assert.match(list, /adminJourneys\.list\(input, calendarTimeZone\)/);
   assert.match(list, /Only eligible consented journeys are included/);
   assert.match(sharedControls, /<SearchMonitorSelect label="Date range"/);
   assert.match(controls, /align="end"/);
@@ -128,7 +128,7 @@ test("Visitor Journeys keeps all eight records fields and the Action link visibl
   for (const name of ["Last activity", "Identity", "Products", "Providers", "Searches", "Observed stages", "Events", "Action"]) {
     assert.ok(list.includes(`data-label="${name}"`), `Journey rows need responsive ${name} data`);
   }
-  assert.match(list, /href=\{detailHref\(journey\.id, list\.data\.scope, range\)\}/);
+  assert.match(list, /href=\{detailHref\(journey\.id, list\.data\.scope, range, calendarDates, partialLastDay\)\}/);
   assert.match(list, /aria-label=\{`View activity for/);
   assert.match(list, /View activity/);
   assert.match(list, /CopyIdentityId id=\{identityId\}/);

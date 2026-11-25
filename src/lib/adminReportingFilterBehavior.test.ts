@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { activityCustomDateBound, normalizeUserActivityQuery } from "./adminActivityDateQuery";
+import { activityCalendarRangeIssue, activityCustomDateBound, normalizeUserActivityQuery } from "./adminActivityDateQuery";
 import { deviceTodayWindow } from "./adminDeviceHistory";
 import { resetStaleHandoffDateCursor, resolveHandoffDateRange } from "./adminHandoffDateRange";
 import { activityWindow, parseActivityFilters } from "./adminIdentityActivity";
@@ -11,10 +11,11 @@ import { parsePageHistoryQuery } from "./adminPageHistory";
 import { journeyWindow, selectedJourneyRange } from "./adminJourneyDateRange";
 import { resetStaleJourneyDateCursor } from "./adminJourneyDateCursor";
 import { encodeAdminJourneyCursor } from "@/services/adminJourneyContract";
-import { encodeAdminOperationalCursor } from "@/services/adminOperationalReadContract";
+import { encodeAdminOperationalCursor, parseAdminHandoffQuery, parseAdminSearchActivityQuery } from "@/services/adminOperationalReadContract";
 
 const searchActivity = readFileSync("src/app/admin/searches/activity/page.tsx", "utf8");
 const searchControls = readFileSync("src/components/admin/AdminOperationalDateRangeFields.tsx", "utf8");
+const handoffsPage = readFileSync("src/app/admin/redirects/page.tsx", "utf8");
 const journeys = readFileSync("src/app/admin/journeys/page.tsx", "utf8");
 const journeyControls = readFileSync("src/components/admin/JourneyDateRangeFields.tsx", "utf8");
 
@@ -92,6 +93,38 @@ test("custom clock values are localized while explicit investigation instants st
   const explicit = "2026-03-08T07:15:31.000Z";
   assert.equal(activityCustomDateBound(explicit, "from", timeZone), explicit);
   assert.equal(activityCustomDateBound(explicit, "from", "Africa/Lagos"), explicit);
+});
+
+test("Search Activity and Handoffs accept 90 civil dates across fall-back and reject 91", () => {
+  const now = new Date("2026-11-04T12:00:00.000Z");
+  const timeZone = "America/New_York";
+  const dates = { range: "custom", from: "2026-08-07", to: "2026-11-04" };
+  const expected = { from: "2026-08-07T04:00:00.000Z", to: "2026-11-05T05:00:00.000Z" };
+  assert.equal(activityCalendarRangeIssue(dates, now, timeZone), null);
+  assert.ok(activityCalendarRangeIssue({ ...dates, from: "2026-08-06" }, now, timeZone));
+  assert.ok(activityCalendarRangeIssue({ ...dates, to: "2026-11-05" }, now, timeZone));
+  assert.equal(Date.parse(expected.to) - Date.parse(expected.from), (90 * 24 + 1) * 3_600_000);
+  assert.equal(activityCustomDateBound(dates.from, "from", timeZone), expected.from);
+  assert.equal(activityCustomDateBound(dates.to, "to", timeZone), expected.to);
+  assert.deepEqual(resolveHandoffDateRange(dates, now, timeZone), { range: "custom", ...expected });
+
+  // The readers and legacy investigation links still receive exact UTC bounds.
+  assert.equal(activityCalendarRangeIssue(expected, now, timeZone), null);
+  const params = new URLSearchParams(expected);
+  assert.equal(parseAdminSearchActivityQuery(params, "staging").status, "ok");
+  const handoffs = parseAdminHandoffQuery(params, "staging");
+  assert.equal(handoffs.status, "ok");
+  if (handoffs.status !== "ok") return;
+  const cursor = encodeAdminOperationalCursor("handoffs", handoffs.data.scope, {
+    at: "2026-11-04T10:00:00.000Z", id: "handoff_123",
+  });
+  const nextPage = { ...dates, cursor };
+  const later = new Date("2026-11-04T13:00:00.000Z");
+  assert.equal(resetStaleHandoffDateCursor(nextPage, resolveHandoffDateRange(nextPage, later, timeZone)), nextPage);
+  assert.equal(parseAdminHandoffQuery(new URLSearchParams({ ...expected, cursor }), "staging").status, "ok");
+
+  assert.match(searchActivity, /activityCalendarRangeIssue\(raw, now, timeZone\)[\s\S]*if \(rangeIssue\)[\s\S]*searchActivity\.list/);
+  assert.match(handoffsPage, /activityCalendarRangeIssue\(supplied, now, timeZone\)[\s\S]*rangeIssue[\s\S]*: await adminOperationalReads\.handoffs\.list/);
 });
 
 test("Today continuations keep their cutoff in the same zone and restart when the date window changes", () => {

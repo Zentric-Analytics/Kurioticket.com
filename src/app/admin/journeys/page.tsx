@@ -3,12 +3,12 @@ import Link from "next/link";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
 import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeFields";
-import { journeyWindow, selectedJourneyRange } from "@/lib/adminJourneyDateRange";
+import { journeyCalendarTimeZone, journeyWindow, selectedJourneyRange } from "@/lib/adminJourneyDateRange";
 import { resetStaleJourneyDateCursor } from "@/lib/adminJourneyDateCursor";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
-import { formatViewerTimestamp } from "@/lib/adminLocalTime";
+import { adminLocalDate, formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { buildAdminSearchProviderOptions } from "@/lib/adminSearchProviderOptions";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
@@ -34,6 +34,9 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
   // The legacy backend defaults each call to its own moving seven-day window.
   // Pin both reads to the same explicit bounds, including cursor continuations.
   const range = selectedJourneyRange(raw);
+  const calendarTimeZone = journeyCalendarTimeZone(raw, timeZone);
+  const calendarDates = calendarTimeZone ? { from: one(raw.from), to: one(raw.to) } : undefined;
+  const partialLastDay = calendarDates && calendarDates.to === adminLocalDate(now, timeZone);
   const fixed = journeyWindow(raw, now, timeZone);
   const providerOptions = buildAdminSearchProviderOptions(getProviderIntegrationStatuses(), one(raw.provider) || null);
   // Always constrain this view to the deployment's configured environment.
@@ -41,9 +44,9 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
   const environment = getPublicEnvironment();
   const input: Record<string, unknown> = { ...withoutPagination(raw), ...fixed, environment, limit: one(raw.limit) || "25" };
   if (one(raw.cursor)) input.cursor = one(raw.cursor);
-  const list = await adminJourneys.list(input);
+  const list = await adminJourneys.list(input, calendarTimeZone);
   const summary = list.status === "ok"
-    ? await adminJourneys.summary({ ...withoutPagination(raw), ...list.data.scope, environment })
+    ? await adminJourneys.summary({ ...withoutPagination(raw), ...list.data.scope, environment }, calendarTimeZone)
     : null;
 
   return (
@@ -185,7 +188,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
                         </td>
                         <td data-label="Events" className="px-2 py-2.5 tabular-nums text-[#334155]">{journey.eventCount}</td>
                         <td data-label="Action" className="px-2 py-2.5">
-                          <Link href={detailHref(journey.id, list.data.scope, range)}
+                          <Link href={detailHref(journey.id, list.data.scope, range, calendarDates, partialLastDay)}
                             aria-label={`View activity for ${journey.identity.kind} journey ${journey.id}`}
                             className="inline-flex min-h-8 items-center text-[12px] font-medium text-[#004BB8] underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
                             View activity
@@ -232,10 +235,18 @@ function Metric({label,value}:{label:string;value:number}) {
     <p className="mt-1 text-[18px] font-medium leading-6 tabular-nums text-[#020617]">{value.toLocaleString()}</p>
   </div>;
 }
-function detailHref(id: string, scope: { from: string; to: string; environment: string; identity: string; product?: string; provider?: string; stage?: string; userId?: string; visitorId?: string }, range: string) {
+function detailHref(
+  id: string, scope: { from: string; to: string; environment: string; identity: string; product?: string; provider?: string; stage?: string; userId?: string; visitorId?: string },
+  range: string, calendarDates?: { from: string; to: string }, partialLastDay = false,
+) {
   const p = new URLSearchParams();
   for (const [key, value] of Object.entries(scope)) if (value) p.set(key, value);
   p.set("range", range);
+  if (calendarDates) {
+    p.set("from", calendarDates.from);
+    p.set("to", calendarDates.to);
+    if (partialLastDay) p.set("asOf", scope.to);
+  }
   return "/admin/journeys/" + id + "?" + p.toString();
 }
 function cursorHref(raw: Record<string, string | string[] | undefined>, cursor: string) {

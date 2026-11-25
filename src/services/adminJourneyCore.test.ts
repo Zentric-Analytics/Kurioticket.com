@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { Prisma } from "@/generated/prisma/client";
 import { resolveOverviewRange } from "@/lib/adminOverviewRange";
+import { journeyCalendarTimeZone, journeyDetailCalendarWindow, journeyWindow } from "@/lib/adminJourneyDateRange";
 import { createAdminJourneyService, type AdminJourneyDatabase } from "./adminJourneyCore";
 import { parseAdminJourneyQuery } from "./adminJourneyContract";
 
@@ -44,7 +45,7 @@ function coverage(overrides: Record<string, bigint> = {}) {
   };
 }
 
-function fixture(batches: unknown[][] = []) {
+function fixture(batches: unknown[][] = [], clock = now) {
   let authorized = true;
   let available = true;
   let failure = false;
@@ -65,7 +66,7 @@ function fixture(batches: unknown[][] = []) {
   const service = createAdminJourneyService({
     authorize: async () => { authCalls += 1; return authorized; },
     database: () => { databaseCalls += 1; return available ? database : null; },
-    environment: () => "staging", now: () => now,
+    environment: () => "staging", now: () => clock,
   });
   return { service, queries, transactionOptions, calls: () => ({ authCalls, databaseCalls }),
     deny: () => { authorized = false; }, offline: () => { available = false; }, fail: () => { failure = true; } };
@@ -308,6 +309,56 @@ test("the Overview summary accepts 90 local dates spanning fall-back without ext
     assert.equal(result.data.scope.to, input.to);
   }
   assert.equal(f.calls().databaseCalls, 1);
+});
+
+test("Journey list, summary, detail and continuations accept 90 New York dates across fall-back", async () => {
+  const zone = "America/New_York";
+  const clock = new Date("2026-11-25T10:00:00.000Z");
+  const selection = { range: "custom", from: "2026-08-07", to: "2026-11-04" };
+  const bounds = journeyWindow(selection, clock, zone);
+  assert.deepEqual(bounds, { from: "2026-08-07T04:00:00.000Z", to: "2026-11-05T05:00:00.000Z" });
+  const calendarZone = journeyCalendarTimeZone(selection, zone);
+  assert.equal(calendarZone, zone);
+  assert.equal(journeyCalendarTimeZone({ range: "custom", ...bounds }, zone), undefined);
+
+  const f = fixture([
+    [journey(), journey("journey-001")],
+    [journey("journey-001")],
+    [summary()], [{ total: BigInt(0), success: BigInt(0), partial: BigInt(0), failed: BigInt(0) }], [coverage()],
+    [journey()], [event("event-001"), event("event-002")],
+    [journey()], [event("event-002")],
+  ], clock);
+  assert.equal((await f.service.list(bounds)).status, "invalid");
+  assert.equal((await f.service.detail("journey-002", bounds)).status, "invalid");
+  assert.equal((await f.service.list({ ...bounds, calendarTimeZone: zone })).status, "invalid");
+  assert.equal((await f.service.list({ ...bounds, from: "2026-08-07T04:01:00.000Z" }, calendarZone)).status, "invalid");
+  assert.equal(f.calls().databaseCalls, 0);
+
+  const list = await f.service.list({ ...bounds, limit: "1" }, calendarZone);
+  assert.ok(list.status === "ok" && list.data.nextCursor);
+  assert.equal((await f.service.list({ ...bounds, cursor: list.data.nextCursor, limit: "1" }, calendarZone)).status, "ok");
+  assert.equal((await f.service.summary(list.data.scope, calendarZone)).status, "ok");
+  const detail = await f.service.detail("journey-002", { ...bounds, limit: "1" }, calendarZone);
+  assert.ok(detail.status === "ok" && detail.data.nextCursor);
+  assert.equal((await f.service.detail("journey-002", { ...bounds, cursor: detail.data.nextCursor, limit: "1" }, calendarZone)).status, "ok");
+  assert.equal(parseAdminJourneyQuery({ cursor: list.data.nextCursor, environment: "production" }, "list", clock,
+    "staging", undefined, calendarZone).status, "invalid");
+});
+
+test("91 local days are rejected even while the last day is too early to exceed the elapsed cap", () => {
+  const selection = { range: "custom", from: "2026-02-01", to: "2026-05-02" };
+  const clock = new Date("2026-05-02T04:01:00.000Z");
+  assert.deepEqual(journeyWindow(selection, clock, "America/New_York"), {});
+});
+
+test("opening Journey details keeps the list's cutoff while the final local day is in progress", () => {
+  const zone = "America/New_York";
+  const clock = new Date("2026-11-05T04:55:00.000Z");
+  const selection = { range: "custom", from: "2026-08-07", to: "2026-11-04", asOf: "2026-11-05T04:45:00.000Z" };
+  assert.deepEqual(journeyDetailCalendarWindow(selection, clock, zone), {
+    from: "2026-08-07T04:00:00.000Z", to: selection.asOf,
+  });
+  assert.equal(journeyDetailCalendarWindow({ ...selection, asOf: "2026-11-04T03:00:00.000Z" }, clock, zone).to, clock.toISOString());
 });
 
 test("All time cursor preserves consent-aware environment and original historical window", async () => {

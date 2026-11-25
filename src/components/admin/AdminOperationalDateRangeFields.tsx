@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { SearchMonitorSelect } from "./SearchMonitorSelect";
 import { AdminCalendarInput } from "./AdminCalendarInput";
-import { ADMIN_REPORTING_RANGE_OPTIONS, type AdminReportingRange } from "@/lib/adminReportingRanges";
-import { adminCalendarRange, adminLocalDate, adminLocalDateTime, adminLocalDateTimeToDate, formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
+import { adminCustomDateRange, ADMIN_REPORTING_RANGE_OPTIONS, type AdminReportingRange } from "@/lib/adminReportingRanges";
+import { adminLocalDate, adminLocalDateTime, adminLocalDateTimeToDate, formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 
 const MAX_RANGE_MS = 90 * 86_400_000;
 
@@ -71,14 +71,14 @@ export function AdminOperationalDateRangeFields({
   const latest = clock ? adminLocalDateTime(reference, timeZone) : today;
   const start = clock ? clockQueryValue(from, initialFrom, timeZone) : from;
   const end = clock ? clockQueryValue(to, initialTo, timeZone) : to;
-  const dates = clock ? null : adminCalendarRange(from, to, timeZone);
-  const startMs = dates ? dates.from.getTime() : clockTimestamp(start, timeZone);
-  const endMs = dates ? Math.min(dates.to.getTime(), reference.getTime()) : clockTimestamp(end, timeZone);
+  const startMs = clock ? clockTimestamp(start, timeZone) : NaN;
+  const endMs = clock ? clockTimestamp(end, timeZone) : NaN;
   const unchangedOpenBound = initialRange === "custom" && Boolean(from) !== Boolean(to)
     && from === initialDates.from && to === initialDates.to
     && Number.isFinite(clock ? (from ? startMs : endMs) : Date.parse(from || to));
-  const valid = unchangedOpenBound || Boolean((clock || dates) && startMs < endMs
-    && endMs <= reference.getTime() && endMs - startMs <= MAX_RANGE_MS);
+  const valid = unchangedOpenBound || (clock
+    ? startMs < endMs && endMs <= reference.getTime() && endMs - startMs <= MAX_RANGE_MS
+    : adminCustomDateRange(from, to, reference, timeZone) !== null);
   useEffect(() => {
     const form = controls.current?.closest("form");
     if (!form || range !== "custom" || valid) return;

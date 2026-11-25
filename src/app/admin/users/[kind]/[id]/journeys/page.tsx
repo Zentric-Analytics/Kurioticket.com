@@ -9,7 +9,7 @@ import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { decodeActivityJourneyReturn, encodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
-import { JOURNEY_ALL_TIME_FROM } from "@/lib/adminJourneyDateRange";
+import { journeyCalendarTimeZone, JOURNEY_ALL_TIME_FROM } from "@/lib/adminJourneyDateRange";
 import { resetStaleJourneyDateCursor } from "@/lib/adminJourneyDateCursor";
 import { identityJourneyHistoryHref, identityJourneyHistoryQuery } from "@/lib/adminIdentityJourneyHistory";
 import { validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
@@ -82,6 +82,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
   const timeZone = await getAdminViewerTimeZone(session.user.id);
   const now = new Date();
   const raw = resetStaleJourneyDateCursor(await searchParams, now, timeZone);
+  const calendarTimeZone = journeyCalendarTimeZone(raw, timeZone);
   const environment = getPublicEnvironment();
   const requested = identityJourneyHistoryQuery(kind, id, raw, now, environment, timeZone);
   const incomingReturn = decodeActivityJourneyReturn(raw.activityReturn);
@@ -101,7 +102,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
 
   // Validate every scoped query before reading identity or activity. This also
   // pins a continuation to the selected user, date window and environment.
-  const validated = parseAdminJourneyQuery(requested.input, "list", now, environment);
+  const validated = parseAdminJourneyQuery(requested.input, "list", now, environment, undefined, calendarTimeZone);
   if (validated.status !== "ok") return <div className="min-w-0 space-y-4 bg-white">
     {returnLink}
     <AdminEmptyState title="Invalid journey filters"
@@ -143,9 +144,9 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
   const otherActions = accountActions?.status === "ok"
     ? accountActions.data.events.filter(event => event.stage === "ACCOUNT_ACTIVITY")
     : [];
-  const list = operational ? null : await adminJourneys.list(requested.input);
+  const list = operational ? null : await adminJourneys.list(requested.input, calendarTimeZone);
   const summary = list?.status === "ok"
-    ? await adminJourneys.summary(list.data.scope)
+    ? await adminJourneys.summary(list.data.scope, calendarTimeZone)
     : null;
   const filterContext = { ...raw, range: requested.range };
   const preserved = identityJourneyHistoryHref(kind, id, filterContext);
@@ -159,7 +160,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
   const nextOperationalHref = operational && identity.data.nextCursor
     ? (() => {
       const path = identityJourneyHistoryHref(kind, id, {
-        ...filterContext, from: scope.from, to: scope.to,
+        ...filterContext, ...(calendarTimeZone ? {} : { from: scope.from, to: scope.to }),
       });
       return path + (path.includes("?") ? "&" : "?")
         + "activityCursor=" + encodeURIComponent(identity.data.nextCursor!);
@@ -288,7 +289,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
         </div>
         {list.data.nextCursor ? <div className="flex justify-end border-t border-[#E7ECF5] pt-3">
           <Link className={linkStyle} href={identityJourneyHistoryHref(kind, id, {
-            ...filterContext, from: list.data.scope.from, to: list.data.scope.to,
+            ...filterContext, ...(calendarTimeZone ? {} : { from: list.data.scope.from, to: list.data.scope.to }),
           }, list.data.nextCursor)}>Next journeys <ChevronRight size={14} aria-hidden="true" /></Link>
         </div> : null}
       </section>

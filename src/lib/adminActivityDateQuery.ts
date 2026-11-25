@@ -1,7 +1,9 @@
-import { adminRollingRange } from "./adminReportingRanges";
+import { adminRollingRange, validAdminCustomCalendarDates } from "./adminReportingRanges";
 import { adminLocalDate, adminLocalDateTimeToDate, adminStartOfLocalDay, shiftAdminCalendarDate } from "./adminLocalTime";
 
 export type RawActivityQuery = Record<string, string | string[] | undefined>;
+
+const activityDay = /^\d{4}-\d{2}-\d{2}$/;
 
 export function isActivityCalendarValue(value: string | string[] | undefined): value is string {
   return typeof value === "string" && /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2})?$/.test(value);
@@ -13,9 +15,16 @@ export function validActivityUtcInstant(value: string) {
   return Number.isFinite(at.getTime()) && at.toISOString() === value;
 }
 
+/** Check the original civil dates before converting the query to UTC instants. */
+export function activityCalendarRangeIssue({ from, to }: RawActivityQuery, now: Date, timeZone: string) {
+  if (typeof from !== "string" || typeof to !== "string" || !activityDay.test(from) || !activityDay.test(to)) return null;
+  return validAdminCustomCalendarDates(from, to, adminLocalDate(now, timeZone))
+    ? null : { field: "to", message: "Choose a date range of up to 90 days, ending no later than today." };
+}
+
 /** Date-only filters use local calendar days. Timestamp bookmarks keep their instant. */
 export function activityCustomDateBound(value: string, edge: "from" | "to", timeZone: string, now?: Date): string {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  if (!activityDay.test(value)) {
     return adminLocalDateTimeToDate(value, timeZone)?.toISOString() ?? value;
   }
   const day = edge === "to" ? shiftAdminCalendarDate(value, 1) : value;

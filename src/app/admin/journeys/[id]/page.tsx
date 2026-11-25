@@ -7,6 +7,8 @@ import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackL
 import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { decodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
+import { journeyCalendarTimeZone, journeyDetailCalendarWindow } from "@/lib/adminJourneyDateRange";
+import { resetStaleJourneyDateCursor } from "@/lib/adminJourneyDateCursor";
 import { adminJourneys } from "@/services/adminJourneyService";
 
 export const metadata = { title: "Admin Journey Detail" };
@@ -14,10 +16,14 @@ export const metadata = { title: "Admin Journey Detail" };
 export default async function AdminJourneyDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params;
   const timeZone = await getAdminViewerTimeZone();
-  const raw = await searchParams;
-  const backendRaw = { ...raw }; delete backendRaw.range; delete backendRaw.activityReturn;
-  const input: Record<string, unknown> = { ...backendRaw, limit: one(raw.limit) || "50" };
-  const result = await adminJourneys.detail(id, input);
+  const supplied = await searchParams;
+  const now = new Date();
+  const calendarTimeZone = journeyCalendarTimeZone(supplied, timeZone);
+  const raw = calendarTimeZone ? resetStaleJourneyDateCursor(supplied, now, calendarTimeZone, id) : supplied;
+  const fixed = calendarTimeZone ? journeyDetailCalendarWindow(raw, now, calendarTimeZone) : {};
+  const backendRaw = { ...raw }; delete backendRaw.range; delete backendRaw.activityReturn; delete backendRaw.asOf;
+  const input: Record<string, unknown> = { ...backendRaw, ...fixed, limit: one(raw.limit) || "50" };
+  const result = await adminJourneys.detail(id, input, calendarTimeZone);
   if (result.status === "not_found") notFound();
 
   return (

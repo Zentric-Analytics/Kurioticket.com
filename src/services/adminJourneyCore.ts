@@ -457,15 +457,15 @@ export function createAdminJourneyService(dependencies: Dependencies) {
   }
 
   return {
-    list(input: AdminJourneyQueryInput = {}): Promise<AdminJourneyResult<AdminJourneyList>> {
+    list(input: AdminJourneyQueryInput = {}, calendarTimeZone?: string): Promise<AdminJourneyResult<AdminJourneyList>> {
       return read<AdminJourneyList>("list", input, async (tx, query) => {
         const records = await tx.$queryRaw<JourneyRecord[]>(listSql(query));
         const page = records.slice(0, query.limit);
         const last = page.at(-1);
         return { status: "ok", data: { scope: query.scope, items: page.map(journeyDto), nextCursor: records.length > query.limit && last ? encodeAdminJourneyCursor({ version: 1, kind: "list", at: last.lastEventAt.toISOString(), id: last.id, scope: query.scope }) : null } };
-      });
+      }, undefined, calendarTimeZone);
     },
-    detail(journeyId: string, input: AdminJourneyQueryInput = {}): Promise<AdminJourneyResult<AdminJourneyDetail>> {
+    detail(journeyId: string, input: AdminJourneyQueryInput = {}, calendarTimeZone?: string): Promise<AdminJourneyResult<AdminJourneyDetail>> {
       return read<AdminJourneyDetail>("detail", input, async (tx, query) => {
         const [journey] = await tx.$queryRaw<JourneyRecord[]>(listSql(query, journeyId));
         if (!journey) return { status: "not_found" };
@@ -473,7 +473,7 @@ export function createAdminJourneyService(dependencies: Dependencies) {
         const page = records.slice(0, query.limit);
         const last = page.at(-1);
         return { status: "ok", data: { scope: query.scope, journey: journeyDto(journey), events: page.map(eventDto), nextCursor: records.length > query.limit && last ? encodeAdminJourneyCursor({ version: 1, kind: "detail", journeyId, at: last.createdAt.toISOString(), id: last.id, scope: query.scope }) : null } };
-      }, journeyId);
+      }, journeyId, calendarTimeZone);
     },
     summary(input: AdminJourneyQueryInput = {}, calendarTimeZone?: string): Promise<AdminJourneyResult<AdminJourneySummary>> {
       return read<AdminJourneySummary>("summary", input, async (tx, query) => {

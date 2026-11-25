@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { ProviderHandoffFilters } from "@/components/admin/ProviderHandoffFilters";
+import { activityCalendarRangeIssue } from "@/lib/adminActivityDateQuery";
 import { resetStaleHandoffDateCursor, resolveHandoffDateRange, withHandoffDateScope } from "@/lib/adminHandoffDateRange";
 import { buildHandoffProviderOptions } from "@/lib/adminHandoffProviderOptions";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
@@ -28,7 +29,10 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
   const scopedRaw = dateWindow.range === "custom" ? { ...raw, range: "custom" } : backendRaw;
   const params = toParams(backendRaw);
   if (!params.has("limit")) params.set("limit", "50");
-  const result = await adminOperationalReads.handoffs.list(params);
+  const rangeIssue = dateWindow.range === "custom" ? activityCalendarRangeIssue(supplied, now, timeZone) : null;
+  const result = rangeIssue
+    ? { status: "invalid" as const, issues: [rangeIssue] }
+    : await adminOperationalReads.handoffs.list(params);
 
   if (embedded) return (
     <>

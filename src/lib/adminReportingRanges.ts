@@ -72,8 +72,8 @@ export function adminCustomDateRange(
   return { from: range.from, to: range.to < now ? range.to : now };
 }
 
-/** The elapsed API cap also permits an Overview-selected civil range that
- * spans a clock change. The zone is supplied by the calling server component. */
+/** The elapsed API cap also permits a server-converted calendar range that
+ * spans a clock change. The calling server component supplies the zone. */
 export function adminReportingWindowExceedsLimit(from: Date, to: Date, now: Date, calendarTimeZone?: string): boolean {
   if (to.getTime() - from.getTime() <= MAX_CUSTOM_REPORTING_DAYS * DAY_MS) return false;
   const zone = normalizeAdminTimeZone(calendarTimeZone);

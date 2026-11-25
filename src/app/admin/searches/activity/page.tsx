@@ -13,7 +13,7 @@ import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { AdminOperationalDateRangeFields } from "@/components/admin/AdminOperationalDateRangeFields";
 import { SearchMonitorTable } from "@/components/admin/SearchMonitorTable";
 import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
-import { activityCustomDateBound } from "@/lib/adminActivityDateQuery";
+import { activityCalendarRangeIssue, activityCustomDateBound } from "@/lib/adminActivityDateQuery";
 import { adminRollingRange } from "@/lib/adminReportingRanges";
 
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
@@ -74,6 +74,14 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
   const timeZone = await getAdminViewerTimeZone();
   const referenceNow = now.toISOString();
   const range = resolveRange(raw);
+  const rangeIssue = range === "custom" ? activityCalendarRangeIssue(raw, now, timeZone) : null;
+  if (rangeIssue) {
+    return (
+      <AdminPageShell title="Search activity" hideHeader>
+        <ReadError status="invalid" issues={[rangeIssue]} />
+      </AdminPageShell>
+    );
+  }
   const params = toBackendParams(raw, range, now, timeZone);
   params.set("environment", currentEnvironment);
   const listParams = new URLSearchParams(params);

@@ -126,20 +126,36 @@ function scope(kind: IdentityKind, id: string, filters: ActivityFilters, environ
 export function encodeActivityCursor(row: Pick<ActivityRow, "id" | "at">, kind: IdentityKind, id: string, filters: ActivityFilters, environment: PublicEnvironment) {
   return Buffer.from(JSON.stringify({ v: 1, at: row.at.toISOString(), id: row.id, scope: scope(kind, id, filters, environment) }), "utf8").toString("base64url");
 }
-/** Bind cursor to the selected identity and every filter, never accept it as authorization. */
-export function decodeActivityCursor(input: string | undefined, kind: IdentityKind, id: string, filters: ActivityFilters, environment: PublicEnvironment): ActivityCursor | null | undefined {
-  if (!input) return undefined;
+function readActivityCursor(input: string): (ActivityCursor & { scope: string }) | null {
   if (input.length > 1100 || !/^[A-Za-z0-9_-]+$/.test(input)) return null;
   try {
     const item: unknown = JSON.parse(Buffer.from(input, "base64url").toString("utf8"));
     if (!item || typeof item !== "object") return null;
     const x = item as {v?: unknown; id?: unknown; at?: unknown; scope?: unknown};
-    if (x.v !== 1 || x.scope !== scope(kind, id, filters, environment)
+    if (x.v !== 1 || typeof x.scope !== "string"
       || typeof x.id !== "string" || !/^[jesr]-[a-z0-9_-]{6,80}$/i.test(x.id)
       || typeof x.at !== "string" || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(x.at)) return null;
     if (!Number.isFinite(new Date(x.at).getTime())) return null;
-    return { id: x.id, at: x.at };
+    return { id: x.id, at: x.at, scope: x.scope };
   } catch { return null; }
+}
+/** Used only to recover the reporting cutoff before full cursor validation. */
+export function activityCursorWindow(input: string): { from: string; to: string } | null {
+  const cursor = readActivityCursor(input);
+  if (!cursor) return null;
+  try {
+    const values: unknown = JSON.parse(cursor.scope);
+    if (!Array.isArray(values)) return null;
+    const [, , , , , , from, to] = values;
+    return typeof from === "string" && typeof to === "string"
+      && validActivityUtcInstant(from) && validActivityUtcInstant(to) && from < to ? { from, to } : null;
+  } catch { return null; }
+}
+/** Bind cursor to the selected identity and every filter, never accept it as authorization. */
+export function decodeActivityCursor(input: string | undefined, kind: IdentityKind, id: string, filters: ActivityFilters, environment: PublicEnvironment): ActivityCursor | null | undefined {
+  if (!input) return undefined;
+  const cursor = readActivityCursor(input);
+  return cursor?.scope === scope(kind, id, filters, environment) ? { id: cursor.id, at: cursor.at } : null;
 }
 /** Keep text searching consistent for modern stages and older activity rows. */
 export function legacyStageLabelMatchesQuery(
