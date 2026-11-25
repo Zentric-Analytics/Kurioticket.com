@@ -39,3 +39,13 @@ mobile-only changes. OTA and coalesced JS overlays wait for that deployment's
 existing exact-SHA health/readiness verification. A failed backend prevents OTA;
 independent native work retains its result/failure evidence. One shared promise
 prevents duplicate web deployment within the same evaluation.
+
+Genuine website acceptance found a separate flight return mismatch: staging mixed
+cohorts were written to session storage, but the reader deliberately rejects
+sandbox inventory there. The result was an expired-results prompt immediately
+after valid detail navigation. A bounded, storage-scope WeakMap now retains one
+public sandbox-containing cohort only in tab memory, preserving all original
+identities and server expiry without persistent sandbox storage. Production
+display-only rows remain excluded; legacy persistent sandbox records stay invalid.
+Regression coverage includes1700mixed results, storage-scope isolation, immutable
+copies, replacement/expiry and unchanged production storage restrictions.
