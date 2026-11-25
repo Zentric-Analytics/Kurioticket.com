@@ -12,6 +12,7 @@ import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
 import { getProviderResult } from "@/services/travel/providerResultCache";
 import { recordProviderHandoffActivity } from "@/services/providerHandoffActivity";
 import { handoffTrackingId } from "@/services/providerHandoffStore";
+import { kayakHotelSnapshot } from "@/services/travel/hotelOperationalBinding";
 
 export function previewAllowsKayakSandboxHandoff(
   body: { id?: string; type?: "flight" | "hotel" },
@@ -132,10 +133,17 @@ export async function POST(request: Request) {
 
   // Return the verified provider URL immediately. Optional identity/analytics
   // failures must never turn a valid View deal action into an error or delay.
+  const operationalHotelSnapshotId = staging && hotelTarget?.id === body.id ? kayakHotelSnapshot(hotelTarget) : undefined;
+  // If the cache ever returns a different hotel ID, do not trust caller-side
+  // correlation in its place. Keep the existing redirect behavior independent.
+  const mayUseClientReference = !operationalHotelSnapshotId && (!hotelTarget || hotelTarget.id === body.id);
   const activity = {
     type: body.type, provider, route, price, currency,
     destinationUrl: url.toString(), sourcePage: body.sourcePage || "unknown", resultId: body.id,
-    requestId: handoffTrackingId(body.requestId), operationalRequestId: handoffTrackingId(body.operationalRequestId),
+    requestId: operationalHotelSnapshotId || mayUseClientReference ? handoffTrackingId(body.requestId) : undefined,
+    // Scoped hotel inventory must not fall back to a caller-supplied reference.
+    operationalRequestId: mayUseClientReference ? handoffTrackingId(body.operationalRequestId) : undefined,
+    ...(operationalHotelSnapshotId ? { operationalHotelSnapshotId } : {}),
     handoffId: handoffTrackingId(body.handoffId),
   };
   after(() => recordProviderHandoffActivity(request, activity));

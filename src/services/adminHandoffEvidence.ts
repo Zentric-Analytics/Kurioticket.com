@@ -37,6 +37,7 @@ function verifiedSearchJoin(includeCanonical = true): Prisma.Sql {
     SELECT COALESCE(
       ${includeCanonical ? Prisma.sql`(SELECT e."searchHistoryId" FROM "JourneyEvent" e
         WHERE e."redirectLogId" = r."id"
+          AND r."metadata"->>'operationalHotelSnapshotId' IS NULL
           AND e."type"::text = 'PROVIDER_HANDOFF_STARTED'
           AND e."searchHistoryId" IS NOT NULL LIMIT 1)` : Prisma.sql`NULL::text`},
       (SELECT s."id" FROM "SearchHistory" s
@@ -48,9 +49,16 @@ function verifiedSearchJoin(includeCanonical = true): Prisma.Sql {
           AND ${sessionEvidence}
           AND s."query"->>'operationalSessionId' = r."metadata"->>'operationalSessionId'
           AND (r."userId" IS NOT NULL OR s."visitorId" IS NOT DISTINCT FROM r."visitorId")
+          AND (r."metadata"->>'operationalHotelSnapshotId' IS NULL OR (
+            r."type"::text = 'HOTEL' AND r."provider" = 'KAYAK sandbox'
+            AND s."query"->>'operationalHotelSnapshotId' = r."metadata"->>'operationalHotelSnapshotId'
+            AND split_part(r."metadata"->>'resultId', ':', 1) = 'kayak-sandbox'
+            AND split_part(r."metadata"->>'resultId', ':', 2) = r."metadata"->>'operationalHotelSnapshotId'
+          ))
         LIMIT 1),
       (SELECT s."id" FROM "SearchHistory" s
-        WHERE r."metadata"->>'requestId' ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+        WHERE r."metadata"->>'operationalHotelSnapshotId' IS NULL
+          AND r."metadata"->>'requestId' ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
           AND s."requestId" = r."metadata"->>'requestId'
           AND s."query"->>'environment' = r."metadata"->>'environment'
           AND s."type"::text = r."type"::text

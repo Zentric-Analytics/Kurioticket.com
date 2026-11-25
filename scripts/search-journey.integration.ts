@@ -17,6 +17,7 @@ import { lockVisitorAccount } from "../src/services/visitorActivityIdentity";
 import { prepareOperationalSearchSession, operationalSessionMetadata, operationalSessionCookieName } from "../src/lib/operationalSearchSession";
 import { getPublicEnvironment } from "../src/lib/stagingSafety";
 import { handoffEvidenceForActivitySql } from "../src/services/adminHandoffEvidence";
+import { createHotelOperationalBindingStore } from "../src/services/travel/hotelOperationalBinding";
 
 // This suite creates its own disposable database and refuses every remote target.
 const target = new URL(process.env.DATABASE_URL || "http://invalid");
@@ -723,5 +724,90 @@ test("signed Essential-only handoffs keep operational evidence without optional 
   } finally {
     if (previous === undefined) delete process.env.AUTH_SECRET;
     else process.env.AUTH_SECRET = previous;
+  }
+});
+
+test("server-owned hotel bindings recover missing references without Analytics, reject other ownership and survive delayed history", async () => {
+  const previousSecret = process.env.AUTH_SECRET;
+  const previousMode = process.env.TRAVEL_PROVIDER_MODE;
+  process.env.AUTH_SECRET = "synthetic-hotel-binding-integration-secret-12345";
+  process.env.TRAVEL_PROVIDER_MODE = "staging";
+  try {
+    const bindings = createHotelOperationalBindingStore(() => db);
+    const owner = await account();
+    const otherOwner = await account();
+    const url = "https://fixture.example/api/redirect";
+    const headers = { origin: "https://fixture.example", "sec-fetch-site": "same-origin" };
+    for (const userId of [null, owner.id]) {
+      const prepared = prepareOperationalSearchSession(new Request(url, { method: "POST", headers }));
+      const otherSession = prepareOperationalSearchSession(new Request(url, { method: "POST", headers }));
+      assert.ok(prepared && otherSession);
+      const requestId = randomUUID(), snapshot = randomUUID(), unrelatedId = randomUUID();
+      const resultId = "kayak-sandbox:" + snapshot + ":210:2";
+      const query = { ...operationalSessionMetadata(prepared.reference), operationalHotelSnapshotId: snapshot };
+      assert.equal(await bindings.remember(snapshot, requestId, prepared.reference, userId), true);
+      assert.equal(await bindings.remember(snapshot, unrelatedId, prepared.reference, userId), false);
+      // A different search with identical owner/session/product is not evidence.
+      const unrelated = await journey.recordSearchHistory({ userId, visitorId: null, requestId: unrelatedId, type: "HOTEL",
+        destination: "Paris, France", query: { ...query, operationalHotelSnapshotId: randomUUID() }, resultCount: 3, status: "SUCCESS", latencyMs: 5 });
+      assert.ok(unrelated);
+      const input = { ...handoff({ provider: "KAYAK sandbox", resultId, operationalHotelSnapshotId: snapshot }), operationalRequestId: unrelatedId, requestId: unrelatedId };
+      const post = async (activity: ProviderHandoffActivity, actor: string | null, credential?: string) => {
+        let receiptId: string | undefined;
+        const request = new Request(url, { method: "POST", headers: { ...headers, ...(credential ? { cookie: operationalSessionCookieName + "=" + credential } : {}) } });
+        await recordProviderHandoffActivity(request, activity, {
+          identity: async () => ({ userId: actor, visitorId: null }),
+          redirect: async value => {
+            const receipt = await handoffs.recordRedirect(value);
+            receiptId = receipt?.id;
+            return receipt;
+          },
+          event: async () => { assert.fail("no optional analytics"); },
+          journey: async () => { assert.fail("no optional journey"); return null; },
+          hotelBinding: bindings.resolve,
+        });
+        assert.ok(receiptId, "valid provider handoff remains independently recorded");
+        return db.redirectLog.findUniqueOrThrow({ where: { id: receiptId } });
+      };
+      const readLink = async (id: string) => (await db.$queryRaw<Array<{ id: string; searchHistoryId: string | null }>>(handoffEvidenceForActivitySql([id], "staging")))[0]?.searchHistoryId;
+      // The handoff can arrive before the asynchronously recorded search.
+      const receipt = await post(input, userId, prepared.credential);
+      assert.equal(await readLink(receipt.id), null);
+      const metadata = receipt.metadata as Record<string, unknown>;
+      assert.equal(metadata.operationalRequestId, requestId, "server replaces wrong client reference");
+      assert.equal(metadata.requestId, undefined);
+      assert.equal(metadata.operationalHotelSnapshotId, snapshot);
+      const history = await journey.recordSearchHistory({ userId, visitorId: null, requestId, type: "HOTEL",
+        destination: "Paris, France", query, resultCount: 1900, status: "SUCCESS", latencyMs: 8 });
+      assert.ok(history);
+      assert.equal(await readLink(receipt.id), history.id);
+      assert.equal((await post(input, userId, prepared.credential)).id, receipt.id, "retry deduplicates");
+      // A reload/another valid rate of the same snapshot needs no browser context.
+      const noClientReference = await post(handoff({ provider: "KAYAK sandbox", resultId: "kayak-sandbox:" + snapshot + ":210:3", operationalHotelSnapshotId: snapshot }), userId, prepared.credential);
+      assert.equal(await readLink(noClientReference.id), history.id);
+      for (const [actor, credential] of [[otherOwner.id, prepared.credential], [userId, otherSession.credential], [userId, undefined], [userId, prepared.credential + "tampered"]] as const) {
+        const rejected = await post({ ...input, handoffId: randomUUID() }, actor, credential);
+        assert.equal((rejected.metadata as Record<string, unknown>).operationalRequestId, undefined);
+        assert.equal(await readLink(rejected.id), null);
+      }
+      // Even an accidentally persisted request ID must match the recorded snapshot.
+      const wrongSnapshot = await db.redirectLog.create({ data: {
+        type: "HOTEL", provider: "KAYAK sandbox", userId, visitorId: null, userType: userId ? "user" : "guest",
+        destinationUrl: "https://provider.example/sandbox", sourcePage: "/hotels/details",
+        metadata: { environment: "staging", operationalRequestId: unrelatedId, operationalHotelSnapshotId: snapshot,
+          operationalSessionId: prepared.reference.id, resultId },
+      } });
+      assert.equal(await readLink(wrongSnapshot.id), null);
+      const binding = await db.providerResultCache.findFirstOrThrow({ where: { vertical: "hotel-operational-binding-v1", resultId: "staging:" + snapshot } });
+      await db.providerResultCache.update({ where: { cacheKey: binding.cacheKey }, data: { expiresAt: new Date(Date.now() - 1000) } });
+      const expired = await post({ ...input, handoffId: randomUUID() }, userId, prepared.credential);
+      assert.equal(await readLink(expired.id), null);
+      assert.equal(await readLink(receipt.id), history.id, "previously verified history does not depend on retained cache");
+      assert.equal(await db.journeyEvent.count({ where: { searchHistoryId: history.id } }), 0);
+      assert.equal(await db.journeyEvent.count({ where: { redirectLogId: { in: [receipt.id, noClientReference.id, expired.id] } } }), 0);
+    }
+  } finally {
+    if (previousSecret === undefined) delete process.env.AUTH_SECRET; else process.env.AUTH_SECRET = previousSecret;
+    if (previousMode === undefined) delete process.env.TRAVEL_PROVIDER_MODE; else process.env.TRAVEL_PROVIDER_MODE = previousMode;
   }
 });

@@ -262,6 +262,12 @@ export function createSearchJourneyService(
           const sameOwner = existing.visitorId === visitorId
             && (existing.userId === userId || (!existing.userId && Boolean(visitorId)));
           if (!sameOwner || existing.type !== input.type) return null;
+          // Snapshot-bound progressive rows may only be advanced by the same
+          // operational owner and snapshot. A replayed cursor cannot rebind them.
+          const original = existing.query && typeof existing.query === "object" && !Array.isArray(existing.query) ? existing.query : {};
+          if (original.operationalHotelSnapshotId && (existing.userId !== userId ||
+              original.environment !== getPublicEnvironment() || original.operationalSessionId !== input.query.operationalSessionId ||
+              original.operationalHotelSnapshotId !== input.query.operationalHotelSnapshotId)) return null;
           // A completed success wins over delayed partial/failure callbacks.
           // A completed failure also cannot be reopened by an earlier page.
           if (input.progressive && existing.status !== "SUCCESS"
