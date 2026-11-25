@@ -35,10 +35,11 @@ export async function searchCars(search:LocationBoundCarSearchParams,options:{si
     errorCategory: kayak.errorCategory,
     errorReason: kayak.errorReason,
   });
-  await Promise.all([
+  const persisted = await Promise.allSettled([
     dependencies.rememberResults("car", inventory, search),
     dependencies.rememberCohort(inventory, search),
   ]);
+  if(persisted.every(result=>result.status==="rejected") && inventory.length) return {results:[],status:"unavailable",warnings:["Car results are temporarily unavailable."],providerStatuses};
   const warnings = kayak.errorReason === "pickup_time_past"
     ? ["KAYAK could not search this pick-up time because it has already passed at the rental location. Choose a later pick-up time or date."]
     : providerSearchWarnings(providerStatuses, inventory.length);
@@ -96,15 +97,8 @@ export async function resolveCarDetails(
   const cohortMatch = (await dependencies.getCohort(search)).find(result => isExactKayakCar(result, id));
   if (cohortMatch) return cohortMatch;
 
-  const recovered = await dependencies.searchKayak(search, kayak);
-  const exact = recovered.results.find(result => isExactKayakCar(result, id)) ?? null;
-  if (exact) {
-    await Promise.all([
-      dependencies.rememberExact("car", recovered.results, search),
-      dependencies.rememberCohort(recovered.results, search),
-    ]);
-  }
-  return exact;
+  // Search-scoped IDs cannot be reconstructed by an unrelated fresh search.
+  return null;
 }
 
 export const getCarDetails = resolveCarDetails;

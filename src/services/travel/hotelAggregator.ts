@@ -1,3 +1,4 @@
+import { inventoryAccounting } from "@/shared/search/inventory";
 import { settleWithDeadline } from "./metasearch";
 import { providersFor, runRegisteredProviders, type ProviderRegistration } from "./providerRegistry";
 import type { AggregatedResult, HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
@@ -48,6 +49,7 @@ export async function searchHotelsByProvider(
   const results = [...inventory].sort(compareHotelsByAvailablePrice);
   await (options.dependencies?.persist ?? persistHotelProviderResults)(results, search, options.defer);
 
+  console.info("[search:inventory-accounting]",{requestId:options.requestId,product:"hotels",stages:inventoryAccounting([{stage:"normalized",rows:inventory},{stage:"deduplicated",rows:results}])});
   return {
     results,
     providerStatuses,
@@ -69,6 +71,7 @@ export async function searchHotels(
     compareHotelsByAvailablePrice,
   );
   await (options.dependencies?.persist ?? persistHotelProviderResults)(results, search, options.defer);
+  console.info("[search:inventory-accounting]",{requestId:options.requestId,product:"hotels",stages:inventoryAccounting([{stage:"normalized",rows:inventory},{stage:"deduplicated",rows:results}])});
   return {
     results,
     providerStatuses,

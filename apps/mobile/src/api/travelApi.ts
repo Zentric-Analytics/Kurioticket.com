@@ -265,6 +265,7 @@ export const travelApi = {
     if (options.locale) params.set("locale", options.locale);
     return request<{ suggestions?: HotelDestinationSuggestion[] }>(`/api/hotels/destinations?${params.toString()}`, {}, { signal: options.signal, sandboxDisplay: true });
   },
+  carDetails: (id: string, options?: { signal?: AbortSignal; sandboxDisplay?: boolean }) => request<{results: CarResult[]}>(`/api/cars/details?id=${encodeURIComponent(id)}`, {}, options),
   searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   searchPackages: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<PackageSearchResponse>("/api/packages/search", { method: "POST", body: JSON.stringify(body) }, options),
   trips: (status?: "upcoming" | "past" | "cancelled") => request<{ trips: MobileTrip[]; summary: Record<string, number> }>(`/api/mobile/v1/trips${status ? `?status=${status}` : ""}`),

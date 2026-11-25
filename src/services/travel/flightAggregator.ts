@@ -1,3 +1,4 @@
+import { inventoryAccounting } from "@/shared/search/inventory";
 import { settleWithDeadline } from "./metasearch";
 import { providersFor, runRegisteredProviders, type ProviderRegistration } from "./providerRegistry";
 import { productionSandboxInventory } from "@/lib/productionSandboxPolicy";
@@ -37,7 +38,6 @@ export async function searchFlights(
   const startedAt = Date.now();
   const providerStatuses = await runRegisteredProviders(providersFor("flights", options.providers), search, options);
   const provider = providerStatuses.find(result => result.provider === "Duffel") ?? providerStatuses[0] ?? {provider:"none",results:[],status:"skipped" as const,latencyMs:0};
-  const kayak = providerStatuses.find(result => result.provider === "KAYAK sandbox") ?? {provider:"none",results:[],status:"skipped" as const,latencyMs:0};
   const providerPerformance = (provider as typeof provider & {
     performance?: { supplierMs: number; normalizationMs: number; offerCount: number; connectingOfferCount: number };
   }).performance;
@@ -59,16 +59,23 @@ export async function searchFlights(
   );
   const aggregationMs = performance.now() - aggregationStartedAt;
   const liveResults = results.filter(result=>!productionSandboxInventory(result));
-  const cacheResult = liveResults.length
-    ? await rememberFlights(liveResults, now, search, options.requestId)
-    : { persisted: true, validForMs: 0 };
-  const actionableResults = cacheResult.persisted ? results : results.filter(productionSandboxInventory);
-  const cacheUnavailable = results.some(result=>!productionSandboxInventory(result)) && !cacheResult.persisted;
+  const groups=new Map<string,NormalizedFlightResult[]>();
+  for(const row of liveResults) { const group=groups.get(row.provider);if(group)group.push(row);else groups.set(row.provider,[row]); }
+  const certifications=await Promise.all([...groups.values()].map(async rows=>{
+    try { return {rows,certificate:await rememberFlights(rows,now,search,options.requestId)}; }
+    catch {return {rows,certificate:{persisted:false,validForMs:0}};}
+  }));
+  const certifiedIds=new Set(certifications.flatMap(item=>item.certificate.persisted?item.rows.map(row=>row.id):[]));
+  const validCertificates=certifications.filter(item=>item.certificate.persisted);
+  const cacheResult={persisted:certifications.every(item=>item.certificate.persisted),validForMs:validCertificates.length?Math.min(...validCertificates.map(item=>item.certificate.validForMs)):0};
+  const actionableResults = results.filter(row=>productionSandboxInventory(row)||certifiedIds.has(row.id));
+  const cacheUnavailable = liveResults.some(row=>!certifiedIds.has(row.id));
+  console.info("[search:inventory-accounting]",{requestId:options.requestId,product:"flights",stages:inventoryAccounting([{stage:"normalized",rows:providerStatuses.flatMap(provider=>provider.results)},{stage:"deduplicated",rows:results},{stage:"policy-eligible",rows:actionableResults}])});
   return {
     results: actionableResults,
     providerStatuses,
     warnings:
-      provider.status === "failed" || kayak.status === "failed" || cacheUnavailable
+      providerStatuses.some(provider=>provider.status === "failed") || cacheUnavailable
         ? ["Flight results are temporarily unavailable. Please try again."]
         : providerSearchWarnings(providerStatuses, actionableResults.length),
     latencyMs: Date.now() - startedAt,
@@ -83,7 +90,7 @@ export async function searchFlights(
     },
     resultsCacheValidForMs: cacheResult.validForMs,
     resultsCacheValidUntil: now + cacheResult.validForMs,
-    ...((!actionableResults.length && (provider.status === "failed" || kayak.status === "failed")) || cacheUnavailable
+    ...((!actionableResults.length && (providerStatuses.some(provider=>provider.status === "failed") || cacheUnavailable))
       ? {
           unavailableMessage:
             "Flight results are temporarily unavailable. Please try again.",
@@ -100,7 +107,7 @@ export async function runWithFlightSearchDeadline<T>(
   options: { signal?: AbortSignal; deadlineMs?: number } = {},
 ) {
   const startedAt=Date.now();
-  return settleWithDeadline(task,options.deadlineMs??FLIGHT_SEARCH_DEADLINE_MS,options.signal,reason=>({provider:"Duffel",results:[],status:"failed",latencyMs:Date.now()-startedAt,error:reason==="failed"?"provider_failed":"provider_timeout",errorCategory:reason==="failed"?"failed":"timeout",errorReason:reason==="failed"?"provider_failed":"provider_timeout"}));
+  return settleWithDeadline<ProviderResult<T>>(task,options.deadlineMs??FLIGHT_SEARCH_DEADLINE_MS,options.signal,reason=>({provider:"Duffel",results:[],status:"failed",latencyMs:Date.now()-startedAt,error:reason==="failed"?"provider_failed":"provider_timeout",errorCategory:reason==="failed"?"failed":"timeout",errorReason:reason==="failed"?"provider_failed":"provider_timeout"}));
 }
 
 export function sortFlights(results: NormalizedFlightResult[], sort: SortMode) {

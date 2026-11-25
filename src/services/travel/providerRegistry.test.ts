@@ -1,3 +1,5 @@
+import { classifyFlights,classifyHotels,classifyCars } from "@/lib/travel/searchContract";
+import {toPublicFlight,toPublicHotel} from "@/lib/searchCache";
 import assert from "node:assert/strict";
 import test, {beforeEach,afterEach} from "node:test";
 let savedMode: string | undefined;
@@ -37,15 +39,31 @@ test("central registrations participate in all three active product services", a
     const flights = await searchFlights(query,{providers:[fixtureProvider("flights",[flight])]});
     assert.deepEqual(flights.results.map(row=>row.id),[flight.id]);
     assert.equal(flights.providerStatuses[0].provider,"Fixture flights");
+    const projectedFlight=classifyFlights(flights.results.map(toPublicFlight),query,[],"fixture");
+    assert.equal(projectedFlight.results[0].searchPolicy.source,"metasearch");
+    assert.equal(projectedFlight.results[0].inventoryProvenance?.providerId,"fixture-flights");
+    assert.deepEqual(projectedFlight.results[0].searchPolicy.action,{kind:"none",enabled:false});
+    const second=fixtureProvider("flights",[{...flight,id:"fixture:second:1"}]);second.id="fixture-second";second.label="Second fixture";
+    setFlightResultCacheBackendForTests({write:async rows=>rows.filter(row=>row.normalizedResult.provider!=="Second fixture").map(row=>row.publicResultId),find:async()=>null,findCompatible:async()=>[],cleanupExpired:async()=>0});
+    const partial=await searchFlights(query,{providers:[fixtureProvider("flights",[flight]),second]});
+    assert.deepEqual(partial.results.map(row=>row.id),[flight.id]);assert.equal(partial.unavailableMessage,undefined);assert(partial.warnings.length);
+
     const hotelQuery = {destination:"New York",checkIn:"2099-12-25",checkOut:"2099-12-29",guests:2,rooms:1};
     const hotel = {...buildStaticHotelResults(hotelQuery)[0],id:"fixture:hotels:1",provider:"Fixture hotels",dataSource:"live" as const};
     const hotels = await searchHotels(hotelQuery,{providers:[fixtureProvider("hotels",[hotel])],dependencies:{searchKayak:async()=>{throw new Error("wrong integration");},persist:async()=>{}}});
     assert.deepEqual(hotels.results.map(row=>row.id),[hotel.id]);
+    const projectedHotel=classifyHotels(hotels.results.map(toPublicHotel),[],"fixture");
+    assert.equal(projectedHotel.results[0].inventoryProvenance?.providerId,"fixture-hotels");
+    assert.deepEqual(projectedHotel.results[0].searchPolicy.action,{kind:"none",enabled:false});
     const carQuery = {pickupLocation:"LHR",dropoffLocation:"LHR",pickupDate:"2099-12-25",dropoffDate:"2099-12-29",pickupTime:"10:00",dropoffTime:"10:00",driverAge:"25"};
     const car = {...buildStaticCarResults(carQuery)[0],id:"fixture:cars:1"};
     const cars = await searchCars(carQuery,{providers:[fixtureProvider("cars",[car])],dependencies:{searchKayak:async()=>{throw new Error("wrong integration");},rememberResults:async()=>{},rememberCohort:async()=>{}}});
     assert.deepEqual(cars.results.map(row=>row.id),[car.id]);
     assert.equal(cars.providerStatuses[0].provider,"Fixture cars");
+    const projectedCar=classifyCars(cars.results,carQuery,"fixture");
+    assert.equal(projectedCar.results[0].inventorySource,"metasearch");
+    assert.equal(projectedCar.results[0].inventoryProvenance?.providerId,"fixture-cars");
+    assert.deepEqual(projectedCar.results[0].searchPolicy.action,{kind:"none",enabled:false});
   } finally { if(previous===undefined) Reflect.deleteProperty(process.env,"NODE_ENV"); else Object.assign(process.env,{NODE_ENV:previous}); }
 });
 

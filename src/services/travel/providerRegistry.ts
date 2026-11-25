@@ -107,7 +107,12 @@ export async function executeRegisteredProvider<P extends SearchProduct>(provide
   if (!provider.capabilities.environments.includes(process.env.NODE_ENV === "production" ? "production" : process.env.NODE_ENV === "test" ? "test" : "development")) return { provider:provider.label,results:[],status:"skipped",latencyMs:0,errorCategory:"skipped",errorReason:"provider_skipped" };
   const response = await provider.execute(query, context);
   // Adapter return values cannot relabel the registration's provenance.
-  return { ...response, provider: provider.label, latencyMs: response.latencyMs ?? Date.now() - started };
+  const results = provider.id === "duffel" || provider.id === "kayak" ? response.results : response.results.map(row=>({
+    ...row, provider:provider.label,
+    ...(provider.product==="cars"?{inventorySource:"metasearch" as const}:{}),
+    inventoryProvenance:{providerId:provider.id,providerLabel:provider.label,mode:provider.capabilities.mode,details:provider.capabilities.details,refresh:provider.capabilities.refresh},
+  }));
+  return { ...response, results, provider: provider.label, latencyMs: response.latencyMs ?? Date.now() - started };
 }
 
 /** Product services share execution policy while retaining their own inventory rules. */

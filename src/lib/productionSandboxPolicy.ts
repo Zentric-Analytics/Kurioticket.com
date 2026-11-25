@@ -77,7 +77,21 @@ export async function withProductionSandboxRequest(request: Request, task: () =>
                 }).sandboxRevision === final?.revision && final !== null)).map(filter);
             if (!value || typeof value !== "object")
                 return value;
-            return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, filter(item)]));
+            const original = value as Record<string,unknown>;
+            const projected = Object.fromEntries(Object.entries(original).map(([key,item])=>[key,filter(item)]));
+            if(Array.isArray(original.results) && Array.isArray(projected.results) && original.results.length !== projected.results.length) {
+                const count=projected.results.length;
+                projected.status=count?"partial":"unavailable";
+                projected.partial=Boolean(count);
+                projected.source="metasearch";
+                const uniqueCount=new Set(projected.results.map((row: {id?:string})=>row.id)).size;
+                if(Array.isArray(projected.accounting)) projected.accounting=projected.accounting.map(entry=>entry && typeof entry === "object" && entry.stage === "public" ? {...entry,count,uniqueCount} : entry);
+                projected.lifecycle=count?"partial":"restricted";
+                for(const key of ["resultCount","receivedCount"]) if(key in original) projected[key]=count;
+                if("available" in original) projected.available=count>0;
+                if(!count) { projected.warnings=[]; projected.nextCursor=null; }
+            }
+            return projected;
         }
         const headers = new Headers(response.headers);
         headers.set("Cache-Control", "private, no-store, max-age=0");

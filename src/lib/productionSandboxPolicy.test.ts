@@ -41,7 +41,7 @@ test("all existing classifiers retain inert display policy", () => { const tagge
     assert.equal(response.results.length, 1);
     assert.deepEqual(response.results[0].searchPolicy.action, { kind: "none", enabled: false });
 } });
-test("KAYAK hotel and car plus Duffel test paths make no upstream call without a grant", async () => { let calls = 0; globalThis.fetch = async () => { calls++; throw Error("must not fetch"); }; const context = { clientIp: "203.0.113.10", userAgent: "KurioticketMobile/0.3.0 (Android; Native) OkHttp" }; const hotels = await searchKayakHotels({ checkIn: "2030-01-01", checkOut: "2030-01-03", destination: "London", guests: 1, rooms: 1 }, context); const cars = await searchKayakCars({ pickupLocation: "LHR", dropoffLocation: "LHR", pickupDate: "2030-01-01", dropoffDate: "2030-01-03", pickupTime: "12:00", dropoffTime: "12:00", driverAge: "30" }, context); const flights = await searchDuffelFlights({} as never); assert.equal(hotels.results.length + cars.results.length + flights.results.length, 0); assert.equal(calls, 0); });
+test("KAYAK hotel and car plus Duffel test paths make no upstream call without a grant", async () => { let calls = 0; globalThis.fetch = async () => { calls++; throw Error("must not fetch"); }; const context = { clientIp: "203.0.113.10", userAgent: "KurioticketMobile/0.3.0 (Android; Native) OkHttp" }; const hotels = await searchKayakHotels({ checkIn: "2030-01-01", checkOut: "2030-01-03", destination: "London", guests: 1, rooms: 1 }, context); const cars = await searchKayakCars({ pickupLocation: "LHR", dropoffLocation: "LHR", pickupDate: "2030-01-01", dropoffDate: "2030-01-03", pickupTime: "12:00", dropoffTime: "12:00", driverAge: "25" }, context); const flights = await searchDuffelFlights({} as never); assert.equal(hotels.results.length + cars.results.length + flights.results.length, 0); assert.equal(calls, 0); });
 test("provider status distinguishes test/live/mismatch without disclosing credentials", () => { const status = providerManagementStatus(true); assert.equal(status[0].credentialMode, "test"); assert.equal(status[0].sandboxAvailable, true); assert.equal(JSON.stringify(status).includes(["duffel", "test", "fixture"].join("_")), false); const live = providerManagementStatus(false, { DUFFEL_API_KEY: ["duffel", "live", "fixture"].join("_"), DUFFEL_API_MODE: "live" }); assert.equal(live[0].liveConfigured, true); assert.equal(live[0].sandboxAvailable, false); });
 test("production changes retain owner allowlist and mandatory reason", () => { assert.equal(validateFeatureControlMutationAuthorization("PRODUCTION", "other@example.test", "reason")?.status, 403); assert.equal(validateFeatureControlMutationAuthorization("PRODUCTION", "owner@example.test", "")?.status, 400); assert.equal(validateFeatureControlMutationAuthorization("PRODUCTION", "owner@example.test", "approved test display"), null); });
 test("ON reaches KAYAK hotels and cars using truthful identity and returns only transient, inert inventory", async () => {
@@ -63,7 +63,7 @@ test("ON reaches KAYAK hotels and cars using truthful identity and returns only 
         const hotel = await searchKayakHotels({ destination: "Los Angeles", destinationId: "kplace:58075", checkIn: "2099-10-12", checkOut: "2099-10-15", guests: 1, rooms: 1 }, context);
         assert.ok(hotel.results.length > 0);
         assert.equal(hasDisplayOnlyInventory(hotel.results), true);
-        const car = await searchKayakCars({ pickupLocation: "Logan International Airport (BOS)", dropoffLocation: "Logan International Airport (BOS)", pickupDate: "2099-10-12", dropoffDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45", driverAge: "30" }, context);
+        const car = await searchKayakCars({ pickupLocation: "Logan International Airport (BOS)", dropoffLocation: "Logan International Airport (BOS)", pickupDate: "2099-10-12", dropoffDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45", driverAge: "25" }, context);
         assert.ok(car.results.length > 0);
         assert.equal(hasDisplayOnlyInventory(car.results), true);
         return Response.json({ results: [...hotel.results, ...car.results] });
@@ -85,4 +85,9 @@ test("Duffel test inventory is inert with ON and genuine live mode is independen
 
 test("legacy cached sandbox offers cannot be read or reused in production",async()=>{
  const backend=createMemoryFlightCacheBackend();const now=Date.now();await backend.write([{publicResultId:"kayak-sandbox:legacy",normalizedResult:{id:"kayak-sandbox:legacy",provider:"KAYAK sandbox"} as never,searchContext:null,searchKey:null,itineraryKey:"legacy-itinerary",expiresAt:now+60000}]);const cache=createFlightResultCache(backend);assert.equal(await cache.get("kayak-sandbox:legacy"),null);assert.equal(await cache.getSearch("kayak-sandbox:legacy"),null);assert.equal(await cache.getDetailsContext("kayak-sandbox:legacy"),null);assert.deepEqual(await cache.getCompatible("kayak-sandbox:legacy"),[]);
+});
+
+test("final authorization recomputes status and counts after revocation",async()=>{
+ const response=await withProductionSandboxRequest(request(false),async()=>Response.json({results:[result()],status:"available",partial:false,resultCount:1,receivedCount:1,available:true}),async()=>state(false));
+ const payload=await response.json();assert.equal(payload.status,"unavailable");assert.equal(payload.lifecycle,"restricted");assert.equal(payload.resultCount,0);assert.equal(payload.receivedCount,0);assert.equal(payload.available,false);
 });
