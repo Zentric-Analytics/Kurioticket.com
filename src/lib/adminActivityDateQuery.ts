@@ -1,19 +1,48 @@
-/** Share the exact UTC window and legacy bookmark handling between the
- * compact Activity overview and the dedicated full Other Activity page.
- * Do not reinterpret existing explicit timestamp filters.
- */
+import { adminRollingRange } from "./adminReportingRanges";
+import { adminLocalDate, adminLocalDateTimeToDate, adminStartOfLocalDay, shiftAdminCalendarDate } from "./adminLocalTime";
+
 export type RawActivityQuery = Record<string, string | string[] | undefined>;
 
-export function normalizeUserActivityQuery(input: RawActivityQuery, now: Date): RawActivityQuery {
+export function isActivityCalendarValue(value: string | string[] | undefined): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2})?$/.test(value);
+}
+
+export function validActivityUtcInstant(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) return false;
+  const at = new Date(value);
+  return Number.isFinite(at.getTime()) && at.toISOString() === value;
+}
+
+/** Date-only filters use local calendar days. Timestamp bookmarks keep their instant. */
+export function activityCustomDateBound(value: string, edge: "from" | "to", timeZone: string, now?: Date): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return adminLocalDateTimeToDate(value, timeZone)?.toISOString() ?? value;
+  }
+  const day = edge === "to" ? shiftAdminCalendarDate(value, 1) : value;
+  const bound = day && adminStartOfLocalDay(day, timeZone);
+  if (!bound) return value;
+  return edge === "to" && now && bound > now ? now.toISOString() : bound.toISOString();
+}
+
+export function displayActivityCalendarDate(value: string, timeZone: string, end = false) {
+  if (!value || value.length === 10) return value;
+  const at = Date.parse(value);
+  return Number.isFinite(at) ? adminLocalDate(new Date(at - (end ? 1 : 0)), timeZone) : "";
+}
+
+/** Resolve calendar ranges before querying and preserve legacy absolute bookmarks. */
+export function normalizeUserActivityQuery(input: RawActivityQuery, now: Date, timeZone = "UTC"): RawActivityQuery {
   const raw = { ...input };
   const selected = typeof raw.range === "string" ? raw.range : "";
   const range = selected || "today";
-  if (!raw.from && !raw.to && ["today", "24h", "7d", "30d"].includes(range)) {
-    const days = range === "30d" ? 30 : range === "7d" ? 7 : 1;
-    raw.from = range === "today"
-      ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString()
-      : new Date(now.getTime() - days * 86_400_000).toISOString();
-    raw.to = now.toISOString();
+  const materializedToday = selected === "today" && [raw.from, raw.to].every(
+    value => typeof value === "string" && validActivityUtcInstant(value),
+  ) && String(raw.from) < String(raw.to);
+  if (!Array.isArray(raw.range) && (materializedToday || (!raw.from && !raw.to))
+      && (range === "today" || range === "24h" || range === "7d" || range === "30d")) {
+    const window = adminRollingRange(range, now, timeZone);
+    if (raw.from !== window.from || !raw.to) raw.to = window.to;
+    raw.from = window.from;
     raw.range = range;
   }
   // Legacy tabs and cursors must not change the current Activity scope.

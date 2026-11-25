@@ -6,7 +6,8 @@ import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { CaseDetailHeading, CaseSidebarField, caseAsideClass, caseColumnsClass, caseMainClass, casePageClass } from "@/components/admin/AdminCaseDetailUI";
 import { SupportReplyForm, SupportTicketStatusControl } from "@/components/admin/SupportTicketActions";
 import { LinkedCasePreview } from "@/components/admin/LinkedCasePreview";
-import { formatDateTime } from "@/lib/admin-data";
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { supportCategoryLabel, supportTicketBackHref } from "@/lib/adminSupportInboxNavigation";
 import type { AdminSupportDetail, AdminSupportStatus } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
@@ -33,7 +34,7 @@ function senderName(author: string, ticket: AdminSupportDetail) {
 }
 
 export default async function AdminSupportTicketPage({ params, searchParams }: PageProps) {
-  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const [{ id }, query, timeZone] = await Promise.all([params, searchParams, getAdminViewerTimeZone()]);
   const result = await adminOperationalReads.support.detail(id);
   if (result.status === "not_found") notFound();
   const inbox = typeof query?.inbox === "string" ? query.inbox : undefined;
@@ -50,7 +51,7 @@ export default async function AdminSupportTicketPage({ params, searchParams }: P
           <ArrowLeft size={14} aria-hidden="true" /> {backLabel}
         </Link>
 
-        {result.status === "ok" ? <TicketContent ticket={result.data} /> : (
+        {result.status === "ok" ? <TicketContent ticket={result.data} timeZone={timeZone} /> : (
           <section className="py-10">
             <h2 className="text-[16px] font-semibold text-[#111827]">
               {result.status === "invalid" ? "Invalid ticket reference" : result.status === "forbidden" ? "Admin access required" : "Ticket details unavailable"}
@@ -67,7 +68,7 @@ export default async function AdminSupportTicketPage({ params, searchParams }: P
   );
 }
 
-function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
+function TicketContent({ ticket, timeZone }: { ticket: AdminSupportDetail; timeZone: string }) {
   const contextFields = Object.entries(ticket.source);
   const contactName = ticket.user?.name || (ticket.identity.kind === "registered" ? "Registered requester" : "Guest requester");
   const pill = statusPills[ticket.status];
@@ -94,7 +95,7 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
                       <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                           <span className="min-w-0 break-words text-[13px] font-semibold text-[#111827]">{senderName(message.author, ticket)}</span>
-                          <time dateTime={message.createdAt} className="shrink-0 text-[11px] text-[#64748B]">{formatDateTime(new Date(message.createdAt))}</time>
+                          <time dateTime={message.createdAt} className="shrink-0 text-[11px] text-[#64748B]">{formatViewerTimestamp(message.createdAt, timeZone)}</time>
                         </div>
                         <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-5 text-[#374151]">{message.body}</p>
                       </div>
@@ -155,8 +156,8 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
             <dl className="space-y-0 pt-2">
               <CaseSidebarField label="Category">{supportCategoryLabel(ticket.category)}</CaseSidebarField>
               <CaseSidebarField label="Priority">{ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()}</CaseSidebarField>
-              <CaseSidebarField label="Created">{formatDateTime(new Date(ticket.createdAt))}</CaseSidebarField>
-              <CaseSidebarField label="Updated">{formatDateTime(new Date(ticket.updatedAt))}</CaseSidebarField>
+              <CaseSidebarField label="Created">{formatViewerTimestamp(ticket.createdAt, timeZone)}</CaseSidebarField>
+              <CaseSidebarField label="Updated">{formatViewerTimestamp(ticket.updatedAt, timeZone)}</CaseSidebarField>
               <CaseSidebarField label="Ticket ID"><span className="[overflow-wrap:anywhere] text-[12px]">{ticket.id}</span></CaseSidebarField>
             </dl>
             {ticket.identity.userId ? (

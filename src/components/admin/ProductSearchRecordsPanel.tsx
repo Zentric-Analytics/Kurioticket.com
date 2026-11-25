@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Fragment, useCallback, useEffect, useId, useState } from "react";
+import { Fragment, useEffect, useId, useState, useSyncExternalStore } from "react";
 import { ChevronDown, RefreshCw } from "lucide-react";
 
+import { formatAdminTimeZoneLabel, formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import type {
   ProductSearchDetails,
@@ -31,15 +32,6 @@ const windowOptions = [
   { value: "all", label: "All time" },
 ] as const;
 
-function dateLabel(value: string | null) {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return "Time unavailable";
-  return new Intl.DateTimeFormat("en", {
-    month: "short", day: "numeric", year: "numeric",
-    hour: "numeric", minute: "2-digit", timeZone: "UTC",
-  }).format(date) + " UTC";
-}
 function dateOnly(value: string | null) {
   if (!value) return "—";
   const date = new Date(value);
@@ -60,17 +52,21 @@ function readError(result: ProductSearchResult<unknown> | null) {
 function validStatus(value: unknown): value is ProductSearchResult<never>["status"] {
   return value === "ok" || value === "invalid" || value === "forbidden" || value === "not_found" || value === "unavailable";
 }
+function subscribeToBookmark(notify: () => void) {
+  window.addEventListener("hashchange", notify);
+  return () => window.removeEventListener("hashchange", notify);
+}
 
 /** All product records, filters, pagination and diagnostics stay inside Providers.
  * Only the server-protected minimal record endpoints are used. */
-export function ProductSearchRecordsPanel({ product }: { product: ProviderProduct }) {
+export function ProductSearchRecordsPanel({ product, timeZone = "UTC" }: { product: ProviderProduct; timeZone?: string }) {
   const disclosureId = useId();
   const sectionId = product === "HOTEL" ? "hotel-search-records" : "car-search-records";
   const [filter, setFilter] = useState<ProductSearchFilter>("EXCEPTIONS");
   const [windowValue, setWindowValue] = useState<ProductSearchWindow>("today");
   // Draft selectors must never trigger a records request until Apply filters.
   const [draftFilter, setDraftFilter] = useState<ProductSearchFilter>("EXCEPTIONS");
-  const [draftWindow, setDraftWindow] = useState<ProductSearchWindow>("24h");
+  const [draftWindow, setDraftWindow] = useState<ProductSearchWindow>("today");
   const [pageIndex, setPageIndex] = useState(0);
   const [cursors, setCursors] = useState<Array<string | null>>([null]);
   const [reload, setReload] = useState(0);
@@ -78,29 +74,32 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
   const [result, setResult] = useState<ProductSearchResult<ProductSearchPage> | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ProductSearchResult<ProductSearchDetails> | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
   const cursor = cursors[pageIndex] ?? null;
+  const detailLoading = selectedId !== null && detail === null;
+  const bookmarked = useSyncExternalStore(subscribeToBookmark, () => window.location.hash === "#" + sectionId, () => false);
+  const [previousBookmark, setPreviousBookmark] = useState(false);
 
-  const resetPage = useCallback(() => {
+  function resetPage() {
     setSelectedId(null);
     setPageIndex(0);
     setCursors([null]);
     setResult(null);
     setLoading(true);
-  }, []);
-  useEffect(() => {
-    // Preserve existing bookmarked URLs without reintroducing a redundant header action.
-    if (window.location.hash === "#" + sectionId) {
+  }
+  // Retain the bookmarked all-records view across hydration and hash navigation.
+  if (bookmarked !== previousBookmark) {
+    setPreviousBookmark(bookmarked);
+    if (bookmarked) {
       setFilter("ALL");
       setDraftFilter("ALL");
       resetPage();
+      if (filter === "ALL" && cursor === null) setReload(value => value + 1);
     }
-  }, [sectionId, resetPage]);
+  }
 
   useEffect(() => {
     const controller = new AbortController();
     let current = true;
-    setLoading(true);
     const params = new URLSearchParams({ product, filter, window: windowValue });
     if (cursor) params.set("cursor", cursor);
     void (async () => {
@@ -109,7 +108,9 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
           method: "GET", cache: "no-store", credentials: "include", signal: controller.signal,
         });
         const data = await response.json() as ProductSearchResult<ProductSearchPage>;
-        if (!data || !validStatus(data.status)) throw new Error("Invalid search response");
+        if (!data || !validStatus(data.status) || (data.status === "ok" && data.data.timeZone !== timeZone)) {
+          throw new Error("Invalid search response");
+        }
         if (current) setResult(data);
       } catch {
         if (current && !controller.signal.aborted) setResult({ status: "unavailable" });
@@ -118,18 +119,12 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
       }
     })();
     return () => { current = false; controller.abort(); };
-  }, [product, filter, windowValue, cursor, reload]);
+  }, [product, filter, windowValue, cursor, reload, timeZone]);
 
   useEffect(() => {
-    if (!selectedId) {
-      setDetail(null);
-      setDetailLoading(false);
-      return;
-    }
+    if (!selectedId) return;
     const controller = new AbortController();
     let current = true;
-    setDetailLoading(true);
-    setDetail(null);
     void (async () => {
       try {
         const params = new URLSearchParams({ product });
@@ -142,8 +137,6 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
         if (current) setDetail(data);
       } catch {
         if (current && !controller.signal.aborted) setDetail({ status: "unavailable" });
-      } finally {
-        if (current) setDetailLoading(false);
       }
     })();
     return () => { current = false; controller.abort(); };
@@ -162,6 +155,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
   const showError = !loading && result && result.status !== "ok";
   const nextCursor = page?.nextCursor ?? null;
   const heading = "Search exceptions and records";
+  const timeZoneLabel = formatAdminTimeZoneLabel(timeZone);
 
   return (
     <section id={sectionId} aria-label={product === "HOTEL" ? "Hotel search records" : "Car search records"} className="min-w-0 scroll-mt-28 border-t border-[#D8E1EC] bg-white py-5">
@@ -169,11 +163,11 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
         <div className="min-w-0">
           <h2 className="text-[14px] font-semibold text-[#020617]">{heading}</h2>
           <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-            Product-specific searches, including failures and valid zero-result searches. The summary metrics above use today (UTC).
+            Product-specific searches, including failures and valid zero-result searches. The summary metrics above use Today · {timeZoneLabel}.
           </p>
         </div>
         <button type="button" disabled={loading} className={buttonClass}
-          onClick={() => { setSelectedId(null); setReload(n => n + 1); }}>
+          onClick={() => { setSelectedId(null); setLoading(true); setReload(n => n + 1); }}>
           <RefreshCw size={14} aria-hidden="true" className={loading ? "animate-spin" : ""} />
           {loading ? "Refreshing…" : "Refresh records"}
         </button>
@@ -185,7 +179,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
         </div>
         <div className="min-w-0">
           <SearchMonitorSelect label="Date range" name="period" appearance="fare" value={draftWindow}
-            options={windowOptions} onValueChange={value => setDraftWindow(value as ProductSearchWindow)} />
+            options={windowOptions} timeZoneLabel={timeZoneLabel} onValueChange={value => setDraftWindow(value as ProductSearchWindow)} />
         </div>
         <button type="button" onClick={applyFilters} disabled={loading}
           className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:opacity-60">
@@ -222,7 +216,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
               return <Fragment key={record.id}>
                 <tr className="align-top hover:bg-[#FAFBFD]">
                   <td data-label="Observed" className="px-3 py-3 align-top tabular-nums first:pl-0">
-                    <time dateTime={record.createdAt ?? undefined} className="block whitespace-normal leading-5">{dateLabel(record.createdAt)}</time>
+                    <time dateTime={record.createdAt ?? undefined} className="block whitespace-normal leading-5">{formatViewerTimestamp(record.createdAt, timeZone)}</time>
                   </td>
                   <td data-label={product === "HOTEL" ? "Destination" : "Pick-up"} className="min-w-0 px-3 py-3">
                     <p className="break-words font-medium text-[#020617]">{product === "HOTEL" ? record.destination || "—" : record.origin || "—"}</p>
@@ -242,7 +236,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
                   <td data-label="Action" className="px-2 py-3 text-center">
                     <button type="button" aria-expanded={expanded} aria-controls={disclosureId + "-" + record.id}
                       className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 font-semibold text-[#004BB8] hover:bg-[#EAF2FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
-                      onClick={() => setSelectedId(current => current === record.id ? null : record.id)}>
+                      onClick={() => { setDetail(null); setSelectedId(current => current === record.id ? null : record.id); }}>
                       {expanded ? "Close" : "Details"}
                       <ChevronDown size={13} aria-hidden="true" className={expanded ? "rotate-180" : ""} />
                     </button>
@@ -262,7 +256,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
                         <dl className="mt-3 grid min-w-0 grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
                           <Field label="Search ID" value={detail.data.search.id} />
                           <Field label="Request ID" value={detail.data.search.requestId} />
-                          <Field label="Recorded" value={dateLabel(detail.data.search.createdAt)} />
+                          <Field label="Recorded" value={formatViewerTimestamp(detail.data.search.createdAt, timeZone)} />
                           <Field label={product === "HOTEL" ? "Destination" : "Pick-up"} value={product === "HOTEL" ? detail.data.search.destination : detail.data.search.origin} />
                           <Field label={product === "HOTEL" ? "Stay dates" : "Drop-off"} value={product === "HOTEL" ? dateOnly(detail.data.search.checkIn) + " → " + dateOnly(detail.data.search.checkOut) : detail.data.search.destination} />
                           <Field label="Outcome" value={statusLabel(detail.data.search.outcome)} />
@@ -280,7 +274,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
                                     <p className="font-semibold text-[#0F172A]">{provider.provider} · {provider.status}</p>
                                     {provider.category ? <p className="text-[#64748B]">{provider.category}</p> : null}
                                   </div>
-                                  <span className="text-[#64748B]">{dateLabel(provider.observedAt)} · {provider.latencyMs === null ? "Latency unavailable" : provider.latencyMs + " ms"}</span>
+                                  <span className="text-[#64748B]">{formatViewerTimestamp(provider.observedAt, timeZone)} · {provider.latencyMs === null ? "Latency unavailable" : provider.latencyMs + " ms"}</span>
                                 </li>
                               ))}
                             </ul>

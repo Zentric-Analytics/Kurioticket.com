@@ -123,7 +123,13 @@ export function encodeAdminAuditCursor(scope: AdminAuditScope, at: string, curso
   return encodeCursor(scope, at, cursorId);
 }
 
-export function parseAdminAuditQuery(params: URLSearchParams, now = new Date()): ParseResult<AdminAuditQuery> {
+export type AdminAuditCalendarWindow = { from: Date; to: Date };
+
+export function parseAdminAuditQuery(
+  params: URLSearchParams,
+  now = new Date(),
+  calendarWindow?: AdminAuditCalendarWindow,
+): ParseResult<AdminAuditQuery> {
   for (const key of params.keys()) {
     if (!allowedKeys.includes(key as never)) return invalid(key, "Unknown query parameter.");
     if (params.getAll(key).length > 1) return invalid(key, "Repeated query parameters are not allowed.");
@@ -152,10 +158,12 @@ export function parseAdminAuditQuery(params: URLSearchParams, now = new Date()):
   const from = parsedFrom.data ?? cursorScope?.from ?? new Date(new Date(to).getTime() - 7 * dayMs).toISOString();
   const start = Date.parse(from);
   const end = Date.parse(to);
-  // Only the explicit All time anchor bypasses the ordinary 90-day window.
-  // The audit reader still enforces authentication, indexed keyset paging, and a 100-row limit.
+  // The explicit All time anchor spans the retained history.
+  // The Admin page can also pass an exact, validated calendar window. A
+  // 90-date selection can span more than 90 elapsed days across fall-back DST.
   const allTime = from === "1970-01-01T00:00:00.000Z";
-  if (start >= end || end > now.getTime() || (!allTime && end - start > 90 * dayMs)) {
+  const withinCalendarWindow = calendarWindow && start === calendarWindow.from.getTime() && end <= calendarWindow.to.getTime();
+  if (start >= end || end > now.getTime() || (!allTime && !withinCalendarWindow && end - start > 90 * dayMs)) {
     return invalid("from", "Use a past time range of more than zero and at most 90 days.");
   }
 

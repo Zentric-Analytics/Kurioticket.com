@@ -3,22 +3,17 @@ import { redirect } from "next/navigation";
 
 import { AdminAlertAcknowledgeButton } from "@/components/admin/AdminAlertAcknowledgeButton";
 import { AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { isProtectedAdminEmail } from "@/lib/admin";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminAlertSnapshot, type AdminOperationalAlert } from "@/services/adminAlertService";
-
-function formatSignalTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Unavailable";
-  return new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(date);
-}
 
 /**
  * Render only real, confirmation-specific alerts within Delivery Health.
  * The caller renders this component only for a configured confirmation feed.
  * No alert means no extra panel or duplicate inactive-monitoring message.
  */
-export async function ConfirmedTripDeliveryAlerts() {
+export async function ConfirmedTripDeliveryAlerts({ timeZone }: { timeZone: string }) {
   const session = await requireAdminSession("/admin/confirmed-trips");
   if (!isProtectedAdminEmail(session.user.email)) redirect("/dashboard");
 
@@ -60,7 +55,7 @@ export async function ConfirmedTripDeliveryAlerts() {
             <h3 className="mt-2 text-sm font-semibold leading-5 text-slate-950">{alert.title}</h3>
             <p className="mt-1 break-words text-[13px] leading-5 text-slate-600">{alert.message}</p>
             {alert.signalAt ? (
-              <p className="mt-1 text-xs leading-5 text-slate-500">Latest signal: {formatSignalTime(alert.signalAt)}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">Latest signal: {formatViewerTimestamp(alert.signalAt, timeZone)}</p>
             ) : null}
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <AdminAlertAcknowledgeButton alertKey={alert.key} signalToken={alert.signalToken} acknowledged={alert.acknowledged} />

@@ -1,3 +1,4 @@
+import { activityCustomDateBound, validActivityUtcInstant } from "./adminActivityDateQuery";
 import type { Prisma } from "@/generated/prisma/client";
 import type { ActivityRow, IdentityKind } from "./adminIdentityJourney";
 import type { PublicEnvironment } from "./stagingSafety";
@@ -21,6 +22,7 @@ export type ActivityFilters = {
   to: string;
   q: string;
   order?: ActivityOrder;
+  timeZone?: string;
 };
 export type ActivityCursor = { at: string; id: string };
 /** Latest recorded timestamp among visible events, independent of sort direction. */
@@ -65,16 +67,12 @@ function validDay(day: string) {
   const parsed = new Date(day + "T00:00:00.000Z");
   return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === day;
 }
-/** Legacy dates are inclusive UTC calendar days; UTC instants support rolling presets. */
-function validUtcInstant(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) return false;
-  const timestamp = new Date(value);
-  return Number.isFinite(timestamp.getTime()) && timestamp.toISOString() === value;
+function activityBoundary(value: string, edge: "from" | "to", timeZone = "UTC") {
+  const bound = activityCustomDateBound(value, edge, timeZone);
+  return new Date(bound.length === 10 ? NaN : bound);
 }
-function dateFilterStart(value: string) { return new Date(value.length === 10 ? value + "T00:00:00.000Z" : value); }
-function dateFilterEnd(value: string) { return value.length === 10 ? new Date(dateFilterStart(value).getTime() + 86_400_000) : new Date(value); }
 
-export function parseActivityFilters(raw: Query): ParseResult {
+export function parseActivityFilters(raw: Query, timeZone = "UTC"): ParseResult {
   if (Object.values(raw).some(Array.isArray)) return { ok: false, error: "Repeated filters are not supported." };
   const tab = one(raw.tab) || "all";
   const stage = one(raw.stage) || "all";
@@ -86,15 +84,22 @@ export function parseActivityFilters(raw: Query): ParseResult {
   if (!activityTabs.includes(tab as ActivityTab) || !activityStages.includes(stage as ActivityStage)
     || !activityProducts.includes(product as ActivityProduct)
     || !["newest", "oldest"].includes(order)) return { ok: false, error: "Unsupported activity filter." };
-  if ((from && !validDay(from) && !validUtcInstant(from)) || (to && !validDay(to) && !validUtcInstant(to))
-    || (from && to && dateFilterStart(from).getTime() >= dateFilterEnd(to).getTime())) return { ok: false, error: "Enter a valid UTC date range." };
+  const start = from ? activityBoundary(from, "from", timeZone).getTime() : -Infinity;
+  const end = to ? activityBoundary(to, "to", timeZone).getTime() : Infinity;
+  if ((from && !validDay(from) && !validActivityUtcInstant(from))
+    || (to && !validDay(to) && !validActivityUtcInstant(to)) || !(start < end)) {
+    return { ok: false, error: "Enter a valid date range." };
+  }
   if (q.length > 80 || /[\u0000-\u001f\u007f]/.test(q)) return { ok: false, error: "Search text must contain at most 80 ordinary characters." };
-  return { ok: true, filters: { tab: tab as ActivityTab, stage: stage as ActivityStage, product: product as ActivityProduct, from, to, q, order: order as ActivityOrder } };
+  return { ok: true, filters: {
+    tab: tab as ActivityTab, stage: stage as ActivityStage, product: product as ActivityProduct, from, to, q, order: order as ActivityOrder,
+    ...(timeZone !== "UTC" && (from.length === 10 || to.length === 10) ? { timeZone } : {}),
+  } };
 }
 export function activityWindow(filters: ActivityFilters) {
   return {
-    ...(filters.from ? { gte: dateFilterStart(filters.from) } : {}),
-    ...(filters.to ? { lt: dateFilterEnd(filters.to) } : {}),
+    ...(filters.from ? { gte: activityBoundary(filters.from, "from", filters.timeZone) } : {}),
+    ...(filters.to ? { lt: activityBoundary(filters.to, "to", filters.timeZone) } : {}),
   };
 }
 export type JourneyStage = Exclude<ActivityStage, "all" | "ACCOUNT_ACTIVITY" | "PAGE_VIEW">;
@@ -116,7 +121,7 @@ export const activitySource = (id: string) => id.startsWith("j-") ? "j" : id.sta
 function scope(kind: IdentityKind, id: string, filters: ActivityFilters, environment: PublicEnvironment) {
   // Preserve existing newest-first cursors; bind oldest-first tokens to their own order.
   return JSON.stringify([kind, id, environment, filters.tab, filters.stage, filters.product, filters.from, filters.to, filters.q,
-    ...(filters.order === "oldest" ? ["oldest"] : [])]);
+    ...(filters.order === "oldest" ? ["oldest"] : []), ...(filters.timeZone ? [filters.timeZone] : [])]);
 }
 export function encodeActivityCursor(row: Pick<ActivityRow, "id" | "at">, kind: IdentityKind, id: string, filters: ActivityFilters, environment: PublicEnvironment) {
   return Buffer.from(JSON.stringify({ v: 1, at: row.at.toISOString(), id: row.id, scope: scope(kind, id, filters, environment) }), "utf8").toString("base64url");

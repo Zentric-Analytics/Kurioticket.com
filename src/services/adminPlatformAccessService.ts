@@ -17,13 +17,13 @@ export type PlatformAccessResult = {
 } | { status: "unavailable" };
 
 /** Account sessions, not installed-device inventory or guest browser tracking. */
-export async function loadPlatformAccess(query: PlatformAccessQuery): Promise<PlatformAccessResult> {
+export async function loadPlatformAccess(query: PlatformAccessQuery, timeZone = "UTC"): Promise<PlatformAccessResult> {
   try {
     const db = getOptionalPrisma();
     if (!db) return { status: "unavailable" };
     // One UTC observation instant must govern the totals and all record queries.
     const observedAt = new Date();
-    const dateFilter = deviceHistoryWindow({ range: query.range, page: 1 }, observedAt);
+    const dateFilter = deviceHistoryWindow({ range: query.range, page: 1 }, observedAt, timeZone);
     const base = { lastSeenAt: dateFilter };
     const selection = query.platform === "web" ? { client: "WEB" as const }
       : query.platform === "ios" ? { client: "MOBILE" as const, platform: "ios" }

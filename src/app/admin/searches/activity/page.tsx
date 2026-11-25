@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Suspense, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { searchWorkspaceTab } from "@/lib/adminSearchWorkspace";
 
@@ -12,8 +12,9 @@ import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { AdminOperationalDateRangeFields } from "@/components/admin/AdminOperationalDateRangeFields";
 import { SearchMonitorTable } from "@/components/admin/SearchMonitorTable";
-import { AdminSearchTimeZoneSync } from "@/components/admin/AdminSearchTimeZoneSync";
-import { validViewerTimeZone, viewerTodayStart } from "@/lib/adminLocalTime";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
+import { activityCustomDateBound } from "@/lib/adminActivityDateQuery";
+import { adminRollingRange } from "@/lib/adminReportingRanges";
 
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -52,6 +53,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
   const raw = { ...supplied };
   delete raw.tab;
   delete raw.environment;
+  delete raw.viewerTimeZone;
   const legacy = resolveSearchActivityLegacyFilters(raw);
   if (legacy?.kind === "redirect") redirect(legacy.href);
   if (legacy?.kind === "unsupported") {
@@ -68,9 +70,11 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
   const legacySourceFilter = raw.applicationSource === "UNKNOWN";
   const currentEnvironment = getPublicEnvironment();
   const providerOptions = buildAdminSearchProviderOptions(getProviderIntegrationStatuses(), one(raw.provider) || null);
-  const referenceNow = new Date().toISOString();
+  const now = new Date();
+  const timeZone = await getAdminViewerTimeZone();
+  const referenceNow = now.toISOString();
   const range = resolveRange(raw);
-  const params = toBackendParams(raw, range);
+  const params = toBackendParams(raw, range, now, timeZone);
   params.set("environment", currentEnvironment);
   const listParams = new URLSearchParams(params);
   listParams.set("limit", "100");
@@ -81,7 +85,6 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
 
   return (
     <>
-      <Suspense fallback={null}><AdminSearchTimeZoneSync /></Suspense>
       <AdminPageShell title="Search activity" hideHeader>
         <div className="mx-auto w-full max-w-[1500px]">
         
@@ -95,7 +98,6 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
             </div>
 
             <form action="/admin/searches/activity" className="border-b border-[#E5E7EB]">
-              {one(raw.viewerTimeZone) ? <input type="hidden" name="viewerTimeZone" value={one(raw.viewerTimeZone)} /> : null}
               {one(raw.product) ? <input type="hidden" name="product" value={one(raw.product)} /> : null}
               {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
               {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
@@ -106,7 +108,8 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                   initialRange={range}
                   initialFrom={one(raw.from)}
                   initialTo={one(raw.to)}
-                  now={new Date().toISOString()}
+                  now={referenceNow}
+                  timeZone={timeZone}
                   legacyOptions={range === "24h" ? [{ value: "24h", label: "Last 24 hrs (legacy)" }] : []}
                 />
                 <div className="min-w-0">
@@ -181,6 +184,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
               initialCursor={result.data.nextCursor}
               query={params.toString()}
               referenceNow={referenceNow}
+              timeZone={timeZone}
               detailQuery={searchActivityDetailQuery({ ...raw, environment: currentEnvironment }, range)}
             />
           </>
@@ -223,10 +227,10 @@ function resolveRange(raw: Record<string, string | string[] | undefined>): Range
   return "today";
 }
 
-function toBackendParams(raw: Record<string, string | string[] | undefined>, range: RangeKey) {
+function toBackendParams(raw: Record<string, string | string[] | undefined>, range: RangeKey, now: Date, timeZone: string) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(raw)) {
-    if (key === "range" || key === "cursor" || key === "limit" || key === "viewerTimeZone") continue;
+    if (key === "range" || key === "cursor" || key === "limit") continue;
     if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
     else if (value) params.set(key, value);
   }
@@ -237,17 +241,12 @@ function toBackendParams(raw: Record<string, string | string[] | undefined>, ran
   }
 
   if (range !== "all" && range !== "custom") {
-    const now = new Date();
-    const from = new Date(now);
-    if (range === "24h") from.setTime(now.getTime() - 24 * 60 * 60 * 1000);
-    if (range === "today") {
-      const zone = validViewerTimeZone(one(raw.viewerTimeZone));
-      if (zone) from.setTime(Date.parse(viewerTodayStart(now, zone)));
-      else from.setUTCHours(0, 0, 0, 0);
+    params.set("from", adminRollingRange(range, now, timeZone).from);
+  } else if (range === "custom") {
+    for (const key of ["from", "to"] as const) {
+      const value = raw[key];
+      if (typeof value === "string" && value) params.set(key, activityCustomDateBound(value, key, timeZone));
     }
-    if (range === "7d") from.setUTCDate(from.getUTCDate() - 7);
-    if (range === "30d") from.setUTCDate(from.getUTCDate() - 30);
-    params.set("from", from.toISOString());
   }
 
   return params;

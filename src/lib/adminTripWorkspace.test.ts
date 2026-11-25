@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { parseAdminTripWorkspace, tripWorkspaceHref } from "./adminTripWorkspace";
+import { decodeAdminTripCursor, encodeAdminTripCursor, tripConfirmationWindow } from "./adminConfirmedTripsDirectory";
 
 const now = new Date("2026-11-03T15:42:00.000Z");
 
@@ -48,6 +49,36 @@ test("custom dates remain editable and invalid or repeated ranges fail closed", 
   assert.equal(parseAdminTripWorkspace({ range: "10m" }, now).ok, false);
   assert.equal(parseAdminTripWorkspace({ range: "custom", from: "2026-11-06", to: "2026-11-03" }, now).ok, false);
   assert.equal(parseAdminTripWorkspace({ range: "custom", from: "2026-02-30" }, now).ok, false);
+  assert.equal(parseAdminTripWorkspace({ range: "custom", from: ["2026-11-01", "2026-11-02"] }, now).ok, false);
+});
+
+test("Trips Today follows the local calendar and keeps cursors scoped to the resulting window", () => {
+  const when = new Date("2026-11-24T23:30:00.000Z");
+  const lagos = parseAdminTripWorkspace({}, when, "Africa/Lagos");
+  const dubai = parseAdminTripWorkspace({}, when, "Asia/Dubai");
+  assert.ok(lagos.ok && dubai.ok);
+  assert.equal(lagos.filters.from, "2026-11-25");
+  const window = tripConfirmationWindow(lagos.filters);
+  assert.equal(window.gte?.toISOString(), "2026-11-24T23:00:00.000Z");
+  assert.equal(window.lt?.toISOString(), "2026-11-25T23:00:00.000Z");
+  const position = { id: "confirmed_trip", confirmedAt: when.toISOString() };
+  const cursor = encodeAdminTripCursor(position, lagos.filters, "production");
+  assert.deepEqual(decodeAdminTripCursor(cursor, lagos.filters, "production"), position);
+  assert.equal(decodeAdminTripCursor(cursor, dubai.filters, "production"), null);
+});
+
+test("Trips use complete local dates across DST while legacy rolling periods stay elapsed", () => {
+  const zone = "Europe/London";
+  const today = new Date("2026-03-30T14:00:00.000Z");
+  const custom = parseAdminTripWorkspace({ range: "custom", from: "2026-03-29", to: "2026-03-29" }, today, zone);
+  assert.ok(custom.ok);
+  const window = tripConfirmationWindow(custom.filters);
+  assert.equal(window.gte?.toISOString(), "2026-03-29T00:00:00.000Z");
+  assert.equal(window.lt?.toISOString(), "2026-03-29T23:00:00.000Z");
+  assert.equal(new URL(tripWorkspaceHref(custom.filters, custom.range), "https://kurioticket.test").searchParams.get("to"), "2026-03-29");
+  const rolling = parseAdminTripWorkspace({ range: "7d" }, today, zone);
+  assert.ok(rolling.ok);
+  assert.equal(Date.parse(rolling.filters.to) - Date.parse(rolling.filters.from), 7 * 86_400_000);
 });
 
 test("changing travel type or status keeps the rest of the chosen scope", () => {

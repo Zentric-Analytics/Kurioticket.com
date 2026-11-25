@@ -13,7 +13,7 @@ test("Platform Health page guards both canonical session and strict API admin ac
         "next/navigation": { redirect: () => { throw Error("redirect"); } }, "next/link": { default: () => null }, "react/jsx-runtime": { jsx: () => null, jsxs: () => null },
         "@/lib/auth-guards": { requireAdminSession: async () => { if (!session)
                 throw Error("denied"); } }, "@/lib/admin": { requireAdminApiSession: async () => api ? { session: {} } : { response: Response.json({}, { status: 403 }) } },
-        "@/components/admin/AdminPageShell": {}, "@/components/admin/PlatformHealthDashboard": {}, "@/lib/platformHealthPresentation": { parsePlatformHealthView }, "@/services/platformOperationsService": { readPlatformOperations: async () => { reads++; return {}; } }
+        "@/components/admin/AdminPageShell": {}, "@/components/admin/PlatformHealthDashboard": {}, "@/lib/platformHealthPresentation": { parsePlatformHealthView }, "@/lib/adminViewerTimeZone.server": { getAdminViewerTimeZone: async () => "Africa/Lagos" }, "@/services/platformOperationsService": { readPlatformOperations: async (_hours: number, _period: string, timeZone: string) => { assert.equal(timeZone, "Africa/Lagos"); reads++; return {}; } }
     };
     const exported: {
         default: (props: {

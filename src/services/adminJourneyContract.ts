@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { adminReportingWindowExceedsLimit } from "@/lib/adminReportingRanges";
 
 export const adminJourneyStages = ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED"] as const;
 export const adminJourneyProducts = ["FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const;
@@ -176,7 +177,8 @@ export function encodeAdminJourneyCursor(cursor: AdminJourneyCursor) {
   return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
 }
 
-function decodeCursor(value: string) {
+export function decodeAdminJourneyCursor(value: string) {
+  if (!/^[A-Za-z0-9_-]{1,2048}$/.test(value)) return null;
   try {
     const parsed = cursorSchema.safeParse(JSON.parse(Buffer.from(value, "base64url").toString("utf8")));
     return parsed.success ? parsed.data : null;
@@ -191,6 +193,7 @@ export function parseAdminJourneyQuery(
   now: Date,
   environment: AdminJourneyEnvironment,
   journeyId?: string,
+  calendarTimeZone?: string,
 ): AdminJourneyResult<AdminJourneyQuery> {
   const values: Record<string, unknown> = Object.create(null);
   if (input instanceof URLSearchParams) {
@@ -211,7 +214,7 @@ export function parseAdminJourneyQuery(
   const raw = parsed.data;
   if (kind === "summary" && (raw.cursor || raw.limit)) return invalid("query", "Summary requests do not accept pagination parameters.");
   if (kind === "detail" && !isAdminJourneyId(journeyId)) return invalid("id", "Invalid journey identifier.");
-  const cursor = raw.cursor ? decodeCursor(raw.cursor) : null;
+  const cursor = raw.cursor ? decodeAdminJourneyCursor(raw.cursor) : null;
   if (raw.cursor && (!cursor || cursor.kind !== kind || cursor.journeyId !== journeyId)) {
     return invalid("cursor", "This cursor does not belong to this view.");
   }
@@ -225,12 +228,15 @@ export function parseAdminJourneyQuery(
       .map(key => [key, raw[key] ?? cursor?.scope[key]])
       .filter(([, value]) => value !== undefined)),
   };
-  const start = new Date(from).getTime();
-  const end = new Date(to).getTime();
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+  const start = fromDate.getTime();
+  const end = toDate.getTime();
   // The explicit epoch anchor is reserved for the All time preset. Every other
   // interval retains the existing 90-day validation boundary.
   const isAllTime = from === "1970-01-01T00:00:00.000Z";
-  if (start >= end || (!isAllTime && end - start > 90 * dayMs) || end > now.getTime()) {
+  const overviewZone = kind === "summary" ? calendarTimeZone : undefined;
+  if (start >= end || end > now.getTime() || (!isAllTime && adminReportingWindowExceedsLimit(fromDate, toDate, now, overviewZone))) {
     return invalid("from", "Use a past UTC time range of more than zero and at most 90 days, or select All time.");
   }
   if (scope.identity === "guest" && scope.userId) return invalid("userId", "A guest filter cannot name a registered account.");

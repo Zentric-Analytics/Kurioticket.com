@@ -2,12 +2,13 @@ import Link from "next/link";
 
 import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { ProviderHandoffFilters } from "@/components/admin/ProviderHandoffFilters";
-import { resolveHandoffDateRange, withHandoffDateScope } from "@/lib/adminHandoffDateRange";
+import { resetStaleHandoffDateCursor, resolveHandoffDateRange, withHandoffDateScope } from "@/lib/adminHandoffDateRange";
 import { buildHandoffProviderOptions } from "@/lib/adminHandoffProviderOptions";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
-import { formatDateTime } from "@/lib/admin-data";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { handoffDetailHref } from "@/lib/adminReferralHandoffNavigation";
 import { adminHandoffRoutePreview } from "@/lib/adminHandoffRoutePreview";
 import { handoffNextPageHref, handoffPreviousPageHref } from "@/lib/adminHandoffPagination";
@@ -18,11 +19,14 @@ export const metadata = { title: "Admin Provider Handoffs" };
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function AdminRedirectsPage({ searchParams, embedded = false }: { embedded?: boolean; searchParams: SearchParams }) {
-  const raw = await searchParams;
+  const supplied = await searchParams;
   const now = new Date();
-  const dateWindow = resolveHandoffDateRange(raw, now);
-  const scopedRaw = embedded ? raw : withHandoffDateScope(raw, now);
-  const params = toParams(scopedRaw);
+  const timeZone = await getAdminViewerTimeZone();
+  const dateWindow = resolveHandoffDateRange(supplied, now, timeZone);
+  const raw = embedded ? supplied : resetStaleHandoffDateCursor(supplied, dateWindow);
+  const backendRaw = embedded ? raw : withHandoffDateScope(raw, now, timeZone);
+  const scopedRaw = dateWindow.range === "custom" ? { ...raw, range: "custom" } : backendRaw;
+  const params = toParams(backendRaw);
   if (!params.has("limit")) params.set("limit", "50");
   const result = await adminOperationalReads.handoffs.list(params);
 
@@ -75,7 +79,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                 rows={result.data.items.map((handoff) => ({
                   id: handoff.id,
                   cells: [
-                    formatDateTime(new Date(handoff.createdAt)),
+                    formatViewerTimestamp(handoff.createdAt, timeZone),
                     <AdminStatusBadge key="product" tone="info">{handoff.product}</AdminStatusBadge>,
                     <span key="provider" className="font-semibold text-slate-950">{handoff.provider}</span>,
                     <span key="route-preview" title={handoff.route || undefined} aria-label={handoff.route || "No route recorded"}>{adminHandoffRoutePreview(handoff.route)}</span>,
@@ -119,11 +123,13 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
         scope={{
           userId: one(scopedRaw.userId),
           visitorId: one(scopedRaw.visitorId),
-          from: one(scopedRaw.from),
-          to: one(scopedRaw.to),
+          from: one(raw.from),
+          to: one(raw.to),
           sourcePage: one(scopedRaw.sourcePage),
         }}
         range={dateWindow.range}
+        timeZone={timeZone}
+        now={now.toISOString()}
         providerOptions={buildHandoffProviderOptions(getProviderIntegrationStatuses(), one(scopedRaw.provider) || null)}
       />
       {result.status === "ok" ? (
@@ -165,7 +171,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                 <tbody className="divide-y divide-[#E7ECF5]">
                   {result.data.items.map(handoff => (
                     <tr key={handoff.id} className="align-top hover:bg-[#FAFBFD]">
-                      <td data-label="Created" className="py-3 pr-1.5 tabular-nums">{formatDateTime(new Date(handoff.createdAt))}</td>
+                      <td data-label="Created" className="py-3 pr-1.5 tabular-nums">{formatViewerTimestamp(handoff.createdAt, timeZone)}</td>
                       <td data-label="Product" className="px-1.5 py-3 font-medium">{handoff.product}</td>
                       <th scope="row" data-label="Provider" className="px-1.5 py-3 text-left font-medium">{handoff.provider}</th>
                       <td data-label="Route / property" className="min-w-0 px-1.5 py-3">

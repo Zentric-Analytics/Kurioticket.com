@@ -3,12 +3,14 @@ import { FileCheck2, Plane } from "lucide-react";
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import { TripConfirmationsMonitoringPanel } from "@/components/admin/TripConfirmationsMonitoringPanel";
 import { TripFlightStatusMonitoringPanel } from "@/components/admin/TripFlightStatusMonitoringPanel";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { requireAdminSession } from "@/lib/auth-guards";
 
 export const metadata = { title: "Admin Trip Monitoring" };
 
 export default async function AdminTripMonitoringPage() {
   await requireAdminSession("/admin/confirmed-trips/monitoring");
+  const timeZone = await getAdminViewerTimeZone();
 
   return (
     <AdminPageShell title="Trip monitoring" hideHeader>
@@ -23,7 +25,7 @@ export default async function AdminTripMonitoringPage() {
                 <Plane size={17} className="shrink-0 text-indigo-700" aria-hidden="true" />
                 <h3 id="trip-flight-status-title" className="text-sm font-semibold text-slate-900">Flight status</h3>
               </div>
-              <TripFlightStatusMonitoringPanel />
+              <TripFlightStatusMonitoringPanel timeZone={timeZone} />
             </section>
 
             <section id="trip-confirmations-panel" aria-labelledby="trip-confirmations-title" className="min-w-0 border-t border-slate-200/80 pt-5">
@@ -31,7 +33,7 @@ export default async function AdminTripMonitoringPage() {
                 <FileCheck2 size={17} className="shrink-0 text-indigo-700" aria-hidden="true" />
                 <h3 id="trip-confirmations-title" className="text-sm font-semibold text-slate-900">Trip confirmations</h3>
               </div>
-              <TripConfirmationsMonitoringPanel />
+              <TripConfirmationsMonitoringPanel timeZone={timeZone} />
             </section>
           </div>
         </section>

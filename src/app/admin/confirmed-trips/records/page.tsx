@@ -5,6 +5,8 @@ import { AdminUncontrolledCalendarInput } from "@/components/admin/AdminCalendar
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { parseAdminTripFilters, tripDirectoryHref } from "@/lib/adminConfirmedTripsDirectory";
+import { adminCalendarDateField, formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { listAdminConfirmedTrips } from "@/services/adminConfirmedTripsDirectoryService";
 
 export const metadata = { title: "Admin Confirmed Trip Records" };
@@ -16,8 +18,8 @@ const statuses = ["all", "UPCOMING", "PAST", "CANCELLED"] as const;
 
 export default async function AdminConfirmedTripRecordsPage({ searchParams }: Props) {
   await requireAdminSession("/admin/confirmed-trips/records");
-  const raw = (await searchParams) ?? {};
-  const parsed = parseAdminTripFilters(raw);
+  const [raw = {}, timeZone] = await Promise.all([searchParams, getAdminViewerTimeZone()]);
+  const parsed = parseAdminTripFilters(raw, timeZone);
   if (!parsed.ok) return (
     <AdminPageShell title="Confirmed Trip Records">
       <AdminSectionCard className="p-6">
@@ -28,6 +30,7 @@ export default async function AdminConfirmedTripRecordsPage({ searchParams }: Pr
   );
 
   const { filters } = parsed;
+  const timeZoneLabel = formatAdminTimeZoneLabel(timeZone);
   const result = await listAdminConfirmedTrips(filters, typeof raw.cursor === "string" ? raw.cursor : undefined);
   if (result.status === "invalid_cursor") return (
     <AdminPageShell title="Confirmed Trip Records">
@@ -62,18 +65,22 @@ export default async function AdminConfirmedTripRecordsPage({ searchParams }: Pr
               {statuses.map(value => <option key={value} value={value}>{value === "all" ? "All statuses" : value}</option>)}
             </select>
           </label>
-          <label className="min-w-0 text-xs font-medium text-slate-700">From (UTC)
-            <AdminUncontrolledCalendarInput name="from" defaultValue={filters.from} className="mt-1 w-full max-w-full" ariaLabel="Confirmed trips start date UTC" />
+          <label className="min-w-0 text-xs font-medium text-slate-700">From ({timeZoneLabel})
+            <AdminUncontrolledCalendarInput name="from" timeZone={timeZone} key={timeZone + filters.from}
+              defaultValue={adminCalendarDateField(filters.from, timeZone)} defaultSubmitValue={filters.from}
+              className="mt-1 w-full max-w-full" ariaLabel={"Confirmed trips start date · " + timeZoneLabel} />
           </label>
-          <label className="min-w-0 text-xs font-medium text-slate-700">To (UTC)
-            <AdminUncontrolledCalendarInput name="to" defaultValue={filters.to} className="mt-1 w-full max-w-full" ariaLabel="Confirmed trips end date UTC" />
+          <label className="min-w-0 text-xs font-medium text-slate-700">To ({timeZoneLabel})
+            <AdminUncontrolledCalendarInput name="to" timeZone={timeZone} key={timeZone + filters.to}
+              defaultValue={adminCalendarDateField(filters.to, timeZone, true)} defaultSubmitValue={filters.to}
+              className="mt-1 w-full max-w-full" ariaLabel={"Confirmed trips end date · " + timeZoneLabel} />
           </label>
           <div className="flex min-w-0 items-end gap-2 lg:col-span-2">
             <button type="submit" className="h-9 min-w-0 rounded-lg bg-indigo-700 px-4 text-xs font-semibold text-white hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Apply filters</button>
             <Link href="/admin/confirmed-trips/records" className="inline-flex h-9 items-center rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50">Clear filters</Link>
           </div>
         </form>
-        <p className="mt-2 text-[11px] leading-4 text-slate-500">Dates filter the latest signed provider-confirmation timestamp in UTC, not the travel date.</p>
+        <p className="mt-2 text-[11px] leading-4 text-slate-500">Reporting dates filter the latest signed provider confirmation.</p>
         {result.status === "unavailable" ? (
           <div role="status" className="mt-4 rounded-lg bg-slate-50 px-4 py-4 text-sm leading-5 text-slate-700">Confirmed trip records are temporarily unavailable. No results or counts have been invented.</div>
         ) : (
@@ -83,7 +90,7 @@ export default async function AdminConfirmedTripRecordsPage({ searchParams }: Pr
               <span className="text-xs font-medium tabular-nums text-slate-600">{new Intl.NumberFormat("en-US").format(result.totalMatching)} verified records</span>
             </div>
             {result.rows.length ? (
-              <TripDirectoryView rows={result.rows} />
+              <TripDirectoryView rows={result.rows} timeZone={timeZone} />
             ) : <p role="status" className="rounded-lg bg-slate-50 px-4 py-4 text-center text-xs leading-5 text-slate-600">No provider-confirmed trip matches the selected filters.</p>}
             {result.nextCursor ? (
               <div className="mt-4 flex justify-end">

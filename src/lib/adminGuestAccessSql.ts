@@ -25,8 +25,8 @@ export function accountDevicePlatformPredicate(platform: DeviceHistoryQuery["pla
  * existing consented PAGE_VIEW records; necessary guest activity uses only
  * already-retained anonymous operational search/handoff records. Never join
  * temporary presence IDs to visitors, or expose raw network data/credentials. */
-export function guestAccessRecordsSql(query: DeviceHistoryQuery, environment: PublicEnvironment, now: Date, id?: string) {
-  const window = deviceHistoryWindow(query, now);
+export function guestAccessRecordsSql(query: DeviceHistoryQuery, environment: PublicEnvironment, now: Date, id?: string, timeZone = "UTC") {
+  const window = deviceHistoryWindow(query, now, timeZone);
   const keys = Object.keys(pageViewCatalog) as PageViewKey[];
   const webKeys = keys.filter(key => pageViewCatalog[key].web.length > 0);
   const nativeKeys = keys.filter(key => pageViewCatalog[key].native.length > 0);
@@ -91,9 +91,9 @@ export function guestAccessRecordsSql(query: DeviceHistoryQuery, environment: Pu
 }
 
 /** Identical source and filters for directory counts and detail history. */
-export function guestAccessHistorySql(id: string, query: DeviceHistoryQuery, environment: PublicEnvironment, now: Date) {
+export function guestAccessHistorySql(id: string, query: DeviceHistoryQuery, environment: PublicEnvironment, now: Date, timeZone = "UTC") {
   return Prisma.sql`
-    WITH records AS MATERIALIZED (${guestAccessRecordsSql(query, environment, now, id)})
+    WITH records AS MATERIALIZED (${guestAccessRecordsSql(query, environment, now, id, timeZone)})
     SELECT r.*, totals."total", totals."firstSeenAt", totals."lastSeenAt"
     FROM (SELECT COUNT(*)::bigint AS "total", MIN("at") AS "firstSeenAt", MAX("at") AS "lastSeenAt" FROM records) totals
     LEFT JOIN LATERAL (

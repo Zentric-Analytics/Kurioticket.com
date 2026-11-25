@@ -19,10 +19,10 @@ test("unfiltered search still returns with the selected default range", () => {
   assert.equal(searchActivityDetailQuery({}, "today"), "range=today");
 });
 
-test("viewer timezone survives search detail and back navigation", () => {
+test("legacy viewer timezone parameters are dropped when retaining selected Search Activity filters", () => {
   const raw = { range: "today", viewerTimeZone: "Africa/Lagos", product: "FLIGHT" };
   const query = searchActivityDetailQuery(raw);
-  assert.equal(new URLSearchParams(query).get("viewerTimeZone"), "Africa/Lagos");
+  assert.equal(new URLSearchParams(query).has("viewerTimeZone"), false);
   assert.equal(searchActivityReturnHref(Object.fromEntries(new URLSearchParams(query))), "/admin/searches/activity?" + query);
 });
 
@@ -35,7 +35,7 @@ test("a former Bot platform bookmark moves to Bot identity and preserves other f
   assert.equal(result?.kind, "redirect");
   assert.ok(result);
   assert.deepEqual(Object.fromEntries(new URL(result.href, "https://example.com").searchParams), {
-    ...Object.fromEntries(Object.entries(raw).filter(([key]) => key !== "applicationSource")),
+    ...Object.fromEntries(Object.entries(raw).filter(([key]) => key !== "applicationSource" && key !== "viewerTimeZone")),
     identity: "bot",
   });
   assert.equal(resolveSearchActivityLegacyFilters({ ...raw, identity: "guest" })?.kind, "unsupported");

@@ -20,7 +20,6 @@ import {
   type AdminJourneyRow,
   type AdminJourneyScope,
   type AdminJourneySearchCounts,
-  type AdminJourneyStage,
   type AdminJourneySummary,
 } from "./adminJourneyContract";
 
@@ -440,11 +439,11 @@ function summaryDto(
 }
 
 export function createAdminJourneyService(dependencies: Dependencies) {
-  async function read<T>(kind: AdminJourneyQueryKind, input: AdminJourneyQueryInput, work: (tx: Prisma.TransactionClient, query: AdminJourneyQuery) => Promise<AdminJourneyResult<T>>, journeyId?: string): Promise<AdminJourneyResult<T>> {
+  async function read<T>(kind: AdminJourneyQueryKind, input: AdminJourneyQueryInput, work: (tx: Prisma.TransactionClient, query: AdminJourneyQuery) => Promise<AdminJourneyResult<T>>, journeyId?: string, calendarTimeZone?: string): Promise<AdminJourneyResult<T>> {
     try {
       // Authorization precedes validation and storage, including for direct server-component callers.
       if (!(await dependencies.authorize())) return { status: "forbidden" };
-      const parsed = parseAdminJourneyQuery(input, kind, (dependencies.now ?? (() => new Date()))(), dependencies.environment(), journeyId);
+      const parsed = parseAdminJourneyQuery(input, kind, (dependencies.now ?? (() => new Date()))(), dependencies.environment(), journeyId, calendarTimeZone);
       if (parsed.status !== "ok") return parsed;
       const database = dependencies.database();
       if (!database) return { status: "unavailable" };
@@ -476,14 +475,14 @@ export function createAdminJourneyService(dependencies: Dependencies) {
         return { status: "ok", data: { scope: query.scope, journey: journeyDto(journey), events: page.map(eventDto), nextCursor: records.length > query.limit && last ? encodeAdminJourneyCursor({ version: 1, kind: "detail", journeyId, at: last.createdAt.toISOString(), id: last.id, scope: query.scope }) : null } };
       }, journeyId);
     },
-    summary(input: AdminJourneyQueryInput = {}): Promise<AdminJourneyResult<AdminJourneySummary>> {
+    summary(input: AdminJourneyQueryInput = {}, calendarTimeZone?: string): Promise<AdminJourneyResult<AdminJourneySummary>> {
       return read<AdminJourneySummary>("summary", input, async (tx, query) => {
         const [row] = await tx.$queryRaw<SummaryRecord[]>(summarySql(query.scope));
         const [operational] = await tx.$queryRaw<OperationalRecord[]>(operationalSql(query.scope));
         const [handoffs] = await tx.$queryRaw<OperationalHandoffRecord[]>(operationalHandoffsSql(query.scope));
         if (!row || !operational || !handoffs) throw new Error("Missing journey summary aggregates.");
         return { status: "ok", data: summaryDto(query.scope, row, operational, handoffs) };
-      });
+      }, undefined, calendarTimeZone);
     },
   };
 }

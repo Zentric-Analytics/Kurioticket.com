@@ -4,9 +4,11 @@ import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
 import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeFields";
 import { journeyWindow, selectedJourneyRange } from "@/lib/adminJourneyDateRange";
+import { resetStaleJourneyDateCursor } from "@/lib/adminJourneyDateCursor";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
-import { formatDateTime } from "@/lib/admin-data";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { buildAdminSearchProviderOptions } from "@/lib/adminSearchProviderOptions";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
@@ -26,12 +28,13 @@ const stages: Array<{ value: AdminJourneyStage; label: string }> = [
 ];
 
 export default async function AdminJourneysPage({ searchParams, embedded = false }: { embedded?: boolean; searchParams: SearchParams }) {
-  const raw = await searchParams;
   const now = new Date();
+  const timeZone = await getAdminViewerTimeZone();
+  const raw = resetStaleJourneyDateCursor(await searchParams, now, timeZone);
   // The legacy backend defaults each call to its own moving seven-day window.
   // Pin both reads to the same explicit bounds, including cursor continuations.
   const range = selectedJourneyRange(raw);
-  const fixed = journeyWindow(raw, now);
+  const fixed = journeyWindow(raw, now, timeZone);
   const providerOptions = buildAdminSearchProviderOptions(getProviderIntegrationStatuses(), one(raw.provider) || null);
   // Always constrain this view to the deployment's configured environment.
   // Historical environment URLs must not silently switch staging into production.
@@ -73,7 +76,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
             <JourneyDateRangeFields initialRange={range}
               initialFrom={one(raw.from) || (range === "custom" ? (list.status === "ok" ? list.data.scope.from : "") : "")}
               initialTo={one(raw.to) || (range === "custom" ? (list.status === "ok" ? list.data.scope.to : "") : "")}
-              now={now.toISOString()} />
+              now={now.toISOString()} timeZone={timeZone} />
           <div className="min-w-0">
             <SearchMonitorSelect label="Product" name="product" appearance="fare"
               value={one(raw.product)} options={[
@@ -147,8 +150,8 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
                       return (
                       <tr key={journey.id} className="min-h-[56px] align-top transition-colors hover:bg-[#F8FAFC]">
                         <td data-label="Last activity" className="px-2 py-2.5">
-                          <p className="font-medium leading-5 text-[#020617]">{formatDateTime(new Date(journey.lastEventAt))}</p>
-                          <p className="mt-1 text-[12px] leading-4 text-[#64748B]">Started {formatDateTime(new Date(journey.startedAt))}</p>
+                          <p className="font-medium leading-5 text-[#020617]">{formatViewerTimestamp(journey.lastEventAt, timeZone)}</p>
+                          <p className="mt-1 text-[12px] leading-4 text-[#64748B]">Started {formatViewerTimestamp(journey.startedAt, timeZone)}</p>
                         </td>
                         <td data-label="Identity" className="px-2 py-2.5">
                           <p className="font-medium capitalize text-[#020617]">{journey.identity.kind}</p>
@@ -196,7 +199,9 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
               </div>
               {list.data.nextCursor ? (
                 <div className="flex justify-end border-t border-[#E7ECF5] py-3">
-                  <Link href={embedded ? workspaceCursorHref(raw, list.data.nextCursor, "journeys") : cursorHref(raw, list.data.nextCursor)}
+                  <Link href={embedded
+                    ? workspaceCursorHref({ ...raw, range }, list.data.nextCursor, "journeys")
+                    : cursorHref({ ...raw, range }, list.data.nextCursor)}
                     className="inline-flex h-9 items-center rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]">
                     Next page
                   </Link>

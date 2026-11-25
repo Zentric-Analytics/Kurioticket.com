@@ -14,17 +14,17 @@ function SearchMonitorTableState({
   initialCursor,
   query,
   referenceNow,
+  timeZone = "UTC",
   detailQuery,
 }: {
   initialItems: AdminSearchActivityRead[];
   initialCursor: string | null;
   query: string;
   referenceNow: string;
+  timeZone?: string;
   detailQuery: string;
 }) {
   const [items, setItems] = useState(initialItems);
-  const [viewerTimeZone, setViewerTimeZone] = useState("UTC");
-  useEffect(() => { setViewerTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"); }, []);
   const [cursor, setCursor] = useState(initialCursor);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -134,7 +134,7 @@ function SearchMonitorTableState({
           <tbody>
             {items.map((search) => (
               <tr key={search.id} className="group relative cursor-pointer border-b border-[#E5E7EB] text-[13px] text-[#374151] hover:bg-[#FAFAFA] focus-within:bg-[#F8FAFC]">
-                <td data-label="Created" className="px-2 py-3 align-top">{formatViewerTimestamp(search.createdAt, viewerTimeZone, referenceNow)}</td>
+                <td data-label="Created" className="px-2 py-3 align-top">{formatViewerTimestamp(search.createdAt, timeZone, referenceNow)}</td>
                 <td data-label="Product" className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td>
                 <td data-label="Platform" className="break-words px-2 py-3 align-top">
                   {searchActivityPlatformLabel(search.applicationSource)}
@@ -161,7 +161,7 @@ function SearchMonitorTableState({
                 <td data-label="Action" className="px-2 py-3 align-top">
                   <Link
                     href={detailHref(search, detailQuery)}
-                    aria-label={`View details for ${productLabel(search.product)} search ${routeLabel(search.origin, search.destination)} at ${formatViewerTimestamp(search.createdAt, viewerTimeZone, referenceNow)}`}
+                    aria-label={`View details for ${productLabel(search.product)} search ${routeLabel(search.origin, search.destination)} at ${formatViewerTimestamp(search.createdAt, timeZone, referenceNow)}`}
                     className="inline-flex items-center gap-0.5 font-medium text-[#004BB8] underline-offset-2 after:absolute after:inset-0 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
                   >
                     View details <ChevronRight size={14} aria-hidden="true" />

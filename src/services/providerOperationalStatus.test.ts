@@ -88,6 +88,27 @@ test("provider readiness remains distinct from recent activity", async () => {
   assert.equal(result[0]?.operationalState, "NO_RECENT_ACTIVITY");
 });
 
+test("a 90-date provider window accepts the extra fall-back hour", async () => {
+  const inputs = {
+    database: database({ total: 0, success: 0, degraded: 0, failed: 0, disabled: 0, averageLatencyMs: null }),
+    readiness: ready,
+    environment: "staging" as const,
+    now: new Date("2026-11-30T12:00:00.000Z"),
+  };
+  const bounds = {
+    from: new Date("2026-09-01T04:00:00.000Z"),
+    to: new Date("2026-11-30T04:59:59.999Z"),
+  };
+  await assert.rejects(readProviderOperationalSnapshot({ ...inputs, customRange: bounds }), /Invalid custom/);
+  const observed = await readProviderOperationalSnapshot({
+    ...inputs, customRange: { ...bounds, timeZone: "America/New_York" },
+  });
+  assert.equal(observed[0]?.operationalState, "NO_RECENT_ACTIVITY");
+  await assert.rejects(readProviderOperationalSnapshot({
+    ...inputs, customRange: { ...bounds, to: inputs.now, timeZone: "America/New_York" },
+  }), /Invalid custom/);
+});
+
 test("disabled-only provider calls do not pretend a ready integration is healthy", async () => {
   const result = await readProviderOperationalSnapshot({
     database: database({

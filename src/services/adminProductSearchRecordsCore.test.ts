@@ -27,6 +27,7 @@ function params(product: "HOTEL" | "CAR", filter?: string, window?: string, curs
 function setup(input: {
   authorized?: boolean;
   environment?: "staging" | "production";
+  timeZone?: string;
   missingDatabase?: boolean;
   fail?: boolean;
   records?: Array<ReturnType<typeof record>>;
@@ -38,6 +39,7 @@ function setup(input: {
     authorize: async () => input.authorized !== false,
     now: () => current,
     environment: () => input.environment ?? "staging",
+    timeZone: async () => input.timeZone ?? "UTC",
     database: () => {
       calls.database++;
       if (input.missingDatabase) return null;
@@ -121,6 +123,18 @@ test("Today is the default hotel and car record window with UTC-midnight bounds"
   }
 });
 
+test("product history uses viewer midnight and preserves rolling durations", async () => {
+  const { reader, calls } = setup({ timeZone: "Asia/Dubai" });
+  const today = await reader.list(params("HOTEL"));
+  assert.equal(today.status, "ok");
+  if (today.status !== "ok") return;
+  assert.equal(today.data.timeZone, "Asia/Dubai");
+  assert.equal((await reader.list(params("HOTEL", "EXCEPTIONS", "24h"))).status, "ok");
+  const [local, rolling] = calls.list as Array<{ where: { createdAt: { gte: Date } } }>;
+  assert.equal(local.where.createdAt.gte.toISOString(), "2026-11-16T20:00:00.000Z");
+  assert.equal(rolling.where.createdAt.gte.toISOString(), "2026-11-16T18:00:00.000Z");
+});
+
 test("car zero-results reader excludes failed searches and does not return registered customer identity", async () => {
   const { reader, calls } = setup({ records: [record({
     type: "CAR", origin: "Heathrow", destination: "Heathrow", status: "SUCCESS", resultCount: 0,
@@ -161,6 +175,9 @@ test("cursor keeps exact product, filter, time window, environment and fixed as-
   const production = setup({ environment: "production" });
   assert.equal((await production.reader.list(params("HOTEL", "EXCEPTIONS", "24h", token))).status, "invalid");
   assert.equal(production.calls.list.length, 0);
+  const lagos = setup({ timeZone: "Africa/Lagos" });
+  assert.equal((await lagos.reader.list(params("HOTEL", "EXCEPTIONS", "today", token))).status, "invalid");
+  assert.equal(lagos.calls.list.length, 0);
 });
 
 test("record details can only read the requested hotel/car and current environment; raw errors are not returned", async () => {

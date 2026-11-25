@@ -16,7 +16,7 @@ function datePredicate(column: Prisma.Sql, window: { gte?: Date; lt?: Date; lte?
 
 /** Group the same retained records used by each detail reader. Never derive
  * authenticated sessions from guest access evidence or use live presence as history. */
-export function historyDirectorySql(section: HistorySection, query: HistoryDirectoryQuery, environment: PublicEnvironment, now: Date) {
+export function historyDirectorySql(section: HistorySection, query: HistoryDirectoryQuery, environment: PublicEnvironment, now: Date, timeZone = "UTC") {
   if (!Number.isSafeInteger(query.page) || query.page < 1 || query.page > 1_000_000) throw new Error("Invalid history directory page");
   let source: Prisma.Sql;
   if (section === "devices") {
@@ -24,7 +24,7 @@ export function historyDirectorySql(section: HistorySection, query: HistoryDirec
       SELECT 'user'::text AS "kind", u."id", COALESCE(NULLIF(u."name", ''), u."email", 'Registered user') AS "name",
         u."email", COUNT(*)::bigint AS "count", MAX(s."lastSeenAt") AS "lastSeenAt", NULL::text AS "guestSource"
       FROM "AccountSession" s JOIN "User" u ON u."id" = s."userId"
-      WHERE ${datePredicate(Prisma.sql`s."lastSeenAt"`, deviceHistoryWindow(query, now))}
+      WHERE ${datePredicate(Prisma.sql`s."lastSeenAt"`, deviceHistoryWindow(query, now, timeZone))}
       ${accountDevicePlatformPredicate(query.platform)}
       GROUP BY u."id", u."name", u."email"
     `;
@@ -32,12 +32,12 @@ export function historyDirectorySql(section: HistorySection, query: HistoryDirec
       SELECT 'guest'::text AS "kind", g."guestId" AS "id",
         CASE WHEN g."guestSource" = 'consented' THEN 'Guest visitor' ELSE 'Guest session' END AS "name",
         NULL::text AS "email", COUNT(*)::bigint AS "count", MAX(g."at") AS "lastSeenAt", g."guestSource"
-      FROM (${guestAccessRecordsSql(query, environment, now)}) g
+      FROM (${guestAccessRecordsSql(query, environment, now, undefined, timeZone)}) g
       GROUP BY g."guestId", g."guestSource"
     `;
     source = query.tab === "registered" ? accounts : query.tab === "guests" ? guests : Prisma.sql`${accounts} UNION ALL ${guests}`;
   } else {
-    const parsed = parsePageHistoryQuery({ range: query.range, from: query.from, to: query.to, platform: query.platform }, now);
+    const parsed = parsePageHistoryQuery({ range: query.range, from: query.from, to: query.to, platform: query.platform }, now, timeZone);
     if (!parsed.ok) throw new Error(parsed.error);
     const keys = Object.keys(pageViewCatalog) as PageViewKey[];
     const webKeys = keys.filter(key => pageViewCatalog[key].web.length > 0);

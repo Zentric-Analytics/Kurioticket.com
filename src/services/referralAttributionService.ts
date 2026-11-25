@@ -1,3 +1,4 @@
+import { viewerTodayStart } from "@/lib/adminLocalTime";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { journeySourcePath } from "@/lib/search-journey";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
@@ -74,12 +75,9 @@ function summarizeGroups(groups: AttributionGroupRow[]) {
 function emptySummary(
   days: number,
   environment: ReferralAttributionSummary["environment"],
+  start: Date,
   end: Date,
-  period: "today" | "rolling" = "rolling",
 ): ReferralAttributionSummary {
-  const start = period === "today"
-    ? new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()))
-    : new Date(end.getTime() - days * 86_400_000);
   return {
     dataAvailable: false,
     environment,
@@ -102,15 +100,15 @@ export function createReferralAttributionService(
     days: number,
     environment: ReferralAttributionSummary["environment"],
     period: "today" | "rolling" = "rolling",
+    timeZone = "UTC",
   ): Promise<ReferralAttributionSummary> {
     const end = now();
-    const unavailable = emptySummary(days, environment, end, period);
+    const start = period === "today"
+      ? new Date(viewerTodayStart(end, timeZone))
+      : new Date(end.getTime() - days * 86_400_000);
+    const unavailable = emptySummary(days, environment, start, end);
     const db = getDatabase();
     if (!db) return unavailable;
-
-    const start = period === "today"
-      ? new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()))
-      : new Date(end.getTime() - days * 86_400_000);
     // New handoff records carry their originating environment. Excluding legacy,
     // unlabelled rows avoids combining staging and production attribution.
     const redirectWhere = {

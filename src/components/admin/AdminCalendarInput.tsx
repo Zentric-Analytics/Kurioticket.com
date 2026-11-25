@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CalendarDays, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock3 } from "lucide-react";
+import { adminLocalDate, formatAdminTimeZoneLabel, resolveAdminTimeZone } from "@/lib/adminLocalTime";
 
 type CalendarMode = "date" | "datetime-local";
 type Props = {
@@ -13,12 +14,13 @@ type Props = {
   min?: string;
   max?: string;
   name?: string;
+  submitValue?: string;
   id?: string;
   ariaLabel?: string;
   className?: string;
   disabled?: boolean;
   defaultTime?: string;
-  timeZone?: "UTC" | "local";
+  timeZone?: string;
   required?: boolean;
 };
 
@@ -73,7 +75,7 @@ function selectedCalendarValue(
   if (mode === "date") {
     return (!min || day >= min.slice(0, 10)) && (!max || day <= max.slice(0, 10)) ? day : null;
   }
-  if (!/^\\d{1,2}$/.test(hour) || !/^\\d{1,2}$/.test(minute)
+  if (!/^\d{1,2}$/.test(hour) || !/^\d{1,2}$/.test(minute)
       || Number(hour) > 23 || Number(minute) > 59) return null;
   const normalizedMin = min?.length === 10 ? min + "T00:00" : min;
   const normalizedMax = max?.length === 10 ? max + "T23:59" : max;
@@ -96,7 +98,7 @@ function selectedCalendarValue(
  * calendar; the page's existing Apply filters action still controls data reads.
  */
 export function AdminCalendarInput({
-  value, onChange, onValueChange, mode = "date", min, max, name, id, ariaLabel,
+  value, onChange, onValueChange, mode = "date", min, max, name, submitValue, id, ariaLabel,
   className = "", disabled = false, defaultTime = "00:00", timeZone = "UTC", required = false,
 }: Props) {
   const generatedId = useId();
@@ -111,11 +113,12 @@ export function AdminCalendarInput({
   const [position, setPosition] = useState({ top: 0, left: 0, width: 324, maxHeight: 430 });
 
   const now = new Date();
+  const reportingTimeZone = resolveAdminTimeZone(timeZone);
   const today = timeZone === "local"
     ? [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-")
-    : now.toISOString().slice(0, 10);
+    : adminLocalDate(now, reportingTimeZone);
   const timeValid = mode === "date" || (
-    /^\\d{1,2}$/.test(hour) && /^\\d{1,2}$/.test(minute) &&
+    /^\d{1,2}$/.test(hour) && /^\d{1,2}$/.test(minute) &&
     Number(hour) <= 23 && Number(minute) <= 59
   );
 
@@ -196,7 +199,8 @@ export function AdminCalendarInput({
     .format(new Date(month + "-01T00:00:00.000Z"));
   return (
     <>
-      <input type={mode} name={name} value={value} required={required} min={min} max={max}
+      {name && submitValue !== undefined ? <input type="hidden" name={name} value={submitValue} /> : null}
+      <input type={mode} name={submitValue === undefined ? name : undefined} value={value} required={required} min={min} max={max}
         onChange={() => undefined}
         onInvalid={event => { event.preventDefault(); openCalendar(); }}
         tabIndex={-1} aria-hidden="true" className="sr-only" />
@@ -244,7 +248,7 @@ export function AdminCalendarInput({
           {mode === "datetime-local" ? (
             <div className="mb-3 rounded-lg bg-[#F8FAFC] px-3 py-2.5">
               <div className="mb-1.5 flex items-center gap-1.5 text-[12px] font-medium text-[#334155]">
-                <Clock3 size={15} aria-hidden="true" /> Time ({timeZone === "UTC" ? "UTC" : "local"}, 24-hour)
+                <Clock3 size={15} aria-hidden="true" /> Time ({timeZone === "local" ? "local" : reportingTimeZone === "UTC" ? "UTC" : formatAdminTimeZoneLabel(reportingTimeZone, now)}, 24-hour)
               </div>
               <div className="flex items-center gap-2">
                 <label className="text-[11px] text-[#64748B]">Hour
@@ -299,7 +303,11 @@ export function AdminCalendarInput({
 }
 
 /** Uncontrolled adapter for the legacy server-rendered trips records GET form. */
-export function AdminUncontrolledCalendarInput({ defaultValue = "", ...props }: Omit<Props, "value" | "onChange" | "onValueChange"> & { defaultValue?: string }) {
+export function AdminUncontrolledCalendarInput({
+  defaultValue = "", defaultSubmitValue, ...props
+}: Omit<Props, "value" | "onChange" | "onValueChange" | "submitValue"> & { defaultValue?: string; defaultSubmitValue?: string }) {
   const [value, setValue] = useState(defaultValue);
-  return <AdminCalendarInput {...props} value={value} onValueChange={setValue} />;
+  const [submitValue, setSubmitValue] = useState(defaultSubmitValue);
+  return <AdminCalendarInput {...props} value={value} submitValue={submitValue}
+    onValueChange={next => { setValue(next); setSubmitValue(undefined); }} />;
 }

@@ -5,6 +5,8 @@ import { AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components
 import { requireAdminSession } from "@/lib/auth-guards";
 import { isValidAdminTripId } from "@/lib/adminConfirmedTripsDirectory";
 import { formatDateTime } from "@/lib/admin-data";
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { getAdminConfirmedTripDetails } from "@/services/adminConfirmedTripsDirectoryService";
 import { getAdminConfirmationDeliveryHistory } from "@/services/partnerConfirmationDeliveryService";
 
@@ -25,7 +27,7 @@ export default async function AdminConfirmedTripDetailPage({ params }: Props) {
   const { id } = await params;
   if (!isValidAdminTripId(id)) notFound();
   await requireAdminSession("/admin/confirmed-trips/records/" + encodeURIComponent(id));
-  const result = await getAdminConfirmedTripDetails(id);
+  const [result, timeZone] = await Promise.all([getAdminConfirmedTripDetails(id), getAdminViewerTimeZone()]);
   if (result.status === "not_found") notFound();
   const history = result.status === "ok" ? await getAdminConfirmationDeliveryHistory(result.trip.id) : null;
   return (
@@ -56,7 +58,7 @@ export default async function AdminConfirmedTripDetailPage({ params }: Props) {
                   <Field label="Provider" value={result.trip.providerName} />
                   <Field label="Confirmation reference" value={result.trip.providerConfirmationCode} />
                   <Field label="Provider trip ID" value={result.trip.providerTripId} />
-                  <Field label="Latest signed confirmation" value={date(result.trip.confirmedAt)} />
+                  <Field label="Latest signed confirmation" value={formatViewerTimestamp(result.trip.confirmedAt, timeZone)} />
                 </dl>
               </section>
               <section aria-label="Travel details">
@@ -69,8 +71,8 @@ export default async function AdminConfirmedTripDetailPage({ params }: Props) {
                   <Field label="Return" value={date(result.trip.returnDate)} />
                   <Field label="Travelers" value={result.trip.travelerCount} />
                   <Field label="Provider-supplied total" value={result.trip.totalAmount === null ? "Not supplied" : result.trip.currency + " " + result.trip.totalAmount} />
-                  <Field label="Record created" value={date(result.trip.createdAt)} />
-                  <Field label="Record last updated" value={date(result.trip.updatedAt)} />
+                  <Field label="Record created" value={formatViewerTimestamp(result.trip.createdAt, timeZone)} />
+                  <Field label="Record last updated" value={formatViewerTimestamp(result.trip.updatedAt, timeZone)} />
                 </dl>
               </section>
             </div>
@@ -87,7 +89,7 @@ export default async function AdminConfirmedTripDetailPage({ params }: Props) {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {history.rows.map(item => <tr key={item.id}>
-                        <td className="whitespace-nowrap px-3 py-2.5">{formatDateTime(new Date(item.receivedAt))}</td>
+                        <td className="whitespace-nowrap px-3 py-2.5">{formatViewerTimestamp(item.receivedAt, timeZone)}</td>
                         <td className="px-3 py-2.5">{item.outcome}</td>
                         <td className="px-3 py-2.5">{item.reason.replaceAll("_", " ")}</td>
                         <td className="px-3 py-2.5">{item.reportedStatus || "Unavailable"}</td>

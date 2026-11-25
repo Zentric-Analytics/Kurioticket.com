@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { SearchMonitorSelect } from "./SearchMonitorSelect";
 import { AdminCalendarInput } from "./AdminCalendarInput";
+import { adminCalendarRange, formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
+import { displayActivityCalendarDate } from "@/lib/adminActivityDateQuery";
 import { ADMIN_REPORTING_RANGE_OPTIONS } from "@/lib/adminReportingRanges";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
@@ -13,24 +15,26 @@ const options = {
   stage: [["all","All activity types"],["SEARCH_COMPLETED","Search completed"],["RESULTS_VIEWED","Results viewed"],["FLIGHT_DETAILS_VIEWED","Flight details viewed"],["OFFER_SELECTED","Offer selected"],["PROVIDER_DEAL_SELECTED","Provider deal selected"],["PROVIDER_HANDOFF_STARTED","Provider handoff"],["RESULT_SAVED","Result saved"],["RESULT_UNSAVED","Result unsaved"],["RESULT_SHARED","Result shared"],["PRICE_ALERT_CREATED","Price alert created"],["ACCOUNT_ACTIVITY","Account activity"]],
   order: [["newest","Newest first"],["oldest","Oldest first"]],
 };
-function utcWindow(days: number) {
-  const to = new Date();
-  return { from: new Date(to.getTime() - days * 86_400_000).toISOString(), to: to.toISOString() };
-}
-export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: string; initial: Values; directory: string; tabs: ReactNode }) {
+export function ActivityFiltersBar({ path, initial, directory, tabs, timeZone, now }: {
+  path: string; initial: Values; directory: string; tabs: ReactNode; timeZone: string; now: string;
+}) {
+  const initialDates = {
+    from: displayActivityCalendarDate(initial.from, timeZone),
+    to: displayActivityCalendarDate(initial.to, timeZone, true),
+  };
   const router = useRouter();
   const [values, setValues] = useState(initial);
-  const [draftDates, setDraftDates] = useState({ from: initial.from, to: initial.to });
+  const [draftDates, setDraftDates] = useState(initialDates);
   const [editingCustom, setEditingCustom] = useState(false);
   const [pending, startTransition] = useTransition();
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submitted = useRef("");
-  const scope = JSON.stringify([initial.tab, initial.q, initial.product, initial.stage, initial.order, initial.from, initial.to, initial.range]);
+  const scope = JSON.stringify([initial.tab, initial.q, initial.product, initial.stage, initial.order, initial.from, initial.to, initial.range, timeZone]);
   const [previousScope, setPreviousScope] = useState(scope);
   if (previousScope !== scope) {
     setPreviousScope(scope);
     setValues(initial);
-    setDraftDates({ from: initial.from, to: initial.to });
+    setDraftDates(initialDates);
     setEditingCustom(false);
   }
   useEffect(() => {
@@ -46,7 +50,7 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
     if (next.product !== "all") params.set("product", next.product);
     if (next.stage !== "all") { params.set("stage", next.stage); params.set("type", next.stage); }
     if (next.order !== "newest") { params.set("order", next.order); params.set("sort", next.order); }
-    if (next.range !== "all") params.set("range", next.range);
+    params.set("range", next.range);
     if (next.from) params.set("from", next.from);
     if (next.to) params.set("to", next.to);
     const url = path + (params.size ? "?" + params.toString() : "");
@@ -62,23 +66,21 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
     ...(values.range === "24h" ? [{ value: "24h", label: "Last 24 hrs (legacy)" }] : [])];
   const setRange = (range: string) => {
     if (range === "custom") {
-      setDraftDates({ from: values.range === "custom" ? values.from : "", to: values.range === "custom" ? values.to : "" });
+      setDraftDates(values.range === "custom" ? initialDates : { from: "", to: "" });
       setEditingCustom(true);
       return;
     }
     setEditingCustom(false);
-    const dates = range === "today" ? { from: new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString(), to: new Date().toISOString() }
-      : range === "24h" ? utcWindow(1) : range === "7d" ? utcWindow(7) : range === "30d" ? utcWindow(30) : {from:"",to:""};
-    update({range, ...dates});
+    update({ range, from: "", to: "" });
   };
-  const validCustom = /^\d{4}-\d{2}-\d{2}$/.test(draftDates.from)
-    && /^\d{4}-\d{2}-\d{2}$/.test(draftDates.to)
-    && !Number.isNaN(Date.parse(draftDates.from)) && !Number.isNaN(Date.parse(draftDates.to))
-    && draftDates.from <= draftDates.to;
+  const validCustom = Boolean(adminCalendarRange(draftDates.from, draftDates.to, timeZone));
+  const customDates = initial.range === "custom" && draftDates.from === initialDates.from && draftDates.to === initialDates.to
+    ? { from: initial.from, to: initial.to }
+    : draftDates;
   const cancelDates = () => {
     setEditingCustom(false);
     setValues(current => ({...current, range: initial.range, from: initial.from, to: initial.to}));
-    setDraftDates({from: initial.from,to: initial.to});
+    setDraftDates(initialDates);
   };
   return <div className="min-w-0 space-y-3">
     <label className="relative block min-w-0">
@@ -92,7 +94,7 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
     <div className="min-w-0 border-b border-[#E2E8F0] pb-2">
       <div data-testid="activity-filters-row" className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_minmax(120px,0.7fr)]">
         <SearchMonitorSelect label="Date range" name="range" value={editingCustom ? "custom" : values.range} options={rangeOptions}
-          appearance="fare" onValueChange={setRange} />
+          appearance="fare" timeZoneLabel={formatAdminTimeZoneLabel(timeZone, new Date(now))} onValueChange={setRange} />
         <SearchMonitorSelect label="Activity product" name="product" value={values.product}
           options={options.product.map(([value,label])=>({value,label}))} appearance="fare"
           onValueChange={product=>update({product})} />
@@ -100,21 +102,20 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
           options={options.stage.map(([value,label])=>({value,label}))} appearance="fare"
           onValueChange={stage=>update({stage})} />
         <button type="button" onClick={() => navigate((editingCustom || values.range === "custom") && validCustom
-          ? { ...values, range: "custom", from: draftDates.from,
-              to: draftDates.to } : values)}
+          ? { ...values, range: "custom", ...customDates } : values)}
           disabled={pending || ((editingCustom || values.range === "custom") && !validCustom)}
           className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60">
           Apply filters
         </button>
       </div>
       {(editingCustom || values.range === "custom") ? <div className="mt-3 flex flex-wrap items-end gap-3">
-      <label className="text-xs text-[#64748B]">From (UTC)
-        <AdminCalendarInput ariaLabel="Custom start date UTC" value={draftDates.from}
+      <label className="text-xs text-[#64748B]">From
+        <AdminCalendarInput timeZone={timeZone} ariaLabel="Custom start date" value={draftDates.from}
           max={draftDates.to || undefined} onChange={e => { setDraftDates(current => ({...current, from:e.target.value}));
           setValues(current => ({...current, range:"custom", from:e.target.value})); }} className="w-[210px] max-w-full" />
       </label>
-      <label className="text-xs text-[#64748B]">To (UTC)
-        <AdminCalendarInput ariaLabel="Custom end date UTC" value={draftDates.to}
+      <label className="text-xs text-[#64748B]">To
+        <AdminCalendarInput timeZone={timeZone} ariaLabel="Custom end date" value={draftDates.to}
           min={draftDates.from || undefined} onChange={e => { setDraftDates(current => ({...current, to:e.target.value}));
           setValues(current => ({...current, range:"custom", to:e.target.value})); }} className="w-[210px] max-w-full" />
       </label>

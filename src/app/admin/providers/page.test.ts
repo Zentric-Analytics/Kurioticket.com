@@ -219,7 +219,7 @@ test("Provider Health range sits to the right of product tabs, not beside attent
 });
 
 test("provider attention uses a single dropdown and safely bounded date selection", () => {
-  assert.match(providersPage, /parseProviderHealthRange\(raw, monitoringNow\)/);
+  assert.match(providersPage, /parseProviderHealthRange\(raw, monitoringNow, timeZone\)/);
   assert.match(providersPage, /ProviderHealthWindowFilter/);
   assert.match(providersPage, /providerHealthRangeHref\(item\.key, monitoringRange, monitoringHours, monitoringPeriod\)/);
   assert.doesNotMatch(providersPage, /Provider health signals \(historical\)/);
@@ -340,8 +340,8 @@ test("Task 2: breakdown reasons are stacked with aligned counts, not comma-joine
 test("Task 3: referral attribution uses compact preset auto-apply and white metric summaries", () => {
   assert.match(referralPage, /requireAdminApiSession\(\)/);
   assert.match(referralPage, /parseAttributionDays\(daysValue === "today" \? null : daysValue\)/);
-  assert.match(referralPage, /getReferralAttributionSummary\(days, environment, period\)/);
-  assert.match(referralPage, /<ReferralWindowFilter days=\{days\} embedded=\{false\} period=\{period\} \/>/);
+  assert.match(referralPage, /getReferralAttributionSummary\(days, environment, period, timeZone\)/);
+  assert.match(referralPage, /<ReferralWindowFilter days=\{days\} embedded=\{false\} period=\{period\} timeZone=\{timeZone\} \/>/);
   assert.match(referralWindowFilter, /router\.replace\(target, \{ scroll: false \}\)/);
   assert.match(referralWindowFilter, /name="days"/);
   assert.match(referralWindowFilter, /name="view" value="attribution"/);
@@ -440,7 +440,7 @@ test("Referral date filter stays available without duplicate Providers tabs", ()
   assert.doesNotMatch(providersPage, /<nav aria-label="Provider reporting sections"/);
   assert.match(providersPage, /<header className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-\[#D8E1EC\] pb-4 pt-1">/);
   assert.match(providersPage, /<h1 className="text-\[20px\] font-semibold leading-7 tracking-\[-0\.02em\] text-\[#020617\]">\s*Referral Attribution\s*<\/h1>/);
-  assert.match(providersPage, /<ReferralWindowFilter days=\{attributionDays \?\? DEFAULT_ATTRIBUTION_DAYS\} period=\{attributionPeriod\} embedded \/>/);
+  assert.match(providersPage, /<ReferralWindowFilter days=\{attributionDays \?\? DEFAULT_ATTRIBUTION_DAYS\} period=\{attributionPeriod\} timeZone=\{timeZone\} embedded \/>/);
   assert.match(referralPage, /\) : null\}/);
   assert.doesNotMatch(referralPage, /<h1 className="sr-only">Referral Attribution<\/h1>/);
   assert.doesNotMatch(providersPage, /attributionEnvironment === "production"/);
@@ -582,7 +582,7 @@ test("Handoff browser history only bypasses the stale-response guard for real fi
   assert.notEqual(providerHandoffHistoryFilterHref("?product=FLIGHT&identity=guest"),
     currentHref);
   // Pagination keeps the same materialized date scope and original filters.
-  assert.match(handoffsPage, /withHandoffDateScope\(raw, now\)/);
+  assert.match(handoffsPage, /withHandoffDateScope\(raw, now, timeZone\)/);
   assert.match(handoffsPage, /handoffNextPageHref\(scopedRaw, result\.data\.nextCursor\)/);
   assert.match(handoffsPage, /handoffPreviousPageHref\(scopedRaw\)/);
   assert.equal(shouldAcceptHandoffFilterResponse(original, scope,

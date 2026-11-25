@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { Prisma } from "@/generated/prisma/client";
+import { resolveOverviewRange } from "@/lib/adminOverviewRange";
 import { createAdminJourneyService, type AdminJourneyDatabase } from "./adminJourneyCore";
 import { parseAdminJourneyQuery } from "./adminJourneyContract";
 
@@ -284,6 +285,29 @@ test("All time accepts the explicit epoch anchor while ordinary intervals remain
     from: "1970-01-01T00:00:00.000Z",
     to: new Date(now.getTime() + 86400000).toISOString(),
   }, "list", now, "staging").status, "invalid");
+});
+
+test("the Overview summary accepts 90 local dates spanning fall-back without extending the API limit", async () => {
+  const zone = "Australia/Sydney";
+  const range = resolveOverviewRange({ range: "custom", from: "2026-02-01", to: "2026-05-01" }, now, zone);
+  assert.equal(range.invalidCustom, false);
+  assert.equal(range.to.getTime() - range.from.getTime(), (90 * 24 + 1) * 3_600_000);
+  const input = { from: range.from.toISOString(), to: range.to.toISOString() };
+  const f = fixture([[summary()], [{ total: BigInt(0), success: BigInt(0), partial: BigInt(0), failed: BigInt(0) }], [coverage()]]);
+
+  assert.equal((await f.service.summary(input)).status, "invalid");
+  assert.equal((await f.service.summary(input, "UTC")).status, "invalid");
+  const arbitraryRange = { ...input, from: new Date(range.from.getTime() + 60_000).toISOString() };
+  assert.equal((await f.service.summary(arbitraryRange, zone)).status, "invalid");
+  assert.equal(f.calls().databaseCalls, 0);
+
+  const result = await f.service.summary(input, zone);
+  assert.equal(result.status, "ok");
+  if (result.status === "ok") {
+    assert.equal(result.data.scope.from, input.from);
+    assert.equal(result.data.scope.to, input.to);
+  }
+  assert.equal(f.calls().databaseCalls, 1);
 });
 
 test("All time cursor preserves consent-aware environment and original historical window", async () => {

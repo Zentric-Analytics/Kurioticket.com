@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { adminCustomDateRange } from "@/lib/adminReportingRanges";
 import {
   encodeAdminAuditCursor,
   parseAdminAuditQuery,
@@ -27,6 +28,19 @@ test("audit cursors are bound to filters", () => {
   const cursor = encodeAdminAuditCursor(first.data.scope, "2026-10-20T12:00:00.000Z", "audit_123");
   assert.equal(parseAdminAuditQuery(new URLSearchParams(`action=USER&cursor=${cursor}`), now).status, "ok");
   assert.equal(parseAdminAuditQuery(new URLSearchParams(`action=OTHER&cursor=${cursor}`), now).status, "invalid");
+});
+
+test("a validated 90-date Audit Logs window includes the fall-back hour without widening API time limits", () => {
+  const now = new Date("2026-11-06T15:00:00Z");
+  const scope = adminCustomDateRange("2026-08-07", "2026-11-04", now, "America/New_York");
+  assert.ok(scope);
+  assert.equal(scope.from.toISOString(), "2026-08-07T04:00:00.000Z");
+  assert.equal(scope.to.toISOString(), "2026-11-05T05:00:00.000Z");
+  const params = new URLSearchParams({ from: scope.from.toISOString(), to: scope.to.toISOString() });
+  assert.equal(parseAdminAuditQuery(params, now).status, "invalid");
+  assert.equal(parseAdminAuditQuery(params, now, scope).status, "ok");
+  params.set("to", "2026-11-05T05:00:00.001Z");
+  assert.equal(parseAdminAuditQuery(params, now, scope).status, "invalid");
 });
 
 test("audit queries reject repeated and unknown parameters", () => {

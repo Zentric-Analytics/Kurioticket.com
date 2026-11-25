@@ -1,36 +1,49 @@
-/** Presentation-only queue date-range selection. Backend receives only ISO from/to. */
-export type AdminQueueRange = "24h" | "today" | "7d" | "30d" | "custom" | "all";
+import { adminLocalDateTime, adminLocalDateTimeToDate, shiftAdminCalendarDate } from "./adminLocalTime";
+import { adminRollingRange, isAdminReportingRange, type AdminReportingRange } from "./adminReportingRanges";
 
-export const adminQueueRangeOptions = [
-  { value: "today", label: "Today" },
-  { value: "7d", label: "Last 7 days" },
-  { value: "30d", label: "Last 30 days" },
-  { value: "all", label: "All time" },
-  { value: "custom", label: "Custom range" },
-] as const;
+/** Presentation-only queue date-range selection. Backend receives only ISO from/to. */
+export type AdminQueueRange = AdminReportingRange;
+export { ADMIN_REPORTING_RANGE_OPTIONS as adminQueueRangeOptions, isAdminReportingRange as isAdminQueueRange } from "./adminReportingRanges";
 
 export type AdminQueueWindow = { range: AdminQueueRange; from: string; to: string };
 
-export function isAdminQueueRange(value: string): value is AdminQueueRange {
-  return value === "24h" || adminQueueRangeOptions.some(option => option.value === value);
+function queueCalendarBound(value: string, timeZone: string, upper = false) {
+  const localValue = upper && /^\d{4}-\d{2}-\d{2}$/.test(value) ? shiftAdminCalendarDate(value, 1) : value;
+  return localValue ? adminLocalDateTimeToDate(localValue, timeZone) : null;
 }
 
-/** A missing range means Today (midnight UTC to now), or custom for legacy dated URLs. */
+/** A missing range means local Today to now, or custom for legacy dated URLs. */
 export function resolveAdminQueueWindow(
   raw: { range?: string; from?: string; to?: string },
   now: Date = new Date(),
+  timeZone = "UTC",
 ): AdminQueueWindow {
-  const range: AdminQueueRange = isAdminQueueRange(raw.range || "")
-    ? raw.range as AdminQueueRange
+  const range: AdminQueueRange = raw.range && isAdminReportingRange(raw.range)
+    ? raw.range
     : raw.from || raw.to ? "custom" : "today";
   if (range === "all") return { range, from: "", to: "" };
-  if (range === "custom") return { range, from: raw.from || "", to: raw.to || "" };
+  if (range === "custom") {
+    const { from = "", to = "" } = raw;
+    return {
+      range,
+      from: queueCalendarBound(from, timeZone)?.toISOString() ?? from,
+      to: queueCalendarBound(to, timeZone, true)?.toISOString() ?? to,
+    };
+  }
+  if (range === "today") {
+    const current = adminRollingRange(range, now, timeZone);
+    const { from } = current;
+    const anchor = raw.to ? Date.parse(raw.to) : Number.NaN;
+    // A Today link from another zone or day must use the current local midnight.
+    const to = raw.from === from && anchor > Date.parse(from) && anchor <= now.getTime()
+      && new Date(anchor).toISOString() === raw.to
+      ? raw.to
+      : current.to;
+    return { range, from, to };
+  }
   // Reuse the exact applied interval across pagination and status-tab navigation.
   if (raw.from && raw.to) return { range, from: raw.from, to: raw.to };
-  const to = now.toISOString();
-  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
-  const durationMs = range === "7d" ? 7 * 86400000 : range === "30d" ? 30 * 86400000 : 86400000;
-  return { range, from: range === "today" ? dayStart : new Date(now.getTime() - durationMs).toISOString(), to };
+  return { range, ...adminRollingRange(range, now, timeZone) };
 }
 
 export function toAdminQueueDateParams(window: AdminQueueWindow): URLSearchParams {
@@ -40,20 +53,18 @@ export function toAdminQueueDateParams(window: AdminQueueWindow): URLSearchParam
   return params;
 }
 
-/** Browser local datetime inputs may be cleared; never silently send invalid dates. */
-export function validateCustomQueueWindow(from: string, to: string): string | null {
+/** Reporting-zone datetime inputs may be cleared or fall in a daylight-saving gap. */
+export function validateCustomQueueWindow(from: string, to: string, timeZone = "UTC"): string | null {
   if (!from || !to) return "Choose both start and end dates.";
-  const start = Date.parse(from);
-  const end = Date.parse(to);
-  if (!Number.isFinite(start) || !Number.isFinite(end)) return "Enter valid dates.";
+  const start = queueCalendarBound(from, timeZone);
+  const end = queueCalendarBound(to, timeZone, true);
+  if (!start || !end) return "Enter valid dates.";
   if (start >= end) return "Start must be earlier than end.";
   return null;
 }
 
-/** Local datetime input values have no zone; convert explicitly to ISO UTC. */
-export function localQueueDateTime(iso: string): string {
+/** Render an explicit UTC instant in the selected reporting zone for editing. */
+export function localQueueDateTime(iso: string, timeZone = "UTC"): string {
   if (!iso || !Number.isFinite(Date.parse(iso))) return "";
-  const d = new Date(iso);
-  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 16);
+  return adminLocalDateTime(new Date(iso), timeZone);
 }

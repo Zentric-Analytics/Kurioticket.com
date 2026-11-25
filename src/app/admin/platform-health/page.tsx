@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAdminApiSession } from "@/lib/admin";
 import { requireAdminSession } from "@/lib/auth-guards";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { PlatformHealthDashboard } from "@/components/admin/PlatformHealthDashboard";
 import { parsePlatformHealthView } from "@/lib/platformHealthPresentation";
@@ -23,5 +24,6 @@ export default async function PlatformHealthPage({ searchParams }: {
             params.append(key, value);
     }
     const view = parsePlatformHealthView(params);
-    return <AdminPageShell title="Platform Health" hideHeader>{view ? <PlatformHealthDashboard key={`${view.period}-${view.hours}-${view.application}`} data={await readPlatformOperations(view.hours, view.period)} {...view}/> : <section role="alert" className="rounded-xl border border-amber-200 bg-white p-6"><h2 className="text-xl font-semibold">Check the health filters</h2><p className="mt-2 text-sm text-slate-600">Choose an application and a Today, 7-day or 30-day window. Environment is set by this deployment.</p><Link href="/admin/platform-health" className="focus-ring mt-4 inline-block text-sm text-[#004BB8]">Reset filters</Link></section>}</AdminPageShell>;
+    const timeZone = await getAdminViewerTimeZone(access.session?.user?.id);
+    return <AdminPageShell title="Platform Health" hideHeader>{view ? <PlatformHealthDashboard key={`${view.period}-${view.hours}-${view.application}-${timeZone}`} data={await readPlatformOperations(view.hours, view.period, timeZone)} {...view}/> : <section role="alert" className="rounded-xl border border-amber-200 bg-white p-6"><h2 className="text-xl font-semibold">Check the health filters</h2><p className="mt-2 text-sm text-slate-600">Choose an application and a Today, 7-day or 30-day window. Environment is set by this deployment.</p><Link href="/admin/platform-health" className="focus-ring mt-4 inline-block text-sm text-[#004BB8]">Reset filters</Link></section>}</AdminPageShell>;
 }

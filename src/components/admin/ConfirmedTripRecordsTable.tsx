@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import type { AdminConfirmedTripRow } from "@/services/adminConfirmedTripsDirectoryService";
 
-type Props = { rows: AdminConfirmedTripRow[] };
+type Props = { rows: AdminConfirmedTripRow[]; timeZone: string };
 
-const dateTime = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" });
 const dateOnly = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
 
 function TripDate({ value }: { value: string }) {
@@ -32,7 +32,7 @@ function Status({ value, needsReview }: { value: string; needsReview: boolean })
 }
 
 /** Read-only list of provider-confirmed trip records. Empty states retain the table structure. */
-export function ConfirmedTripRecordsTable({ rows }: Props) {
+export function ConfirmedTripRecordsTable({ rows, timeZone }: Props) {
   return (
     <div className="min-w-0">
       <div role="region" aria-label="Matching confirmed trip records" tabIndex={0}
@@ -60,7 +60,7 @@ export function ConfirmedTripRecordsTable({ rows }: Props) {
             {rows.length ? rows.map(trip => (
               <tr key={trip.id} className="align-top hover:bg-slate-50/70">
                 <td data-label="Created" className="px-3 py-3">
-                  <time dateTime={trip.createdAt} className="block text-xs font-medium leading-5 text-slate-900">{dateTime.format(new Date(trip.createdAt))}</time>
+                  <time dateTime={trip.createdAt} className="block text-xs font-medium leading-5 text-slate-900">{formatViewerTimestamp(trip.createdAt, timeZone)}</time>
                 </td>
                 <td data-label="Type" className="px-3 py-3">
                   <span className="text-[11px] font-semibold leading-4 text-indigo-700">{trip.tripType}</span>

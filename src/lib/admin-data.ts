@@ -4,6 +4,7 @@ import {
   getDuffelApiMode,
 } from "@/lib/env";
 import { getOptionalPrisma, isDatabaseConfigured, withOptionalDb } from "@/lib/prisma";
+import { formatAdminTimeZoneLabel, formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { getDuffelProviderBlockReason } from "@/services/travel/providers/duffelProvider";
 
 type ProviderStatus = {
@@ -102,7 +103,7 @@ export async function getSearchHealth(): Promise<SearchHealth> {
   }, { hasLogs: false, totalRecentSearches: "—", noResultSearches: "—", failedSearches: "—", topProducts: [] } satisfies SearchHealth);
 }
 
-export async function getRecentAdminActivity(limit = 6) {
+export async function getRecentAdminActivity({ limit = 6, timeZone = "UTC" } = {}) {
   const db = getOptionalPrisma();
   if (!db) return { status: "unavailable" as const };
   try {
@@ -112,7 +113,8 @@ export async function getRecentAdminActivity(limit = 6) {
       title: log.action,
       detail: `${log.adminEmail} ${log.targetType ? `on ${log.targetType}` : ""}${log.targetEmail ? ` (${log.targetEmail})` : ""}`,
       source: log.adminUserId ? "human" as const : "system" as const,
-      timestamp: new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(log.createdAt) + " UTC",
+      timestamp: formatViewerTimestamp(log.createdAt, timeZone) + " " + formatAdminTimeZoneLabel(timeZone, log.createdAt),
+      timestampIso: log.createdAt.toISOString(),
     })) };
   } catch {
     return { status: "unavailable" as const };

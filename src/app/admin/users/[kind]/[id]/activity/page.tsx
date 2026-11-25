@@ -12,6 +12,8 @@ import { AdminIdentityDeviceAccess } from "@/components/admin/AdminIdentityDevic
 import { loadAdminDeviceSessions } from "@/services/adminDeviceSessionsService";
 import { journeyHistoryHrefFromActivity } from "@/lib/adminActivityOverview";
 import { pageHistoryHrefFromActivity } from "@/lib/adminPageHistory";
+import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { normalizeUserActivityQuery, safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
 import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
 import { requireAdminSession } from "@/lib/auth-guards";
@@ -35,9 +37,9 @@ const tabs = [
 ] as const;
 // Keep the UTC instant, but use a compact, unambiguous header label so
 // each date stays on one line beside the workspace sidebar at desktop zoom.
-const format = (at: Date) => new Intl.DateTimeFormat("en-GB", {
+const format = (at: Date, timeZone: string) => new Intl.DateTimeFormat("en-GB", {
   day: "numeric", month: "short", year: "numeric",
-  hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC",
+  hour: "2-digit", minute: "2-digit", hour12: false, timeZone,
 }).format(at);
 // One common desktop grid: guest/customer identity spans two fifths, while
 // First seen/Joined, Last seen and Events each occupy one fifth.
@@ -64,9 +66,9 @@ function safeDirectoryHref(raw: RawQuery) {
   }
   return "/admin/users" + (safe.size ? "?" + safe.toString() : "");
 }
-function HeaderTime({ at }: { at: Date }) {
-  const label = format(at);
-  return <time dateTime={at.toISOString()} title={label + " UTC"}>{label}</time>;
+function HeaderTime({ at, timeZone }: { at: Date; timeZone: string }) {
+  const label = format(at, timeZone);
+  return <time dateTime={at.toISOString()} title={label + " " + formatAdminTimeZoneLabel(timeZone, at)}>{label}</time>;
 }
 function Fact({ label, children, className = "", testId }: {
   label: string; children: React.ReactNode; className?: string; testId?: string;
@@ -113,12 +115,14 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const { kind, id } = await params;
   if (!validActivityIdentity(kind, id)) notFound();
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
-  const raw = normalizeUserActivityQuery(await searchParams, new Date());
+  const timeZone = await getAdminViewerTimeZone(session.user.id);
+  const now = new Date();
+  const raw = normalizeUserActivityQuery(await searchParams, now, timeZone);
   // Legacy activity bookmarks still open this workspace; page views now have their own section.
   if (raw.tab === "pages") delete raw.tab;
   if (raw.stage === "PAGE_VIEW") delete raw.stage;
   if (raw.type === "PAGE_VIEW") delete raw.type;
-  const filtersResult = parseActivityFilters(raw);
+  const filtersResult = parseActivityFilters(raw, timeZone);
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
   const backHref = safeDirectoryHref(raw);
   const queryParams = safeActivityQueryParams(raw);
@@ -143,12 +147,12 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       action={<Link className={buttonClass} href={activityHref(basePath, queryParams, { cursor: null, order: null })}>Return to newest activity</Link>} />
   </div>;
   const data = result.data;
-  const deviceSessions = kind === "user" ? await loadAdminDeviceSessions(id) : null;
+  const deviceSessions = kind === "user" ? await loadAdminDeviceSessions(id, timeZone, now) : null;
   const environment = data.environment;
   const operational = data.source === "operational";
   const order = filters.order === "oldest" ? "oldest" : "newest";
   const activityReturn = activityHref(basePath, queryParams, {});
-  // Keep the selected UTC window, but do not let travel-specific filters hide page visits.
+  // Keep the reporting window while letting page visits ignore travel-specific filters.
   const pageFilters: ActivityFilters = { ...filters, tab: "pages", stage: "all", product: "all", q: "", order: "newest" };
   const pagesHref = pageHistoryHrefFromActivity(kind, id, pageFilters, typeof raw.range === "string" ? raw.range : undefined, activityReturn);
   // The unfiltered overview already includes the five newest page records and total.
@@ -207,8 +211,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           </div>
 
           <dl className="grid min-w-0 grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:contents">
-            <Fact label={kind === "guest" ? "First seen" : "Joined"} className="lg:border-l-0 lg:pl-2 2xl:pl-6"><HeaderTime at={data.firstSeenAt}/></Fact>
-            <Fact label="Last seen" className="lg:border-l-0 lg:pl-2 2xl:pl-6">{data.lastSeenAvailable === false ? "Unavailable" : data.lastSeenAt ? <HeaderTime at={data.lastSeenAt}/> : "—"}</Fact>
+            <Fact label={kind === "guest" ? "First seen" : "Joined"} className="lg:border-l-0 lg:pl-2 2xl:pl-6"><HeaderTime timeZone={timeZone} at={data.firstSeenAt}/></Fact>
+            <Fact label="Last seen" className="lg:border-l-0 lg:pl-2 2xl:pl-6">{data.lastSeenAvailable === false ? "Unavailable" : data.lastSeenAt ? <HeaderTime timeZone={timeZone} at={data.lastSeenAt}/> : "—"}</Fact>
             <Fact label="Events" testId="activity-events-fact"
               className={"lg:border-l-0 lg:pl-6 " + (kind === "user" || data.source === "visitor" ? "lg:pr-28" : "")}>
               {data.events.length - data.events.filter(event => event.stage === "PAGE_VIEW").length + (data.summary.pagesVisited ?? 0)}
@@ -257,13 +261,13 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       </section>
       </div>
 
-      {kind === "user" ? <AdminIdentityDeviceAccess kind={kind} result={deviceSessions}
+      {kind === "user" ? <AdminIdentityDeviceAccess timeZone={timeZone} kind={kind} result={deviceSessions}
         historyHref={"/admin/users/user/" + encodeURIComponent(id) + "/devices?range=all&activityReturn=" + encodeURIComponent(activityReturn)} /> : null}
 
       {!operational ? <div data-testid="activity-page-visits-summary" className="min-w-0 space-y-2 border-t border-[#E2E8F0] pt-4">
         {pageSummary && pageSummary.source !== "operational" ? <>
           <p className="text-[12px] text-[#64748B]">Page visits use the selected date range only.</p>
-          <PageViewRecords key={pagesHref} events={pageSummary.events} count={pageSummary.summary.pagesVisited ?? 0}
+          <PageViewRecords timeZone={timeZone} key={pagesHref} events={pageSummary.events} count={pageSummary.summary.pagesVisited ?? 0}
             full={false} href={pagesHref} operational={false}/>
         </> : <section aria-label="Pages visited" className="space-y-2">
           <h2 className="text-[15px] font-semibold">Pages visited</h2>
@@ -274,7 +278,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
 
       <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
         <section aria-label="Activity filters" className="min-w-0">
-          <ActivityFiltersBar path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
+          <ActivityFiltersBar timeZone={timeZone} now={now.toISOString()} path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
             initial={{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order,
               from:filters.from,to:filters.to,range:typeof raw.range === "string" && ["today","24h","7d","30d","all","custom"].includes(raw.range) ? raw.range : (filters.from || filters.to ? "custom" : "today")}}
             tabs={<nav aria-label="Activity tabs" className="flex max-w-full shrink-0 gap-7 overflow-x-auto">
@@ -288,7 +292,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             </nav>} />
         </section>
 
-        <AdminActivityOverview events={data.events} journeyHistoryHref={journeyHistoryHref}
+        <AdminActivityOverview timeZone={timeZone} events={data.events} journeyHistoryHref={journeyHistoryHref}
           environment={environment} operational={operational}/>
       </div>
     </section>

@@ -1,4 +1,5 @@
 import { requireAdminApiSession } from "@/lib/admin";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { readPlatformOperations } from "@/services/platformOperationsService";
 import { parsePlatformOperationsHours } from "@/services/platformOperationsContract";
 export const runtime = "nodejs";
@@ -15,5 +16,6 @@ export async function GET(request: Request) {
   const hours = parsePlatformOperationsHours(sanitized);
   if (hours === null)
     return Response.json({ error: "Use hours between 1 and 720; environment is server-owned." }, { status: 400, headers: { "Cache-Control": "private, no-store" } });
-  return Response.json(await readPlatformOperations(hours, period), { headers: { "Cache-Control": "private, no-store" } });
+  const timeZone = await getAdminViewerTimeZone(auth.session?.user?.id);
+  return Response.json(await readPlatformOperations(hours, period, timeZone), { headers: { "Cache-Control": "private, no-store" } });
 }

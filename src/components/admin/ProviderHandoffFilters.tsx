@@ -41,11 +41,15 @@ export function ProviderHandoffFilters({
   scope,
   range,
   providerOptions,
+  now,
+  timeZone,
 }: {
   initial: ProviderHandoffFilterValues;
   scope: ProviderHandoffFilterScope;
   range: HandoffDateRange;
   providerOptions: readonly HandoffProviderOption[];
+  now: string;
+  timeZone: string;
 }) {
 
   return (
@@ -74,7 +78,7 @@ export function ProviderHandoffFilters({
           initialRange={range}
           initialFrom={scope.from || ""}
           initialTo={scope.to || ""}
-          now={new Date().toISOString()}
+          now={now} timeZone={timeZone}
           legacyOptions={range === "24h" ? [{ value: "24h", label: "Last 24 hrs (legacy)" }] : []}
         />
         <div className="min-w-0">
