@@ -75,6 +75,7 @@ try{
   await page.screenshot({path:path.join(output,'health-'+width+'.png'),fullPage:true});
   await page.getByRole('link',{name:'Investigate searches',exact:false}).click();
   await expect(page).toHaveURL(/applicationSource=IOS/);
+  await expect(page).toHaveURL(/viewerTimeZone=UTC/);
   const searchRows=page.getByRole('region',{name:'Search activity table'}).locator('tbody tr');
   const openSearchDetail=async row=>{
     await row.getByRole('link',{name:/View details for Flight search/}).click();
@@ -143,21 +144,22 @@ try{
     await expect(page).toHaveURL(/identity=bot/);
     await expect(page).toHaveURL(/range=custom/);
 
+    const allTimeSearches=base+'/admin/searches/activity?viewerTimeZone=UTC&range=all';
     for (const [source,platform] of [['WEB','Website'],['ANDROID','Android']]) {
-      await page.goto(base+'/admin/searches/activity?range=all&identity=bot&applicationSource='+source);
+      await page.goto(allTimeSearches+'&identity=bot&applicationSource='+source);
       await expect(platformTrigger).toHaveText(platform);
       await expect(identityTrigger).toHaveText('Bot');
       await expect(total).toHaveText('0');
       await expect(page.getByText('No searches found',{exact:true})).toBeVisible();
     }
-    await page.goto(base+'/admin/searches/activity?range=all&applicationSource=WEB&identity=registered');
+    await page.goto(allTimeSearches+'&applicationSource=WEB&identity=registered');
     await expect(total).toHaveText('1');
     await expect(searchRows.locator('td[data-label="Identity"]')).toHaveText('Registered');
     await openSearchDetail(searchRows);
     await expect(page.getByText('Registered',{exact:true})).toBeVisible();
     await expect(page.getByRole('link',{name:/View user details/})).toHaveAttribute('href','/admin/users/user/user_qa000/activity');
 
-    await page.goto(base+'/admin/searches/activity?range=all&applicationSource=UNKNOWN');
+    await page.goto(allTimeSearches+'&applicationSource=UNKNOWN');
     await expect(total).toHaveText('1');
     await expect(page.getByRole('link',{name:'Clear legacy source filter'})).toBeVisible();
     await openSearchDetail(historicalRow);
@@ -165,7 +167,7 @@ try{
     await expect(page.getByText('Guest',{exact:true})).toBeVisible();
     await expect(page.locator('a[href^="/admin/users/"][href$="/activity"]')).toHaveCount(0);
 
-    await page.goto(base+'/admin/searches/activity?range=all&product=FLIGHT&applicationSource=BOT');
+    await page.goto(allTimeSearches+'&product=FLIGHT&applicationSource=BOT');
     await expect(page).toHaveURL(/identity=bot/);
     await expect(page).toHaveURL(/range=all/);
     await expect(page).toHaveURL(/product=FLIGHT/);
