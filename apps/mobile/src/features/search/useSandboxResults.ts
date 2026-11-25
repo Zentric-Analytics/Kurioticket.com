@@ -2,13 +2,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { AppState, Platform } from "react-native";
+import { displayInventory, authorizedDisplayPhase } from "../../../../../src/shared/search/lifecycle";
 import { hasDisplayOnlyInventory } from "../../../../../src/shared/presentation/sandboxInventory";
 type State = {
     enabled: boolean;
     revision: string | null;
     controlled: boolean;
 };
-export function useSandboxResults<T extends unknown[] | null>(results: T): T {
+export function useSandboxResultState<T extends unknown[] | null>(results: T) {
+    const [settled,setSettled]=useState(false);
     const [policy, setPolicy] = useState<State | null>(null);
     const needsPolicy = hasDisplayOnlyInventory(results);
     useEffect(() => {
@@ -38,18 +40,20 @@ export function useSandboxResults<T extends unknown[] | null>(results: T): T {
                     setPolicy(null);
             }
             finally {
+                if(active && current===sequence) setSettled(true);
                 clearTimeout(timer);
                 controllers.delete(controller);
             }
         };
-        const invalidate = () => { sequence++; setPolicy(null); void refresh(); };
+        const invalidate = () => { sequence++; setSettled(false); setPolicy(null); void refresh(); };
         void refresh();
         const timer = setInterval(() => { if (AppState.currentState === "active")
             void refresh(); }, 5000);
         const subscription = AppState.addEventListener("change", invalidate);
         return () => { active = false; clearInterval(timer); controllers.forEach(c => c.abort()); subscription.remove(); };
     }, [needsPolicy]);
-    return useMemo(() => Array.isArray(results) ? results.filter(value => !hasDisplayOnlyInventory(value) || Boolean(policy?.enabled && (value as {
-        sandboxRevision?: string;
-    }).sandboxRevision === policy.revision)) as T : results, [results, policy]);
+    return useMemo(() => {const display=displayInventory(results,policy,settled);return {...display,...authorizedDisplayPhase(display.results?.length??0,display.authorization)};}, [results,policy,settled]);
 }
+
+/** Backward-compatible reader for detail and auxiliary consumers. */
+export function useSandboxResults<T extends unknown[] | null>(results:T):T {return useSandboxResultState(results).results;}

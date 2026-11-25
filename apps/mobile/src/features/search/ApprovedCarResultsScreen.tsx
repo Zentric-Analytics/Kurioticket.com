@@ -1,5 +1,5 @@
 import { presentSearchResults, searchUnavailableMessage } from "./searchFailurePresentation";
-import { useSandboxResults } from "./useSandboxResults";
+import { useSandboxResultState } from "./useSandboxResults";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -63,9 +63,10 @@ export function ApprovedCarResultsScreen() {
   const params = useLocalSearchParams<Record<string,string|string[]>>();
   const plan = useMemo(() => buildSearchPlan("car",params),[JSON.stringify(params)]);
   const [rawSandboxResults, setResults] = useState<CarResult[]>([]);
-  const results = useSandboxResults(rawSandboxResults);
+  const {results,pending:displayPending,unavailable:displayUnavailable} = useSandboxResultState(rawSandboxResults);
   const [resultsRequestId,setResultsRequestId] = useState<string>();
-  const [status,setStatus] = useState<Status>("loading");
+  const [transportStatus,setStatus] = useState<Status>("loading");
+  const status:Status=transportStatus === "ready" ? displayPending ? "loading" : displayUnavailable ? "error" : transportStatus : transportStatus;
   const [message,setMessage] = useState("");
   const [retry,setRetry] = useState(0);
   const [sort,setSort] = useState<CarSort>("recommended");

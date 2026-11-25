@@ -1,5 +1,5 @@
 import { hasDisplayOnlyInventory } from "../../../../../src/shared/presentation/sandboxInventory";
-import { useSandboxResults } from "./useSandboxResults";
+import { useSandboxResultState } from "./useSandboxResults";
 import { presentSearchResults, searchUnavailableMessage } from "./searchFailurePresentation";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode, type SetStateAction } from "react";
 import {
@@ -261,9 +261,10 @@ function ResultsScreen({ product }: { product: Product }) {
   const plan = buildSearchPlan(product, params);
   const payload = plan.plan?.payload || {};
   const [rawSandboxResults, setResults] = useState<(FlightResult | HotelResult)[]>([]);
-  const results = useSandboxResults(rawSandboxResults);
+  const {results,pending:displayPending,unavailable:displayUnavailable} = useSandboxResultState(rawSandboxResults);
   const [resultsRequestId, setResultsRequestId] = useState<string>();
-  const [status, setStatus] = useState<Status>("loading");
+  const [transportStatus, setStatus] = useState<Status>("loading");
+  const status:Status=transportStatus === "ready" ? displayPending ? "loading" : displayUnavailable ? "error" : transportStatus : transportStatus;
   const [message, setMessage] = useState("");
   const [retry, setRetry] = useState(0);
   const searchSequence = useRef(0);
@@ -514,6 +515,7 @@ function ResultsScreen({ product }: { product: Product }) {
       if (presentation.status !== "error" && product === "hotel" && Platform.OS === "android" && "progressive" in response && response.progressive && response.nextCursor) {
         // The first validated batch is already visible. Subsequent completed
         // pages are merged without navigating away or resetting the list.
+        let continuationFailed=false;
         let cursor: string | null = response.nextCursor;
         const merged = new Map((valid as HotelResult[]).map(hotel => [hotel.id, hotel]));
         setHotelProgressivePending(true);
@@ -523,6 +525,7 @@ function ResultsScreen({ product }: { product: Product }) {
             if (!isCurrent()) return;
             const accepted = acceptCanonicalResults(page.results as HotelResult[], safeCanonicalHotelResult);
             if (canonicalResultsWereSilentlyLost(accepted)) {
+              continuationFailed=true;
               setMessage("Some hotels are still unavailable. You can browse the results already loaded.");
               break;
             }
@@ -533,13 +536,14 @@ function ResultsScreen({ product }: { product: Product }) {
             setStatus(cumulative.length ? "ready" : "loading");
             cursor = page.nextCursor ?? null;
           } catch (error) {
+            continuationFailed=true;
             if (isCurrent()) setMessage("Some hotels are still unavailable. You can browse the results already loaded.");
             break;
           }
         }
         if (isCurrent()) {
           setHotelProgressivePending(false);
-          setStatus(resultsRef.current.length ? "ready" : "empty");
+          setStatus(resultsRef.current.length ? "ready" : continuationFailed ? "error" : "empty");
         }
       } else if (product === "hotel") {
         setHotelProgressivePending(false);

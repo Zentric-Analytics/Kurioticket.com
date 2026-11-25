@@ -1,5 +1,6 @@
 "use client";
-import { useSandboxResults } from "./useSandboxResults";
+import { searchRequestDeadline } from "@/shared/search/deadline";
+import { useSandboxResultState } from "./useSandboxResults";
 import { hasDisplayOnlyInventory } from "@/shared/presentation/sandboxInventory";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
@@ -995,14 +996,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const desktopSortRef = useRef<HTMLDivElement | null>(null);
   const desktopSortButtonRef = useRef<HTMLButtonElement | null>(null);
   const [rawSandboxResults, setResults] = useState<PublicFlightResult[]>([]);
-  const providerResults = useSandboxResults(rawSandboxResults);
+  const {results:providerResults,pending:displayPending,unavailable:displayUnavailable} = useSandboxResultState(rawSandboxResults);
   const kayak = useKayakResults();
   const results = useMemo(() => guidedMode || kayak?.vertical !== "flights" ? providerResults : [
     ...providerResults, ...kayak.offers.map(offer => kayakFlightCardModel(offer, kayak.criteria)).filter((flight): flight is PublicFlightResult => flight !== null),
   ],[guidedMode,kayak,providerResults]);
   const activeFlightSearchKeyRef = useRef<string>("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [transportError, setError] = useState("");
+  const error=transportError||(displayUnavailable?"Flight search is temporarily unavailable. Please try again.":"");
+  const [transportLoading, setLoading] = useState(true);
+  const loading=transportLoading||displayPending;
   const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
   const [filtersReadySearchKey, setFiltersReadySearchKey] = useState<
     string | null
@@ -2616,6 +2619,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     let active = true;
     let controller: AbortController | null = null;
+    let requestDeadline: ReturnType<typeof searchRequestDeadline> | undefined;
     const searchKey = buildFlightResultsSearchKey(body);
     activeFlightSearchKeyRef.current = searchKey;
 
@@ -2659,11 +2663,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       }
 
       controller = new AbortController();
+      requestDeadline=searchRequestDeadline(controller.signal,35_000);
       fetch("/api/flights/search", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-sandbox-results-policy": "1" },
         body: JSON.stringify(body),
-        signal: controller.signal,
+        signal: requestDeadline.signal,
       })
         .then(async (response) => {
           const data = await response.json();
@@ -2707,6 +2712,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           }
         })
         .finally(() => {
+          requestDeadline?.dispose();
           if (active && activeFlightSearchKeyRef.current === searchKey) {
             mainInventoryReadyRef.current = true;
             setLoading(false);
@@ -2719,6 +2725,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       active = false;
       window.clearTimeout(timer);
       controller?.abort();
+      requestDeadline?.dispose();
     };
   }, [body, dictionary.unableToSearchFlights, guidedMode, mainInventoryRetryGeneration]);
 

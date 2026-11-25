@@ -1,5 +1,5 @@
 "use client";
-import { useSandboxResults } from "./useSandboxResults";
+import { useSandboxResultState } from "./useSandboxResults";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import { displayedJourneyRequest, journeyRequestId } from "@/lib/journeyEventClient";
@@ -287,11 +287,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
 
   const [rawSandboxResults, setResults] = useState<PublicHotelResult[]>([]);
-  const results = useSandboxResults(rawSandboxResults);
+  const {results,pending:displayPending,unavailable:displayUnavailable} = useSandboxResultState(rawSandboxResults);
   const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>([]);
   const [inventoryLoading, setLoading] = useState(true);
   const [completedSearchKey, setCompletedSearchKey] = useState<string | null>(null);
-  const [error, setError] = useState("");
+  const [transportError, setError] = useState("");
+  const error=transportError||(displayUnavailable?"Hotel search is temporarily unavailable. Please try again.":"");
   const [retryKey, setRetryKey] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterApplying, setFilterApplying] = useState(false);
@@ -385,7 +386,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   }, [body.checkIn, body.checkOut, body.destination, body.destinationId, body.destinationLocation, body.guests, body.adults, body.children, body.rooms, petFriendlyOnly, providerMode]);
   const bodySearchKey = [body.destinationId, body.destination, body.checkIn, body.checkOut, body.guests, hotelOccupancy(body).adults, hotelOccupancy(body).children, body.rooms, petFriendlyOnly ? "pets" : "", providerMode].join("-");
   // A changed search must not display cards belonging to the previous request.
-  const loading = inventoryLoading || completedSearchKey !== bodySearchKey;
+  const loading = inventoryLoading || completedSearchKey !== bodySearchKey || displayPending;
   useEffect(() => {
     if (!loading) clearSearchResultsLoadingSession("hotel", bodySearchKey);
   }, [bodySearchKey, loading]);
