@@ -20,9 +20,10 @@ export function scopeKayakOfferIds<T extends { id: string; hotelPropertyKey?: st
   }));
 }
 
-/** Android's OkHttp/Dalvik transport identifier is rejected by KAYAK's Hotel sandbox.
- * Use KAYAK's established affiliate-app default for native Hotel requests while
- * keeping real browser/iOS agents and all Flight/Car requests unchanged. */
+/** Historical staging Hotel compatibility for bare OkHttp/Dalvik agents.
+ * An absent override selects the client's existing affiliate-app default.
+ * This is not evidence of KAYAK's rejection rule or approved native permissions.
+ * Production always retains the authentic incoming identity instead. */
 export function kayakProviderUserAgent(vertical: KayakVertical, incoming?: string): string | undefined {
   const agent = incoming?.trim();
   if (!agent) return undefined;
