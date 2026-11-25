@@ -32,3 +32,10 @@ Postgres tests skipped, zero failures. The first post-change run exposed two
 obsolete coalescing expectations; they now assert direct compatible OTA and the
 absence of native delivery. Live worker execution, OTA publication and installed
 device adoption remain separate verification gates.
+
+Follow-up live review found web delivery and OTA publication started concurrently.
+Mobile releases now always schedule an exact-source staging deployment, including
+mobile-only changes. OTA and coalesced JS overlays wait for that deployment's
+existing exact-SHA health/readiness verification. A failed backend prevents OTA;
+independent native work retains its result/failure evidence. One shared promise
+prevents duplicate web deployment within the same evaluation.
