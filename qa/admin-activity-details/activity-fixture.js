@@ -1,5 +1,7 @@
 // QA ONLY: deterministic synthetic rows for rendering the actual Admin Activity route.
 // Never use this as production data or cite a generated screenshot as a staging result.
+import { activityWindow } from "@/lib/adminIdentityActivity";
+
 const time = minute => new Date("2026-10-22T17:" + String(minute).padStart(2, "0") + ":00.000Z");
 const journey = (id, startedAt, props) => ({ journeyId: id, journeyStartedAt: startedAt, ...props });
 export const recorded = [
@@ -64,6 +66,12 @@ const pageVisitHistory = Array.from({ length: 45 }, (_, index) => {
     pageView: { path, previousPath: null, transport: native ? "native" : "web", platform, href: native ? null : "https://staging.kurioticket.com" + path } };
 });
 
+const localCalendarHistory = [{
+  id: "s-qa-lagos-midnight", at: new Date("2026-10-21T23:05:00.000Z"),
+  label: "Search completed", detail: "HOTEL · Abuja · SUCCESS",
+  stage: "SEARCH_COMPLETED", product: "HOTEL", searchHistoryId: "qa-lagos-midnight-search",
+}];
+
 export async function loadAdminIdentityActivity(kind, id, filters, cursor, readMode = "page", pageHistory) {
   if (!/^[a-z0-9_-]{6,80}$/i.test(id)) return { status: "not_found" };
   if (kind === "user" && id === "qa-registered-unavailable-0001") return { status: "unavailable" };
@@ -74,9 +82,7 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     || (filters.tab === "searches" && ["SEARCH_COMPLETED", "RESULTS_VIEWED"].includes(stage))
     || (filters.tab === "selections" && stage === "OFFER_SELECTED")
     || (filters.tab === "handoffs" && stage === "PROVIDER_HANDOFF_STARTED");
-  const fromBound = filters.from ? new Date(filters.from.length === 10 ? filters.from + "T00:00:00.000Z" : filters.from) : null;
-  const toBound = filters.to ? (filters.to.length === 10
-    ? new Date(Date.parse(filters.to + "T00:00:00.000Z") + 86400000) : new Date(filters.to)) : null;
+  const { gte: fromBound, lt: toBound } = activityWindow(filters);
   const matches = row => tabMatch(row.stage)
     && (filters.stage === "all" || row.stage === filters.stage)
     && (filters.product === "all" || row.product === filters.product)
@@ -85,7 +91,10 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     && (!toBound || row.at < toBound)
     && (!pageHistory || pageHistory.platform === "all" || row.pageView?.platform === ({ios:"iOS app",android:"Android app",mobile:"Mobile web",desktop:"Desktop web"})[pageHistory.platform]);
   const sourceRows = id === "qa-operational-guest-0001" ? operationalRecorded
-    : id === "qa-complete-history-0001" ? completeHistory : id === "qa-page-history-0001" ? pageVisitHistory : [...recorded, ...olderRecorded, ...newerRecorded];
+    : id === "qa-complete-history-0001" ? completeHistory
+    : id === "qa-page-history-0001" ? pageVisitHistory
+    : id === "qa-lagos-midnight-0001" ? localCalendarHistory
+    : [...recorded, ...olderRecorded, ...newerRecorded];
   const allMatched = id === "qa-no-events-0001" ? [] : sourceRows.filter(matches);
   const summary = {
     pagesVisited: allMatched.filter(row => row.stage === "PAGE_VIEW").length,

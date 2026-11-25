@@ -27,9 +27,9 @@ export type UserPopulationMetrics = {
  * time window used here.
  */
 export async function readUserPopulationMetrics(
-  date: AdminIdentityDate, now = new Date(), from?: string, to?: string,
+  date: AdminIdentityDate, now = new Date(), from?: string, to?: string, timeZone = "UTC",
 ): Promise<UserPopulationMetrics | null> {
-  const bounds = adminIdentityDateBounds(date, now, from, to);
+  const bounds = adminIdentityDateBounds(date, now, from, to, timeZone);
   const newlyRegistered = bounds ? Prisma.sql`
     COUNT(*) FILTER (WHERE "createdAt" >= ${bounds.from}
       ${bounds.to ? Prisma.sql`AND "createdAt" < ${bounds.to}` : Prisma.empty})::bigint

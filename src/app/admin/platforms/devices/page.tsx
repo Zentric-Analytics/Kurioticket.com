@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { Monitor, Smartphone, TabletSmartphone, Users } from "lucide-react";
+import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
+import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { getOnlinePresenceSnapshot } from "@/services/onlinePresenceService";
 import { readPlatformOperations } from "@/services/platformOperationsService";
@@ -14,7 +17,7 @@ import {
 export const metadata = { title: "Admin Platform Metrics" };
 type RawQuery = Record<string, string | string[] | undefined>;
 const rangeOptions = [
-  { value: "today", label: "Today (UTC)" },
+  { value: "today", label: "Today" },
   { value: "7d", label: "Last 7 days" },
   { value: "30d", label: "Last 30 days" },
   { value: "all", label: "All time" },
@@ -31,15 +34,16 @@ const navigationLink = "focus-ring inline-flex min-h-9 items-center justify-cent
 export default async function AdminPlatformsDevicesPage({ searchParams }: {
   searchParams: Promise<RawQuery>;
 }) {
-  await requireAdminSession("/admin/platforms/devices");
+  const session = await requireAdminSession("/admin/platforms/devices");
   const query = parsePlatformAccessQuery(await searchParams);
   if (!query) return <AdminEmptyState title="Invalid Platform Metrics filters"
     message="Choose a valid period, platform and page."
     action={<Link className={navigationLink} href="/admin/platforms/devices">Reset filters</Link>} />;
 
+  const timeZone = await getAdminViewerTimeZone(session.user.id);
   const [result, health, presence] = await Promise.all([
-    loadPlatformAccess(query),
-    readPlatformOperations(24, "today").catch(() => null),
+    loadPlatformAccess(query, timeZone),
+    readPlatformOperations(24, "today", timeZone).catch(() => null),
     getOnlinePresenceSnapshot(getPublicEnvironment()),
   ]);
   // Application activity is an observed search signal, not an uptime or crash-free claim.
@@ -128,13 +132,11 @@ export default async function AdminPlatformsDevicesPage({ searchParams }: {
 
     <form action="/admin/platforms/devices" method="get" aria-label="Platform Metrics filters"
       className="flex min-w-0 flex-wrap items-end gap-3 border-b border-[#E2E8F0] pb-4">
-      <label className="flex w-full min-w-0 flex-col gap-1 text-[12px] font-medium text-[#475569] sm:w-[200px]">
-        Session period
-        <select name="range" defaultValue={query.range}
-          className="focus-ring h-10 w-full rounded-lg border border-[#CBD5E1] bg-white px-3 text-[13px] font-normal text-[#0F172A]">
-          {rangeOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-        </select>
-      </label>
+      <div className="flex w-full min-w-0 flex-col gap-1 text-[12px] font-medium text-[#475569] sm:w-[200px]">
+        <span>Session period</span>
+        <AdminDirectorySelect name="range" label="Session period" value={query.range}
+          options={rangeOptions} timeZoneLabel={formatAdminTimeZoneLabel(timeZone)} />
+      </div>
       <label className="flex w-full min-w-0 flex-col gap-1 text-[12px] font-medium text-[#475569] sm:w-[200px]">
         Platform
         <select name="platform" defaultValue={query.platform}

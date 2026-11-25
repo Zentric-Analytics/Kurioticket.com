@@ -47,7 +47,7 @@ test("Changing Support filters preserves other filters and clears the stale page
 
 
 test("Support ticket detail returns to the exact filtered inbox, including pagination", () => {
-  const params = new URLSearchParams("q=refund&status=OPEN&priority=HIGH&category=redirect&cursor=next-page&limit=25");
+  const params = new URLSearchParams("q=refund&status=OPEN&priority=HIGH&category=redirect&range=today&cursor=next-page&limit=25");
   const detail = new URL(supportTicketDetailHref("ticket-123", params), "https://kurioticket.test");
   assert.equal(detail.pathname, "/admin/support/ticket-123");
   const returned = new URL(supportInboxReturnHref(detail.searchParams.get("inbox") || undefined), "https://kurioticket.test");
@@ -121,13 +121,14 @@ test("direct deletion navigation does not invent an originating Support inbox", 
 test("Deletion Requests has the same clean white Support workspace and a compact, accessible filter toolbar", () => {
   const queue = readFileSync("src/app/admin/account-deletions/page.tsx", "utf8");
   const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
+  const filters = readFileSync("src/components/admin/AdminDeletionFilters.tsx", "utf8");
   assert.match(shell, /const accountDeletionWorkspace = pathname === "\/admin\/account-deletions"/);
   assert.match(shell, /\|\| accountDeletionWorkspace \|\| accountDeletionDetail/);
   assert.match(queue, /<AdminPageShell title="Account deletion requests" hideHeader>/);
-  assert.match(queue, /aria-label="Filter account deletion requests"/);
-  assert.match(queue, /<AdminDirectorySelect name="status" label="Request status"/);
-  assert.match(queue, /options=\{statusOptions\} plain align="end"/);
-  assert.match(queue, /bg-\[#004BB8\] px-4/);
+  assert.match(filters, /aria-label="Filter account deletion requests"/);
+  assert.match(filters, /name="status"\s+label="Request status"/);
+  assert.match(filters, /options=\{statusOptions\}\s+compact/);
+  assert.match(filters, /bg-\[#004BB8\]/);
   assert.doesNotMatch(queue, /<AdminFilterBar|<AdminDataTable|<AdminStatusBadge/);
   assert.doesNotMatch(queue, /Review the account-deletion lifecycle through the safe admin queue/);
 });
@@ -145,7 +146,7 @@ test("Deletion queue preserves every lifecycle field and review destination when
   }
   assert.match(queue, /adminOperationalReads\.deletions\.list\(params\)/);
   assert.match(queue, /href=\{"\/admin\/account-deletions\/" \+ request\.id\}/);
-  assert.match(queue, /href=\{cursorHref\(raw, result\.data\.nextCursor\)\}/);
+  assert.match(queue, /href=\{cursorHref\(applied, result\.data\.nextCursor\) \+ "&range=" \+ window\.range\}/);
   assert.match(queue, /status: "invalid"|result\.status === "invalid"/);
   assert.match(queue, /An unavailable read is not shown as an empty queue/);
 });

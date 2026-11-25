@@ -5,6 +5,8 @@ import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminSupportToolbar } from "@/components/admin/AdminSupportToolbar";
 import { supportTicketDetailHref } from "@/lib/adminSupportInboxNavigation";
 import { resolveAdminQueueWindow } from "@/lib/adminQueueDateRange";
+import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import type { AdminSupportPriority, AdminSupportStatus } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -52,24 +54,31 @@ function priorityStyle(priority: AdminSupportPriority) {
 }
 
 export default async function AdminSupportPage({ searchParams }: { searchParams: SearchParams }) {
-  const raw = await searchParams;
-  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) });
+  const [raw, timeZone] = await Promise.all([searchParams, getAdminViewerTimeZone()]);
+  const now = new Date();
+  const timeZoneLabel = formatAdminTimeZoneLabel(timeZone, now);
+  const ticketDate = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeZone });
+  const ticketTime = new Intl.DateTimeFormat("en", { timeStyle: "short", timeZone });
+  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) }, now, timeZone);
   const applied = { ...raw, from: window.from || undefined, to: window.to || undefined };
   const params = scopedParams(applied);
   // Forward the continuation cursor only to the ticket read. Status tabs and
   // filter submissions use scopedParams without cursor, so they start at page one.
-  if (one(raw.cursor)) params.set("cursor", one(raw.cursor));
+  const windowRebased = window.range === "today" && (window.from !== raw.from || window.to !== raw.to);
+  if (!windowRebased && one(raw.cursor)) params.set("cursor", one(raw.cursor));
   if (!params.has("limit")) params.set("limit", "50");
   // Keep the current activity-based ticket ordering and cursor contract unchanged.
   const result = await adminOperationalReads.support.list(params);
   const toolbarParams = scopedParams(applied);
   toolbarParams.set("range", window.range);
   const pageHref = "/admin/support?" + toolbarParams.toString();
+  const detailParams = new URLSearchParams(params);
+  detailParams.set("range", window.range);
 
   return (
     <AdminPageShell title="Support" hideHeader>
       <div className="mx-auto w-full max-w-[1500px] text-[#374151]">
-        <AdminSupportToolbar query={one(raw.q)} status={one(raw.status)} priority={one(raw.priority)} category={one(raw.category)} range={window.range} from={window.from} to={window.to} pageHref={pageHref}>
+        <AdminSupportToolbar query={one(raw.q)} status={one(raw.status)} priority={one(raw.priority)} category={one(raw.category)} range={window.range} from={window.from} to={window.to} pageHref={pageHref} timeZone={timeZone} timeZoneLabel={timeZoneLabel}>
         {result.status === "ok" ? (
           result.data.items.length === 0 ? (
             <div className="border-b border-[#E5E7EB] px-2 py-10 text-center">
@@ -96,7 +105,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                         <tr key={ticket.id} className="group h-[64px] align-middle text-[13px] text-[#374151] transition-colors hover:bg-[#F8FAFC] focus-within:bg-[#F8FAFC]">
                           <td data-label="Ticket" className="max-w-[330px] px-3 py-1.5 align-middle">
                             <Link
-                              href={ticketHref(ticket.id, params)}
+                              href={ticketHref(ticket.id, detailParams)}
                               className="block break-words font-semibold text-[#111827] hover:text-[#004BB8] hover:underline focus-visible:outline-[#004BB8]"
                             >
                               {ticket.subject}
@@ -118,15 +127,15 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                           </td>
                           <td data-label="Last updated" className="px-3 py-1.5 align-middle">
                             <time dateTime={updatedAt.toISOString()} className="block whitespace-nowrap text-[13px] font-medium text-[#374151]">
-                              {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(updatedAt)}
+                              {ticketDate.format(updatedAt)}
                               <span className="mt-0.5 block text-[12px] font-normal text-[#64748B]">
-                                {new Intl.DateTimeFormat("en", { timeStyle: "short" }).format(updatedAt)}
+                                {ticketTime.format(updatedAt)}
                               </span>
                             </time>
                           </td>
                           <td data-label="Action" className="whitespace-nowrap px-3 py-1.5 align-middle">
                             <Link
-                              href={ticketHref(ticket.id, params)}
+                              href={ticketHref(ticket.id, detailParams)}
                               aria-label={"View ticket: " + ticket.subject}
                               className="focus-ring inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-sm px-0.5 text-[13px] font-medium text-[#004BB8] underline-offset-4 transition-colors hover:underline"
                             >

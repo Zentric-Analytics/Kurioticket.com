@@ -73,7 +73,7 @@ test("Platform monitoring uses bounded aggregate counts, not account history row
   assert.match(service, /db\.accountSession\.count/);
   assert.match(service, /lastSeenAt: dateFilter/);
   assert.match(service, /const observedAt = new Date\(\)/);
-  assert.match(service, /deviceHistoryWindow\(\{ range: query.range, page: 1 \}, observedAt\)/);
+  assert.match(service, /deviceHistoryWindow\(\{ range: query.range, page: 1 \}, observedAt, timeZone\)/);
   assert.match(service, /total !== breakdownTotal/);
   assert.match(service, /Number\.isSafeInteger\(total\)/);
   assert.doesNotMatch(service, /db\.accountSession\.findMany|tokenHash|maskedIp|userAgent/);

@@ -71,7 +71,7 @@ test("Activity and Support use white non-Overview workspaces while preserving au
   assert.match(page, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
   assert.match(page, /text-\[12px\] font-normal text-\[#64748B\]/);
   assert.match(page, /data-testid="activity-body-card"/);
-  assert.match(page, /normalizeUserActivityQuery\(await searchParams, new Date\(\)\)/);
+  assert.match(page, /normalizeUserActivityQuery\(await searchParams, now, timeZone\)/);
   assert.match(dateQuery, /if \(raw\.tab === "journeys"\) delete raw\.tab/);
   assert.doesNotMatch(page, /Related records|const related =|label="Journeys"|value: "journeys"/);
   assert.doesNotMatch(timeline, /Show all|Hide all|Not linked to a journey/);

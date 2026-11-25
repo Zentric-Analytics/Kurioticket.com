@@ -24,7 +24,7 @@ function mount(module: keyof typeof entries, name: string, props: object) {
 
 test("Activity server-scope resets drafts without background navigation or losing focus", async () => {
   const initial = { tab: "all", q: "server", product: "all", stage: "all", order: "newest", from: "", to: "", range: "all" };
-  const props = { path: "/admin/searches/activity", initial, directory: "users", tabs: null };
+  const props = { path: "/admin/searches/activity", initial, directory: "users", tabs: null, timeZone: "Africa/Lagos", now: "2026-11-25T00:00:00.000Z" };
   await withComponentBrowser(bundle(), mount("activity", "ActivityFiltersBar", props), async page => {
     const input = page.getByRole("textbox", { name: "Search activity" });
     await input.fill("local draft");
@@ -45,22 +45,34 @@ test("Activity server-scope resets drafts without background navigation or losin
     assert.equal(url.searchParams.get("q"), "new search");
     assert.equal(url.searchParams.get("from"), "2030-01-01");
     assert.equal(url.searchParams.get("directory"), "users");
+    const range = page.getByRole("button", { name: "Date range: All time · WAT (UTC+1)", exact: true });
+    await range.focus();
+    await range.press("ArrowDown");
+    const menu = page.getByRole("listbox", { name: "Date range" });
+    await menu.press("Home");
+    await menu.press("Enter");
+    await page.getByRole("button", { name: "Date range: Today · WAT (UTC+1)", exact: true }).waitFor();
+    await page.getByRole("button", { name: "Apply filters", exact: true }).click();
+    const periodUrls = await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation);
+    const period = new URL(periodUrls.at(-1)!, "http://fixture.local");
+    assert.equal(period.searchParams.get("range"), "today");
+    assert.equal(period.searchParams.has("from"), false, "the server resolves local midnight");
   });
 });
 
 test("Provider health drafts reset only on committed scope changes and never read incomplete dates", async () => {
-  await withComponentBrowser(bundle(), mount("providers", "ProviderHealthWindowFilter", { product: "CAR", hours: 24, custom: null }), async page => {
-    await page.getByRole("button", { name: "Date range: Last 24 hrs", exact: true }).click();
+  await withComponentBrowser(bundle(), mount("providers", "ProviderHealthWindowFilter", { product: "CAR", hours: 24, custom: null, timeZone: "Africa/Lagos" }), async page => {
+    await page.getByRole("button", { name: "Date range: Last 24 hrs (legacy) · WAT (UTC+1)", exact: true }).click();
     await page.getByRole("option", { name: "Custom range", exact: true }).click();
-    await page.getByRole("button", { name: "Provider health start date UTC" }).click();
-    const providerCalendar = page.getByRole("dialog", { name: "Provider health start date UTC" });
+    await page.getByRole("button", { name: "Provider health start date" }).click();
+    const providerCalendar = page.getByRole("dialog", { name: "Provider health start date" });
     await providerCalendar.getByRole("button", { name: "Today" }).click();
     assert.equal(await providerCalendar.count(), 0, "Today selects immediately and closes the calendar");
     assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), []);
-    await page.evaluate(() => (window as unknown as { fixtureRender: (props: unknown) => void }).fixtureRender({ product: "CAR", hours: 72, custom: null }));
-    await page.getByRole("button", { name: "Date range: Last 3 days", exact: true }).waitFor();
-    assert.equal(await page.getByRole("button", { name: "Provider health start date UTC" }).count(), 0);
-    await page.getByRole("button", { name: "Date range: Last 3 days", exact: true }).click();
+    await page.evaluate(() => (window as unknown as { fixtureRender: (props: unknown) => void }).fixtureRender({ product: "CAR", hours: 72, custom: null, timeZone: "Africa/Lagos" }));
+    await page.getByRole("button", { name: "Date range: Last 3 days · WAT (UTC+1)", exact: true }).waitFor();
+    assert.equal(await page.getByRole("button", { name: "Provider health start date" }).count(), 0);
+    await page.getByRole("button", { name: "Date range: Last 3 days · WAT (UTC+1)", exact: true }).click();
     await page.getByRole("option", { name: "Last 7 days", exact: true }).click();
     const urls = await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation);
     assert.deepEqual(urls, ["/admin/providers?hours=168&product=CAR"]);
@@ -242,14 +254,14 @@ test("Overview applies complete custom UTC dates and can revise a committed cust
     };
     await page.getByRole("button", { name: "Overview reporting range: Last 24 hrs" }).click();
     await page.getByRole("option", { name: "Custom range" }).click();
-    await selectCalendarDate("From (UTC)", "2026-11-01");
+    await selectCalendarDate("From", "2026-11-01");
     assert.equal(await page.getByRole("button", { name: "Apply dates" }).isDisabled(), true);
-    await selectCalendarDate("To (UTC)", "2026-11-03");
+    await selectCalendarDate("To", "2026-11-03");
     await page.getByRole("button", { name: "Apply dates" }).click();
     await page.getByRole("button", { name: "Overview reporting range: Custom range" }).click();
     await page.getByRole("option", { name: "Custom range" }).click();
-    assert.match(await page.getByRole("button", { name: "From (UTC)" }).innerText(), /11\/01\/2026/);
-    await selectCalendarDate("To (UTC)", "2026-11-04");
+    assert.match(await page.getByRole("button", { name: "From" }).innerText(), /11\/01\/2026/);
+    await selectCalendarDate("To", "2026-11-04");
     await page.getByRole("button", { name: "Apply dates" }).click();
     assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), [
       "/admin?range=custom&from=2026-11-01&to=2026-11-03",
@@ -300,12 +312,19 @@ test("CMS all-market navigation preserves draft search, selected market and over
 });
 
 test("Audit Logs drafts never fetch until Apply filters and preserve typed values", async () => {
-  const props = { action: "", adminEmail: "", searchEmail: "", targetType: "", targetEmail: "", range: "24h", fromDate: "", toDate: "", pageHref: "/admin/logs?range=24h" };
+  const props = {
+    action: "", adminEmail: "", searchEmail: "", targetType: "", targetEmail: "", range: "24h", fromDate: "", toDate: "",
+    pageHref: "/admin/logs?range=24h", today: "2026-11-25", timeZone: "Africa/Lagos", timeZoneLabel: "WAT (UTC+1)",
+  };
   await withComponentBrowser(bundle(), mount("audit", "AdminAuditLogsToolbar", props), async page => {
     const admin = page.getByRole("searchbox", { name: "Search email", exact: true });
+    const range = page.getByRole("combobox", { name: "Date range", exact: true });
     assert.equal(await page.getByRole("searchbox").count(), 1);
+    assert.match(await range.innerText(), /Last 24 hrs \(legacy\)\s+WAT \(UTC\+1\)/);
+    assert.equal(await range.evaluate(element => element.getAttribute("aria-describedby") &&
+      document.getElementById(element.getAttribute("aria-describedby")!)?.textContent), "WAT (UTC+1)");
     await admin.fill("draft@example.test");
-    await page.getByRole("combobox", { name: "Date range", exact: true }).click();
+    await range.click();
     await page.getByRole("option", { name: "Last 7 days", exact: true }).click();
     await page.getByRole("combobox", { name: "Action", exact: true }).click();
     await page.getByRole("option", { name: "CMS actions", exact: true }).click();

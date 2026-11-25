@@ -3,7 +3,7 @@ import { Clock3, Info, ShieldCheck } from "lucide-react";
 import { AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { ConfirmedTripsBreakdowns } from "@/components/admin/ConfirmedTripsBreakdowns";
 import { ConfirmedTripDeliveryAlerts } from "@/components/admin/ConfirmedTripDeliveryAlerts";
-import { formatDateTime } from "@/lib/admin-data";
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import {
   getConfirmedTripsIntegrationReadiness,
   getConfirmedTripsOperationsSnapshot,
@@ -29,7 +29,7 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 /** Authenticated by the canonical Trip monitoring page before rendering. */
-export async function TripConfirmationsMonitoringPanel() {
+export async function TripConfirmationsMonitoringPanel({ timeZone }: { timeZone: string }) {
   const readiness = getConfirmedTripsIntegrationReadiness();
   const [operations, deliveryHealth] = await Promise.all([
     getConfirmedTripsOperationsSnapshot(),
@@ -39,7 +39,7 @@ export async function TripConfirmationsMonitoringPanel() {
   return (
     <div className="min-w-0 space-y-4">
       <section aria-label="Confirmed trip breakdowns" className="min-w-0">
-        <ConfirmedTripsBreakdowns operations={operations} />
+        <ConfirmedTripsBreakdowns operations={operations} timeZone={timeZone} />
       </section>
 
       <section aria-labelledby="confirmation-integration-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
@@ -102,9 +102,9 @@ export async function TripConfirmationsMonitoringPanel() {
               <Fact label="Rejected · last 24h" value={String(deliveryHealth.rejectedLast24h)} />
             </div>
             <dl className="mt-3 grid gap-x-5 gap-y-2 border-t border-slate-100 pt-3 sm:grid-cols-2 lg:grid-cols-4">
-              <InlineFact label="Latest authenticated delivery" value={deliveryHealth.lastReceivedAt ? formatDateTime(new Date(deliveryHealth.lastReceivedAt)) : "None recorded"} />
-              <InlineFact label="Last accepted delivery" value={deliveryHealth.lastAcceptedAt ? formatDateTime(new Date(deliveryHealth.lastAcceptedAt)) : "None recorded"} />
-              <InlineFact label="Latest rejected delivery · last 24h" value={deliveryHealth.lastRejectedAt ? formatDateTime(new Date(deliveryHealth.lastRejectedAt)) : "None in last 24h"} />
+              <InlineFact label="Latest authenticated delivery" value={deliveryHealth.lastReceivedAt ? formatViewerTimestamp(deliveryHealth.lastReceivedAt, timeZone) : "None recorded"} />
+              <InlineFact label="Last accepted delivery" value={deliveryHealth.lastAcceptedAt ? formatViewerTimestamp(deliveryHealth.lastAcceptedAt, timeZone) : "None recorded"} />
+              <InlineFact label="Latest rejected delivery · last 24h" value={deliveryHealth.lastRejectedAt ? formatViewerTimestamp(deliveryHealth.lastRejectedAt, timeZone) : "None in last 24h"} />
               <InlineFact label="Configured provider" value={deliveryHealth.providerName} />
             </dl>
             <h5 className="mt-3 text-sm font-semibold text-slate-900">Recent authenticated delivery receipts</h5>
@@ -122,7 +122,7 @@ export async function TripConfirmationsMonitoringPanel() {
                   <tbody className="divide-y divide-slate-100">
                     {deliveryHealth.recent.map(item => (
                       <tr key={item.id} className="align-top hover:bg-slate-50/60">
-                        <td className="whitespace-nowrap px-3 py-2.5 text-slate-800">{formatDateTime(new Date(item.receivedAt))}</td>
+                        <td className="whitespace-nowrap px-3 py-2.5 text-slate-800">{formatViewerTimestamp(item.receivedAt, timeZone)}</td>
                         <td className="px-3 py-2.5"><AdminStatusBadge tone={item.outcome === "ACCEPTED" ? "good" : "warn"}>{item.outcome}</AdminStatusBadge></td>
                         <td className="break-words px-3 py-2.5 text-slate-700">{item.reason.replaceAll("_", " ")}</td>
                         <td className="px-3 py-2.5 text-slate-700">{item.reportedStatus || "Unavailable"}</td>
@@ -136,7 +136,7 @@ export async function TripConfirmationsMonitoringPanel() {
             )}
           </>
         )}
-        {readiness.feedReady ? <ConfirmedTripDeliveryAlerts /> : null}
+        {readiness.feedReady ? <ConfirmedTripDeliveryAlerts timeZone={timeZone} /> : null}
       </section>
     </div>
   );

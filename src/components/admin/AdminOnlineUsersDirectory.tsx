@@ -42,9 +42,9 @@ const cardItems = [
   { label: "Website online", icon: Monitor, key: "website" },
 ] as const;
 const pageSize = 25;
-const clock = new Intl.DateTimeFormat("en-GB", {
+const clock = (timeZone: string) => new Intl.DateTimeFormat("en-GB", {
   day: "numeric", month: "short", year: "numeric",
-  hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC",
+  hour: "2-digit", minute: "2-digit", hour12: false, timeZone,
 });
 
 function matches(row: OnlineIdentityRow, filters: Filters) {
@@ -72,7 +72,7 @@ function isSnapshot(value: unknown): value is AdminOnlineUsersSnapshot {
     && (row.locationLabel === null || (typeof row.locationLabel === "string" && row.locationLabel.length <= 160)));
 }
 
-export function AdminOnlineUsersDirectory({ initial }: { initial: AdminOnlineUsersSnapshot }) {
+export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initial: AdminOnlineUsersSnapshot; timeZone?: string }) {
   const [snapshot, setSnapshot] = useState(initial);
   const [draft, setDraft] = useState<Filters>(empty);
   const [applied, setApplied] = useState<Filters>(empty);
@@ -227,7 +227,7 @@ export function AdminOnlineUsersDirectory({ initial }: { initial: AdminOnlineUse
                 {row.locationLabel ?? "Unavailable"}
               </td>
               <td className="px-3 py-3 tabular-nums text-[#475569]">
-                <time dateTime={row.lastSeenAt}>{clock.format(new Date(row.lastSeenAt))} UTC</time>
+                <time dateTime={row.lastSeenAt}>{clock(timeZone).format(new Date(row.lastSeenAt))}</time>
               </td>
               <td className="px-3 py-3">
                 <span className="inline-flex items-center gap-1.5 font-medium text-[#15803D]">

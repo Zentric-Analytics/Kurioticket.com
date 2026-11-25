@@ -29,7 +29,7 @@ const row: Row = {
   totalAmount: null,
   needsStatusReview: false,
 };
-const render = (rows: Row[]) => renderToStaticMarkup(createElement(ConfirmedTripRecordsTable, { rows }));
+const render = (rows: Row[], timeZone = "UTC") => renderToStaticMarkup(createElement(ConfirmedTripRecordsTable, { rows, timeZone }));
 
 test("compact record table preserves authentic customer, trip, provider, timestamps and details link", () => {
   const html = render([row]);
@@ -61,6 +61,11 @@ test("stored statuses and stale-status warnings remain truthful and read-only", 
   assert.equal((html.match(/Review status freshness/g) || []).length, 1);
   assert.equal((html.match(/href="\/admin\/confirmed-trips\/records\//g) || []).length, 4);
   assert.doesNotMatch(html, /Cancel booking|Refund now|Issue ticket/);
+});
+
+test("record creation times use the reporting zone while retaining UTC machine-readable values", () => {
+  const html = render([row], "Africa/Lagos");
+  assert.match(html, /dateTime="2026-10-28T10:00:00.000Z"[^>]*>Oct 28, 2026, 11:00\s+AM<\/time>/i);
 });
 
 test("no records create no fake trip rows or detail destinations", () => {

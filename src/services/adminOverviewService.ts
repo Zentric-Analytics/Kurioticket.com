@@ -1,6 +1,7 @@
 import "server-only";
 
 import { requireAdminApiSession } from "@/lib/admin";
+import { adminReportingWindowExceedsLimit } from "@/lib/adminReportingRanges";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { adminJourneys } from "@/services/adminJourneyService";
@@ -13,7 +14,7 @@ function invalidDate(value: string | null) {
   return value !== null && (!Number.isFinite(Date.parse(value)) || !/(Z|[+-]\d{2}:\d{2})$/.test(value));
 }
 
-export async function getAdminOverview(params: URLSearchParams) {
+export async function getAdminOverview(params: URLSearchParams, calendarTimeZone?: string) {
   const auth = await requireAdminApiSession();
   if (auth.response) return { status: "forbidden" as const };
 
@@ -40,12 +41,14 @@ export async function getAdminOverview(params: URLSearchParams) {
       }],
     };
   }
-  const to = new Date(params.get("to") ?? now).toISOString();
-  // Match the default Overview picker when the API is called without dates.
-  const from = new Date(params.get("from") ?? new Date(new Date(to).getTime() - 24 * 60 * 60 * 1000)).toISOString();
-  if (Date.parse(from) >= Date.parse(to) || Date.parse(to) > now.getTime() || Date.parse(to) - Date.parse(from) > 90 * 24 * 60 * 60 * 1000) {
+  const toDate = new Date(params.get("to") ?? now);
+  // Requests without dates retain the API's trailing 24-hour window.
+  const fromDate = new Date(params.get("from") ?? new Date(toDate.getTime() - 24 * 60 * 60 * 1000));
+  if (fromDate >= toDate || toDate > now || adminReportingWindowExceedsLimit(fromDate, toDate, now, calendarTimeZone)) {
     return { status: "invalid" as const, issues: [{ field: "from", message: "Use a past time range of more than zero and at most 90 days." }] };
   }
+  const from = fromDate.toISOString();
+  const to = toDate.toISOString();
 
   // This is an observation window, not the lifetime of an enabled account.
   const recentVisitorCutoff = new Date(now.getTime() - 5 * 60 * 1000);
@@ -54,7 +57,7 @@ export async function getAdminOverview(params: URLSearchParams) {
 
   try {
     const [journeys, providers, websitePresence, onlinePresence, lifecycle] = await Promise.all([
-      adminJourneys.summary({ from, to, environment }),
+      adminJourneys.summary({ from, to, environment }, calendarTimeZone),
       getProviderOperationalStatuses(24, environment),
       getWebsitePresenceSnapshot(environment, now),
       getOnlinePresenceSnapshot(environment, now),

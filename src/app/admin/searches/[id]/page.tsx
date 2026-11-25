@@ -20,7 +20,8 @@ import {
   searchDetailCrawlerEvidenceLabel,
 } from "@/lib/adminSearchDetailPresentation";
 import { AdminLocalTimestamp } from "@/components/admin/AdminLocalTimestamp";
-import { formatDateTime } from "@/lib/admin-data";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import type { AdminSearchActivityDetail } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -34,6 +35,7 @@ export default async function AdminSearchDetailPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  const timeZone = await getAdminViewerTimeZone();
   const raw = await searchParams;
   const query = new URLSearchParams();
   const environment = typeof raw.environment === "string" ? raw.environment : "";
@@ -46,7 +48,7 @@ export default async function AdminSearchDetailPage({
       <SearchWorkspaceBackLink href={searchActivityReturnHref(raw)} label="Search activity" />
       <AdminPageShell title="Search detail" hideHeader>
         {result.status === "ok" ? (
-          <SearchDetailContent search={result.data} />
+          <SearchDetailContent search={result.data} timeZone={timeZone} />
         ) : (
           <div className="border-y border-[#E5E7EB] py-8 text-[12px] text-[#6B7280]">
             This search record is unavailable for the requested admin scope.
@@ -57,7 +59,7 @@ export default async function AdminSearchDetailPage({
   );
 }
 
-function SearchDetailContent({ search }: { search: AdminSearchActivityDetail }) {
+function SearchDetailContent({ search, timeZone }: { search: AdminSearchActivityDetail; timeZone: string }) {
   const diagnostic = search.diagnostic;
   const showProviderReasons = diagnostic.providers.some(provider => provider.status !== "SUCCESS");
   const identityKind = search.identity.kind;
@@ -83,7 +85,7 @@ function SearchDetailContent({ search }: { search: AdminSearchActivityDetail }) 
               {searchDetailHeadline(search)}
             </p>
             <p className="mt-1 text-[12px] font-medium text-[#6B7280]">
-              Searched <AdminLocalTimestamp value={search.createdAt} />
+              Searched <AdminLocalTimestamp value={search.createdAt} timeZone={timeZone} />
             </p>
           </div>
           <StatusDot status={diagnostic.outcome === "ZERO_RESULTS" ? "ZERO_RESULTS" : search.status} label={searchDetailOutcomeLabel(diagnostic.outcome)} />
@@ -168,8 +170,10 @@ function SearchDetailContent({ search }: { search: AdminSearchActivityDetail }) 
       </section>
 
       <SearchDetailActivityPanel
+        key={search.environment + ":" + search.id}
         searchId={search.id}
         environment={search.environment}
+        timeZone={timeZone}
       />
 
       {diagnostic.outcome !== "SUCCESS" ? (
@@ -215,7 +219,7 @@ function SearchDetailContent({ search }: { search: AdminSearchActivityDetail }) 
             {search.operationalSessionId ? <Field label="Operational session ID" value={search.operationalSessionId} /> : null}
             {providerReasonCodes.length ? <Field label="Provider reason codes" value={providerReasonCodes.join("; ")} /> : null}
             {diagnostic.providers.some(provider => Math.abs(Date.parse(provider.observedAt) - Date.parse(search.createdAt)) > 60_000) ? (
-              <Field label="Provider observation times" value={diagnostic.providers.map(provider => provider.provider + ": " + formatDateTime(new Date(provider.observedAt))).join("; ")} />
+              <Field label="Provider observation times" value={diagnostic.providers.map(provider => provider.provider + ": " + formatViewerTimestamp(provider.observedAt, timeZone)).join("; ")} />
             ) : null}
           </div>
         </details>

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
+import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { validActivityIdentity } from "@/lib/adminIdentityActivity";
 import { historyDirectoryReturnHref } from "@/lib/adminHistoryDirectory";
@@ -18,10 +20,10 @@ export const metadata = { title: "Admin Device & Access History" };
 type RawQuery = Record<string, string | string[] | undefined>;
 type Props = { params: Promise<{ kind: string; id: string }>; searchParams: Promise<RawQuery> };
 const linkClass = "focus-ring inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-white px-3 text-[12px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
-const format = (date: Date) => new Intl.DateTimeFormat("en-GB", {
+const format = (date: Date, timeZone: string) => new Intl.DateTimeFormat("en-GB", {
   day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-  hour12: false, timeZone: "UTC",
-}).format(date) + " UTC";
+  hour12: false, timeZone,
+}).format(date);
 
 /** Render the same verified session status on desktop and mobile. */
 function VerifiedDeviceStatus({ session, observedAt, onlineSessionIds, validSessionIds }: {
@@ -47,7 +49,9 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
   const { kind, id } = await params;
   if (!validActivityIdentity(kind, id)) notFound();
   const path = "/admin/users/" + kind + "/" + encodeURIComponent(id);
-  await requireAdminSession(path + "/devices");
+  const session = await requireAdminSession(path + "/devices");
+  const timeZone = await getAdminViewerTimeZone(session.user.id);
+  const observedAt = new Date();
   const raw = await searchParams;
   const activityPath = path + "/activity";
   const incoming = typeof raw.activityReturn === "string" ? raw.activityReturn : "";
@@ -64,9 +68,9 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
       action={<Link href={path + "/devices?" + new URLSearchParams({ activityReturn: backHref }).toString()} className={linkClass}>Reset device filters</Link>} />
   </div>;
   const query = parsed.query;
-  if (kind === "guest") return <AdminGuestAccessHistory id={id} query={query} path={path + "/devices"} backHref={backHref} backLabel={backLabel}/>;
+  if (kind === "guest") return <AdminGuestAccessHistory timeZone={timeZone} now={observedAt} id={id} query={query} path={path + "/devices"} backHref={backHref} backLabel={backLabel}/>;
   // Only authenticated accounts enter the canonical account session reader.
-  const result = await loadAdminFullDeviceHistory(id, query);
+  const result = await loadAdminFullDeviceHistory(id, query, timeZone, observedAt);
   if (result.status === "not_found") notFound();
   if (result.status === "unavailable") return <div className="min-w-0 space-y-4">
     <Link href={backHref} className={linkClass}><ArrowLeft size={15} aria-hidden="true"/> {backLabel}</Link>
@@ -77,7 +81,6 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
 
   const totalPages = Math.max(1, Math.ceil(result.total / DEVICE_HISTORY_PAGE_SIZE));
   const pagePath = path + "/devices";
-  const observedAt = new Date();
   const onlineSessionIds = result.onlineSessionIds === null ? null : new Set(result.onlineSessionIds);
   const validSessionIds = result.validSessionIds === null ? null : new Set(result.validSessionIds);
   return <div className="min-w-0 space-y-5 bg-white pb-6 text-[#0F172A]">
@@ -94,13 +97,13 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
           <h1 className="text-[19px] font-semibold">Device &amp; Access History</h1>
           <p className="mt-1 break-words text-[13px] font-medium text-[#334155]">{result.owner.name || result.owner.email || id}</p>
           <p className="mt-1 break-all text-[12px] text-[#64748B]">{result.owner.email && result.owner.email !== result.owner.name ? result.owner.email + " · " : ""}{id}</p>
-          <p className="mt-1 text-[12px] text-[#64748B]">Recorded sessions · UTC · Approximate locations · Online status updates automatically</p>
+          <p className="mt-1 text-[12px] text-[#64748B]">Recorded sessions · {formatAdminTimeZoneLabel(timeZone, observedAt)} · Approximate locations · Online status updates automatically</p>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-md bg-[#F8FAFC] px-2.5 py-1.5 text-[12px] text-[#475569]">
           <Clock3 size={14} aria-hidden="true"/>{result.total.toLocaleString()} matching sessions
         </span>
       </header>
-      <AdminDeviceHistoryFilters key={query.range + ":" + (query.from ?? "") + ":" + (query.to ?? "") + ":" + (query.platform ?? "all")}
+      <AdminDeviceHistoryFilters timeZone={timeZone} key={query.range + ":" + (query.from ?? "") + ":" + (query.to ?? "") + ":" + (query.platform ?? "all")}
         path={pagePath} query={query} returnHref={backHref}/>
       {result.sessions.length === 0 ? <p role="status" className="rounded-lg bg-[#F8FAFC] px-4 py-7 text-center text-[13px] text-[#64748B]">
         {result.total === 0 ? "No device history matches this date range." : "No records on this page. Go to a previous page."}
@@ -113,7 +116,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
               <p className="flex items-center gap-2 font-semibold"><Icon size={15} aria-hidden="true"/>{platformLabel(session)}</p>
               <p className="break-words text-[#475569]">{deviceValue(session.deviceLabel)} · {deviceValue(session.os)}</p>
               <p className="break-words text-[#64748B]">{session.client === "MOBILE" ? "In-app" : deviceValue(session.browser)} · {deviceValue(session.locationLabel)}</p>
-              <p className="tabular-nums text-[#64748B]">Last seen <time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt)}</time></p>
+              <p className="tabular-nums text-[#64748B]">Last seen <time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt, timeZone)}</time></p>
               <p className="text-[#475569]">Status: <VerifiedDeviceStatus session={session} observedAt={observedAt} onlineSessionIds={onlineSessionIds} validSessionIds={validSessionIds} /></p>
               {session.revokedAt && recordedDeviceSignOutReason(session.revokeReason) ? <p className="text-[#64748B]">
                 Reason: {recordedDeviceSignOutReason(session.revokeReason)}
@@ -144,7 +147,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
                   <td className="px-3 py-3">{deviceValue(session.os)}</td>
                   <td className="px-3 py-3">{session.client === "MOBILE" ? "In-app" : deviceValue(session.browser)}</td>
                   <td className="break-words px-3 py-3">{deviceValue(session.locationLabel)}</td>
-                  <td className="px-3 py-3 tabular-nums"><time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt)}</time></td>
+                  <td className="px-3 py-3 tabular-nums"><time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt, timeZone)}</time></td>
                   <td className="px-3 py-3">
                     <VerifiedDeviceStatus session={session} observedAt={observedAt} onlineSessionIds={onlineSessionIds} validSessionIds={validSessionIds} />
                     {session.revokedAt && recordedDeviceSignOutReason(session.revokeReason) ? <span className="mt-1 block break-words text-[11px] leading-4 text-[#64748B]">

@@ -12,7 +12,7 @@ const searchDetails = readFileSync("src/app/admin/searches/[id]/page.tsx", "utf8
 
 test("population totals use one consistent and bounded DB read, not journey activity", () => {
   assert.ok(users.indexOf("<AdminUserPopulationCards") < users.indexOf("<AdminUsersToolbar"));
-  assert.match(users, /readUserPopulationMetrics\(date, now, from, to\)/);
+  assert.match(users, /readUserPopulationMetrics\(date, now, from, to, timeZone\)/);
   assert.match(population, /withOptionalDb<UserPopulationMetrics \| null>/);
   assert.match(population, /db\.\$queryRaw/);
   assert.match(population, /FROM "User"/);
@@ -73,7 +73,7 @@ test("Online Users owns the four live metrics while Users Directory keeps its se
   const directoryIndex = users.indexOf("<AdminUsersToolbar");
   assert.ok(populationIndex > 0 && directoryIndex > populationIndex);
   assert.doesNotMatch(users, /AdminPlatformOnlinePresence|getOnlinePresenceSnapshot/);
-  assert.match(users, /readUserPopulationMetrics\(date, now, from, to\)/);
+  assert.match(users, /readUserPopulationMetrics\(date, now, from, to, timeZone\)/);
   assert.match(onlinePage, /requireAdminSession\("\/admin\/users\/online"\)/);
   assert.match(onlinePage, /<AdminOnlineUsersDirectory initial=\{initial\}/);
   assert.match(onlineApi, /requireAdminApiSession\(\)/);
@@ -143,7 +143,7 @@ test("Platform Health leads the dedicated page and uses measured narrow signals"
   assert.ok(health > 0 && health < online && online < downloads
     && downloads < sessions && sessions < filters);
   assert.doesNotMatch(platformPage, /access-history-heading|Device &amp; Access History|Platform access pagination/);
-  assert.match(platformPage, /readPlatformOperations\(24, "today"\)/);
+  assert.match(platformPage, /readPlatformOperations\(24, "today", timeZone\)/);
   assert.match(platformPage, /getOnlinePresenceSnapshot\(getPublicEnvironment\(\)\)/);
   assert.match(platformPage, /applications\.WEB\.state/);
   assert.match(platformPage, /applications\.IOS\.state/);

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import { adminStartOfLocalDay, shiftAdminCalendarDate, validViewerTimeZone } from "./adminLocalTime";
 import type { PublicEnvironment } from "./stagingSafety";
 
 export const ADMIN_CONFIRMED_TRIPS_PAGE_SIZE = 20;
@@ -18,6 +19,7 @@ export type AdminTripFilters = {
   identity: AdminTripIdentity;
   from: string;
   to: string;
+  reportingTimeZone?: string;
 };
 
 export type AdminTripCursor = { id: string; confirmedAt: string };
@@ -27,25 +29,21 @@ type ParseResult = { ok: true; filters: AdminTripFilters } | { ok: false; error:
 const one = (value: string | string[] | undefined) => typeof value === "string" ? value : "";
 const unsafeText = /[\u0000-\u001f\u007f]/;
 const validId = /^[a-z0-9_-]{6,100}$/i;
+const calendarDayPattern = /^\d{4}-\d{2}-\d{2}$/;
 
-function validUtcDay(day: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return false;
-  const date = new Date(day + "T00:00:00.000Z");
-  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === day;
-}
 function validUtcInstant(value: string) {
   return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value) &&
     Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
 }
-function validUtcBound(value: string) { return validUtcDay(value) || validUtcInstant(value); }
-function boundDate(value: string, upper: boolean) {
+function boundDate(value: string, upper: boolean, timeZone: string) {
   if (validUtcInstant(value)) return new Date(value);
-  const day = new Date(value + "T00:00:00.000Z");
-  return upper ? new Date(day.getTime() + 86_400_000) : day;
+  if (!calendarDayPattern.test(value)) return null;
+  const day = upper ? shiftAdminCalendarDate(value, 1) : value;
+  return day ? adminStartOfLocalDay(day, timeZone) : null;
 }
 
-/** Input is untrusted: reject duplicate values, unknown enums and invalid UTC days. */
-export function parseAdminTripFilters(raw: RawQuery): ParseResult {
+/** Explicit instants remain anchored. Date-only bounds use the reporting calendar. */
+export function parseAdminTripFilters(raw: RawQuery, timeZone = "UTC"): ParseResult {
   const keys = ["q", "provider", "product", "status", "identity", "from", "to", "cursor"];
   if (keys.some(key => Array.isArray(raw[key]))) {
     return { ok: false, error: "Repeated trip filters are not supported." };
@@ -65,22 +63,34 @@ export function parseAdminTripFilters(raw: RawQuery): ParseResult {
     || !adminTripIdentities.includes(identity as AdminTripIdentity)) {
     return { ok: false, error: "Unsupported product, trip-status or identity filter." };
   }
-  if ((from && !validUtcBound(from)) || (to && !validUtcBound(to)) || (from && to && from > to)) {
-    return { ok: false, error: "Enter a valid UTC date range." };
+  const reportingZone = validViewerTimeZone(timeZone) ?? "UTC";
+  const start = from ? boundDate(from, false, reportingZone) : null;
+  const end = to ? boundDate(to, true, reportingZone) : null;
+  if ((from && !start) || (to && !end) || (start && end && start > end)
+    || (calendarDayPattern.test(from) && calendarDayPattern.test(to) && from > to)) {
+    return { ok: false, error: "Enter a valid trip date range." };
   }
-  return { ok: true, filters: { q, provider, product: product as AdminTripProduct, status: status as AdminTripStatus, identity: identity as AdminTripIdentity, from, to } };
+  const reportingTimeZone = reportingZone !== "UTC" && (calendarDayPattern.test(from) || calendarDayPattern.test(to))
+    ? { reportingTimeZone: reportingZone } : {};
+  return { ok: true, filters: { q, provider, product: product as AdminTripProduct, status: status as AdminTripStatus, identity: identity as AdminTripIdentity, from, to, ...reportingTimeZone } };
 }
 
 export function tripConfirmationWindow(filters: AdminTripFilters) {
+  const timeZone = filters.reportingTimeZone ?? "UTC";
+  const start = filters.from ? boundDate(filters.from, false, timeZone) : null;
+  const end = filters.to ? boundDate(filters.to, true, timeZone) : null;
+  if ((filters.from && !start) || (filters.to && !end)) throw new RangeError("Invalid trip date range.");
   return {
-    ...(filters.from ? { gte: boundDate(filters.from, false) } : {}),
-    ...(filters.to ? { lt: boundDate(filters.to, true) } : {}),
+    ...(start ? { gte: start } : {}),
+    ...(end ? { lt: end } : {}),
   };
 }
 
 function cursorScope(filters: AdminTripFilters, environment: PublicEnvironment) {
   return createHash("sha256")
-    .update(JSON.stringify([environment, filters.q, filters.provider, filters.product, filters.status, filters.identity, filters.from, filters.to]))
+    .update(JSON.stringify([environment, filters.q, filters.provider, filters.product, filters.status, filters.identity, filters.from, filters.to,
+      ...(filters.reportingTimeZone ? [filters.reportingTimeZone] : []),
+    ]))
     .digest("hex")
     .slice(0, 24);
 }

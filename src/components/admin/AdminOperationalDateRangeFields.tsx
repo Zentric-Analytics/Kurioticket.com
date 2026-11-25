@@ -3,75 +3,117 @@
 import { useEffect, useRef, useState } from "react";
 import { SearchMonitorSelect } from "./SearchMonitorSelect";
 import { AdminCalendarInput } from "./AdminCalendarInput";
-import { ADMIN_REPORTING_RANGE_OPTIONS, type AdminReportingRange } from "@/lib/adminReportingRanges";
-import { offsetUtcDateTime, utcDateTimeInput, utcDateTimeIso } from "@/lib/adminJourneyDateRange";
+import { adminCustomDateRange, ADMIN_REPORTING_RANGE_OPTIONS, type AdminReportingRange } from "@/lib/adminReportingRanges";
+import { adminLocalDate, adminLocalDateTime, adminLocalDateTimeToDate, formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 
-/** Used only by operational record directories supporting ISO from/to.
- * Custom UTC bounds appear on their own row, without disturbing the desktop
- * six-control filter bar. The selected range is applied only by the parent form. */
+const MAX_RANGE_MS = 90 * 86_400_000;
+
+function clockInput(value: string, timeZone: string) {
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return value;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? adminLocalDateTime(date, timeZone) : "";
+}
+
+function clockQueryValue(value: string, initial: string, timeZone: string) {
+  return value === clockInput(initial, timeZone) ? initial : value;
+}
+
+function clockTimestamp(value: string, timeZone: string) {
+  const local = adminLocalDateTimeToDate(value, timeZone);
+  return local ? local.getTime() : /(?:Z|[+-]\d{2}:\d{2})$/.test(value) ? Date.parse(value) : NaN;
+}
+
+/** Display local calendar dates while preserving explicit timestamp bookmarks. */
 export function AdminOperationalDateRangeFields({
   initialRange,
   initialFrom,
   initialTo,
   now,
+  timeZone,
   testId,
+  customTestId = testId + "-custom",
+  align = "start",
   legacyOptions = [],
 }: {
-  initialRange: AdminReportingRange | "today";
+  initialRange: AdminReportingRange | "90d";
   initialFrom: string;
   initialTo: string;
   now: string;
+  timeZone: string;
   testId: string;
+  customTestId?: string;
+  align?: "start" | "end";
   legacyOptions?: readonly { value: string; label: string }[];
 }) {
+  const initialClock = initialRange !== "custom" || ![initialFrom, initialTo].some(value => /^\d{4}-\d{2}-\d{2}$/.test(value));
+  const initialDates = {
+    from: initialClock ? clockInput(initialFrom, timeZone) : initialFrom,
+    to: initialClock ? clockInput(initialTo, timeZone) : initialTo,
+  };
+  const scope = JSON.stringify([initialRange, initialFrom, initialTo, timeZone]);
+  const [previousScope, setPreviousScope] = useState(scope);
   const [range, setRange] = useState<string>(initialRange);
-  const [from, setFrom] = useState(utcDateTimeInput(initialFrom));
-  const [to, setTo] = useState(utcDateTimeInput(initialTo));
-  const lastScope = useRef(JSON.stringify([initialRange, initialFrom, initialTo]));
-  useEffect(() => {
-    const scope = JSON.stringify([initialRange, initialFrom, initialTo]);
-    if (lastScope.current === scope) return;
-    lastScope.current = scope;
+  const [from, setFrom] = useState(initialDates.from);
+  const [to, setTo] = useState(initialDates.to);
+  const [clock, setClock] = useState(initialClock);
+  const controls = useRef<HTMLDivElement>(null);
+  if (previousScope !== scope) {
+    setPreviousScope(scope);
     setRange(initialRange);
-    setFrom(utcDateTimeInput(initialFrom));
-    setTo(utcDateTimeInput(initialTo));
-  }, [initialRange, initialFrom, initialTo]);
-  const custom = range === "custom";
-  const start = utcDateTimeIso(from);
-  const end = utcDateTimeIso(to);
-  const endTime = Date.parse(end);
-  const valid = Boolean(start && end && Date.parse(start) < endTime &&
-    endTime <= Date.parse(now) && endTime - Date.parse(start) <= 90 * 86400000);
+    setFrom(initialDates.from);
+    setTo(initialDates.to);
+    setClock(initialClock);
+  }
+
+  const reference = new Date(now);
+  const today = adminLocalDate(reference, timeZone);
+  const zoneLabel = formatAdminTimeZoneLabel(timeZone, reference);
+  const latest = clock ? adminLocalDateTime(reference, timeZone) : today;
+  const start = clock ? clockQueryValue(from, initialFrom, timeZone) : from;
+  const end = clock ? clockQueryValue(to, initialTo, timeZone) : to;
+  const startMs = clock ? clockTimestamp(start, timeZone) : NaN;
+  const endMs = clock ? clockTimestamp(end, timeZone) : NaN;
+  const unchangedOpenBound = initialRange === "custom" && Boolean(from) !== Boolean(to)
+    && from === initialDates.from && to === initialDates.to
+    && Number.isFinite(clock ? (from ? startMs : endMs) : Date.parse(from || to));
+  const valid = unchangedOpenBound || (clock
+    ? startMs < endMs && endMs <= reference.getTime() && endMs - startMs <= MAX_RANGE_MS
+    : adminCustomDateRange(from, to, reference, timeZone) !== null);
+  useEffect(() => {
+    const form = controls.current?.closest("form");
+    if (!form || range !== "custom" || valid) return;
+    const blockInvalidRange = (event: SubmitEvent) => event.preventDefault();
+    form.addEventListener("submit", blockInvalidRange);
+    return () => form.removeEventListener("submit", blockInvalidRange);
+  }, [range, valid]);
+
   return <>
-    <div data-testid={testId} className="min-w-0">
+    <div ref={controls} data-testid={testId} className="min-w-0">
       <SearchMonitorSelect label="Date range" name="range" value={range}
-        options={[...ADMIN_REPORTING_RANGE_OPTIONS, ...legacyOptions]}
-        appearance="fare" onValueChange={value => {
+        timeZoneLabel={zoneLabel} options={[...ADMIN_REPORTING_RANGE_OPTIONS, ...legacyOptions]}
+        appearance="fare" align={align} onValueChange={value => {
           setRange(value);
           if (value === "custom" && range !== "custom" && (!from || !to)) {
-            setTo(now.slice(0, 16));
-            setFrom(new Date(Date.parse(now) - 7 * 86400000).toISOString().slice(0, 16));
+            setClock(true);
+            setTo(adminLocalDateTime(reference, timeZone));
+            setFrom(adminLocalDateTime(new Date(reference.getTime() - 7 * 86_400_000), timeZone));
           }
         }} truncateLabel />
     </div>
-    {custom ? (
-      <div data-testid={testId + "-custom"} className="col-span-full flex min-w-0 flex-wrap items-end gap-3 border-t border-[#E7ECF5] py-3">
-        <label className="flex min-w-0 flex-col gap-1 text-[12px] text-[#475569]">From (UTC)
-          <AdminCalendarInput mode="datetime-local" required value={from} onChange={event => setFrom(event.target.value)}
-            min={to ? offsetUtcDateTime(to, -90 * 24 * 60) : undefined}
-            max={to ? offsetUtcDateTime(to, -1) : now.slice(0, 16)}
-            className="w-[220px] max-w-full" />
+    {range === "custom" ? (
+      <div data-testid={customTestId} className="order-last col-span-full flex min-w-0 flex-wrap items-end gap-3 border-t border-[#E7ECF5] py-3">
+        <label className="flex min-w-0 flex-col gap-1 text-[12px] text-[#475569]">From
+          <AdminCalendarInput mode={clock ? "datetime-local" : "date"} timeZone={timeZone} required value={from}
+            onChange={event => setFrom(event.target.value)} max={to || latest} className="w-[220px] max-w-full" />
         </label>
-        <label className="flex min-w-0 flex-col gap-1 text-[12px] text-[#475569]">To (UTC)
-          <AdminCalendarInput mode="datetime-local" required value={to} onChange={event => setTo(event.target.value)}
-            min={from ? offsetUtcDateTime(from, 1) : undefined}
-            max={from ? (offsetUtcDateTime(from, 90 * 24 * 60) < now.slice(0, 16) ? offsetUtcDateTime(from, 90 * 24 * 60) : now.slice(0, 16)) : now.slice(0, 16)}
-            className="w-[220px] max-w-full" />
+        <label className="flex min-w-0 flex-col gap-1 text-[12px] text-[#475569]">To
+          <AdminCalendarInput mode={clock ? "datetime-local" : "date"} timeZone={timeZone} required value={to}
+            onChange={event => setTo(event.target.value)} min={from || undefined} max={latest} className="w-[220px] max-w-full" />
         </label>
         <input type="hidden" name="from" value={start} />
         <input type="hidden" name="to" value={end} />
         {!valid ? <span role="alert" className="text-[12px] text-rose-700">
-          Choose valid UTC dates within 90 days, with From before To and no future date.
+          Choose a valid date range within 90 days, with no future dates.
         </span> : null}
       </div>
     ) : null}

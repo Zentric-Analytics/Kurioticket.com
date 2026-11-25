@@ -16,7 +16,8 @@ const fixturePath=path.join(here,"fixtures.ts").replaceAll("\\","/");
 const mocks={
  "@/lib/auth-guards":`import {headers} from 'next/headers';import {redirect} from 'next/navigation';export async function requireAdminSession(){if((await headers()).get('x-qa-role')==='SUPPORT')redirect('/auth/signin');return {user:{id:'qa-admin',role:'ADMIN',email:'qa@example.invalid'}};}`,
  "@/lib/admin":`export async function requireAdminApiSession(){return {session:{user:{id:'qa-admin'}}};}`,
- "@/services/platformOperationsService":`import {platformFixture} from ${JSON.stringify(fixturePath)};import {headers} from 'next/headers';export async function readPlatformOperations(hours=24,period='rolling'){const d=platformFixture((await headers()).get('x-qa-unavailable')==='1');if(period==='today'){const to=new Date(Date.parse(d.window.to)+12*3600000);d.window.to=to.toISOString();d.window.from=new Date(Date.UTC(to.getUTCFullYear(),to.getUTCMonth(),to.getUTCDate())).toISOString();}else{d.window.from=new Date(Date.parse(d.window.to)-hours*3600000).toISOString();}return d;}`,
+ "@/lib/adminViewerTimeZone.server":`import {headers} from 'next/headers';import {resolveAdminTimeZone} from '@/lib/adminLocalTime';export async function getAdminViewerTimeZone(){return resolveAdminTimeZone((await headers()).get('x-qa-reporting-time-zone'));}`,
+ "@/services/platformOperationsService":`import {platformFixture} from ${JSON.stringify(fixturePath)};import {headers} from 'next/headers';import {viewerTodayStart} from '@/lib/adminLocalTime';export async function readPlatformOperations(hours=24,period='rolling',timeZone='UTC'){const d=platformFixture((await headers()).get('x-qa-unavailable')==='1');d.timeZone=timeZone;if(period==='today'){const to=new Date(Date.parse(d.window.to)+12*3600000);d.window.to=to.toISOString();d.window.from=viewerTodayStart(to,timeZone);}else{d.window.from=new Date(Date.parse(d.window.to)-hours*3600000).toISOString();}return d;}`,
  "@/lib/stagingSafety":`export function getPublicEnvironment(){return 'staging';}`,
  "@/services/travel/providerIntegrationStatus":`export function getProviderIntegrationStatuses(){return [];}`,
  "@/services/adminOperationalReadService":`import {stage06SearchActivityReads} from ${JSON.stringify(fixturePath)};export const adminOperationalReads={searchActivity:stage06SearchActivityReads};`,
@@ -49,8 +50,10 @@ try{
  for(let i=0;i<120;i++){try{if((await fetch(base,{signal:AbortSignal.timeout(2000)})).ok)break;}catch{}if(server.exitCode!==null)throw Error('Fixture exited');await new Promise(r=>setTimeout(r,500));}
  browser=await chromium.launch({headless:true});
  for(const width of [1440,390,320]){
-  const context=await browser.newContext({viewport:{width,height:1000},reducedMotion:'reduce',timezoneId:'UTC'});const page=await context.newPage();const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  const context=await browser.newContext({viewport:{width,height:1000},reducedMotion:'reduce',timezoneId:'UTC',extraHTTPHeaders:{'x-qa-reporting-time-zone':'Africa/Lagos'}});const page=await context.newPage();const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto(base+'/admin/platform-health',{waitUntil:'networkidle',timeout:120000});await expect(page.getByRole('heading',{name:'Platform Health',exact:true}).first()).toBeAttached();await expect(page.getByText('Search operations',{exact:true})).toBeVisible();
+  await expect(page.getByRole('combobox',{name:'Activity window',exact:true})).toHaveAccessibleDescription('WAT (UTC+1)');
+  await expect(page.locator('time[datetime="2026-11-15T23:00:00.000Z"]')).toHaveText(/Nov 16.*12:00 AM/);
   await expect(page.getByRole('navigation',{name:'Admin navigation'})).toBeVisible();await expect(page.getByRole('button',{name:'Open admin navigation'})).toHaveCount(0);
   await page.keyboard.press('Control+k');await page.getByRole('textbox',{name:'Search admin workspaces and records'}).fill('Platform Health');await expect(page.getByRole('link',{name:/Platform Health.*Workspace/})).toBeVisible();await page.keyboard.press('Escape');
   const applicationSelect=page.getByRole('combobox',{name:'Application',exact:true});
@@ -75,7 +78,8 @@ try{
   await page.screenshot({path:path.join(output,'health-'+width+'.png'),fullPage:true});
   await page.getByRole('link',{name:'Investigate searches',exact:false}).click();
   await expect(page).toHaveURL(/applicationSource=IOS/);
-  await expect(page).toHaveURL(/viewerTimeZone=UTC/);
+  await expect(page).not.toHaveURL(/viewerTimeZone=/);
+  await expect(page.getByRole('button',{name:/^Date range:.*WAT \(UTC\+1\)$/})).toBeVisible();
   const searchRows=page.getByRole('region',{name:'Search activity table'}).locator('tbody tr');
   const openSearchDetail=async row=>{
     await row.getByRole('link',{name:/View details for Flight search/}).click();
@@ -144,7 +148,7 @@ try{
     await expect(page).toHaveURL(/identity=bot/);
     await expect(page).toHaveURL(/range=custom/);
 
-    const allTimeSearches=base+'/admin/searches/activity?viewerTimeZone=UTC&range=all';
+    const allTimeSearches=base+'/admin/searches/activity?range=all';
     for (const [source,platform] of [['WEB','Website'],['ANDROID','Android']]) {
       await page.goto(allTimeSearches+'&identity=bot&applicationSource='+source);
       await expect(platformTrigger).toHaveText(platform);

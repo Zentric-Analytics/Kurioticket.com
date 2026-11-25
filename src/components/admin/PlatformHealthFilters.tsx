@@ -23,10 +23,11 @@ export function ApplicationSourceSelect({ value = "ALL", name = "application", i
   );
 }
 
-export function PlatformHealthFilters({ hours, period, application }: {
+export function PlatformHealthFilters({ hours, period, application, timeZoneLabel }: {
   hours: number;
   period: "today" | "rolling";
   application: PlatformSelection;
+  timeZoneLabel: string;
 }) {
   return (
     <form action="/admin/platform-health" method="get" aria-label="Platform health filters"
@@ -44,7 +45,7 @@ export function PlatformHealthFilters({ hours, period, application }: {
             ...(period === "rolling" && hours === 24 ? [{ value: "24", label: "Last 24 hrs (legacy)" }] : []),
             { value: "720", label: "Last 30 days" },
           ]}
-          compact attached
+          compact attached timeZoneLabel={timeZoneLabel}
         />
       </div>
       <button type="submit"

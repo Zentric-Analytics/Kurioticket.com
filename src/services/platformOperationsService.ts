@@ -1,5 +1,6 @@
 import "server-only";
 import { getOptionalPrisma } from "@/lib/prisma";
+import { resolveAdminTimeZone, viewerTodayStart } from "@/lib/adminLocalTime";
 import { getPublicEnvironment, getStagingReleaseReadiness } from "@/lib/stagingSafety";
 import { getSafeSystemStatus } from "@/lib/admin-data";
 import { getProviderOperationalStatuses } from "@/services/providerOperationalStatus";
@@ -32,11 +33,12 @@ export async function readPlatformSearchActivity(from: Date, to: Date) {
 
 /** Aggregate-only operational read. No account IDs, device IDs, raw errors,
  * traveler queries or URLs are returned. Accounts/sessions are not event totals. */
-export async function readPlatformOperations(hours = 24, period: "today" | "rolling" = "rolling") {
+export async function readPlatformOperations(hours = 24, period: "today" | "rolling" = "rolling", timeZone = "UTC") {
   const environment = getPublicEnvironment();
+  const zone = resolveAdminTimeZone(timeZone);
   const to = new Date();
   const from = period === "today"
-    ? new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate()))
+    ? new Date(viewerTodayStart(to, zone))
     : new Date(to.getTime() - hours * 3_600_000);
   const db = getOptionalPrisma();
   let activity: ReturnType<typeof partitionOperationalGroups> | null = null;
@@ -64,7 +66,7 @@ export async function readPlatformOperations(hours = 24, period: "today" | "roll
     getEmailDeliveryHealthSnapshot().catch(() => null), getCmsHealthOverview().catch(() => null), getAdminAlertSnapshot().catch(() => null),
   ]);
   return {
-    environment, window: { from: from.toISOString(), to: to.toISOString() },
+    environment, timeZone: zone, window: { from: from.toISOString(), to: to.toISOString() },
     activity: { state: activity ? "AVAILABLE" : "MONITORING_UNAVAILABLE", data: activity },
     botSearches: activity?.searches.applications.BOT.total ?? null,
     database: { state: !system ? "MONITORING_UNAVAILABLE" : system.databaseConnected ? "HEALTHY" : system.databaseConfigured ? "FAILING" : "UNKNOWN" },

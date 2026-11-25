@@ -43,7 +43,7 @@ test("unlinked account actions are available in Journey History without invented
   assert.match(page, /!scope\.stage && !scope\.provider/);
   assert.match(page, /event => event\.stage === "ACCOUNT_ACTIVITY"/);
   assert.match(page, /Other recorded account actions/);
-  assert.match(page, /<ActivityTimeline events=\{otherActions\}/);
+  assert.match(page, /<ActivityTimeline timeZone=\{timeZone\} events=\{otherActions\}/);
   assert.doesNotMatch(page, /otherActions\.map\([^)]*searchHistoryId/);
   const reader = read("src/services/adminIdentityActivityService.ts");
   assert.match(reader, /if \(typeof meta\?\.linkedJourneyId === "string" && typeof meta\?\.linkedSearchHistoryId === "string"\) return \[\]/);

@@ -91,8 +91,29 @@ test("attribution defaults to unavailable rather than inventing zero-conversion 
   assert.equal(summary.environment, "staging");
 });
 
+test("regional referral Today uses local midnight in the database scope", async () => {
+  const now = new Date("2026-11-24T23:30:00.000Z");
+  const bounds: Array<{ gte: Date; lte: Date }> = [];
+  const service = createReferralAttributionService(() => ({
+    $transaction: async fn => fn({
+      redirectLog: {
+        count: async args => {
+          bounds.push((args as { where: { createdAt: { gte: Date; lte: Date } } }).where.createdAt);
+          return 0;
+        },
+        groupBy: async () => [],
+      },
+    }),
+  }), () => now);
+  const summary = await service.getSummary(1, "production", "today", "Africa/Lagos");
+  assert.equal(summary.dataAvailable, true);
+  assert.equal(summary.window.start, "2026-11-24T23:00:00.000Z");
+  assert.deepEqual(bounds.map(bound => [bound.gte.toISOString(), bound.lte.toISOString()]),
+    Array.from({ length: 2 }, () => ["2026-11-24T23:00:00.000Z", now.toISOString()]));
+});
+
 test("attribution reporting window accepts only an explicit bounded day count", () => {
-  assert.equal(parseAttributionDays(null), 7);
+  assert.equal(parseAttributionDays(null), 1);
   assert.equal(parseAttributionDays("7"), 7);
   assert.equal(parseAttributionDays("30"), 30);
   assert.equal(parseAttributionDays("1"), 1);

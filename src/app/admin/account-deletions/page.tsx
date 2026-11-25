@@ -3,8 +3,9 @@ import { ChevronRight } from "lucide-react";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminDeletionFilters } from "@/components/admin/AdminDeletionFilters";
-import { formatDateTime } from "@/lib/admin-data";
+import { formatAdminTimeZoneLabel, formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { resolveAdminQueueWindow } from "@/lib/adminQueueDateRange";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const metadata = { title: "Admin Account Deletions" };
@@ -20,10 +21,13 @@ const statusPresentation: Record<string, { label: string; dot: string; text: str
 };
 
 export default async function AdminAccountDeletionsPage({ searchParams }: { searchParams: SearchParams }) {
-  const raw = await searchParams;
-  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) });
+  const [raw, timeZone] = await Promise.all([searchParams, getAdminViewerTimeZone()]);
+  const now = new Date();
+  const timeZoneLabel = formatAdminTimeZoneLabel(timeZone, now);
+  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) }, now, timeZone);
   const applied = { ...raw, from: window.from || undefined, to: window.to || undefined };
   const params = toParams(applied);
+  if (window.range === "today" && (window.from !== raw.from || window.to !== raw.to)) params.delete("cursor");
   if (!params.has("limit")) params.set("limit", "50");
   const result = await adminOperationalReads.deletions.list(params);
 
@@ -31,7 +35,7 @@ export default async function AdminAccountDeletionsPage({ searchParams }: { sear
     <AdminPageShell title="Account deletion requests" hideHeader>
       <section aria-label="Account deletion requests" className="mx-auto w-full max-w-[1500px] min-w-0 text-[#374151]">
         <h1 className="mb-4 text-[20px] font-semibold leading-7 text-[#020617]">Deletion Requests</h1>
-        <AdminDeletionFilters query={one(raw.q)} status={one(raw.status)} limit={one(raw.limit)} range={window.range} from={window.from} to={window.to}>
+        <AdminDeletionFilters query={one(raw.q)} status={one(raw.status)} limit={one(raw.limit)} range={window.range} from={window.from} to={window.to} timeZone={timeZone} timeZoneLabel={timeZoneLabel}>
         {result.status === "ok" ? (
           result.data.items.length === 0 ? (
             <QueueState title="No deletion requests" message="No account deletion requests match the selected filters." />
@@ -82,18 +86,18 @@ export default async function AdminAccountDeletionsPage({ searchParams }: { sear
                             </span>
                           </td>
                           <td data-label="Requested" className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums text-[#475569]">
-                            {formatDateTime(new Date(request.requestedAt))}
+                            {formatViewerTimestamp(request.requestedAt, timeZone)}
                           </td>
                           <td data-label="Scheduled" className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums text-[#475569]">
-                            {formatDateTime(new Date(request.deletionScheduledAt))}
+                            {formatViewerTimestamp(request.deletionScheduledAt, timeZone)}
                           </td>
                           <td data-label="Resolution" className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums">
                             {request.cancelledAt ? (
-                              <p><span className="block text-[#64748B]">Cancelled</span>{formatDateTime(new Date(request.cancelledAt))}</p>
+                              <p><span className="block text-[#64748B]">Cancelled</span>{formatViewerTimestamp(request.cancelledAt, timeZone)}</p>
                             ) : null}
                             {request.completedAt ? (
                               <p className={request.cancelledAt ? "mt-2" : ""}>
-                                <span className="block text-[#64748B]">Completed</span>{formatDateTime(new Date(request.completedAt))}
+                                <span className="block text-[#64748B]">Completed</span>{formatViewerTimestamp(request.completedAt, timeZone)}
                               </p>
                             ) : null}
                             {!request.cancelledAt && !request.completedAt ? "—" : null}

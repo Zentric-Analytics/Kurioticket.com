@@ -4,6 +4,8 @@ import { AdminCalendarInput } from "@/components/admin/AdminCalendarInput";
 import { useState, useTransition } from "react";
 import { LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { shiftAdminCalendarDate } from "@/lib/adminLocalTime";
+import { validAdminCustomCalendarDates } from "@/lib/adminReportingRanges";
 
 import { AdminDirectorySelect, type AdminDirectoryOption } from "./AdminDirectorySelect";
 
@@ -13,6 +15,9 @@ type Props = {
   range: EmailDeliveryRange;
   fromDate: string;
   toDate: string;
+  today: string;
+  timeZone: string;
+  timeZoneLabel: string;
 };
 
 const rangeOptions: readonly AdminDirectoryOption[] = [
@@ -23,38 +28,22 @@ const rangeOptions: readonly AdminDirectoryOption[] = [
   { value: "custom", label: "Custom range" },
 ];
 
-function validDate(value: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return false;
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
-}
-
-function defaultCustomDates() {
-  const to = new Date();
-  const from = new Date(to.getTime() - 7 * 24 * 60 * 60 * 1000);
-  return {
-    from: from.toISOString().slice(0, 10),
-    to: to.toISOString().slice(0, 10),
-  };
-}
-
-export function EmailDeliveryRangeFilter({ range, fromDate, toDate }: Props) {
+export function EmailDeliveryRangeFilter({ range, fromDate, toDate, today, timeZone, timeZoneLabel }: Props) {
   const router = useRouter();
   const [customOpen, setCustomOpen] = useState(false);
   const [rangeSelectVersion, setRangeSelectVersion] = useState(0);
-  const initial = fromDate && toDate ? { from: fromDate, to: toDate } : defaultCustomDates();
+  const initial = fromDate && toDate ? { from: fromDate, to: toDate }
+    : { from: shiftAdminCalendarDate(today, -7) ?? today, to: today };
   const [draftDates, setDraftDates] = useState(initial);
+  const committedDates = JSON.stringify([range, fromDate, toDate]);
+  const [previousDates, setPreviousDates] = useState(committedDates);
+  if (previousDates !== committedDates) {
+    setPreviousDates(committedDates);
+    setDraftDates(initial);
+    setCustomOpen(false);
+  }
   const [isPending, startTransition] = useTransition();
-  const todayUtc = new Date().toISOString().slice(0, 10);
-  const validCustom =
-    validDate(draftDates.from) &&
-    validDate(draftDates.to) &&
-    draftDates.from <= draftDates.to &&
-    draftDates.to <= todayUtc;
+  const validCustom = validAdminCustomCalendarDates(draftDates.from, draftDates.to, today);
 
   function navigate(next: string) {
     startTransition(() => router.push(next, { scroll: false }));
@@ -62,7 +51,7 @@ export function EmailDeliveryRangeFilter({ range, fromDate, toDate }: Props) {
 
   function changeRange(next: string) {
     if (next === "custom") {
-      setDraftDates(fromDate && toDate ? { from: fromDate, to: toDate } : defaultCustomDates());
+      setDraftDates(initial);
       setCustomOpen(true);
       return;
     }
@@ -77,6 +66,7 @@ export function EmailDeliveryRangeFilter({ range, fromDate, toDate }: Props) {
         key={range + ":" + rangeSelectVersion}
         name="range"
         label="Date range"
+        timeZoneLabel={timeZoneLabel}
         value={range}
         options={[...rangeOptions, ...(range === "24h" ? [{ value: "24h", label: "Last 24 hrs (legacy)" }] : [])]}
         nativeExcludeValues={["custom"]}
@@ -87,11 +77,12 @@ export function EmailDeliveryRangeFilter({ range, fromDate, toDate }: Props) {
       {(customOpen || range === "custom") ? (
         <div className="flex flex-wrap items-end gap-2">
           <label className="text-[11px] font-medium text-[#64748B]">
-            From (UTC)
+            From ({timeZoneLabel})
             <AdminCalendarInput
-              ariaLabel="Email delivery custom start date UTC"
+              ariaLabel={"Email delivery custom start date (" + timeZoneLabel + ")"}
               value={draftDates.from}
-              max={draftDates.to || todayUtc}
+              max={draftDates.to || today}
+              timeZone={timeZone}
               onChange={(event) => {
                 setCustomOpen(true);
                 setDraftDates((current) => ({ ...current, from: event.target.value }));
@@ -99,12 +90,13 @@ export function EmailDeliveryRangeFilter({ range, fromDate, toDate }: Props) {
               className="w-[210px] max-w-full" />
           </label>
           <label className="text-[11px] font-medium text-[#64748B]">
-            To (UTC)
+            To ({timeZoneLabel})
             <AdminCalendarInput
-              ariaLabel="Email delivery custom end date UTC"
+              ariaLabel={"Email delivery custom end date (" + timeZoneLabel + ")"}
               value={draftDates.to}
               min={draftDates.from || undefined}
-              max={todayUtc}
+              max={today}
+              timeZone={timeZone}
               onChange={(event) => {
                 setCustomOpen(true);
                 setDraftDates((current) => ({ ...current, to: event.target.value }));
@@ -131,7 +123,7 @@ export function EmailDeliveryRangeFilter({ range, fromDate, toDate }: Props) {
             type="button"
             onClick={() => {
               setCustomOpen(false);
-              setDraftDates(fromDate && toDate ? { from: fromDate, to: toDate } : defaultCustomDates());
+              setDraftDates(initial);
               setRangeSelectVersion((version) => version + 1);
             }}
             className="h-10 px-2 text-[13px] font-medium text-[#475569] hover:underline"

@@ -30,6 +30,7 @@ test("Deletion Requests has heading and four controls with applied date window",
 
 test("Date controls show local custom inputs only when custom date is selected", () => {
   assert.match(controls, /range !== "custom"/);
-  assert.match(controls, /<AdminCalendarInput mode="datetime-local" timeZone="local"/);
+  assert.match(controls, /<AdminCalendarInput mode="datetime-local" timeZone=\{timeZone\}/);
+  assert.match(controls, /timeZoneLabel=\{timeZoneLabel\}/);
   assert.match(controls, /role="alert"/);
 });

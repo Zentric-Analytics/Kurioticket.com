@@ -128,13 +128,13 @@ test("both routes require admin authorization before rendering and reuse the exi
   for (const section of ["devices", "pages"]) {
     const route = readFileSync("src/app/admin/users/" + section + "/page.tsx", "utf8");
     assert.ok(route.includes('await requireAdminSession("/admin/users/' + section + '")'));
-    assert.ok(route.includes('<AdminHistoryDirectory section="' + section + '"'));
+    assert.ok(route.includes('<AdminHistoryDirectory timeZone={timeZone} section="' + section + '"'));
   }
   const devices = readFileSync("src/app/admin/users/[kind]/[id]/devices/page.tsx", "utf8");
   const pages = readFileSync("src/app/admin/users/[kind]/[id]/pages/page.tsx", "utf8");
   assert.match(devices, /historyDirectoryReturnHref\("devices", incoming\)/);
   assert.match(devices, /Back to Device & Access/);
-  assert.match(devices, /loadAdminFullDeviceHistory\(id, query\)/);
+  assert.match(devices, /loadAdminFullDeviceHistory\(id, query, timeZone, observedAt\)/);
   assert.match(pages, /historyDirectoryReturnHref\("pages", raw\.activityReturn\)/);
   assert.match(pages, /Back to Pages Visited/);
   assert.match(pages, /loadAdminIdentityActivity\(kind, id, query\.filters/);

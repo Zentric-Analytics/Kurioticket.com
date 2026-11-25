@@ -6,9 +6,11 @@ import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeFields";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
-import { formatDateTime } from "@/lib/admin-data";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { decodeActivityJourneyReturn, encodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
-import { JOURNEY_ALL_TIME_FROM } from "@/lib/adminJourneyDateRange";
+import { journeyCalendarTimeZone, JOURNEY_ALL_TIME_FROM } from "@/lib/adminJourneyDateRange";
+import { resetStaleJourneyDateCursor } from "@/lib/adminJourneyDateCursor";
 import { identityJourneyHistoryHref, identityJourneyHistoryQuery } from "@/lib/adminIdentityJourneyHistory";
 import { validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
@@ -76,11 +78,13 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
   const { kind, id } = await params;
   if (!validActivityIdentity(kind, id)) notFound();
   const route = "/admin/users/" + kind + "/" + encodeURIComponent(id);
-  await requireAdminSession(route + "/journeys");
-  const raw = await searchParams;
+  const session = await requireAdminSession(route + "/journeys");
+  const timeZone = await getAdminViewerTimeZone(session.user.id);
   const now = new Date();
+  const raw = resetStaleJourneyDateCursor(await searchParams, now, timeZone);
+  const calendarTimeZone = journeyCalendarTimeZone(raw, timeZone);
   const environment = getPublicEnvironment();
-  const requested = identityJourneyHistoryQuery(kind, id, raw, now, environment);
+  const requested = identityJourneyHistoryQuery(kind, id, raw, now, environment, timeZone);
   const incomingReturn = decodeActivityJourneyReturn(raw.activityReturn);
   // Navigation context can never switch the selected identity.
   const backHref = incomingReturn && (
@@ -98,7 +102,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
 
   // Validate every scoped query before reading identity or activity. This also
   // pins a continuation to the selected user, date window and environment.
-  const validated = parseAdminJourneyQuery(requested.input, "list", now, environment);
+  const validated = parseAdminJourneyQuery(requested.input, "list", now, environment, undefined, calendarTimeZone);
   if (validated.status !== "ok") return <div className="min-w-0 space-y-4 bg-white">
     {returnLink}
     <AdminEmptyState title="Invalid journey filters"
@@ -140,9 +144,9 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
   const otherActions = accountActions?.status === "ok"
     ? accountActions.data.events.filter(event => event.stage === "ACCOUNT_ACTIVITY")
     : [];
-  const list = operational ? null : await adminJourneys.list(requested.input);
+  const list = operational ? null : await adminJourneys.list(requested.input, calendarTimeZone);
   const summary = list?.status === "ok"
-    ? await adminJourneys.summary(list.data.scope)
+    ? await adminJourneys.summary(list.data.scope, calendarTimeZone)
     : null;
   const filterContext = { ...raw, range: requested.range };
   const preserved = identityJourneyHistoryHref(kind, id, filterContext);
@@ -156,7 +160,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
   const nextOperationalHref = operational && identity.data.nextCursor
     ? (() => {
       const path = identityJourneyHistoryHref(kind, id, {
-        ...filterContext, from: scope.from, to: scope.to,
+        ...filterContext, ...(calendarTimeZone ? {} : { from: scope.from, to: scope.to }),
       });
       return path + (path.includes("?") ? "&" : "?")
         + "activityCursor=" + encodeURIComponent(identity.data.nextCursor!);
@@ -207,7 +211,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
       <JourneyDateRangeFields initialRange={requested.range}
         initialFrom={one(raw.from) || (requested.range === "custom" ? scope.from : "")}
         initialTo={one(raw.to) || (requested.range === "custom" ? scope.to : "")}
-        now={now.toISOString()} />
+        now={now.toISOString()} timeZone={timeZone} />
       <SearchMonitorSelect label="Product" name="product" appearance="fare"
         value={one(raw.product)} options={products} truncateLabel />
       <SearchMonitorSelect label="Observed stage" name="stage" appearance="fare"
@@ -225,7 +229,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
         <p className="mb-4 text-[12px] leading-5 text-[#64748B]">
           These records are searches and handoffs associated with this operational session. They are not reconstructed or attributed to a consented journey.
         </p>
-        <ActivityTimeline events={identity.data.events} nextHref={nextOperationalHref}
+        <ActivityTimeline timeZone={timeZone} events={identity.data.events} nextHref={nextOperationalHref}
           environment={environment} order="newest" />
       </section>
     ) : list?.status !== "ok" ? (
@@ -254,8 +258,8 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
               {list.data.items.map(item => (
                 <tr key={item.id} className="align-top hover:bg-[#F8FAFC]">
                   <td className="px-3 py-3">
-                    <p className="font-medium">{formatDateTime(new Date(item.startedAt))}</p>
-                    <p className="mt-1 text-[11px] text-[#64748B]">Last {formatDateTime(new Date(item.lastEventAt))}</p>
+                    <p className="font-medium">{formatViewerTimestamp(item.startedAt, timeZone)}</p>
+                    <p className="mt-1 text-[11px] text-[#64748B]">Last {formatViewerTimestamp(item.lastEventAt, timeZone)}</p>
                   </td>
                   <td className="break-words px-3 py-3 text-[#334155]">{item.products.join(", ") || "—"}</td>
                   <td className="break-words px-3 py-3 text-[#334155]">
@@ -285,7 +289,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
         </div>
         {list.data.nextCursor ? <div className="flex justify-end border-t border-[#E7ECF5] pt-3">
           <Link className={linkStyle} href={identityJourneyHistoryHref(kind, id, {
-            ...filterContext, from: list.data.scope.from, to: list.data.scope.to,
+            ...filterContext, ...(calendarTimeZone ? {} : { from: list.data.scope.from, to: list.data.scope.to }),
           }, list.data.nextCursor)}>Next journeys <ChevronRight size={14} aria-hidden="true" /></Link>
         </div> : null}
       </section>
@@ -298,7 +302,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
             Verified account actions without an eligible exact journey link are shown separately.
             They are not assigned to searches by time, route or device.
           </p>
-          <ActivityTimeline events={otherActions} nextHref={null} environment={environment} order="newest" />
+          <ActivityTimeline timeZone={timeZone} events={otherActions} nextHref={null} environment={environment} order="newest" />
         </section>
       ) : accountActions?.status !== "ok" ? (
         <p role="status" className="text-[12px] text-[#64748B]">Other recorded account actions are temporarily unavailable; this does not mean there are no records.</p>

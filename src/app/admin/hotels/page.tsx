@@ -2,7 +2,8 @@ import {
   AdminEmptyState,
   AdminPageShell,
 } from "@/components/admin/AdminPageShell";
-import { formatDateTime } from "@/lib/admin-data";
+import { formatAdminTimeZoneLabel, formatViewerTimestamp } from "@/lib/adminLocalTime";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { ProductSearchRecordsPanel } from "@/components/admin/ProductSearchRecordsPanel";
 import { OperationsMetric, OperationsMetricStrip, OperationsSection, OperationsStatus } from "@/components/admin/TravelOperationsOverviewUI";
 import { getHotelOperationsSnapshot } from "@/services/adminHotelOperationsService";
@@ -11,8 +12,10 @@ import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegr
 export const metadata = { title: "Admin Hotel Operations" };
 
 export default async function AdminHotelsPage() {
+  const timeZone = await getAdminViewerTimeZone();
+  const timeZoneLabel = formatAdminTimeZoneLabel(timeZone);
   const [operations, integrations] = await Promise.all([
-    getHotelOperationsSnapshot(24, undefined, "today"),
+    getHotelOperationsSnapshot(24, undefined, "today", timeZone),
     Promise.resolve(getProviderIntegrationStatuses()),
   ]);
 
@@ -27,7 +30,7 @@ export default async function AdminHotelsPage() {
         <div className="min-w-0 space-y-0">
         {operations ? (
           <OperationsMetricStrip>
-            <OperationsMetric label="Searches" value={operations.searches.total} hint="Today (UTC)" tone="info" />
+            <OperationsMetric label="Searches" value={operations.searches.total} hint={"Today · " + timeZoneLabel} tone="info" />
             <OperationsMetric label="Successful" value={operations.searches.successful} hint="Recorded successful searches" tone="good" />
             <OperationsMetric label="Partial / failed" value={operations.searches.partial + operations.searches.failed} hint={operations.searches.partial + " partial · " + operations.searches.failed + " failed"} tone={operations.searches.partial + operations.searches.failed > 0 ? "warn" : "neutral"} />
             <OperationsMetric label="Zero results" value={operations.searches.successfulZeroResults} hint="Successful searches returning no hotel offers" tone={operations.searches.successfulZeroResults > 0 ? "warn" : "neutral"} />
@@ -70,7 +73,7 @@ export default async function AdminHotelsPage() {
                       <Stat label="Degraded (Today)" value={health ? String(health.degradedCalls) : "—"} />
                       <Stat label="Failed (Today)" value={health ? String(health.failedCalls) : "—"} />
                       <Stat label="Avg latency" value={health?.averageLatencyMs === null || health?.averageLatencyMs === undefined ? "—" : health.averageLatencyMs + " ms"} />
-                      <Stat label="Last issue" value={health?.lastIssueAt ? formatDateTime(new Date(health.lastIssueAt)) : "—"} />
+                      <Stat label="Last issue" value={health?.lastIssueAt ? formatViewerTimestamp(health.lastIssueAt, timeZone) : "—"} />
                     </div>
                     <p className="mt-3 text-xs leading-5 text-[#64748B]">{integration.note}</p>
                   </div>
@@ -79,7 +82,7 @@ export default async function AdminHotelsPage() {
             </div>
           </OperationsSection>
 
-        <ProductSearchRecordsPanel product="HOTEL" />
+        <ProductSearchRecordsPanel product="HOTEL" timeZone={timeZone} key={timeZone} />
 
         {operations ? (
           <div className="min-w-0">
@@ -97,7 +100,7 @@ export default async function AdminHotelsPage() {
                     <div key={(destination.destination || "unknown") + "-" + index} className="flex min-w-0 flex-wrap items-start justify-between gap-3 py-3 sm:items-center">
                       <div>
                         <p className="break-words text-[13px] font-semibold text-[#020617]">{destination.destination || "—"}</p>
-                        <p className="mt-1 text-xs font-semibold text-[#64748B]">{destination.lastIssueAt ? "Last issue " + formatDateTime(new Date(destination.lastIssueAt)) : "No timestamp"}</p>
+                        <p className="mt-1 text-xs font-semibold text-[#64748B]">{destination.lastIssueAt ? "Last issue " + formatViewerTimestamp(destination.lastIssueAt, timeZone) : "No timestamp"}</p>
                       </div>
                       <OperationsStatus tone="warn">{destination.issueCount} {destination.issueCount === 1 ? "exception" : "exceptions"}</OperationsStatus>
                     </div>

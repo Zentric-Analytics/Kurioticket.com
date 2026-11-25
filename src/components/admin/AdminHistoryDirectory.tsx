@@ -3,13 +3,14 @@ import { ChevronLeft, ChevronRight, UserRound } from "lucide-react";
 import { AdminEmptyState } from "./AdminPageShell";
 import { AdminHistoryDirectoryFilters } from "./AdminHistoryDirectoryFilters";
 import { HISTORY_DIRECTORY_LABELS, HISTORY_DIRECTORY_PAGE_SIZE, historyDirectoryHref, historyDirectoryPath, historyIdentityHref, parseHistoryDirectoryQuery, type HistorySection } from "@/lib/adminHistoryDirectory";
+import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { loadAdminHistoryDirectory } from "@/services/adminHistoryDirectoryService";
 
 const linkClass = "focus-ring inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-white px-3 text-[12px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
-const format = (date: Date) => new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC" }).format(date) + " UTC";
+const format = (date: Date, timeZone: string) => new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, timeZone }).format(date);
 const tabs = [{ value: "all", label: "All" }, { value: "registered", label: "Registered" }, { value: "guests", label: "Guests" }] as const;
 
-export async function AdminHistoryDirectory({ section, raw }: { section: HistorySection; raw: Record<string, string | string[] | undefined> }) {
+export async function AdminHistoryDirectory({ section, raw, timeZone }: { section: HistorySection; raw: Record<string, string | string[] | undefined>; timeZone: string }) {
   const label = HISTORY_DIRECTORY_LABELS[section];
   const parsed = parseHistoryDirectoryQuery(section, raw);
   if (!parsed.ok) return <div className="min-w-0 space-y-4 bg-white">
@@ -18,7 +19,7 @@ export async function AdminHistoryDirectory({ section, raw }: { section: History
   </div>;
   const query = parsed.query;
   const now = new Date();
-  const result = await loadAdminHistoryDirectory(section, query, now);
+  const result = await loadAdminHistoryDirectory(section, query, now, timeZone);
   const total = result.status === "ok" ? result.total : null;
   const totalPages = total === null ? 1 : Math.min(1_000_000, Math.max(1, Math.ceil(total / HISTORY_DIRECTORY_PAGE_SIZE)));
   const countLabel = section === "devices" ? "Records" : "Visits";
@@ -28,7 +29,7 @@ export async function AdminHistoryDirectory({ section, raw }: { section: History
       <h1 className="text-[19px] font-semibold">{label}</h1>
       {total !== null ? <span data-testid="history-directory-total" className="text-[12px] tabular-nums text-[#64748B]">{total.toLocaleString()} matching {total === 1 ? "identity" : "identities"}</span> : null}
     </header>
-    <AdminHistoryDirectoryFilters key={JSON.stringify([query.q, query.range, query.platform, query.from, query.to])} section={section} query={query}/>
+    <AdminHistoryDirectoryFilters timeZone={timeZone} key={JSON.stringify([query.q, query.range, query.platform, query.from, query.to])} section={section} query={query}/>
     <nav aria-label="History identity types" className="flex flex-wrap gap-4 border-y border-[#E2E8F0]">
       {tabs.map(tab => <Link key={tab.value} href={historyDirectoryHref(section, query, { tab: tab.value, page: 1 })}
         aria-current={query.tab === tab.value ? "page" : undefined} className={"focus-ring border-b-2 py-3 text-[13px] font-medium " + (query.tab === tab.value ? "border-[#004BB8] text-[#004BB8]" : "border-transparent text-[#64748B] hover:text-[#004BB8]")}>{tab.label}</Link>)}
@@ -39,11 +40,11 @@ export async function AdminHistoryDirectory({ section, raw }: { section: History
       action={query.page > 1 ? <Link className={linkClass} href={historyDirectoryHref(section, query, { page: 1 })}>First page</Link> : undefined}/>
     : <div className="min-w-0 overflow-hidden rounded-lg border border-[#E2E8F0]">
       <div aria-hidden="true" className={"hidden gap-3 border-b border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 text-[11px] font-medium uppercase text-[#64748B] md:grid " + columns}>
-        <span>Identity</span><span>Type</span><span>{countLabel}</span><span>Last {section === "devices" ? "seen" : "visit"} (UTC)</span><span>Action</span>
+        <span>Identity</span><span>Type</span><span>{countLabel}</span><span>Last {section === "devices" ? "seen" : "visit"} ({formatAdminTimeZoneLabel(timeZone, now)})</span><span>Action</span>
       </div>
       <ul className="divide-y divide-[#E2E8F0]">
         {result.rows.map(row => {
-          const href = historyIdentityHref(section, row, query, now);
+          const href = historyIdentityHref(section, row, query, now, timeZone);
           return <li key={row.kind + ":" + row.id} data-testid="history-directory-row" className={"grid min-w-0 items-center gap-2 px-3 py-3 text-[13px] md:gap-3 " + columns}>
             <div className="flex min-w-0 items-start gap-2">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[#475569]"><UserRound size={15} aria-hidden="true"/></span>
@@ -54,7 +55,7 @@ export async function AdminHistoryDirectory({ section, raw }: { section: History
             </div>
             <span className="min-w-0 text-[12px] text-[#475569]">{row.kind === "user" ? "Registered" : row.guestSource === "operational" ? "Guest" : "Consented guest"}</span>
             <span className="min-w-0 tabular-nums"><span className="text-[#64748B] md:hidden">{countLabel}: </span>{row.count.toLocaleString()}{section === "devices" ? <span className="mt-0.5 block text-[11px] text-[#64748B]">{row.kind === "user" ? "Sessions" : "Observations"}</span> : null}</span>
-            <time dateTime={row.lastSeenAt.toISOString()} className="min-w-0 break-words text-[12px] tabular-nums text-[#64748B]">{format(row.lastSeenAt)}</time>
+            <time dateTime={row.lastSeenAt.toISOString()} className="min-w-0 break-words text-[12px] tabular-nums text-[#64748B]">{format(row.lastSeenAt, timeZone)}</time>
             <Link href={href} aria-label={"View history for " + row.name + (row.email ? " (" + row.email + ")" : " (" + row.id + ")")}
               className="focus-ring inline-flex min-w-0 items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline"><span>View history</span><ChevronRight size={14} className="shrink-0" aria-hidden="true"/></Link>
           </li>;

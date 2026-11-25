@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
+import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { historyDirectoryReturnHref } from "@/lib/adminHistoryDirectory";
 import { ACTIVITY_PAGE_SIZE, validActivityIdentity } from "@/lib/adminIdentityActivity";
@@ -18,7 +20,8 @@ export default async function AdminPagesHistoryPage({ params, searchParams }: Pr
   const { kind, id } = await params;
   if (!validActivityIdentity(kind, id)) notFound();
   const path = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/pages";
-  await requireAdminSession(path);
+  const session = await requireAdminSession(path);
+  const timeZone = await getAdminViewerTimeZone(session.user.id);
   const raw = await searchParams;
   const directoryReturn = historyDirectoryReturnHref("pages", raw.activityReturn);
   const backHref = directoryReturn ?? pageHistoryBackHref(kind, id, raw.activityReturn);
@@ -26,7 +29,7 @@ export default async function AdminPagesHistoryPage({ params, searchParams }: Pr
   const back = <nav aria-label="Breadcrumb" className="flex min-w-0 items-center text-[13px]">
     <Link href={backHref} className="focus-ring inline-flex items-center gap-1.5 text-[#004BB8] hover:underline"><ArrowLeft size={15} aria-hidden="true"/> {backLabel}</Link>
   </nav>;
-  const parsed = parsePageHistoryQuery(raw, new Date());
+  const parsed = parsePageHistoryQuery(raw, new Date(), timeZone);
   if (!parsed.ok) return <div className="min-w-0 space-y-4 bg-white">{back}
     <AdminEmptyState title="Invalid page history filters" message={parsed.error} action={<Link href={path + "?" + new URLSearchParams({ activityReturn: backHref }).toString()} className={linkClass}>Reset history filters</Link>}/>
   </div>;
@@ -46,11 +49,11 @@ export default async function AdminPagesHistoryPage({ params, searchParams }: Pr
     <section aria-label="Full pages visited history" className="min-w-0 space-y-4 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-5">
       <header className="min-w-0">
         <h1 className="text-[19px] font-semibold">Pages Visited History</h1>
-        <p className="mt-1 break-words text-[12px] text-[#64748B]">{data.title} · {data.email ? data.email + " · " : ""}{id} · Recorded page and screen visits · UTC</p>
+        <p className="mt-1 break-words text-[12px] text-[#64748B]">{data.title} · {data.email ? data.email + " · " : ""}{id} · Recorded page and screen visits · {formatAdminTimeZoneLabel(timeZone)}</p>
       </header>
-      <AdminPageHistoryFilters key={JSON.stringify([query.range, query.platform, query.filters])} path={path} query={query} returnHref={backHref}/>
+      <AdminPageHistoryFilters timeZone={timeZone} key={JSON.stringify([query.range, query.platform, query.filters])} path={path} query={query} returnHref={backHref}/>
       {query.page > totalPages ? <AdminEmptyState title="No records on this page" message="Go to the first page to review the available history." action={<Link className={linkClass} href={url(1)}>First page</Link>}/> :
-        <PageViewRecords events={data.events} count={count} full operational={operational}/>}
+        <PageViewRecords timeZone={timeZone} events={data.events} count={count} full operational={operational}/>}
       {!operational && totalPages > 1 && query.page <= totalPages ? <nav aria-label="Page history pagination" className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E2E8F0] pt-3">
         <span className="text-[12px] text-[#64748B]">Page {query.page} of {totalPages} · {count.toLocaleString()} matching visits</span>
         <div className="flex flex-wrap gap-2">

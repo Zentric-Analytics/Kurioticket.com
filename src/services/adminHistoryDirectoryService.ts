@@ -10,11 +10,11 @@ type StoredRow = { kind: string | null; id: string | null; name: string | null; 
 export type HistoryDirectoryResult = { status: "ok"; rows: HistoryDirectoryRow[]; total: number } | { status: "unavailable" };
 
 /** Read-only, bounded list. Authorization is required at each route. */
-export async function loadAdminHistoryDirectory(section: HistorySection, query: HistoryDirectoryQuery, now: Date): Promise<HistoryDirectoryResult> {
+export async function loadAdminHistoryDirectory(section: HistorySection, query: HistoryDirectoryQuery, now: Date, timeZone = "UTC"): Promise<HistoryDirectoryResult> {
   try {
     const db = getOptionalPrisma();
     if (!db) return { status: "unavailable" };
-    const stored = await db.$queryRaw<StoredRow[]>(historyDirectorySql(section, query, getPublicEnvironment(), now));
+    const stored = await db.$queryRaw<StoredRow[]>(historyDirectorySql(section, query, getPublicEnvironment(), now, timeZone));
     const total = Number(stored[0]?.total);
     if (!Number.isSafeInteger(total) || total < 0 || stored.length > HISTORY_DIRECTORY_PAGE_SIZE) throw new Error("Invalid history total");
     const rows: HistoryDirectoryRow[] = [];

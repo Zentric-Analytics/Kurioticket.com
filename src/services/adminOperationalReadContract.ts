@@ -287,6 +287,22 @@ function scopeKey(scope: object) {
   return JSON.stringify(scope);
 }
 
+/** Inspect the handoff cursor's date window before reapplying a calendar preset. */
+export function adminHandoffCursorWindow(token: string): ScopeBase | null {
+  if (!/^[A-Za-z0-9_-]{1,8192}$/.test(token)) return null;
+  try {
+    const decoded = JSON.parse(Buffer.from(token, "base64url").toString("utf8")) as Record<string, unknown>;
+    if (decoded.v !== 1 || decoded.kind !== "handoffs" || typeof decoded.scope !== "string") return null;
+    const scope = JSON.parse(decoded.scope) as Record<string, unknown>;
+    const { from, to } = scope;
+    if ((from !== null && typeof from !== "string") || (to !== null && typeof to !== "string")) return null;
+    const dates = baseScope({ from, to });
+    return dates.status === "ok" ? dates.data : null;
+  } catch {
+    return null;
+  }
+}
+
 function decodeCursor(kind: AdminOperationalKind, token: string | null, scope: object): ParseResult<CursorPosition | null> {
   if (!token) return { status: "ok", data: null };
   try {

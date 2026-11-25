@@ -2,6 +2,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import {
   encodeAdminAuditCursor,
   parseAdminAuditQuery,
+  type AdminAuditCalendarWindow,
   type AdminAuditList,
   type AdminAuditRead,
   type AdminAuditResult,
@@ -44,10 +45,10 @@ function dto(row: Prisma.AdminAuditLogGetPayload<{ select: typeof select }>): Ad
 
 export function createAdminAuditReadService(dependencies: Dependencies) {
   return {
-    async list(params: URLSearchParams): Promise<AdminAuditResult<AdminAuditList>> {
+    async list(params: URLSearchParams, calendarWindow?: AdminAuditCalendarWindow): Promise<AdminAuditResult<AdminAuditList>> {
       try {
         if (!(await dependencies.authorize())) return { status: "forbidden" };
-        const parsed = parseAdminAuditQuery(params, (dependencies.now ?? (() => new Date()))());
+        const parsed = parseAdminAuditQuery(params, (dependencies.now ?? (() => new Date()))(), calendarWindow);
         if (parsed.status !== "ok") return parsed;
         const db = dependencies.database();
         if (!db) return { status: "unavailable" };

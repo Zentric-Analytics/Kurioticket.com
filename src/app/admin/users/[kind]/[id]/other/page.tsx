@@ -6,6 +6,7 @@ import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { normalizeUserActivityQuery, safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
 import { activityHref, parseActivityFilters, validActivityIdentity } from "@/lib/adminIdentityActivity";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { loadAdminIdentityActivity } from "@/services/adminIdentityActivityService";
 
@@ -22,12 +23,13 @@ export default async function AdminIdentityOtherActivityPage({
   const { kind, id } = await params;
   if (!validActivityIdentity(kind, id)) notFound();
   const path = "/admin/users/" + kind + "/" + encodeURIComponent(id);
-  await requireAdminSession(path + "/other");
-  const raw = normalizeUserActivityQuery(await searchParams, new Date());
+  const session = await requireAdminSession(path + "/other");
+  const timeZone = await getAdminViewerTimeZone(session.user.id);
+  const raw = normalizeUserActivityQuery(await searchParams, new Date(), timeZone);
   const paramsForActivity = safeActivityQueryParams(raw);
   const activityPath = path + "/activity";
   const backHref = activityHref(activityPath, paramsForActivity, {});
-  const parsed = parseActivityFilters(raw);
+  const parsed = parseActivityFilters(raw, timeZone);
   if (!parsed.ok) return <div className="space-y-4">
     <Link href={backHref} className={linkClass}><ArrowLeft size={15} aria-hidden="true"/> Back to Activity</Link>
     <AdminEmptyState title="Invalid activity filters" message={parsed.error}
@@ -56,7 +58,7 @@ export default async function AdminIdentityOtherActivityPage({
       <p className="mt-1 break-words text-[13px] text-[#475569]">{result.data.title}</p>
       <p className="mt-2 text-[12px] text-[#64748B]">Actions and operational records outside tracked journeys. Date, product and activity filters match the previous Activity view. Events remain in their recorded order.</p>
     </section>
-    <ActivityTimeline events={rows} nextHref={null} environment={result.data.environment}
+    <ActivityTimeline timeZone={timeZone} events={rows} nextHref={null} environment={result.data.environment}
       returnHref={backHref} clearHref={activityPath}/>
   </div>;
 }

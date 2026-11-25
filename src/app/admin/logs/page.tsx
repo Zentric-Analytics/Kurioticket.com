@@ -1,8 +1,10 @@
 import Link from "next/link";
 
 import { AdminAuditLogsToolbar } from "@/components/admin/AdminAuditLogsToolbar";
-import { formatDateTime } from "@/lib/admin-data";
-import type { AdminAuditRead } from "@/services/adminAuditReadContract";
+import { adminLocalDate, formatAdminTimeZoneLabel, formatViewerTimestamp, resolveAdminTimeZone } from "@/lib/adminLocalTime";
+import { adminCustomDateRange, adminRollingRange } from "@/lib/adminReportingRanges";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
+import { parseAdminAuditQuery, type AdminAuditCalendarWindow, type AdminAuditRead } from "@/services/adminAuditReadContract";
 import { adminAuditReads } from "@/services/adminAuditReadService";
 
 export const metadata = { title: "Admin Audit Logs" };
@@ -25,14 +27,17 @@ const actionLabels: Record<string, string> = {
 };
 
 export default async function AdminLogsPage({ searchParams }: { searchParams: SearchParams }) {
-  const raw = await searchParams;
+  const [raw, timeZone] = await Promise.all([searchParams, getAdminViewerTimeZone()]);
   const now = new Date();
   const range = normalizeRange(one(raw.range));
   const fromDate = one(raw.fromDate);
   const toDate = one(raw.toDate);
-  const params = auditParams(raw, range, now);
-  const result = await adminAuditReads.list(params);
-  const pageHref = currentHref(raw, range);
+  const absoluteRange = raw.from !== undefined || raw.to !== undefined;
+  const custom = range === "custom" && !absoluteRange
+    ? adminCustomDateRange(fromDate, toDate, now, timeZone) ?? undefined : undefined;
+  const params = auditParams(raw, range, now, timeZone, custom);
+  const result = await adminAuditReads.list(params, custom);
+  const pageHref = currentHref({ ...raw, cursor: params.get("cursor") ?? undefined }, range);
 
   return (
     <div className="w-full min-w-0 bg-white text-[#020617]">
@@ -46,9 +51,12 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
           searchEmail={one(raw.searchEmail)}
           targetType={one(raw.targetType)}
           targetEmail={one(raw.targetEmail)}
-          range={range}
+          range={absoluteRange ? "fixed" : range}
           fromDate={fromDate}
           toDate={toDate}
+          today={adminLocalDate(now, timeZone)}
+          timeZone={timeZone}
+          timeZoneLabel={formatAdminTimeZoneLabel(timeZone, now)}
           pageHref={pageHref}
         />
 
@@ -72,20 +80,20 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
                   <span>Target</span>
                 </div>
                 <div className="w-full min-w-0 divide-y divide-[#E7ECF5]">
-                  {result.data.items.map(log => <AuditRow key={log.id} log={log} />)}
+                  {result.data.items.map(log => <AuditRow key={log.id} log={log} timeZone={timeZone} />)}
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <p className="text-[12px] text-[#64748B]">Newest first · up to 100 records per page.</p>
                 <div className="flex items-center gap-4">
-                  {one(raw.cursor) ? (
+                  {params.has("cursor") ? (
                     <Link href={newestHref(raw, range)} className="text-[13px] font-medium text-[#475569] hover:text-[#020617] hover:underline">
                       Back to newest
                     </Link>
                   ) : null}
                   {result.data.nextCursor ? (
-                    <Link href={cursorHref(raw, range, result.data.nextCursor)} className="text-[13px] font-medium text-[#004BB8] hover:underline">
+                    <Link href={cursorHref(raw, range, result.data.nextCursor, timeZone)} className="text-[13px] font-medium text-[#004BB8] hover:underline">
                       Older records ›
                     </Link>
                   ) : null}
@@ -110,10 +118,10 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
   );
 }
 
-function AuditRow({ log }: { log: AdminAuditRead }) {
+function AuditRow({ log, timeZone }: { log: AdminAuditRead; timeZone: string }) {
   const content = (
     <>
-      <time dateTime={log.createdAt} className="text-[12px] leading-5 text-[#475569]">{formatDateTime(new Date(log.createdAt))}</time>
+      <time dateTime={log.createdAt} className="text-[12px] leading-5 text-[#475569]">{formatViewerTimestamp(log.createdAt, timeZone)}</time>
       <div className="min-w-0">
         <p className="break-all text-[13px] font-medium text-[#020617]" title={log.adminEmail}>{log.adminEmail}</p>
       </div>
@@ -189,9 +197,15 @@ function normalizeRange(value: string): AuditRange {
   return value === "today" || value === "24h" || value === "7d" || value === "30d" || value === "all" || value === "90d" || value === "custom" ? value : "today";
 }
 
-function auditParams(raw: Record<string, string | string[] | undefined>, range: AuditRange, now: Date) {
+function auditParams(
+  raw: Record<string, string | string[] | undefined>,
+  range: AuditRange,
+  now: Date,
+  timeZone: string,
+  custom?: AdminAuditCalendarWindow,
+) {
   const params = new URLSearchParams();
-  const pageOnlyKeys = new Set(["range", "fromDate", "toDate"]);
+  const pageOnlyKeys = new Set(["range", "fromDate", "toDate", "cursorTimeZone"]);
 
   // Preserve the reader's validation boundary: repeated reader filters and
   // unknown query keys must reach parseAdminAuditQuery so they fail closed
@@ -203,53 +217,53 @@ function auditParams(raw: Record<string, string | string[] | undefined>, range: 
   }
   if (!params.has("limit")) params.set("limit", "100");
 
-  if (params.has("cursor") || params.has("from") || params.has("to")) return params;
+  const calendarRange = range === "today" || range === "custom";
+  if (params.has("from") || params.has("to") || (params.has("cursor") && !calendarRange)) return params;
 
+  let from: string;
+  let to = now.toISOString();
   if (range === "custom") {
-    const fromDate = one(raw.fromDate);
-    const toDate = one(raw.toDate);
-    params.set("from", /^\d{4}-\d{2}-\d{2}$/.test(fromDate) ? fromDate + "T00:00:00.000Z" : fromDate);
-    params.set("to", customEndIso(toDate, now));
-    return params;
+    // Keep invalid date-only links at the existing reader's validation boundary.
+    from = custom?.from.toISOString() ?? "";
+    to = custom?.to.toISOString() ?? "";
+  } else if (range === "all") {
+    from = "1970-01-01T00:00:00.000Z";
+  } else {
+    from = range === "90d" ? new Date(now.getTime() - 90 * 86_400_000).toISOString()
+      : adminRollingRange(range, now, timeZone).from;
   }
 
-  if (range === "all") {
-    params.set("from", "1970-01-01T00:00:00.000Z");
-    params.set("to", now.toISOString());
-    return params;
+  if (params.has("cursor")) {
+    const cursorZone = resolveAdminTimeZone(one(raw.cursorTimeZone));
+    const cursorWindow = range === "custom" && cursorZone !== timeZone
+      ? adminCustomDateRange(one(raw.fromDate), one(raw.toDate), now, cursorZone) ?? undefined : custom;
+    const parsed = parseAdminAuditQuery(params, now, cursorWindow);
+    if (parsed.status !== "ok") return params;
+    const pinned = parsed.data.scope;
+    if (cursorZone === timeZone && pinned.from === from && pinned.to <= to) return params;
+    // A new zone or calendar day starts a new read instead of showing
+    // an older page of the previous reporting window under the new label.
+    params.delete("cursor");
   }
-
-  const durationMs = range === "24h" ? 24 * 60 * 60 * 1000
-    : range === "30d" ? 30 * 24 * 60 * 60 * 1000
-      : range === "90d" ? 90 * 24 * 60 * 60 * 1000
-        : 7 * 24 * 60 * 60 * 1000;
-  params.set("from", (range === "today"
-    ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
-    : new Date(now.getTime() - durationMs)).toISOString());
-  params.set("to", now.toISOString());
+  params.set("from", from);
+  params.set("to", to);
   return params;
-}
-
-function customEndIso(value: string, now: Date) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  const end = new Date(value + "T00:00:00.000Z");
-  end.setUTCDate(end.getUTCDate() + 1);
-  return new Date(Math.min(end.getTime(), now.getTime())).toISOString();
 }
 
 function currentHref(raw: Record<string, string | string[] | undefined>, range: AuditRange) {
   const params = new URLSearchParams();
   params.set("range", range);
-  for (const key of ["action", "searchEmail", "adminEmail", "targetType", "targetEmail", "fromDate", "toDate", "cursor"] as const) {
+  for (const key of ["action", "searchEmail", "adminEmail", "targetType", "targetEmail", "fromDate", "toDate", "from", "to", "cursor"] as const) {
     const value = one(raw[key]);
     if (value) params.set(key, value);
   }
   return "/admin/logs?" + params.toString();
 }
 
-function cursorHref(raw: Record<string, string | string[] | undefined>, range: AuditRange, cursor: string) {
+function cursorHref(raw: Record<string, string | string[] | undefined>, range: AuditRange, cursor: string, timeZone: string) {
   const params = new URLSearchParams(currentHref(raw, range).split("?")[1]);
   params.set("cursor", cursor);
+  if (!params.has("from") && !params.has("to") && (range === "today" || range === "custom")) params.set("cursorTimeZone", timeZone);
   return "/admin/logs?" + params.toString();
 }
 

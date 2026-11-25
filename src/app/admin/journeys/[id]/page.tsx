@@ -4,18 +4,26 @@ import { notFound } from "next/navigation";
 import { AdminEmptyState, AdminPageShell } from "@/components/admin/AdminPageShell";
 import { JourneyEventHistory } from "@/components/admin/JourneyEventHistory";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
-import { formatDateTime } from "@/lib/admin-data";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { decodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
+import { journeyCalendarTimeZone, journeyDetailCalendarWindow } from "@/lib/adminJourneyDateRange";
+import { resetStaleJourneyDateCursor } from "@/lib/adminJourneyDateCursor";
 import { adminJourneys } from "@/services/adminJourneyService";
 
 export const metadata = { title: "Admin Journey Detail" };
 
 export default async function AdminJourneyDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params;
-  const raw = await searchParams;
-  const backendRaw = { ...raw }; delete backendRaw.range; delete backendRaw.activityReturn;
-  const input: Record<string, unknown> = { ...backendRaw, limit: one(raw.limit) || "50" };
-  const result = await adminJourneys.detail(id, input);
+  const timeZone = await getAdminViewerTimeZone();
+  const supplied = await searchParams;
+  const now = new Date();
+  const calendarTimeZone = journeyCalendarTimeZone(supplied, timeZone);
+  const raw = calendarTimeZone ? resetStaleJourneyDateCursor(supplied, now, calendarTimeZone, id) : supplied;
+  const fixed = calendarTimeZone ? journeyDetailCalendarWindow(raw, now, calendarTimeZone) : {};
+  const backendRaw = { ...raw }; delete backendRaw.range; delete backendRaw.activityReturn; delete backendRaw.asOf;
+  const input: Record<string, unknown> = { ...backendRaw, ...fixed, limit: one(raw.limit) || "50" };
+  const result = await adminJourneys.detail(id, input, calendarTimeZone);
   if (result.status === "not_found") notFound();
 
   return (
@@ -31,9 +39,9 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
               <Field label="Identity" value={result.data.journey.identity.kind} />
               <Field label="User ID" value={result.data.journey.identity.userId || "—"} />
               <Field label="Visitor ID" value={result.data.journey.identity.visitorId} />
-              <Field label="Started" value={formatDateTime(new Date(result.data.journey.startedAt))} />
-              <Field label="First event in window" value={formatDateTime(new Date(result.data.journey.firstEventAt))} />
-              <Field label="Last event in window" value={formatDateTime(new Date(result.data.journey.lastEventAt))} />
+              <Field label="Started" value={formatViewerTimestamp(result.data.journey.startedAt, timeZone)} />
+              <Field label="First event in window" value={formatViewerTimestamp(result.data.journey.firstEventAt, timeZone)} />
+              <Field label="Last event in window" value={formatViewerTimestamp(result.data.journey.lastEventAt, timeZone)} />
               <Field label="Products" value={result.data.journey.products.join(", ") || "—"} />
               <Field label="Providers" value={result.data.journey.providers.join(", ") || "—"} />
               <Field label="Recorded searches" value={String(result.data.journey.searchCount)} />
@@ -41,7 +49,7 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
               <Field label="Environment" value={result.data.scope.environment} />
             </dl>
           </section>
-          <JourneyEventHistory events={result.data.events} />
+          <JourneyEventHistory events={result.data.events} timeZone={timeZone} />
           {result.data.nextCursor ? <div className="flex justify-end"><Link href={cursorHref(id, raw, result.data.nextCursor)} className="inline-flex h-9 items-center rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]">Next events</Link></div> : null}
         </div>
       ) : (

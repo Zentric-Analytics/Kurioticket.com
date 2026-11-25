@@ -86,7 +86,7 @@ test("settings history rejects unsupported filters and malicious cursors without
   assert.equal(queries.length, 0);
 });
 
-test("Settings History allows paginated All time while validating bounded custom UTC dates", async () => {
+test("Settings History allows paginated All time while validating bounded custom dates", async () => {
   const { reader, queries } = fixture();
   const all = await reader.list({ range: "all", category: "all" });
   assert.equal(all.status, "ok");
@@ -98,6 +98,37 @@ test("Settings History allows paginated All time while validating bounded custom
   assert.match(JSON.stringify(queries[1].where), /2026-11-01T00:00:00.000Z/);
   assert.deepEqual(await reader.list({ range: "custom", category: "all", fromDate: "2026-02-30", toDate: "2026-11-18" }), { status: "invalid" });
   assert.deepEqual(await reader.list({ range: "custom", category: "all", fromDate: "2026-01-01", toDate: "2026-11-18" }), { status: "invalid" });
+});
+
+test("Settings History reads local Today and complete custom dates spanning DST", async () => {
+  const { reader, queries } = fixture();
+  assert.equal((await reader.list({ range: "today", category: "all", timeZone: "Africa/Lagos" })).status, "ok");
+  assert.equal((await reader.list({
+    range: "custom", category: "all", timeZone: "America/New_York",
+    fromDate: "2026-11-01", toDate: "2026-11-01",
+  })).status, "ok");
+  const bounds = (query: Record<string, unknown>) => (query.where as { createdAt: unknown }).createdAt;
+  assert.deepEqual(bounds(queries[0]), {
+    gte: new Date("2026-11-17T23:00:00Z"), lt: now,
+  });
+  assert.deepEqual(bounds(queries[1]), {
+    gte: new Date("2026-11-01T04:00:00Z"), lt: new Date("2026-11-02T05:00:00Z"),
+  });
+});
+
+test("Settings History restarts an older calendar page after changing the reporting zone", async () => {
+  const { reader, queries } = fixture();
+  const cursor = Buffer.from(JSON.stringify({
+    v: 1, scope: { range: "today", category: "all", from: "2026-11-18T00:00:00.000Z", to: now.toISOString() },
+    at: "2026-11-18T10:00:00.000Z", id: "audit-member-002",
+  }), "utf8").toString("base64url");
+  const result = await reader.list({ range: "today", category: "all", timeZone: "Africa/Lagos", cursor });
+  assert.equal(result.status, "ok");
+  if (result.status !== "ok") return;
+  assert.equal(result.resetCursor, true);
+  const where = queries[0].where as { createdAt: { gte: Date }; AND: unknown[] };
+  assert.equal(where.createdAt.gte.toISOString(), "2026-11-17T23:00:00.000Z");
+  assert.equal(where.AND.length, 1);
 });
 
 test("settings history category stays scoped to approved features and team actions", async () => {

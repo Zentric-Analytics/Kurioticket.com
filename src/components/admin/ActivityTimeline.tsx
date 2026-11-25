@@ -5,17 +5,18 @@ import {
   Building2, CarFront, ChevronRight, CircleDot, ExternalLink,
   ListChecks, MousePointerClick, Plane, Search,
 } from "lucide-react";
+import { adminLocalDate, formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { groupContiguousActivityRows } from "@/lib/adminIdentityActivity";
 import { encodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
 import { PageViewDetails } from "@/components/admin/PageViewRecords";
 
-const dayLabel = (at: Date) => new Intl.DateTimeFormat("en", {
-  month: "short", day: "numeric", year: "numeric", timeZone: "UTC",
+const dayLabel = (at: Date, timeZone: string) => new Intl.DateTimeFormat("en", {
+  month: "short", day: "numeric", year: "numeric", timeZone,
 }).format(at);
-const hourLabel = (at: Date) => new Intl.DateTimeFormat("en", {
-  hour: "numeric", minute: "2-digit", timeZone: "UTC",
-}).format(at) + " UTC";
+const hourLabel = (at: Date, timeZone: string) => new Intl.DateTimeFormat("en", {
+  hour: "numeric", minute: "2-digit", timeZone,
+}).format(at);
 
 const productLabels = new Map([
   ["FLIGHT", "Flight"], ["HOTEL", "Hotel"], ["CAR", "Car"], ["PACKAGE", "Package"],
@@ -64,22 +65,22 @@ function detailHref(row: ActivityRow, environment: string, now: Date, returnHref
   }
   return null;
 }
-function RecordedEvent({ row }: { row: ActivityRow }) {
+function RecordedEvent({ row, timeZone }: { row: ActivityRow; timeZone: string }) {
   return <li data-activity-id={row.id} className="flex min-w-0 flex-col gap-1.5 py-3 sm:flex-row sm:items-start sm:gap-4">
     <span aria-hidden="true" className="mt-0.5 hidden shrink-0 text-[#64748B] sm:block"><EventIcon stage={row.stage} /></span>
     <div className="min-w-0 flex-1">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <p className="text-[13px] font-medium text-[#0F172A]">{row.label}</p>
-        <time dateTime={row.at.toISOString()} className="shrink-0 text-[12px] font-normal text-[#64748B]">{hourLabel(row.at)}</time>
+        <time dateTime={row.at.toISOString()} className="shrink-0 text-[12px] font-normal text-[#64748B]">{hourLabel(row.at, timeZone)}</time>
       </div>
       {row.pageView ? <PageViewDetails row={row}/> : <p className="mt-1 break-words text-[12px] leading-5 text-[#64748B]">{activityDetail(row) || "No additional details recorded"}</p>}
     </div>
   </li>;
 }
-function dayGroups(events: ActivityRow[]) {
+function dayGroups(events: ActivityRow[], timeZone: string) {
   const byDate = new Map<string, ActivityRow[]>();
   for (const row of events) {
-    const date = row.at.toISOString().slice(0,10);
+    const date = adminLocalDate(row.at, timeZone);
     byDate.set(date, [...(byDate.get(date) ?? []), row]);
   }
   return [...byDate].map(([date,rows]) => ({date,rows,journeys:groupContiguousActivityRows(rows)}));
@@ -96,11 +97,11 @@ function journalTitle(rows: ActivityRow[]) {
 /** Every eligible event is visible immediately, including repeated searches.
  * Preserve optional journey context and one View journey action without collapse controls.
  */
-export function ActivityTimeline({ events, nextHref, environment, order = "newest", returnHref, clearHref }: {
+export function ActivityTimeline({ events, nextHref, environment, order = "newest", returnHref, clearHref, timeZone = "UTC" }: {
   events: ActivityRow[]; nextHref: string | null; environment: string;
-  order?: "newest" | "oldest"; returnHref?: string; clearHref?: string;
+  order?: "newest" | "oldest"; returnHref?: string; clearHref?: string; timeZone?: string;
 }) {
-  const days = dayGroups(events);
+  const days = dayGroups(events, timeZone);
   const now = new Date();
   return <section aria-labelledby="activity-history-title" className="min-w-0">
     <div className="flex items-center justify-between gap-3 pb-3">
@@ -111,9 +112,9 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
       <p className="font-medium">No activity matches your filters</p><span className="sr-only">No activity recorded in this view</span>
       {clearHref ? <Link className="focus-ring mt-3 inline-block text-sm text-[#004BB8] underline" href={clearHref}>Clear filters</Link> : null}
     </div> : <div className="space-y-6">
-      {days.map(day => <section key={day.date} aria-label={"Activity on " + dayLabel(new Date(day.date + "T12:00:00Z"))}>
+      {days.map(day => <section key={day.date} aria-label={"Activity on " + dayLabel(day.rows[0].at, timeZone)}>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold">{dayLabel(new Date(day.date + "T12:00:00Z"))} <span className="ml-1 text-xs font-normal text-[#475569]">UTC</span></h3>
+          <h3 className="text-sm font-semibold">{dayLabel(day.rows[0].at, timeZone)} <span className="ml-1 text-xs font-normal text-[#475569]">{formatAdminTimeZoneLabel(timeZone, day.rows[0].at)}</span></h3>
           <span className="text-xs text-[#475569]">{day.rows.length} {day.rows.length === 1 ? "event" : "events"}</span>
         </div>
         <div className="divide-y divide-[#E2E8F0] border-y border-[#E2E8F0]">
@@ -131,7 +132,7 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
                 {href ? <Link href={href} aria-label={"View journey for " + title} className="focus-ring inline-flex shrink-0 items-center gap-1 rounded-sm py-1 text-[13px] font-medium text-[#004BB8] hover:underline">View journey<ChevronRight size={14} aria-hidden="true" /></Link> : null}
               </div> : null}
               <ol className={"divide-y divide-[#E2E8F0] pl-3 sm:pl-8 " + (group.journeyId ? "border-t border-[#E2E8F0]" : "")}>
-                {group.events.map(row => <RecordedEvent key={row.id} row={row}/>)}
+                {group.events.map(row => <RecordedEvent key={row.id} row={row} timeZone={timeZone}/>)}
               </ol>
             </div>;
           })}

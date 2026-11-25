@@ -143,20 +143,12 @@ export function journeyHistoryHrefFromActivity(
 ) {
   const params = new URLSearchParams();
   const dateOnly = /^\d{4}-\d{2}-\d{2}$/;
-  // The older Activity bookmarks treat UTC date-only 'to' as inclusive,
-  // whereas Journeys requires strict UTC instants with an exclusive end.
+  // Both views interpret calendar dates in the active reporting time zone.
   const legacyDates = dateOnly.test(filters.from) || dateOnly.test(filters.to);
   params.set("range", legacyDates ? "custom"
     : rawRange && ranges.has(rawRange) ? rawRange : "today");
-  if (filters.from) {
-    params.set("from", dateOnly.test(filters.from)
-      ? filters.from + "T00:00:00.000Z" : filters.from);
-  }
-  if (filters.to) {
-    params.set("to", dateOnly.test(filters.to)
-      ? new Date(Date.parse(filters.to + "T00:00:00.000Z") + 86400000).toISOString()
-      : filters.to);
-  }
+  if (filters.from) params.set("from", filters.from);
+  if (filters.to) params.set("to", filters.to);
   if (filters.product !== "all") params.set("product", filters.product);
   if (stages.has(filters.stage)) params.set("stage", filters.stage);
   const returnToken = encodeActivityJourneyReturn(returnHref);
