@@ -84,6 +84,7 @@ test("historical mixed release is repaired through the real orchestrator without
     fingerprintsFactory: async () => fingerprints,
   });
   worker.deliverIos = worker.deliverAndroid = async () => { assert.fail("no native rebuild expected"); };
+  worker.deliverWeb = async () => ({ status: "live", deployedSha: "b".repeat(40) });
   worker.deliverOta = async (sha, cwd, lease, targets) => {
     published.push(...targets);
     return { updates: targets.map((platform) => ({ platform, id: "update" })) };

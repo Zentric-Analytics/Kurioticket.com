@@ -300,6 +300,11 @@ export class PreviewOrchestrator {
       classification = enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative: nativeBaselines, requiredNativeTargets });
       const otaPlan = planPlatformOta({ classification, fingerprints, deliveredNative: nativeBaselines, previous, pendingOta });
       classification = otaPlan.classification;
+      // Every mobile release needs an exact-source staging backend. This also
+      // covers mobile-only changes and native coalescing that needs a JS overlay.
+      if (classification.classification.split("+").some((target) => target === "OTA" || target.endsWith("_NATIVE"))) {
+        classification = { ...classification, classification: [...new Set([...classification.classification.split("+"), "WEB"])].sort().join("+") };
+      }
       const planned = await this.ledger.transition(sha, this.config.workerId, ["VALIDATING"], "PLANNED", { classification: classification.classification, validation_state: "PASSED", evidence: { files, identity, fingerprints } });
       if (this.config.mode === "dry-run" || classification.classification === "NO_DELIVERY") {
         const complete = await this.ledger.transition(sha, this.config.workerId, [planned.state], "COMPLETE", { evidence: { files, identity, fingerprints, plan: classification, submissionPerformed: false } });
@@ -309,8 +314,14 @@ export class PreviewOrchestrator {
       await this.ledger.transition(sha, this.config.workerId, [planned.state], "DELIVERING");
       const evidence = { files, identity, fingerprints, classification, pendingOtaPlatforms: otaPlan.pendingOtaPlatforms };
       const deliveries = {};
-      if (classification.classification.includes("WEB")) deliveries.web = () => this.deliverWeb(sha, lease);
-      if (otaPlan.otaPlatforms.length) deliveries.ota = () => this.deliverOta(sha, checkout.directory, lease, otaPlan.otaPlatforms, fingerprints);
+      let stagingDelivery;
+      const stagingReady = () => stagingDelivery ??= this.deliverWeb(sha, lease);
+      if (classification.classification.includes("WEB")) deliveries.web = stagingReady;
+      if (otaPlan.otaPlatforms.length) deliveries.ota = async () => {
+        await stagingReady();
+        await lease.checkpoint();
+        return this.deliverOta(sha, checkout.directory, lease, otaPlan.otaPlatforms, fingerprints);
+      };
       if (classification.classification.includes("IOS_NATIVE")) deliveries.ios = () => this.deliverIos(sha, checkout.directory, lease, fingerprints.ios);
       if (classification.classification.includes("ANDROID_NATIVE")) deliveries.android = () => this.deliverAndroid(sha, checkout.directory, lease, fingerprints.android);
       const { results: deliveryResults, failures: deliveryFailures } = await settleDeliveries(deliveries);
@@ -352,9 +363,13 @@ export class PreviewOrchestrator {
           else coalescedNoDeliveryPlatforms.push(platform);
         }
         if (coalescedOtaPlatforms.length) {
-          const overlay = await this.deliverOta(sha, checkout.directory, lease, coalescedOtaPlatforms, fingerprints);
-          evidence.ota = { ...overlay, updates: [...(evidence.ota?.updates ?? []), ...(overlay.updates ?? [])] };
-          evidence.coalescedOtaPlatforms = coalescedOtaPlatforms;
+          try {
+            await stagingReady();
+            await lease.checkpoint();
+            const overlay = await this.deliverOta(sha, checkout.directory, lease, coalescedOtaPlatforms, fingerprints);
+            evidence.ota = { ...overlay, updates: [...(evidence.ota?.updates ?? []), ...(overlay.updates ?? [])] };
+            evidence.coalescedOtaPlatforms = coalescedOtaPlatforms;
+          } catch (error) { deliveryFailures.push({ target: "ota", error }); }
         }
         if (coalescedNoDeliveryPlatforms.length) evidence.coalescedNoDeliveryPlatforms = coalescedNoDeliveryPlatforms;
         evidence.coalescedOverlayEvidence = coalescedOverlayEvidence;

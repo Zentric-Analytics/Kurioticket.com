@@ -55,3 +55,34 @@ test("completed source does not repeatedly request native builds for compatible 
   assert.deepEqual(await worker.nativeChangeTargets("d".repeat(40), baseline, fingerprints), []);
   assert.deepEqual(await worker.nativeChangeTargets("d".repeat(40), baseline), ["ios", "android"].map((p) => `${p.toUpperCase()}_NATIVE`));
 });
+
+test("mobile-only OTA waits for exact-source staging readiness and never publishes after backend failure", async () => {
+  for (const fail of [false, true]) {
+    let ready, rejectReady;
+    const backend = new Promise((resolve, reject) => { ready = resolve; rejectReady = reject; });
+    const calls = [];
+    const fingerprints = { ios: "a".repeat(40), android: "b".repeat(40) };
+    const worker = new PreviewOrchestrator({
+      config: { mode: "active", workerId: "test", nativeDeliveryAllowed: false },
+      ledger: { transition: async (source_sha, owner, from, state, patch) => ({ source_sha, state, ...patch }), recordDeliveryEvidence: async () => {} },
+      github: { report: async () => {} }, render: {},
+      checkoutFactory: async () => ({ directory: ".", cleanup: async () => {} }),
+      changeSetFactory: async () => ["apps/mobile/src/screen.tsx"], prepareCheckoutFactory: async () => {},
+      identityFactory: async () => ({ ...PREVIEW_IDENTITY, projectId: PREVIEW_IDENTITY.easProjectId, profile: PREVIEW_IDENTITY.buildProfile }),
+      fingerprintsFactory: async () => fingerprints,
+    });
+    worker.deliverWeb = async () => { calls.push("web"); return backend; };
+    worker.deliverOta = async () => { calls.push("ota"); return { updateIds: ["fixture"] }; };
+    const baselines = Object.fromEntries(Object.entries(fingerprints).map(([platform, fingerprint]) => [platform, { fingerprint }]));
+    const processing = worker.process({ source_sha: "c".repeat(40), state: "DETECTED" }, { source_sha: "d".repeat(40) }, { checkpoint: async () => {} }, baselines);
+    const outcome = processing.then(value => ({ value }), error => ({ error }));
+    // Let the real process reach the asynchronous backend prerequisite.
+    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(calls, ["web"], "publication must not race the deployment");
+    if (fail) rejectReady(new Error("staging exact-SHA health failed"));
+    else ready({ status: "live", deployedSha: "c".repeat(40) });
+    const result = await outcome;
+    if (fail) { assert.match(result.error.message, /staging exact-SHA health failed/); assert.deepEqual(calls, ["web"]); }
+    else { assert.equal(result.value.state, "COMPLETE"); assert.equal(result.value.evidence.classification.classification, "OTA+WEB"); assert.deepEqual(calls, ["web", "ota"]); }
+  }
+});
