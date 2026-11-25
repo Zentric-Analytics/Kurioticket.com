@@ -30,6 +30,8 @@ export type FlightSearchParams = {
 };
 
 export type HotelSearchParams = {
+  petFriendly?: boolean;
+  roomComposition?: Array<{ adults: number; children: number }>;
   destinationId?: string;
   destination: string;
   checkIn: string;

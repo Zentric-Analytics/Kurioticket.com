@@ -58,9 +58,9 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
   const [datesOpen, setDatesOpen] = useState(false);
   const [countsOpen, setCountsOpen] = useState(false);
   const [destinationOpen, setDestinationOpen] = useState(false);
-  const [adultCount, setAdultCount] = useState(initial.current.form.guests);
-  const [childCount, setChildCount] = useState(0);
-  const [petFriendly, setPetFriendly] = useState(false);
+  const [adultCount, setAdultCount] = useState(initial.current.form.adults ?? initial.current.form.guests);
+  const [childCount, setChildCount] = useState(initial.current.form.children ?? 0);
+  const [petFriendly, setPetFriendly] = useState(initial.current.form.petFriendly ?? false);
   const explicitDestination = firstParam(params.destination);
   const explicitDestinationLocation = firstParam(params.destinationLocation);
   const previousExplicitDestination = useRef(explicitDestination);
@@ -111,7 +111,7 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
     {showSubmit ? editAppearance ? <PrimaryButton appearance="resultsEdit" label={submitLabel} icon={null} onPress={submit}/> : <View style={styles.mainSubmit}><PrimaryButton label={submitLabel} icon={null} onPress={submit}/></View> : null}
     <DateRangeSheet visible={datesOpen} title="Travel dates" startLabel="Check-in date" endLabel="Check-out date" presentation="sheet" startDate={form.checkIn} endDate={form.checkOut} minimumStartDate={localIsoDate(new Date())} endMustBeAfterStart onDone={(checkIn, checkOut) => { update({ ...form, checkIn, checkOut }); setErrors(value => ({ ...value, checkIn: undefined, checkOut: undefined })); setDatesOpen(false); }} onCancel={() => setDatesOpen(false)}/>
     <HotelDestinationSheet visible={destinationOpen} value={form.destination} pickerPresentation="sheet" onChoose={(destination) => { update({ ...form, destination }); setForm((current) => ({ ...current, destinationLocation: undefined })); if (destination.trim()) setErrors((current) => ({ ...current, destination: undefined })); setDestinationOpen(false); }} onSelect={(suggestion) => setForm((current) => ({ ...current, destinationLocation: hotelDestinationLocation(suggestion, current.destination) }))} onCancel={() => setDestinationOpen(false)}/>
-    <HotelGuestsRoomsSheet visible={countsOpen} presentation="sheet" adults={adultCount} children={childCount} rooms={form.rooms} petFriendly={petFriendly} onDone={(draft) => { setAdultCount(draft.adults); setChildCount(draft.children); setPetFriendly(draft.petFriendly); update({ ...form, guests: draft.adults + draft.children, rooms: draft.rooms }); setErrors((value) => ({ ...value, guests: undefined, rooms: undefined })); setCountsOpen(false); }} onCancel={() => setCountsOpen(false)}/>
+    <HotelGuestsRoomsSheet visible={countsOpen} presentation="sheet" adults={adultCount} children={childCount} rooms={form.rooms} petFriendly={petFriendly} onDone={(draft) => { setAdultCount(draft.adults); setChildCount(draft.children); setPetFriendly(draft.petFriendly); update({ ...form, guests: draft.adults + draft.children, rooms: draft.rooms, adults:draft.adults, children:draft.children, petFriendly:draft.petFriendly }); setErrors((value) => ({ ...value, guests: undefined, rooms: undefined })); setCountsOpen(false); }} onCancel={() => setCountsOpen(false)}/>
   </View>;
 });
 

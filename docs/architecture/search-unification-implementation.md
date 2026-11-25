@@ -26,8 +26,8 @@ Investigation basis: prior website/Android/iOS forensic evidence, consolidated S
 
 | Unit | State | Evidence / remaining work |
 |---|---|---|
-| U0 | Complete (local) | Existing branch histories preserved; native baseline 2436/2436 and focused backend policy/contract baseline 30/30 passed; full backend baseline running |
-| U1 | Pending | Canonical selection, Unicode/rank, bounded discovery, intent |
+| U0 | Complete (local) | Existing branch histories preserved; native baseline 2436/2436 and focused backend policy/contract baseline 30/30 passed; full backend baseline 5473/5473 passed |
+| U1 | Implemented; wider acceptance in U7 | Typed identities including metropolitan scope, dynamic native airports, authenticated code/ID admission, shared Unicode/rank, bounded/cancellable discovery and hotel composition/pet restoration. Final combined focused suite 43/43; restoration/catalogue 12/12; native focused 49/49; final web/mobile TypeScript both passed. Discovery cancellation/rapid-input and full cross-consumer acceptance remain U7 checks. |
 | U2 | Pending | Active approved provider registration/context/capabilities |
 | U3 | Pending | Product orchestration and hotel batch ownership |
 | U4 | Pending | Neutral provenance/snapshots/final accounting |
@@ -40,3 +40,5 @@ Investigation basis: prior website/Android/iOS forensic evidence, consolidated S
 Evidence directory: outputs/search-unification-implementation-2026-11-24 outside repository. Initial native suite was invalidated by removal of the obsolete warning test while Node was collecting files (2436pass,1missing-file failure); rerun on stable merged source is required. This is an execution-order issue, not a baseline product failure. Backend baseline running separately. Future logs record exact commands/counts and pre-existing versus introduced failures.
 
 Physical iOS validation and actual supplier acceptance are not available from Windows/local fixture tests. Android KAYAK403 remains open/external-rule unknown; no spoofing or live supplier test permitted. Preserve notice exactly: “Results are not bookable at this time. Live results will be available soon!!!”
+
+U1 decisions: metropolitan selections are representable but are not silently admitted as flight airports; city selection still requires explicit airport refinement. KAYAK unsupported pet, child, room-composition and non-default driver-age criteria remain explicit limitations rather than invented supplier parameters. Native source adoption requires a future authorized release; no installed app has changed. Dynamic-import test harness keeps React Native ambient types outside the server type graph.

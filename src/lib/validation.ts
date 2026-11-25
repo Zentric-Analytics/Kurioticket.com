@@ -4,6 +4,7 @@ import { buildHotelPriceAlertPayload } from "@/lib/price-alerts/hotelPriceAlerts
 import { buildAutomaticCarPriceAlertPayload, buildCarPriceAlertPayload } from "@/lib/price-alerts/carPriceAlerts";
 import { MULTI_CITY_MAX_LEGS, MULTI_CITY_MIN_LEGS, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
 import { searchLocationSchema } from "@/lib/locations/searchTarget";
+import { validateLocationSelection } from "@/lib/locations/selectionAuthority";
 
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -116,6 +117,16 @@ export const flightSearchSchema = z
     };
   })
   .superRefine((data, context) => {
+    const checkLocation = (field: string, location: z.infer<typeof searchLocationSchema> | undefined, code: string | undefined) => {
+      if (location && (location.kind !== "airport" || location.codes?.iata !== code
+        || ![ `airport:${code}`, `flight-place:airport:${code}`, `flight-place:${code}` ].includes(location.id)
+        || !validateLocationSelection(location, "flights"))) {
+        context.addIssue({ code: "custom", message: "Choose the airport from the suggestions again.", path: [field] });
+      }
+    };
+    checkLocation("originLocation", data.originLocation, data.origin);
+    checkLocation("destinationLocation", data.destinationLocation, data.destination);
+    data.legs.forEach((leg, index) => { checkLocation(`legs.${index}.originLocation`, leg.originLocation, leg.origin); checkLocation(`legs.${index}.destinationLocation`, leg.destinationLocation, leg.destination); });
     const legs = data.legs;
     const expectedCount = data.tripType === "one-way" ? 1 : data.tripType === "round-trip" ? 2 : null;
     if (expectedCount !== null && legs.length !== expectedCount) {
@@ -159,6 +170,8 @@ export const hotelSearchSchema = z
     adults: z.coerce.number().int().min(1).max(12).optional(),
     children: z.coerce.number().int().min(0).max(11).optional(),
     rooms: z.coerce.number().int().min(1).max(6).default(1),
+    petFriendly: z.boolean().optional(),
+    roomComposition: z.array(z.object({ adults: z.number().int().min(1).max(12), children: z.number().int().min(0).max(11) })).max(6).optional(),
     sort: z.enum(["cheapest", "best", "rating", "location"]).optional(),
     currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).optional(),
     destinationLocation: searchLocationSchema.optional(),
@@ -168,6 +181,10 @@ export const hotelSearchSchema = z
     const adults = data.adults ?? data.guests - children;
     return adults >= 1 && children >= 0 && adults + children === data.guests;
   }, { message: "Guest total must match the adults and children selected.", path: ["guests"] })
+  .refine(data => !data.roomComposition || (data.roomComposition.length === data.rooms
+    && data.roomComposition.reduce((sum, room) => sum + room.adults + room.children, 0) === data.guests
+    && (data.adults === undefined || data.roomComposition.reduce((sum, room) => sum + room.adults, 0) === data.adults)
+    && (data.children === undefined || data.roomComposition.reduce((sum, room) => sum + room.children, 0) === data.children)), { message: "Room composition must match the selected guests and rooms.", path: ["roomComposition"] })
   .refine((data) => data.checkOut > data.checkIn, {
     message: "Check-out must be after check-in.",
     path: ["checkOut"],

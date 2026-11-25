@@ -85,7 +85,7 @@ export const kayakProviderCriteria = (value: Record<string, unknown>) => Object.
   Object.entries(value).flatMap(([key, item]) =>
     typeof item === "string" || typeof item === "number" || typeof item === "boolean"
       ? [[key, String(item)]]
-      : key.endsWith("Location") || key.endsWith("LocationTarget")
+      : key === "roomComposition" || key.endsWith("Location") || key.endsWith("LocationTarget")
         ? [[key, JSON.stringify(item)]]
       : [],
   ),

@@ -12,7 +12,7 @@ export function adaptKayakHotelSearch(input: Record<string, string | undefined>)
   if (!Number.isInteger(adults) || adults < 1 || !Number.isInteger(children) || children < 0 || adults + children !== guests) {
     return { supported: false, reasonCode: "unsupported_search", reason: "Guest total must match the selected adults and children." };
   }
-  if ((input.rooms && input.rooms !== "1") || children !== 0 ||
+  if (input.petFriendly === "true" || input.roomComposition || (input.rooms && input.rooms !== "1") || children !== 0 ||
       (input.currency && input.currency !== "USD")) {
     return { supported: false, reasonCode: "unsupported_search", reason: "Hotel sandbox searches support one room, adults only and USD prices." };
   }
@@ -23,7 +23,7 @@ export function adaptKayakHotelSearch(input: Record<string, string | undefined>)
 }
 
 export function adaptKayakCarSearch(input: Record<string, string | undefined>): AdaptedSearch {
-  if ((input.dropoffLocation && input.dropoffLocation !== input.pickupLocation) ||
+  if ((input.driverAge && input.driverAge !== "25") || (input.dropoffLocation && input.dropoffLocation !== input.pickupLocation) ||
       (input.returnToDifferentLocation && input.returnToDifferentLocation !== "false") || input.vehicleType ||
       (input.currency && input.currency !== "USD")) {
     return { supported: false, reasonCode: "unsupported_search", reason: "Car sandbox searches require the same airport, no specific vehicle filter, and USD prices." };

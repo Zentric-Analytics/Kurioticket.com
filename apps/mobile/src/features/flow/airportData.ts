@@ -6,7 +6,8 @@ import {
 } from "../../../../../src/shared/airports";
 
 /** Native-safe view of the repository's platform-neutral airport record. */
-export type Airport = AirportOption & Required<Pick<AirportOption,
+import type { SearchLocation } from "../../api/locationSuggestions";
+export type Airport = AirportOption & { canonical?: SearchLocation } & Required<Pick<AirportOption,
   "country" | "countryCode" | "latitude" | "longitude" | "priority"
 >>;
 

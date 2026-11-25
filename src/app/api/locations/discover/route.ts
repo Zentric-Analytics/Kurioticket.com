@@ -20,6 +20,6 @@ export async function GET(request: Request) {
     : product === "hotels" ? hotelDestinations.map(fromHotelDestination)
     : getCanonicalCarLocationCatalog();
   const supportedByProviders = product === "flights" ? ["duffel", "kayak"] : ["kayak"];
-  const result = await discoverLocations({ query, product, catalog, adapters: availableDiscoveryAdapters(request, product), limit: 8, timeoutMs: 900, supportedByProviders });
+  const result = await discoverLocations({ query, product, catalog, adapters: availableDiscoveryAdapters(request, product), limit: 8, timeoutMs: 900, signal: request.signal, supportedByProviders });
   return Response.json({ ...result, query, product, isLiveAvailability: false }, { headers: { "Cache-Control": "private, no-store" } });
 }

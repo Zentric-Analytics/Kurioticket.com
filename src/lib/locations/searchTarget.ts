@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export type SearchLocationKind = "airport" | "city" | "district" | "landmark" | "rental-area" | "custom";
+export type SearchLocationKind = "airport" | "city" | "metropolitan-area" | "district" | "landmark" | "rental-area" | "custom";
 export type SearchLocationProviderBinding = {
   provider: string;
   value: string;
@@ -29,7 +29,7 @@ export type SearchLocation = {
 
 export const searchLocationSchema: z.ZodType<SearchLocation> = z.object({
   id: z.string().trim().min(1).max(160),
-  kind: z.enum(["airport", "city", "district", "landmark", "rental-area", "custom"]),
+  kind: z.enum(["airport", "city", "metropolitan-area", "district", "landmark", "rental-area", "custom"]),
   primaryLabel: z.string().trim().min(1).max(160),
   supportingLabel: z.string().trim().max(200).default(""),
   submittedValue: z.string().trim().min(1).max(160),

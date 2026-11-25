@@ -14,7 +14,7 @@ export type FlightPlaceSuggestion = {
 
 export type SearchLocation = {
   id: string;
-  kind: "airport" | "city" | "district" | "landmark" | "rental-area" | "custom";
+  kind: "airport" | "city" | "metropolitan-area" | "district" | "landmark" | "rental-area" | "custom";
   primaryLabel: string;
   supportingLabel: string;
   submittedValue: string;
@@ -26,7 +26,7 @@ export type SearchLocation = {
 
 export type CarLocationSuggestion = {
   id: string;
-  kind: "airport" | "city" | "area";
+  kind: "airport" | "city" | "metropolitan-area" | "area";
   value: string;
   primaryText: string;
   secondaryText: string;
@@ -67,6 +67,6 @@ export async function searchCarLocations(query: string, options: { limit?: numbe
   const body: unknown = await response.json();
   if (!record(body) || !Array.isArray(body.suggestions)) return [];
   return body.suggestions.filter((item): item is CarLocationSuggestion => record(item)
-    && typeof item.id === "string" && ["airport", "city", "area"].includes(String(item.kind))
+    && typeof item.id === "string" && ["airport", "city", "metropolitan-area", "area"].includes(String(item.kind))
     && typeof item.value === "string" && typeof item.primaryText === "string" && typeof item.secondaryText === "string");
 }

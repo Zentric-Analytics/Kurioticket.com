@@ -1,6 +1,7 @@
 export const locationKinds = [
   "airport",
   "city",
+  "metropolitan-area",
   "district",
   "landmark",
   "rental-area",

@@ -15,6 +15,7 @@ const toCarSuggestionKind = (canonical: CanonicalLocation): CarLocationSuggestio
     case "city":
     case "custom":
       return canonical.kind;
+    case "metropolitan-area":
     case "rental-area":
     case "district":
     case "landmark":
@@ -46,7 +47,7 @@ async function discoverCarLocations(request: Request) {
 
   try {
     if (q) {
-      const discovery = await discoverLocations({ query: q, product: "cars", catalog: getCanonicalCarLocationCatalog(), adapters: availableDiscoveryAdapters(request, "cars"), limit, timeoutMs: 900, supportedByProviders: ["kayak"] });
+      const discovery = await discoverLocations({ query: q, product: "cars", catalog: getCanonicalCarLocationCatalog(), adapters: availableDiscoveryAdapters(request, "cars"), limit, timeoutMs: 900, signal: request.signal, supportedByProviders: ["kayak"] });
       const suggestions: CarLocationSuggestion[] = discovery.suggestions.map((canonical) => ({ id: canonical.id, kind: toCarSuggestionKind(canonical),
         value: canonical.submittedValue, primaryText: canonical.primaryLabel, secondaryText: canonical.supportingLabel, city: canonical.primaryLabel,
         countryCode: canonical.country?.code, airportCode: canonical.codes?.iata, canonical, validation: "provider-verified", isProviderValidated: true }));

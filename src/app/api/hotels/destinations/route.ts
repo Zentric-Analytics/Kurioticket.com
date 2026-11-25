@@ -113,7 +113,7 @@ async function discoverHotelDestinations(request: Request) {
   );
 
   {
-    const discovery = await discoverLocations({ query, product: "hotels", catalog: hotelDestinations.map(fromHotelDestination), adapters: availableDiscoveryAdapters(request, "hotels"), limit, timeoutMs: 900, supportedByProviders: ["kayak"] });
+    const discovery = await discoverLocations({ query, product: "hotels", catalog: hotelDestinations.map(fromHotelDestination), adapters: availableDiscoveryAdapters(request, "hotels"), limit, timeoutMs: 900, signal: request.signal, supportedByProviders: ["kayak"] });
     const suggestions = discovery.suggestions.map((canonical) => ({
       id: canonical.id, name: canonical.primaryLabel, region: canonical.region || (canonical.kind === "custom" ? "" : canonical.supportingLabel.split(",")[0]) || "",
       country: canonical.country?.name || (canonical.kind === "custom" ? "" : canonical.supportingLabel.split(",").at(-1)?.trim()) || "",

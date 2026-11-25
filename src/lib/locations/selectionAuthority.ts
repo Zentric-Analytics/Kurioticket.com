@@ -101,6 +101,12 @@ export function issueLocationSelection(location: CanonicalLocation, product: Tra
 }
 
 export type SelectionFailure = "LOCATION_RESOLUTION_FAILED" | "UNSUPPORTED_LOCATION";
+/** Verify handle scope without treating client-carried bindings as authority. */
+export function validateLocationSelection(input: { id: string; selectionToken?: string }, product: TravelProduct, now = Date.now()): boolean {
+  if (!input.selectionToken) return false;
+  const payload = decodePayload(input.selectionToken, input.id);
+  return Boolean(payload && payload.exp > now && payload.id === input.id && payload.product === product);
+}
 export function resolveProviderSelection(input: { id: string; selectionToken?: string }, product: TravelProduct, provider: string, now = Date.now()): { ok: true; value: string } | { ok: false; reason: SelectionFailure } {
   if (!input.selectionToken) return { ok: false, reason: "LOCATION_RESOLUTION_FAILED" };
   const payload = decodePayload(input.selectionToken, input.id);

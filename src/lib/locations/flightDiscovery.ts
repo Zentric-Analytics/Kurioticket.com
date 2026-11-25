@@ -40,11 +40,12 @@ export function getOwnedFlightLocationCatalog() {
 }
 
 export function fromFlightPlaceSuggestion(place: FlightPlace): CanonicalLocation {
-  const owned = catalog.find((location) => location.codes?.iata === place.code.toUpperCase());
+  const kind = place.type === "city" ? "city" : "airport";
+  const owned = catalog.find((location) => location.kind === kind && location.codes?.iata === place.code.toUpperCase());
   if (!place.duffelPlaceId && owned) return owned;
   return {
-    id: owned?.id ?? `flight-place:${place.code.toUpperCase()}`,
-    kind: place.type === "city" ? "city" : "airport",
+    id: owned?.id ?? `flight-place:${kind}:${place.code.toUpperCase()}`,
+    kind,
     primaryLabel: `${place.city} (${place.code.toUpperCase()})`,
     supportingLabel: place.airport,
     submittedValue: place.code.toUpperCase(),

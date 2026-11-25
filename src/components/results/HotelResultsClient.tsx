@@ -363,6 +363,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       adults: searchInput.adults,
       children: searchInput.children,
       rooms: searchInput.rooms,
+      petFriendly: searchInput.petFriendly,
       sort: searchInput.sort || "cheapest",
     }),
     [searchInput],
