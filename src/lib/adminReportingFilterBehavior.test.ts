@@ -5,6 +5,7 @@ import test from "node:test";
 import { journeyWindow, selectedJourneyRange } from "./adminJourneyDateRange";
 
 const searchActivity = readFileSync("src/app/admin/searches/activity/page.tsx", "utf8");
+const searchControls = readFileSync("src/components/admin/AdminOperationalDateRangeFields.tsx", "utf8");
 const journeys = readFileSync("src/app/admin/journeys/page.tsx", "utf8");
 const journeyControls = readFileSync("src/components/admin/JourneyDateRangeFields.tsx", "utf8");
 
@@ -31,7 +32,8 @@ test("multiple-filter Journeys and Search Activity pages retain Apply-only submi
   assert.match(journeyControls, /ADMIN_REPORTING_RANGE_OPTIONS/);
   assert.match(journeyControls, /ADMIN_REPORTING_RANGE_OPTIONS/);
   assert.match(journeyControls, /ADMIN_REPORTING_RANGE_OPTIONS/);
-  assert.match(searchActivity, /ADMIN_REPORTING_RANGE_OPTIONS/);
+  assert.match(searchActivity, /<AdminOperationalDateRangeFields/);
+  assert.match(searchControls, /ADMIN_REPORTING_RANGE_OPTIONS/);
   assert.match(searchActivity, /return "today"/);
   assert.match(searchActivity, /from\.setTime\(now\.getTime\(\) - 24 \* 60 \* 60 \* 1000\)/);
   assert.match(searchActivity, /<button type="submit"/);
