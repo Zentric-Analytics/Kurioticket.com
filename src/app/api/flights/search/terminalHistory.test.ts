@@ -7,13 +7,15 @@ import test from "node:test";
 import ts from "typescript";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
-import { operationalSessionMetadata } from "@/lib/operationalSearchSession";
+import { operationalSessionMetadata, type OperationalSessionReference } from "@/lib/operationalSearchSession";
+import { returnedKayakHotelSnapshot } from "@/services/travel/hotelOperationalBinding";
 
 const providerDiagnostic = "KAYAK HTTP 403: synthetic provider authentication failure";
 const requestId = "78e1de9e-6dfe-494f-9fdb-83726d83bf64";
+const hotelSnapshot = "11111111-1111-4111-8111-111111111111";
 type History = { requestId: string; type: string; status: string; userId: string | null; visitorId: string | null; resultCount: number; query: unknown; latencyMs: number };
 
-function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; operationalGuest?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string; withOffers?: boolean; rateLimited?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT"; declaredCrawler?: string; applicationSource?: "WEB" | "IOS" | "ANDROID" | "UNKNOWN" } = {}) {
+function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; operationalGuest?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string; withOffers?: boolean; scopedHotelOffers?: boolean; bindingUnavailable?: boolean; rateLimited?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT"; declaredCrawler?: string; applicationSource?: "WEB" | "IOS" | "ANDROID" | "UNKNOWN" } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: History[] = [];
   const providerCalls: Array<{ metadata: Record<string, unknown>; status: string; errorMessage?:string }> = [];
@@ -22,8 +24,11 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
   const errors: unknown[] = [];
   let identityLookups = 0;
   const providerCriteria: unknown[] = [];
+  const bindingCalls: Array<{ snapshot: string; requestId: string; sessionId: string | undefined; userId: string | null }> = [];
   const aggregate = {
-    results: options.withOffers ? [{ id: "actionable-offer", price: 199, currency: "USD" }] : [],
+    results: options.scopedHotelOffers
+      ? [{ id: `kayak-sandbox:${hotelSnapshot}:1:1`, provider: "KAYAK sandbox", price: 199, currency: "USD" }]
+      : options.withOffers ? [{ id: "actionable-offer", price: 199, currency: "USD" }] : [],
     warnings: [providerDiagnostic], latencyMs: 42,
     ...(options.available ? {} : { unavailableMessage: providerDiagnostic }),
     providerStatuses: [{ provider: "provider", status: options.available && !options.providerFailed ? "success" : "failed", latencyMs: 40, results: [], error: options.available && !options.providerFailed ? undefined : providerDiagnostic }],
@@ -31,14 +36,14 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
   };
   const schema = { safeParse: (data: unknown) => ({ success: true, data }) };
   const dependencies: Record<string, unknown> = {
-    "@/lib/productionSandboxPolicy": {withProductionSandboxRequest,captureFinalSearchHistory,productionSandboxInventory},
+    "@/lib/productionSandboxPolicy": {withProductionSandboxRequest,captureFinalSearchHistory,productionSandboxInventory,productionSandboxHost: () => false},
     "next/server": { NextResponse: { json: Response.json }, after: (callback: () => Promise<unknown>) => { deferred.push(callback); } },
     "node:crypto": { createHash },
     "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
     "@/lib/rate-limit": { getClientIp: () => "192.0.2.1", checkRateLimit: (key: string, limit: number, period: number) => { rates.push([key, limit, period]); return { allowed: !options.rateLimited }; } },
     "@/lib/searchCache": { toPublicFlight: (value: unknown) => value, toPublicHotel: (value: unknown) => value },
     "@/lib/validation": { flightSearchSchema: schema, hotelSearchSchema: schema },
-    "@/lib/travel/searchContract": { classifyFlights: (results: unknown[]) => ({ results }), classifyHotels: () => ({ results: [] }) },
+    "@/lib/travel/searchContract": { classifyFlights: (results: unknown[]) => ({ results }), classifyHotels: (results: unknown[]) => ({ results }) },
     "@/services/operationalActivityService": {
       logSearchHistory: async (input: History) => { if (options.loggingFails) throw new Error("storage unavailable"); histories.push(structuredClone(input)); },
       logProviderCall: async (input: typeof providerCalls[number]) => { providerCalls.push(structuredClone(input)); },
@@ -78,6 +83,13 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
     "@/lib/kayak-client-ip": { getKayakClientIp: () => "192.0.2.1" },
     "./providerDiagnostics": { logNativeFlightProviderDiagnostics: () => undefined },
     "@/services/travel/kayakSandbox": { isKayakSandboxEnabled: () => false },
+    "@/services/travel/hotelOperationalBinding": {
+      returnedKayakHotelSnapshot,
+      rememberHotelOperationalBinding: async (snapshot: string, searchId: string, session: OperationalSessionReference | undefined, userId: string | null) => {
+        bindingCalls.push({ snapshot, requestId: searchId, sessionId: session?.id, userId });
+        return !options.bindingUnavailable;
+      },
+    },
     "@/lib/search-journey": { resolveSearchRequestId },
     "@/lib/hotelSearchRecordedStatus": { hotelSearchRecordedStatus },
   };
@@ -106,7 +118,7 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
     : { destination: "London", checkIn: "2099-05-01", checkOut: "2099-05-02", rooms: 1, guests: 1 };
   if (product === "hotel" && options.currency) Object.assign(criteria, { currency: options.currency });
   return {
-    deferred, histories, providerCalls, providerCriteria, errors, criteria, analyticsEvents, rates,
+    deferred, histories, providerCalls, providerCriteria, errors, criteria, analyticsEvents, rates, bindingCalls,
     lookups: () => identityLookups,
     post: (headers: Record<string, string> = {}) => exported.POST(new Request(`https://staging.kurioticket.com/api/${product}s/search`, {
       method: "POST", headers: { "content-type": "application/json", "x-search-request-id": requestId, ...headers }, body: JSON.stringify(criteria),
@@ -164,6 +176,7 @@ for (const product of ["flight", "hotel"] as const) {
       "38d77b62-f43d-40d5-9597-a6ff76f02c28");
     assert.equal((fixture.histories[0].query as Record<string, unknown>).operationalSessionExpiresAtMs, Date.parse("2099-05-01"));
     assert.ok(!JSON.stringify(fixture.histories).includes("synthetic-test-only"));
+    assert.deepEqual(fixture.bindingCalls, [], "failed searches cannot bind inventory");
   });
 
   test(`${product} optional failure-history storage errors leave the response and deferred task safe`, async () => {
@@ -179,8 +192,40 @@ for (const product of ["flight", "hotel"] as const) {
     await fixture.deferred[0]();
     assert.equal(fixture.histories.length, 1);
     assert.equal(fixture.histories[0].status, "SUCCESS");
+    assert.deepEqual(fixture.bindingCalls, [], "empty searches do not establish inventory bindings");
   });
 }
+
+
+for (const anonymous of [true, false]) {
+  test(`hotel publishes a server-owned snapshot binding for a verified ${anonymous ? "guest" : "account"} before responding`, async () => {
+    const fixture = routeFixture("hotel", { available: true, scopedHotelOffers: true, operationalGuest: true, anonymous });
+    const response = await fixture.post();
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).results[0].id, `kayak-sandbox:${hotelSnapshot}:1:1`);
+    assert.deepEqual(fixture.bindingCalls, [{ snapshot: hotelSnapshot, requestId,
+      sessionId: "38d77b62-f43d-40d5-9597-a6ff76f02c28", userId: anonymous ? null : "verified-account" }]);
+    assert.equal(fixture.histories.length, 0, "history is still deferred");
+    await fixture.deferred[0]();
+    assert.equal(fixture.histories[0].requestId, requestId);
+    assert.equal((fixture.histories[0].query as Record<string, unknown>).operationalHotelSnapshotId, hotelSnapshot);
+    assert.equal(fixture.histories[0].userId, anonymous ? null : "verified-account");
+    assert.equal(fixture.lookups(), 1, "binding and history reuse the same resolved identity");
+    assert.equal(fixture.analyticsEvents.length, anonymous ? 0 : 1);
+  });
+}
+
+test("hotel returns valid inventory and records history even if binding storage is unavailable", async () => {
+  const fixture = routeFixture("hotel", { available: true, scopedHotelOffers: true, operationalGuest: true, anonymous: true, bindingUnavailable: true });
+  const response = await fixture.post();
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).results[0].id, `kayak-sandbox:${hotelSnapshot}:1:1`);
+  assert.equal(fixture.bindingCalls.length, 1);
+  await fixture.deferred[0]();
+  assert.equal(fixture.histories[0].status, "SUCCESS");
+  assert.equal((fixture.histories[0].query as Record<string, unknown>).operationalHotelSnapshotId, undefined);
+  assert.deepEqual(fixture.analyticsEvents, []);
+});
 
 test("hotel provider failure with zero offers is FAILED even without an unavailable response", async () => {
   const fixture = routeFixture("hotel", { available: true, providerFailed: true });
@@ -300,6 +345,7 @@ for (const product of ["flight", "hotel"] as const) {
     assert.equal((history.query as Record<string, unknown>).operationalSessionId, undefined);
     assert.equal(fixture.lookups(), 0, "bots never enter the user identity pipeline");
     assert.deepEqual(fixture.analyticsEvents, [], "bot searches are not human engagement events");
+    assert.deepEqual(fixture.bindingCalls, [], "bots cannot establish customer inventory bindings");
     assert.equal(fixture.providerCalls.length, product === "flight" ? 10 : 1);
     assert.ok(fixture.providerCalls.every(call => call.metadata.applicationSource === "BOT"));
   });

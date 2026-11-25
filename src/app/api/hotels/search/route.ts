@@ -1,4 +1,4 @@
-import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
+import { withProductionSandboxRequest, captureFinalSearchHistory, productionSandboxHost } from "@/lib/productionSandboxPolicy";
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession, operationalSessionMetadata } from "@/lib/operationalSearchSession";
@@ -21,6 +21,7 @@ import { resolveRequestActivityIdentity } from "@/services/requestActivityIdenti
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
 import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
 import { resolveSearchRequestId } from "@/lib/search-journey";
+import { returnedKayakHotelSnapshot, rememberHotelOperationalBinding } from "@/services/travel/hotelOperationalBinding";
 
 export async function POST(request: Request) {
  return withProductionSandboxRequest(request, async () => {
@@ -84,9 +85,12 @@ export async function POST(request: Request) {
   const recordedSearch = { ...search, ...searchNetworkObservation(request),
     ...(operationalSession ? operationalSessionMetadata(operationalSession.reference) : {}),
     ...searchCrawlerMetadata(crawler) };
-  const resolveSearchIdentity = () => crawler
+  // Reuse the same identity result for the private binding and history write.
+  let searchIdentity: ReturnType<typeof resolveRequestActivityIdentity> | undefined;
+  const resolveSearchIdentity = () => searchIdentity ??= (crawler
     ? Promise.resolve({ userId: null, visitorId: null, applicationSource: "BOT" as const })
-    : resolveRequestActivityIdentity(request, undefined, operationalSession);
+    : resolveRequestActivityIdentity(request, undefined, operationalSession));
+  if (!productionSandboxHost() && operationalSession?.reference.environment === "staging") void resolveSearchIdentity();
 
   const kayakContext = {
     requestId,
@@ -139,6 +143,13 @@ export async function POST(request: Request) {
   }
 
   const publicResults = aggregate.results.map(toPublicHotel);
+  // Server-side offer membership, independent of client memory/consent. Only
+  // current staging KAYAK snapshots have this inventory identity contract.
+  const snapshot = !productionSandboxHost() && operationalSession?.reference.environment === "staging"
+    ? returnedKayakHotelSnapshot(aggregate.results) : undefined;
+  const operationalHotelSnapshotId = snapshot && await rememberHotelOperationalBinding(
+    snapshot, requestId, operationalSession?.reference, (await resolveSearchIdentity()).userId,
+  ) ? snapshot : undefined;
   console.info("[hotel-search-summary]", {
     requestId,
     searchFingerprint: createHash("sha256").update(JSON.stringify(providerSearch)).digest("hex"),
@@ -163,7 +174,7 @@ export async function POST(request: Request) {
       destination: search.destination,
       checkIn: new Date(search.checkIn),
       checkOut: new Date(search.checkOut),
-      query: recordedSearch,
+      query: { ...recordedSearch, ...(operationalHotelSnapshotId ? { operationalHotelSnapshotId } : {}) },
       resultCount: publicResults.length,
       latencyMs: aggregate.latencyMs,
       status,

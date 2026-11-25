@@ -16,11 +16,12 @@ import { isKayakSandboxEnabled, KayakError, type KayakHotelBatchCheckpoint } fro
 import { toPublicHotel } from "@/lib/searchCache";
 import { classifyHotels } from "@/lib/travel/searchContract";
 import type { HotelSearchParams } from "@/lib/types";
+import { rememberHotelOperationalBinding, resolveHotelOperationalBinding, returnedKayakHotelSnapshot } from "@/services/travel/hotelOperationalBinding";
 
 export const runtime = "nodejs";
 const MAX_CURSOR_BYTES = 16384;
 const TTL_MS = 90_000;
-type State = { search: HotelSearchParams; trackId: string; snapshot: string; checkpoint: KayakHotelBatchCheckpoint; expiresAt: number; issuedAt: number; startedAt: number; };
+type State = { search: HotelSearchParams; trackId: string; snapshot: string; checkpoint: KayakHotelBatchCheckpoint; expiresAt: number; issuedAt: number; startedAt: number; operationalBinding?: true; };
 
 function signature(value: string, key: string) {
   return createHmac("sha256", key).update("android-hotel-progressive-v1:" + value).digest("base64url");
@@ -49,6 +50,7 @@ function decode(value: unknown, key: string): State | null {
         !Array.isArray(state.checkpoint.pageHashes) ||
         state.checkpoint.pageHashes.length !== state.checkpoint.nextPage ||
         state.checkpoint.pageHashes.some(x => typeof x !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(x)) ||
+        (state.operationalBinding !== undefined && state.operationalBinding !== true) ||
         !hotelSearchSchema.safeParse(state.search).success) return null;
     return state;
   } catch { return null; }
@@ -86,19 +88,31 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid hotel search." }, { status: 400 });
   const search = parsed.data;
   const operationalSession = prepareOperationalSearchSession(request);
-  const recordedSearch = { ...search, ...searchNetworkObservation(request), ...(operationalSession ? operationalSessionMetadata(operationalSession.reference) : {}) };
   const startedAt = state?.startedAt ?? Date.now();
   const trackId = state?.trackId ?? randomUUID();
   const snapshot = state?.snapshot ?? randomUUID();
+  let searchIdentity: ReturnType<typeof resolveRequestActivityIdentity> | undefined;
+  const resolveSearchIdentity = () => searchIdentity ??= resolveRequestActivityIdentity(request, undefined, operationalSession);
+  let operationalHotelSnapshotId: string | undefined;
+  if (state?.operationalBinding && operationalSession?.reference.environment === "staging") {
+    const owner = await resolveSearchIdentity();
+    if (await resolveHotelOperationalBinding(snapshot, operationalSession.reference, owner.userId) === trackId) operationalHotelSnapshotId = snapshot;
+  }
+  // Do not let a replay mutate the original snapshot or its history. Older
+  // unbound cursors still follow the legacy path, without a new binding.
+  if (state?.operationalBinding && operationalHotelSnapshotId !== snapshot) {
+    return NextResponse.json({ error: "This hotel search expired. Search again." }, { status: 400 });
+  }
+  const recordedSearch = () => ({ ...search, ...searchNetworkObservation(request), ...(operationalSession ? operationalSessionMetadata(operationalSession.reference) : {}), ...(operationalHotelSnapshotId ? { operationalHotelSnapshotId } : {}) });
   try {
     const outcome = await searchHotelBatch(search,{clientIp:getKayakClientIp(request),userAgent:request.headers.get("user-agent")??undefined,trackId,requestId:trackId,signal:request.signal},snapshot,state?.checkpoint);
     if (!outcome.supported) {
       after(async () => {
-        const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request, undefined, operationalSession);
+        const { userId, visitorId, ...application } = await resolveSearchIdentity();
         await Promise.all([
           logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
             checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
-            query: recordedSearch, resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
+            query: recordedSearch(), resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
           ...(visitorId ? [trackAnalyticsEvent({ ...application, userId, visitorId, type: "SEARCH",
             name: "hotel_search", metadata: { destination: search.destination, resultCount: 0, progressive: true, unsupported: true, trackId } })] : []),
           logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search", status: "DISABLED",
@@ -109,20 +123,28 @@ export async function POST(request: Request) {
       return attachOperationalSearchSession(NextResponse.json({ error: "These hotel search options aren't supported. Please change your search.", warningCategory: "unsupported_search", status: "unavailable", results: [] }, { status: 422 }), operationalSession);
     }
     const {batch,results,cumulative}=outcome;
+    // Only the first page may establish this binding. A continuation must
+    // never reassign it to another session or renew its expiry.
+    if (!continued && operationalSession?.reference.environment === "staging" &&
+        (returnedKayakHotelSnapshot(cumulative) === snapshot || (!cumulative.length && batch.checkpoint))) {
+      const owner = await resolveSearchIdentity();
+      if (await rememberHotelOperationalBinding(snapshot, trackId, operationalSession.reference, owner.userId)) operationalHotelSnapshotId = snapshot;
+    }
     const classified = classifyHotels(results.map(toPublicHotel), [], trackId);
     const now = Date.now();
     const nextCursor = batch.checkpoint ? encode({
       search, trackId, snapshot, checkpoint: batch.checkpoint,
       startedAt, issuedAt: now, expiresAt: now + TTL_MS,
+      ...(state?.operationalBinding || operationalHotelSnapshotId ? { operationalBinding: true as const } : {}),
     }, key) : null;
     after(async () => {
-      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request, undefined, operationalSession);
+      const { userId, visitorId, ...application } = await resolveSearchIdentity();
       // Persist each displayed batch under the signed cursor's stable request ID.
       // Early result/offer events can then resolve ownership before the last page.
       await logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true,
         completed: nextCursor === null, type: "HOTEL", destination: search.destination,
         checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
-        query: recordedSearch, resultCount: cumulative.length, latencyMs: Date.now() - startedAt,
+        query: recordedSearch(), resultCount: cumulative.length, latencyMs: Date.now() - startedAt,
         status: nextCursor ? "PARTIAL" : "SUCCESS" });
       if (!nextCursor) {
         await Promise.all([
@@ -139,11 +161,11 @@ export async function POST(request: Request) {
   } catch (error) {
     const unavailable = error instanceof KayakError ? error.code : "unavailable";
     after(async () => {
-      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request, undefined, operationalSession);
+      const { userId, visitorId, ...application } = await resolveSearchIdentity();
       await Promise.all([
         logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
           checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
-          query: recordedSearch, resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
+          query: recordedSearch(), resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
         ...(visitorId ? [trackAnalyticsEvent({ ...application, userId, visitorId, type: "SEARCH",
           name: "hotel_search", metadata: { destination: search.destination, resultCount: 0, progressive: true, failed: true, trackId } })] : []),
         logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search",

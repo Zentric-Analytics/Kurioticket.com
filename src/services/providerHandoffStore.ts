@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { journeySourcePath } from "@/lib/search-journey";
-import { withEnvironmentMetadata } from "@/lib/stagingSafety";
+import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
 import { applicationMetadata, type ApplicationAttribution } from "@/lib/application-source";
 
@@ -19,6 +19,8 @@ export type ProviderHandoffActivity = {
   requestId?: string;
   /** Candidate for direct operational correlation, not an analytics event. */
   operationalRequestId?: string;
+  /** Internal marker extracted from the verified hotel offer, never from POST data. */
+  operationalHotelSnapshotId?: string;
   handoffId?: string;
 };
 export type AttributedHandoff = ProviderHandoffActivity & ApplicationAttribution & { userId: string | null; visitorId: string | null; operationalSessionId?: string | null; operationalSessionExpiresAtMs?: number };
@@ -59,6 +61,9 @@ async function correlate(tx: Prisma.TransactionClient, input: AttributedHandoff,
   const searchQuery = metadataObject(search.query);
   const sameOperationalSession = Boolean(input.operationalSessionId && searchQuery.operationalSessionId === input.operationalSessionId);
   const sameConsentedVisitor = Boolean(visitorId && search.visitorId === visitorId);
+  if (input.operationalHotelSnapshotId && (!sameOperationalSession || search.userId !== input.userId ||
+      searchQuery.environment !== getPublicEnvironment() || searchQuery.operationalHotelSnapshotId !== input.operationalHotelSnapshotId ||
+      requestId !== input.operationalRequestId)) return { searchHistoryId: null, correlation: "rejected" as const };
   if ((!sameOperationalSession && !sameConsentedVisitor)
     || (sameOperationalSession && search.userId !== input.userId)
     || (search.userId && search.userId !== input.userId)
@@ -82,6 +87,7 @@ export function createProviderHandoffStore(
       // Admin verifies the exact original search against session, owner, product
       // and environment even if SearchHistory is committed after this handoff.
       const operationalRequestId = input.operationalSessionId ? handoffTrackingId(input.operationalRequestId) : undefined;
+      const operationalHotelSnapshotId = handoffTrackingId(input.operationalHotelSnapshotId);
       let correlationInput = { ...input, requestId };
       let receipt = await db.$transaction(async tx => {
         const visitorId = input.visitorId && await lockConsentedVisitor(tx, input.visitorId, input.userId)
@@ -98,6 +104,7 @@ export function createProviderHandoffStore(
             || existing.provider !== input.provider || metadata.resultId !== input.resultId
             || (visitorId && requestId && metadata.requestId !== requestId)
             || (operationalRequestId && metadata.operationalRequestId !== operationalRequestId)
+            || (operationalHotelSnapshotId && metadata.operationalHotelSnapshotId !== operationalHotelSnapshotId)
             || (input.operationalSessionId && metadata.operationalSessionId !== input.operationalSessionId)) return null;
           // Context changes may omit optional correlation on a retry. Preserve
           // the original attempt's reference, then recheck its current owner.
@@ -111,7 +118,7 @@ export function createProviderHandoffStore(
           provider: input.provider, route: input.route, price: input.price, currency: input.currency,
           destinationUrl: input.destinationUrl, userType: input.userId ? "user" : "guest",
           sourcePage: journeySourcePath(input.sourcePage) ?? "unknown",
-          metadata: withEnvironmentMetadata({ ...applicationMetadata(input), resultId: input.resultId, ...(requestId && (visitorId || input.operationalSessionId) ? { requestId } : {}), ...(operationalRequestId ? { operationalRequestId } : {}), ...(input.operationalSessionId ? { operationalSessionId: input.operationalSessionId, ...(Number.isSafeInteger(input.operationalSessionExpiresAtMs) ? { operationalSessionExpiresAtMs: input.operationalSessionExpiresAtMs } : {}) } : {}) }),
+          metadata: withEnvironmentMetadata({ ...applicationMetadata(input), resultId: input.resultId, ...(requestId && (visitorId || (!operationalHotelSnapshotId && input.operationalSessionId)) ? { requestId } : {}), ...(operationalRequestId ? { operationalRequestId } : {}), ...(operationalHotelSnapshotId ? { operationalHotelSnapshotId } : {}), ...(input.operationalSessionId ? { operationalSessionId: input.operationalSessionId, ...(Number.isSafeInteger(input.operationalSessionExpiresAtMs) ? { operationalSessionExpiresAtMs: input.operationalSessionExpiresAtMs } : {}) } : {}) }),
         }, select: { id: true } });
         return { id: redirect.id, created: true, visitorId, userId: input.userId,
           ...await correlate(tx, input, visitorId) };

@@ -4,6 +4,7 @@ import { applicationMetadata } from "@/lib/application-source";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { journeyEventKey, recordJourneyEvent } from "@/services/searchJourneyService";
 import { journeySourcePath } from "@/lib/search-journey";
+import { kayakHotelSnapshot, resolveHotelOperationalBinding } from "@/services/travel/hotelOperationalBinding";
 import { recordProviderRedirect, type AttributedHandoff, type HandoffReceipt, type ProviderHandoffActivity } from "./providerHandoffStore";
 
 export type { ProviderHandoffActivity } from "./providerHandoffStore";
@@ -12,6 +13,7 @@ type ActivityDependencies = {
   redirect: (input: AttributedHandoff) => Promise<unknown>;
   event: typeof trackAnalyticsEvent;
   journey?: typeof recordJourneyEvent;
+  hotelBinding?: typeof resolveHotelOperationalBinding;
 };
 
 const dependencies: ActivityDependencies = {
@@ -19,6 +21,7 @@ const dependencies: ActivityDependencies = {
   redirect: recordProviderRedirect,
   event: trackAnalyticsEvent,
   journey: recordJourneyEvent,
+  hotelBinding: resolveHotelOperationalBinding,
 };
 
 /** Schedule only after a verified provider URL is ready; this does not confirm a booking. */
@@ -29,6 +32,15 @@ export async function recordProviderHandoffActivity(
 ) {
   const identity = await record.identity(request).catch(() => ({ userId: null, visitorId: null, applicationSource: "UNKNOWN" as const }));
   const operationalSession = readOperationalSearchSession(request);
+  if (input.operationalHotelSnapshotId) {
+    // The redirect route extracted this snapshot from its already validated,
+    // server-cached selected offer. Do not manufacture Analytics attribution.
+    const snapshot = input.type === "hotel" ? kayakHotelSnapshot({ id: input.resultId, provider: input.provider }) : undefined;
+    const bound = snapshot === input.operationalHotelSnapshotId && operationalSession && record.hotelBinding
+      ? await record.hotelBinding(snapshot, operationalSession, identity.userId).catch(() => undefined) : undefined;
+    input = { ...input, operationalRequestId: bound,
+      requestId: identity.visitorId && bound && input.requestId === bound ? input.requestId : undefined };
+  }
   const redirect = await record.redirect({ ...input, ...identity, ...(operationalSession ? operationalSessionMetadata(operationalSession) : {}) }).catch(() => null);
   // A rejected/reused key or unavailable durable write must not create a
   // second, independent redirect count in the legacy analytics table.
