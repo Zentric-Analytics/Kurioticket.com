@@ -1,6 +1,6 @@
 import { getPrisma } from "@/lib/prisma";
 import { sendTransactionalEmail, supportEmailSender, supportTicketClosedEmail, supportTicketEmail, supportTicketResolvedEmail } from "@/services/emailService";
-import { trackAnalyticsEvent } from "@/services/analyticsService";
+import { recordOperationalAccountAudit } from "@/services/operationalAccountAuditService";
 import { createNotificationEvent } from "@/services/notificationService";
 import type { SupportTicketStatusValue } from "@/lib/supportTickets";
 
@@ -50,11 +50,11 @@ type SupportPrismaClient = {
 };
 
 type SendSupportEmail = typeof sendTransactionalEmail;
-type TrackSupportAnalytics = typeof trackAnalyticsEvent;
+type RecordSupportAudit = typeof recordOperationalAccountAudit;
 
 let prismaClientForTesting: SupportPrismaClient | null = null;
 let sendSupportEmailForTesting: SendSupportEmail | null = null;
-let trackSupportAnalyticsForTesting: TrackSupportAnalytics | null = null;
+let recordSupportAuditForTesting: RecordSupportAudit | null = null;
 
 export async function createSupportTicket(input: {
   userId?: string | null;
@@ -82,15 +82,16 @@ export async function createSupportTicket(input: {
   });
 
   try {
-    await (trackSupportAnalyticsForTesting ?? trackAnalyticsEvent)({
+    // Guest tickets already have a durable SupportTicket record; no duplicate account audit.
+    if (input.userId) await (recordSupportAuditForTesting ?? recordOperationalAccountAudit)({
       userId: input.userId,
       type: "SUPPORT_TICKET",
       name: "support_ticket_created",
       metadata: { category: input.category },
     });
-  } catch (error) {
-    // A persisted request must not look like a failed submission because optional telemetry failed.
-    console.error("[support] Failed to record optional ticket analytics", error);
+  } catch {
+    // A persisted request must not look like a failed submission because account audit storage failed.
+    console.error("[support] Failed to record account ticket audit");
   }
 
   try {
@@ -236,7 +237,7 @@ export const __supportServiceTest = {
   setSendSupportEmailForTesting(sendEmail: SendSupportEmail | null) {
     sendSupportEmailForTesting = sendEmail;
   },
-  setTrackAnalyticsForTesting(track: TrackSupportAnalytics | null) {
-    trackSupportAnalyticsForTesting = track;
+  setRecordAuditForTesting(track: RecordSupportAudit | null) {
+    recordSupportAuditForTesting = track;
   },
 };

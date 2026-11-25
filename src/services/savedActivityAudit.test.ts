@@ -74,6 +74,7 @@ test("a real Save and Unsave write exactly one auditable event each, for every t
     assert.equal(fixture.get().audit.length, 1);
     assert.equal(fixture.get().audit[0].name, "saved_item_confirmed");
     assert.equal(fixture.get().audit[0].metadata.product, input.type.toUpperCase());
+    assert.equal(fixture.get().audit[0].metadata.recordPurpose, "essential_account_audit");
     assert.equal(fixture.get().audit[0].metadata.applicationSource, "IOS");
     const repeat = await writer("user-a", input, { applicationSource: "ANDROID" });
     assert.equal(repeat.id, saved.id);
@@ -85,12 +86,13 @@ test("a real Save and Unsave write exactly one auditable event each, for every t
     assert.equal(fixture.get().audit.length, 2);
     assert.equal(fixture.get().audit[1].name, "saved_item_removed");
     assert.equal(fixture.get().audit[1].metadata.product, input.type.toUpperCase());
+    assert.equal(fixture.get().audit[1].metadata.recordPurpose, "essential_account_audit");
     assert.equal(fixture.get().audit[1].metadata.applicationSource, "ANDROID");
     assert.equal(fixture.get().audit[1].metadata.savedItemId, saved.id);
   }
 });
 
-test("analytics failure rolls back a saved mutation, preventing false success", async () => {
+test("account audit failure rolls back a saved mutation, preventing false success", async () => {
   const fixture = makeDatabase(true);
   const writer = createSavedItemWriter(fixture.db, true);
   await assert.rejects(() => writer("user-a", car));

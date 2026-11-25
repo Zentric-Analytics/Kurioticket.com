@@ -65,7 +65,7 @@ test("verified bot package search executes once and records one BOT search, not 
       }) : {},
     },
     "next/server": { after: (callback: () => Promise<unknown>) => deferred.push(callback) },
-    "@/services/analyticsService": { logSearchHistory: async (value: Record<string, unknown>) => {
+    "@/services/operationalActivityService": { logSearchHistory: async (value: Record<string, unknown>) => {
       recorded.push(value);
     } },
   };

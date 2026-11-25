@@ -28,11 +28,14 @@ test("guest handoffs persist the same visitor identity in the canonical log and 
 
 test("signed-in and non-consenting handoffs preserve authoritative account attribution", async () => {
   let recorded: unknown;
+  let optionalCalls = 0;
   await recordProviderHandoffActivity(request, { ...handoff, type: "flight" }, {
     identity: async () => ({ userId: "account-123", visitorId: null }),
     redirect: async (value) => { recorded = value; },
-    event: async () => {},
+    event: async () => { optionalCalls++; },
+    journey: async () => { optionalCalls++; return null; },
   });
+  assert.equal(optionalCalls, 0);
   assert.deepEqual(recorded, { ...handoff, type: "flight", userId: "account-123", visitorId: null });
 });
 
@@ -128,10 +131,12 @@ test("a validated handoff receipt carries exact search correlation and retries d
 });
 
 test("withdrawal during deferred correlation cannot restore stale visitor attribution", async () => {
+  let optionalCalls = 0;
   await recordProviderHandoffActivity(request, handoff, {
     identity: async () => ({ userId: "account-a", visitorId: "withdrawn-visitor" }),
     redirect: async () => ({ id: "redirect-123", created: true, visitorId: null, userId: "account-a", searchHistoryId: null, correlation: "unavailable" }),
-    event: async value => { assert.equal(value.visitorId, null); assert.equal(value.userId, "account-a"); },
-    journey: async value => { assert.equal(value.visitorId, null); assert.equal(value.searchHistoryId, undefined); return null; },
+    event: async () => { optionalCalls++; },
+    journey: async () => { optionalCalls++; return null; },
   });
+  assert.equal(optionalCalls, 0);
 });

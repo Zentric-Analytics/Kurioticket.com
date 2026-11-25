@@ -51,6 +51,11 @@ jobs:
           node --input-type=module --import jiti/register -e
           'await import("./src/services/visitorIdentityCore.test.ts");
           await import("./src/services/analyticsService.test.ts");
+          await import("./src/app/api/packages/search/route.test.ts");
+          await import("./src/app/api/cars/search/route.test.ts");
+          await import("./src/services/supportService.test.ts");
+          await import("./src/lib/customerInteractionTracking.test.ts");
+          await import("./src/services/savedActivityAudit.test.ts");
           await import("./src/services/searchJourneyService.test.ts");
           await import("./src/services/providerHandoffStore.test.ts");
           await import("./src/services/providerHandoffActivity.test.ts");

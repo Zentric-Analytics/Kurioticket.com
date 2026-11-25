@@ -4,7 +4,7 @@ import { isFeatureEnabled as resolveFeatureEnabled } from "@/lib/feature-control
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { identifySearchCrawler, searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { after } from "next/server";
-import { logSearchHistory } from "@/services/analyticsService";
+import { logSearchHistory } from "@/services/operationalActivityService";
 
 const noStore = { "Cache-Control": "no-store" };
 

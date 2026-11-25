@@ -3,7 +3,8 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession, operationalSessionMetadata } from "@/lib/operationalSearchSession";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
-import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
+import { logProviderCall, logSearchHistory } from "@/services/operationalActivityService";
+import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { hotelSearchSchema } from "@/lib/validation";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
@@ -88,8 +89,8 @@ export async function POST(request: Request) {
           logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
             checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
             query: recordedSearch, resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
-          trackAnalyticsEvent({ ...application, userId, visitorId, type: "SEARCH",
-            name: "hotel_search", metadata: { destination: search.destination, resultCount: 0, progressive: true, unsupported: true, trackId } }),
+          ...(visitorId ? [trackAnalyticsEvent({ ...application, userId, visitorId, type: "SEARCH",
+            name: "hotel_search", metadata: { destination: search.destination, resultCount: 0, progressive: true, unsupported: true, trackId } })] : []),
           logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search", status: "DISABLED",
             latencyMs: Date.now() - startedAt, errorMessage: "unsupported_search",
             metadata: { ...application, progressive: true, trackId } }),
@@ -137,8 +138,8 @@ export async function POST(request: Request) {
         status: nextCursor ? "PARTIAL" : "SUCCESS" });
       if (!nextCursor) {
         await Promise.all([
-          trackAnalyticsEvent({ ...application, userId, visitorId, type: "SEARCH",
-            name: "hotel_search", metadata: { destination: search.destination, resultCount: cumulative.length, progressive: true, trackId } }),
+          ...(visitorId ? [trackAnalyticsEvent({ ...application, userId, visitorId, type: "SEARCH",
+            name: "hotel_search", metadata: { destination: search.destination, resultCount: cumulative.length, progressive: true, trackId } })] : []),
           logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search", status: "SUCCESS",
             latencyMs: Date.now() - startedAt, metadata: { ...application, progressive: true, trackId, resultCount: cumulative.length } }),
         ]);
@@ -155,8 +156,8 @@ export async function POST(request: Request) {
         logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
           checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
           query: recordedSearch, resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
-        trackAnalyticsEvent({ ...application, userId, visitorId, type: "SEARCH",
-          name: "hotel_search", metadata: { destination: search.destination, resultCount: 0, progressive: true, failed: true, trackId } }),
+        ...(visitorId ? [trackAnalyticsEvent({ ...application, userId, visitorId, type: "SEARCH",
+          name: "hotel_search", metadata: { destination: search.destination, resultCount: 0, progressive: true, failed: true, trackId } })] : []),
         logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search",
           status: "FAILED", latencyMs: Date.now() - startedAt, errorMessage: unavailable,
           metadata: { ...application, progressive: true, trackId } }),
