@@ -1,4 +1,4 @@
-import { searchLocations } from "./search";
+import { normalizeLocationText, searchLocations } from "./search";
 import { LocationSelectionSizeError, publicLocationSelection } from "./selectionAuthority";
 import type { CanonicalLocation, LocationProviderBinding, TravelProduct } from "./types";
 
@@ -26,6 +26,36 @@ function merge(left: CanonicalLocation, right: CanonicalLocation): CanonicalLoca
     verification: bindings.some((binding) => binding.verification === "verified") ? "verified" : left.verification };
 }
 
+// A catalogue alias helps formulate a discovery query; it never grants supplier
+// support. Only returned provider rows retain their original verified binding.
+function hotelQueryReference(catalog: readonly CanonicalLocation[], query: string) {
+  const matches = searchLocations(catalog, query, 25)
+    .filter(({ match }) => match.location.kind === "city" && match.score >= 480);
+  return matches.length === 1 ? matches[0].match.location : undefined;
+}
+
+function withHotelReferenceAliases(location: CanonicalLocation, catalog: readonly CanonicalLocation[]) {
+  if (location.kind !== "city") return location;
+  const normalized = normalizeLocationText;
+  const providerCountry = location.country?.name || location.supportingLabel.split(",").at(-1)?.trim();
+  const references = catalog.filter(reference => {
+    if (reference.kind !== location.kind || normalized(reference.primaryLabel) !== normalized(location.primaryLabel)) return false;
+    const sameCountry = reference.country?.code && location.country?.code
+      ? normalized(reference.country.code) === normalized(location.country.code)
+      : reference.country?.name && providerCountry && normalized(reference.country.name) === normalized(providerCountry);
+    if (!sameCountry) return false;
+    // Same-country cities can share a name. Require an explicit matching region
+    // when the owned region is more specific than the city itself.
+    const region = reference.region && normalized(reference.region);
+    return !region || region === normalized(reference.primaryLabel)
+      || region === normalized(location.region || "")
+      || location.supportingLabel.split(",").some(part => normalized(part) === region);
+  });
+  if (references.length !== 1) return location;
+  const reference = references[0];
+  return { ...location, aliases: [...new Set([...(location.aliases ?? []), reference.primaryLabel, ...(reference.aliases ?? [])])] };
+}
+
 async function bounded(adapter: DiscoveryAdapter, query: string, product: TravelProduct, timeoutMs: number, signal?: AbortSignal) {
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -44,9 +74,13 @@ export async function discoverLocations(options: { query: string; product: Trave
   const query = options.query.trim();
   if (!query) return { suggestions: [], sources: [] };
   const adapters = (options.adapters ?? []).filter((adapter) => adapter.products.includes(options.product));
-  const outcomes = await Promise.all(adapters.map((adapter) => bounded(adapter, query, options.product, options.timeoutMs ?? 900, options.signal)));
+  const reference = options.product === "hotels" ? hotelQueryReference(options.catalog, query) : undefined;
+  const providerQuery = reference?.primaryLabel || query;
+  const outcomes = await Promise.all(adapters.map((adapter) => bounded(adapter, providerQuery, options.product, options.timeoutMs ?? 900, options.signal)));
   const merged = new Map<string, CanonicalLocation>();
-  for (const location of [...outcomes.flatMap((outcome) => outcome.locations), ...options.catalog]) {
+  const discovered = outcomes.flatMap(outcome => outcome.locations).map(location => options.product === "hotels"
+    ? withHotelReferenceAliases(location, options.catalog) : location);
+  for (const location of [...discovered, ...options.catalog]) {
     const match = searchLocations([location], query, 1)[0];
     if (!match) continue;
     const key = identity(location, options.product);
