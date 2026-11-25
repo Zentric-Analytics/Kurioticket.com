@@ -126,11 +126,11 @@ test("Online data validates deduplicated web counts for admin, support and custo
 });
 
 test("Search Activity links only verified operational guest sessions to Users Directory", () => {
-  assert.match(searchDetails, /validActivityIdentity\("guest", search\.operationalSessionId \?\? ""\)/);
-  assert.match(searchDetails, /search\.environment === getPublicEnvironment\(\)/);
-  assert.match(searchDetails, /!search\.identity\.userId && !search\.identity\.visitorId/);
+  assert.match(searchDetails, /const activity = isBot \? null : search\.searcher\.activity/);
+  assert.match(searchDetails, /activity && validActivityIdentity\(activityKind, activity\.id\)/);
+  assert.match(searchDetails, /encodeURIComponent\(activity\.id\)/);
   assert.match(searchDetails, /View recorded guest session/);
-  assert.match(searchDetails, /No verified guest session was attached to this search/);
+  assert.doesNotMatch(searchDetails, /encodeURIComponent\(search\.operationalSessionId/);
   assert.doesNotMatch(searchDetails, /createVisitorToken|Visitor\.create/);
 });
 

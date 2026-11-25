@@ -37,8 +37,8 @@ test("canonical Flight search telemetry remains environment scoped and real-data
   const activity = readFileSync("src/app/admin/searches/activity/page.tsx", "utf8");
   assert.match(activity, /delete raw\.environment/);
   assert.match(activity, /params\.set\("environment", currentEnvironment\)/);
-  assert.match(activity, /adminOperationalReads\.searches\.list\(listParams\)/);
-  assert.match(activity, /adminOperationalReads\.searches\.summary\(params\)/);
+  assert.match(activity, /adminOperationalReads\.searchActivity\.list\(listParams\)/);
+  assert.match(activity, /adminOperationalReads\.searchActivity\.summary\(params\)/);
   assert.match(activity, /Search data unavailable/);
 });
 
