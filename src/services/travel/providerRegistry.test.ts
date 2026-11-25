@@ -6,7 +6,7 @@ import test, {beforeEach,afterEach} from "node:test";
 let savedMode: string | undefined;
 beforeEach(()=>{savedMode=process.env.NODE_ENV;Object.assign(process.env,{NODE_ENV:"test"});});
 afterEach(()=>{if(savedMode===undefined)Reflect.deleteProperty(process.env,"NODE_ENV");else Object.assign(process.env,{NODE_ENV:savedMode});});
-import { providersFor, executeRegisteredProvider, type ProductContracts } from "./providerRegistry";
+import { providersFor, executeRegisteredProvider, registeredProviderReady, type ProductContracts } from "./providerRegistry";
 import { searchFlights } from "./flightAggregator";
 import { searchHotels, searchHotelBatch } from "./hotelAggregator";
 import { searchCars } from "./carAggregator";
@@ -16,6 +16,46 @@ import { setFlightResultCacheBackendForTests } from "@/lib/searchCache";
 import type { NormalizedFlightResult } from "@/lib/types";
 
 import {fixtureProvider} from "./fixtures/testProviders";
+import {withProductionSandboxRequest} from "@/lib/productionSandboxPolicy";
+
+test("new sandbox registrations require production grants and remain neutral and inert",async()=>{
+ const previous=process.env.NEXT_PUBLIC_APP_URL;
+ process.env.NEXT_PUBLIC_APP_URL="https://kurioticket.com";
+ try {
+  const query={destination:"New York",checkIn:"2099-12-25",checkOut:"2099-12-29",guests:2,rooms:1};
+  const row={...buildStaticHotelResults(query)[0],inventoryKind:"bookable" as const,pricePerNight:100,totalPrice:400,currency:"USD",id:"sandbox-new-one",provider:"New sandbox",bookingUrl:"https://provider.example/checkout",partnerRedirectUrl:""};
+  const provider=fixtureProvider("hotels",[row]);provider.capabilities={...provider.capabilities,mode:"sandbox"};
+  let calls=0;provider.execute=async()=>{calls++;return {provider:"New sandbox",results:[row],status:"success",latencyMs:0};};
+  const request=new Request("https://kurioticket.com/api/hotels/search",{headers:{"x-sandbox-results-policy":"1"}});
+  const run=()=>executeRegisteredProvider(provider,query,{}).then(value=>Response.json({results:value.results,status:"available"}));
+  const denied=await withProductionSandboxRequest(request,run,async()=>({enabled:false,revision:"r1",available:true}));
+  assert.equal((await denied.json()).results.length,0);assert.equal(calls,0);
+  const allowed=await withProductionSandboxRequest(request,run,async()=>({enabled:true,revision:"r1",available:true}));
+  const result=(await allowed.json()).results[0];assert.equal(calls,1);
+  assert.equal(result.sandboxDisplayOnly,true);assert.equal(result.sandboxRevision,"r1");
+  assert.equal(result.searchPolicy.source,"metasearch");assert.equal(result.searchPolicy.action.kind,"none");assert.equal(result.bookingUrl,"");
+ }finally{if(previous===undefined)delete process.env.NEXT_PUBLIC_APP_URL;else process.env.NEXT_PUBLIC_APP_URL=previous;}
+});
+
+test("compatibility batches cannot bypass central readiness or environment admission",async()=>{
+ const provider=fixtureProvider("hotels",[]);provider.id="kayak";
+ let called=0;
+ provider.hotelBatch=async()=>{called++;return {supported:true,batch:{offers:[],providerRows:0,checkpoint:null},results:[]};};
+ const query={destination:"New York",checkIn:"2099-12-25",checkOut:"2099-12-29",guests:2,rooms:1};
+ for(const readiness of [{configured:false,enabled:true},{configured:true,enabled:false}]){
+  provider.readiness=()=>readiness;
+  assert.equal(registeredProviderReady(provider),false);
+  assert.equal((await searchHotelBatch(query,{clientIp:"192.0.2.1"},"snapshot",undefined,{providers:[provider]})).supported,false);
+ }
+ provider.readiness=()=>({configured:true,enabled:true});
+ provider.capabilities={...provider.capabilities,environments:["production"]};
+ assert.equal(registeredProviderReady(provider),false);
+ assert.equal((await searchHotelBatch(query,{clientIp:"192.0.2.1"},"snapshot",undefined,{providers:[provider]})).supported,false);
+ assert.equal(called,0);
+ provider.capabilities={...provider.capabilities,environments:["test"]};
+ assert.equal((await searchHotelBatch(query,{clientIp:"192.0.2.1"},"snapshot",undefined,{providers:[provider],persist:async()=>{}})).supported,true);
+ assert.equal(called,1);
+});
 
 test("central registrations participate in all three active product services", async () => {
   const previous = process.env.NODE_ENV;

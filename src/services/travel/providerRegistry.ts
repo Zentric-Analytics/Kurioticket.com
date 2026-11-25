@@ -1,4 +1,6 @@
 import {isKayakSandboxEnabled} from "./kayakSandbox";
+import {currentSandboxGrant,productionSandboxHost} from "@/lib/productionSandboxPolicy";
+import {displayOnlyInventory} from "@/shared/presentation/sandboxInventory";
 import {getDuffelProviderBlockReason} from "./providers/duffelProvider";
 import {duffelDiscoveryAdapter,kayakDiscoveryAdapter} from "@/lib/locations/providerDiscoveryAdapters";
 import type {DiscoveryAdapter} from "@/lib/locations/discovery";
@@ -112,20 +114,31 @@ export async function executeRegisteredProvider<P extends SearchProduct>(provide
   if (provider.capabilities.mode === "test" && process.env.NODE_ENV !== "test") throw new Error("Test provider cannot execute outside tests");
   const started = Date.now();
   if (!provider.supports(query)) return { provider: provider.label, results: [], status: "skipped", latencyMs: 0, errorCategory: "unsupported_search", errorReason: "unsupported_search" };
-  if (!provider.capabilities.environments.includes(process.env.NODE_ENV === "production" ? "production" : process.env.NODE_ENV === "test" ? "test" : "development")) return { provider:provider.label,results:[],status:"skipped",latencyMs:0,errorCategory:"skipped",errorReason:"provider_skipped" };
-  const readiness=provider.readiness();
-  if(!readiness.configured || !readiness.enabled) return {provider:provider.label,results:[],status:"skipped",latencyMs:0,errorCategory:"skipped",errorReason:"provider_skipped"};
+  if (!registeredProviderReady(provider)) return {provider:provider.label,results:[],status:"skipped",latencyMs:0,errorCategory:"skipped",errorReason:"provider_skipped"};
+  const controlledSandbox=provider.id!=="kayak" && provider.capabilities.mode==="sandbox" && productionSandboxHost();
+  const grant=controlledSandbox ? await currentSandboxGrant():null;
+  if(controlledSandbox && !grant)return {provider:provider.label,results:[],status:"skipped",latencyMs:0,errorCategory:"skipped",errorReason:"provider_skipped"};
   const response = await provider.execute(query, context);
   // Adapter return values cannot relabel the registration's provenance.
   const snapshot=provider.capabilities.snapshot==="search-scoped" ? context.requestId??crypto.randomUUID() : null;
   const publicId=(id:string)=>`${provider.id}:${snapshot?`${snapshot}:`:""}${id}`;
-  const results = provider.id === "duffel" || provider.id === "kayak" ? response.results : response.results.map(row=>({
+  let results = provider.id === "duffel" || provider.id === "kayak" ? response.results : response.results.map(row=>({
     ...row, id:publicId(row.id), provider:provider.label,
     ...("propertyGroupId" in row && row.propertyGroupId?{propertyGroupId:publicId(row.propertyGroupId as string)}:{}),
     ...(provider.product==="cars"?{inventorySource:"metasearch" as const}:{}),
     inventoryProvenance:{providerId:provider.id,providerLabel:provider.label,mode:provider.capabilities.mode,details:provider.capabilities.details,refresh:provider.capabilities.refresh},
   }));
+  if(controlledSandbox){const fresh=await currentSandboxGrant();results=fresh && fresh.revision===grant?.revision ? results.map(row=>displayOnlyInventory(row,fresh.revision)):[];}
   return { ...response, results, provider: provider.label, latencyMs: response.latencyMs ?? Date.now() - started };
+}
+
+/** Admission shared by search, discovery and compatibility execution. */
+export function registeredProviderReady<P extends SearchProduct>(provider:ProviderRegistration<P>):boolean {
+  const environment=process.env.NODE_ENV === "production" ? "production" : process.env.NODE_ENV === "test" ? "test" : "development";
+  if(provider.capabilities.mode === "test" && environment !== "test")return false;
+  if(!provider.capabilities.environments.includes(environment))return false;
+  const readiness=provider.readiness();
+  return readiness.configured && readiness.enabled;
 }
 
 /** Product services share execution policy while retaining their own inventory rules. */

@@ -3,7 +3,8 @@ export function isSandboxInventory(value: unknown): boolean {
     if (!value || typeof value !== "object")
         return false;
     const row = value as Record<string, unknown>;
-    return row.sandboxDisplayOnly === true || row.provider === "KAYAK sandbox" || row.inventorySource === "kayak-sandbox" || ([row.id, row.resultId].some(id => typeof id === "string" && /^(kayak-sandbox:|sandbox:duffel:)/.test(id)));
+    const provenance=row.inventoryProvenance as {mode?:unknown}|undefined;
+    return provenance?.mode === "sandbox" || provenance?.mode === "test" || row.sandboxDisplayOnly === true || row.provider === "KAYAK sandbox" || row.inventorySource === "kayak-sandbox" || ([row.id, row.resultId].some(id => typeof id === "string" && /^(kayak-sandbox:|sandbox:duffel:)/.test(id)));
 }
 export function hasDisplayOnlyInventory(value: unknown): boolean {
     if (!value || typeof value !== "object")
@@ -19,7 +20,7 @@ export function displayOnlyInventory<T>(value: T, revision: string): T & {
     sandboxDisplayOnly: true;
     sandboxRevision: string;
     searchPolicy: {
-        source: "duffel" | "kayak-sandbox";
+        source: "duffel" | "kayak-sandbox" | "metasearch";
         bookable: false;
         action: {
             kind: "none";
@@ -37,5 +38,5 @@ export function displayOnlyInventory<T>(value: T, revision: string): T & {
     }
     return { ...clean(value) as T, sandboxDisplayOnly: true, sandboxRevision: revision, searchPolicy: { source: (value as {
                 provider?: string;
-            }).provider === "Duffel" ? "duffel" : "kayak-sandbox", bookable: false, action: { kind: "none", enabled: false } } };
+            }).provider === "Duffel" ? "duffel" : (value as {inventoryProvenance?:unknown}).inventoryProvenance ? "metasearch" : "kayak-sandbox", bookable: false, action: { kind: "none", enabled: false } } };
 }

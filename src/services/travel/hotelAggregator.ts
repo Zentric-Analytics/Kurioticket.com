@@ -1,6 +1,6 @@
 import { inventoryAccounting } from "@/shared/search/inventory";
 import { settleWithDeadline } from "./metasearch";
-import { providersFor, runRegisteredProviders, type ProviderRegistration } from "./providerRegistry";
+import { providersFor, registeredProviderReady, runRegisteredProviders, type ProviderRegistration } from "./providerRegistry";
 import type { AggregatedResult, HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import { rememberHotels } from "@/lib/searchCache";
 import { providerSearchWarnings } from "./providerSearchOutcome";
@@ -17,7 +17,7 @@ export type HotelProviderMode = "kayak-sandbox";
  * provider plans use the already-compatible canonical full response instead
  * of inventing another cursor format or omitting independent inventory. */
 export function hotelSearchRequiresCanonicalResponse(injected?:readonly ProviderRegistration<"hotels">[]) {
-  return providersFor("hotels",injected).some(provider=>provider.id!=="kayak" && provider.readiness().configured && provider.readiness().enabled);
+  return providersFor("hotels",injected).some(provider=>provider.id!=="kayak" && registeredProviderReady(provider));
 }
 
 async function persistHotelProviderResults(
@@ -103,7 +103,7 @@ export function dedupeHotels(results: NormalizedHotelResult[]) {
 /** Authoritative hotel business service used by the signed legacy transport. */
 export async function searchHotelBatch(search:HotelSearchParams, context:KayakRequestContext, snapshot:string, checkpoint?:import("./kayakSandbox").KayakHotelBatchCheckpoint, options: {providers?:readonly ProviderRegistration<"hotels">[];getCohort?:typeof getHotelSearchCohort;persist?:typeof persistHotelProviderResults} = {}) {
   const registration=providersFor("hotels",options.providers).find(provider=>provider.id==="kayak");
-  if(!registration?.hotelBatch || !registration.supports(search)) return {supported:false as const};
+  if(!registration?.hotelBatch || !registeredProviderReady(registration) || !registration.supports(search)) return {supported:false as const};
   const outcome=await settleWithDeadline(signal=>registration.hotelBatch!(search,{...context,signal},snapshot,checkpoint),registration.timeoutMs,context.signal,()=>null);
   if(!outcome) throw new Error("Hotel batch unavailable");
   if(!outcome.supported) return outcome;

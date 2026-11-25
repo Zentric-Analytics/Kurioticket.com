@@ -79,9 +79,9 @@ export function kayakDiscoveryAdapter(request: Request): DiscoveryAdapter | null
 
 export async function availableDiscoveryAdapters(request: Request, product: TravelProduct) {
   if(product === "packages")return [];
-  const {providersFor}=await import("@/services/travel/providerRegistry");
+  const {providersFor,registeredProviderReady}=await import("@/services/travel/providerRegistry");
   return providersFor(product).flatMap(provider=>{
-    try {const adapter=provider.discovery?.(request);if(adapter && adapter.provider!==provider.id)throw new Error("Invalid discovery registration");return adapter?[adapter]:[];}
+    try {if(!registeredProviderReady(provider))return [];const adapter=provider.discovery?.(request);if(adapter && adapter.provider!==provider.id)throw new Error("Invalid discovery registration");return adapter?[adapter]:[];}
     catch {return [{provider:provider.id,products:[product],discover:async()=>{throw new Error("Discovery unavailable");}} as DiscoveryAdapter];}
   });
 }
