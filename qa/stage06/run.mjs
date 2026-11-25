@@ -76,15 +76,23 @@ try{
   await page.getByRole('link',{name:'Investigate searches',exact:false}).click();
   await expect(page).toHaveURL(/applicationSource=IOS/);
   const searchRows=page.getByRole('region',{name:'Search activity table'}).locator('tbody tr');
+  const openSearchDetail=async row=>{
+    await row.getByRole('link',{name:/View details for Flight search/}).click();
+    await page.waitForURL(/\/admin\/searches\/search_qa\d+\?/);
+  };
+  const backToSearchActivity=async ()=>{
+    await page.getByRole('link',{name:'Search activity',exact:true}).click();
+    await page.waitForURL(/\/admin\/searches\/activity\?/);
+  };
   await expect(searchRows).toHaveCount(1);
   await expect(searchRows.locator('td[data-label="Platform"]')).toHaveText('iOSv1.2.3');
   await expect(searchRows.locator('td[data-label="Identity"]')).toHaveText('Guest');
-  await page.getByRole('link',{name:/View details for Flight search/}).click();
+  await openSearchDetail(searchRows);
   await expect(page.getByText('Platform',{exact:true})).toBeVisible();
   await expect(page.getByText('1.2.3',{exact:true})).toBeVisible();
   await expect(page.getByText('Guest',{exact:true})).toBeVisible();
   await expect(page.locator('a[href^="/admin/users/"][href$="/activity"]')).toHaveCount(0);
-  await page.getByRole('link',{name:'Search activity',exact:true}).click();
+  await backToSearchActivity();
   await expect(page).toHaveURL(/applicationSource=IOS/);
 
   const platformTrigger=page.getByRole('button',{name:/^Platform:/});
@@ -127,32 +135,32 @@ try{
     await expect(total).toHaveText('1');
     await expect(searchRows).toHaveCount(1);
     await expect(searchRows.locator('td[data-label="Identity"]')).toHaveText('Bot');
-    await searchRows.getByRole('link',{name:/View details/}).click();
+    await openSearchDetail(searchRows);
     await expect(page.getByText('Googlebot',{exact:true})).toBeVisible();
     await expect(page.getByText('User-Agent identified',{exact:true})).toBeVisible();
     await expect(page.locator('a[href^="/admin/users/"][href$="/activity"]')).toHaveCount(0);
-    await page.getByRole('link',{name:'Search activity',exact:true}).click();
+    await backToSearchActivity();
     await expect(page).toHaveURL(/identity=bot/);
     await expect(page).toHaveURL(/range=custom/);
 
-    for (const platform of ['Website','Android']) {
-      await platformTrigger.click();
-      await platformList.getByRole('option',{name:platform,exact:true}).click();
-      await page.getByRole('button',{name:'Apply filters'}).click();
+    for (const [source,platform] of [['WEB','Website'],['ANDROID','Android']]) {
+      await page.goto(base+'/admin/searches/activity?range=all&identity=bot&applicationSource='+source);
+      await expect(platformTrigger).toHaveText(platform);
+      await expect(identityTrigger).toHaveText('Bot');
       await expect(total).toHaveText('0');
       await expect(page.getByText('No searches found',{exact:true})).toBeVisible();
     }
     await page.goto(base+'/admin/searches/activity?range=all&applicationSource=WEB&identity=registered');
     await expect(total).toHaveText('1');
     await expect(searchRows.locator('td[data-label="Identity"]')).toHaveText('Registered');
-    await searchRows.getByRole('link',{name:/View details/}).click();
+    await openSearchDetail(searchRows);
     await expect(page.getByText('Registered',{exact:true})).toBeVisible();
     await expect(page.getByRole('link',{name:/View user details/})).toHaveAttribute('href','/admin/users/user/user_qa000/activity');
 
     await page.goto(base+'/admin/searches/activity?range=all&applicationSource=UNKNOWN');
     await expect(total).toHaveText('1');
     await expect(page.getByRole('link',{name:'Clear legacy source filter'})).toBeVisible();
-    await historicalRow.getByRole('link',{name:/View details/}).click();
+    await openSearchDetail(historicalRow);
     await expect(page.getByText('Source not recorded',{exact:true})).toBeVisible();
     await expect(page.getByText('Guest',{exact:true})).toBeVisible();
     await expect(page.locator('a[href^="/admin/users/"][href$="/activity"]')).toHaveCount(0);
