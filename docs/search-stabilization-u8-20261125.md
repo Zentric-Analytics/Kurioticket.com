@@ -49,3 +49,7 @@ identities and server expiry without persistent sandbox storage. Production
 display-only rows remain excluded; legacy persistent sandbox records stay invalid.
 Regression coverage includes1700mixed results, storage-scope isolation, immutable
 copies, replacement/expiry and unchanged production storage restrictions.
+
+## Exact airport intent after GeoIP ranking
+
+Live staging origin discovery returned VNY before exact LAX and city HOU/IAH before exact HOU. The origin route reapplied GeoIP ordering without the entered query. Preserve exact three-letter airport intent before proximity in both provider and owned-fallback responses; retain every city and neighboring airport with its identity and selection authority. Destination ordering and default suggestions remain unchanged. Two LAX/HOU regressions failed before the correction; all 12 focused discovery tests pass afterwards, including absence of GeoIP and case/whitespace normalization. No client impersonation, supplier permission, native binary, or production change is involved.

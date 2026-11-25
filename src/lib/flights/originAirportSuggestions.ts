@@ -62,9 +62,17 @@ export const getCityAwareOriginAirports = (location: OriginSuggestionLocation | 
 };
 
 export const prioritizeOriginSuggestions = (
-  suggestions: AirportOption[],
+  suggestions: (AirportOption & { type?: string })[],
   location: OriginSuggestionLocation | null | undefined,
+  query = "",
 ) => {
-  if (!location || suggestions.length < 2) return suggestions;
-  return sortForLocation(suggestions, location);
+  if (suggestions.length < 2) return suggestions;
+  const ordered = location ? sortForLocation(suggestions, location) : suggestions;
+  const code = query.trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(code)) return ordered;
+  // Explicit airport intent precedes GeoIP proximity. Keep the separate city
+  // suggestion and every neighboring airport, with their relative order intact.
+  const exactAirport = (airport: AirportOption & { type?: string }) =>
+    airport.code.toUpperCase() === code && airport.type !== "city";
+  return [...ordered.filter(exactAirport), ...ordered.filter((airport) => !exactAirport(airport))];
 };

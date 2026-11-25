@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { getCityAwareOriginAirports } from "@/lib/flights/originAirportSuggestions";
+import { getCityAwareOriginAirports, prioritizeOriginSuggestions } from "@/lib/flights/originAirportSuggestions";
+import type { AirportOption } from "@/data/airports";
 
 type TestLocation = Parameters<typeof getCityAwareOriginAirports>[0];
 
@@ -58,3 +59,21 @@ test("invalid or missing GeoIP falls back safely to global defaults", () => {
 test("MaxMind disabled-style missing location returns existing default behavior", () => {
   assert.deepEqual(codes(undefined, 3), codes(null, 3));
 });
+
+for (const code of ["LAX", "HOU"]) {
+  test(`explicit ${code} airport outranks nearby airports and its distinct city`, () => {
+    const places: (AirportOption & { type: "airport" | "city" })[] = [
+      { code, city: "Nearby", airport: "All airports", type: "city", priority: 100 },
+      { code: code === "LAX" ? "VNY" : "IAH", city: "Nearby", airport: "Nearby airport", type: "airport", priority: 100 },
+      { code, city: "Target", airport: "Exact airport", type: "airport", priority: 1 },
+    ];
+    const location = maxmindLocation({ countryCode: "US", city: "Nearby" });
+    const ordered = prioritizeOriginSuggestions(places, location, ` ${code.toLowerCase()} `);
+    assert.equal(ordered[0], places[2]);
+    assert.equal(ordered.length, places.length);
+    assert.equal(new Set(ordered).size, places.length);
+    assert.equal(prioritizeOriginSuggestions(places, null, code)[0], places[2]);
+    assert.equal(prioritizeOriginSuggestions(places, location, "Nearby")[0], places[0]);
+    assert.equal(places[0].type, "city", "ranking does not mutate or relabel suggestions");
+  });
+}
