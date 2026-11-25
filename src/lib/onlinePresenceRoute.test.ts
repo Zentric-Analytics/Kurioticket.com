@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, {beforeEach,afterEach} from "node:test";
 import { createHmac } from "node:crypto";
 import { isWebsiteOnlinePresenceRoute } from "./onlinePresence";
 import { createOnlinePresenceHandler, type OnlinePresenceHeartbeat } from "./onlinePresenceRoute";
@@ -12,6 +12,9 @@ const tokenHeader = "x-kt-presence-session";
 const webPath = "/api/identity/online-presence";
 const nativePath = "/api/mobile/v1/presence";
 const origin = "https://kurioticket.example";
+let savedPublicUrl:string|undefined,savedAuthUrl:string|undefined;
+beforeEach(()=>{savedPublicUrl=process.env.NEXT_PUBLIC_APP_URL;savedAuthUrl=process.env.NEXTAUTH_URL;process.env.NEXT_PUBLIC_APP_URL=origin;process.env.NEXTAUTH_URL=origin;});
+afterEach(()=>{if(savedPublicUrl===undefined)delete process.env.NEXT_PUBLIC_APP_URL;else process.env.NEXT_PUBLIC_APP_URL=savedPublicUrl;if(savedAuthUrl===undefined)delete process.env.NEXTAUTH_URL;else process.env.NEXTAUTH_URL=savedAuthUrl;});
 
 function fixture() {
   const records: OnlinePresenceHeartbeat[] = [];

@@ -3,7 +3,8 @@ import { buildStaticCarResults } from "../../src/services/travel/staticCarResult
 
 const count = 3000;
 const date = "2030-11-18";
-const carSearch = { pickupLocation: "BOS", dropoffLocation: "BOS", pickupDate: date, pickupTime: "10:00", dropoffDate: "2030-11-21", dropoffTime: "10:00", driverAge: "18-70" };
+// Layout/map fixtures require a reviewed geography; unknown codes intentionally have no map.
+const carSearch = { pickupLocation: "LHR", dropoffLocation: "LHR", pickupDate: date, pickupTime: "10:00", dropoffDate: "2030-11-21", dropoffTime: "10:00", driverAge: "18-70" };
 const carBase = buildStaticCarResults(carSearch)[0];
 const hotels = Array.from({ length: count }, (_, index) => ({
   id: `kayak-sandbox:fixture:${index}`, provider: "KAYAK sandbox", name: `Fixture Hotel ${index}${index === 5 ? ' with a longer property name to exercise dynamic card heights on a narrow screen' : ''}`,
