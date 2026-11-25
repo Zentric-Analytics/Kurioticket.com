@@ -14,6 +14,9 @@ import { recordProviderHandoffActivity } from "../src/services/providerHandoffAc
 import { createProviderHandoffStore, type ProviderHandoffActivity } from "../src/services/providerHandoffStore";
 import { retireAccountVisitors } from "../src/services/visitorAccountRetirement";
 import { lockVisitorAccount } from "../src/services/visitorActivityIdentity";
+import { prepareOperationalSearchSession, operationalSessionMetadata, operationalSessionCookieName } from "../src/lib/operationalSearchSession";
+import { getPublicEnvironment } from "../src/lib/stagingSafety";
+import { handoffEvidenceForActivitySql } from "../src/services/adminHandoffEvidence";
 
 // This suite creates its own disposable database and refuses every remote target.
 const target = new URL(process.env.DATABASE_URL || "http://invalid");
@@ -663,5 +666,62 @@ test("essential search and handoff writes survive absent analytics consent for g
     assert.equal(records.redirects[0].visitorId, null);
     assert.equal(records.events.length, 0);
     assert.equal(records.funnel.length, 0);
+  }
+});
+
+test("signed Essential-only handoffs keep operational evidence without optional Analytics writes", async () => {
+  const previous = process.env.AUTH_SECRET;
+  process.env.AUTH_SECRET = "synthetic-integration-secret-not-a-real-key-12345";
+  try {
+    const owner = await account();
+    const environment = getPublicEnvironment();
+    for (const userId of [null, owner.id]) {
+      const url = "https://fixture.example/api/redirect";
+      const headers = { origin: "https://fixture.example", "sec-fetch-site": "same-origin" };
+      const prepared = prepareOperationalSearchSession(new Request(url, { method: "POST", headers }));
+      assert.ok(prepared);
+      const requestId = randomUUID();
+      const history = await journey.recordSearchHistory({
+        userId, visitorId: null, requestId, type: "HOTEL",
+        query: operationalSessionMetadata(prepared.reference), resultCount: 535, status: "SUCCESS", latencyMs: 10,
+      });
+      assert.ok(history);
+      const original = await db.searchHistory.findUniqueOrThrow({ where: { requestId } });
+      const dependencies = {
+        identity: async () => ({ userId, visitorId: null }),
+        redirect: handoffs.recordRedirect, event: analytics, journey: journey.recordJourneyEvent,
+      };
+      const input = handoff({ operationalRequestId: requestId });
+      const cookie = operationalSessionCookieName + "=" + prepared.credential;
+      const request = new Request(url, { method: "POST", headers: { ...headers, cookie } });
+      await recordProviderHandoffActivity(request, input, dependencies);
+      await recordProviderHandoffActivity(request, input, dependencies);
+      const records = await handoffRecords(input.provider);
+      assert.equal(records.redirects.length, 1);
+      assert.equal(records.redirects[0].visitorId, null);
+      assert.equal(records.events.length, 0);
+      assert.equal(records.funnel.length, 0);
+      const metadata = records.redirects[0].metadata as Record<string, unknown>;
+      assert.equal(metadata.operationalRequestId, requestId);
+      assert.equal(metadata.requestId, undefined, "no optional journey reference");
+      assert.equal(metadata.operationalSessionId, prepared.reference.id);
+      assert.ok(!JSON.stringify(metadata).includes(prepared.credential), "never retain the signed credential");
+      const ids = [records.redirects[0].id];
+      const links = await db.$queryRaw<Array<{ id: string; searchHistoryId: string | null }>>(handoffEvidenceForActivitySql(ids, environment));
+      assert.deepEqual(links, [{ id: ids[0], searchHistoryId: original.id }]);
+      assert.equal(await db.journeyEvent.count({ where: { searchHistoryId: original.id } }), 0);
+      for (const badCookie of [undefined, cookie + "tampered"]) {
+        const unverified = handoff({ operationalRequestId: requestId });
+        await recordProviderHandoffActivity(new Request(url, { method: "POST", headers: { ...headers, ...(badCookie ? { cookie: badCookie } : {}) } }), unverified, dependencies);
+        const rejected = await handoffRecords(unverified.provider);
+        assert.equal(rejected.redirects.length, 1, "missing evidence does not block the operational receipt");
+        assert.equal((rejected.redirects[0].metadata as Record<string, unknown>).operationalRequestId, undefined);
+        assert.equal(rejected.events.length, 0);
+        assert.equal(rejected.funnel.length, 0);
+      }
+    }
+  } finally {
+    if (previous === undefined) delete process.env.AUTH_SECRET;
+    else process.env.AUTH_SECRET = previous;
   }
 });

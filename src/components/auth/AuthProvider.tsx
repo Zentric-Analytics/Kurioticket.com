@@ -6,6 +6,7 @@ import { revokeCurrentAccountSession } from "@/lib/currentSessionRevocation";
 import { AnalyticsConsentBridge } from "@/components/privacy/AnalyticsConsentBridge";
 import { JourneyEventsProvider } from "@/components/privacy/JourneyEventsProvider";
 import { WebsiteOnlinePresence } from "./WebsiteOnlinePresence";
+import { OperationalHandoffProvider } from "./OperationalHandoffProvider";
 
 const inactivityTimeoutMs = 15 * 60 * 1000;
 const activityStorageKey = "kurioticket:last-authenticated-activity";
@@ -25,10 +26,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <InactivitySignOut />
       <WebsiteOnlinePresence />
-      <JourneyEventsProvider>
-        {children}
-        <AnalyticsConsentBridge />
-      </JourneyEventsProvider>
+      <OperationalHandoffProvider>
+        <JourneyEventsProvider>
+          {children}
+          <AnalyticsConsentBridge />
+        </JourneyEventsProvider>
+      </OperationalHandoffProvider>
     </SessionProvider>
   );
 }

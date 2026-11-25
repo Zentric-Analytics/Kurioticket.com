@@ -13,6 +13,7 @@ import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
 import { pageViewCatalog, pageViewInfo, type PageViewKey } from "@/lib/pageViewCatalog";
 import { toAdminPageView } from "@/lib/adminPageView";
+import { handoffEvidenceForActivitySql } from "@/services/adminHandoffEvidence";
 import { PAGE_VIEW_SUMMARY_LIMIT, isPageHistoryPlatform, pageHistoryPlatformValues, pageHistoryTransport, validPageHistoryPage, type PageHistoryPlatform } from "@/lib/adminPageHistory";
 
 const journeySelect = {
@@ -374,7 +375,7 @@ export async function loadAdminIdentityActivity(
     // A repeatable-read snapshot keeps canonical + legacy de-duplication stable
     // when a source record and its JourneyEvent are inserted concurrently.
     // The timeline, all totals and every visitor-ID batch observe one snapshot.
-    const [journey, searches, handoffs, analytics, canonicalCounts, legacySearchTotal, legacyHandoffTotal, journeysTracked, pagesVisited] =
+    const [journey, searches, handoffs, analytics, canonicalCounts, legacySearchTotal, legacyHandoffTotal, journeysTracked, pagesVisited, operationalHandoffLinks] =
       await db.$transaction(async tx => {
         const counts = new Map<string, number>();
         let distinctJourneyCount = 0;
@@ -492,7 +493,17 @@ export async function loadAdminIdentityActivity(
           canReadHandoffs ? tx.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
           readPages ? tx.analyticsEvent.count({ where: pageWhere }) : Promise.resolve(0),
         ]);
-        return [pageJourney, pageSearches, pageHandoffs, pageAnalytics, counts, searchTotal, handoffTotal, distinctJourneyCount, pageTotal] as const;
+        // Resolve only rows already authorized by the identity/environment
+        // scope. Bound the SQL parameter count without losing complete history.
+        const operationalHandoffLinks = new Map<string, string>();
+        const handoffIds = pageHandoffs.map(row => row.id);
+        for (let offset = 0; offset < handoffIds.length; offset += 500) {
+          const links = await tx.$queryRaw<Array<{ id: string; searchHistoryId: string | null }>>(
+            handoffEvidenceForActivitySql(handoffIds.slice(offset, offset + 500), environment),
+          );
+          for (const link of links) if (link.searchHistoryId) operationalHandoffLinks.set(link.id, link.searchHistoryId);
+        }
+        return [pageJourney, pageSearches, pageHandoffs, pageAnalytics, counts, searchTotal, handoffTotal, distinctJourneyCount, pageTotal, operationalHandoffLinks] as const;
       }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead, timeout: transactionTimeout });
     snapshotMilliseconds = Date.now() - snapshotAt;
 
@@ -527,6 +538,7 @@ export async function loadAdminIdentityActivity(
       ...handoffs.map(r => ({
         id: "r-" + r.id, stage: "PROVIDER_HANDOFF_STARTED" as const, product: r.type, provider: r.provider,
         redirectLogId: r.id, dedupeKey: "handoff:" + r.id,
+        searchHistoryId: operationalHandoffLinks.get(r.id) ?? null,
         label: "Provider handoff started", detail: [r.type, r.route, r.provider].filter(Boolean).join(" · "),
         at: r.createdAt,
       })),

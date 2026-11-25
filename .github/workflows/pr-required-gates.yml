@@ -60,6 +60,8 @@ jobs:
           await import("./src/services/providerHandoffStore.test.ts");
           await import("./src/services/providerHandoffActivity.test.ts");
           await import("./src/lib/providerHandoffClient.test.ts");
+          await import("./src/lib/operationalHandoffContext.test.ts");
+          await import("./src/components/results/journeyEventWiring.test.ts");
           await import("./src/app/api/flights/search/terminalHistory.test.ts");'
       - name: Validate admin operational read contracts
         env:
@@ -68,7 +70,10 @@ jobs:
         run: >-
           node --input-type=module --import jiti/register -e
           'await import("./src/services/adminOperationalReadContract.test.ts");
-          await import("./src/services/adminOperationalReadCore.test.ts");'
+          await import("./src/services/adminOperationalReadCore.test.ts");
+          await import("./src/lib/adminIdentityActivityComplete.test.ts");
+          await import("./src/lib/adminActivityOverview.test.ts");
+          await import("./src/components/admin/ActivityTimeline.test.ts");'
       - name: Validate Platform Health refresh and investigation UI contracts
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json

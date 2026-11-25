@@ -9,6 +9,7 @@ import { PrismaClient, type Prisma } from "../src/generated/prisma/client";
 import { createAdminJourneyService } from "../src/services/adminJourneyCore";
 import { createAdminJourneyHttpHandlers } from "../src/services/adminJourneyHttp";
 import { createAdminOperationalReadService } from "../src/services/adminOperationalReadCore";
+import { handoffEvidenceForActivitySql } from "../src/services/adminHandoffEvidence";
 import type { AdminJourneyResult, AdminJourneyStage } from "../src/services/adminJourneyContract";
 import { declaredSearchCrawler, searchCrawlerMetadata } from "../src/lib/searchCrawlerGate";
 
@@ -535,4 +536,36 @@ test("Search Activity gives legacy verified crawlers identity precedence and rec
   assert.equal(detail.identity.kind, "bot");
   assert.deepEqual(detail.crawler, { name: "GOOGLEBOT", evidence: "VERIFIED_DNS" });
   assert.deepEqual(detail.searcher, { name: null, email: null, activity: null });
+});
+
+test("Admin operational activity evidence links exact guest/account searches and rejects mismatched evidence", async () => {
+  const at = time(15);
+  const accountA = await account();
+  const accountB = await account();
+  const sessionId = randomUUID();
+  const requestId = randomUUID();
+  const original = await search(null, at, { userId: accountA.id, requestId, query: { environment: "staging", operationalSessionId: sessionId } });
+  const guestRequestId = randomUUID();
+  const guest = await search(null, at, { requestId: guestRequestId, query: { environment: "staging", operationalSessionId: sessionId } });
+  const foreignRequestId = randomUUID();
+  await search(null, at, { userId: accountA.id, requestId: foreignRequestId, query: { environment: "production", operationalSessionId: sessionId } });
+  const reference = { environment: "staging", operationalRequestId: requestId, operationalSessionId: sessionId };
+  const cases = [
+    { data: { userId: accountA.id, metadata: reference }, expected: original.id },
+    { data: { metadata: { ...reference, operationalRequestId: guestRequestId } }, expected: guest.id },
+    { data: { userId: accountB.id, metadata: reference }, expected: null },
+    { data: { metadata: reference }, expected: null },
+    { data: { userId: accountA.id, metadata: { ...reference, operationalSessionId: randomUUID() } }, expected: null },
+    { data: { userId: accountA.id, metadata: { ...reference, operationalSessionId: "invalid-session" } }, expected: null },
+    { data: { userId: accountA.id, type: "FLIGHT" as const, metadata: reference }, expected: null },
+    { data: { userId: accountA.id, metadata: { ...reference, operationalRequestId: foreignRequestId } }, expected: null },
+    { data: { userId: accountA.id, metadata: { environment: "staging", operationalRequestId: requestId } }, expected: null },
+    { data: { userId: accountA.id, metadata: { ...reference, operationalRequestId: randomUUID(), requestId } }, expected: null },
+  ];
+  for (const { data, expected } of cases) {
+    const receipt = await redirect(null, new Date(+at + 60_000), data);
+    const links = await db.$queryRaw<Array<{ id: string; searchHistoryId: string | null }>>(handoffEvidenceForActivitySql([receipt.id], "staging"));
+    assert.deepEqual(links, [{ id: receipt.id, searchHistoryId: expected }]);
+    assert.equal(await db.journeyEvent.count({ where: { redirectLogId: receipt.id } }), 0);
+  }
 });

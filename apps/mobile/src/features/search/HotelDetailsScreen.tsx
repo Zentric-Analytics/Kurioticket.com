@@ -468,7 +468,7 @@ function HotelDetail({
       if (selected.offerId === "internal-rooms") {
         if (kurioticketWebUrl) await openProviderInApp(kurioticketWebUrl);
       } else {
-        const response = await travelApi.hotelRedirect(selected.offerId, { handoff: journeyEvents.prepareHandoff(journeyRequestId) });
+        const response = await travelApi.hotelRedirect(selected.offerId, { handoff: journeyEvents.prepareHandoff(journeyRequestId), operationalRequestId: journeyRequestId });
         await openProviderInApp(response.url);
       }
     } catch {

@@ -231,3 +231,20 @@ test("international Activity context keeps the final journey request target belo
     assert.equal(status,200,"Node's default HTTP parser accepts the final URL with a 4KB cookie");
   } finally { await new Promise<void>((resolve,reject) => server.close(error => error ? reject(error) : resolve())); }
 });
+
+test("operational search timeline displays the exact returned count, including zero", () => {
+  const base: ActivityRow = { id: "s-count", at, stage: "SEARCH_COMPLETED", label: "Search completed", detail: "FLIGHT · LOS → DXB · SUCCESS", product: "FLIGHT" };
+  for (const [resultCount, expected] of [[535, "535 results returned"], [1813, "1,813 results returned"], [0, "0 results returned"], [1, "1 result returned"]] as const) {
+    assert.ok(eventMarkup(render([{ ...base, resultCount }]), base.id).includes(expected), expected);
+  }
+  assert.doesNotMatch(render([{ ...base, resultCount: null }]), /results? returned/);
+  assert.doesNotMatch(render([{ ...base, stage: "RESULTS_VIEWED", resultCount: 535 }]), /results returned/);
+});
+test("only an independently verified operational handoff links to its original search", () => {
+  const base: ActivityRow = { id: "r-link", at, stage: "PROVIDER_HANDOFF_STARTED", product: "FLIGHT", label: "Provider handoff started", detail: "FLIGHT · LOS-DXB · Example provider" };
+  const linked = render([{ ...base, searchHistoryId: "original-search" }]);
+  assert.match(linked, /href="\/admin\/searches\/original-search\?environment=staging"/);
+  assert.match(linked, /View original search/);
+  assert.doesNotMatch(render([base]), /View original search|\/admin\/searches\//);
+  assert.doesNotMatch(render([{ ...base, searchHistoryId: "original-search", journeyId: "consented-journey" }]), /View original search/);
+});

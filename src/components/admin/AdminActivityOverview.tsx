@@ -57,7 +57,7 @@ export function AdminActivityOverview({
                   {search.searchStatus ? <span>Status: <span className="font-medium text-[#334155]">{search.searchStatus.replaceAll("_", " ").toLowerCase()}</span></span> : null}
                   {search.resultCount !== null ? <span>Results returned: <span className="font-medium tabular-nums text-[#334155]">{search.resultCount}</span></span> : null}
                   <span>{search.eventCount} recorded {search.eventCount === 1 ? "stage" : "stages"}</span>
-                  {!search.journeyId ? <span>Search record only</span> : null}
+                  {!search.journeyId ? <span>{search.handoffs > 0 ? "Operational search and handoffs" : "Search record only"}</span> : null}
                 </div>
                 <dl className="grid min-w-0 grid-cols-3 gap-2 sm:max-w-[550px]">
                   {counts.map(({ label, value }) => <div key={label} className="min-w-0 rounded-md border border-[#E2E8F0] px-2.5 py-2">
