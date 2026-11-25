@@ -4,8 +4,10 @@ import {
   type AdminTripProduct,
   type AdminTripStatus,
 } from "./adminConfirmedTripsDirectory";
+import { adminLocalDate } from "./adminLocalTime";
+import { adminRollingRange } from "./adminReportingRanges";
 
-/** Today defaults to the current UTC calendar day; legacy rolling 24h deep links remain valid. */
+/** Today uses the reporting calendar. Rolling periods preserve elapsed duration. */
 export const adminTripWorkspaceRanges = ["24h", "all", "today", "7d", "30d", "custom"] as const;
 export type AdminTripWorkspaceRange = (typeof adminTripWorkspaceRanges)[number];
 
@@ -14,22 +16,13 @@ type Resolved =
   | { ok: true; range: AdminTripWorkspaceRange; filters: AdminTripFilters; dateFields: { from: string; to: string } }
   | { ok: false; error: string };
 
-function utcDay(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-function calendarStart(now: Date, count: number): string {
-  const beginning = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  beginning.setUTCDate(beginning.getUTCDate() - (count - 1));
-  return utcDay(beginning);
-}
-
 /**
  * The same normalized filters drive the summary and the matching records.
- * Never accept a future-dated/invalid range or silently reinterpret minute-precise windows.
+ * Reuse an anchored rolling window only when its elapsed duration matches the selected range.
  */
-export function parseAdminTripWorkspace(raw: RawQuery, now = new Date()): Resolved {
+export function parseAdminTripWorkspace(raw: RawQuery, now = new Date(), timeZone = "UTC"): Resolved {
   if (Array.isArray(raw.range)) return { ok: false, error: "Repeated trip time ranges are not supported." };
+  if (Array.isArray(raw.from) || Array.isArray(raw.to)) return { ok: false, error: "Repeated trip dates are not supported." };
   const requested = raw.range || "";
   if (typeof requested !== "string" || (requested && !adminTripWorkspaceRanges.includes(requested as AdminTripWorkspaceRange))) {
     return { ok: false, error: "Unsupported trip time range." };
@@ -40,20 +33,21 @@ export function parseAdminTripWorkspace(raw: RawQuery, now = new Date()): Resolv
     from: typeof raw.from === "string" && range === "custom" ? raw.from : "",
     to: typeof raw.to === "string" && range === "custom" ? raw.to : "",
   };
-  const day = utcDay(now);
-  const rollingDays = range === "24h" ? 1 : range === "7d" ? 7 : range === "30d" ? 30 : 0;
+  const day = adminLocalDate(now, timeZone);
+  const rolling = range === "24h" || range === "7d" || range === "30d"
+    ? adminRollingRange(range, now, timeZone) : null;
   // A signed/paginated URL can preserve exact interval instants, rather than
   // recalculating them while a user navigates records.
-  const preserved = rollingDays && typeof raw.from === "string" && typeof raw.to === "string" &&
+  const preserved = rolling && typeof raw.from === "string" && typeof raw.to === "string" &&
     /^\d{4}-\d{2}-\d{2}T/.test(raw.from) && /^\d{4}-\d{2}-\d{2}T/.test(raw.to) &&
     Date.parse(raw.to) <= now.getTime() &&
-    Date.parse(raw.to) - Date.parse(raw.from) === rollingDays * 86_400_000;
+    Date.parse(raw.to) - Date.parse(raw.from) === Date.parse(rolling.to) - Date.parse(rolling.from);
   const from = range === "today" ? day
-    : rollingDays ? preserved ? raw.from as string : new Date(now.getTime() - rollingDays * 86_400_000).toISOString()
+    : rolling ? preserved ? raw.from as string : rolling.from
       : dateFields.from;
   const to = range === "today" ? day
-    : rollingDays ? preserved ? raw.to as string : now.toISOString() : dateFields.to;
-  const parsed = parseAdminTripFilters({ ...raw, from, to });
+    : rolling ? preserved ? raw.to as string : rolling.to : dateFields.to;
+  const parsed = parseAdminTripFilters({ ...raw, from, to }, timeZone);
   return parsed.ok
     ? { ok: true, range, filters: parsed.filters, dateFields }
     : { ok: false, error: parsed.error };

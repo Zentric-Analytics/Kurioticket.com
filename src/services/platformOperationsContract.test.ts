@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
+import { resolveAdminTimeZone, viewerTodayStart } from "@/lib/adminLocalTime";
 import { applicationSources } from "@/lib/application-source";
 import { partitionOperationalGroups, summarizeOperationalGroups, parsePlatformOperationsHours, projectScheduledJobRun, type OperationalGroup } from "./platformOperationsContract";
 import { createScheduledJobObserver } from "./scheduledJobObservation";
@@ -42,7 +43,7 @@ test("job observation updates one run, preserves task failure, and stores no pay
 function loadRoute(file: string, modules: Record<string, unknown>) {
   const exports: { GET: (request: Request) => Promise<Response> } = {} as never;
   runInNewContext(ts.transpileModule(readFileSync(file, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {
-    exports, Response, URL, Date, console: { error: () => undefined }, require: (name: string) => { assert.ok(name in modules, name); return modules[name]; },
+    exports, Response, URL, URLSearchParams, Date, console: { error: () => undefined }, require: (name: string) => { assert.ok(name in modules, name); return modules[name]; },
   });
   return exports.GET;
 }
@@ -56,7 +57,7 @@ test("health HTTP status follows database readiness and never leaks database err
 });
 test("operational endpoint rejects unauthorized access and client-owned environment", async () => {
   let authorized = false, calls = 0;
-  const get = loadRoute("src/app/api/admin/platform-operations/route.ts", { "@/services/platformOperationsContract": { parsePlatformOperationsHours }, "@/lib/admin": { requireAdminApiSession: async () => authorized ? { session: {} } : { response: Response.json({}, { status: 403 }) } }, "@/services/platformOperationsService": { readPlatformOperations: async () => { calls++; return {}; } } });
+  const get = loadRoute("src/app/api/admin/platform-operations/route.ts", { "@/services/platformOperationsContract": { parsePlatformOperationsHours }, "@/lib/admin": { requireAdminApiSession: async () => authorized ? { session: {} } : { response: Response.json({}, { status: 403 }) } }, "@/lib/adminViewerTimeZone.server": { getAdminViewerTimeZone: async () => "Africa/Lagos" }, "@/services/platformOperationsService": { readPlatformOperations: async (_hours: number, _period: string, timeZone: string) => { assert.equal(timeZone, "Africa/Lagos"); calls++; return {}; } } });
   assert.equal((await get(new Request("https://kurioticket.com/api/admin/platform-operations"))).status, 403);
   authorized = true;
   for (const query of ["environment=staging", "hours=0", "hours=721", "hours=NaN", "hours=24&hours=168", "hours=", "hours=1e2", "hours=0x18", "hours=1.5", "hours=%2024", "hours=-1"]) assert.equal((await get(new Request("https://kurioticket.com/api/admin/platform-operations?" + query))).status, 400);
@@ -68,13 +69,20 @@ test("operational endpoint rejects unauthorized access and client-owned environm
 
 test("operational service scopes aggregate SQL to its environment and outages return null data", async () => {
   let offline = false;
+  const expectedStart = "2026-11-24T23:00:00.000Z";
+  class Clock extends Date {
+    constructor(value: string | number = "2026-11-25T12:00:00.000Z") { super(value); }
+  }
   const modules: Record<string, unknown> = {
     "server-only": {},
+    "@/lib/adminLocalTime": { resolveAdminTimeZone, viewerTodayStart },
     "@/lib/prisma": { getOptionalPrisma: () => ({ $transaction: async (task: (tx: unknown) => Promise<unknown>) => {
       if (offline) throw new Error("private database error");
       return task({ $queryRaw: async (_strings: TemplateStringsArray, ...values: unknown[]) => {
         assert.equal(values.filter(value => value === "staging").length, 3);
         assert.ok(!values.includes("production"));
+        const instants = values.filter((value): value is Date => value instanceof Date).map(value => value.toISOString());
+        assert.equal(instants.filter(value => value === expectedStart).length, 3);
         assert.match(_strings.join("?"), /service NOT IN \('scheduled-job','crawler-blocked-search'\)/);
         assert.doesNotMatch(_strings.join("?"), /SELECT 'crawlerBlocks'/);
         assert.match(_strings.join("?"), /"countAsSearch" = TRUE/, "historical nearby child searches are not aggregate searches");
@@ -92,9 +100,10 @@ test("operational service scopes aggregate SQL to its environment and outages re
     "./platformOperationsContract": { partitionOperationalGroups },
     "./adminAlertService": { getAdminAlertSnapshot: async () => null },
   };
-  const exports: { readPlatformOperations: () => Promise<{ activity: { state: string; data: unknown }; nativeApplicationHealth: { state: string }; botSearches: number | null }> } = {} as never;
-  runInNewContext(ts.transpileModule(readFileSync("src/services/platformOperationsService.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, Date, require: (name: string) => { assert.ok(name in modules, name); return modules[name]; } });
-  const observed = await exports.readPlatformOperations();
+  const exports: { readPlatformOperations: (hours?: number, period?: string, timeZone?: string) => Promise<{ timeZone: string; activity: { state: string; data: unknown }; nativeApplicationHealth: { state: string }; botSearches: number | null }> } = {} as never;
+  runInNewContext(ts.transpileModule(readFileSync("src/services/platformOperationsService.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, Date: Clock, require: (name: string) => { assert.ok(name in modules, name); return modules[name]; } });
+  const observed = await exports.readPlatformOperations(24, "today", "Africa/Lagos");
+  assert.equal(observed.timeZone, "Africa/Lagos");
   assert.equal(observed.activity.state, "AVAILABLE"); assert.equal(observed.nativeApplicationHealth.state, "UNKNOWN");
   assert.equal(observed.botSearches, 17);
   assert.equal((observed.activity.data as { searches: { combined: { total: number } } }).searches.combined.total, 19,
@@ -111,6 +120,7 @@ test("Overview search activity observes exact bounds in the deployment and disti
   let state: "records" | "empty" | "unavailable" = "records";
   const modules: Record<string, unknown> = {
     "server-only": {},
+    "@/lib/adminLocalTime": { resolveAdminTimeZone, viewerTodayStart },
     "@/lib/prisma": { getOptionalPrisma: () => ({ $queryRaw: async (sql: TemplateStringsArray, ...params: unknown[]) => {
       assert.match(sql.join("?"), /FROM "SearchHistory"[\s\S]*"createdAt" >= \? AND "createdAt" < \?/);
       assert.doesNotMatch(sql.join("?"), /ApiProviderLog|crawler-blocked-search/);

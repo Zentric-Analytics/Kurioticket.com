@@ -46,7 +46,7 @@ export function recentPageViews(events: ActivityRow[]) {
     .slice(0, PAGE_VIEW_SUMMARY_LIMIT);
 }
 
-export function parsePageHistoryQuery(raw: RawActivityQuery, now: Date):
+export function parsePageHistoryQuery(raw: RawActivityQuery, now: Date, timeZone = "UTC"):
   { ok: true; query: PageHistoryQuery } | { ok: false; error: string } {
   if (Object.values(raw).some(Array.isArray)) return { ok: false, error: "Repeated filters are not supported." };
   const range = typeof raw.range === "string" ? raw.range : "today";
@@ -59,9 +59,9 @@ export function parsePageHistoryQuery(raw: RawActivityQuery, now: Date):
   if (range === "custom" && !raw.from && !raw.to) return { ok: false, error: "Choose a valid custom date range." };
   // Use the same date semantics as Activity. Freeze the upper bound on all-time
   // views too, so paging links don't drift as new events arrive.
-  const normalized = normalizeUserActivityQuery({ range, from: raw.from, to: raw.to, q: raw.q, product: raw.product }, now);
+  const normalized = normalizeUserActivityQuery({ range, from: raw.from, to: raw.to, q: raw.q, product: raw.product }, now, timeZone);
   if (!normalized.to && range === "all") normalized.to = now.toISOString();
-  const parsed = parseActivityFilters({ ...normalized, tab: "pages", stage: "all", order: "newest" });
+  const parsed = parseActivityFilters({ ...normalized, tab: "pages", stage: "all", order: "newest" }, timeZone);
   if (!parsed.ok) return parsed;
   return { ok: true, query: { filters: parsed.filters, range, platform, page } };
 }

@@ -4,10 +4,19 @@ import test from "node:test";
 import { activityOverviewRows, completeJourneyDetailHref, journeyHistoryHrefFromActivity } from "./adminActivityOverview";
 import { decodeActivityJourneyReturn } from "./adminActivityJourneyNavigation";
 import type { ActivityRow } from "./adminIdentityJourney";
+import { journeyWindow } from "./adminJourneyDateRange";
 import type { ActivityFilters } from "./adminIdentityActivity";
 
 const now = new Date("2026-11-20T12:50:00.000Z");
 const activityPath = "/admin/users/user/qa-account-0001/activity?range=today&product=CAR&tab=searches&q=CDG";
+function assertSameActivityReturn(value: string | null) {
+  assert.ok(value);
+  const base = "https://kurioticket.test";
+  const returned = new URL(value, base);
+  const original = new URL(activityPath, base);
+  assert.equal(returned.pathname, original.pathname);
+  assert.deepEqual(Object.fromEntries(returned.searchParams), Object.fromEntries(original.searchParams));
+}
 const filters: ActivityFilters = {
   tab: "searches", stage: "SEARCH_COMPLETED", product: "CAR",
   from: "2026-11-20T00:00:00.000Z", to: now.toISOString(),
@@ -189,7 +198,7 @@ test("journey navigation carries only applicable product/date/stage filters and 
   assert.equal(url.searchParams.get("to"),filters.to);
   assert.equal(url.searchParams.get("q"),null);
   assert.equal(url.searchParams.get("tab"),null);
-  assert.equal(decodeActivityJourneyReturn(url.searchParams.get("activityReturn")),activityPath);
+  assertSameActivityReturn(decodeActivityJourneyReturn(url.searchParams.get("activityReturn")));
 });
 
 test("Journey History links preserve newly supported native flight stage filters", () => {
@@ -199,7 +208,7 @@ test("Journey History links preserve newly supported native flight stage filters
     const url = new URL(href, "https://kurioticket.test");
     assert.equal(url.searchParams.get("stage"), stage);
     assert.equal(url.searchParams.get("product"), "FLIGHT");
-    assert.equal(decodeActivityJourneyReturn(url.searchParams.get("activityReturn")), activityPath);
+    assertSameActivityReturn(decodeActivityJourneyReturn(url.searchParams.get("activityReturn")));
   }
 });
 
@@ -213,27 +222,31 @@ test("journey detail opens all eligible recorded stages for one identity; filter
   assert.equal(url.searchParams.get("userId"),"qa-account-0001");
   assert.equal(url.searchParams.get("product"),null);
   assert.equal(url.searchParams.get("stage"),null);
-  assert.equal(decodeActivityJourneyReturn(url.searchParams.get("activityReturn")),activityPath);
+  assertSameActivityReturn(decodeActivityJourneyReturn(url.searchParams.get("activityReturn")));
 });
 
-test("old inclusive UTC date filters become a strict same-day Journey window", () => {
+test("inclusive Activity dates retain local calendar semantics in Journey History", () => {
   const href=journeyHistoryHrefFromActivity("user","qa-account-0001",{
     ...filters,from:"2026-10-22",to:"2026-10-22",
   },"custom",activityPath);
   const p=new URL(href,"https://kurioticket.test").searchParams;
   assert.equal(p.get("range"),"custom");
-  assert.equal(p.get("from"),"2026-10-22T00:00:00.000Z");
-  assert.equal(p.get("to"),"2026-10-23T00:00:00.000Z");
+  assert.equal(p.get("from"), "2026-10-22");
+  assert.equal(p.get("to"), "2026-10-22");
+  assert.deepEqual(journeyWindow(Object.fromEntries(p), now, "Africa/Lagos"), {
+    from: "2026-10-21T23:00:00.000Z",
+    to: "2026-10-22T23:00:00.000Z",
+  });
 });
 
 test("operational guest events appear directly in Activity without a second-page redirect", () => {
   const page = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx", "utf8");
   const overview = readFileSync("src/components/admin/AdminActivityOverview.tsx", "utf8");
   const legacy = readFileSync("src/app/admin/users/[kind]/[id]/other/page.tsx", "utf8");
-  assert.match(page, /<AdminActivityOverview events=\{data\.events\}/);
+  assert.match(page, /<AdminActivityOverview timeZone=\{timeZone\} events=\{data\.events\}/);
   assert.match(page, /environment=\{environment\} operational=\{operational\}/);
   assert.doesNotMatch(page, /otherHref|encodeURIComponent\(id\) \+ "\/other"/);
-  assert.match(overview, /<ActivityTimeline events=\{events\} nextHref=\{null\} environment=\{environment\}/);
+  assert.match(overview, /<ActivityTimeline timeZone=\{timeZone\} events=\{events\} nextHref=\{null\} environment=\{environment\}/);
   assert.doesNotMatch(overview, /View recorded session activity|href=\{otherHref\}/);
   assert.match(overview, /!operational \? <section/);
   assert.match(legacy, /loadAdminIdentityActivity\(kind, id, parsed\.filters, undefined, "all"\)/);

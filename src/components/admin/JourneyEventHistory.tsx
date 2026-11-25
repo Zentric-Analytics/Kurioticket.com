@@ -1,7 +1,6 @@
 import type { AdminJourneyEvent } from "@/services/adminJourneyContract";
 
-const dateFormat = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeZone: "UTC" });
-const timeFormat = new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit", second: "2-digit", timeZone: "UTC" });
+import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 const readable = (value: string) => value.toLowerCase().replaceAll("_", " ").replace(/^./, c => c.toUpperCase());
 const searchStatusLabel = (status: string, resultCount: number) =>
   status === "PARTIAL"
@@ -37,11 +36,13 @@ const searchCriteria = (search: NonNullable<AdminJourneyEvent["search"]>): strin
 };
 
 /** Presentation only: retain the reader's event order and every recorded row. */
-export function JourneyEventHistory({ events }: { events: AdminJourneyEvent[] }) {
+export function JourneyEventHistory({ events, timeZone = "UTC" }: { events: AdminJourneyEvent[]; timeZone?: string }) {
+  const dateFormat = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeZone });
+  const timeFormat = new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit", second: "2-digit", timeZone });
   return <section aria-labelledby="journey-history-heading" className="min-w-0">
     <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
       <h2 id="journey-history-heading" className="text-[15px] font-semibold text-[#020617]">Event History</h2>
-      <p className="text-xs text-[#64748B]">{events.length} recorded {events.length === 1 ? "event" : "events"} in this view · UTC</p>
+      <p className="text-xs text-[#64748B]">{events.length} recorded {events.length === 1 ? "event" : "events"} in this view · {formatAdminTimeZoneLabel(timeZone)}</p>
     </div>
     <div className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" role="region" aria-label="Journey event history" tabIndex={0}>
       <table className="w-full min-w-[820px] table-fixed text-left text-[13px] text-[#334155]">

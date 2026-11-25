@@ -1,4 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
+import { adminLocalDate, normalizeAdminTimeZone } from "@/lib/adminLocalTime";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 import { classifyProviderIssue, type SafeProviderIssue } from "@/services/searchFailureDiagnostics";
 
@@ -173,7 +174,7 @@ export async function readProviderOperationalSnapshot(input: {
   environment: PublicEnvironment;
   now: Date;
   windowHours?: number;
-  customRange?: { from: Date; to: Date };
+  customRange?: { from: Date; to: Date; timeZone?: string };
 }): Promise<ProviderOperationalStatus[]> {
   const hours =
     Number.isInteger(input.windowHours) &&
@@ -182,10 +183,19 @@ export async function readProviderOperationalSnapshot(input: {
       ? input.windowHours as number
       : 24;
   const custom = input.customRange;
-  if (custom && (Number.isNaN(custom.from.getTime()) || Number.isNaN(custom.to.getTime()) ||
-    custom.from > custom.to || custom.to > input.now ||
-    custom.to.getTime() - custom.from.getTime() > 90 * 86_400_000)) {
-    throw new Error("Invalid custom provider telemetry range.");
+  if (custom) {
+    if (!Number.isFinite(custom.from.getTime()) || !Number.isFinite(custom.to.getTime()) ||
+        custom.from > custom.to || custom.to > input.now) {
+      throw new Error("Invalid custom provider telemetry range.");
+    }
+    const zone = normalizeAdminTimeZone(custom.timeZone);
+    const maxRange = 90 * 86_400_000;
+    // Provider forms bound the number of local dates. A fall-back date
+    // can lengthen an otherwise valid range by an hour.
+    const exceedsRange = zone
+      ? Date.parse(adminLocalDate(custom.to, zone)) - Date.parse(adminLocalDate(custom.from, zone)) >= maxRange
+      : custom.to.getTime() - custom.from.getTime() > maxRange;
+    if (exceedsRange) throw new Error("Invalid custom provider telemetry range.");
   }
   const since = custom?.from ?? new Date(input.now.getTime() - hours * 60 * 60 * 1000);
   const until = custom?.to ?? input.now;

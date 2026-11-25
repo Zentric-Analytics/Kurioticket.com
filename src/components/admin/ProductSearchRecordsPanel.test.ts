@@ -94,7 +94,7 @@ test("both new Providers API endpoints independently authorize requests and rest
 
 test("hotel and car search filters keep draft selections until Apply filters", () => {
   assert.match(panelSource, /const \[draftFilter, setDraftFilter\] = useState<ProductSearchFilter>\("EXCEPTIONS"\)/);
-  assert.match(panelSource, /const \[draftWindow, setDraftWindow\] = useState<ProductSearchWindow>\("24h"\)/);
+  assert.match(panelSource, /const \[draftWindow, setDraftWindow\] = useState<ProductSearchWindow>\("today"\)/);
   assert.match(panelSource, /value=\{draftFilter\}/);
   assert.match(panelSource, /value=\{draftWindow\}/);
   assert.match(panelSource, /setDraftFilter\(value as ProductSearchFilter\)/);
@@ -107,5 +107,5 @@ test("hotel and car search filters keep draft selections until Apply filters", (
   assert.match(panelSource, /sm:grid-cols-\[minmax\(0,180px\)_minmax\(0,180px\)_auto\]/);
   // Requests use applied state and do not depend on the draft values.
   assert.match(panelSource, /new URLSearchParams\(\{ product, filter, window: windowValue \}\)/);
-  assert.match(panelSource, /\[product, filter, windowValue, cursor, reload\]/);
+  assert.match(panelSource, /\[product, filter, windowValue, cursor, reload, timeZone\]/);
 });

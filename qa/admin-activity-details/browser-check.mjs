@@ -1,5 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 
 const base = process.env.ADMIN_ACTIVITY_QA_URL;
@@ -219,7 +220,7 @@ try {
     await expect(guestManage).toHaveAttribute("aria-expanded","false");
     await expect(page.getByRole("button",{name:"Apply Filter",exact:true})).toHaveCount(0);
     await expect(page.getByRole("button",{name:"Apply filters",exact:true})).toBeVisible();
-    await expect(page.getByRole("button",{name:"Date range: All time"})).toBeVisible();
+    await expect(page.getByRole("button",{name:"Date range: All time · UTC", exact:true})).toBeVisible();
     await expect(page.getByRole("button",{name:"Activity product: All products"})).toBeVisible();
     await expect(page.getByRole("button",{name:"Activity type: All activity types"})).toBeVisible();
     await expect(page.getByRole("button",{name:/Sort activity/})).toHaveCount(0);
@@ -253,7 +254,7 @@ try {
     await expectBalancedDesktopHeader(page, "Registered zoom " + zoom);
     const inlineDevices = page.getByTestId("identity-device-access");
     await expect(inlineDevices).toBeVisible();
-    await expect(inlineDevices.getByText("Today (UTC)")).toBeVisible();
+    await expect(inlineDevices.getByText("Today · UTC", { exact:true })).toBeVisible();
     await expect(inlineDevices.getByRole("heading",{name:"Device & Access History"})).toHaveCount(0);
     await expect(inlineDevices.getByTestId("device-session-row")).toHaveCount(3);
     await expect(inlineDevices.getByTestId("device-today-list")).toBeVisible();
@@ -591,9 +592,9 @@ try {
   assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),"qa-guest-activity-0001");
   console.log("PASS concise summary and identity controls");
 
-  // The default rolling 24-hour period must not invent October records in November.
+  // Today's period must not include historical records from the fixture.
   await page.goto(url.split("?")[0]);
-  await expect(page.getByRole("button",{name:"Date range: Today"})).toBeVisible();
+  await expect(page.getByRole("button",{name:"Date range: Today · UTC", exact:true})).toBeVisible();
   await expect(page.getByTestId("activity-journey-row")).toHaveCount(0);
   await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
   await page.goto(url);
@@ -621,10 +622,10 @@ try {
   await expect(page).not.toHaveURL(/product=FLIGHT/);
   // Legacy custom-date URLs remain editable without adding a fifth preset option.
   await page.goto(url.split("?")[0]+"?range=custom&from=2026-10-01&to=2026-10-23");
-  await expect(page.getByRole("button", { name: "Custom start date UTC" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Custom end date UTC" })).toBeVisible();
-  await page.getByRole("button", { name: "Custom end date UTC" }).click();
-  const endCalendar = page.getByRole("dialog", { name: "Custom end date UTC" });
+  await expect(page.getByRole("button", { name: "Custom start date" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Custom end date" })).toBeVisible();
+  await page.getByRole("button", { name: "Custom end date" }).click();
+  const endCalendar = page.getByRole("dialog", { name: "Custom end date" });
   await expect(endCalendar.getByRole("heading")).toHaveText("October 2026");
   await expect(endCalendar.getByRole("combobox")).toHaveCount(0);
   await endCalendar.getByRole("gridcell", { name: "Saturday, October 24, 2026" }).click();
@@ -667,6 +668,22 @@ try {
   assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Registered Activity typography and palette");
   await expectAlignedColumns(page);
   await page.screenshot({caret:"initial",path:output+"/after-registered-activity-1280.png",fullPage:true});
+
+  const localCalendar = base + "/admin/users/guest/qa-lagos-midnight-0001/activity?range=custom&from=2026-10-22&to=2026-10-22";
+  await page.goto(localCalendar);
+  await expect(page.getByRole("button", { name: "Date range: Custom range · UTC", exact: true })).toBeVisible();
+  await expect(page.getByTestId("activity-journey-row")).toHaveCount(0);
+  const account = createHash("sha256").update("qa-admin").digest("hex").slice(0, 32);
+  await context.addCookies([{
+    name: "admin_reporting_tz_manual_" + account, value: "Africa/Lagos", url: base, httpOnly: true,
+  }]);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Date range: Custom range · WAT (UTC+1)", exact: true })).toBeVisible();
+  await expect(page.getByTestId("activity-journey-row")).toContainText("Abuja");
+  await page.getByRole("link", { name: "View Journey History" }).click();
+  await expect(page.getByRole("button", { name: "Date range: Custom range · WAT (UTC+1)", exact: true })).toBeVisible();
+  console.log("PASS administrator time zone controls calendar bounds and persists across Activity and Journey History");
+
   assert.deepEqual(errors,[],"No browser exceptions");
   console.log("PASS registered identity and browser errors");
 } finally {

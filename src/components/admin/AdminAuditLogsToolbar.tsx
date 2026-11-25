@@ -5,9 +5,9 @@ import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent
 import { LoaderCircle, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AdminDirectorySelect, type AdminDirectoryOption } from "./AdminDirectorySelect";
-import { ADMIN_REPORTING_RANGE_OPTIONS } from "@/lib/adminReportingRanges";
+import { ADMIN_REPORTING_RANGE_OPTIONS, validAdminCustomCalendarDates } from "@/lib/adminReportingRanges";
 
-type AuditRange = "today" | "24h" | "7d" | "30d" | "all" | "90d" | "custom";
+type AuditRange = "today" | "24h" | "7d" | "30d" | "all" | "90d" | "custom" | "fixed";
 
 type Props = {
   action: string;
@@ -18,6 +18,9 @@ type Props = {
   range: AuditRange;
   fromDate: string;
   toDate: string;
+  today: string;
+  timeZone: string;
+  timeZoneLabel: string;
   pageHref: string;
 };
 
@@ -59,10 +62,6 @@ function withCurrentOption(options: readonly AdminDirectoryOption[], value: stri
   return [{ value, label: prefix + value }, ...options];
 }
 
-function validDate(value: string) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value + "T00:00:00Z"));
-}
-
 export function AdminAuditLogsToolbar({
   action,
   adminEmail,
@@ -72,6 +71,9 @@ export function AdminAuditLogsToolbar({
   range,
   fromDate,
   toDate,
+  today,
+  timeZone,
+  timeZoneLabel,
   pageHref,
 }: Props) {
   const router = useRouter();
@@ -92,10 +94,16 @@ export function AdminAuditLogsToolbar({
 
   useEffect(() => {
     paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
+  }, [pageHref]);
+
+  const filterScope = JSON.stringify([pageHref, range, action, targetType]);
+  const [previousFilterScope, setPreviousFilterScope] = useState(filterScope);
+  if (filterScope !== previousFilterScope) {
+    setPreviousFilterScope(filterScope);
     setDraftRange(range);
     setDraftAction(action);
     setDraftTargetType(targetType);
-  }, [pageHref, range, action, targetType]);
+  }
 
   const committedScope = JSON.stringify([pageHref, fromDate, toDate, customOpen]);
   const [previousScope, setPreviousScope] = useState(committedScope);
@@ -133,13 +141,14 @@ export function AdminAuditLogsToolbar({
     ...rangeOptions,
     ...(draftRange === "90d" ? [{ value: "90d", label: "Last 90 days (legacy)" }] : []),
     ...(draftRange === "24h" ? [{ value: "24h", label: "Last 24 hrs (legacy)" }] : []),
+    ...(range === "fixed" ? [{ value: "fixed", label: "Fixed date range" }] : []),
   ];
-  const todayUtc = new Date().toISOString().slice(0, 10);
-  const validCustom = validDate(draftDates.from) && validDate(draftDates.to) && draftDates.from <= draftDates.to && draftDates.to <= todayUtc;
+  const validCustom = validAdminCustomCalendarDates(draftDates.from, draftDates.to, today);
 
   const navigate = useCallback((values: Record<string, string | null>) => {
     const params = new URLSearchParams(paramsRef.current);
     params.delete("cursor");
+    params.delete("cursorTimeZone");
     for (const [key, value] of Object.entries(values)) {
       if (value) params.set(key, value);
       else params.delete(key);
@@ -159,7 +168,8 @@ export function AdminAuditLogsToolbar({
   function applyFilters() {
     if (isPending || (draftRange === "custom" && !validCustom)) return;
     navigate({
-      range: draftRange,
+      range: draftRange === "fixed" ? null : draftRange,
+      ...(draftRange === "fixed" ? {} : { from: null, to: null }),
       action: draftAction || null,
       targetType: draftTargetType || null,
       // Preserve old field-specific bookmarks unless the search was changed.
@@ -208,6 +218,7 @@ export function AdminAuditLogsToolbar({
             key={draftRange + ":" + rangeSelectVersion}
             name="range"
             label="Date range"
+            timeZoneLabel={timeZoneLabel}
             value={draftRange}
             options={options}
             nativeExcludeValues={["custom"]}
@@ -253,11 +264,12 @@ export function AdminAuditLogsToolbar({
       {(customOpen || draftRange === "custom") ? (
         <div className="mt-3 flex flex-wrap items-end gap-3">
           <label className="text-[11px] font-medium text-[#64748B]">
-            From (UTC)
+            From ({timeZoneLabel})
             <AdminCalendarInput
-              ariaLabel="Custom start date UTC"
+              ariaLabel={"Custom start date (" + timeZoneLabel + ")"}
               value={draftDates.from}
-              max={draftDates.to || todayUtc}
+              max={draftDates.to || today}
+              timeZone={timeZone}
               onChange={event => {
                 setCustomOpen(true);
                 setDraftDates(current => ({ ...current, from: event.target.value }));
@@ -265,12 +277,13 @@ export function AdminAuditLogsToolbar({
               className="w-[210px] max-w-full" />
           </label>
           <label className="text-[11px] font-medium text-[#64748B]">
-            To (UTC)
+            To ({timeZoneLabel})
             <AdminCalendarInput
-              ariaLabel="Custom end date UTC"
+              ariaLabel={"Custom end date (" + timeZoneLabel + ")"}
               value={draftDates.to}
               min={draftDates.from || undefined}
-              max={todayUtc}
+              max={today}
+              timeZone={timeZone}
               onChange={event => {
                 setCustomOpen(true);
                 setDraftDates(current => ({ ...current, to: event.target.value }));

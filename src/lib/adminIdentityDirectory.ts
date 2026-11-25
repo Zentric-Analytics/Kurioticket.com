@@ -1,4 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
+import { adminCalendarRange, adminLocalDate, adminStartOfLocalDay } from "./adminLocalTime";
+import { adminRollingRange } from "./adminReportingRanges";
 
 /** Identity types remain separate in storage; only their Admin listing is unified. */
 
@@ -16,29 +18,24 @@ export type AdminIdentityDate = (typeof ADMIN_IDENTITY_DATES)[number];
 export function parseAdminIdentityDate(value?: string): AdminIdentityDate {
   return ADMIN_IDENTITY_DATES.includes(value as AdminIdentityDate) ? value as AdminIdentityDate : "today";
 }
-export function validAdminIdentityCustomDates(from?: string, to?: string) {
-  const parse = (value?: string) => {
-    if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-    const result = new Date(value + "T00:00:00.000Z");
-    return !Number.isNaN(result.getTime()) && result.toISOString().slice(0, 10) === value ? result : null;
-  };
-  const start = parse(from);
-  const end = parse(to);
-  return start && end && start <= end ? { from: start, to: new Date(end.getTime() + 86400000) } : null;
+export function validAdminIdentityCustomDates(from?: string, to?: string, timeZone = "UTC") {
+  return from && to ? adminCalendarRange(from, to, timeZone) : null;
 }
-export function adminIdentityDateBounds(date: AdminIdentityDate, now = new Date(), from?: string, to?: string) {
+export function adminIdentityDateBounds(date: AdminIdentityDate, now = new Date(), from?: string, to?: string, timeZone = "UTC") {
   if (date === "all") return null;
-  if (date === "custom") return validAdminIdentityCustomDates(from, to);
-  if (date === "24h" || date === "last7" || date === "last30") {
-    const days = date === "24h" ? 1 : date === "last7" ? 7 : 30;
-    return { from: new Date(now.getTime() - days * 86_400_000), to: now };
+  if (date === "custom") return validAdminIdentityCustomDates(from, to, timeZone);
+  if (date === "today" || date === "24h" || date === "last7" || date === "last30") {
+    const range = date === "last7" ? "7d" : date === "last30" ? "30d" : date;
+    return { from: new Date(adminRollingRange(range, now, timeZone).from), to: now };
   }
-  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const month = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  if (date === "today") return { from: today, to: now };
-  if (date === "thisMonth") return { from: month, to: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)) };
-  if (date === "lastMonth") return { from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)), to: month };
-  return { from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1)), to: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)) };
+  const month = new Date(adminLocalDate(now, timeZone).slice(0, 7) + "-01T00:00:00Z");
+  const monthStart = (offset: number) => {
+    const day = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + offset, 1));
+    return adminStartOfLocalDay(day.toISOString().slice(0, 10), timeZone) ?? day;
+  };
+  if (date === "thisMonth") return { from: monthStart(0), to: monthStart(1) };
+  if (date === "lastMonth") return { from: monthStart(-1), to: monthStart(0) };
+  return { from: monthStart(-2), to: monthStart(1) };
 }
 
 /** An existing registered account is discoverable when it was created OR
@@ -96,7 +93,7 @@ export type AdminIdentityDirectoryRow = {
   operationalGuestCount: bigint;
   /** All recorded, unlinked operational sessions in this deployment. */
   operationalAllTimeCount: bigint;
-  /** Sessions first recorded inside the selected UTC period. */
+  /** Sessions first recorded inside the selected reporting period. */
   operationalNewCount: bigint;
 };
 
@@ -126,6 +123,7 @@ export type AdminIdentityPageRequest = {
   from?: string;
   to?: string;
   now?: Date;
+  timeZone?: string;
 };
 
 /**
@@ -141,7 +139,7 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
   const showOperationalGuests = input.showOperationalGuests ?? false;
   const environment = input.environment ?? "production";
   const sort = parseAdminIdentitySort(input.sort);
-  const bounds = adminIdentityDateBounds(input.date ?? "all", input.now, input.from, input.to);
+  const bounds = adminIdentityDateBounds(input.date ?? "all", input.now, input.from, input.to, input.timeZone);
   const order = sort === "oldest"
     ? Prisma.sql`"joinedAt" ASC, "kind" ASC, "id" ASC`
     : sort === "name_asc"

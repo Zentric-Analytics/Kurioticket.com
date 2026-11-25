@@ -7,7 +7,6 @@ const loading = readFileSync("src/app/admin/confirmed-trips/loading.tsx", "utf8"
 const operationsPage = readFileSync("src/components/admin/TripConfirmationsMonitoringPanel.tsx", "utf8");
 const monitoringPage = readFileSync("src/app/admin/confirmed-trips/monitoring/page.tsx", "utf8");
 const monitoringLoading = readFileSync("src/app/admin/confirmed-trips/monitoring/loading.tsx", "utf8");
-const tripWorkspaceNavigation = readFileSync("src/components/admin/TripWorkspaceNavigation.tsx", "utf8");
 const operationsRedirect = readFileSync("src/app/admin/confirmed-trips/operations/page.tsx", "utf8");
 const flightStatusRedirect = readFileSync("src/app/admin/flight-status/page.tsx", "utf8");
 const directory = readFileSync("src/app/admin/confirmed-trips/records/page.tsx", "utf8");
@@ -42,7 +41,7 @@ test("Trip directory is the primary record workspace without duplicate entry lin
   assert.doesNotMatch(page, /Browse confirmed trips|Open full directory/);
   assert.doesNotMatch(page, /href="\/admin\/confirmed-trips\/records"/);
   assert.doesNotMatch(loading, /Browse confirmed trips|href="\/admin\/confirmed-trips\/records"/);
-  assert.match(page, /<TripDirectoryView rows=\{directory\.rows\} subtle \/>/);
+  assert.match(page, /<TripDirectoryView rows=\{directory\.rows\} subtle timeZone=\{timeZone\} \/>/);
   assert.match(page, /tripDirectoryHref\(filters, directory\.nextCursor\)/);
   assert.match(page, /Older matching trips/);
   assert.match(recordsTable, /encodeURIComponent\(trip\.id\)/);
@@ -92,7 +91,7 @@ test("Trip overview note and disconnected Tracking field are removed without los
   for (const field of fields) assert.match(controls, new RegExp('name="' + field + '"'));
   assert.doesNotMatch(controls, /name="tracking"|label="Tracking"|<span>Tracking<\/span>/);
   assert.match(controls, /value: "TRACKED", label: "Tracked".*disabled: true/);
-  assert.match(page, /<TripDirectoryView rows=\{directory\.rows\} subtle \/>/);
+  assert.match(page, /<TripDirectoryView rows=\{directory\.rows\} subtle timeZone=\{timeZone\} \/>/);
   assert.match(page, /directory\.statusCounts\.cancelled/);
   assert.match(page, /directory\.nextCursor/);
 });
@@ -117,7 +116,7 @@ test("all five overview counters display the current filtered scope without clic
   for (const label of ["Confirmed trips", "Tracked trips", "Upcoming", "Past", "Cancelled"]) {
     assert.ok(page.includes('label="' + label + '"'), "Missing metric: " + label);
   }
-  assert.match(page, /parseAdminTripWorkspace\(raw\)/);
+  assert.match(page, /parseAdminTripWorkspace\(raw \?\? \{\}, now, timeZone\)/);
   assert.match(page, /listAdminConfirmedTrips\(filters\)/);
   assert.match(page, /directory\?\.status === "ok"/);
   assert.match(page, /label="Confirmed trips" value=\{directory\.totalMatching\}/);
@@ -180,7 +179,7 @@ test("Travel type dropdown is the only category selector on the Trips page", () 
   assert.doesNotMatch(controls, /autoSubmit/);
   assert.match(page, /<TripFilterControls filters=\{filters\}/);
   assert.doesNotMatch(page + loading, /aria-label="Trip travel types"|tripCategories|tripWorkspaceHref|Trips by category|TripCategoryCard/);
-  assert.match(operationsPage, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
+  assert.match(operationsPage, /<ConfirmedTripsBreakdowns operations=\{operations\} timeZone=\{timeZone\} \/>/);
   assert.match(breakdowns, /operations\.byProduct\.map/);
   assert.match(breakdowns, /operations\.byProvider\.map/);
   assert.match(breakdowns, /No providers or counts are assumed/);
@@ -191,7 +190,7 @@ test("redundant directory labels and result count are absent without changing re
   assert.doesNotMatch(controls, /UTC dates filter signed confirmation timestamps\. Tracking and precise minute-level ranges require a future integration/);
   assert.doesNotMatch(page, /Showing up to 20 records, newest confirmation first/);
   assert.doesNotMatch(page, /matching verified trips/);
-  assert.match(page, /<TripDirectoryView rows=\{directory\.rows\} subtle \/>/);
+  assert.match(page, /<TripDirectoryView rows=\{directory\.rows\} subtle timeZone=\{timeZone\} \/>/);
   assert.match(page, /directory\.nextCursor/);
   assert.match(page, /tripDirectoryHref\(filters, directory\.nextCursor\)/);
   assert.doesNotMatch(controls, /Clear filters|href="\/admin\/confirmed-trips#trip-directory"/);
@@ -200,9 +199,9 @@ test("redundant directory labels and result count are absent without changing re
 });
 
 test("the main directory uses authorized read-only filtered records, never the 20-row overview sample", () => {
-  assert.match(page, /parseAdminTripWorkspace\(raw\)/);
+  assert.match(page, /parseAdminTripWorkspace\(raw \?\? \{\}, now, timeZone\)/);
   assert.match(page, /listAdminConfirmedTrips\(filters\)/);
-  assert.match(page, /<TripDirectoryView rows=\{directory\.rows\} subtle \/>/);
+  assert.match(page, /<TripDirectoryView rows=\{directory\.rows\} subtle timeZone=\{timeZone\} \/>/);
   assert.match(page, /directory\.totalMatching/);
   assert.match(page, /directory\.nextCursor/);
   assert.match(page, /tripDirectoryHref\(filters, directory\.nextCursor\)/);
@@ -268,7 +267,7 @@ test("six directory filters use a compact left-anchored toolbar with a polished 
   assert.match(controls, />Apply<\/button>/);
   assert.doesNotMatch(controls, />Apply filters<\/button>/);
   assert.match(workspace, /requested \|\| \(raw\.from \|\| raw\.to \? "custom" : "today"\)/);
-  assert.match(workspace, /parseAdminTripFilters\(\{ \.\.\.raw, from, to \}\)/);
+  assert.match(workspace, /parseAdminTripFilters\(\{ \.\.\.raw, from, to \}, timeZone\)/);
   assert.doesNotMatch(page, /if \(parsed\.ok && parsed\.range === "custom"\)/);
   assert.doesNotMatch(page, /redirect\(tripDirectoryHref\(parsed\.filters\)\)/);
   assert.match(directory, /<AdminUncontrolledCalendarInput name="from"/);
@@ -284,9 +283,9 @@ test("six directory filters use a compact left-anchored toolbar with a polished 
 });
 
 test("Trips use one dedicated list backed by genuine records and the existing read-only details route", () => {
-  assert.match(directory, /<TripDirectoryView rows=\{result\.rows\} \/>/);
+  assert.match(directory, /<TripDirectoryView rows=\{result\.rows\} timeZone=\{timeZone\} \/>/);
   assert.doesNotMatch(recordsView, /useState|LayoutGrid|aria-pressed|Grid/);
-  assert.match(recordsView, /<ConfirmedTripRecordsTable rows=\{rows\} \/>/);
+  assert.match(recordsView, /<ConfirmedTripRecordsTable rows=\{rows\} timeZone=\{timeZone\} \/>/);
   assert.match(recordsTable, /\["CREATED", "TYPE", "TRIP", "TRAVEL DATES", "PROVIDER", "IDENTITY", "STATUS", "ACTION"\]/);
   assert.match(recordsTable, /<thead className="border-b border-slate-200\/80 bg-slate-50\/90 text-\[10px\] text-slate-500">/);
   assert.match(recordsTable, /className="px-3 py-2\.5 font-semibold tracking-\[0\.08em\]"/);
@@ -318,8 +317,8 @@ test("Trips rely on the sidebar while preserving monitoring panels", () => {
   assert.match(monitoringPage, /await requireAdminSession\("\/admin\/confirmed-trips\/monitoring"\)/);
   assert.doesNotMatch(monitoringPage, /Back to Trips|ArrowLeft|Trip monitoring navigation/);
   assert.match(monitoringPage, /<section aria-label="Trip monitoring details" className="min-w-0 pt-6">/);
-  assert.match(monitoringPage, /<TripConfirmationsMonitoringPanel \/>/);
-  assert.match(monitoringPage, /<TripFlightStatusMonitoringPanel \/>/);
+  assert.match(monitoringPage, /<TripConfirmationsMonitoringPanel timeZone=\{timeZone\} \/>/);
+  assert.match(monitoringPage, /<TripFlightStatusMonitoringPanel timeZone=\{timeZone\} \/>/);
   assert.match(monitoringPage, /id="trip-confirmations-panel"/);
   assert.match(monitoringPage, /id="trip-flight-status-panel"/);
   assert.doesNotMatch(monitoringPage, /<details|<summary|ChevronDown|showConfirmations|showFlightStatus|requestedPanel/);
@@ -327,7 +326,7 @@ test("Trips rely on the sidebar while preserving monitoring panels", () => {
   const flightPanelIndex = monitoringPage.indexOf('id="trip-flight-status-panel"');
   const confirmationsPanelIndex = monitoringPage.indexOf('id="trip-confirmations-panel"');
   assert.ok(flightPanelIndex >= 0 && confirmationsPanelIndex > flightPanelIndex, "Flight status must appear before Trip confirmations");
-  assert.ok(monitoringPage.indexOf("<TripFlightStatusMonitoringPanel />") < monitoringPage.indexOf("<TripConfirmationsMonitoringPanel />"), "Flight monitoring content must render first");
+  assert.ok(monitoringPage.indexOf("<TripFlightStatusMonitoringPanel timeZone={timeZone} />") < monitoringPage.indexOf("<TripConfirmationsMonitoringPanel timeZone={timeZone} />"), "Flight monitoring content must render first");
   assert.match(monitoringPage, /id="trip-flight-status-panel"[^>]*className="min-w-0"/);
   assert.match(monitoringPage, /id="trip-confirmations-panel"[^>]*className="min-w-0 border-t border-slate-200\/80 pt-5"/);
   assert.doesNotMatch(monitoringPage, /id="trip-confirmations-panel"[^>]*rounded-xl|id="trip-flight-status-panel"[^>]*rounded-xl/);
@@ -351,7 +350,7 @@ test("Trips rely on the sidebar while preserving monitoring panels", () => {
   assert.match(operationsPage, /className="min-w-0 space-y-4"/);
   assert.match(operationsPage, /<section aria-label="Confirmed trip breakdowns" className="min-w-0">/);
   assert.doesNotMatch(operationsPage, /confirmation-breakdowns-title/);
-  assert.match(operationsPage, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
+  assert.match(operationsPage, /<ConfirmedTripsBreakdowns operations=\{operations\} timeZone=\{timeZone\} \/>/);
   assert.match(operationsPage, /getConfirmedTripsIntegrationReadiness\(\)/);
   assert.match(operationsPage, /getConfirmedTripsOperationsSnapshot\(\)/);
   assert.match(operationsPage, /getConfirmationDeliveryHealth\(\)/);
@@ -369,7 +368,7 @@ test("Trips rely on the sidebar while preserving monitoring panels", () => {
     "deliveryHealth.lastReceivedAt", "deliveryHealth.lastAcceptedAt", "deliveryHealth.lastRejectedAt",
     "deliveryHealth.providerName", "deliveryHealth.recent.map",
   ]) assert.ok(operationsPage.includes(property), property);
-  assert.match(operationsPage, /readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null/);
+  assert.match(operationsPage, /readiness\.feedReady \? <ConfirmedTripDeliveryAlerts timeZone=\{timeZone\} \/> : null/);
   assert.match(operationsPage, /id="confirmation-delivery-health-title"/);
   assert.match(operationsPage, /id="confirmation-integration-title"/);
   assert.doesNotMatch(operationsPage, /id="confirmation-breakdowns-title"/);

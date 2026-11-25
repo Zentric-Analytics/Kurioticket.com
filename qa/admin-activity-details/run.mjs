@@ -28,6 +28,8 @@ await put("next.config.mjs",
   'import path from "node:path";\n' +
   'export default {devIndicators:false,agentRules:false,experimental:{externalDir:true},webpack(config,{webpack}){\n' +
   'config.resolve.alias["@/lib/auth-guards"]=path.resolve("mocks/auth-guards.js");\n' +
+  'config.resolve.alias["@/lib/auth"]=path.resolve("mocks/auth-guards.js");\n' +
+  'config.resolve.alias["next-auth$"]=path.resolve("mocks/auth-guards.js");\n' +
   'config.resolve.alias["@/lib/stagingSafety"]=path.resolve("mocks/stagingSafety.js");\n' +
   'config.resolve.alias["@/services/adminJourneyService"]=path.resolve("mocks/journeys.js");\n' +
   'config.resolve.alias["@/lib/prisma"]=path.resolve("mocks/prisma.js");\n' +
@@ -75,7 +77,11 @@ await put("app/admin/users/[kind]/[id]/other/page.tsx",
   await readFile(path.join(source, "app/admin/users/[kind]/[id]/other/page.tsx"), "utf8"));
 await put("app/admin/users/[kind]/[id]/journeys/page.tsx",
   await readFile(path.join(source, "app/admin/users/[kind]/[id]/journeys/page.tsx"), "utf8"));
-await put("mocks/auth-guards.js", 'export async function requireAdminSession(){return {user:{id:"qa-admin",role:"ADMIN"}};}');
+await put("mocks/auth-guards.js", [
+  'export const authOptions = {};',
+  'export async function getServerSession(){return {user:{id:"qa-admin",role:"ADMIN"}};}',
+  'export const requireAdminSession = getServerSession;',
+].join("\n"));
 await put("mocks/stagingSafety.js", 'export function getPublicEnvironment(){return "staging";}');
 await put("mocks/activity.js", await readFile(path.join(qa, "activity-fixture.js"), "utf8"));
 await put("mocks/presence.js", 'export async function getOnlinePresenceSnapshot(){return {status:"ok",windowSeconds:90,observedAt:new Date().toISOString(),total:1,registeredAccounts:1,guestSessions:0};}');

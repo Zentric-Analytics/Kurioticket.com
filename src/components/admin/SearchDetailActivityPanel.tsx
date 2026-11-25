@@ -8,6 +8,7 @@ import type { SearchScopedActivityResult, SearchScopedEvent } from "@/services/a
 type Props = {
   searchId: string;
   environment: "staging" | "production";
+  timeZone: string;
 };
 
 const PAGE_SIZE = 25;
@@ -20,10 +21,6 @@ const activityLabels: Record<Exclude<SearchScopedEvent["stage"], "SEARCH_COMPLET
 };
 const buttonStyle = "inline-flex min-h-9 items-center rounded-md border border-[#D8E1EC] bg-white px-3 text-[12px] font-medium text-[#004BB8] hover:bg-[#F5F8FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-50";
 
-function timestamp(value: string) {
-  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  return formatViewerTimestamp(value, zone);
-}
 function handoffLabel(event: SearchScopedEvent) {
   if (!event.handoff) return null;
   const { price, currency, route } = event.handoff;
@@ -35,19 +32,21 @@ function handoffLabel(event: SearchScopedEvent) {
 
 /** A first-class section, not a hidden View activity link. It only loads
  * consented events linked to this exact search and verified provider handoffs. */
-export function SearchDetailActivityPanel({ searchId, environment }: Props) {
+export function SearchDetailActivityPanel({ searchId, environment, timeZone }: Props) {
   const [cursors, setCursors] = useState<Array<string | null>>([null]);
   const [pageIndex, setPageIndex] = useState(0);
   const [request, setRequest] = useState(0);
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<SearchScopedActivityResult | null>(null);
   const cursor = cursors[pageIndex];
+  function beginRequest() {
+    setLoading(true);
+    setResult(null);
+  }
 
   useEffect(() => {
     const controller = new AbortController();
     let current = true;
-    setLoading(true);
-    setResult(null);
     const params = new URLSearchParams({ environment });
     if (cursor) params.set("cursor", cursor);
     void (async () => {
@@ -89,6 +88,7 @@ export function SearchDetailActivityPanel({ searchId, environment }: Props) {
           <p className="mt-1 text-[12px] text-[#6B7280]">Recorded actions associated with this search only</p>
         </div>
         <button type="button" className={buttonStyle} onClick={() => {
+          beginRequest();
           setPageIndex(0);
           setCursors([null]);
           setRequest(value => value + 1);
@@ -114,7 +114,7 @@ export function SearchDetailActivityPanel({ searchId, environment }: Props) {
                   <p className="font-semibold text-[#111827]">{event.stage === "OFFER_SELECTED" && event.offerReference
                       ? "Fare selected"
                       : activityLabels[event.stage as Exclude<SearchScopedEvent["stage"], "SEARCH_COMPLETED">]}</p>
-                  <p className="text-[#6B7280]">{timestamp(event.occurredAt)}</p>
+                  <p className="text-[#6B7280]">{formatViewerTimestamp(event.occurredAt, timeZone)}</p>
                 </div>
               </div>
               <div className="min-w-0 self-center break-words text-[#475569]">
@@ -136,9 +136,13 @@ export function SearchDetailActivityPanel({ searchId, environment }: Props) {
       {list && (list.nextCursor || pageIndex > 0) ? (
         <nav aria-label="Search interactions pagination" className="mt-3 flex flex-wrap items-center justify-end gap-3 border-t border-[#E5E7EB] pt-3">
           <span className="text-[12px] text-[#6B7280]">Page {pageIndex + 1} · Up to {PAGE_SIZE} events per page</span>
-          <button type="button" className={buttonStyle} disabled={pageIndex === 0} onClick={() => setPageIndex(index => Math.max(0, index - 1))}>Previous</button>
+          <button type="button" className={buttonStyle} disabled={pageIndex === 0} onClick={() => {
+            beginRequest();
+            setPageIndex(index => Math.max(0, index - 1));
+          }}>Previous</button>
           <button type="button" className={buttonStyle} disabled={!list.nextCursor} onClick={() => {
             if (!list.nextCursor) return;
+            beginRequest();
             setCursors(previous => [...previous.slice(0, pageIndex + 1), list.nextCursor]);
             setPageIndex(index => index + 1);
           }}>Next</button>

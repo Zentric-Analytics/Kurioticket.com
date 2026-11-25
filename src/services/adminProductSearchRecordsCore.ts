@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
+import { resolveAdminTimeZone, viewerTodayStart } from "@/lib/adminLocalTime";
 import { classifyProviderIssue, providerSearchService } from "@/services/searchFailureDiagnostics";
 
 export type ProviderProduct = "HOTEL" | "CAR";
@@ -34,6 +35,7 @@ export type ProductSearchPage = {
   product: ProviderProduct;
   filter: ProductSearchFilter;
   window: ProductSearchWindow;
+  timeZone: string;
 };
 export type ProductSearchDetails = {
   search: ProductSearchRecord;
@@ -51,6 +53,7 @@ type Dependencies = {
   database: () => Database | null;
   environment: () => PublicEnvironment;
   now: () => Date;
+  timeZone?: () => Promise<string>;
 };
 
 const LIMIT = 25;
@@ -75,6 +78,7 @@ type SearchCursor = {
   filter: ProductSearchFilter;
   window: ProductSearchWindow;
   environment: PublicEnvironment;
+  timeZone: string;
   asOf: string;
   at: string;
   id: string;
@@ -104,7 +108,7 @@ function cursorToken(cursor: SearchCursor) {
   return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
 }
 
-function parseCursor(value: string | null, expected: Pick<SearchCursor, "product" | "filter" | "window" | "environment">, now: Date):
+function parseCursor(value: string | null, expected: Pick<SearchCursor, "product" | "filter" | "window" | "environment" | "timeZone">, now: Date):
   | { ok: true; cursor: SearchCursor | null }
   | { ok: false } {
   if (!value) return { ok: true, cursor: null };
@@ -113,6 +117,7 @@ function parseCursor(value: string | null, expected: Pick<SearchCursor, "product
     const data = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Record<string, unknown>;
     if (data.v !== 1 || data.product !== expected.product || data.filter !== expected.filter
       || data.window !== expected.window || data.environment !== expected.environment
+      || (data.timeZone ?? "UTC") !== expected.timeZone
       || !isIso(data.asOf) || !isIso(data.at) || typeof data.id !== "string" || !ID.test(data.id)
       || Date.parse(data.at) > Date.parse(data.asOf)
       || Date.parse(data.asOf) > now.getTime() + 60_000) return { ok: false };
@@ -122,6 +127,7 @@ function parseCursor(value: string | null, expected: Pick<SearchCursor, "product
       filter: expected.filter,
       window: expected.window,
       environment: expected.environment,
+      timeZone: expected.timeZone,
       asOf: data.asOf,
       at: data.at,
       id: data.id,
@@ -148,7 +154,7 @@ function toRecord(row: SearchRow): ProductSearchRecord {
   };
 }
 
-function scopeWhere(product: ProviderProduct, filter: ProductSearchFilter, window: ProductSearchWindow, environment: PublicEnvironment, asOf: Date, cursor: SearchCursor | null): Prisma.SearchHistoryWhereInput {
+function scopeWhere(product: ProviderProduct, filter: ProductSearchFilter, window: ProductSearchWindow, environment: PublicEnvironment, timeZone: string, asOf: Date, cursor: SearchCursor | null): Prisma.SearchHistoryWhereInput {
   const and: Prisma.SearchHistoryWhereInput[] = [];
   if (filter === "EXCEPTIONS") {
     and.push({ OR: [{ status: { in: ["FAILED", "PARTIAL"] } }, { status: "SUCCESS", resultCount: 0 }] });
@@ -166,7 +172,7 @@ function scopeWhere(product: ProviderProduct, filter: ProductSearchFilter, windo
     query: { path: ["environment"], equals: environment },
     createdAt: {
       lte: asOf,
-      ...(window === "today" ? { gte: new Date(Date.UTC(asOf.getUTCFullYear(), asOf.getUTCMonth(), asOf.getUTCDate())) }
+      ...(window === "today" ? { gte: new Date(viewerTodayStart(asOf, timeZone)) }
           : hours ? { gte: new Date(asOf.getTime() - hours * 60 * 60_000) } : {}),
     },
     ...(filter === "SUCCESS" || filter === "PARTIAL" || filter === "FAILED" ? { status: filter } : {}),
@@ -198,15 +204,16 @@ export function createAdminProductSearchRecordsReader(deps: Dependencies) {
         const typedFilter = filter as ProductSearchFilter;
         const typedWindow = window as ProductSearchWindow;
         const environment = deps.environment();
+        const timeZone = resolveAdminTimeZone(await deps.timeZone?.());
         const now = deps.now();
-        const continuation = parseCursor(params.get("cursor"), { product, filter: typedFilter, window: typedWindow, environment }, now);
+        const continuation = parseCursor(params.get("cursor"), { product, filter: typedFilter, window: typedWindow, environment, timeZone }, now);
         if (!continuation.ok) return invalid("cursor", "Cursor does not match this product and filter.");
         const db = deps.database();
         if (!db) return { status: "unavailable" };
         const cursor = continuation.cursor;
         const asOf = cursor ? new Date(cursor.asOf) : now;
         const records = await db.searchHistory.findMany({
-          where: scopeWhere(product, typedFilter, typedWindow, environment, asOf, cursor),
+          where: scopeWhere(product, typedFilter, typedWindow, environment, timeZone, asOf, cursor),
           select: searchSelect,
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
           take: LIMIT + 1,
@@ -214,10 +221,10 @@ export function createAdminProductSearchRecordsReader(deps: Dependencies) {
         const page = records.slice(0, LIMIT);
         const last = page[page.length - 1];
         const nextCursor = records.length > LIMIT && last
-          ? cursorToken({ v: 1, product, filter: typedFilter, window: typedWindow, environment,
+          ? cursorToken({ v: 1, product, filter: typedFilter, window: typedWindow, environment, timeZone,
               asOf: asOf.toISOString(), at: last.createdAt.toISOString(), id: last.id })
           : null;
-        return { status: "ok", data: { product, filter: typedFilter, window: typedWindow, items: page.map(toRecord), nextCursor } };
+        return { status: "ok", data: { product, filter: typedFilter, window: typedWindow, timeZone, items: page.map(toRecord), nextCursor } };
       } catch {
         return { status: "unavailable" };
       }

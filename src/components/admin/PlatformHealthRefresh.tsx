@@ -7,9 +7,10 @@ import type { PlatformOperations } from "./PlatformHealthDashboard";
 
 type Feedback = "idle" | "success" | "error";
 
-export function PlatformHealthRefresh({ hours, period = "rolling", lastRefreshedAt, onRefreshed }: {
+export function PlatformHealthRefresh({ hours, period = "rolling", timeZone = "UTC", lastRefreshedAt, onRefreshed }: {
   hours: number;
   period?: "today" | "rolling";
+  timeZone?: string;
   lastRefreshedAt: string;
   onRefreshed: (fresh: PlatformOperations) => void;
 }) {
@@ -42,7 +43,7 @@ export function PlatformHealthRefresh({ hours, period = "rolling", lastRefreshed
       if (response.status === 401) throw new Error("Your session has expired. Sign in again to refresh.");
       if (response.status === 403) throw new Error("Your session cannot access these observations.");
       if (!response.ok) throw new Error("The monitoring service could not refresh. Please try again.");
-      const fresh = parsePlatformRefreshSnapshot(await response.json(), hours, period);
+      const fresh = parsePlatformRefreshSnapshot(await response.json(), hours, period, timeZone);
       if (!fresh) throw new Error("The monitoring response was incomplete. Please try again.");
       if (controller.signal.aborted) return;
       onRefreshed(fresh);
@@ -72,7 +73,7 @@ export function PlatformHealthRefresh({ hours, period = "rolling", lastRefreshed
       </button>
       <p role="status" aria-live="polite" aria-atomic="true"
         className="flex min-h-4 max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] leading-4 text-[#64748B]">
-        <span>Last refreshed: <time dateTime={lastRefreshedAt} className="font-medium tabular-nums text-[#475569]">{formatPlatformRefreshTime(lastRefreshedAt)}</time></span>
+        <span>Last refreshed: <time dateTime={lastRefreshedAt} className="font-medium tabular-nums text-[#475569]">{formatPlatformRefreshTime(lastRefreshedAt, timeZone)}</time></span>
         {pending ? <span>· Checking observations…</span>
           : feedback === "success" ? <span className="inline-flex items-center gap-1 font-medium text-emerald-700"><Check size={12} aria-hidden="true" /> Updated</span> : null}
       </p>

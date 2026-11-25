@@ -8,7 +8,9 @@ import { parseProviderHealthRange, providerHealthRangeHref } from "@/lib/adminPr
 import { ProviderHealthWindowFilter } from "@/components/admin/ProviderHealthWindowFilter";
 import { getProviderOutcomeWidths } from "@/lib/adminProviderVisuals";
 import { ProviderDirectoryTable, type ProviderDirectoryRecord } from "@/components/admin/ProviderDirectoryTable";
-import { formatDateTime, getProviderStatuses } from "@/lib/admin-data";
+import { getProviderStatuses } from "@/lib/admin-data";
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import {
   filterProviderOperationalStatuses,
   filterProviderStatuses,
@@ -33,18 +35,18 @@ const tableCellClass = "px-3 py-3 align-middle text-[13px] text-[#020617]";
 const numberHeadingClass = "px-3 py-3 text-right text-[12px] font-medium uppercase text-[#475569]";
 
 export default async function AdminProvidersPage({ searchParams }: { searchParams: SearchParams }) {
-  const raw = await searchParams;
+  const [raw, timeZone] = await Promise.all([searchParams, getAdminViewerTimeZone()]);
   const filter = normalizeProductFilter(raw.product);
   const attribution = raw.view === "attribution";
   const attributionPeriod = raw.period === "today" || raw.days === "today" || (raw.days === undefined && raw.period === undefined) ? "today" : "rolling";
   const attributionDays = parseAttributionDays(raw.days === "today" ? null : typeof raw.days === "string" ? raw.days : null);
   const monitoringNow = new Date();
-  const monitoringSelection = parseProviderHealthRange(raw, monitoringNow);
+  const monitoringSelection = parseProviderHealthRange(raw, monitoringNow, timeZone);
   const monitoringPeriod = raw.period === "custom" ? "custom"
     : raw.period === "today" || (raw.hours === undefined && raw.period === undefined) ? "today" : "rolling";
   const monitoringHours = monitoringSelection.hours;
   const monitoringRange = monitoringSelection.range;
-  const monitoringWindow = monitoringPeriod === "today" ? { label: "Today (UTC)" }
+  const monitoringWindow = monitoringPeriod === "today" ? { label: "Today" }
     : monitoringPeriod === "custom" && monitoringRange ? { label: monitoringRange.fromDate + " – " + monitoringRange.toDate }
     : { label: monitoringHours === 72 ? "Last 3 days" : monitoringHours === 168 ? "Last 7 days" : "Last 24 hours" };
 
@@ -81,7 +83,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           : status
             ? { label: operationalLabel(status.operationalState), tone: operationalTone(status.operationalState) }
             : { label: "Not monitored", tone: "neutral" as const },
-        lastActivity: displayTime(status?.lastActivityAt ?? null,
+        lastActivity: displayTime(status?.lastActivityAt ?? null, timeZone,
           unscopedTiming ? "Not tracked by service" : operational === null ? "Unavailable" : "No activity in selected window"),
         detail: {
           environment: integration.environment === "test" ? "Test mode"
@@ -90,8 +92,8 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           search: integration.searchEnabled ? "Enabled" : "Not enabled",
           booking: integration.bookingEnabled ? "Enabled" : "Not available",
           externalHandoff: integration.externalHandoffEnabled ? "Enabled" : "Not enabled",
-          lastSuccess: displayTime(status?.lastSuccessAt ?? null, timingUnavailable),
-          lastFailure: displayTime(status?.lastFailureAt ?? null, timingUnavailable),
+          lastSuccess: displayTime(status?.lastSuccessAt ?? null, timeZone, timingUnavailable),
+          lastFailure: displayTime(status?.lastFailureAt ?? null, timeZone, timingUnavailable),
           note: integration.note,
         },
         canRetestDuffel: integration.id === "duffel",
@@ -109,15 +111,15 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
         tone: catalogue.searchEnabled ? "good" as const : "warn" as const,
       },
       health: { label: "Internal catalogue", tone: "neutral" as const },
-      lastActivity: displayTime(null, "Not externally monitored"),
+      lastActivity: displayTime(null, timeZone, "Not externally monitored"),
       detail: {
         environment: catalogue.environment,
         configured: "Not required",
         search: catalogue.searchEnabled ? "Enabled" : "Not enabled",
         booking: catalogue.bookingEnabled ? "Enabled" : "Not live yet",
         externalHandoff: null,
-        lastSuccess: displayTime(null, "Not externally monitored"),
-        lastFailure: displayTime(null, "Not externally monitored"),
+        lastSuccess: displayTime(null, timeZone, "Not externally monitored"),
+        lastFailure: displayTime(null, timeZone, "Not externally monitored"),
         note: catalogue.notes,
       },
       canRetestDuffel: false,
@@ -134,7 +136,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           <h1 className="text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[#020617]">
             Referral Attribution
           </h1>
-          <ReferralWindowFilter days={attributionDays ?? DEFAULT_ATTRIBUTION_DAYS} period={attributionPeriod} embedded />
+          <ReferralWindowFilter days={attributionDays ?? DEFAULT_ATTRIBUTION_DAYS} period={attributionPeriod} timeZone={timeZone} embedded />
         </header>
       ) : null}
 
@@ -191,7 +193,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                           <div className="min-w-0">
                             <dt className="text-[12px] text-[#64748B]">Last failure</dt>
                             <dd className="mt-0.5 text-[13px] font-medium text-[#0F172A]">
-                              <ActivityTime value={provider.lastFailureAt}
+                              <ActivityTime value={provider.lastFailureAt} timeZone={timeZone}
                                 empty={filter !== "all" && unscopedTimingProviders.has(provider.id)
                                   ? "Not available for this service" : "Not recorded in " + monitoringWindow.label.toLowerCase()} />
                             </dd>
@@ -199,7 +201,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                           <div className="min-w-0">
                             <dt className="text-[12px] text-[#64748B]">Last success</dt>
                             <dd className="mt-0.5 text-[13px] font-medium text-[#0F172A]">
-                              <ActivityTime value={provider.lastSuccessAt}
+                              <ActivityTime value={provider.lastSuccessAt} timeZone={timeZone}
                                 empty={filter !== "all" && unscopedTimingProviders.has(provider.id)
                                   ? "Not available for this service" : "Not recorded in " + monitoringWindow.label.toLowerCase()} />
                             </dd>
@@ -282,6 +284,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
               </nav>
               <div className="relative z-10 ml-auto min-w-[152px] max-w-full pb-1">
                 <ProviderHealthWindowFilter product={filter} hours={monitoringHours} period={monitoringPeriod}
+                  timeZone={timeZone} nowIso={monitoringNow.toISOString()}
                   custom={monitoringPeriod === "custom" ? monitoringRange : null} />
               </div>
             </div>
@@ -452,9 +455,9 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
   );
 }
 
-function displayTime(value: string | null, empty: string) {
+function displayTime(value: string | null, timeZone: string, empty: string) {
   return value
-    ? { text: formatDateTime(new Date(value)), iso: value }
+    ? { text: formatViewerTimestamp(value, timeZone), iso: value }
     : { text: empty, iso: null };
 }
 
@@ -538,8 +541,8 @@ function StatusIndicator({ value, tone }: { value: string; tone: StatusTone }) {
   );
 }
 
-function ActivityTime({ value, empty = "Not recorded" }: { value: string | null; empty?: string }) {
+function ActivityTime({ value, timeZone, empty = "Not recorded" }: { value: string | null; timeZone: string; empty?: string }) {
   return value
-    ? <time dateTime={value}>{formatDateTime(new Date(value))}</time>
+    ? <time dateTime={value}>{formatViewerTimestamp(value, timeZone)}</time>
     : <span className="text-[12px] text-[#64748B]">{empty}</span>;
 }

@@ -1,15 +1,17 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { journeyWindow } from "./adminJourneyDateRange";
 
 const list = readFileSync("src/app/admin/journeys/page.tsx", "utf8");
 const detail = readFileSync("src/app/admin/journeys/[id]/page.tsx", "utf8");
 const dates = readFileSync("src/lib/adminJourneyDateRange.ts", "utf8");
 const controls = readFileSync("src/components/admin/JourneyDateRangeFields.tsx", "utf8");
+const sharedControls = readFileSync("src/components/admin/AdminOperationalDateRangeFields.tsx", "utf8");
 
 test("journey metrics are scoped to one returned list reporting window", () => {
-  assert.match(list, /adminJourneys\.summary\(\{ \.\.\.withoutPagination\(raw\), \.\.\.list\.data\.scope, environment \}\)/);
-  assert.match(list, /adminJourneys\.list\(input\)/);
+  assert.match(list, /adminJourneys\.summary\(\{ \.\.\.withoutPagination\(raw\), \.\.\.list\.data\.scope, environment \}, calendarTimeZone\)/);
+  assert.match(list, /adminJourneys\.list\(input, calendarTimeZone\)/);
   assert.doesNotMatch(list, /Promise\.all\(\[\s*adminJourneys\.list/);
 });
 test("headline metrics report recorded funnel stages, not correlation as a journey stage", () => {
@@ -32,26 +34,24 @@ test("journey detail is valid JSX and strips view-only range from backend input"
 });
 test("journey date presets are passed to detail and single-ended historical bounds survive", () => {
   assert.match(list, /p\.set\("range", range\)/);
-  assert.match(dates, /if \(one\(raw\.cursor\) \|\| one\(raw\.from\) \|\| one\(raw\.to\)\) return \{\}/);
-  assert.match(controls, /ADMIN_REPORTING_RANGE_OPTIONS/);
-  assert.match(controls, /ADMIN_REPORTING_RANGE_OPTIONS/);
-  assert.match(controls, /ADMIN_REPORTING_RANGE_OPTIONS/);
+  const from = "2026-11-19T13:24:11.357Z";
+  assert.deepEqual(journeyWindow({ from }, new Date("2026-11-25T12:00:00Z"), "Asia/Dubai"), { from });
+  assert.match(controls, /<AdminOperationalDateRangeFields/);
+  assert.match(sharedControls, /ADMIN_REPORTING_RANGE_OPTIONS/);
 });
 
 test("custom dates are editable and preset selection does not submit stale bounds", () => {
-  assert.match(controls, /<AdminCalendarInput mode="datetime-local"/);
-  assert.match(controls, /name="from"/);
-  assert.match(controls, /name="to"/);
-  assert.match(controls, /\{custom \? \(/);
-  assert.match(controls, /onValueChange=/);
+  assert.match(sharedControls, /<AdminCalendarInput mode=\{clock \? "datetime-local"/);
+  assert.match(sharedControls, /name="from"/);
+  assert.match(sharedControls, /name="to"/);
+  assert.match(sharedControls, /\{range === "custom" \? \(/);
+  assert.match(sharedControls, /onValueChange=/);
   assert.match(list, /<JourneyDateRangeFields/);
 });
 
-test("equal custom UTC endpoints block native form submission", () => {
-  assert.match(controls, /<AdminCalendarInput mode="datetime-local"/);
-  assert.match(controls, /offsetUtcDateTime\(from, 1\)/);
-  assert.match(controls, /offsetUtcDateTime\(to, -1\)/);
-  assert.match(controls, /Date\.parse\(startIso\) < Date\.parse\(endIso\)/);
+test("equal custom clock endpoints block native form submission", () => {
+  assert.match(sharedControls, /startMs < endMs/);
+  assert.match(sharedControls, /form\.addEventListener\("submit", blockInvalidRange\)/);
 });
 test("detail event pagination retains the display preset without forwarding it to backend", () => {
   assert.match(detail, /key !== "cursor"\) p\.set\(key, value\)/);
@@ -60,7 +60,6 @@ test("detail event pagination retains the display preset without forwarding it t
 
 test("Journeys directory shares Users styling without modifying consent-aware data reads", () => {
   const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
-  const datesView = readFileSync("src/components/admin/JourneyDateRangeFields.tsx", "utf8");
   const history = readFileSync("src/components/admin/JourneyEventHistory.tsx", "utf8");
   assert.match(shell, /const visitorJourneysWorkspace = pathname === "\/admin\/journeys"/);
   assert.match(shell, /\|\| visitorJourneysWorkspace \|\| searchesWorkspace/);
@@ -71,17 +70,17 @@ test("Journeys directory shares Users styling without modifying consent-aware da
   assert.match(list, /buildAdminSearchProviderOptions\(getProviderIntegrationStatuses\(\), one\(raw\.provider\) \|\| null\)/);
   assert.doesNotMatch(list, /name="environment" label="Environment"|name="provider" type="search"/);
   assert.match(list, /clearFieldNamesOnChange=\{\["userId", "visitorId"\]\}/);
-  assert.match(list, /adminJourneys\.list\(input\)/);
+  assert.match(list, /adminJourneys\.list\(input, calendarTimeZone\)/);
   assert.match(list, /Only eligible consented journeys are included/);
-  assert.match(datesView, /<SearchMonitorSelect label="Date range"/);
-  assert.match(datesView, /appearance="fare" align="end"/);
-  assert.match(datesView, /<AdminCalendarInput mode="datetime-local"/);
+  assert.match(sharedControls, /<SearchMonitorSelect label="Date range"/);
+  assert.match(controls, /align="end"/);
+  assert.match(sharedControls, /mode=\{clock \? "datetime-local"/);
   assert.match(history, /aria-label="Journey event history"/);
   assert.match(history, /events\.map\(\(event, index\) =>/);
   assert.match(history, /Step \{index \+ 1\}/);
 });
 
-test("Visitor Journeys defaults to Today UTC, keeps responsive filters on one desktop row and isolates environment", () => {
+test("Visitor Journeys defaults to local Today, keeps responsive filters on one desktop row and isolates environment", () => {
   assert.match(dates, /return one\(raw\.from\) \|\| one\(raw\.to\) \|\| one\(raw\.cursor\) \? "custom" : "today"/);
   assert.match(dates, /JOURNEY_ALL_TIME_FROM/);
   assert.match(list, /getPublicEnvironment\(\)/);
@@ -89,9 +88,9 @@ test("Visitor Journeys defaults to Today UTC, keeps responsive filters on one de
   assert.match(list, /<JourneyDateRangeFields initialRange=\{range\}/);
   assert.match(list, /data-testid="journey-filters-toolbar"/);
   assert.ok(list.indexOf('data-testid="journey-filters-toolbar"') < list.indexOf('<JourneyDateRangeFields'));
-  assert.match(controls, /data-testid="journey-date-range"/);
-  assert.match(controls, /data-testid="journey-custom-date-fields"/);
-  assert.match(controls, /order-last col-span-full/);
+  assert.match(controls, /testId="journey-date-range"/);
+  assert.match(controls, /customTestId="journey-custom-date-fields"/);
+  assert.match(sharedControls, /order-last col-span-full/);
   assert.match(list, /grid w-full min-w-0 grid-cols-1 items-center gap-2/);
   assert.match(list, /lg:grid-cols-\[repeat\(5,minmax\(0,1fr\)\)_120px\]/);
   assert.match(list, /h-10 w-full min-w-0/);
@@ -110,7 +109,7 @@ test("Visitor Journeys defaults to Today UTC, keeps responsive filters on one de
 test("Journey Details shares clean directory layout and preserves event chronology", () => {
   const history = readFileSync("src/components/admin/JourneyEventHistory.tsx", "utf8");
   assert.match(detail, /className="min-w-0 space-y-6 bg-white py-3/);
-  assert.match(detail, /<JourneyEventHistory events=\{result\.data\.events\} \/>/);
+  assert.match(detail, /<JourneyEventHistory events=\{result\.data\.events\} timeZone=\{timeZone\}/);
   assert.match(detail, /<SearchWorkspaceBackLink href=\{returnHref\(raw\)\}/);
   assert.match(detail, /result\.data\.nextCursor/);
   assert.match(history, /key=\{event\.id\}/);
@@ -129,7 +128,7 @@ test("Visitor Journeys keeps all eight records fields and the Action link visibl
   for (const name of ["Last activity", "Identity", "Products", "Providers", "Searches", "Observed stages", "Events", "Action"]) {
     assert.ok(list.includes(`data-label="${name}"`), `Journey rows need responsive ${name} data`);
   }
-  assert.match(list, /href=\{detailHref\(journey\.id, list\.data\.scope, range\)\}/);
+  assert.match(list, /href=\{detailHref\(journey\.id, list\.data\.scope, range, calendarDates, partialLastDay\)\}/);
   assert.match(list, /aria-label=\{`View activity for/);
   assert.match(list, /View activity/);
   assert.match(list, /CopyIdentityId id=\{identityId\}/);

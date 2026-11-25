@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
+import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { recentPageViews } from "@/lib/adminPageHistory";
 
-const stamp = (date: Date) => new Intl.DateTimeFormat("en-GB", {
+const stamp = (date: Date, timeZone: string) => new Intl.DateTimeFormat("en-GB", {
   day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-  second: "2-digit", hour12: false, timeZone: "UTC",
-}).format(date) + " UTC";
+  second: "2-digit", hour12: false, timeZone,
+}).format(date);
 
 export function PageViewDetails({ row }: { row: ActivityRow }) {
   const page = row.pageView;
@@ -19,8 +20,8 @@ export function PageViewDetails({ row }: { row: ActivityRow }) {
   </div>;
 }
 
-export function PageViewRecords({ events, count, full, href, operational }: {
-  events: ActivityRow[]; count: number; full: boolean; href?: string; operational: boolean;
+export function PageViewRecords({ events, count, full, href, operational, timeZone = "UTC" }: {
+  events: ActivityRow[]; count: number; full: boolean; href?: string; operational: boolean; timeZone?: string;
 }) {
   const visible = full ? events.filter(row => row.stage === "PAGE_VIEW" && row.pageView) : recentPageViews(events);
   return <section aria-label="Pages visited" className="min-w-0 space-y-3" data-testid="page-view-records">
@@ -35,14 +36,14 @@ export function PageViewRecords({ events, count, full, href, operational }: {
     {!visible.length ? <p className="rounded-lg border border-[#E2E8F0] p-3 text-[13px] text-[#64748B]">{operational ? "No optional navigation records for this session." : "No recorded page visits match these filters."}</p>
       : <div className="min-w-0 overflow-hidden rounded-lg border border-[#E2E8F0]">
         <div aria-hidden="true" className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.8fr)_minmax(0,0.8fr)_minmax(0,1fr)] gap-3 border-b border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 text-[11px] font-medium uppercase text-[#64748B] lg:grid">
-          <span>Page</span><span>URL / screen</span><span>Platform</span><span>Time (UTC)</span>
+          <span>Page</span><span>URL / screen</span><span>Platform</span><span>Time ({formatAdminTimeZoneLabel(timeZone)})</span>
         </div>
         <ol className="divide-y divide-[#E2E8F0]">
           {visible.map(row => <li key={row.id} data-testid="page-view-row" className="grid min-w-0 gap-1.5 px-3 py-3 text-[12px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.8fr)_minmax(0,0.8fr)_minmax(0,1fr)] lg:gap-3">
             <span className="min-w-0 break-words font-medium text-[#0F172A]">{row.label}</span>
             <PageViewDetails row={row}/>
             <span className="min-w-0 break-words text-[#475569]">{row.pageView?.platform}</span>
-            <time dateTime={row.at.toISOString()} className="min-w-0 break-words tabular-nums text-[#64748B]">{stamp(row.at)}</time>
+            <time dateTime={row.at.toISOString()} className="min-w-0 break-words tabular-nums text-[#64748B]">{stamp(row.at, timeZone)}</time>
           </li>)}
         </ol>
       </div>}

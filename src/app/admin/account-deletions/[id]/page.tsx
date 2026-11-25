@@ -6,7 +6,8 @@ import { AccountDeletionManageForm } from "@/components/admin/AccountDeletionMan
 import { CaseDetailHeading, CaseInfoField, CaseMilestone, CaseSectionTitle, caseAsideClass, caseColumnsClass, caseMainClass, casePageClass } from "@/components/admin/AdminCaseDetailUI";
 import { LinkedCasePreview } from "@/components/admin/LinkedCasePreview";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
-import { formatDateTime } from "@/lib/admin-data";
+import { formatViewerTimestamp } from "@/lib/adminLocalTime";
+import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { deletionRequestBackHref } from "@/lib/adminSupportInboxNavigation";
 import { getAdminAccountDeletionDetail, type AdminAccountDeletionDetail } from "@/services/adminAccountDeletionDetailService";
 
@@ -45,7 +46,7 @@ function daysRemaining(scheduledAt: string) {
 }
 
 export default async function AdminAccountDeletionDetailPage({ params, searchParams }: PageProps) {
-  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const [{ id }, query, timeZone] = await Promise.all([params, searchParams, getAdminViewerTimeZone()]);
   const result = await getAdminAccountDeletionDetail(id);
   if (result.status === "not_found") notFound();
 
@@ -87,10 +88,10 @@ export default async function AdminAccountDeletionDetailPage({ params, searchPar
                         : statusView[request.status].description}
                   </p>
                   <dl className="mt-4 grid min-w-0 gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
-                    <CaseMilestone label="Requested" tone="info" value={formatDateTime(new Date(request.requestedAt))} />
-                    <CaseMilestone label="Scheduled review" value={formatDateTime(new Date(request.deletionScheduledAt))} />
-                    {request.cancelledAt ? <CaseMilestone label="Cancelled" value={formatDateTime(new Date(request.cancelledAt))} /> : null}
-                    {request.completedAt ? <CaseMilestone label="Completed" tone="complete" value={formatDateTime(new Date(request.completedAt))} /> : null}
+                    <CaseMilestone label="Requested" tone="info" value={formatViewerTimestamp(request.requestedAt, timeZone)} />
+                    <CaseMilestone label="Scheduled review" value={formatViewerTimestamp(request.deletionScheduledAt, timeZone)} />
+                    {request.cancelledAt ? <CaseMilestone label="Cancelled" value={formatViewerTimestamp(request.cancelledAt, timeZone)} /> : null}
+                    {request.completedAt ? <CaseMilestone label="Completed" tone="complete" value={formatViewerTimestamp(request.completedAt, timeZone)} /> : null}
                   </dl>
                 </section>
 

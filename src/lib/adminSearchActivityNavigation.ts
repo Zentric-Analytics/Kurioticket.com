@@ -6,7 +6,6 @@
 export const searchActivityFilterKeys = [
   "applicationSource",
   "range",
-  "viewerTimeZone",
   "environment",
   "product",
   "status",

@@ -4,22 +4,23 @@ import { activityOverviewRows } from "@/lib/adminActivityOverview";
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
 
-const stamp = (date: Date) => new Intl.DateTimeFormat("en-GB", {
+const stamp = (date: Date, timeZone: string) => new Intl.DateTimeFormat("en-GB", {
   day: "numeric", month: "short", year: "numeric", hour: "2-digit",
-  minute: "2-digit", timeZone: "UTC", hour12: false,
-}).format(date) + " UTC";
+  minute: "2-digit", timeZone, hour12: false,
+}).format(date);
 const name = (product: string) => ({
   FLIGHT: "Flight", HOTEL: "Hotel", CAR: "Car", PACKAGE: "Package",
 } as Record<string,string>)[product] ?? "Recorded product";
 const action = "focus-ring inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1.5 text-[13px] font-medium text-[#004BB8] hover:bg-[#F1F6FF]";
 
 export function AdminActivityOverview({
-  events, journeyHistoryHref, operational, environment,
+  events, journeyHistoryHref, operational, environment, timeZone = "UTC",
 }: {
   events: ActivityRow[];
   journeyHistoryHref: string;
   operational: boolean;
   environment: string;
+  timeZone?: string;
 }) {
   const overview = activityOverviewRows(events.filter(event => event.stage !== "PAGE_VIEW"));
   return <section data-testid="activity-overview" aria-label="Activity overview" className="min-w-0 space-y-6">
@@ -49,7 +50,7 @@ export function AdminActivityOverview({
                     <h3 className="break-words text-[13px] font-semibold text-[#0F172A]">{name(search.product ?? "")} search</h3>
                     {search.route ? <p className="mt-1 break-words text-[12px] text-[#475569]">{search.route}</p> : null}
                   </div>
-                  <time dateTime={(search.searchedAt ?? search.at).toISOString()} className="shrink-0 text-[12px] text-[#64748B]">{stamp(search.searchedAt ?? search.at)}</time>
+                  <time dateTime={(search.searchedAt ?? search.at).toISOString()} className="shrink-0 text-[12px] text-[#64748B]">{stamp(search.searchedAt ?? search.at, timeZone)}</time>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[#64748B]">
                   {search.platform ? <span>Platform: <span className="font-medium text-[#334155]">{search.platform === "IOS" ? "iOS app" : search.platform === "ANDROID" ? "Android app" : "Website"}</span></span> : null}
@@ -85,7 +86,7 @@ export function AdminActivityOverview({
               <p className="font-medium text-[#334155]">{event.label}</p>
               <p className="mt-0.5 break-words text-[#64748B]">{event.detail}</p>
             </div>
-            <time dateTime={event.at.toISOString()} className="shrink-0 tabular-nums text-[#64748B]">{stamp(event.at)}</time>
+            <time dateTime={event.at.toISOString()} className="shrink-0 tabular-nums text-[#64748B]">{stamp(event.at, timeZone)}</time>
           </li>)}
         </ol>
         {overview.otherCount > overview.other.length ? <p className="mt-2 text-[12px] text-[#64748B]">Additional account activity is available in the complete recorded history.</p> : null}
@@ -98,7 +99,7 @@ export function AdminActivityOverview({
           authorized reader. Display their actual events here, not a link to
           another page or fabricated consented journeys. */}
       <p className="mb-3 text-[12px] text-[#64748B]">Recorded searches and handoffs for this session.</p>
-      <ActivityTimeline events={events} nextHref={null} environment={environment}/>
+      <ActivityTimeline timeZone={timeZone} events={events} nextHref={null} environment={environment}/>
     </section>}
   </section>;
 }

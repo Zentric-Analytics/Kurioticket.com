@@ -193,6 +193,7 @@ try {
           await expect(main.getByText(/Showing .* deliveries in/)).toHaveCount(0);
           const deliveries = main.getByRole("region", { name: "Delivery history" });
           await expect(deliveries.getByText("bi***@zentricanalytics.com", { exact: true })).toBeVisible();
+          await expect(deliveries.locator('time[datetime="2026-11-05T11:59:00.000Z"]').first()).toBeVisible();
           const delivered = deliveries.locator("tbody").getByText("Delivered", { exact: true }).first();
           await expect(delivered).toHaveClass(/inline-flex/);
           await expect(delivered.locator("span").first()).toHaveClass(/rounded-full/);

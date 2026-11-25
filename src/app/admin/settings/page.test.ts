@@ -187,7 +187,7 @@ test("settings uses a single administrative workspace instead of dashboard cards
   assert.doesNotMatch(settingsPage, /SummaryItem|Recent control updates|Related operations|Change safeguards|Protected changes/);
 });
 
-test("Settings History uses polished accessible shared dropdowns and a Today UTC default", () => {
+test("Settings History uses accessible shared dropdowns and a viewer-local Today default", () => {
   const history = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
   const dropdown = readFileSync("src/components/admin/AdminDirectorySelect.tsx", "utf8");
   assert.match(history, /requestedRange as SettingsHistoryRange : "today"/);
@@ -197,11 +197,13 @@ test("Settings History uses polished accessible shared dropdowns and a Today UTC
   assert.match(history, /data-testid="settings-history-filter-row"/);
   assert.match(history, /lg:grid-cols-\[190px_220px_136px\]/);
   assert.match(history, /<SettingsHistoryRangeControl range=\{range\}/);
+  assert.match(history, /today=\{adminLocalDate\(now, timeZone\)\} timeZone=\{timeZone\}/);
   assert.match(history, /data-testid="settings-history-filter-row"/);
   assert.match(history, /data-testid="settings-history-category-control"/);
   const rangeControl = readFileSync("src/components/admin/SettingsHistoryRangeControl.tsx", "utf8");
   assert.match(rangeControl, /data-testid="settings-history-range-control"/);
   assert.match(rangeControl, /ADMIN_REPORTING_RANGE_OPTIONS/);
+  assert.match(rangeControl, /timeZoneLabel=\{timeZoneLabel\}/);
   assert.match(rangeControl, /name="fromDate"/);
   assert.match(rangeControl, /name="toDate"/);
   assert.match(history, /<AdminDirectorySelect label="Section" name="category" value=\{category\}/);
@@ -265,7 +267,7 @@ test("the Deals feature flag is presented as Packages without changing the inter
 
 test("Settings sidebar offers four deep-linkable sections without changing the global header", () => {
   assert.match(settingsLayout, /<AdminPageShell title="Settings" hideHeader>/);
-  assert.match(settingsLayout, /<AdminSettingsNavigation \/>/);
+  assert.match(settingsLayout, /<AdminSettingsNavigation showTeamAccess=\{isStagingEnvironment\(\)\} \/>/);
   assert.match(settingsNavigation, /usePathname\(\)/);
   assert.match(settingsNavigation, /aria-label="Settings sections"/);
   assert.match(settingsNavigation, /aria-current=\{active \? "page" : undefined\}/);
