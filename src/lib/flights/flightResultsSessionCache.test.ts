@@ -24,6 +24,46 @@ const multiCitySearch = {
   currency: "USD",
 };
 
+test("mixed sandbox flight cohort restores fully in the same tab without persistent storage", () => {
+  const storage = new MemoryStorage();
+  const rows = Array.from({ length: 1700 }, (_, index) => ({ ...result, id: index < 120 ? `duffel:${index}` : `kayak-sandbox:${index}`, provider: index < 120 ? "Duffel" : "KAYAK sandbox" }));
+  writeFlightResultsSessionSnapshot("mixed", rows, [], 10_000, storage, 100);
+  assert.equal(storage.getItem(FLIGHT_RESULTS_SESSION_CACHE_KEY), null, "sandbox results must never be serialized to browser storage");
+  const snapshot = readFlightResultsSessionSnapshot("mixed", storage, 200);
+  assert.deepEqual(snapshot?.results.map(row => row.id), rows.map(row => row.id), "retain all1700 original identities");
+  assert.equal(readFlightResultsSessionSnapshot("mixed", new MemoryStorage(), 200), null, "different tab/storage scope cannot restore it");
+  assert.equal(readFlightResultsSessionSnapshot("other", storage, 200), null);
+  assert.equal(readFlightResultsSessionSnapshot("mixed", storage, 10_000), null, "server validity is not extended");
+});
+
+test("volatile restoration cannot retain production display-only inventory", () => {
+  const storage = new MemoryStorage();
+  writeFlightResultsSessionSnapshot("blocked", [{ ...result, id: "kayak-sandbox:blocked", provider: "KAYAK sandbox", sandboxDisplayOnly: true } as PublicFlightResult], [], 10_000, storage, 100);
+  assert.equal(readFlightResultsSessionSnapshot("blocked", storage, 200), null);
+  assert.equal(storage.getItem(FLIGHT_RESULTS_SESSION_CACHE_KEY), null);
+});
+
+test("legacy persisted sandbox inventory remains rejected and removed", () => {
+  const storage = new MemoryStorage();
+  storage.setItem(FLIGHT_RESULTS_SESSION_CACHE_KEY, JSON.stringify({ version: 3, searchKey: "legacy-sandbox", savedAt: 100, validUntil: 10_000, results: [{ ...result, provider: "KAYAK sandbox" }], warnings: [] }));
+  assert.equal(readFlightResultsSessionSnapshot("legacy-sandbox", storage, 200), null);
+  assert.equal(storage.getItem(FLIGHT_RESULTS_SESSION_CACHE_KEY), null);
+});
+
+test("volatile snapshot owns its immutable rows and is replaced by the next search", () => {
+  const storage = new MemoryStorage();
+  const row = { ...result, id: "kayak-sandbox:first", provider: "KAYAK sandbox" };
+  writeFlightResultsSessionSnapshot("first", [row], [], 10_000, storage, 100);
+  row.airlineName = "mutated caller";
+  const first = readFlightResultsSessionSnapshot("first", storage, 200)!;
+  assert.equal(first.results[0].airlineName, result.airlineName);
+  first.results[0].airlineName = "mutated reader";
+  assert.equal(readFlightResultsSessionSnapshot("first", storage, 200)?.results[0].airlineName, result.airlineName);
+  writeFlightResultsSessionSnapshot("second", [result], [], 10_000, storage, 300);
+  assert.equal(readFlightResultsSessionSnapshot("first", storage, 400), null);
+  assert.equal(readFlightResultsSessionSnapshot("second", storage, 400)?.results.length, 1);
+});
+
 const fourLegs = [
   { origin: "IAH", destination: "LAX", departureDate: "2026-10-10" },
   { origin: "LAX", destination: "JFK", departureDate: "2026-10-15" },

@@ -22,6 +22,13 @@ export type FlightResultsSessionSnapshotState = {
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
+// One public cohort per tab/storage scope. Sandbox results never enter browser
+// persistence; production display-only inventory is excluded from this path.
+// A WeakMap also avoids a process-global server/user cache: SSR has no Storage.
+const volatileSnapshots = new WeakMap<StorageLike, FlightResultsSessionSnapshot>();
+const copySnapshot = (snapshot: FlightResultsSessionSnapshot) =>
+  JSON.parse(JSON.stringify(snapshot)) as FlightResultsSessionSnapshot;
+
 export function buildFlightResultsSearchKey(body: {
   origin: string;
   destination: string;
@@ -72,6 +79,7 @@ function browserSessionStorage(): StorageLike | null {
 }
 
 function removeSnapshot(storage: StorageLike) {
+  volatileSnapshots.delete(storage);
   try {
     storage.removeItem(FLIGHT_RESULTS_SESSION_CACHE_KEY);
   } catch {
@@ -85,6 +93,15 @@ export function readFlightResultsSessionSnapshotForRefresh(
   now = Date.now(),
 ): FlightResultsSessionSnapshotState | null {
   if (!storage) return null;
+
+  const volatile = volatileSnapshots.get(storage);
+  if (volatile) {
+    if (now - volatile.savedAt >= FLIGHT_RESULTS_SESSION_CACHE_TTL_MS || hasDisplayOnlyInventory(volatile)) {
+      removeSnapshot(storage);
+    } else if (volatile.searchKey === searchKey) {
+      return { snapshot: copySnapshot(volatile), isFresh: now < volatile.validUntil };
+    }
+  }
 
   let serialized: string | null;
   try {
@@ -157,6 +174,7 @@ export function writeFlightResultsSessionSnapshot(
   requestId?: string,
 ): void {
   if (!storage) return;
+  volatileSnapshots.delete(storage);
   const hadSandbox = hasDisplayOnlyInventory(results);
   results = results.filter(result=>!hasDisplayOnlyInventory(result));
   if (hadSandbox && !results.length) { removeSnapshot(storage); return; }
@@ -182,6 +200,11 @@ export function writeFlightResultsSessionSnapshot(
       warnings: [...warnings],
       ...(requestId ? { requestId } : {}),
     };
+    if (containsSandboxInventory(snapshot)) {
+      removeSnapshot(storage);
+      if (!hadSandbox) volatileSnapshots.set(storage, copySnapshot(snapshot));
+      return;
+    }
     storage.setItem(FLIGHT_RESULTS_SESSION_CACHE_KEY, JSON.stringify(snapshot));
   } catch {
     // Quota, serialization, and disabled-storage errors are deliberately ignored.

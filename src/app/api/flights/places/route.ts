@@ -79,7 +79,7 @@ export async function GET(request: Request) {
     if (providerResult.status !== "success") {
       const fallbackSuggestions = searchCuratedPlaceSuggestions(query, { context, lat, lng, radiusKm, countryCode, locale });
       const orderedFallbackSuggestions = context === "origin"
-        ? prioritizeOriginSuggestions(fallbackSuggestions, maxMindLocation)
+        ? prioritizeOriginSuggestions(fallbackSuggestions, maxMindLocation, query)
         : fallbackSuggestions;
       recordFlightLocationDiscovery({
         providerStatus: providerResult.status,
@@ -109,7 +109,7 @@ export async function GET(request: Request) {
       );
     }
     const suggestions = context === "origin"
-      ? prioritizeOriginSuggestions(providerResult.results, maxMindLocation)
+      ? prioritizeOriginSuggestions(providerResult.results, maxMindLocation, query)
       : providerResult.results;
     const hasLiveProviderSuggestion = suggestions.some((suggestion) => "duffelPlaceId" in suggestion && Boolean(suggestion.duffelPlaceId));
     recordFlightLocationDiscovery({ providerStatus: "success", latencyMs: providerResult.latencyMs, resultCount: suggestions.length, usedFallback: !hasLiveProviderSuggestion });
