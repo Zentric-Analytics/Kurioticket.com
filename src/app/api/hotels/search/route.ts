@@ -78,13 +78,14 @@ export async function POST(request: Request) {
   const recordedSearch = { ...search, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) };
 
   const kayakContext = {
+    requestId,
     trackId: operationalSession?.reference.id,
     clientIp: getKayakClientIp(request),
     userAgent: request.headers.get("user-agent") || undefined,
     signal: request.signal,
   };
   const aggregate = providerMode
-    ? await searchHotelsByProvider(providerSearch, providerMode, { kayak: kayakContext, defer: after })
+    ? await searchHotelsByProvider(providerSearch, providerMode, { kayak: kayakContext, requestId, signal: request.signal, defer: after })
     : await searchHotels(providerSearch, { kayak: kayakContext, defer: after });
   if (aggregate.unavailableMessage) {
     after(async () => {

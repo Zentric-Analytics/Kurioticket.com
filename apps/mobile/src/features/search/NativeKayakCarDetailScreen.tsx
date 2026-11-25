@@ -68,7 +68,7 @@ export function NativeKayakCarDetailScreen() {
       return;
     }
     let active = true;
-    void travelApi.searchCars(plan.plan.payload)
+    void travelApi.carDetails(resultId,{sandboxDisplay:true})
       .then((response) => {
         if (!active) return;
         const found = response.results.find((item) => item.id === resultId && isKayakSandboxCar(item) && safeCanonicalCarResult(item));

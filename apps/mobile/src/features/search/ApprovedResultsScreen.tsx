@@ -1,3 +1,4 @@
+import { randomUUID } from "expo-crypto";
 import { hasDisplayOnlyInventory } from "../../../../../src/shared/presentation/sandboxInventory";
 import { useSandboxResultState } from "./useSandboxResults";
 import { presentSearchResults, searchUnavailableMessage } from "./searchFailurePresentation";
@@ -381,7 +382,7 @@ function ResultsScreen({ product }: { product: Product }) {
     const controller = new AbortController();
     activeSearch.current = controller;
     const sequence = ++searchSequence.current;
-    const requestId = `mobile-${Date.now()}-${sequence}`;
+    const requestId = randomUUID();
     const clientStartedAt = performance.now();
     let deadlineExpired = false;
     const isLatest = () => sequence === searchSequence.current;

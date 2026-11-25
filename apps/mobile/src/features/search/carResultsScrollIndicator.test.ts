@@ -21,8 +21,8 @@ test("Cars owns a modest safe-area-aware native iOS scroll indicator", () => {
 test("Cars resolves its full logical content extent independently of image prefetch", () => {
   assert.match(screen, /const CAR_RESULT_INITIAL_IMAGE_COUNT = 3/);
   assert.match(screen, /\.slice\(0,CAR_RESULT_INITIAL_IMAGE_COUNT\)/);
-  assert.match(list, /initialNumToRender=\{Math\.max\(results\.length,1\)\}/);
-  assert.match(list, /maxToRenderPerBatch=\{Math\.max\(results\.length,CAR_RESULT_RENDER_BATCH_SIZE\)\}/);
+  assert.match(list, /initialNumToRender=\{CAR_RESULT_RENDER_BATCH_SIZE\}/);
+  assert.match(list, /maxToRenderPerBatch=\{CAR_RESULT_RENDER_BATCH_SIZE\}/);
   assert.match(list, /windowSize=\{CAR_RESULT_WINDOW_SIZE\}/);
   assert.match(list, /updateCellsBatchingPeriod=\{CAR_RESULT_BATCHING_PERIOD_MS\}/);
   assert.match(list, /removeClippedSubviews=\{Platform\.OS === "android"\}/);

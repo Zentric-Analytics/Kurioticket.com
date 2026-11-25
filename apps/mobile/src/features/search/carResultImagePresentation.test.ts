@@ -36,8 +36,8 @@ test("native Cars prewarm artwork separately from the full initial row extent", 
   assert.match(resultsScreen, /Image\.prefetch\(uri\)/);
   assert.match(resultsScreen, /KURIOTICKET_COMPARE_LOGO_URI/);
   assert.match(resultsScreen, /<FlatList ref=\{carScrollRef\}/);
-  assert.match(resultsScreen, /initialNumToRender=\{Math\.max\(results\.length,1\)\}/);
-  assert.match(resultsScreen, /maxToRenderPerBatch=\{Math\.max\(results\.length,CAR_RESULT_RENDER_BATCH_SIZE\)\}/);
+  assert.match(resultsScreen, /initialNumToRender=\{CAR_RESULT_RENDER_BATCH_SIZE\}/);
+  assert.match(resultsScreen, /maxToRenderPerBatch=\{CAR_RESULT_RENDER_BATCH_SIZE\}/);
   assert.match(resultsScreen, /windowSize=\{CAR_RESULT_WINDOW_SIZE\}/);
 });
 

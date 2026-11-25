@@ -1,3 +1,4 @@
+import {providersFor} from "./providerRegistry";
 import {
   getDuffelApiMode,
   type DuffelApiMode,
@@ -22,6 +23,7 @@ export type ProviderIntegrationStatus = {
   bookingEnabled: boolean;
   environment: string;
   note: string;
+  registrations?: Array<{product:string;mode:string;details:string;refresh:string;booking:string;handoff:string}>;
 };
 
 export type ProviderIntegrationEnvironment = {
@@ -96,7 +98,7 @@ export function evaluateProviderIntegrationStatuses(
 export function getProviderIntegrationStatuses(): ProviderIntegrationStatus[] {
   const duffelApiKey = process.env.DUFFEL_API_KEY?.trim() || "";
 
-  return evaluateProviderIntegrationStatuses({
+  const statuses = evaluateProviderIntegrationStatuses({
     duffelApiMode: getDuffelApiMode(),
     duffelConfigured: Boolean(duffelApiKey),
     duffelBlockReason: duffelApiKey
@@ -106,4 +108,5 @@ export function getProviderIntegrationStatuses(): ProviderIntegrationStatus[] {
     kayakRequested: process.env.KAYAK_SANDBOX_ENABLED === "true",
     kayakEnabled: isKayakSandboxEnabled(),
   });
+  return statuses.map(status=>({...status,registrations:(["flights","hotels","cars"] as const).flatMap(product=>providersFor(product).filter(provider=>provider.id===(status.id==="duffel"?"duffel":"kayak")).map(provider=>({product,mode:provider.capabilities.mode,details:provider.capabilities.details,refresh:provider.capabilities.refresh,booking:provider.capabilities.booking,handoff:provider.capabilities.handoff})))}));
 }
