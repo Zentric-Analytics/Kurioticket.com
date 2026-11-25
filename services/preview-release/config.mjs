@@ -81,6 +81,9 @@ export function requirePreviewEnvironment(env = process.env) {
     // guaranteeing that a live-but-stuck worker eventually releases ownership.
     cycleDeadlineMs: parseBoundedInteger(env.PREVIEW_CYCLE_DEADLINE_MS, 18_000_000, 900_000, 21_600_000),
     mode: env.PREVIEW_RELEASE_MODE === "active" ? "active" : "dry-run",
+    // Active Preview OTA delivery does not authorize paid native builds or
+    // native distribution. Operators must authorize that separate capability.
+    nativeDeliveryAllowed: env.PREVIEW_NATIVE_DELIVERY_ALLOWED === "true",
     cutoverBaselineSha: env.PREVIEW_CUTOVER_BASELINE_SHA ? assertExactSha(env.PREVIEW_CUTOVER_BASELINE_SHA, "Cutover baseline SHA") : null,
     iosNativeBackfillSha: env.PREVIEW_IOS_NATIVE_BACKFILL_SHA ? assertExactSha(env.PREVIEW_IOS_NATIVE_BACKFILL_SHA, "iOS native backfill SHA") : null,
     workerId: env.RENDER_INSTANCE_ID || env.HOSTNAME || `worker-${process.pid}`,

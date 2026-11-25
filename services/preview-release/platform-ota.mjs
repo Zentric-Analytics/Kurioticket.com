@@ -1,5 +1,25 @@
 const platforms = ["ios", "android"];
 
+// Root manifests trigger conservative native evaluation, but do not by
+// themselves prove a new mobile binary is necessary. Only resolve this narrow
+// case after canonical fingerprints match the delivered platform binary.
+export function resolveRootDependencyEvaluation(classification, fingerprints, deliveredNative) {
+  const targets = new Set(classification.classification.split("+"));
+  const resolved = [];
+  for (const platform of platforms) {
+    const target = `${platform.toUpperCase()}_NATIVE`;
+    const candidates = classification[`${platform}Native`];
+    const current = fingerprints?.[platform];
+    if (!targets.has(target) || !candidates?.length || candidates.some((file) => !/^(?:package|package-lock)\.json$/.test(file))) continue;
+    if (!/^[0-9a-f]{40,128}$/.test(current ?? "") || current !== deliveredNative?.[platform]?.fingerprint) continue;
+    targets.delete(target);
+    resolved.push(...candidates);
+  }
+  if (!resolved.length) return classification;
+  targets.add("OTA");
+  return { ...classification, classification: [...targets].sort().join("+"), otaCandidates: [...new Set([...(classification.otaCandidates ?? []), ...resolved])], dependencyOnlyNativeEvaluationResolved: true };
+}
+
 // A completed aggregate release is not proof that both platforms received JS.
 export function pendingOtaPlatforms(previous) {
   const evidence = previous?.evidence;

@@ -1684,7 +1684,7 @@ test("coalesced native delivery can publish an OTA overlay only to affected plat
   assert.deepEqual(result.updateIds, ["ios-overlay"]);
 });
 
-test("conservative native range coalesces onto fingerprint-compatible builds and completes OTA delivery", async () => {
+test("root dependency range uses compatible OTA without native reservations or delivery", async () => {
   const targetSha = "f".repeat(40);
   const previousSha = "3".repeat(40);
   const artifactSha = "6".repeat(40);
@@ -1717,8 +1717,7 @@ test("conservative native range coalesces onto fingerprint-compatible builds and
     fingerprintsFactory: async () => fingerprints,
   });
   orchestrator.deliverWeb = async () => ({ deployId: "staging-deploy", deployedSha: targetSha, status: "live" });
-  orchestrator.deliverIos = async (_sha, _cwd, _lease, fingerprint) => ({ buildId: "ios-build", nativeArtifactSourceSha: artifactSha, nativeFingerprint: fingerprint });
-  orchestrator.deliverAndroid = async (_sha, _cwd, _lease, fingerprint) => ({ buildId: "android-build", nativeArtifactSourceSha: artifactSha, nativeFingerprint: fingerprint });
+  orchestrator.deliverIos = orchestrator.deliverAndroid = async () => assert.fail("compatible root dependencies require no native delivery");
   orchestrator.deliverOta = async (_sha, _cwd, _lease, platforms, runtimeByPlatform) => {
     published.push(...platforms.map((platform) => ({ platform, runtime: runtimeByPlatform[platform] })));
     return { updateIds: platforms.map((platform) => `${platform}-update`), runtimes: runtimeByPlatform, channel: "preview" };
@@ -1739,7 +1738,8 @@ test("conservative native range coalesces onto fingerprint-compatible builds and
     { platform: "ios", runtime: fingerprints.ios },
     { platform: "android", runtime: fingerprints.android },
   ]);
-  assert.deepEqual(result.evidence.coalescedOtaPlatforms, ["ios", "android"]);
+  assert.deepEqual(result.evidence.ota.updateIds, ["ios-update", "android-update"]);
+  assert.equal(result.evidence.classification.classification, "OTA+WEB");
   assert.deepEqual(transitions.map(({ state }) => state), ["VALIDATING", "PLANNED", "DELIVERING", "COMPLETE"]);
 });
 
@@ -2448,7 +2448,7 @@ test("failed remote-ID publication remains operator-controlled and cannot fall t
   assert.equal(checkpoints, 2);
 });
 
-test("failed iOS recovery does not starve a compatible coalesced Android OTA", async () => {
+test("failed iOS recovery does not starve a directly compatible Android OTA", async () => {
   const targetSha = "f".repeat(40);
   const previousSha = "3".repeat(40);
   const androidArtifactSha = "2".repeat(40);
@@ -2501,6 +2501,7 @@ test("failed iOS recovery does not starve a compatible coalesced Android OTA", a
   assert.deepEqual(transitions.map(({ state }) => state), ["VALIDATING", "PLANNED", "DELIVERING", "VALIDATING", "PLANNED", "DELIVERING"]);
   assert.equal(persistedEvidence.length, 2);
   assert.equal(persistedEvidence[0].platformFailures.ios.state, "RECOVERY_REQUIRED");
-  assert.deepEqual(persistedEvidence[0].coalescedOtaPlatforms, ["android"]);
+  assert.deepEqual(persistedEvidence[0].ota.updateIds, ["android-update"]);
+  assert.equal(persistedEvidence[0].classification.classification, "IOS_NATIVE+OTA+WEB");
 });
 

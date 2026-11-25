@@ -1,3 +1,5 @@
+import { mobileSharedRuntime } from "./mobile-shared-runtime.mjs";
+
 const WEB_PREFIXES = ["src/", "public/", "prisma/", "scripts/"];
 const MOBILE_PREFIX = "apps/mobile/";
 const DOC_PATTERNS = [/^docs\//, /\/docs\//, /\.md$/i];
@@ -85,7 +87,7 @@ export function classifyChangeSet(files) {
   const mobileTooling = mobile.filter((file) => MOBILE_TOOLING.some((pattern) => pattern.test(file)));
   const otaCandidates = [
     ...mobile.filter((file) => !mobileTooling.includes(file) && OTA_SAFE.some((pattern) => pattern.test(file))),
-    ...unique.filter((file) => MOBILE_SHARED_RUNTIME.some((pattern) => pattern.test(file))),
+    ...unique.filter((file) => mobileSharedRuntime.has(file) || MOBILE_SHARED_RUNTIME.some((pattern) => pattern.test(file))),
   ];
   const uncertainMobile = mobile.filter((file) => !iosNative.includes(file) && !androidNative.includes(file) && !otaCandidates.includes(file) && !mobileTooling.includes(file) && !DOC_PATTERNS.some((pattern) => pattern.test(file)));
 
