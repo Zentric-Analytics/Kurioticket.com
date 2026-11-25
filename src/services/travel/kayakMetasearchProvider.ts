@@ -1,3 +1,6 @@
+import { currentSandboxGrant, productionSandboxHost } from "@/lib/productionSandboxPolicy";
+import { displayOnlyInventory } from "@/shared/presentation/sandboxInventory";
+
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import type { FlightSearchParams, HotelSearchParams, NormalizedFlightResult, PublicHotelResult, ProviderResult } from "@/lib/types";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
@@ -17,9 +20,10 @@ export function scopeKayakOfferIds<T extends { id: string; hotelPropertyKey?: st
   }));
 }
 
-/** Android's OkHttp/Dalvik transport identifier is rejected by KAYAK's Hotel sandbox.
- * Use KAYAK's established affiliate-app default for native Hotel requests while
- * keeping real browser/iOS agents and all Flight/Car requests unchanged. */
+/** Historical staging Hotel compatibility for bare OkHttp/Dalvik agents.
+ * An absent override selects the client's existing affiliate-app default.
+ * This is not evidence of KAYAK's rejection rule or approved native permissions.
+ * Production always retains the authentic incoming identity instead. */
 export function kayakProviderUserAgent(vertical: KayakVertical, incoming?: string): string | undefined {
   const agent = incoming?.trim();
   if (!agent) return undefined;
@@ -29,7 +33,15 @@ export function kayakProviderUserAgent(vertical: KayakVertical, incoming?: strin
 async function search<T>(vertical: KayakVertical, criteria: Record<string, string>, context?: KayakRequestContext, map?: (offer: Parameters<typeof kayakFlightCardModel>[0]) => T | null): Promise<ProviderResult<T>> {
   const startedAt = Date.now();
   if (!isKayakSandboxEnabled() || !context?.clientIp) return { provider: "KAYAK sandbox", results: [], status: "skipped", latencyMs: Date.now() - startedAt };
-  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, kayakProviderUserAgent(vertical, context.userAgent), context.clientIp, undefined,
+  const production = productionSandboxHost();
+  const grant = production ? await currentSandboxGrant() : null;
+  if (production && (!grant || !context?.userAgent?.trim())) return {provider:"KAYAK sandbox",results:[],status:"skipped",latencyMs:0};
+  const protect = async (results: T[]) => {
+    if (!production) return results;
+    const fresh=await currentSandboxGrant();
+    return fresh && fresh.revision === grant?.revision ? results.map(result=>displayOnlyInventory(result,fresh.revision)) : [];
+  };
+  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, production ? context.userAgent : kayakProviderUserAgent(vertical, context.userAgent), context.clientIp, undefined,
     diagnostic => console.warn("[kayak-search:http-rejection]", JSON.stringify({ ...diagnostic, requestId: context.requestId })),
     diagnostic => console.info("[kayak-search:car-request]", JSON.stringify({ ...diagnostic, requestId: context.requestId })));
   try {
@@ -51,7 +63,7 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
       await client.search(resolved.search, trackId, context.signal),
       crypto.randomUUID(),
     );
-    return { provider: "KAYAK sandbox", results: offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; }), status: "success", latencyMs: Date.now() - startedAt };
+    return { provider: "KAYAK sandbox", results: await protect(offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; })), status: "success", latencyMs: Date.now() - startedAt };
   } catch (error) {
     const reason = error instanceof KayakError ? error.code : "unavailable";
     // A 403 can reject the client agent, not just the key. Keep the real agent
@@ -63,7 +75,7 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
     const results = error instanceof KayakPartialSearchError
       ? scopeKayakOfferIds(error.offers, crypto.randomUUID()).flatMap(offer => { const value = map?.(offer); return value ? [value] : []; })
       : [];
-    return { provider: "KAYAK sandbox", results, status: "failed", latencyMs: Date.now() - startedAt, error: reason, errorCategory, errorReason };
+    return { provider: "KAYAK sandbox", results: await protect(results), status: "failed", latencyMs: Date.now() - startedAt, error: reason, errorCategory, errorReason };
   }
 }
 
@@ -74,7 +86,7 @@ export const kayakProviderCriteria = (value: Record<string, unknown>) => Object.
   Object.entries(value).flatMap(([key, item]) =>
     typeof item === "string" || typeof item === "number" || typeof item === "boolean"
       ? [[key, String(item)]]
-      : key.endsWith("Location") || key.endsWith("LocationTarget")
+      : key === "roomComposition" || key.endsWith("Location") || key.endsWith("LocationTarget")
         ? [[key, JSON.stringify(item)]]
       : [],
   ),
@@ -84,6 +96,26 @@ export const searchKayakHotels = (criteria: HotelSearchParams, context?: KayakRe
   const nights = Math.max(1, Math.round((Date.parse(criteria.checkOut) - Date.parse(criteria.checkIn)) / 86_400_000));
   return search<PublicHotelResult>("hotels", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakHotelCardModel(offer, nights));
 };
+
+/** Compatibility batch execution shares canonical resolution, identity policy,
+ * snapshot scoping and normalization. Cursor signing belongs to the transport.
+ * Production compatibility requests already delegate to canonical full search. */
+export async function searchKayakHotelBatch(criteria: HotelSearchParams, context: KayakRequestContext, snapshot: string, checkpoint?: import("./kayakSandbox").KayakHotelBatchCheckpoint) {
+  if (productionSandboxHost() || !isKayakSandboxEnabled() || !context.clientIp) throw new Error("Hotel batch execution unavailable");
+  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined,
+    kayakProviderUserAgent("hotels", context.userAgent), context.clientIp);
+  const trackId = context.trackId || crypto.randomUUID();
+  const resolved = await resolveRegularKayakSearch("hotels", kayakProviderCriteria(criteria as unknown as Record<string,unknown>),
+    (term, vertical = "hotels") => client.places(vertical, term, trackId, context.signal));
+  if (!resolved.supported || resolved.search.vertical !== "hotels") return { supported: false as const };
+  const batch = await client.searchHotelBatch(resolved.search, trackId, checkpoint, context.signal);
+  const nights = Math.max(1, Math.round((Date.parse(criteria.checkOut)-Date.parse(criteria.checkIn))/86_400_000));
+  const results = scopeKayakOfferIds(batch.offers, snapshot).flatMap(offer => {
+    const model = kayakHotelCardModel(offer, nights);
+    return model ? [model] : [];
+  });
+  return { supported: true as const, batch, results };
+}
 /** Only KAYAK's search-scoped result identity groups cars, never a model name. */
 export { groupKayakCarResults } from "@/lib/cars/carResults";
 

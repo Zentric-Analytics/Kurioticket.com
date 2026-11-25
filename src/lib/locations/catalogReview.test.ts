@@ -52,7 +52,7 @@ test("review reports are deterministic, dedupe product counts and never claim av
     catalogVersion: "candidate-2026-08",
     candidateCount: 1,
     byStatus: { proposed: 0, "needs-evidence": 0, approved: 1, rejected: 0, promoted: 0, "rolled-back": 0 },
-    byKind: { airport: 0, city: 1, district: 0, landmark: 0, "rental-area": 0, custom: 0 },
+    byKind: { airport: 0, city: 1, "metropolitan-area": 0, district: 0, landmark: 0, "rental-area": 0, custom: 0 },
     byProduct: { flights: 0, hotels: 1, cars: 1, packages: 0 },
     validationErrors: [],
     promotableCandidateIds: [deterministicCandidateId(location)],

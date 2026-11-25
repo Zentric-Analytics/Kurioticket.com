@@ -52,7 +52,7 @@ test("overview metric, status and table use neutral layout without altering valu
   assert.match(metric, /24-hour window/);
   assert.match(metric, /<dt/);
   assert.match(metric, /<dd/);
-  const status = renderToStaticMarkup(createElement(OperationsStatus, { tone: "bad", children: "Failed" }));
+  const status = renderToStaticMarkup(OperationsStatus({ tone: "bad", children: "Failed" }));
   assert.match(status, /Failed/);
   assert.match(status, /bg-rose-500/);
   const table = renderToStaticMarkup(createElement(OperationsDataTable, {
@@ -65,15 +65,13 @@ test("overview metric, status and table use neutral layout without altering valu
 });
 
 test("Hotel and Car metrics stay horizontal on desktop with smaller-screen fallback", () => {
-  const html = renderToStaticMarkup(createElement(OperationsMetricStrip, {
-    children: [
+  const html = renderToStaticMarkup(createElement(OperationsMetricStrip, null, ...[
       createElement(OperationsMetric, { key: "a", label: "Searches", value: 14 }),
       createElement(OperationsMetric, { key: "b", label: "Successful", value: 4 }),
       createElement(OperationsMetric, { key: "c", label: "Partial / failed", value: 10 }),
       createElement(OperationsMetric, { key: "d", label: "Zero results", value: 0 }),
       createElement(OperationsMetric, { key: "e", label: "Average latency", value: "34,826 ms" }),
-    ],
-  }));
+    ]));
   assert.match(html, /grid-cols-5/);
   assert.match(html, /min-w-0 grid-cols-2/);
   assert.match(html, /lg:grid-cols-5/);

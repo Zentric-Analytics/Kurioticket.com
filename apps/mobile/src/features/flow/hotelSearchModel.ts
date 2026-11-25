@@ -2,7 +2,7 @@ export type RouteValue = string | string[] | undefined;
 import { addCalendarDays, localDateFromIso, localIsoDate } from "./localDateModel";
 export { addCalendarDays, localDateFromIso, localIsoDate } from "./localDateModel";
 import type { HotelDestinationSuggestion } from "../../api/travelApi";
-export type HotelForm = { destination: string; destinationLocation?: string; checkIn: string; checkOut: string; guests: number; rooms: number };
+export type HotelForm = { destination: string; destinationLocation?: string; checkIn: string; checkOut: string; guests: number; rooms: number; adults?: number; children?: number; petFriendly?: boolean; roomComposition?: Array<{adults:number;children:number}> };
 export type HotelFormErrors = Partial<Record<keyof HotelForm, string>>;
 
 export const HOTEL_LIMITS = { guests: { min: 1, max: 12 }, rooms: { min: 1, max: 6 } } as const;
@@ -35,8 +35,21 @@ export function initializeHotelForm(params: Record<string, RouteValue>, today = 
   const validCounts = guests !== undefined && rooms !== undefined && isValidHotelOccupancy(guests, rooms);
   const hadInvalid = Boolean((incomingCheckIn || incomingCheckOut) && !validDates) || Boolean((firstParam(params.guests) || firstParam(params.rooms)) && !validCounts);
   const destinationLocation = firstParam(params.destinationLocation);
+  let roomComposition: HotelForm["roomComposition"];
+  const encodedRooms = firstParam(params.roomComposition);
+  if (encodedRooms) {
+    try {
+      const parsed: unknown = JSON.parse(encodedRooms);
+      if (Array.isArray(parsed) && parsed.length === rooms && parsed.every((room) =>
+        room && Number.isInteger(room.adults) && room.adults >= 1 &&
+        Number.isInteger(room.children) && room.children >= 0) &&
+        parsed.reduce((sum, room) => sum + room.adults + room.children, 0) === guests) {
+        roomComposition = parsed;
+      }
+    } catch { /* Invalid saved input cannot become provider criteria. */ }
+  }
   return {
-    form: { destination: firstParam(params.destination), ...(destinationLocation ? { destinationLocation } : {}), ...(validDates ? { checkIn: incomingCheckIn, checkOut: incomingCheckOut } : defaults), guests: validCounts ? guests! : 2, rooms: validCounts ? rooms! : 1 },
+    form: { destination: firstParam(params.destination), ...(roomComposition ? { roomComposition } : {}), ...(integer(params.adults)!==undefined?{adults:integer(params.adults),children:integer(params.children)??0}:{}), ...(firstParam(params.petFriendly)?{petFriendly:firstParam(params.petFriendly)==="true"}:{}), ...(destinationLocation ? { destinationLocation } : {}), ...(validDates ? { checkIn: incomingCheckIn, checkOut: incomingCheckOut } : defaults), guests: validCounts ? guests! : 2, rooms: validCounts ? rooms! : 1 },
     notice: hadInvalid ? "Some search details were invalid, so safe defaults were used." : undefined,
   };
 }
@@ -59,7 +72,7 @@ export const changeGuests = (form: HotelForm, delta: number): HotelForm => {
 };
 export const changeRooms = (form: HotelForm, delta: number): HotelForm => ({ ...form, rooms: Math.max(HOTEL_LIMITS.rooms.min, Math.min(HOTEL_LIMITS.rooms.max, form.rooms + delta)) });
 export const countLabel = (count: number, singular: string) => `${count} ${singular}${count === 1 ? "" : "s"}`;
-export const hotelSearchParams = (form: HotelForm) => ({ destination: form.destination.trim(), ...(form.destinationLocation ? { destinationLocation: form.destinationLocation } : {}), checkIn: form.checkIn, checkOut: form.checkOut, guests: String(form.guests), rooms: String(form.rooms) });
+export const hotelSearchParams = (form: HotelForm) => ({ destination: form.destination.trim(), ...(form.destinationLocation ? { destinationLocation: form.destinationLocation } : {}), checkIn: form.checkIn, checkOut: form.checkOut, guests: String(form.guests), rooms: String(form.rooms), ...(form.adults!==undefined?{adults:String(form.adults),children:String(form.children??0)}:{}), ...(form.petFriendly!==undefined?{petFriendly:String(form.petFriendly)}:{}), ...(form.roomComposition?{roomComposition:JSON.stringify(form.roomComposition)}:{}) });
 
 /** Clear stale provider destination IDs when replacing an edited Hotel Results search in place. */
 export function hotelSearchRouteParamPatch(next: Record<string, string | undefined>): Record<string, string | undefined> {

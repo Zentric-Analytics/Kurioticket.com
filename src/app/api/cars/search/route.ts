@@ -1,3 +1,4 @@
+import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { applicationMetadata } from "@/lib/application-source";
 import { after } from "next/server";
@@ -5,7 +6,7 @@ import { attachOperationalSearchSession, prepareOperationalSearchSession, operat
 import { identifySearchCrawler, searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
-import { logProviderCall, logSearchHistory } from "@/services/operationalActivityService";
+import { logProviderCall, logSearchHistory as persistSearchHistory } from "@/services/operationalActivityService";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { validateCarsForm, type CarsFormValues } from "@/lib/cars/carsSearchUtils";
 import type { LocationBoundCarSearchParams } from "@/lib/cars/types";
@@ -41,6 +42,10 @@ function canonicalSearch(value: unknown): LocationBoundCarSearchParams | null {
 }
 
 export async function POST(request: Request) {
+ return withProductionSandboxRequest(request, async () => {
+  const projectHistory=captureFinalSearchHistory();
+  const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(input));
+
   const crawler = await identifySearchCrawler(request);
   const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("CAR_SEARCH_ENABLED"))) return Response.json({ error: "Car search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503, headers: noStore });
@@ -78,7 +83,7 @@ export async function POST(request: Request) {
     });
   };
   try {
-    const { results, status, warnings, providerStatuses, unsupported } = await searchCars(search, { requestId, kayak: { requestId, clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
+    const { results, status, warnings, providerStatuses, unsupported } = await searchCars(search, { requestId, kayak: { trackId: operationalSession?.reference.id, requestId, clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
     const response = classifyCars(results, search, requestId, warnings);
     if (unsupported) {
       recordSearch(0, "FAILED");
@@ -146,4 +151,6 @@ export async function POST(request: Request) {
     recordSearch(0, "FAILED");
     return attachOperationalSearchSession(Response.json({ error: "Car search is temporarily unavailable.", requestId }, { status: 500, headers: noStore }), operationalSession);
   }
+
+ });
 }

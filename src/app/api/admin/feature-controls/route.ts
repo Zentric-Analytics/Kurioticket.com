@@ -29,6 +29,7 @@ export async function PATCH(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid feature control request.", issues: parsed.error.flatten() }, { status: 400 });
   const email = auth.session.user.email?.trim().toLowerCase() || "";
   const environment = getRuntimeFeatureEnvironment();
+  if (parsed.data.key === "ALLOW_SANDBOX_RESULTS_IN_PRODUCTION" && environment !== "PRODUCTION") return NextResponse.json({error:"Production sandbox policy cannot be changed from staging."},{status:403});
   const authorizationError = validateFeatureControlMutationAuthorization(environment, email, parsed.data.reason);
   if (authorizationError) {
     if (authorizationError.status === 403) {

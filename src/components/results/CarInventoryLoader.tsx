@@ -1,4 +1,5 @@
 "use client";
+import { useSandboxResultState } from "./useSandboxResults";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { CarsResultsClient } from "./CarsResultsClient";
@@ -14,10 +15,12 @@ export function CarInventoryLoader({ values, fallback }: {
   values: LocationBoundCarSearchParams & { returnToDifferentLocation: boolean };
   fallback: ReactNode;
 }) {
-  const [results, setResults] = useState<NormalizedCarResult[] | null>(null);
+  const [rawSandboxResults, setResults] = useState<NormalizedCarResult[] | null>(null);
+  const {results,pending:displayPending,unavailable:displayUnavailable} = useSandboxResultState(rawSandboxResults);
   const [requestId, setRequestId] = useState<string | null>(null);
   const journeyEvents = useJourneyEvents();
-  const [error, setError] = useState(false);
+  const [transportError, setError] = useState(false);
+  const error=transportError||displayUnavailable;
   const [invalidSearch, setInvalidSearch] = useState(false);
   const [unsupported, setUnsupported] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -48,7 +51,7 @@ export function CarInventoryLoader({ values, fallback }: {
     let active = true;
     const timeout = window.setTimeout(() => controller.abort(), 60_000);
     fetch("/api/cars/search", {
-      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json", "x-sandbox-results-policy": "1" },
       body: JSON.stringify(values), signal: controller.signal,
     }).then(async response => {
       if (response.status === 422) {
@@ -103,6 +106,6 @@ export function CarInventoryLoader({ values, fallback }: {
       setError(false); setAttempt(value => value + 1);
     }}>Retry search</button>
   </main>;
-  if (results === null) return fallback;
+  if (results === null || displayPending) return fallback;
   return <CarsResultsClient values={values} initialResults={results} inventoryStatus="available" requestId={requestId} />;
 }

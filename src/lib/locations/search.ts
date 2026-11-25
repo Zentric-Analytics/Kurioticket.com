@@ -13,6 +13,14 @@ export function normalizeLocationText(value: string) {
 
 const words = (value: string) => normalizeLocationText(value).split(" ").filter(Boolean);
 
+const compact = (value: string) => value.replace(/\s+/g, "");
+function transposed(left: string, right: string) {
+  if (left.length !== right.length) return false;
+  const differing = [...left].flatMap((letter, index) => letter !== right[index] ? [index] : []);
+  return differing.length === 2 && differing[1] === differing[0] + 1
+    && left[differing[0]] === right[differing[1]] && left[differing[1]] === right[differing[0]];
+}
+
 function boundedEditDistance(left: string, right: string, maximum: number) {
   if (Math.abs(left.length - right.length) > maximum) return maximum + 1;
   let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
@@ -51,6 +59,7 @@ export function rankLocation(location: CanonicalLocation, rawQuery: string): Loc
 
   const terms = searchableTerms(location).map(normalizeLocationText).filter(Boolean);
   if (terms.some((term) => term === query)) return { location, tier: "label-exact", score: 500 };
+  if (query.length >= 5 && terms.some(term => compact(term) === compact(query))) return { location, tier: "label-exact", score: 480 };
   // Short type-ahead input must visibly explain the match. Do not surface Delhi
   // for "New" merely because a hidden alias says New Delhi, or every airport in
   // New Zealand because its supporting country label happens to match.
@@ -66,7 +75,7 @@ export function rankLocation(location: CanonicalLocation, rawQuery: string): Loc
   if (terms.some((term) => term.includes(query))) return { location, tier: "substring", score: 200 };
 
   // Typo tolerance is deliberately narrow: never for codes/short input and only one edit.
-  if (query.length >= 5 && terms.some((term) => words(term).some((word) => word.length >= 5 && boundedEditDistance(query, word, 1) <= 1))) {
+  if (query.length >= 5 && terms.some((term) => transposed(compact(query), compact(term)) || words(term).some((word) => word.length >= 5 && boundedEditDistance(query, word, 1) <= 1))) {
     return { location, tier: "typo", score: 100 };
   }
   return null;

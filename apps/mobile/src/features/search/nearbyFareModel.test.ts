@@ -103,3 +103,10 @@ test("a stale generation stops taking queued work", async () => {
   }, () => current, 1);
   assert.deepEqual(handled, ["one"]);
 });
+
+test("display-only inventory cannot seed native nearby-fare storage", () => {
+  const sandbox = { price: 1, currency: "USD", sandboxDisplayOnly: true };
+  const live = { price: 110, currency: "USD" };
+  assert.equal(selectNearbyFareResult([sandbox, live], fare => fare.price), live);
+  assert.equal(selectNearbyFareResult([sandbox], fare => fare.price), undefined);
+});

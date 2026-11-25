@@ -159,7 +159,7 @@ test("standalone details use persistent mobile controls with native-ordered hero
   assert.match(clientSource, /aria-label="Back to Cars results"/);
   assert.match(clientSource, /or similar/);
   assert.match(clientSource, /useSavedCar\(car, search\)/);
-  assert.match(clientSource, /navigator\.share/);
+  assert.match(clientSource, /shareProductLink/);
   assert.match(
     clientSource,
     /rounded-full border border-white\/70 bg-white\/85/,

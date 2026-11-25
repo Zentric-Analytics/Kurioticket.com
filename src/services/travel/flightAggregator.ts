@@ -1,3 +1,7 @@
+import { inventoryAccounting } from "@/shared/search/inventory";
+import { settleWithDeadline } from "./metasearch";
+import { providersFor, runRegisteredProviders, type ProviderRegistration } from "./providerRegistry";
+import { productionSandboxInventory } from "@/lib/productionSandboxPolicy";
 import type {
   AggregatedResult,
   FlightSearchParams,
@@ -8,18 +12,17 @@ import type {
 import { getItineraryDateKey } from "@/lib/utils";
 import { getSearchLegs } from "@/lib/flights/flightSearchJourney";
 import { FLIGHT_CACHE_TTL_MS, rememberFlights } from "@/lib/searchCache";
-import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
 import {
   deduplicateFlightOffers,
   isFlightProviderOfferUsableAt,
 } from "@/services/travel/flightOfferInventory";
-import { searchKayakFlights, type KayakRequestContext } from "./kayakMetasearchProvider";
+import { type KayakRequestContext } from "./kayakMetasearchProvider";
 import { providerSearchWarnings } from "./providerSearchOutcome";
 
 /** The sole production flight pipeline. Provider policy is deliberately not configurable. */
 export async function searchFlights(
   search: FlightSearchParams,
-  options: { signal?: AbortSignal; deadlineMs?: number; onProviderStart?: () => void; requestId?: string; kayak?: KayakRequestContext; fareOnly?: boolean } = {},
+  options: { signal?: AbortSignal; deadlineMs?: number; onProviderStart?: () => void; requestId?: string; kayak?: KayakRequestContext; fareOnly?: boolean; providers?: readonly ProviderRegistration<"flights">[] } = {},
 ): Promise<AggregatedResult<NormalizedFlightResult> & {
   performance: {
     supplierMs: number;
@@ -33,20 +36,15 @@ export async function searchFlights(
   resultsCacheValidUntil?: number;
 }> {
   const startedAt = Date.now();
-  const [provider, kayak] = await Promise.all([runWithFlightSearchDeadline(
-    (signal) => {
-      options.onProviderStart?.();
-      return searchDuffelFlights(search, signal);
-    },
-    options,
-  ), searchKayakFlights(search, options.kayak)]);
+  const providerStatuses = await runRegisteredProviders(providersFor("flights", options.providers), search, options);
+  const provider = providerStatuses.find(result => result.provider === "Duffel") ?? providerStatuses[0] ?? {provider:"none",results:[],status:"skipped" as const,latencyMs:0};
   const providerPerformance = (provider as typeof provider & {
     performance?: { supplierMs: number; normalizationMs: number; offerCount: number; connectingOfferCount: number };
   }).performance;
   const now = Date.now();
   const aggregationStartedAt = performance.now();
   const deduplicationStartedAt = performance.now();
-  const usableResults = [...provider.results, ...kayak.results].filter(
+  const usableResults = providerStatuses.flatMap(provider => provider.results).filter(
     (result) =>
       matchesRequestedLegs(result, search) &&
       isFlightProviderOfferUsableAt(result, now),
@@ -60,26 +58,26 @@ export async function searchFlights(
     ),
   );
   const aggregationMs = performance.now() - aggregationStartedAt;
-  const cacheResult = results.length && !options.fareOnly
-    ? await rememberFlights(results, now, search, options.requestId)
-    : null;
-  const cacheUnavailable = cacheResult?.persisted === false;
-  const availableResults = cacheUnavailable ? [] : results;
-  // Fare comparisons never expose booking actions or populate their cache.
-  // Their quote validity still ends at the earliest provider expiration.
-  const validForMs = cacheResult?.validForMs ?? (results.length
-    ? results.reduce((remaining, result) => Math.min(
-      remaining,
-      (result.providerExpiresAt ?? Infinity) - now,
-    ), FLIGHT_CACHE_TTL_MS)
-    : 0);
+  const liveResults = results.filter(result=>!productionSandboxInventory(result));
+  const groups=new Map<string,NormalizedFlightResult[]>();
+  for(const row of liveResults) { const group=groups.get(row.provider);if(group)group.push(row);else groups.set(row.provider,[row]); }
+  const certifications=await Promise.all((options.fareOnly?[]:[...groups.values()]).map(async rows=>{
+    try { return {rows,certificate:await rememberFlights(rows,now,search,options.requestId)}; }
+    catch {return {rows,certificate:{persisted:false,validForMs:0}};}
+  }));
+  const certifiedIds=new Set(certifications.flatMap(item=>item.certificate.persisted?item.rows.map(row=>row.id):[]));
+  const validCertificates=certifications.filter(item=>item.certificate.persisted);
+  const cacheResult={persisted:certifications.every(item=>item.certificate.persisted),validForMs:options.fareOnly?results.reduce((remaining,row)=>Math.min(remaining,(row.providerExpiresAt??Infinity)-now),FLIGHT_CACHE_TTL_MS):validCertificates.length?Math.min(...validCertificates.map(item=>item.certificate.validForMs)):0};
+  const actionableResults = options.fareOnly?results:results.filter(row=>productionSandboxInventory(row)||certifiedIds.has(row.id));
+  const cacheUnavailable = !options.fareOnly && liveResults.some(row=>!certifiedIds.has(row.id));
+  console.info("[search:inventory-accounting]",{requestId:options.requestId,product:"flights",stages:inventoryAccounting([{stage:"normalized",rows:providerStatuses.flatMap(provider=>provider.results)},{stage:"deduplicated",rows:results},{stage:"policy-eligible",rows:actionableResults}])});
   return {
-    results: availableResults,
-    providerStatuses: [provider, kayak],
+    results: actionableResults,
+    providerStatuses,
     warnings:
-      provider.status === "failed" || kayak.status === "failed" || cacheUnavailable
+      providerStatuses.some(provider=>provider.status === "failed") || cacheUnavailable
         ? ["Flight results are temporarily unavailable. Please try again."]
-        : providerSearchWarnings([provider, kayak], availableResults.length),
+        : providerSearchWarnings(providerStatuses, actionableResults.length),
     latencyMs: Date.now() - startedAt,
     performance: {
       supplierMs: providerPerformance?.supplierMs ?? provider.latencyMs,
@@ -90,9 +88,9 @@ export async function searchFlights(
       deduplicationMs,
       aggregationMs,
     },
-    resultsCacheValidForMs: validForMs,
-    resultsCacheValidUntil: now + validForMs,
-    ...((!availableResults.length && (provider.status === "failed" || kayak.status === "failed")) || cacheUnavailable
+    resultsCacheValidForMs: cacheResult.validForMs,
+    resultsCacheValidUntil: now + cacheResult.validForMs,
+    ...((!actionableResults.length && (providerStatuses.some(provider=>provider.status === "failed") || cacheUnavailable))
       ? {
           unavailableMessage:
             "Flight results are temporarily unavailable. Please try again.",
@@ -108,24 +106,8 @@ export async function runWithFlightSearchDeadline<T>(
   task: (signal: AbortSignal) => Promise<ProviderResult<T>>,
   options: { signal?: AbortSignal; deadlineMs?: number } = {},
 ) {
-  const startedAt = Date.now();
-  const controller = new AbortController();
-  const onAbort = () => controller.abort();
-  options.signal?.addEventListener("abort", onAbort, { once: true });
-  if (options.signal?.aborted) controller.abort();
-  let timeout: ReturnType<typeof setTimeout>;
-  const deadlineResult = new Promise<ProviderResult<T>>((resolve) => {
-    timeout = setTimeout(() => {
-      controller.abort();
-      resolve({ provider: "Duffel", results: [], status: "failed", latencyMs: Date.now() - startedAt, error: "provider_timeout", errorCategory: "timeout", errorReason: "provider_timeout" });
-    }, options.deadlineMs ?? FLIGHT_SEARCH_DEADLINE_MS);
-  });
-  try {
-    return await Promise.race([task(controller.signal), deadlineResult]);
-  } finally {
-    clearTimeout(timeout!);
-    options.signal?.removeEventListener("abort", onAbort);
-  }
+  const startedAt=Date.now();
+  return settleWithDeadline<ProviderResult<T>>(task,options.deadlineMs??FLIGHT_SEARCH_DEADLINE_MS,options.signal,reason=>({provider:"Duffel",results:[],status:"failed",latencyMs:Date.now()-startedAt,error:reason==="failed"?"provider_failed":"provider_timeout",errorCategory:reason==="failed"?"failed":"timeout",errorReason:reason==="failed"?"provider_failed":"provider_timeout"}));
 }
 
 export function sortFlights(results: NormalizedFlightResult[], sort: SortMode) {

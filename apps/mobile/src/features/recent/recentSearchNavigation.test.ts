@@ -38,7 +38,7 @@ test("valid one-way flight reopens native results with numeric server params mad
   assert.equal(route.pathname, "/flight-results");
   assert.deepEqual(route.params, {
     tripType: "one-way", origin: "LOS", destination: "LHR", departureDate: "2099-08-30",
-    adults: "2", children: "1", infants: "0", travelers: "3", cabinClass: "economy",
+    adults: "2", children: "1", infants: "0", travelers: "3", cabinClass: "economy", currency:"USD",
   });
 });
 
@@ -57,7 +57,7 @@ test("valid hotel reopens native results and preserves numeric occupancy", () =>
     result: "old", currency: "GHS",
   }));
   assert.equal(route.pathname, "/hotel-results");
-  assert.deepEqual(route.params, { destination: "Accra", checkIn: "2099-09-01", checkOut: "2099-09-05", guests: "4", rooms: "2" });
+  assert.deepEqual(route.params, { destination: "Accra", checkIn: "2099-09-01", checkOut: "2099-09-05", guests: "4", rooms: "2", currency:"GHS" });
 });
 
 test("expired flight falls back to the form with only legitimate stored fields", () => {

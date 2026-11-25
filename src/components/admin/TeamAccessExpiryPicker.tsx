@@ -33,7 +33,11 @@ export function TeamAccessExpiryPicker({ id, initialValue = "", compact = false 
   const [draftMinute, setDraftMinute] = useState("59");
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
 
-  useEffect(() => { setValue(initialValue || ""); }, [initialValue]);
+  const [previousInitialValue, setPreviousInitialValue] = useState(initialValue);
+  if (previousInitialValue !== initialValue) {
+    setPreviousInitialValue(initialValue);
+    setValue(initialValue || "");
+  }
 
   useEffect(() => {
     if (!open) return;

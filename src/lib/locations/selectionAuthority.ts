@@ -33,9 +33,9 @@ function encodePayload(payload: Payload) {
   const fields = [
     payload.product,
     payload.exp,
-    // `kind` is display metadata and is not needed to resolve a provider value.
+    // Flight admission authenticates kind; hotel/car binding resolution retains the compact legacy tuple.
     // Keeping it out of the token leaves room for long airport and landmark IDs.
-    payload.bindings.map(({ provider, value, verification, provenance }) => [provider, value, verification, provenance]),
+    payload.bindings.map(({ provider, value, kind, verification, provenance }) => payload.product === "flights" ? [provider,value,kind,verification,provenance] : [provider, value, verification, provenance]),
   ];
   // Hotel IDs already travel with the selection. Authenticate that exact ID as
   // additional data instead of repeating a long destination label in the token.
@@ -96,11 +96,17 @@ export function issueLocationSelection(location: CanonicalLocation, product: Tra
     id: location.id,
     product,
     exp: now + TTL_MS,
-    bindings: (location.providerBindings ?? []).slice(0, 12),
+    bindings: (location.providerBindings ?? []).slice(0, 12).map(binding=>product === "flights"?{...binding,kind:location.kind}:binding),
   });
 }
 
 export type SelectionFailure = "LOCATION_RESOLUTION_FAILED" | "UNSUPPORTED_LOCATION";
+/** Verify handle scope without treating client-carried bindings as authority. */
+export function validateLocationSelection(input: { id: string; selectionToken?: string }, product: TravelProduct, now = Date.now()): boolean {
+  if (!input.selectionToken) return false;
+  const payload = decodePayload(input.selectionToken, input.id);
+  return Boolean(payload && payload.exp > now && payload.id === input.id && payload.product === product && (product !== "flights" || (payload.bindings.length>0 && payload.bindings.every(binding=>binding.kind==="airport"))));
+}
 export function resolveProviderSelection(input: { id: string; selectionToken?: string }, product: TravelProduct, provider: string, now = Date.now()): { ok: true; value: string } | { ok: false; reason: SelectionFailure } {
   if (!input.selectionToken) return { ok: false, reason: "LOCATION_RESOLUTION_FAILED" };
   const payload = decodePayload(input.selectionToken, input.id);

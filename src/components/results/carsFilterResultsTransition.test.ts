@@ -86,6 +86,8 @@ test("Compare deals seller offers remain scoped without selection-triggered page
   modules["@/components/results/CarResultImage"] = "exports.CarResultImage=()=>null;";
   modules["@/components/results/CarsRouteLoadingOverlay"] = "exports.CarsRouteLoadingOverlay=()=>null;";
   modules["@/components/results/CarPriceAlertControl"] = "exports.CarPriceAlertControl=({car,offer})=>require('react').createElement('div',{'data-fixture-alert-car':car.id,'data-fixture-alert-offer':offer.id});";
+  modules["next-auth/react"]="exports.useSession=()=>({data:null,status:'unauthenticated'});";
+  modules["@/components/privacy/JourneyEventsProvider"]="exports.useJourneyEvents=()=>({handoffMetadata:()=>({}),workflowDecision:()=>{}});";
   function addModule(name: string, file: string) {
     if (modules[name]) return;
     const compiled = ts.transpileModule(read(file), { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
@@ -267,7 +269,7 @@ test("every full mobile drawer exit compares its opening snapshot before closing
 
   assert.match(openHandler, /mobileFilterDrawerInitialFiltersRef\.current =[\s\S]*getSelectedCarFiltersSignature/);
   assert.match(closeHandler, /mobileFilterDrawerInitialFiltersRef\.current !==[\s\S]*getSelectedCarFiltersSignature\(selectedCarFiltersRef\.current\)/);
-  assert.match(closeHandler, /if \(filtersChanged\) startFilterResultsTransition\(\);[\s\S]*setFiltersOpen\(false\)/);
+  assert.match(closeHandler, /if \(filtersChanged\) \{[\s\S]*startFilterResultsTransition\(\);[\s\S]*\}[\s\S]*setFiltersOpen\(false\)/);
   assert.equal((drawer.match(/onClick=\{closeMobileFiltersDrawer\}/g) ?? []).length, 2);
   assert.match(cars, /else closeMobileFiltersDrawer\(\)/);
   assert.match(cars, /onClick=\{closeMobileFiltersDrawer\}[\s\S]*`View \$\{visibleResults\.length\}/);

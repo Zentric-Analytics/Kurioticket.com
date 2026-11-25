@@ -37,12 +37,14 @@ test("stale results stay retained but blocked from scrolling until refresh settl
   const staleIndex = source.indexOf("const refreshingStaleSnapshot");
   const emptySnapshotIndex = source.indexOf("} else {", staleIndex);
   const fetchIndex = source.indexOf('fetch("/api/flights/search"', staleIndex);
-  const catchIndex = source.indexOf(".catch((searchError)", fetchIndex);
+  const catchIndex = source.indexOf(".catch(", fetchIndex);
   const finallyIndex = source.indexOf(".finally(()", catchIndex);
   const staleRestore = source.slice(staleIndex, emptySnapshotIndex);
   const failure = source.slice(catchIndex, finallyIndex);
 
   assert.ok(staleIndex >= 0 && staleIndex < emptySnapshotIndex && emptySnapshotIndex < fetchIndex);
+  assert.ok(fetchIndex < catchIndex && catchIndex < finallyIndex);
+  assert.match(staleRestore, /returnIntentRef\.current\?\.returning[\s\S]*setLoading\(refreshingStaleSnapshot\)/);
   assert.match(staleRestore, /if \(!shouldBypassSnapshot && returnIntentRef\.current\?\.returning/);
   assert.match(staleRestore, /!snapshotState\?\.isFresh/);
   assert.match(staleRestore, /setLoading\(refreshingStaleSnapshot\)/);
@@ -52,21 +54,24 @@ test("stale results stay retained but blocked from scrolling until refresh settl
   assert.match(source, /backgroundRefreshing \? t\("updatingResults"\) : ""/);
 });
 
-test("successful date-filtered responses are cached while errors retain existing handling", async () => {
+test("successful date-filtered offers are cached without diagnostics, and failures use fixed public copy", async () => {
   const source = await readFile(resultsClientPath, "utf8");
   const responseIndex = source.indexOf("const filteredResults = filterResultsByRequestedOutboundDate(");
   const writeIndex = source.indexOf("writeFlightResultsSessionSnapshot(", responseIndex);
-  const catchIndex = source.indexOf(".catch((searchError)", responseIndex);
+  const catchIndex = source.indexOf(".catch(", responseIndex);
   const finallyIndex = source.indexOf(".finally(()", catchIndex);
 
-  assert.ok(responseIndex >= 0 && responseIndex < writeIndex && writeIndex < catchIndex);
+  assert.ok(responseIndex >= 0 && responseIndex < writeIndex && writeIndex < catchIndex && catchIndex < finallyIndex);
   assert.match(
     source.slice(writeIndex, catchIndex),
-    /searchKey,[\s\S]*filteredResults,[\s\S]*warnings,[\s\S]*data\.resultsCacheValidUntil/,
+    /searchKey,\s*filteredResults,\s*\[\],\s*data\.resultsCacheValidUntil/,
   );
   assert.match(source.slice(responseIndex, catchIndex), /typeof data\.resultsCacheValidUntil === "number"/);
   assert.doesNotMatch(source.slice(catchIndex, finallyIndex), /writeFlightResultsSessionSnapshot/);
-  assert.match(source.slice(catchIndex, finallyIndex), /setError\(/);
+  const failure = source.slice(catchIndex, finallyIndex);
+  assert.match(failure, /setError\(\s*dictionary\.unableToSearchFlights/);
+  assert.doesNotMatch(failure, /\.message|data\.error/);
+  assert.doesNotMatch(source.slice(responseIndex, catchIndex), /data\.warnings/);
   assert.match(source.slice(responseIndex, finallyIndex), /activeFlightSearchKeyRef\.current !== searchKey/);
 });
 

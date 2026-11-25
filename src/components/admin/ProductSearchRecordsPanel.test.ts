@@ -24,6 +24,9 @@ test("both product pages remove redundant header search links without losing rec
   }
   assert.doesNotMatch(panelSource, /export function ProductSearchJumpLink/);
   assert.match(panelSource, /window.location.hash === "#" \+ sectionId/);
+  assert.match(panelSource, /useSyncExternalStore\(subscribeToBookmark/);
+  assert.match(panelSource, /window.addEventListener\("hashchange", notify\)/);
+  assert.match(panelSource, /window.addEventListener\("popstate", notify\)/);
 });
 
 test("both product directories render independently accessible, responsive read-only record tables", () => {

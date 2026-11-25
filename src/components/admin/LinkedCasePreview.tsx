@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import React, { useEffect, useId, useState } from "react";
 
 import type { LinkedCaseOrigin, LinkedCasePreviewResult } from "@/services/adminLinkedCasePreviewCore";
 
@@ -45,12 +45,18 @@ export function LinkedCasePreview({ origin, sourceId }: Props) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<LinkedCasePreviewResult | null>(null);
 
+  const readScope = JSON.stringify([expanded, origin, sourceId]);
+  const [previousReadScope, setPreviousReadScope] = useState(readScope);
+  if (previousReadScope !== readScope) {
+    setPreviousReadScope(readScope);
+    setLoading(expanded);
+    setResult(null);
+  }
+
   useEffect(() => {
     if (!expanded) return;
     const controller = new AbortController();
     let active = true;
-    setLoading(true);
-    setResult(null);
 
     void (async () => {
       try {

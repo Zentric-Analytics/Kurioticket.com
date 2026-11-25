@@ -14,7 +14,7 @@ const identity = (location: CanonicalLocation, product: TravelProduct) => produc
   ? `custom:${location.id}`
   : location.codes?.iata
     ? `iata:${location.kind}:${location.codes.iata.toUpperCase()}`
-    : `${location.kind}:${location.primaryLabel.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, "")}:${(location.country?.code || location.supportingLabel || location.submittedValue).normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+    : `${location.kind}:${location.primaryLabel.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "")}:${(location.country?.code || location.supportingLabel || location.submittedValue).normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "")}`;
 
 function merge(left: CanonicalLocation, right: CanonicalLocation): CanonicalLocation {
   const bindings = [...(left.providerBindings ?? []), ...(right.providerBindings ?? [])].filter((binding, index, all) =>
@@ -26,19 +26,25 @@ function merge(left: CanonicalLocation, right: CanonicalLocation): CanonicalLoca
     verification: bindings.some((binding) => binding.verification === "verified") ? "verified" : left.verification };
 }
 
-async function bounded(adapter: DiscoveryAdapter, query: string, product: TravelProduct, timeoutMs: number) {
+async function bounded(adapter: DiscoveryAdapter, query: string, product: TravelProduct, timeoutMs: number, signal?: AbortSignal) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try { return { locations: await adapter.discover(query, { product, signal: controller.signal }), status: "success" as const }; }
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const cancelled = new Promise<never>((_, reject) => {
+    const abort = () => { controller.abort(); reject(new Error("discovery_cancelled")); };
+    if (signal?.aborted) abort();
+    else signal?.addEventListener("abort", abort, {once:true, signal:controller.signal});
+  });
+  const deadline = new Promise<never>((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new Error("discovery_timeout")); }, timeoutMs); });
+  try { return { locations: await Promise.race([adapter.discover(query, { product, signal: controller.signal }), deadline, cancelled]), status: "success" as const }; }
   catch (error) { return { locations: [], status: controller.signal.aborted ? "timeout" as const : "failed" as const, error }; }
-  finally { clearTimeout(timer); }
+  finally { clearTimeout(timer); controller.abort(); }
 }
 
-export async function discoverLocations(options: { query: string; product: TravelProduct; catalog: readonly CanonicalLocation[]; adapters?: readonly DiscoveryAdapter[]; limit?: number; timeoutMs?: number; supportedByProviders?: readonly string[] }) {
+export async function discoverLocations(options: { query: string; product: TravelProduct; catalog: readonly CanonicalLocation[]; adapters?: readonly DiscoveryAdapter[]; limit?: number; timeoutMs?: number; signal?: AbortSignal; supportedByProviders?: readonly string[] }) {
   const query = options.query.trim();
   if (!query) return { suggestions: [], sources: [] };
   const adapters = (options.adapters ?? []).filter((adapter) => adapter.products.includes(options.product));
-  const outcomes = await Promise.all(adapters.map((adapter) => bounded(adapter, query, options.product, options.timeoutMs ?? 900)));
+  const outcomes = await Promise.all(adapters.map((adapter) => bounded(adapter, query, options.product, options.timeoutMs ?? 900, options.signal)));
   const merged = new Map<string, CanonicalLocation>();
   for (const location of [...outcomes.flatMap((outcome) => outcome.locations), ...options.catalog]) {
     const match = searchLocations([location], query, 1)[0];
@@ -66,7 +72,8 @@ export async function discoverLocations(options: { query: string; product: Trave
     }
   }
   return {
-    suggestions,
+    suggestions: options.signal?.aborted ? [] : suggestions,
+    state: options.signal?.aborted ? "cancelled" : suggestions.length ? "available" : outcomes.some(outcome => outcome.status !== "success") ? "unavailable" : "no-match",
     sources: adapters.map((adapter, index): DiscoverySourceStatus => ({ provider: adapter.provider, status: outcomes[index].status, count: outcomes[index].locations.length,
       failure: outcomes[index].status === "timeout" ? "TIMEOUT" : outcomes[index].status === "failed" ? "PROVIDER_UNAVAILABLE" : undefined })),
   };

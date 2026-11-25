@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import React, { useSyncExternalStore } from "react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 
 const subscribe = () => () => {};

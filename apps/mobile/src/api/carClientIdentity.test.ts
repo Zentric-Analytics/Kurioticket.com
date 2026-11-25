@@ -1,33 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { runInNewContext } from "node:vm";
-import { URL as NodeURL } from "node:url";
 import test from "node:test";
-import ts from "typescript";
 
-function fixture(platform = "android", version = "0.3.0", registered = true, signedSearchCredential?: string) {
-  const journeyResponses: unknown[] = [];
-  const calls: Array<{ url: string; init: RequestInit }> = [];
-  const dependencies: Record<string, unknown> = {
-    "../config/apiUrl": { getApiBaseUrl: () => ({ ok: true, baseUrl: "https://staging.kurioticket.com" }) },
-    "../storage/sessionStorage": { readSession: async () => registered ? { user: { id: "test-user" }, token: "test-session" } : null },
-    "react-native": { Platform: { OS: platform } },
-    "expo-constants": { default: { expoConfig: { version } } },
-    "expo-crypto": { randomUUID: () => "00000000-0000-4000-8000-000000000001" },
-    "./exploreCatalogueContract": { parseMobileExploreCatalogue: () => null },
-    "../features/search/flightSearchDiagnostics": { logFlightSearchCheckpoint: () => {} },
-    "../features/privacy/visitorIdentity": { visitorIdentity: { headers: async () => ({}), trackingContext: () => null } },
-    "../features/privacy/journeyResponseContext": { rememberJourneyResponseContext: (data: unknown) => { journeyResponses.push(data); } },
-    "../features/auth/authApi": {},
-    "../../../../src/lib/providerHandoffClient": { createProviderHandoffMetadata: () => () => ({}) },
-  };
-  const compiled = ts.transpileModule(readFileSync(new NodeURL("./travelApi.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const exported: any = {};
-  runInNewContext(compiled, { exports: exported, require: (name: string) => { assert.ok(name in dependencies, name); return dependencies[name]; }, __DEV__: false, AbortController, setTimeout, clearTimeout, Date, performance, URLSearchParams, console,
-    fetch: async (url: string, init: RequestInit) => { calls.push({ url, init }); return Response.json({ results: [], status: "empty" }, { headers: signedSearchCredential ? { "X-Kt-Search-Session": signedSearchCredential } : {} }); },
-  });
-  return { api: exported.travelApi, headers: exported.carSearchClientHeaders as (platform: string, version?: string) => Record<string,string>, calls, journeyResponses };
-}
+import {nativeTravelApiHarness} from "./testsupport/travelApiHarness";
+function fixture(platform="android",version="0.3.0",baseOrRegistered:string|boolean=true,signedSearchCredential?:string){return nativeTravelApiHarness(platform,version,typeof baseOrRegistered==="string"?baseOrRegistered:"https://staging.kurioticket.com",undefined,{registered:typeof baseOrRegistered==="boolean"?baseOrRegistered:true,signedSearchCredential});}
+
 test("actual car transport identifies application/version/Android and keeps native transport identity and payload", async () => {
   const h = fixture();
   const criteria = { pickupLocation: "LHR", dropoffLocation: "LHR", pickupDate: "2026-12-14", dropoffDate: "2026-12-17", pickupTime: "10:00", dropoffTime: "10:00", driverAge: "25" };
@@ -55,6 +32,34 @@ test("unavailable or malformed version never invents identity or permits header 
   const h = fixture();
   for (const version of [undefined, "", "0.3.0\r\nInjected: true", "unknown", "<script>"]) assert.deepEqual(Object.keys(h.headers("android",version)), []);
   assert.match(h.headers("android", "0.3.0-preview.1")["User-Agent"], /0\.3\.0-preview\.1/);
+});
+
+test("production display capability is opt-in and preserves actual Android identity and authorization", async () => {
+  const h = fixture("android", "0.3.0", "https://kurioticket.com");
+  await h.api.searchFlights({}, { sandboxDisplay: true });
+  await h.api.searchHotels({}, { sandboxDisplay: true });
+  await h.api.searchHotelsProgressive({}, null, { sandboxDisplay: true });
+  await h.api.searchCars({}, { sandboxDisplay: true });
+  for (const call of h.calls) {
+    const headers = new Headers(call.init.headers);
+    assert.equal(headers.get("x-sandbox-results-policy"), "1");
+    assert.equal(headers.get("User-Agent"), "KurioticketMobile/0.3.0 (Android; Native) OkHttp");
+    assert.equal(headers.get("Authorization"), "Bearer test-session");
+  }
+  await h.api.searchFlights({});
+  assert.equal(new Headers(h.calls.at(-1)!.init.headers).get("x-sandbox-results-policy"), null);
+});
+
+test("hotel destination discovery opts into production sandbox policy without changing client identity", async () => {
+  for (const platform of ["android", "ios"]) {
+    const h = fixture(platform, "0.3.0", "https://kurioticket.com");
+    await h.api.searchHotelDestinations("New York", { locale: "en-US", limit: 8 });
+    assert.match(h.calls[0].url, /\/api\/hotels\/destinations\?q=New\+York&limit=8&locale=en-US$/);
+    const headers = new Headers(h.calls[0].init.headers);
+    assert.equal(headers.get("x-sandbox-results-policy"), "1");
+    assert.equal(headers.get("User-Agent"), null);
+    assert.equal(headers.get("Authorization"), "Bearer test-session");
+  }
 });
 
 for (const platform of ["android", "ios"]) {

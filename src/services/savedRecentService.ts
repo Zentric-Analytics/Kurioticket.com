@@ -1,3 +1,4 @@
+import {productionSandboxInventory} from "@/lib/productionSandboxPolicy";
 import { z } from "zod";
 import { resolveSavedFlightTime } from "@/shared/flights/savedFlightTime";
 import { createHash } from "node:crypto";
@@ -95,7 +96,9 @@ function savedActivityEventMetadata(input: CreateSavedItemInput, itemId: string,
  * *same transaction* only for a newly created saved item.
  */
 export function createSavedItemWriter(database: () => Pick<PrismaClient, "$transaction">, audit = false) {
-  return async (userId: string, input: CreateSavedItemInput, attribution: ApplicationAttribution = {}) => database().$transaction(async tx => {
+  return async (userId: string, input: CreateSavedItemInput, attribution: ApplicationAttribution = {}) => {
+    if(productionSandboxInventory(input))throw new Error("Sandbox inventory cannot be saved.");
+    return database().$transaction(async tx => {
     const retryIdentity = input.type === "car"
       ? "car:" + userId + ":" + carSavedSignature(input) : savedRetryKey(userId, input);
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('saved-item-retry'), hashtext(${retryIdentity}))`;
@@ -119,6 +122,7 @@ export function createSavedItemWriter(database: () => Pick<PrismaClient, "$trans
     });
     return item;
   });
+  };
 }
 const writeUserSavedItem = createSavedItemWriter(getPrisma, true);
 export async function createUserSavedItem(

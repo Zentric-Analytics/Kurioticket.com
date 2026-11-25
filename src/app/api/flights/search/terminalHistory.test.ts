@@ -1,3 +1,4 @@
+import { withProductionSandboxRequest, captureFinalSearchHistory, productionSandboxInventory } from "@/lib/productionSandboxPolicy";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -8,13 +9,14 @@ import { resolveSearchRequestId } from "@/lib/search-journey";
 import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
 import { operationalSessionMetadata } from "@/lib/operationalSearchSession";
 
+const providerDiagnostic = "KAYAK HTTP 403: synthetic provider authentication failure";
 const requestId = "78e1de9e-6dfe-494f-9fdb-83726d83bf64";
 type History = { requestId: string; type: string; status: string; userId: string | null; visitorId: string | null; resultCount: number; query: unknown; latencyMs: number };
 
 function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; operationalGuest?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string; withOffers?: boolean; rateLimited?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT"; declaredCrawler?: string; applicationSource?: "WEB" | "IOS" | "ANDROID" | "UNKNOWN" } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: History[] = [];
-  const providerCalls: Array<{ metadata: Record<string, unknown>; status: string }> = [];
+  const providerCalls: Array<{ metadata: Record<string, unknown>; status: string; errorMessage?:string }> = [];
   const analyticsEvents: unknown[] = [];
   const rates: Array<[string, number, number]> = [];
   const errors: unknown[] = [];
@@ -22,13 +24,14 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
   const providerCriteria: unknown[] = [];
   const aggregate = {
     results: options.withOffers ? [{ id: "actionable-offer", price: 199, currency: "USD" }] : [],
-    warnings: ["Provider temporarily unavailable"], latencyMs: 42,
-    ...(options.available ? {} : { unavailableMessage: "Provider temporarily unavailable" }),
-    providerStatuses: [{ provider: "provider", status: options.available && !options.providerFailed ? "success" : "failed", latencyMs: 40, results: [], error: options.available && !options.providerFailed ? undefined : "upstream failure" }],
+    warnings: [providerDiagnostic], latencyMs: 42,
+    ...(options.available ? {} : { unavailableMessage: providerDiagnostic }),
+    providerStatuses: [{ provider: "provider", status: options.available && !options.providerFailed ? "success" : "failed", latencyMs: 40, results: [], error: options.available && !options.providerFailed ? undefined : providerDiagnostic }],
     performance: { supplierMs: 40, normalizationMs: 0, deduplicationMs: 0, aggregationMs: 2, offerCount: 0, connectingOfferCount: 0 },
   };
   const schema = { safeParse: (data: unknown) => ({ success: true, data }) };
   const dependencies: Record<string, unknown> = {
+    "@/lib/productionSandboxPolicy": {withProductionSandboxRequest,captureFinalSearchHistory,productionSandboxInventory},
     "next/server": { NextResponse: { json: Response.json }, after: (callback: () => Promise<unknown>) => { deferred.push(callback); } },
     "node:crypto": { createHash },
     "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
@@ -121,7 +124,12 @@ for (const product of ["flight", "hotel"] as const) {
     const fixture = routeFixture(product);
     const response = await fixture.post();
     assert.equal(response.status, 503);
-    assert.equal((await response.json()).requestId, requestId);
+    const body = await response.json();
+    assert.equal(body.requestId, requestId);
+    assert.equal(body.error, `${product === "flight" ? "Flight" : "Hotel"} search is temporarily unavailable. Please try again.`);
+    assert.deepEqual(body.warnings, []);
+    assert.equal("providerStatuses" in body, false);
+    assert.ok(!JSON.stringify(body).includes(providerDiagnostic));
     assert.equal(fixture.lookups(), 0, "identity resolution cannot delay the terminal search response");
     assert.deepEqual(fixture.histories, []);
     assert.equal(fixture.deferred.length, 1);
@@ -134,6 +142,7 @@ for (const product of ["flight", "hotel"] as const) {
       query: fixture.criteria, resultCount: 0, latencyMs: 42, status: "FAILED",
     });
     assert.equal(fixture.providerCalls.length, 1, "existing provider diagnostics remain recorded");
+    assert.equal((fixture.providerCalls[0] as { errorMessage: string }).errorMessage, providerDiagnostic);
   });
 
   test(`${product} failed search history does not invent an identity for an unconsented request`, async () => {

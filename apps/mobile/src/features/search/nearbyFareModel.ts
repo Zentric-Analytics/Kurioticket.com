@@ -1,3 +1,4 @@
+import { hasDisplayOnlyInventory } from "../../../../../src/shared/presentation/sandboxInventory";
 import type { NearbyFlightFare } from "../../api/travelApi";
 import { shiftCalendarDate } from "./dateStripModel";
 
@@ -61,7 +62,7 @@ export function selectNearbyFareResult<T extends { price: number; currency: stri
   let lowestComparable: { result: T; value: number } | undefined;
   let providerCurrencyFallback: T | undefined;
 
-  for (const result of results) {
+  for (const result of results.filter(result=>!hasDisplayOnlyInventory(result))) {
     if (!Number.isFinite(result.price) || !result.currency?.trim()) continue;
     providerCurrencyFallback ??= result;
     const value = normalizePrice(result);

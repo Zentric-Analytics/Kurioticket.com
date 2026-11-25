@@ -54,7 +54,11 @@ function validStatus(value: unknown): value is ProductSearchResult<never>["statu
 }
 function subscribeToBookmark(notify: () => void) {
   window.addEventListener("hashchange", notify);
-  return () => window.removeEventListener("hashchange", notify);
+  window.addEventListener("popstate", notify);
+  return () => {
+    window.removeEventListener("hashchange", notify);
+    window.removeEventListener("popstate", notify);
+  };
 }
 
 /** All product records, filters, pagination and diagnostics stay inside Providers.

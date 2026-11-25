@@ -1,7 +1,7 @@
 "use client";
 
 import { signOut } from "next-auth/react";
-import { useState } from "react";
+import React, { useState } from "react";
 
 import { PendingDeletionDeadline } from "@/components/account/PendingDeletionDeadline";
 import { useLocale } from "@/components/layout/LocaleProvider";

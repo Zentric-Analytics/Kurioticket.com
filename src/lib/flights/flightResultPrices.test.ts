@@ -39,3 +39,10 @@ test("ignores nearby fares that cannot be normalized instead of comparing raw am
   const fares = [flight(1, "XYZ"), flight(110, "USD")];
   assert.equal(getLowestComparableFlightFare(fares, "USD", rates), fares[1]);
 });
+
+test("display-only inventory cannot become a cached nearby fare", () => {
+  const sandbox = { price: 1, currency: "USD", sandboxDisplayOnly: true };
+  const live = { price: 110, currency: "USD" };
+  assert.equal(getLowestComparableFlightFare([sandbox, live], "USD", rates), live);
+  assert.equal(getLowestComparableFlightFare([sandbox], "USD", rates), null);
+});

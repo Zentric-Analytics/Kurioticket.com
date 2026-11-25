@@ -320,7 +320,7 @@ test("Audit Logs drafts never fetch until Apply filters and preserve typed value
     const admin = page.getByRole("searchbox", { name: "Search email", exact: true });
     const range = page.getByRole("combobox", { name: "Date range", exact: true });
     assert.equal(await page.getByRole("searchbox").count(), 1);
-    assert.match(await range.innerText(), /Last 24 hrs \(legacy\)\s+WAT \(UTC\+1\)/);
+    assert.match(await range.innerText(), /Last 24 hrs \(legacy\)\s*WAT \(UTC\+1\)/);
     assert.equal(await range.evaluate(element => element.getAttribute("aria-describedby") &&
       document.getElementById(element.getAttribute("aria-describedby")!)?.textContent), "WAT (UTC+1)");
     await admin.fill("draft@example.test");

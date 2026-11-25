@@ -17,7 +17,8 @@ test("nearby requests have isolated generation, controller registry, and canonic
 
 test("selected inventory comes from the current date's primary search", () => {
   assert.match(lifecycle, /flightResultsOwner !== plan.plan\?\.key/);
-  assert.match(lifecycle, /fares: ownedFlightResults\.map/);
+  assert.match(lifecycle, /comparableResults=ownedFlightResults\.filter\(result=>!hasDisplayOnlyInventory\(result\)\)/);
+  assert.match(lifecycle, /fares: comparableResults\.map/);
 });
 
 test("selected inventory seeds immediately and neighbors remain progressive", () => {

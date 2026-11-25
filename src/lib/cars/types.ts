@@ -1,3 +1,4 @@
+import type { InventoryProvenance } from "@/shared/search/inventory";
 export type CarSearchParams = {
   pickupLocation: string;
   dropoffLocation: string;
@@ -83,7 +84,8 @@ export type NormalizedCarResult = {
   importantInformation: string[];
   pickupInstructions?: string;
   offers: CarOffer[];
-  inventorySource: "kurioticket-static-cars" | "kayak-sandbox";
+  inventorySource: "kurioticket-static-cars" | "kayak-sandbox" | "metasearch";
+  inventoryProvenance?: InventoryProvenance;
   /** Sandbox display overrides prevent required legacy defaults becoming claims. */
   sandboxPresentation?: { specs: string[]; pickupLabel: string; filterOptions?: string[] };
 };

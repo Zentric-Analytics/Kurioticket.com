@@ -32,8 +32,8 @@ test("client-combined search screens use combined empty-state handling", () => {
 test("Hotels waits for the server-combined result before rendering an empty or failed search", () => {
   const client = readFileSync("src/components/results/HotelResultsClient.tsx", "utf8");
   const aggregate = readFileSync("src/services/travel/hotelAggregator.ts", "utf8");
-  assert.match(aggregate, /const kayak = await \(options\.dependencies\?\.searchKayak \?\? searchKayakHotels\)/);
-  assert.match(aggregate, /dedupeHotels\(kayak\.results\)/);
+  assert.match(aggregate, /const providerStatuses = await runRegisteredProviders\(providersFor\("hotels"/);
+  assert.match(aggregate, /dedupeHotels\(inventory\)/);
   assert.doesNotMatch(aggregate, /buildStaticHotelResults/);
   assert.match(client, /fetch\("\/api\/hotels\/search"/);
   assert.match(client, /readHotelSearchResponse\(response, t\("hotelResults\.searchUnavailableDetailed"\),/);

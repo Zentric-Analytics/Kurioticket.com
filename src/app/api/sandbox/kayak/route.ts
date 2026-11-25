@@ -1,3 +1,4 @@
+import { productionSandboxHost } from "@/lib/productionSandboxPolicy";
 import { NextRequest, NextResponse } from "next/server";
 import { isIP } from "node:net";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -40,6 +41,7 @@ async function readSmallBody(request: Request) {
 }
 
 export async function POST(request: NextRequest) {
+  if (productionSandboxHost()) return NextResponse.json({error:"Use the display-only search interface."},{status:404,headers:noStore});
   if (!isKayakSandboxEnabled())
     return NextResponse.json(
       { error: "Sandbox unavailable." },

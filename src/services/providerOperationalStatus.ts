@@ -20,6 +20,7 @@ export async function getProviderOperationalStatuses(
 
   const readiness = getProviderIntegrationStatuses().map(integration => ({
     id: integration.id,
+    products:integration.products,
     provider: integration.provider,
     state: integration.state,
   }));

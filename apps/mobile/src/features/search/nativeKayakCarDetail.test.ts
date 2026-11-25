@@ -59,7 +59,7 @@ test("KAYAK Cars only show or similar when the normalized provider result says s
 });
 
 test("native KAYAK Cars details recover only through the canonical server Cars API", () => {
-  assert.match(sandboxDetail, /travelApi\.searchCars\(plan\.plan\.payload\)/);
+  assert.match(sandboxDetail, /travelApi\.carDetails\(resultId,\{sandboxDisplay:true\}\)/);
   assert.match(sandboxDetail, /safeCanonicalCarResult\(item\)/);
   assert.match(sandboxDetail, /isKayakSandboxCar\(item\)/);
   assert.doesNotMatch(sandboxDetail, /api\/sandbox\/kayak|KAYAK_SANDBOX_API_KEY/);

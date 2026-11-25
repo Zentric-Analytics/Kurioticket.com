@@ -1,4 +1,5 @@
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
+import {withProductionSandboxRequest,captureFinalSearchHistory,productionSandboxInventory} from "@/lib/productionSandboxPolicy";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession, operationalSessionMetadata } from "@/lib/operationalSearchSession";
 import { identifySearchCrawler, searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
@@ -6,7 +7,7 @@ import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicFlight } from "@/lib/searchCache";
 import { flightSearchSchema } from "@/lib/validation";
 import { classifyFlights } from "@/lib/travel/searchContract";
-import { logProviderCall, logSearchHistory } from "@/services/operationalActivityService";
+import { logProviderCall, logSearchHistory as persistSearchHistory } from "@/services/operationalActivityService";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { searchFlights } from "@/services/travel/flightAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
@@ -16,6 +17,9 @@ import { logNativeFlightProviderDiagnostics } from "./providerDiagnostics";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 
 export async function handleFlightSearch(request: Request, purpose: "customer" | "nearby-fare") {
+ return withProductionSandboxRequest(request,async()=>{
+  const projectHistory=captureFinalSearchHistory();
+  const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(input));
   const crawler = await identifySearchCrawler(request);
   const nearby = purpose === "nearby-fare";
   const routeStartedAt = performance.now();
@@ -55,7 +59,7 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
     requestId,
     fareOnly: nearby,
     onProviderStart: () => { providerStartedAt = performance.now(); },
-    kayak: { clientIp: kayakClientIp, userAgent, signal: request.signal },
+    kayak: { trackId: operationalSession?.reference.id, clientIp: kayakClientIp, userAgent, signal: request.signal },
   });
   logNativeFlightProviderDiagnostics({
     requestId,
@@ -147,18 +151,18 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
     if (aggregate.unavailableMessage) {
       return NextResponse.json({ error: aggregate.unavailableMessage, fares: [], requestId }, { status: 503, headers });
     }
-    const fares = aggregate.results.map(({ price, currency }) => ({ price, currency }));
+    const fares = aggregate.results.filter(row=>!productionSandboxInventory(row)).map(({ price, currency }) => ({ price, currency }));
     return NextResponse.json({ fares, requestId, resultsCacheValidUntil: aggregate.resultsCacheValidUntil }, { headers });
   }
 
   if (aggregate.unavailableMessage) {
     return attachOperationalSearchSession(NextResponse.json(
       {
-        error: aggregate.unavailableMessage,
+        error: "Flight search is temporarily unavailable. Please try again.",
         results: [],
         status: "unavailable",
         source: "duffel",
-        warnings: aggregate.warnings,
+        warnings: [],
         partial: false,
         requestId,
       },
@@ -195,4 +199,5 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
       "Server-Timing": serverTiming,
     },
   }), operationalSession);
+ });
 }

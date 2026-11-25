@@ -1,4 +1,7 @@
 "use client";
+import { searchRequestDeadline } from "@/shared/search/deadline";
+import { useSandboxResultState } from "./useSandboxResults";
+import { hasDisplayOnlyInventory } from "@/shared/presentation/sandboxInventory";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import { normalizeJourneySortMode, normalizeJourneySortChoice } from "@/lib/search-journey";
@@ -1011,7 +1014,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [desktopSortOpen, setDesktopSortOpen] = useState(false);
   const desktopSortRef = useRef<HTMLDivElement | null>(null);
   const desktopSortButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [providerResults, setResults] = useState<PublicFlightResult[]>([]);
+  const [rawSandboxResults, setResults] = useState<PublicFlightResult[]>([]);
+  const {results:providerResults,pending:displayPending,unavailable:displayUnavailable} = useSandboxResultState(rawSandboxResults);
   const kayak = useKayakResults();
   const [restoredFlightView, setRestoredFlightView] = useState<FlightResultsReturnView | null>(null);
   // The return view freezes KAYAK's original offers instead of letting a
@@ -1030,8 +1034,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       .filter((flight): flight is PublicFlightResult => flight !== null),
   ],[guidedMode, displayedKayakCriteria, displayedKayakOffers, providerResults]);
   const activeFlightSearchKeyRef = useRef<string>("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [transportError, setError] = useState("");
+  const error=transportError||(displayUnavailable?"Flight search is temporarily unavailable. Please try again.":"");
+  const [transportLoading, setLoading] = useState(true);
+  const loading=transportLoading||displayPending;
   const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
   const [filtersReadySearchKey, setFiltersReadySearchKey] = useState<
     string | null
@@ -2653,6 +2659,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     let active = true;
     let controller: AbortController | null = null;
+    let requestDeadline: ReturnType<typeof searchRequestDeadline> | undefined;
     const searchKey = buildFlightResultsSearchKey(body);
     activeFlightSearchKeyRef.current = searchKey;
     // Keep the consumed marker across React StrictMode effect replay.
@@ -2724,21 +2731,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       }
 
       controller = new AbortController();
+      requestDeadline=searchRequestDeadline(controller.signal,35_000);
       const fareScope = currentNearbyFareScope();
       fetch("/api/flights/search", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-sandbox-results-policy": "1" },
         body: JSON.stringify(body),
-        signal: controller.signal,
+        signal: requestDeadline.signal,
       })
         .then(async (response) => {
           const data = await response.json();
 
-          if (!response.ok) {
-            throw new Error(data.error || mainInventoryErrorMessage());
+          if (!response.ok || !Array.isArray(data?.results) || (data.status === "unavailable" && data.results.length === 0)) {
+            throw new Error("Flight search unavailable");
           }
 
-          return data as { results: PublicFlightResult[]; warnings?: string[]; resultsCacheValidUntil?: number; requestId?: string };
+          return data as { results: PublicFlightResult[]; resultsCacheValidUntil?: number; requestId?: string };
         })
         .then((data) => {
           if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
@@ -2747,12 +2755,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             data.results,
             body.departureDate,
           );
-          const warnings = Array.isArray(data.warnings) ? data.warnings : [];
           if (typeof data.resultsCacheValidUntil === "number") {
             writeFlightResultsSessionSnapshot(
               searchKey,
               filteredResults,
-              warnings,
+              [],
               data.resultsCacheValidUntil,
               undefined,
               undefined,
@@ -2763,14 +2770,19 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           setResults(filteredResults);
           setJourneyResponse({ searchKey, requestId: journeyRequestId(data.requestId) });
         })
-        .catch((searchError) => {
+        .catch(() => {
           if (controller?.signal.aborted || !active || activeFlightSearchKeyRef.current !== searchKey) return;
 
           if (!refreshingStaleSnapshot) {
-            setError(mainInventoryErrorMessage(searchError instanceof Error ? searchError.message : undefined));
+            setError(
+              dictionary.unableToSearchFlights ||
+                enTranslations.unableToSearchFlights ||
+                "Unable to search flights.",
+            );
           }
         })
         .finally(() => {
+          requestDeadline?.dispose();
           if (active && activeFlightSearchKeyRef.current === searchKey) {
             mainInventoryReadyRef.current = true;
             setLoading(false);
@@ -2783,8 +2795,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       active = false;
       window.clearTimeout(timer);
       controller?.abort();
+      requestDeadline?.dispose();
     };
-  }, [body, guidedMode, mainInventoryRetryGeneration]);
+  }, [body, dictionary.unableToSearchFlights, guidedMode, mainInventoryRetryGeneration]);
 
   const retryMainInventorySearch = useCallback(() => {
     userInitiatedRetryRef.current = true;
@@ -2879,8 +2892,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const dates = getNearbyFareDateRange(getNearbyFareWindowStart(centerDate));
     const { fetchedAt, validUntil, fareScope } = mainInventoryFreshness.current;
     const selectedDate = body.departureDate;
-    const selected: NearbyFareQuote = providerResults.length
-      ? { date: selectedDate, status: "success", fares: providerResults.map(({ price, currency }) => ({ price, currency })), fetchedAt, validUntil }
+    const comparableResults=providerResults.filter(result=>!hasDisplayOnlyInventory(result));
+    const selected: NearbyFareQuote = comparableResults.length
+      ? { date: selectedDate, status: "success", fares: comparableResults.map(({ price, currency }) => ({ price, currency })), fetchedAt, validUntil }
       : { date: selectedDate, status: "unavailable", fetchedAt };
     const selectedKey = getNearbyFareCacheKey(body, selectedDate, nearbyFareScope);
     const cachedSelected = getFreshNearbyFareCacheEntry(nearbyFareCacheRef.current, selectedKey);

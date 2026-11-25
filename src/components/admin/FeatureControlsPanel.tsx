@@ -16,6 +16,7 @@ type Control = {
 
 
 const controlRowSummaries: Record<FeatureControlKey, string> = {
+  ALLOW_SANDBOX_RESULTS_IN_PRODUCTION: "Display authorized test inventory only. Saving, caching and booking remain disabled.",
   FLIGHT_SEARCH_ENABLED: "Allow flight searches.",
   HOTEL_SEARCH_ENABLED: "Allow hotel searches.",
   CAR_SEARCH_ENABLED: "Allow car searches.",
@@ -25,6 +26,7 @@ const controlRowSummaries: Record<FeatureControlKey, string> = {
 };
 
 const controlChangeDescriptions: Record<FeatureControlKey, { enable: string; disable: string }> = {
+  ALLOW_SANDBOX_RESULTS_IN_PRODUCTION: {enable:"Authorized test results may be displayed on all compliant clients without bookings or storage.",disable:"Stop sandbox searches and revoke displayed sandbox inventory. Live providers remain available."},
   FLIGHT_SEARCH_ENABLED: {
     enable: "Visitors will be able to search for flights again.",
     disable: "Flight searches will be unavailable to visitors. Existing saved travel data will not be affected.",
@@ -234,7 +236,7 @@ export function FeatureControlsPanel({
 
                     <div className="flex shrink-0 items-center justify-between gap-3 sm:min-w-[128px] sm:justify-end">
                       <span className={"text-[12px] font-medium " + (control.state.enabled ? "text-emerald-700" : "text-[#64748B]")}>
-                        {control.state.enabled ? "Enabled" : "Disabled"}
+                        {control.key === "ALLOW_SANDBOX_RESULTS_IN_PRODUCTION" ? (control.state.enabled ? "ON" : "OFF") : (control.state.enabled ? "Enabled" : "Disabled")}
                       </span>
                       <button
                         type="button"

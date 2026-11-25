@@ -34,12 +34,13 @@ export type AdminNavDefinition = {
 
 export const adminNavigationGroups = [
   { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches/activity", "/admin/confirmed-trips", "/admin/support"] },
-  { label: "Provider readiness", hrefs: ["/admin/providers"] },
+  { label: "Provider readiness", hrefs: ["/admin/providers", "/admin/provider-management"] },
   { label: "Website content", hrefs: ["/admin/content"] },
   { label: "System & security", hrefs: ["/admin/system", "/admin/platform-health", "/admin/settings"] },
 ] as const;
 
 export const adminNavigation: AdminNavDefinition[] = [
+  {href:"/admin/provider-management",label:"Provider Management",icon:Activity,roles:["ADMIN"],section:"readiness",description:"Control display-only sandbox inventory across the production platform."},
   { href: "/admin", label: "Overview", icon: LayoutDashboard, roles: ["ADMIN"], section: "operations", description: "Operations dashboard and platform health." },
   { href: "/admin/users", label: "Users", icon: Users, roles: ["ADMIN"], section: "operations", description: "Manage customer accounts, roles and status." },
   { href: "/admin/users/online", parentHref: "/admin/users", label: "Online Users", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Review verified current account and guest presence across platforms." },
@@ -159,6 +160,11 @@ const workspaceSections: ReadonlyArray<{
       { href: "/admin/support", label: "Support Tickets" },
       { href: "/admin/account-deletions", label: "Deletion Requests" },
     ],
+  },
+  {
+    label: "Provider Management",
+    paths:["/admin/provider-management"],
+    links:[{href:"/admin/provider-management",label:"Provider Management"}],
   },
   {
     label: "Providers",

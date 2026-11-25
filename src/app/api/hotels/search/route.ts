@@ -1,3 +1,4 @@
+import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession, operationalSessionMetadata } from "@/lib/operationalSearchSession";
@@ -8,7 +9,7 @@ import { toPublicHotel } from "@/lib/searchCache";
 import { hotelSearchSchema } from "@/lib/validation";
 import { classifyHotels } from "@/lib/travel/searchContract";
 import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
-import { logProviderCall, logSearchHistory } from "@/services/operationalActivityService";
+import { logProviderCall, logSearchHistory as persistSearchHistory } from "@/services/operationalActivityService";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import {
   searchHotels,
@@ -22,6 +23,10 @@ import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 
 export async function POST(request: Request) {
+ return withProductionSandboxRequest(request, async () => {
+  const projectHistory=captureFinalSearchHistory();
+  const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(input));
+
   const crawler = await identifySearchCrawler(request);
   const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("HOTEL_SEARCH_ENABLED"))) return NextResponse.json({ error: "Hotel search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
@@ -84,12 +89,14 @@ export async function POST(request: Request) {
     : resolveRequestActivityIdentity(request, undefined, operationalSession);
 
   const kayakContext = {
+    requestId,
+    trackId: operationalSession?.reference.id,
     clientIp: getKayakClientIp(request),
     userAgent: request.headers.get("user-agent") || undefined,
     signal: request.signal,
   };
   const aggregate = providerMode
-    ? await searchHotelsByProvider(providerSearch, providerMode, { kayak: kayakContext, defer: after })
+    ? await searchHotelsByProvider(providerSearch, providerMode, { kayak: kayakContext, requestId, signal: request.signal, defer: after })
     : await searchHotels(providerSearch, { kayak: kayakContext, defer: after });
   if (aggregate.unavailableMessage) {
     after(async () => {
@@ -118,19 +125,14 @@ export async function POST(request: Request) {
 
     return attachOperationalSearchSession(NextResponse.json(
       {
-        error: aggregate.unavailableMessage,
+        error: "Hotel search is temporarily unavailable. Please try again.",
         results: [],
         status: "unavailable",
         source: providerMode || "kayak-sandbox",
-        warnings: aggregate.warnings,
+        warnings: [],
         partial: false,
         requestId,
         warningCategory: deriveHotelWarningCategory(aggregate),
-        providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs }) => ({
-          provider,
-          status,
-          latencyMs,
-        })),
       },
       { status: 503 },
     ), operationalSession);
@@ -194,15 +196,11 @@ export async function POST(request: Request) {
   return attachOperationalSearchSession(NextResponse.json({
     ...classified,
     source: providerMode || classified.source,
-    providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs, error }) => ({
-      provider,
-      status,
-      latencyMs,
-      error: sanitizeProviderError(error),
-    })),
     warningCategory: deriveHotelWarningCategory(aggregate),
     latencyMs: aggregate.latencyMs,
   }), operationalSession);
+
+ });
 }
 
 function sanitizeProviderError(error?: string) {

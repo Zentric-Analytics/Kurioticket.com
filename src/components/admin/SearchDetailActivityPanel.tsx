@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 
 import type { SearchScopedActivityResult, SearchScopedEvent } from "@/services/adminSearchScopedActivityCore";
@@ -39,6 +39,13 @@ export function SearchDetailActivityPanel({ searchId, environment, timeZone }: P
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<SearchScopedActivityResult | null>(null);
   const cursor = cursors[pageIndex];
+  const scope = JSON.stringify([searchId, environment, cursor, request]);
+  const [previousScope, setPreviousScope] = useState(scope);
+  if (previousScope !== scope) {
+    setPreviousScope(scope);
+    setLoading(true);
+    setResult(null);
+  }
   function beginRequest() {
     setLoading(true);
     setResult(null);

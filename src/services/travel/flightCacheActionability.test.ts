@@ -15,15 +15,15 @@ test("Flight Search propagates its response request ID into cache persistence", 
   assert.match(route, /searchFlights\(parsed\.data,[\s\S]*requestId,/);
   assert.match(route, /resolveRequestActivityIdentity\(request, undefined, operationalSession\)/);
   assert.doesNotMatch(route, /getServerSession\(/);
-  assert.match(aggregator, /rememberFlights\(results, now, search, options\.requestId\)/);
+  assert.match(aggregator, /rememberFlights\(rows,now,search,options\.requestId\)/);
 });
 
-test("Flight Search fails closed when provider results are not cache-confirmed", async () => {
+test("Flight Search fails closed when live provider results are not cache-confirmed; display-only inventory has no cache requirement", async () => {
   const aggregator = await readFile(aggregatorPath, "utf8");
 
-  assert.match(aggregator, /const availableResults = cacheUnavailable \? \[\] : results/);
-  assert.match(aggregator, /const cacheUnavailable = cacheResult\?\.persisted === false/);
-  assert.match(aggregator, /provider\.status === "failed" \|\| kayak\.status === "failed" \|\| cacheUnavailable/);
+  assert.match(aggregator, /productionSandboxInventory\(row\)\|\|certifiedIds.has\(row.id\)/);
+  assert.match(aggregator, /liveResults.some\(row=>!certifiedIds.has\(row.id\)\)/);
+  assert.match(aggregator, /providerStatuses.some\(provider=>provider.status === "failed"\) \|\| cacheUnavailable/);
 });
 
 test("browser snapshots require the server-owned cache validity from the same response", async () => {

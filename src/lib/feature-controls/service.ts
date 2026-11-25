@@ -55,7 +55,7 @@ export async function mutateFeatureControl(input: { key: FeatureControlKey; envi
     let row = await tx.featureFlag.findUnique({ where: { key_environment: { key: input.key, environment: input.environment } } });
     if (!row) row = await tx.featureFlag.create({ data: { key: input.key, environment: input.environment, name: definition.name, description: definition.description, enabled: input.environment === "STAGING" ? definition.defaultStaging : definition.defaultProduction } });
     if (row.enabled === input.enabled) return { changed: false as const, state: row };
-    const updated = await tx.featureFlag.update({ where: { id: row.id }, data: { enabled: input.enabled, name: definition.name, description: definition.description } });
+    const updated = await tx.featureFlag.update({ where: { id: row.id }, data: { enabled: input.enabled, name: definition.name, description: definition.description, ...(input.key === "ALLOW_SANDBOX_RESULTS_IN_PRODUCTION" ? {updatedAt:new Date(Math.max(Date.now(),row.updatedAt.getTime()+1))} : {}) } });
     await tx.adminAuditLog.create({ data: { adminUserId: input.actor.id, adminEmail: input.actor.email.toLowerCase(), action: "FEATURE_CONTROL_UPDATED", targetType: "FeatureFlag", targetId: row.id, metadata: { featureKey: input.key, environment: input.environment, previousEnabled: row.enabled, nextEnabled: input.enabled, reason: input.reason || null, category: definition.category, riskLevel: definition.risk } as Prisma.InputJsonValue, ipAddress: input.actor.ipAddress, userAgent: input.actor.userAgent } });
     return { changed: true as const, state: updated };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });

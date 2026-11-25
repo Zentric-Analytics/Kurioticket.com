@@ -1,3 +1,6 @@
+import { currentSandboxGrant, productionSandboxHost } from "@/lib/productionSandboxPolicy";
+import { displayOnlyInventory } from "@/shared/presentation/sandboxInventory";
+
 import {
   assertProductionLiveProvider,
   assertSandboxProviderAllowed,
@@ -64,6 +67,7 @@ export function getDuffelProviderBlockReason(apiKey: string) {
   if (!stagingSafety.safe) return stagingSafety.reason;
 
   const apiMode = getDuffelApiMode();
+  if (productionSandboxHost() && apiMode === "test" && apiKey.trim().startsWith("duffel_test_")) return undefined;
 
   try {
     assertProductionLiveProvider("Duffel", apiMode);
@@ -149,6 +153,7 @@ export function selectGraphBackedDuffelOffers(
 export function searchDuffelDealsItineraryInventory(
   search: FlightSearchParams,
 ): Promise<ProviderResult<DuffelDealsItineraryInventory>> {
+  if (productionSandboxHost() && getDuffelApiMode() === "test") return Promise.resolve(skippedProvider("Duffel", "display_only_inventory"));
   const apiKey = process.env.DUFFEL_API_KEY;
   const stagingSafety = getStagingProviderSafety();
   if (!stagingSafety.safe)
@@ -242,7 +247,7 @@ export function searchDuffelDealsItineraryInventory(
   });
 }
 
-export function searchDuffelFlights(
+export async function searchDuffelFlights(
   search: FlightSearchParams,
   signal?: AbortSignal,
 ): Promise<ProviderResult<NormalizedFlightResult>> {
@@ -262,6 +267,9 @@ export function searchDuffelFlights(
     return Promise.resolve(skippedProvider("Duffel", blockReason));
   }
 
+  const sandbox = productionSandboxHost() && getDuffelApiMode() === "test";
+  const grant = sandbox ? await currentSandboxGrant() : null;
+  if (sandbox && !grant) return skippedProvider("Duffel", "sandbox_display_disabled");
   let supplierMs = 0;
   let normalizationMs = 0;
   let offerCount = 0;
@@ -293,7 +301,7 @@ export function searchDuffelFlights(
     normalizationMs = performance.now() - normalizationStartedAt;
     connectingOfferCount = results.filter((result) => result.stops > 0).length;
     return results;
-  }).then((result) => {
+  }).then(async (result) => {
     console.info("[flight-search:duffel-request]", {
       tripType: search.tripType,
       legCount,
@@ -305,6 +313,7 @@ export function searchDuffelFlights(
     });
     return {
       ...result,
+      results: sandbox ? ((await currentSandboxGrant())?.revision === grant?.revision ? result.results.map(value => displayOnlyInventory({...value,id:"sandbox:duffel:"+value.id},grant!.revision)) : []) : result.results,
       performance: { supplierMs, normalizationMs, offerCount, connectingOfferCount },
     };
   });
@@ -315,6 +324,7 @@ export function getDuffelFlightOffer(
   providerOfferId: string,
   search: FlightSearchParams,
 ): Promise<ProviderResult<NormalizedFlightResult>> {
+  if (productionSandboxHost() && getDuffelApiMode() === "test") return Promise.resolve(skippedProvider("Duffel", "display_only_inventory"));
   const apiKey = process.env.DUFFEL_API_KEY;
   const stagingSafety = getStagingProviderSafety();
   if (!stagingSafety.safe)
@@ -345,6 +355,7 @@ export function getDuffelFlightUpsellOffers(
   providerOfferId: string,
   search: FlightSearchParams,
 ): Promise<ProviderResult<NormalizedFlightResult>> {
+  if (productionSandboxHost() && getDuffelApiMode() === "test") return Promise.resolve(skippedProvider("Duffel", "display_only_inventory"));
   const apiKey = process.env.DUFFEL_API_KEY;
   const stagingSafety = getStagingProviderSafety();
   if (!stagingSafety.safe)
@@ -725,15 +736,18 @@ const mergeProviderAndCuratedPlaces = (
   curatedPlaces: DuffelPlaceSuggestion[],
   searchContext?: PlaceSearchContext,
 ) => {
+  // A metro group and its primary airport can share an IATA code (MIA, LAX).
+  // Native clients must retain the airport when expanding an all-airports row.
+  const placeIdentity = (place: DuffelPlaceSuggestion) => `${place.type ?? "airport"}:${place.code}`;
   const placesByCode = new Map<string, DuffelPlaceSuggestion>();
 
   for (const providerPlace of providerPlaces) {
-    placesByCode.set(providerPlace.code, providerPlace);
+    placesByCode.set(placeIdentity(providerPlace), providerPlace);
   }
 
   for (const curatedPlace of curatedPlaces) {
-    if (!placesByCode.has(curatedPlace.code)) {
-      placesByCode.set(curatedPlace.code, curatedPlace);
+    if (!placesByCode.has(placeIdentity(curatedPlace))) {
+      placesByCode.set(placeIdentity(curatedPlace), curatedPlace);
     }
   }
 
@@ -753,6 +767,7 @@ const mergeProviderAndCuratedPlaces = (
 export async function searchDuffelPlaces(
   query: string,
   searchContext?: PlaceSearchContext,
+  signal?: AbortSignal,
 ): Promise<ProviderResult<DuffelPlaceSuggestion>> {
   const apiKey = process.env.DUFFEL_API_KEY;
   const stagingSafety = getStagingProviderSafety();
@@ -772,6 +787,7 @@ export async function searchDuffelPlaces(
     const response = await fetchJson<DuffelPlaceApiResponse>(
       `https://api.duffel.com/places/suggestions?query=${encodeURIComponent(query)}`,
       {
+        signal,
         headers: {
           Authorization: `Bearer ${apiKey}`,
           Accept: "application/json",
@@ -797,11 +813,12 @@ export async function searchDuffelPlaces(
 
       if (!code || !city || !airport) continue;
 
-      if (seenCodes.has(code)) continue;
-      const nameKey = `${normalizeSuggestionText(city)}|${normalizeSuggestionText(airport)}`;
+      const identity = `${item.type ?? "airport"}:${code}`;
+      if (seenCodes.has(identity)) continue;
+      const nameKey = `${item.type ?? "airport"}|${normalizeSuggestionText(city)}|${normalizeSuggestionText(airport)}`;
       if (seenNames.has(nameKey)) continue;
 
-      seenCodes.add(code);
+      seenCodes.add(identity);
       seenNames.add(nameKey);
 
       const providerSuggestion: DuffelPlaceSuggestion = {

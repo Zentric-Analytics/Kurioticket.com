@@ -53,7 +53,7 @@ test("well-known endpoints are public, direct JSON routes that fail closed", () 
   for (const source of [appleRoute, androidRoute]) {
     assert.match(source, /export (?:async )?function GET/);
     assert.match(source, /NextResponse\.json/);
-    assert.match(source, /status:503/);
+    assert.match(source, /status:\s*503/);
     assert.doesNotMatch(source, /requireMobileSecurity|redirect\(/);
   }
 });

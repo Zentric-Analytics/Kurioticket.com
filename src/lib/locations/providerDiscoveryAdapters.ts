@@ -18,12 +18,12 @@ const broadHotelPlaceLabels = new Map([
 export const canonicalFromProvider = (provider: string, value: string, label: string, kind?: string): CanonicalLocation => {
   const iata = /^[A-Z]{3}$/.test(value) ? value : undefined;
   const providerKind = kind?.trim().toLowerCase() ?? "";
-  const normalizedKind = providerKind.includes("city") ? "city"
+  const normalizedKind = providerKind.includes("metro") ? "metropolitan-area" : providerKind.includes("rental") || providerKind === "area" ? "rental-area" : providerKind.includes("city") ? "city"
     : providerKind.includes("district") ? "district"
     : providerKind.includes("landmark") ? "landmark"
     : providerKind.includes("airport") || iata ? "airport" : "city";
   const parts = label.split(",").map((part) => part.trim());
-  const base: CanonicalLocation = { id: iata ? `${normalizedKind}:${iata}` : `place:${normalizeLocationText(label).replaceAll(" ", "-").slice(0, 120)}`,
+  const base: CanonicalLocation = { id: iata ? `${normalizedKind}:${iata}` : `place:${normalizedKind}:${normalizeLocationText(label).replaceAll(" ", "-").slice(0, 120)}`,
     kind: normalizedKind, primaryLabel: parts[0] || label, supportingLabel: parts.slice(1).join(", "), submittedValue: label,
     codes: iata ? { iata } : undefined, timeZone: iata ? airportTimeZones[iata] : undefined,
     staticCoverage: emptyCoverage, source: { catalog: "kurioticket", datasetVersion: "provider-discovery-v1" } };
@@ -54,7 +54,7 @@ function canonicalHotelLocation(place: SandboxPlace): CanonicalLocation | null {
 export function duffelDiscoveryAdapter(): DiscoveryAdapter {
   return { provider: "duffel", products: ["flights"], async discover(query, { signal }) {
     if (signal.aborted) throw new DOMException("Aborted", "AbortError");
-    const result = await searchDuffelPlaces(query, { context: "destination" });
+    const result = await searchDuffelPlaces(query, { context: "destination" }, signal);
     if (result.status !== "success") throw new Error(result.errorCategory ?? "Duffel unavailable");
     return result.results.map(fromFlightPlaceSuggestion);
   } };
@@ -77,6 +77,18 @@ export function kayakDiscoveryAdapter(request: Request): DiscoveryAdapter | null
   } };
 }
 
-export function availableDiscoveryAdapters(request: Request, product: TravelProduct) {
-  return [product === "flights" ? duffelDiscoveryAdapter() : null, kayakDiscoveryAdapter(request)].filter((adapter): adapter is DiscoveryAdapter => adapter !== null);
+export async function availableDiscoveryAdapters(request: Request, product: TravelProduct) {
+  if(product === "packages")return [];
+  const {providersFor,registeredProviderReady}=await import("@/services/travel/providerRegistry");
+  return providersFor(product).flatMap(provider=>{
+    try {if(!registeredProviderReady(provider))return [];const adapter=provider.discovery?.(request);if(adapter && adapter.provider!==provider.id)throw new Error("Invalid discovery registration");return adapter?[adapter]:[];}
+    catch {return [{provider:provider.id,products:[product],discover:async()=>{throw new Error("Discovery unavailable");}} as DiscoveryAdapter];}
+  });
+}
+
+/** Selection eligibility follows approved central registrations, not a second provider list. */
+export async function registeredLocationProviders(product:TravelProduct){
+ if(product==="packages")return [];
+ const {providersFor}=await import("@/services/travel/providerRegistry");
+ return providersFor(product).map(provider=>provider.id);
 }

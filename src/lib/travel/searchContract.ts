@@ -1,3 +1,6 @@
+import { searchLifecycle, type SearchLifecycle } from "@/shared/search/lifecycle";
+import { inventoryAccounting } from "@/shared/search/inventory";
+import { hasDisplayOnlyInventory, displayOnlyInventory } from "@/shared/presentation/sandboxInventory";
 import { isProviderHotelResult } from "@/services/travel/hotelInventorySource";
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { buildCarDetailsHref } from "@/lib/cars/carResults";
@@ -8,31 +11,32 @@ export type TravelSearchStatus="available"|"partial"|"empty"|"unavailable";
 export type TravelResultAction={kind:"internal-detail";href:string;enabled:true}|{kind:"provider";href:string;enabled:true}|{kind:"none";enabled:false};
 export type TravelResultPolicy={source:TravelInventorySource;bookable:boolean;action:TravelResultAction};
 export type ContractResult<T>=T&{searchPolicy:TravelResultPolicy};
-export type TravelSearchResponse<T>={results:ContractResult<T>[];status:TravelSearchStatus;source:TravelInventorySource;warnings:string[];partial:boolean;requestId:string};
+export type TravelSearchResponse<T>={results:ContractResult<T>[];status:TravelSearchStatus;source:TravelInventorySource;warnings:string[];partial:boolean;requestId:string;lifecycle?:SearchLifecycle;accounting?:ReturnType<typeof inventoryAccounting>};
 
 // A failed/incomplete search is not evidence that no inventory exists.
+// Warnings are used internally to determine status, not returned as public text.
 const status=(count:number,warnings:string[]):TravelSearchStatus=>count?(warnings.length?"partial":"available"):(warnings.length?"unavailable":"empty");
-export function classifyFlights(results:PublicFlightResult[],search:FlightSearchParams,warnings:string[],requestId:string):TravelSearchResponse<PublicFlightResult>{const query=new URLSearchParams({tripType:search.tripType,origin:search.origin,destination:search.destination,departureDate:search.departureDate,adults:String(search.adults),children:String(search.children),infants:String(search.infants),travelers:String(search.travelers),cabinClass:search.cabinClass});if(search.tripType==="round-trip"&&search.returnDate)query.set("returnDate",search.returnDate);if(search.currency)query.set("currency",search.currency);const classified=results.map(result=>{const kayak=result.provider==="KAYAK sandbox";return {...result,searchPolicy:{source:kayak?"kayak-sandbox" as const:"duffel" as const,bookable:!kayak,action:{kind:"internal-detail" as const,href:`/flights/details/${encodeURIComponent(result.id)}?${query.toString()}`,enabled:true as const}}}});return{results:classified,status:status(classified.length,warnings),source:classified.some(x=>x.searchPolicy.source==="kayak-sandbox")?"metasearch":"duffel",warnings,partial:Boolean(warnings.length),requestId};}
+export function classifyFlights(results:PublicFlightResult[],search:FlightSearchParams,warnings:string[],requestId:string):TravelSearchResponse<PublicFlightResult>{const query=new URLSearchParams({tripType:search.tripType,origin:search.origin,destination:search.destination,departureDate:search.departureDate,adults:String(search.adults),children:String(search.children),infants:String(search.infants),travelers:String(search.travelers),cabinClass:search.cabinClass});if(search.tripType==="round-trip"&&search.returnDate)query.set("returnDate",search.returnDate);if(search.currency)query.set("currency",search.currency);const classified=results.map(result=>{const kayak=result.provider==="KAYAK sandbox";const neutral=Boolean(result.inventoryProvenance)||(!kayak&&result.provider!=="Duffel");if(hasDisplayOnlyInventory(result))return displayOnlyInventory(result,(result as unknown as {sandboxRevision:string}).sandboxRevision);return {...result,searchPolicy:{source:neutral?"metasearch" as const:kayak?"kayak-sandbox" as const:result.provider==="Duffel"?"duffel" as const:"metasearch" as const,bookable:!neutral&&!kayak&&result.provider==="Duffel",action:neutral?{kind:"none" as const,enabled:false as const}:{kind:"internal-detail" as const,href:`/flights/details/${encodeURIComponent(result.id)}?${query.toString()}`,enabled:true as const}}}});return{lifecycle:searchLifecycle({count:classified.length,status:status(classified.length,warnings),partial:Boolean(warnings.length)}),accounting:inventoryAccounting([{stage:"public",rows:classified}]),results:classified,status:status(classified.length,warnings),source:classified.some(x=>x.searchPolicy.source!=="duffel")?"metasearch":"duffel",warnings:[],partial:Boolean(warnings.length),requestId};}
 export function classifyHotels(results: PublicHotelResult[], warnings: string[], requestId: string): TravelSearchResponse<PublicHotelResult> {
-  const classified = results.filter(isProviderHotelResult).map(result => ({
+  const classified = results.filter(isProviderHotelResult).map(result => hasDisplayOnlyInventory(result) ? displayOnlyInventory(result,(result as unknown as {sandboxRevision:string}).sandboxRevision) : ({
     ...result,
     searchPolicy: {
       source: result.provider === "KAYAK sandbox" ? "kayak-sandbox" as const : "metasearch" as const,
       bookable: false,
-      action: { kind: "internal-detail" as const, href: `/hotels/details/${encodeURIComponent(result.id)}`, enabled: true as const },
+      action: result.inventoryProvenance?.details === "none" ? {kind:"none" as const,enabled:false as const} : { kind: "internal-detail" as const, href: `/hotels/details/${encodeURIComponent(result.id)}`, enabled: true as const },
     },
   }));
-  return { results: classified, status: status(classified.length, warnings), source: classified.length ? "metasearch" : "kayak-sandbox", warnings, partial: Boolean(warnings.length), requestId };
+  return { lifecycle:searchLifecycle({count:classified.length,status:status(classified.length,warnings),partial:Boolean(warnings.length)}), accounting:inventoryAccounting([{stage:"public",rows:classified}]), results: classified, status: status(classified.length, warnings), source: classified.length ? "metasearch" : "kayak-sandbox", warnings: [], partial: Boolean(warnings.length), requestId };
 }
 
 export function classifyCars(results: NormalizedCarResult[], search: CarSearchParams, requestId: string, warnings: string[] = []): TravelSearchResponse<NormalizedCarResult> {
-  const classified = results.filter(result => result.inventorySource === "kayak-sandbox").map(result => ({
+  const classified = results.filter(result => result.inventorySource === "kayak-sandbox" || Boolean(result.inventoryProvenance)).map(result => hasDisplayOnlyInventory(result) ? displayOnlyInventory(result,(result as unknown as {sandboxRevision:string}).sandboxRevision) : ({
     ...result,
     searchPolicy: {
-      source: "kayak-sandbox" as const,
+      source: result.inventoryProvenance ? "metasearch" as const : "kayak-sandbox" as const,
       bookable: false,
-      action: { kind: "internal-detail" as const, href: buildCarDetailsHref(result.id, search), enabled: true as const },
+      action: result.inventoryProvenance ? {kind:"none" as const,enabled:false as const} : { kind: "internal-detail" as const, href: buildCarDetailsHref(result.id, search), enabled: true as const },
     },
   }));
-  return { results: classified, status: status(classified.length, warnings), source: classified.length ? "metasearch" : "kayak-sandbox", warnings, partial: Boolean(warnings.length), requestId };
+  return { results: classified, status: status(classified.length, warnings), source: classified.length ? "metasearch" : "kayak-sandbox", warnings: [], partial: Boolean(warnings.length), requestId };
 }

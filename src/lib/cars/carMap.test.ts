@@ -5,7 +5,15 @@ import {
   buildCarDirectionsUrl,
   buildGoogleCarMapEmbedUrl,
   buildGoogleCarStreetViewEmbedUrl,
+  carPickupMapQuery,
 } from "./carMap";
+
+test("LHR map and directions use owned airport geography, never an ambiguous code or rental-desk coordinate",()=>{
+ const query=carPickupMapQuery("LHR");assert(query);assert.match(query,/Heathrow/i);assert.match(query,/London/i);assert.match(query,/United Kingdom/i);
+ assert.equal(new URL(buildCarDirectionsUrl("LHR")!).searchParams.get("destination"),query);
+ assert.equal(carPickupMapQuery("QQQ"),null);
+ assert.equal(carPickupMapQuery("Completely Different Place (LHR)"),"Completely Different Place (LHR)");
+});
 
 test("Google Cars map embeds the normalized pickup destination", () => {
   const value = buildGoogleCarMapEmbedUrl({

@@ -78,7 +78,7 @@ test("date and guest drafts commit only from their stable footer actions", () =>
   assert.match(panel, /presentation === "resultsEditFullScreen"[\s\S]*?title="Guests & Rooms"[\s\S]*?footer=\{<PrimaryButton label="Done"/);
   assert.match(dates, /onBack=\{onCancel\}/);
   assert.match(panel, /title="Guests & Rooms" onBack=\{onCancel\}/);
-  assert.match(panel, /onDone=\{\(draft\) => \{[\s\S]*?update\(\{ \.\.\.form, guests: draft\.adults \+ draft\.children, rooms: draft\.rooms \}\)[\s\S]*?setCountsOpen\(false\)/);
+  assert.match(panel, /onDone=\{\(draft\) => \{[\s\S]*?update\(\{ \.\.\.form, guests: draft\.adults \+ draft\.children, rooms: draft\.rooms, adults:draft\.adults, children:draft\.children, petFriendly:draft\.petFriendly \}\)[\s\S]*?setCountsOpen\(false\)/);
   assert.match(dates, /onPress=\{\(\) => onDone\(draftStart,draftEnd\)\}/);
 });
 

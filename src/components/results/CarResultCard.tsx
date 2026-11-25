@@ -1,4 +1,5 @@
 "use client";
+import { sandboxCardAction } from "./sandboxCardActions";
 
 import Link from "next/link";
 import {
@@ -335,7 +336,7 @@ export function CarResultCard({
 
   return (
     <div data-car-result-card-shell className="w-full">
-    <article
+    <article onClickCapture={event=>sandboxCardAction(car,event)} onAuxClickCapture={event=>sandboxCardAction(car,event)} onKeyDownCapture={event=>sandboxCardAction(car,event)}
       data-car-card-offers-expanded={offersExpanded ? "true" : "false"}
       className={`relative w-full overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white shadow-[0_2px_10px_rgba(24,48,91,0.08)] md:rounded-2xl md:bg-white md:shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] md:transition md:duration-200 md:hover:-translate-y-0.5 md:hover:border-[#CBD6E2] md:hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]`}
     >

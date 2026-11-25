@@ -1,3 +1,4 @@
+import { productionSandboxInventory } from "@/lib/productionSandboxPolicy";
 import type {
   FlightSearchParams,
   HotelSearchParams,
@@ -250,6 +251,7 @@ export function createFlightResultCache(backend: SharedFlightCacheBackend) {
       requestId?: string,
     ) {
       const records = results.flatMap((result) => {
+        if (productionSandboxInventory(result)) return [];
         const expiresAt = Math.min(
           now + FLIGHT_CACHE_TTL_MS,
           result.providerExpiresAt ?? Number.POSITIVE_INFINITY,
@@ -328,7 +330,7 @@ export function createFlightResultCache(backend: SharedFlightCacheBackend) {
         const record = await backend.find(publicResultId, now);
         console.info("[flight-result-cache]", { event: record ? "hit" : "miss" });
         await cleanup(now);
-        return record?.normalizedResult ?? null;
+        return record && !productionSandboxInventory(record.normalizedResult) ? record.normalizedResult : null;
       } catch {
         console.error("[flight-result-cache]", { event: "read_error" });
         return null;
@@ -337,7 +339,7 @@ export function createFlightResultCache(backend: SharedFlightCacheBackend) {
     async getSearch(publicResultId: string, now = Date.now()) {
       try {
         const record = await backend.find(publicResultId, now);
-        return record?.searchContext ? clone(record.searchContext) : null;
+        return record?.searchContext && !productionSandboxInventory(record.normalizedResult) ? clone(record.searchContext) : null;
       } catch {
         console.error("[flight-result-cache]", { event: "search_read_error" });
         return null;
@@ -346,10 +348,10 @@ export function createFlightResultCache(backend: SharedFlightCacheBackend) {
     async getCompatible(publicResultId: string, now = Date.now()) {
       try {
         const selected = await backend.find(publicResultId, now);
-        if (!selected) return [];
+        if (!selected || productionSandboxInventory(selected.normalizedResult)) return [];
         if (!selected.itineraryKey || !selected.searchKey) return [selected.normalizedResult];
         const records = await backend.findCompatible(selected.searchKey, selected.itineraryKey, now);
-        return records.map(({ normalizedResult }) => normalizedResult);
+        return records.map(({ normalizedResult }) => normalizedResult).filter(result=>!productionSandboxInventory(result));
       } catch {
         console.error("[flight-result-cache]", { event: "compatible_read_error" });
         return [];
@@ -358,14 +360,14 @@ export function createFlightResultCache(backend: SharedFlightCacheBackend) {
     async getDetailsContext(publicResultId: string, now = Date.now()) {
       try {
         const selected = await backend.find(publicResultId, now);
-        if (!selected) return null;
+        if (!selected || productionSandboxInventory(selected.normalizedResult)) return null;
         const compatible = selected.itineraryKey && selected.searchKey
           ? await backend.findCompatible(selected.searchKey, selected.itineraryKey, now)
           : [selected];
         return {
           flight: selected.normalizedResult,
           search: selected.searchContext ? clone(selected.searchContext) : null,
-          compatibleFlights: compatible.map(({ normalizedResult }) => normalizedResult),
+          compatibleFlights: compatible.map(({ normalizedResult }) => normalizedResult).filter(result=>!productionSandboxInventory(result)),
         };
       } catch {
         console.error("[flight-result-cache]", { event: "details_context_read_error" });
@@ -433,7 +435,7 @@ export function rememberHotels(
   const expiresAt = now + FLIGHT_CACHE_TTL_MS;
   const searchKey = search ? hotelSearchIdentity(search) : null;
   const searchContext = search ? clone(search) : null;
-  const snapshot = clone(results);
+  const snapshot = clone(results.filter(result=>!productionSandboxInventory(result)));
   if (searchKey) {
     hotelSearchCache.set(searchKey, {
       value: snapshot,
@@ -454,7 +456,7 @@ export function rememberHotels(
 export function getHotelFromCache(id: string, now = Date.now()) {
   purgeExpired(hotelCache, now);
   const result = hotelCache.get(id)?.value;
-  return result ? clone(result) : null;
+  return result && !productionSandboxInventory(result) ? clone(result) : null;
 }
 
 export function getHotelDetailsCacheContext(
@@ -468,18 +470,18 @@ export function getHotelDetailsCacheContext(
   if (search) {
     const cohort = hotelSearchCache.get(hotelSearchIdentity(search))?.value ?? [];
     const selected = cohort.find((hotel) => hotel.id === id);
-    if (!selected) return null;
+    if (!selected || productionSandboxInventory(selected)) return null;
     return {
       hotel: clone(selected),
       searchContext: clone(search),
       relatedHotels: cohort
-        .filter((hotel) => hotel.id !== id)
+        .filter((hotel) => hotel.id !== id && !productionSandboxInventory(hotel))
         .map(clone),
     };
   }
 
   const selected = hotelCache.get(id);
-  if (!selected) return null;
+  if (!selected || productionSandboxInventory(selected.value)) return null;
   // Keep the exact array that produced this offer. The latest criteria-keyed
   // search can belong to a different provider snapshot with identical criteria.
   const cohort = selected.cohort;

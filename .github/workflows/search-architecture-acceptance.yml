@@ -1,0 +1,46 @@
+name: Search architecture acceptance
+
+on:
+  pull_request:
+    branches: [dev]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: search-architecture-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Search backend regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3010
+      NEXTAUTH_URL: http://127.0.0.1:3010
+      DATABASE_URL: postgresql://unused:unused@127.0.0.1:1/unused
+      KAYAK_SANDBOX_ENABLED: "false"
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/mobile/package-lock.json
+      - run: npm ci
+      # The inheritance proof executes actual shared-native transport readers.
+      - run: npm --prefix apps/mobile ci
+      - run: npx --no-install playwright install --with-deps chromium
+      - run: npm run build
+      - run: npx --no-install tsc --noEmit --incremental false
+      - run: npm run lint
+      # Build first: mounted-browser tests consume its stable CSS output.
+      - run: npm test -- --test-concurrency=4
+      - run: npm run security:secrets
+      - run: npm run check:conflicts
+      - run: npm run check:migration-timestamps

@@ -24,8 +24,8 @@ test("the branded loader owns calm native progress and accessible rotating statu
 });
 
 test("results become ready without an artificial presentation delay", () => {
-  const validationToReady = screen.slice(screen.indexOf("const valid ="), screen.indexOf("setMessage(response.warnings"));
-  assert.match(validationToReady, /setResults\(valid\);\s*resultsRef\.current = valid;[\s\S]*setStatus\(valid\.length \? "ready" : "empty"\);/);
+  const validationToReady = screen.slice(screen.indexOf("const valid ="), screen.indexOf("setMessage(presentation.message)"));
+  assert.match(validationToReady, /setResults\(valid\);\s*resultsRef\.current = valid;[\s\S]*const presentation = presentSearchResults\(product, valid\.length, response\);\s*setStatus\(presentation\.status\);/);
   assert.doesNotMatch(validationToReady, /setTimeout|sleep|minimum|waitForAnimation/);
 });
 

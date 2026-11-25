@@ -11,7 +11,7 @@ test("normal KAYAK results use regular cards without visible sandbox labels", ()
   assert.doesNotMatch(source, /KAYAK sandbox · Simulated · Not bookable/);
   assert.doesNotMatch(source, /providerLabel=[^\n]*KAYAK sandbox/);
   assert.match(source, /detailsHref=`\/sandbox\/kayak\/details\?id=\$\{encodeURIComponent\(offer\.id\)\}`/);
-  assert.match(source, /saveKayakOffer\(sessionStorage,\{offer,vertical,criteria\}\)/);
+  assert.match(source, /saveKayakOffer\(sessionStorage,\{offer,vertical,criteria,[\s\S]*resultsHref[\s\S]*\}\)/);
   assert.match(source, /actionLabel="View flight"/);
   assert.match(source, /actionLabel="View hotel"/);
   assert.match(source, /actionLabel="View car"/);

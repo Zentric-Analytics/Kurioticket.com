@@ -7,6 +7,7 @@ const TTL_MS = 30 * 60 * 1000;
 export type StoredKayakOffer = {offer:SandboxOffer;vertical:KayakVertical;criteria:Record<string,string>;savedAt:number;resultsHref?:string};
 
 export function saveKayakOffer(storage: Storage, value: Omit<StoredKayakOffer,"savedAt">) {
+  if (typeof window !== "undefined" && ["kurioticket.com","www.kurioticket.com"].includes(window.location.hostname)) return;
   try {
     storage.setItem(`${PREFIX}${value.offer.id}`,JSON.stringify({...value,savedAt:Date.now()}));
   } catch {
@@ -14,6 +15,7 @@ export function saveKayakOffer(storage: Storage, value: Omit<StoredKayakOffer,"s
   }
 }
 export function readKayakOffer(storage: Storage, id: string, now = Date.now()): StoredKayakOffer | null {
+  if (typeof window !== "undefined" && ["kurioticket.com","www.kurioticket.com"].includes(window.location.hostname)) return null;
   try {
     const value = JSON.parse(storage.getItem(`${PREFIX}${id}`) || "null") as StoredKayakOffer | null;
     if (!value || value.offer?.id !== id || !["flights","hotels","cars"].includes(value.vertical) || now-value.savedAt > TTL_MS) return null;

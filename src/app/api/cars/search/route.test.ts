@@ -1,3 +1,4 @@
+import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
 import { applicationMetadata } from "@/lib/application-source";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -45,6 +46,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
     status: options.status ?? "available", warnings: [], providerStatuses: [provider],
   };
   const dependencies: Record<string, unknown> = {
+    "@/lib/productionSandboxPolicy": {withProductionSandboxRequest,captureFinalSearchHistory},
     "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
     "@/lib/application-source": { applicationMetadata },
     "@/lib/searchCrawlerGate": {

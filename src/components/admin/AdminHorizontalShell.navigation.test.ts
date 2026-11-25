@@ -88,7 +88,7 @@ test("navigation keeps parent workspaces visible while child routes stay nested"
   assert.match(shell, /Official Kurioticket mark stays in the top-left header beside the title at every width/);
   const groups = getAdminHeaderGroups("ADMIN", true);
   const entries = groups.flatMap(group => group.links);
-  assert.deepEqual(entries.map(({ item }) => item.label), ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Platforms", "Settings"]);
+  assert.deepEqual(entries.map(({ item }) => item.label), ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Provider Management", "Content", "System", "Platforms", "Settings"]);
   const searches = entries.find(({ item }) => item.href === "/admin/searches/activity");
   const providers = entries.find(({ item }) => item.href === "/admin/providers");
   assert.deepEqual(searches?.children.map((item) => item.label), ["Provider Handoffs"]);
@@ -101,7 +101,7 @@ test("navigation keeps parent workspaces visible while child routes stay nested"
 
 
 test("Settings uses the same full-white workspace surface as other flat admin workspaces", () => {
-  assert.match(shell, /const settingsWorkspace = pathname === "\/admin\/settings" \|\| pathname\.startsWith\("\/admin\/settings\/"\);/);
+  assert.match(shell, /const settingsWorkspace = pathname === "\/admin\/settings" \|\| pathname\.startsWith\("\/admin\/settings\/"\) \|\| pathname === "\/admin\/preview-testers";/);
   assert.match(shell, /auditLogsWorkspace \|\| emailDeliveryWorkspace \|\| settingsWorkspace \|\| usersDirectory/);
   assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
 });
@@ -129,9 +129,9 @@ test("global More sections dropdown is replaced with per-workspace navigation", 
   assert.doesNotMatch(shell, /getAdminMoreGroups/);
   assert.match(shell, /function WorkspaceSectionNavigation/);
   assert.match(shell, /getAdminWorkspaceSections\(pathname, role\)/);
-  assert.match(shell, /<WorkspaceSectionNavigation pathname=\{pathname\} role=\{role\}/);
-  assert.match(shell, /if \(pathname === "\/admin\/providers"/);
-  assert.match(shell, /isAdminWorkspaceSectionActive\(pathname, item\.href\)/);
+  assert.match(shell, /<WorkspaceSidebar pathname=\{pathname\} role=\{role\}/);
+  assert.match(shell, /const providerAttribution = pathname === "\/admin\/providers"/);
+  assert.match(shell, /isAdminWorkspaceSectionActive\(pathname, link\.href, searchParams\.get\("activityReturn"\)\)/);
 });
 
 test("Platforms uses the standard sidebar layout for Platform Health and Platform Metrics", () => {

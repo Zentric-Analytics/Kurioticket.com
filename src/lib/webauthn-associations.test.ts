@@ -19,3 +19,11 @@ test("asset links uses configured Android identity", () => {
   assert.equal(JSON.stringify(value).includes("private"), false);
   assert.throws(() => androidAssociation({ NODE_ENV: "test" }));
 });
+
+test("production and Preview Apple identities are preserved without inventing entitlements", () => {
+  assert.deepEqual(
+    appleAssociation({ NODE_ENV: "test", WEBAUTHN_IOS_APP_IDS: "N23R45R4CY.com.kurioticket.app, N23R45R4CY.com.kurioticket.app.preview" }),
+    { webcredentials: { apps: ["N23R45R4CY.com.kurioticket.app", "N23R45R4CY.com.kurioticket.app.preview"] } },
+  );
+  assert.throws(() => appleAssociation({ NODE_ENV: "test", WEBAUTHN_IOS_APP_IDS: "N23R45R4CY.com.kurioticket.app,invalid" }));
+});

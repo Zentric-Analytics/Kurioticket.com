@@ -3,7 +3,7 @@ import { z } from "zod";
 /** Server/web runtime validation for the portable SearchLocation contract. */
 export const searchLocationSchema = z.object({
   id: z.string().trim().min(1).max(160),
-  kind: z.enum(["airport", "city", "district", "landmark", "rental-area", "custom"]),
+  kind: z.enum(["airport", "city", "metropolitan-area", "district", "landmark", "rental-area", "custom"]),
   primaryLabel: z.string().trim().min(1).max(160),
   supportingLabel: z.string().trim().max(200).default(""),
   submittedValue: z.string().trim().min(1).max(160),

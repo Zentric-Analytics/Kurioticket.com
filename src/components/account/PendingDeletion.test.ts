@@ -1,16 +1,14 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { createJiti } from "jiti";
 import { JSDOM } from "jsdom";
 import { act, createElement, type ReactNode } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
+import {LocaleProvider} from "@/components/layout/LocaleProvider";
+import {PendingDeletionActions} from "./PendingDeletionActions";
+import {PendingDeletionDeadline} from "./PendingDeletionDeadline";
 
-const jiti = createJiti(import.meta.url, { jsx: { runtime: "automatic" }, fsCache: false });
-const { PendingDeletionActions } = await jiti.import<typeof import("./PendingDeletionActions")>("./PendingDeletionActions.tsx");
-const { PendingDeletionDeadline } = await jiti.import<typeof import("./PendingDeletionDeadline")>("./PendingDeletionDeadline.tsx");
-const { LocaleProvider } = await jiti.import<typeof import("../layout/LocaleProvider")>("../layout/LocaleProvider.tsx");
 
 const deadline = "2026-11-24T03:30:00.000Z";
 

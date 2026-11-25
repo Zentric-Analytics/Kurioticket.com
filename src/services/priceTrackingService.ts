@@ -1,3 +1,4 @@
+import { productionSandboxHost, productionSandboxInventory } from "@/lib/productionSandboxPolicy";
 import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
 import { recordOperationalAccountAudit } from "@/services/operationalAccountAuditService";
 import { flightPriceAlertDuplicateKey } from "@/lib/price-alerts/flightPriceAlerts";
@@ -139,6 +140,7 @@ export async function createPriceAlert(input: {
   currency: string;
   query: Record<string, unknown>;
 }) {
+  if (productionSandboxHost() && (productionSandboxInventory(input.query) || input.type !== "FLIGHT" || process.env.DUFFEL_API_KEY?.startsWith("duffel_test_"))) throw new PriceAlertUnavailableError();
   if (!(await isFeatureEnabled("PRICE_ALERTS_ENABLED"))) throw new PriceAlertUnavailableError();
   try {
     const db = getPrisma();

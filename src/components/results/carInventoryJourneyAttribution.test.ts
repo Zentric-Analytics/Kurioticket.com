@@ -35,7 +35,7 @@ test("Car views retain the existing consent-aware journey sender", () => {
   assert.match(loader, /useJourneyEvents\(\)/);
   assert.match(journey, /const browserActionId = \(\) => crypto\.randomUUID\(\)/);
   assert.match(journey, /allowed: browserAllowsAnalytics/);
-  assert.match(journey, /resultsViewed\(requestId\) \{\s*if \(requestId\) sender\.send\(\{ type: "RESULTS_VIEWED", requestId/);
+  assert.match(journey, /resultsViewed\(requestId\) \{\s*if \(requestId\) \{\s*sender\.send\(\{ type: "RESULTS_VIEWED", requestId/);
 });
 
 test("Car provider handoffs propagate the validated search request ID", () => {

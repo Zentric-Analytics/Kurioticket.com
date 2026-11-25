@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
 
 import { normalizeCountryCode } from "@/lib/geo/context";
 import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
 import { countryToRegion, normalizeRegion } from "@/lib/region/detectRegion";
 import { discoverLocations } from "@/lib/locations/discovery";
-import { availableDiscoveryAdapters } from "@/lib/locations/providerDiscoveryAdapters";
+import { availableDiscoveryAdapters, registeredLocationProviders } from "@/lib/locations/providerDiscoveryAdapters";
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { fromHotelDestination } from "@/lib/locations/adapters";
 
@@ -67,6 +68,10 @@ const resolveCountryContext = async (request: Request, selectedCountryCode: stri
 };
 
 export async function GET(request: Request) {
+  return withProductionSandboxRequest(request, () => discoverHotelDestinations(request));
+}
+
+async function discoverHotelDestinations(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const query = (searchParams.get("q") || "").trim();
   const selectedCountryCode = normalizeCountryHint(searchParams.get("countryCode"));
@@ -108,7 +113,7 @@ export async function GET(request: Request) {
   );
 
   {
-    const discovery = await discoverLocations({ query, product: "hotels", catalog: hotelDestinations.map(fromHotelDestination), adapters: availableDiscoveryAdapters(request, "hotels"), limit, timeoutMs: 900, supportedByProviders: ["kayak"] });
+    const discovery = await discoverLocations({ query, product: "hotels", catalog: hotelDestinations.map(fromHotelDestination), adapters: await availableDiscoveryAdapters(request, "hotels"), limit, timeoutMs: 900, signal: request.signal, supportedByProviders: await registeredLocationProviders("hotels") });
     const suggestions = discovery.suggestions.map((canonical) => ({
       id: canonical.id, name: canonical.primaryLabel, region: canonical.region || (canonical.kind === "custom" ? "" : canonical.supportingLabel.split(",")[0]) || "",
       country: canonical.country?.name || (canonical.kind === "custom" ? "" : canonical.supportingLabel.split(",").at(-1)?.trim()) || "",

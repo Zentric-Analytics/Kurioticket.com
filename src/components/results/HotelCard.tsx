@@ -1,4 +1,5 @@
 "use client";
+import { sandboxCardAction } from "./sandboxCardActions";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import { useOperationalHandoff } from "@/components/auth/OperationalHandoffProvider";
@@ -517,7 +518,7 @@ export function HotelCard({
   }
 
   return (
-    <Card className={`${styles.card} group relative mx-auto w-full max-w-[800px] overflow-hidden rounded-[13px] border-[#D8E1EC] bg-white shadow-[0_2px_10px_rgba(24,48,91,0.08)] transition sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] sm:hover:-translate-y-0.5 sm:hover:border-slate-300 sm:hover:shadow-[0_22px_50px_-24px_rgba(2,28,43,0.30)] focus-within:border-[#004BB8]/40 focus-within:ring-2 focus-within:ring-[#004BB8]/10 motion-reduce:transform-none motion-reduce:transition-none sm:w-full lg:mx-0 lg:max-w-none lg:border-[#CFD9E5] lg:bg-white lg:shadow-none lg:hover:translate-y-0 lg:hover:border-[#AEB1BA] lg:hover:shadow-none`}>
+    <Card onClickCapture={event=>sandboxCardAction(hotel,event)} onAuxClickCapture={event=>sandboxCardAction(hotel,event)} onKeyDownCapture={event=>sandboxCardAction(hotel,event)} className={`${styles.card} group relative mx-auto w-full max-w-[800px] overflow-hidden rounded-[13px] border-[#D8E1EC] bg-white shadow-[0_2px_10px_rgba(24,48,91,0.08)] transition sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] sm:hover:-translate-y-0.5 sm:hover:border-slate-300 sm:hover:shadow-[0_22px_50px_-24px_rgba(2,28,43,0.30)] focus-within:border-[#004BB8]/40 focus-within:ring-2 focus-within:ring-[#004BB8]/10 motion-reduce:transform-none motion-reduce:transition-none sm:w-full lg:mx-0 lg:max-w-none lg:border-[#CFD9E5] lg:bg-white lg:shadow-none lg:hover:translate-y-0 lg:hover:border-[#AEB1BA] lg:hover:shadow-none`}>
       {resolvedDetailsHref ? (
         <Link
           href={resolvedDetailsHref}

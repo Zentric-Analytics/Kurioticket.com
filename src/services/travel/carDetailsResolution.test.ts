@@ -54,20 +54,10 @@ test("a server-owned search cohort recovers the exact selected result after an e
   assert.equal(fixture.calls.searches, 0);
 });
 
-test("a cache miss repeats the canonical provider search and remembers all results", async () => {
-  const selected = kayakCar("kayak-sandbox:opaque-provider-id:7");
-  const other = kayakCar("kayak-sandbox:different-provider-id:2");
-  const context = { clientIp: "203.0.113.7", userAgent: "mobile-web-test" };
-  const fixture = dependencies({ searchKayak: async (receivedSearch, receivedContext) => {
-    fixture.calls.searches += 1;
-    assert.deepEqual(receivedSearch, search);
-    assert.equal(receivedContext, context);
-    return { provider: "KAYAK sandbox", results: [other, selected], status: "success", latencyMs: 1 };
-  } });
-  assert.equal(await resolveCarDetails(selected.id, search, context, fixture.value), selected);
-  assert.equal(fixture.calls.searches, 1);
-  assert.equal(fixture.calls.exactWrites, 1);
-  assert.equal(fixture.calls.cohortWrites, 1);
+test("expired search-scoped identity never triggers a fresh supplier search", async () => {
+ const fixture=dependencies({searchKayak:async()=>{assert.fail("must not reconstruct snapshot");}});
+ assert.equal(await resolveCarDetails("kayak-sandbox:expired:7",search,undefined,fixture.value),null);
+ assert.deepEqual(fixture.calls,{searches:0,exactWrites:0,cohortWrites:0});
 });
 
 test("missing, mismatched, and malformed KAYAK results fail closed", async () => {
@@ -81,7 +71,7 @@ test("missing, mismatched, and malformed KAYAK results fail closed", async () =>
   assert.equal(isKayakCarResultId("kayak-sandbox:../../private"), false);
   assert.equal(isKayakCarResultId("kayak-sandbox:valid:opaque:4"), true);
   assert.equal(await resolveCarDetails("kayak-sandbox:bad/id", search, undefined, fixture.value), null);
-  assert.equal(fixture.calls.searches, 1, "malformed IDs do not trigger another provider request");
+  assert.equal(fixture.calls.searches, 0, "missing or malformed IDs never trigger a provider request");
 });
 
 test("retired static car IDs cannot revive catalogue offers", async () => {

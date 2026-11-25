@@ -35,8 +35,8 @@ test("native Cars retains its stable virtualized FlatList scrolling", () => {
   const owner = cars.slice(start, cars.indexOf("/>", contentStyleStart) + 2);
   assert.ok(start >= 0 && contentStyleStart > start);
   for (const contract of [/alwaysBounceVertical=\{false\}/, /bounces=\{false\}/, /overScrollMode="never"/]) assert.match(owner, contract);
-  assert.match(owner, /initialNumToRender=\{Math\.max\(results\.length,1\)\}/);
-  assert.match(owner, /maxToRenderPerBatch=\{Math\.max\(results\.length,CAR_RESULT_RENDER_BATCH_SIZE\)\}/);
+  assert.match(owner, /initialNumToRender=\{CAR_RESULT_RENDER_BATCH_SIZE\}/);
+  assert.match(owner, /maxToRenderPerBatch=\{CAR_RESULT_RENDER_BATCH_SIZE\}/);
   assert.match(owner, /windowSize=\{CAR_RESULT_WINDOW_SIZE\}/);
   assert.match(owner, /contentContainerStyle=\{\[r\.body,\{paddingBottom:Math\.max\(insets\.bottom \+ 64,64\)\}\]\}/);
   assert.match(cars, /<SafeAreaView style=\{\[r\.safe,\{backgroundColor:headerSurfaceColor\}\]\} edges=\{\[\]\}>/);

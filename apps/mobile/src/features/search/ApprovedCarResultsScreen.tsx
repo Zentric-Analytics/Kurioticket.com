@@ -1,3 +1,6 @@
+import { randomUUID } from "expo-crypto";
+import { presentSearchResults, searchUnavailableMessage } from "./searchFailurePresentation";
+import { useSandboxResultState } from "./useSandboxResults";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -63,9 +66,11 @@ export function ApprovedCarResultsScreen() {
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string,string|string[]>>();
   const plan = useMemo(() => buildSearchPlan("car",params),[JSON.stringify(params)]);
-  const [results,setResults] = useState<CarResult[]>([]);
+  const [rawSandboxResults, setResults] = useState<CarResult[]>([]);
+  const {results,pending:displayPending,unavailable:displayUnavailable} = useSandboxResultState(rawSandboxResults);
   const [resultsRequestId,setResultsRequestId] = useState<string>();
-  const [status,setStatus] = useState<Status>("loading");
+  const [transportStatus,setStatus] = useState<Status>("loading");
+  const status:Status=transportStatus === "ready" ? displayPending ? "loading" : displayUnavailable ? "error" : transportStatus : transportStatus;
   const [message,setMessage] = useState("");
   const [retry,setRetry] = useState(0);
   const [sort,setSort] = useState<CarSort>("recommended");
@@ -92,11 +97,11 @@ export function ApprovedCarResultsScreen() {
     const controller=new AbortController();
     activeSearch.current=controller;
     const sequence=++searchSequence.current;
-    const requestId=`mobile-car-${Date.now()}-${sequence}`;
+    const requestId=randomUUID();
     setResultsRequestId(undefined);
     setStatus("loading");setMessage("");
-    try{const response=await travelApi.searchCars(plan.plan.payload,{signal:controller.signal,requestId});if(controller.signal.aborted||sequence!==searchSequence.current)return;const acceptance=acceptCanonicalResults(response.results,safeCanonicalCarResult);if(acceptance.rejectedIds.length)console.warn("[travel-search] canonical car results failed client safety checks",{requestId:response.requestId,canonicalCount:acceptance.canonicalCount,acceptedCount:acceptance.accepted.length,rejectedIds:acceptance.rejectedIds});setResults(acceptance.accepted);if(canonicalResultsWereSilentlyLost(acceptance)){setStatus("error");setMessage("The canonical search returned inventory that this app could not render safely.");}else{journeyEvents.rememberSearch(response.requestId,journeyResponseContext(response));setResultsRequestId(response.requestId);if(acceptance.accepted.length)await prefetchInitialCarImages(acceptance.accepted);if(controller.signal.aborted||sequence!==searchSequence.current)return;setStatus(acceptance.accepted.length?"ready":"empty");setMessage(response.warnings?.[0]||"");void recordRecentSearchBestEffort(buildRecentSearch("car",plan.plan.payload));}}
-    catch(error){if(controller.signal.aborted||sequence!==searchSequence.current)return;setStatus("error");setMessage(error instanceof Error?error.message:"Car search failed");}
+    try{const response=await travelApi.searchCars(plan.plan.payload,{signal:controller.signal,requestId,sandboxDisplay:true});if(controller.signal.aborted||sequence!==searchSequence.current)return;const acceptance=acceptCanonicalResults(response.results,safeCanonicalCarResult);if(acceptance.rejectedIds.length)console.warn("[travel-search] canonical car results failed client safety checks",{requestId:response.requestId,canonicalCount:acceptance.canonicalCount,acceptedCount:acceptance.accepted.length,rejectedIds:acceptance.rejectedIds});setResults(acceptance.accepted);if(canonicalResultsWereSilentlyLost(acceptance)){setStatus("error");setMessage(searchUnavailableMessage("car"));}else{journeyEvents.rememberSearch(response.requestId,journeyResponseContext(response));setResultsRequestId(response.requestId);if(acceptance.accepted.length)await prefetchInitialCarImages(acceptance.accepted);if(controller.signal.aborted||sequence!==searchSequence.current)return;const presentation=presentSearchResults("car",acceptance.accepted.length,response);setStatus(presentation.status);setMessage(presentation.message);void recordRecentSearchBestEffort(buildRecentSearch("car",plan.plan.payload));}}
+    catch{if(controller.signal.aborted||sequence!==searchSequence.current)return;setStatus("error");setMessage(searchUnavailableMessage("car"));}
   },[plan.plan?.key,retry]);
   useEffect(()=>{const executionKey=`${plan.plan?.key??"invalid"}:${retry}`;if(searchAbortTimer.current)clearTimeout(searchAbortTimer.current);searchAbortTimer.current=undefined;if(activeExecutionKey.current!==executionKey){activeExecutionKey.current=executionKey;void load();}return()=>{searchAbortTimer.current=setTimeout(()=>{if(activeExecutionKey.current!==executionKey)return;searchSequence.current+=1;activeSearch.current?.abort("screen-cleanup");activeExecutionKey.current=undefined;},0);};},[load,plan.plan?.key,retry]);
   useEffect(()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);carResultsApplyingTimer.current=undefined;setCarResultsApplying(false);return()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);};},[plan.plan?.key]);
@@ -152,7 +157,7 @@ export function ApprovedCarResultsScreen() {
     {/* Render the complete bounded result set in the first virtualized batch.
         UIKit then receives the final contentSize before scrolling begins, while
         image prefetching stays independently limited to the first few assets. */}
-    <FlatList ref={carScrollRef} style={{backgroundColor:carCanvasColor}} data={listData} keyExtractor={result=>result.id} renderItem={({item,index})=><View style={r.carResultCardSlot}><CarResultCard result={item} rank={index} badge={carBadges.get(item.id)} imageUri={resolveNativeCarImageUri(item.imageUrl)} searchParams={payload} resultBackgroundColor={carCanvasColor} plan={plan.plan} priceAlertsAvailable={availability.priceAlerts} journeyRequestId={resultsRequestId}/></View>} ItemSeparatorComponent={CarResultItemSeparator} ListHeaderComponent={listHeader} ListEmptyComponent={listEmpty} initialNumToRender={Math.max(results.length,1)} maxToRenderPerBatch={Math.max(results.length,CAR_RESULT_RENDER_BATCH_SIZE)} windowSize={CAR_RESULT_WINDOW_SIZE} updateCellsBatchingPeriod={CAR_RESULT_BATCHING_PERIOD_MS} removeClippedSubviews={Platform.OS === "android"} showsVerticalScrollIndicator={true} automaticallyAdjustsScrollIndicatorInsets={false} scrollIndicatorInsets={carResultsScrollIndicatorInsets} alwaysBounceVertical={false} bounces={false} overScrollMode="never" keyboardShouldPersistTaps="handled" contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 64,64)}]}/>
+    <FlatList ref={carScrollRef} style={{backgroundColor:carCanvasColor}} data={listData} keyExtractor={result=>result.id} renderItem={({item,index})=><View style={r.carResultCardSlot}><CarResultCard result={item} rank={index} badge={carBadges.get(item.id)} imageUri={resolveNativeCarImageUri(item.imageUrl)} searchParams={payload} resultBackgroundColor={carCanvasColor} plan={plan.plan} priceAlertsAvailable={availability.priceAlerts} journeyRequestId={resultsRequestId}/></View>} ItemSeparatorComponent={CarResultItemSeparator} ListHeaderComponent={listHeader} ListEmptyComponent={listEmpty} initialNumToRender={CAR_RESULT_RENDER_BATCH_SIZE} maxToRenderPerBatch={CAR_RESULT_RENDER_BATCH_SIZE} windowSize={CAR_RESULT_WINDOW_SIZE} updateCellsBatchingPeriod={CAR_RESULT_BATCHING_PERIOD_MS} removeClippedSubviews={Platform.OS === "android"} showsVerticalScrollIndicator={true} automaticallyAdjustsScrollIndicatorInsets={false} scrollIndicatorInsets={carResultsScrollIndicatorInsets} alwaysBounceVertical={false} bounces={false} overScrollMode="never" keyboardShouldPersistTaps="handled" contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 64,64)}]}/>
     </View>
     {status==="loading"?<View style={StyleSheet.absoluteFill}><NativeBrandedSearchLoading product="car" includeTopInset={false}/></View>:null}
     <CarFilterSheet visible={filterSheetVisible} results={results} filters={filters} pricePerDay={pricePerDay} onChange={changeCarFilters} onClose={completeCarFilterSession}/>

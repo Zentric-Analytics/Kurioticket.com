@@ -47,7 +47,7 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
     if (tripType === "multi-city") {
       const legCount = integer(text(params.legCount), -1);
       if (legCount < 2 || legCount > 5) return { error: "Choose between two and five flights." };
-      const legs = Array.from({ length: legCount }, (_, index) => ({ origin: text(params[`origin${index + 1}`]).toUpperCase(), destination: text(params[`destination${index + 1}`]).toUpperCase(), departureDate: text(params[`departureDate${index + 1}`]) }));
+      const legs = Array.from({ length: legCount }, (_, index) => ({ origin: text(params[`origin${index + 1}`]).toUpperCase(), ...(parseLocationTarget(text(params[`originLocation${index + 1}`])) ? {originLocation:parseLocationTarget(text(params[`originLocation${index + 1}`]))}:{}), ...(parseLocationTarget(text(params[`destinationLocation${index + 1}`])) ? {destinationLocation:parseLocationTarget(text(params[`destinationLocation${index + 1}`]))}:{}), destination: text(params[`destination${index + 1}`]).toUpperCase(), departureDate: text(params[`departureDate${index + 1}`]) }));
       let previous = "";
       for (const leg of legs) { if (!/^[A-Z0-9]{3}$/.test(leg.origin) || !/^[A-Z0-9]{3}$/.test(leg.destination) || leg.origin === leg.destination) return { error: "Choose different valid airports for every flight." }; if (!future(leg.departureDate, now)) return { error: "Choose valid future departure dates." }; if (previous && leg.departureDate < previous) return { error: "Choose chronological flight dates." }; previous = leg.departureDate; }
       if (adults < 1 || adults > 9 || children < 0 || infants < 0 || adults + children + infants > 9) return { error: "Choose valid traveler counts." };
@@ -60,10 +60,15 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
     if (tripType === "round-trip" && (!future(returnDate, now) || returnDate <= departureDate)) return { error: "Choose a return date after departure." };
     if (adults < 1 || adults > 9 || children < 0 || infants < 0 || adults + children + infants > 9) return { error: "Choose valid traveler counts." };
     if (!["economy", "premium-economy", "business", "first"].includes(cabinClass)) return { error: "Choose a supported cabin class." };
-    const payload = { tripType, origin, destination, departureDate, ...(tripType === "round-trip" ? { returnDate } : {}), adults, children, infants, travelers: adults + children + infants, cabinClass, currency };
+    const payload = { tripType, origin, destination, ...(parseLocationTarget(text(params.fromLocation)||text(params.originLocation)) ? {originLocation:parseLocationTarget(text(params.fromLocation)||text(params.originLocation))}:{}), ...(parseLocationTarget(text(params.toLocation)||text(params.destinationLocation)) ? {destinationLocation:parseLocationTarget(text(params.toLocation)||text(params.destinationLocation))}:{}), departureDate, ...(tripType === "round-trip" ? { returnDate } : {}), adults, children, infants, travelers: adults + children + infants, cabinClass, currency };
     return { plan: { payload, key: JSON.stringify(["flight", ...Object.values(payload)]), summary: `${origin} → ${destination} · ${departureDate}` } };
   }
   if (product === "hotel") {
+    let roomComposition: unknown;
+    if (text(params.roomComposition)) {
+      try { roomComposition = JSON.parse(text(params.roomComposition)); } catch { return { error: "Choose valid room composition." }; }
+      if (!Array.isArray(roomComposition)) return { error: "Choose valid room composition." };
+    }
     const destinationId = text(params.destinationId);
     const destinationLocation = parseLocationTarget(text(params.destinationLocation));
     const destination = text(params.destination);
@@ -75,7 +80,7 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
     const minimumLocalIso = localIsoDate(now);
     if (!isHotelTodayOrFutureLocalDate(checkIn, minimumLocalIso) || !isHotelTodayOrFutureLocalDate(checkOut, minimumLocalIso) || checkOut <= checkIn) return { error: "Choose valid check-in and check-out dates." };
     if (!isValidHotelOccupancy(guests, rooms)) return { error: "Choose valid guest and room counts." };
-    const payload = { ...(destinationId ? { destinationId } : {}), ...(destinationLocation ? { destinationLocation } : {}), destination, checkIn, checkOut, guests, rooms };
+    const payload = { ...(destinationId ? { destinationId } : {}), ...(destinationLocation ? { destinationLocation } : {}), destination, checkIn, checkOut, guests, rooms, ...(text(params.adults) ? {adults:integer(text(params.adults),guests),children:integer(text(params.children),0)}:{}), ...(text(params.petFriendly) ? {petFriendly:text(params.petFriendly)==="true"}:{}), ...(text(params.roomComposition) ? {roomComposition}: {}) };
     return { plan: { payload, key: JSON.stringify(["hotel", ...Object.values(payload)]), summary: `${destination} · ${checkIn} – ${checkOut}` } };
   }
   const pickupLocation = text(params.pickupLocation); const dropoffLocation = text(params.dropoffLocation) || pickupLocation;

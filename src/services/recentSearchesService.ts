@@ -1,3 +1,4 @@
+import {searchLocationSchema} from "@/lib/locations/searchTarget";
 import { z } from "zod";
 import type { InputJsonValue } from "@prisma/client/runtime/client";
 
@@ -34,7 +35,10 @@ const recentSearchBaseInputSchema = z.object({
 });
 
 const recentFlightParamsSchema = z.object({
-  tripType: z.enum(["round-trip", "one-way"]),
+  currency:z.string().regex(/^[A-Z]{3}$/).optional(),locale:z.string().max(40).optional(),market:z.string().max(10).optional(),
+  originLocation:searchLocationSchema.optional(),destinationLocation:searchLocationSchema.optional(),
+  legs:z.array(z.object({origin:z.string().max(3),destination:z.string().max(3),departureDate:z.string().max(32),originLocation:searchLocationSchema.optional(),destinationLocation:searchLocationSchema.optional()})).min(2).max(5).optional(),
+  tripType: z.enum(["round-trip", "one-way", "multi-city"]),
   origin: z.string().trim().min(1).max(64),
   destination: z.string().trim().min(1).max(64),
   departureDate: z.string().trim().min(1).max(32),
@@ -47,6 +51,10 @@ const recentFlightParamsSchema = z.object({
 });
 
 const recentHotelParamsSchema = z.object({
+  currency:z.string().regex(/^[A-Z]{3}$/).optional(),locale:z.string().max(40).optional(),market:z.string().max(10).optional(),
+  adults:positiveIntegerSchema.optional(),children:nonNegativeIntegerSchema.optional(),petFriendly:z.boolean().optional(),
+  roomComposition:z.array(z.object({adults:positiveIntegerSchema,children:nonNegativeIntegerSchema})).max(6).optional(),
+  destinationId:z.string().max(160).optional(),destinationLocation:searchLocationSchema.optional(),
   destination: z.string().trim().min(1).max(256),
   checkIn: z.string().trim().min(1).max(32),
   checkOut: z.string().trim().min(1).max(32),
@@ -55,6 +63,8 @@ const recentHotelParamsSchema = z.object({
 });
 
 const recentCarParamsSchema = z.object({
+  currency:z.string().regex(/^[A-Z]{3}$/).optional(),locale:z.string().max(40).optional(),market:z.string().max(10).optional(),
+  pickupLocationTarget:searchLocationSchema.optional(),dropoffLocationTarget:searchLocationSchema.optional(),
   pickupLocation: z.string().trim().min(1).max(256),
   dropoffLocation: z.string().trim().min(1).max(256),
   pickupDate: z.string().trim().min(1).max(32),

@@ -82,7 +82,7 @@ test("all-rejected canonical flight inventory becomes a recoverable error, not n
   const flightBranch = screen.slice(screen.indexOf("if (flightAcceptance && canonicalResultsWereSilentlyLost"), screen.indexOf("setResults(valid)", screen.indexOf("if (flightAcceptance && canonicalResultsWereSilentlyLost")));
   assert.match(flightBranch, /setResults\(\[\]\)/);
   assert.match(flightBranch, /setStatus\("error"\)/);
-  assert.match(flightBranch, /could not render safely/);
+  assert.match(flightBranch, /setMessage\(searchUnavailableMessage\(product\)\)/);
   assert.doesNotMatch(flightBranch, /setStatus\("empty"\)/);
 });
 

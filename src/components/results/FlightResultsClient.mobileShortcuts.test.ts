@@ -117,7 +117,7 @@ test("Flight quick filters still stage and commit Flight filter state", () => {
   assert.match(shortcuts, /setSelectedStops\(mobileDraftStops\)/);
   assert.match(shortcuts, /setSelectedFromAirports\(mobileDraftFromAirports\)/);
   assert.match(shortcuts, /setSelectedToAirports\(mobileDraftToAirports\)/);
-  assert.match(shortcuts, /if \(mobileShortcutSheet === "sort"\) setSortMode\(mobileDraftSort\)/);
+  assert.match(shortcuts, /if \(mobileShortcutSheet === "sort"\) \{[\s\S]*setSortMode\(mobileDraftSort\)/);
 });
 
 test("Hotel-style clear X clears committed Flight quick filters", () => {

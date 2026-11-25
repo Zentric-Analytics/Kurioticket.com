@@ -1,8 +1,9 @@
 import type { CarLocationSuggestion, CarLocationSuggestionKind } from "@/lib/cars/carLocationSuggestions";
 import { discoverLocations } from "@/lib/locations/discovery";
-import { availableDiscoveryAdapters } from "@/lib/locations/providerDiscoveryAdapters";
+import { availableDiscoveryAdapters, registeredLocationProviders } from "@/lib/locations/providerDiscoveryAdapters";
 import { getCanonicalCarLocationCatalog } from "@/lib/cars/carLocationSuggestions";
 import type { CanonicalLocation } from "@/lib/locations/types";
+import { withProductionSandboxRequest } from "@/lib/productionSandboxPolicy";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ const toCarSuggestionKind = (canonical: CanonicalLocation): CarLocationSuggestio
     case "city":
     case "custom":
       return canonical.kind;
+    case "metropolitan-area":
     case "rental-area":
     case "district":
     case "landmark":
@@ -22,6 +24,10 @@ const toCarSuggestionKind = (canonical: CanonicalLocation): CarLocationSuggestio
 };
 
 export async function GET(request: Request) {
+  return withProductionSandboxRequest(request, () => discoverCarLocations(request));
+}
+
+async function discoverCarLocations(request: Request) {
   const url = new URL(request.url);
   const q = (url.searchParams.get("q") ?? "").trim().replace(/\s+/g, " ").slice(0, 120);
   const parsedLimit = Number.parseInt(url.searchParams.get("limit") ?? "8", 10);
@@ -41,7 +47,7 @@ export async function GET(request: Request) {
 
   try {
     if (q) {
-      const discovery = await discoverLocations({ query: q, product: "cars", catalog: getCanonicalCarLocationCatalog(), adapters: availableDiscoveryAdapters(request, "cars"), limit, timeoutMs: 900, supportedByProviders: ["kayak"] });
+      const discovery = await discoverLocations({ query: q, product: "cars", catalog: getCanonicalCarLocationCatalog(), adapters: await availableDiscoveryAdapters(request, "cars"), limit, timeoutMs: 900, signal: request.signal, supportedByProviders: await registeredLocationProviders("cars") });
       const suggestions: CarLocationSuggestion[] = discovery.suggestions.map((canonical) => ({ id: canonical.id, kind: toCarSuggestionKind(canonical),
         value: canonical.submittedValue, primaryText: canonical.primaryLabel, secondaryText: canonical.supportingLabel, city: canonical.primaryLabel,
         countryCode: canonical.country?.code, airportCode: canonical.codes?.iata, canonical, validation: "provider-verified", isProviderValidated: true }));

@@ -12,15 +12,17 @@ export function KayakMetasearchClient({ vertical, criteria: inputCriteria, child
 }) {
   const criteriaKey = JSON.stringify(inputCriteria);
   const criteria = useMemo<Record<string,string>>(() => JSON.parse(criteriaKey), [criteriaKey]);
-  const flightReturnRef = useRef<{ returning: boolean; view: FlightResultsReturnView | null } | null>(null);
+  const [flightReturn] = useState<{ returning: boolean; view: FlightResultsReturnView | null } | null>(()=>{
   // Read during the client render, before a nested results component consumes
   // the one-use return marker in its effect. SSR markup is unaffected.
-  if (flightReturnRef.current === null && vertical === "flights" && typeof window !== "undefined") {
+  if (vertical === "flights" && typeof window !== "undefined") {
     const href = window.location.pathname + window.location.search;
     const returning = peekResultsReturn("flight", window.location.href);
-    flightReturnRef.current = { returning,
+    return { returning,
       view: returning ? peekFlightResultsReturnView(href) : null };
   }
+  return null;
+  });
   const request = useRef<AbortController | null>(null);
   const [busy, setBusy] = useState(true);
   const [status, setStatus] = useState<"loading" | "success" | "error" | "needs-input">("loading");
@@ -61,7 +63,7 @@ export function KayakMetasearchClient({ vertical, criteria: inputCriteria, child
     let active = true;
     queueMicrotask(() => {
       if (!active) return;
-      const returning = flightReturnRef.current;
+      const returning = flightReturn;
       if (vertical === "flights" && returning?.returning) {
         const snapshot = returning.view;
         if (snapshot && JSON.stringify(snapshot.kayakCriteria) === criteriaKey) {
@@ -80,7 +82,7 @@ export function KayakMetasearchClient({ vertical, criteria: inputCriteria, child
       void run();
     });
     return () => { active = false; request.current?.abort(); request.current = null; };
-  }, [run, vertical, criteriaKey]);
+  }, [run, vertical, criteriaKey,flightReturn]);
   return <KayakResultsContext.Provider value={{vertical,offers,criteria,status,retry:()=>void run()}}>{children ?? <section aria-label="KAYAK sandbox provider results" className="page-shell my-4 rounded-xl border border-amber-500 bg-amber-50 p-4">
     <h2 className="text-xl font-bold">KAYAK · sandbox provider</h2>
     <p>Simulated inventory. Cards use your display currency; converted amounts are estimates of the original provider price. No real bookings or payments. {children ? "KAYAK offers use the shared results, filters and sorting below." : "Other providers remain available separately below."}</p>

@@ -106,4 +106,3 @@ export function buildAdminOnlineUsersSnapshot(
     platforms: counts, rows,
   };
 }
-

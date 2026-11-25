@@ -5105,4 +5105,6 @@ export const translations: TranslationDictionary = {
   "accountMenu.notifications.label": "Notifications",
   loadingSavedAndRecent: "Loading Saved & Recent",
   flightSearchDestinationPlaceholderShort: "To?",
+  "legal.privacy.sections.data-we-collect.paragraph3": "For service reliability and incident response, we measure recent activity across the website and apps. We use short-lived session credentials, the platform, the time of the last activity and, when signed in, a reference to your account session. We use these signals to count active sessions and deduplicate signed-in accounts. This measurement is separate from optional analytics.",
+  "legal.cookiePolicy.sections.use.paragraph3": "Operational online-presence monitoring uses a short-lived signed credential held in page memory, not a separate online-presence cookie or browser storage entry. The credential is shared between active same-origin tabs where supported and expires when the page session ends; retained operational records expire on a short rolling window.",
 };

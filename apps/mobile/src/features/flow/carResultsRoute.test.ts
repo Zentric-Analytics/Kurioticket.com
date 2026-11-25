@@ -79,7 +79,7 @@ test("native car details route mounts the approved detail surface", () => {
 test("car details retain selected result context and can truthfully recover it", () => {
   const detail = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
   assert.match(detail, /parseResult\(one\(params\.result\)\)/);
-  assert.match(detail, /travelApi\.searchCars/);
+  assert.match(detail, /travelApi\.carDetails/);
   assert.match(detail, /item\.id===one\(params\.resultId\)/);
   for (const field of ["pickupLocation", "returnLocation", "passengers", "bags", "transmission", "airConditioning", "fuelPolicy", "offers"]) {
     assert.match(detail, new RegExp(`result\\.${field}`));

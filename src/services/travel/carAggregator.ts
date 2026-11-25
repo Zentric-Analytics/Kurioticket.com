@@ -1,3 +1,4 @@
+import { providersFor, runRegisteredProviders, type ProviderRegistration } from "./providerRegistry";
 import type { CarInventoryStatus, LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import type { ProviderResult } from "@/lib/types";
 import { providerSearchWarnings } from "./providerSearchOutcome";
@@ -15,10 +16,13 @@ const carSearchDependencies: CarSearchDependencies = {
   rememberResults: rememberProviderResults,
   rememberCohort: rememberCarSearchCohort,
 };
-export async function searchCars(search:LocationBoundCarSearchParams,options:{kayak?:KayakRequestContext;requestId?:string;dependencies?:CarSearchDependencies}={}):Promise<CarSearchResult>{
+export async function searchCars(search:LocationBoundCarSearchParams,options:{signal?:AbortSignal;deadlineMs?:number;kayak?:KayakRequestContext;requestId?:string;providers?:readonly ProviderRegistration<"cars">[];dependencies?:CarSearchDependencies}={}):Promise<CarSearchResult>{
   if(!search.pickupLocation||!search.pickupDate||!search.dropoffDate)return{results:[],status:"invalid-search",warnings:[],providerStatuses:[]};
   const dependencies = options.dependencies ?? carSearchDependencies;
-  const kayak = await dependencies.searchKayak(search, options.kayak);
+  const providerStatuses = await runRegisteredProviders(providersFor("cars", options.providers).map(registration =>
+    options.dependencies && registration.id === "kayak" ? {...registration, readiness:()=>({configured:true,enabled:true}), execute:(query:LocationBoundCarSearchParams, context:import("./providerRegistry").ProviderExecutionContext) => dependencies.searchKayak(query, context.kayak)} : registration), search, options);
+  const inventory = providerStatuses.flatMap(provider => provider.results);
+  const kayak = providerStatuses.find(provider => provider.provider === "KAYAK sandbox") ?? providerStatuses[0] ?? {provider:"none",status:"skipped" as const,results:[],latencyMs:0};
   console.info("[car-search:provider-diagnostics]", {
     requestId: options.requestId,
     kayakClientIpPresent: Boolean(options.kayak?.clientIp),
@@ -31,16 +35,17 @@ export async function searchCars(search:LocationBoundCarSearchParams,options:{ka
     errorCategory: kayak.errorCategory,
     errorReason: kayak.errorReason,
   });
-  await Promise.all([
-    dependencies.rememberResults("car", kayak.results, search),
-    dependencies.rememberCohort(kayak.results, search),
+  const persisted = await Promise.allSettled([
+    dependencies.rememberResults("car", inventory, search),
+    dependencies.rememberCohort(inventory, search),
   ]);
+  if(persisted.every(result=>result.status==="rejected") && inventory.length) return {results:[],status:"unavailable",warnings:["Car results are temporarily unavailable."],providerStatuses};
   const warnings = kayak.errorReason === "pickup_time_past"
     ? ["KAYAK could not search this pick-up time because it has already passed at the rental location. Choose a later pick-up time or date."]
-    : providerSearchWarnings([kayak], kayak.results.length);
+    : providerSearchWarnings(providerStatuses, inventory.length);
   // Static fixture prices must never become apparent rental availability.
-  return{results:kayak.results,status:!kayak.results.length && warnings.length ? "unavailable" : "available",warnings,providerStatuses:[kayak],
-    unsupported: !kayak.results.length && kayak.status === "skipped" && (kayak.errorReason === "unsupported_search" || kayak.errorReason === "unsupported_location")};
+  return{results:inventory,status:!inventory.length && warnings.length ? "unavailable" : "available",warnings,providerStatuses,
+    unsupported: !inventory.length && kayak.status === "skipped" && (kayak.errorReason === "unsupported_search" || kayak.errorReason === "unsupported_location")};
 }
 const KAYAK_CAR_ID_PREFIX = "kayak-sandbox:";
 
@@ -92,15 +97,8 @@ export async function resolveCarDetails(
   const cohortMatch = (await dependencies.getCohort(search)).find(result => isExactKayakCar(result, id));
   if (cohortMatch) return cohortMatch;
 
-  const recovered = await dependencies.searchKayak(search, kayak);
-  const exact = recovered.results.find(result => isExactKayakCar(result, id)) ?? null;
-  if (exact) {
-    await Promise.all([
-      dependencies.rememberExact("car", recovered.results, search),
-      dependencies.rememberCohort(recovered.results, search),
-    ]);
-  }
-  return exact;
+  // Search-scoped IDs cannot be reconstructed by an unrelated fresh search.
+  return null;
 }
 
 export const getCarDetails = resolveCarDetails;

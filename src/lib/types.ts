@@ -1,3 +1,4 @@
+import type { InventoryProvenance } from "@/shared/search/inventory";
 export type TripType = "round-trip" | "one-way" | "multi-city";
 export type CabinClass = "economy" | "premium-economy" | "business" | "first";
 export type SortMode = "cheapest" | "best" | "fastest" | "stops";
@@ -30,6 +31,8 @@ export type FlightSearchParams = {
 };
 
 export type HotelSearchParams = {
+  petFriendly?: boolean;
+  roomComposition?: Array<{ adults: number; children: number }>;
   destinationId?: string;
   destination: string;
   checkIn: string;
@@ -190,6 +193,7 @@ export type FlightFareTerm = {
 };
 
 export type NormalizedFlightResult = {
+  inventoryProvenance?: InventoryProvenance;
   id: string;
   provider: string;
   /** Provider-supplied booking seller used only for customer-facing deal presentation. */
@@ -366,9 +370,9 @@ export type HotelCatalogueProfile = {
   travellerFeatures?: string[];
 };
 
-export type NormalizedHotelResult = NormalizedHotelBase & HotelInventory;
+export type NormalizedHotelResult = NormalizedHotelBase & HotelInventory & {inventoryProvenance?: InventoryProvenance};
 
-export type PublicHotelResult = PublicHotelBase & HotelInventory;
+export type PublicHotelResult = PublicHotelBase & HotelInventory & {inventoryProvenance?: InventoryProvenance};
 
 export type PublicHotelPropertyDetails = {
   description: string;

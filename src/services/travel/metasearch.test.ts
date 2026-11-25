@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { requireProviderBinding, searchAllProviders, type MetasearchProvider, type ResolvedLocation } from "./metasearch";
+import { requireProviderBinding, searchAllProviders, settleWithDeadline, type MetasearchProvider, type ResolvedLocation } from "./metasearch";
 
 type Raw = { id: string; price?: number };
 type Offer = { id: string; price: number };
@@ -47,4 +47,22 @@ test("provider location bindings fail closed when missing or ambiguous", () => {
   assert.equal(requireProviderBinding(location, "a"), "provider-place-41");
   assert.throws(() => requireProviderBinding(location, "missing"), /unambiguous/);
   assert.throws(() => requireProviderBinding({ ...location, bindings: [...location.bindings, { provider: "a", id: "other" }] }, "a"), /unambiguous/);
+});
+
+test("a global deadline preserves providers that already completed", async () => {
+  const completed=adapter("completed",async()=>({status:"success",offers:[{id:"kept",price:10}]}));
+  const stuck=adapter("stuck",()=>new Promise(()=>{}));
+  const result=await searchAllProviders(null,[],[completed,stuck],{deadlineMs:5,dedupeKey:row=>row.id,compare:()=>0});
+  assert.deepEqual(result.results.map(row=>row.id),["kept"]);
+  assert.deepEqual(result.providers.map(row=>row.status),["success","timeout"]);
+});
+
+test("cancellation settles a noncooperative adapter and pre-cancellation prevents dispatch", async () => {
+  const controller=new AbortController();
+  let dispatched=0;
+  const running=settleWithDeadline(()=>{dispatched++;return new Promise<string>(()=>{});},100,controller.signal,reason=>reason);
+  await Promise.resolve();controller.abort();
+  assert.equal(await running,"cancelled");
+  assert.equal(await settleWithDeadline(async()=>{dispatched++;return "wrong";},100,controller.signal,reason=>reason),"cancelled");
+  assert.equal(dispatched,1);
 });

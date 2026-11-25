@@ -25,3 +25,11 @@ test("callers without a response scheduler retain awaited persistence", async ()
   await persistHotelInventory(async () => true, async () => { written = true; });
   assert.equal(written, true);
 });
+
+test("independent cohort and individual cache failures do not discard the successful publication",async()=>{
+  await persistHotelInventory(async()=>true,async()=>{throw new Error("individual cache failed");});
+  let fallback=false;
+  await persistHotelInventory(async()=>{throw new Error("cohort failed");},async()=>{fallback=true;});
+  assert.equal(fallback,true);
+  await assert.rejects(persistHotelInventory(async()=>false,async()=>{throw new Error("write failed");}),/publication unavailable/);
+});
