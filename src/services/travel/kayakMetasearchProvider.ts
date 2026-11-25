@@ -95,6 +95,26 @@ export const searchKayakHotels = (criteria: HotelSearchParams, context?: KayakRe
   const nights = Math.max(1, Math.round((Date.parse(criteria.checkOut) - Date.parse(criteria.checkIn)) / 86_400_000));
   return search<PublicHotelResult>("hotels", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakHotelCardModel(offer, nights));
 };
+
+/** Compatibility batch execution shares canonical resolution, identity policy,
+ * snapshot scoping and normalization. Cursor signing belongs to the transport.
+ * Production compatibility requests already delegate to canonical full search. */
+export async function searchKayakHotelBatch(criteria: HotelSearchParams, context: KayakRequestContext, snapshot: string, checkpoint?: import("./kayakSandbox").KayakHotelBatchCheckpoint) {
+  if (productionSandboxHost() || !isKayakSandboxEnabled() || !context.clientIp) throw new Error("Hotel batch execution unavailable");
+  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined,
+    kayakProviderUserAgent("hotels", context.userAgent), context.clientIp);
+  const trackId = context.trackId || crypto.randomUUID();
+  const resolved = await resolveRegularKayakSearch("hotels", kayakProviderCriteria(criteria as unknown as Record<string,unknown>),
+    (term, vertical = "hotels") => client.places(vertical, term, trackId, context.signal));
+  if (!resolved.supported || resolved.search.vertical !== "hotels") return { supported: false as const };
+  const batch = await client.searchHotelBatch(resolved.search, trackId, checkpoint, context.signal);
+  const nights = Math.max(1, Math.round((Date.parse(criteria.checkOut)-Date.parse(criteria.checkIn))/86_400_000));
+  const results = scopeKayakOfferIds(batch.offers, snapshot).flatMap(offer => {
+    const model = kayakHotelCardModel(offer, nights);
+    return model ? [model] : [];
+  });
+  return { supported: true as const, batch, results };
+}
 /** Only KAYAK's search-scoped result identity groups cars, never a model name. */
 export { groupKayakCarResults } from "@/lib/cars/carResults";
 

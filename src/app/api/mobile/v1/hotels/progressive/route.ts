@@ -1,3 +1,4 @@
+import { searchHotelBatch } from "@/services/travel/hotelAggregator";
 import { productionSandboxHost } from "@/lib/productionSandboxPolicy";
 import { POST as canonicalHotelSearch } from "@/app/api/hotels/search/route";
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
@@ -9,14 +10,10 @@ import { hotelSearchSchema } from "@/lib/validation";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
-import { isKayakSandboxEnabled, KayakSandboxClient, KayakError, type KayakHotelBatchCheckpoint } from "@/services/travel/kayakSandbox";
-import { resolveRegularKayakSearch } from "@/services/travel/kayakRegularSearch";
-import { kayakProviderCriteria } from "@/services/travel/kayakMetasearchProvider";
-import { kayakHotelCardModel } from "@/components/results/kayakCardModels";
-import { rememberHotels, toPublicHotel } from "@/lib/searchCache";
-import { getHotelSearchCohort, rememberHotelSearchCohort, rememberProviderResults } from "@/services/travel/providerResultCache";
+import { isKayakSandboxEnabled, KayakError, type KayakHotelBatchCheckpoint } from "@/services/travel/kayakSandbox";
+import { toPublicHotel } from "@/lib/searchCache";
 import { classifyHotels } from "@/lib/travel/searchContract";
-import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
+import type { HotelSearchParams } from "@/lib/types";
 
 export const runtime = "nodejs";
 const MAX_CURSOR_BYTES = 16384;
@@ -84,11 +81,9 @@ export async function POST(request: Request) {
   const startedAt = state?.startedAt ?? Date.now();
   const trackId = state?.trackId ?? randomUUID();
   const snapshot = state?.snapshot ?? randomUUID();
-  const client = new KayakSandboxClient(key, undefined, undefined, "kayakaffiliateapp", getKayakClientIp(request));
   try {
-    const resolved = await resolveRegularKayakSearch("hotels", kayakProviderCriteria(search as unknown as Record<string, unknown>),
-      (term, vertical = "hotels") => client.places(vertical, term, trackId, request.signal));
-    if (!resolved.supported || resolved.search.vertical !== "hotels") {
+    const outcome = await searchHotelBatch(search,{clientIp:getKayakClientIp(request),userAgent:request.headers.get("user-agent")??undefined,trackId,requestId:trackId,signal:request.signal},snapshot,state?.checkpoint);
+    if (!outcome.supported) {
       after(async () => {
         const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
         await Promise.all([
@@ -104,29 +99,7 @@ export async function POST(request: Request) {
       });
       return attachOperationalSearchSession(NextResponse.json({ error: "These hotel search options aren't supported. Please change your search.", warningCategory: "unsupported_search", status: "unavailable", results: [] }, { status: 422 }), operationalSession);
     }
-    const batch = await client.searchHotelBatch(resolved.search, trackId, state?.checkpoint, request.signal);
-    const nights = Math.max(1, Math.round((Date.parse(search.checkOut) - Date.parse(search.checkIn)) / 86_400_000));
-    const results: NormalizedHotelResult[] = batch.offers.flatMap(offer => {
-      const model = kayakHotelCardModel({ ...offer,
-        id: snapshot + ":" + offer.id,
-        ...(offer.hotelPropertyKey ? { hotelPropertyKey: snapshot + ":" + offer.hotelPropertyKey } : {}),
-      }, nights);
-      return model ? [model] : [];
-    });
-    // Always reconstruct the verified same-search cohort, including early-page
-    // rates and related properties. Ignore any previous search snapshot for
-    // identical criteria; only this signed cursor's snapshot may be appended.
-    const previous = state
-      ? (await getHotelSearchCohort(search)).filter(item => item.id.startsWith("kayak-sandbox:" + snapshot + ":"))
-      : [];
-    const cumulative = [...new Map([...previous, ...results].map(item => [item.id, item])).values()];
-    if (results.length) {
-      rememberHotels(cumulative, search);
-      await rememberProviderResults("hotel", results, search);
-    }
-    // Persist before returning clickable results. Never publish only the final
-    // page: the cohort underpins same-property rates and related hotels.
-    if (cumulative.length) await rememberHotelSearchCohort(cumulative, search);
+    const {batch,results,cumulative}=outcome;
     const classified = classifyHotels(results.map(toPublicHotel), [], trackId);
     const now = Date.now();
     const nextCursor = batch.checkpoint ? encode({

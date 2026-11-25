@@ -1,12 +1,13 @@
-import { providersFor, executeRegisteredProvider, type ProviderRegistration } from "./providerRegistry";
+import { settleWithDeadline } from "./metasearch";
+import { providersFor, runRegisteredProviders, type ProviderRegistration } from "./providerRegistry";
 import type { AggregatedResult, HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import { rememberHotels } from "@/lib/searchCache";
 import { providerSearchWarnings } from "./providerSearchOutcome";
 import { compareHotelsByAvailablePrice } from "@/lib/hotels/hotelResultAvailability";
 import { searchKayakHotels, type KayakRequestContext } from "./kayakMetasearchProvider";
-import { rememberHotelSearchCohort, rememberProviderResults } from "./providerResultCache";
+import { getHotelSearchCohort, rememberHotelSearchCohort, rememberProviderResults } from "./providerResultCache";
 import { persistHotelInventory } from "./persistHotelInventory";
-type HotelSearchOptions = { providers?: readonly ProviderRegistration<"hotels">[]; kayak?: KayakRequestContext; defer?: (task: () => Promise<void>) => void;
+type HotelSearchOptions = { signal?: AbortSignal; deadlineMs?: number; requestId?: string; providers?: readonly ProviderRegistration<"hotels">[]; kayak?: KayakRequestContext; defer?: (task: () => Promise<void>) => void;
   dependencies?: { searchKayak: typeof searchKayakHotels; persist: typeof persistHotelProviderResults } };
 
 export type HotelProviderMode = "kayak-sandbox";
@@ -41,8 +42,8 @@ export async function searchHotelsByProvider(
     };
   }
 
-  const providerStatuses = await Promise.all(providersFor("hotels", options.providers).map(registration =>
-    executeRegisteredProvider(options.dependencies && registration.id === "kayak" ? {...registration, execute: (query, context) => options.dependencies!.searchKayak(query, context.kayak)} : registration, search, options)));
+  const providerStatuses = await runRegisteredProviders(providersFor("hotels", options.providers).map(registration =>
+    options.dependencies && registration.id === "kayak" ? {...registration, execute: (query: HotelSearchParams, context: import("./providerRegistry").ProviderExecutionContext) => options.dependencies!.searchKayak(query, context.kayak)} : registration), search, options);
   const inventory = providerStatuses.flatMap(provider => provider.results);
   const results = [...inventory].sort(compareHotelsByAvailablePrice);
   await (options.dependencies?.persist ?? persistHotelProviderResults)(results, search, options.defer);
@@ -61,8 +62,8 @@ export async function searchHotels(
   options: HotelSearchOptions = {},
 ): Promise<AggregatedResult<NormalizedHotelResult>> {
   const startedAt = Date.now();
-  const providerStatuses = await Promise.all(providersFor("hotels", options.providers).map(registration =>
-    executeRegisteredProvider(options.dependencies && registration.id === "kayak" ? {...registration, execute: (query, context) => options.dependencies!.searchKayak(query, context.kayak)} : registration, search, options)));
+  const providerStatuses = await runRegisteredProviders(providersFor("hotels", options.providers).map(registration =>
+    options.dependencies && registration.id === "kayak" ? {...registration, execute: (query: HotelSearchParams, context: import("./providerRegistry").ProviderExecutionContext) => options.dependencies!.searchKayak(query, context.kayak)} : registration), search, options);
   const inventory = providerStatuses.flatMap(provider => provider.results);
   const results = dedupeHotels(inventory).sort(
     compareHotelsByAvailablePrice,
@@ -86,4 +87,18 @@ export function dedupeHotels(results: NormalizedHotelResult[]) {
     if (!seen.has(key)) seen.set(key, result);
   }
   return [...seen.values()];
+}
+
+/** Authoritative hotel business service used by the signed legacy transport. */
+export async function searchHotelBatch(search:HotelSearchParams, context:KayakRequestContext, snapshot:string, checkpoint?:import("./kayakSandbox").KayakHotelBatchCheckpoint, options: {providers?:readonly ProviderRegistration<"hotels">[];getCohort?:typeof getHotelSearchCohort;persist?:typeof persistHotelProviderResults} = {}) {
+  const registration=providersFor("hotels",options.providers).find(provider=>provider.id==="kayak");
+  if(!registration?.hotelBatch || !registration.supports(search)) return {supported:false as const};
+  const outcome=await settleWithDeadline(signal=>registration.hotelBatch!(search,{...context,signal},snapshot,checkpoint),registration.timeoutMs,context.signal,()=>null);
+  if(!outcome) throw new Error("Hotel batch unavailable");
+  if(!outcome.supported) return outcome;
+  const previous=checkpoint ? (await (options.getCohort??getHotelSearchCohort)(search)).filter(row=>row.id.startsWith("kayak-sandbox:"+snapshot+":")) : [];
+  if(checkpoint && !previous.length) throw new Error("Hotel snapshot expired");
+  const cumulative=dedupeHotels([...previous,...outcome.results]);
+  await (options.persist??persistHotelProviderResults)(cumulative,search);
+  return {...outcome,cumulative};
 }

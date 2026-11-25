@@ -1,4 +1,5 @@
-import { providersFor, executeRegisteredProvider, type ProviderRegistration } from "./providerRegistry";
+import { settleWithDeadline } from "./metasearch";
+import { providersFor, runRegisteredProviders, type ProviderRegistration } from "./providerRegistry";
 import { productionSandboxInventory } from "@/lib/productionSandboxPolicy";
 import type {
   AggregatedResult,
@@ -34,9 +35,7 @@ export async function searchFlights(
   resultsCacheValidUntil?: number;
 }> {
   const startedAt = Date.now();
-  const providerStatuses = await Promise.all(providersFor("flights", options.providers).map(registration =>
-    registration.id === "duffel" ? runWithFlightSearchDeadline(signal => executeRegisteredProvider(registration, search, {...options, signal}), options)
-      : executeRegisteredProvider(registration, search, options)));
+  const providerStatuses = await runRegisteredProviders(providersFor("flights", options.providers), search, options);
   const provider = providerStatuses.find(result => result.provider === "Duffel") ?? providerStatuses[0] ?? {provider:"none",results:[],status:"skipped" as const,latencyMs:0};
   const kayak = providerStatuses.find(result => result.provider === "KAYAK sandbox") ?? {provider:"none",results:[],status:"skipped" as const,latencyMs:0};
   const providerPerformance = (provider as typeof provider & {
@@ -100,24 +99,8 @@ export async function runWithFlightSearchDeadline<T>(
   task: (signal: AbortSignal) => Promise<ProviderResult<T>>,
   options: { signal?: AbortSignal; deadlineMs?: number } = {},
 ) {
-  const startedAt = Date.now();
-  const controller = new AbortController();
-  const onAbort = () => controller.abort();
-  options.signal?.addEventListener("abort", onAbort, { once: true });
-  if (options.signal?.aborted) controller.abort();
-  let timeout: ReturnType<typeof setTimeout>;
-  const deadlineResult = new Promise<ProviderResult<T>>((resolve) => {
-    timeout = setTimeout(() => {
-      controller.abort();
-      resolve({ provider: "Duffel", results: [], status: "failed", latencyMs: Date.now() - startedAt, error: "provider_timeout", errorCategory: "timeout", errorReason: "provider_timeout" });
-    }, options.deadlineMs ?? FLIGHT_SEARCH_DEADLINE_MS);
-  });
-  try {
-    return await Promise.race([task(controller.signal), deadlineResult]);
-  } finally {
-    clearTimeout(timeout!);
-    options.signal?.removeEventListener("abort", onAbort);
-  }
+  const startedAt=Date.now();
+  return settleWithDeadline(task,options.deadlineMs??FLIGHT_SEARCH_DEADLINE_MS,options.signal,reason=>({provider:"Duffel",results:[],status:"failed",latencyMs:Date.now()-startedAt,error:reason==="failed"?"provider_failed":"provider_timeout",errorCategory:reason==="failed"?"failed":"timeout",errorReason:reason==="failed"?"provider_failed":"provider_timeout"}));
 }
 
 export function sortFlights(results: NormalizedFlightResult[], sort: SortMode) {

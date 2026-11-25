@@ -5,7 +5,7 @@ beforeEach(()=>{savedMode=process.env.NODE_ENV;Object.assign(process.env,{NODE_E
 afterEach(()=>{if(savedMode===undefined)Reflect.deleteProperty(process.env,"NODE_ENV");else Object.assign(process.env,{NODE_ENV:savedMode});});
 import { providersFor, executeRegisteredProvider, type ProviderRegistration, type SearchProduct, type ProductContracts } from "./providerRegistry";
 import { searchFlights } from "./flightAggregator";
-import { searchHotels } from "./hotelAggregator";
+import { searchHotels, searchHotelBatch } from "./hotelAggregator";
 import { searchCars } from "./carAggregator";
 import { buildStaticHotelResults } from "./staticHotelResults";
 import { buildStaticCarResults } from "./staticCarResults";
@@ -68,4 +68,25 @@ test("test injection and duplicate registrations cannot become runtime inventory
     const provider=fixtureProvider("hotels",[]);
     assert.throws(()=>providersFor("hotels",[provider,provider]),/Invalid/);
   } finally { if(previous===undefined)Reflect.deleteProperty(process.env,"NODE_ENV");else Object.assign(process.env,{NODE_ENV:previous}); }
+});
+
+test("compatibility batches use shared hotel cohort rules and fail closed on lost continuation", async () => {
+  const query={destination:"New York",checkIn:"2099-12-25",checkOut:"2099-12-29",guests:2,rooms:1};
+  const base=buildStaticHotelResults(query)[0];
+  const first={...base,id:"kayak-sandbox:snapshot:one",provider:"KAYAK sandbox"};
+  const second={...base,id:"kayak-sandbox:snapshot:two",provider:"KAYAK sandbox"};
+  const foreign={...base,id:"kayak-sandbox:other:three",provider:"KAYAK sandbox"};
+  const provider=fixtureProvider("hotels",[]);
+  provider.id="kayak";
+  provider.hotelBatch=async()=>({supported:true,batch:{offers:[],providerRows:2,checkpoint:null},results:[second,second]});
+  const checkpoint={nextPage:1,total:2,pageHashes:["hash"]};
+  let published:string[]=[];
+  const options={providers:[provider],getCohort:async()=>[first,foreign],persist:async(rows:typeof first[])=>{published=rows.map(row=>row.id);}};
+  const outcome=await searchHotelBatch(query,{clientIp:"192.0.2.1"},"snapshot",checkpoint,options);
+  assert.equal(outcome.supported,true);
+  assert.deepEqual(published,[first.id,second.id]);
+  await assert.rejects(searchHotelBatch(query,{clientIp:"192.0.2.1"},"snapshot",checkpoint,{...options,getCohort:async()=>[]}),/snapshot expired/);
+  provider.hotelBatch=async()=>{throw new Error("upstream continuation failed");};
+  await assert.rejects(searchHotelBatch(query,{clientIp:"192.0.2.1"},"snapshot",checkpoint,options),/batch unavailable/);
+  assert.deepEqual(published,[first.id,second.id]);
 });

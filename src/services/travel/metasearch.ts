@@ -6,6 +6,31 @@
  */
 export type MetasearchVertical = "flights" | "hotels" | "cars";
 
+/** A real completion barrier, even for adapters that ignore AbortSignal.
+ * Only the winning value escapes; listeners and timers are always released. */
+export async function settleWithDeadline<T>(task: (signal: AbortSignal) => Promise<T>, timeoutMs: number, signal: AbortSignal | undefined, fallback: (reason: "cancelled" | "timeout" | "failed") => T): Promise<T> {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new Error("A positive provider deadline is required");
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let abort = () => {};
+  const terminal = new Promise<T>(resolve => {
+    abort = () => { controller.abort(); resolve(fallback("cancelled")); };
+    if (signal?.aborted) abort();
+    else {
+      signal?.addEventListener("abort", abort, {once:true});
+      timer = setTimeout(() => { controller.abort(); resolve(fallback("timeout")); }, timeoutMs);
+    }
+  });
+  try {
+    if (signal?.aborted) return await terminal;
+    return await Promise.race([Promise.resolve().then(()=>task(controller.signal)).catch(()=>fallback("failed")), terminal]);
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener("abort", abort);
+    controller.abort();
+  }
+}
+
 export type ProviderLocationBinding = {
   provider: string;
   id: string;
@@ -76,56 +101,19 @@ export async function searchAllProviders<Query, RawOffer, Offer>(
     throw new Error("A positive metasearch deadline is required");
   }
   const now = options.now ?? Date.now;
-  const barrierStarted = now();
-  const barrier = new AbortController();
-  const abort = () => barrier.abort(options.signal?.reason);
-  options.signal?.addEventListener("abort", abort, { once: true });
-  if (options.signal?.aborted) abort();
-
-  const tasks = providers.map(async (provider) => {
+  const completed = await Promise.all(providers.map(async provider => {
     const started = now();
-    const controller = new AbortController();
-    const abortProvider = () => controller.abort(barrier.signal.reason);
-    barrier.signal.addEventListener("abort", abortProvider, { once: true });
-    const bindings = new Map<string, string>();
+    const bindings = new Map<string,string>();
     for (const location of locations) {
-      const binding = location.bindings.find((candidate) => candidate.provider === provider.id);
-      if (binding) bindings.set(location.canonicalId, binding.id);
+      const binding=location.bindings.find(candidate=>candidate.provider===provider.id);
+      if(binding) bindings.set(location.canonicalId,binding.id);
     }
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    try {
-      const timeoutMs = Math.min(provider.timeoutMs ?? options.deadlineMs, options.deadlineMs);
-      const timeout = new Promise<ProviderSearchResult<RawOffer>>((resolve) => {
-        timer = setTimeout(() => {
-          controller.abort("provider_timeout");
-          resolve({ offers: [], status: "timeout", error: "provider_timeout" });
-        }, timeoutMs);
-      });
-      const response = await Promise.race([provider.search(query, bindings, controller.signal), timeout]);
-      return { provider, response, latencyMs: now() - started };
-    } catch {
-      return { provider, response: { offers: [], status: "failed" as const, error: "provider_unavailable" }, latencyMs: now() - started };
-    } finally {
-      if (timer) clearTimeout(timer);
-      barrier.signal.removeEventListener("abort", abortProvider);
-    }
-  });
-
-  let barrierTimer: ReturnType<typeof setTimeout> | undefined;
-  const deadline = new Promise<null>((resolve) => {
-    barrierTimer = setTimeout(() => { barrier.abort("search_deadline"); resolve(null); }, options.deadlineMs);
-  });
-  const settled = await Promise.race([Promise.all(tasks), deadline]);
-  if (barrierTimer) clearTimeout(barrierTimer);
-  barrier.abort("search_complete");
-  options.signal?.removeEventListener("abort", abort);
-
-  // A global deadline produces an explicit terminal status for every unfinished
-  // adapter. Promise continuations have no reference to the output below.
-  const completed = settled ?? providers.map((provider) => ({
-    provider,
-    response: { offers: [] as readonly RawOffer[], status: "timeout" as const, error: "search_deadline" },
-    latencyMs: now() - barrierStarted,
+    const response = await settleWithDeadline(
+      signal=>provider.search(query,bindings,signal),
+      Math.min(provider.timeoutMs??options.deadlineMs,options.deadlineMs), options.signal,
+      reason=>({offers:[] as readonly RawOffer[],status:reason==="failed"?"failed" as const:"timeout" as const,error:reason==="failed"?"provider_unavailable":reason==="cancelled"?"search_cancelled":"provider_timeout"}),
+    );
+    return {provider,response,latencyMs:now()-started};
   }));
   const unique = new Map<string, Offer>();
   for (const entry of completed) {

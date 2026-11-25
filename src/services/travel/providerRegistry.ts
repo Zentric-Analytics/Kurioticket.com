@@ -1,9 +1,10 @@
+import { settleWithDeadline } from "./metasearch";
 import { getFlightProviderCapabilities } from "./flightProviderCapabilities";
 import type { FlightSearchParams, HotelSearchParams, NormalizedFlightResult, NormalizedHotelResult, ProviderResult } from "@/lib/types";
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import type { LocationKind } from "@/lib/locations/types";
 import { searchDuffelFlights } from "./providers/duffelProvider";
-import { searchKayakFlights, searchKayakHotels, searchKayakCars, type KayakRequestContext } from "./kayakMetasearchProvider";
+import { searchKayakFlights, searchKayakHotels, searchKayakCars, searchKayakHotelBatch, type KayakRequestContext } from "./kayakMetasearchProvider";
 import { adaptKayakFlightSearch } from "./kayakSearchAdapter";
 
 export type ProductContracts = {
@@ -43,6 +44,7 @@ export type ProviderRegistration<P extends SearchProduct> = {
   product: P;
   capabilities: ProviderCapabilities;
   timeoutMs: number;
+  hotelBatch?: P extends "hotels" ? typeof searchKayakHotelBatch : never;
   supports(query: ProductContracts[P]["query"]): boolean;
   execute(query: ProductContracts[P]["query"], context: ProviderExecutionContext): Promise<ProviderResult<ProductContracts[P]["offer"]>>;
 };
@@ -72,7 +74,7 @@ const flights: readonly ProviderRegistration<"flights">[] = [
     execute: (query, context) => searchKayakFlights(query, kayakContext(context)) },
 ];
 const hotels: readonly ProviderRegistration<"hotels">[] = [
-  { id: "kayak", label: "KAYAK sandbox", product: "hotels", timeoutMs: 30_000, capabilities: kayakCapabilities,
+  { id: "kayak", label: "KAYAK sandbox", product: "hotels", hotelBatch: searchKayakHotelBatch, timeoutMs: 30_000, capabilities: kayakCapabilities,
     // Location binding is resolved authoritatively inside the adapter.
     supports: () => true, // Adapter validates criteria together with authoritative destination resolution.
     execute: (query, context) => searchKayakHotels(query, kayakContext(context)) },
@@ -106,4 +108,13 @@ export async function executeRegisteredProvider<P extends SearchProduct>(provide
   const response = await provider.execute(query, context);
   // Adapter return values cannot relabel the registration's provenance.
   return { ...response, provider: provider.label, latencyMs: response.latencyMs ?? Date.now() - started };
+}
+
+/** Product services share execution policy while retaining their own inventory rules. */
+export async function runRegisteredProviders<P extends SearchProduct>(providers: readonly ProviderRegistration<P>[], query: ProductContracts[P]["query"], context: ProviderExecutionContext & {deadlineMs?:number}): Promise<ProviderResult<ProductContracts[P]["offer"]>[]> {
+  return Promise.all(providers.map(provider => {
+    const started=Date.now();
+    return settleWithDeadline<ProviderResult<ProductContracts[P]["offer"]>>(signal=>executeRegisteredProvider(provider,query,{...context,signal}),Math.min(provider.timeoutMs,context.deadlineMs??30_000),context.signal??context.kayak?.signal,
+      reason=>({provider:provider.label,results:[],status:"failed",latencyMs:Date.now()-started,errorCategory:reason==="failed"?"failed":"timeout",errorReason:reason==="failed"?"provider_failed":"provider_timeout"}));
+  }));
 }
