@@ -15,7 +15,10 @@ test("same workspace preserves six measured summary values for recorded identiti
   }));
   assert.equal((html.match(/data-testid="activity-metric-value"/g)??[]).length,6);
   assert.doesNotMatch(html,/aria-label="Unavailable"/);
-  for(const label of ["Searches","Results viewed","Offers selected","Provider handoffs","Journeys tracked","Pages visited"])assert.ok(html.includes(label),label);
+  const metrics=Array.from(html.matchAll(/data-testid="activity-metric-label"[^>]*>([^<]+)<\/span><span data-testid="activity-metric-value"[^>]*>([^<]+)<\/span>/g),match=>[match[1],match[2]]);
+  assert.deepEqual(metrics,[["Searches","3"],["Results viewed","0"],["Offers selected","2"],["Provider handoffs","1"],["Journeys tracked","5"],["Pages visited","6"]]);
+  assert.match(html,/>Last seen<\/dt><dd[^>]*><time dateTime="2026-11-26T12:00:00.000Z"/);
+  assert.doesNotMatch(html,/>Last active<\/dt>/);
   assert.match(html,/data-testid="activity-info-grid"/);
   assert.match(html,/data-testid="activity-identity-dividers"/);
   assert.ok(html.indexOf('aria-label="Activity summary"')<html.indexOf("Recent activity fixture"));
