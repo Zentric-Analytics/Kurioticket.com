@@ -155,7 +155,8 @@ try {
     });
     if (result !== 0) {
       process.exitCode = result ?? 1;
-      break;
+      console.error("FAILED visual check:", check, "exit", result);
+      // Continue independent browser suites so one failure does not hide others.
     }
   }
   console.log("Customer activity screenshots:", output);

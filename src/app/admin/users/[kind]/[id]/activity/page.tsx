@@ -180,14 +180,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       <div data-testid="activity-info-grid"
         className="relative min-w-0 lg:-mx-6 lg:-mt-6 lg:border-y lg:border-[#E2E8F0]">
       <section aria-label="Customer identity" className="relative min-w-0">
-        {/* Identity has five columns; the six metrics below have their own grid. */}
-        <div aria-hidden="true" data-testid="activity-identity-dividers"
-          className="pointer-events-none absolute inset-0 hidden lg:block">
-          <span data-testid="activity-divider-40" className="absolute inset-y-0 left-[40%] border-l border-[#E2E8F0]" />
-          <span data-testid="activity-divider-60" className="absolute inset-y-0 left-[60%] border-l border-[#E2E8F0]" />
-          <span data-testid="activity-divider-80" className="absolute inset-y-0 left-[80%] border-l border-[#E2E8F0]" />
-        </div>
-        <div className={activityColumns + " lg:items-start lg:py-6"}>
+        <div data-testid="activity-identity-facts" className={activityColumns + " relative lg:items-start lg:py-4"}>
           <div className="flex min-w-0 items-center gap-4 lg:col-span-2 lg:gap-3 lg:px-3 min-[1700px]:gap-4 min-[1700px]:px-6">
             <span aria-hidden="true"
               className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold min-[1100px]:hidden min-[1700px]:flex">
@@ -214,19 +207,26 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             <Fact label={kind === "guest" ? "First seen" : "Joined"} className="lg:border-l-0 lg:pl-2 2xl:pl-6"><HeaderTime timeZone={timeZone} at={data.firstSeenAt}/></Fact>
             <Fact label="Last seen" className="lg:border-l-0 lg:pl-2 2xl:pl-6">{data.lastSeenAvailable === false ? "Unavailable" : data.lastSeenAt ? <HeaderTime timeZone={timeZone} at={data.lastSeenAt}/> : "—"}</Fact>
             <Fact label="Events" testId="activity-events-fact"
-              className={"lg:border-l-0 lg:pl-6 " + (kind === "user" || data.source === "visitor" ? "lg:pr-28" : "")}>
+              className="lg:border-l-0 lg:pl-6 lg:pr-3">
               {data.events.length - data.events.filter(event => event.stage === "PAGE_VIEW").length + (data.summary.pagesVisited ?? 0)}
             </Fact>
           </dl>
+        {/* Identity has five columns; the six metrics below have their own grid. */}
+        <div aria-hidden="true" data-testid="activity-identity-dividers"
+          className="pointer-events-none absolute inset-0 hidden lg:block">
+          <span data-testid="activity-divider-40" className="absolute inset-y-0 left-[40%] border-l border-[#E2E8F0]" />
+          <span data-testid="activity-divider-60" className="absolute inset-y-0 left-[60%] border-l border-[#E2E8F0]" />
+          <span data-testid="activity-divider-80" className="absolute inset-y-0 left-[80%] border-l border-[#E2E8F0]" />
+        </div>
+        </div>
 
           {(kind === "user" || (kind === "guest" && data.source === "visitor")) ? <div
-            className="flex min-w-0 justify-start lg:absolute lg:right-2 lg:top-1/2 lg:-translate-y-1/2"
+            className="flex min-w-0 justify-end pt-3 lg:px-3 lg:pb-3 lg:pt-0"
             aria-label="Identity management">
             {kind === "guest"
               ? <GuestTrackingActions visitorId={id} backHref={backHref} />
               : <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>}
           </div> : null}
-        </div>
       </section>
 
       <section aria-label="Activity summary" className="relative min-w-0 border-y border-[#E2E8F0] py-4 lg:border-b-0 lg:py-5">

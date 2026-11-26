@@ -44,7 +44,7 @@ try {
           const summary=document.querySelector('section[aria-label="Activity summary"]');
           const metrics=[...summary.querySelectorAll('[data-testid="activity-metric"]')];
           const facts=[...grid.querySelectorAll("dl > div")];
-          const r=identity.getBoundingClientRect();
+          const r=grid.getBoundingClientRect();
           const lines=[40,60,80].map(n=>identity.querySelector('[data-testid="activity-divider-'+n+'"]').getBoundingClientRect());
           const metricRects=metrics.map(el=>el.getBoundingClientRect());
           const cols=innerWidth>=1280?6:3;

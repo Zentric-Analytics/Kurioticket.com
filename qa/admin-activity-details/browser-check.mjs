@@ -48,7 +48,7 @@ async function expectAlignedColumns(page) {
     const facts=[...grid.querySelectorAll('dl > div')];
     const summary=info.querySelector('section[aria-label="Activity summary"]');
     const metrics=[...summary.querySelectorAll('[data-testid="activity-metric"]')];
-    const r=identity.getBoundingClientRect(), box=summary.getBoundingClientRect();
+    const r=grid.getBoundingClientRect(), box=summary.getBoundingClientRect();
     const lines=[40,60,80].map(n=>identity.querySelector('[data-testid="activity-divider-'+n+'"]').getBoundingClientRect());
     const rects=metrics.map(e=>e.getBoundingClientRect());
     const cols=innerWidth>=1280 ? 6 : 3;
@@ -61,7 +61,7 @@ async function expectAlignedColumns(page) {
       equalWidths:rects.every(m=>Math.abs(m.width-rects[0].width)<e),
       metricRows:rects.every((m,i)=>Math.abs(m.top-rects[Math.floor(i/cols)*cols].top)<e),
       inside:rects.every(m=>m.left>=box.left-e && m.right<=box.right+e),
-      joint:Math.abs(r.bottom-box.top)<e && parseFloat(getComputedStyle(summary).borderTopWidth)>0.5,
+      joint:Math.abs(identity.getBoundingClientRect().bottom-box.top)<e && parseFloat(getComputedStyle(summary).borderTopWidth)>0.5,
       noOverflow:document.documentElement.scrollWidth<=innerWidth+1,
     };
   });
@@ -88,18 +88,20 @@ async function expectBalancedDesktopHeader(page, context, requireSingleLineEmail
     const facts=[...identity.querySelectorAll('dl > div')];
     const events=facts[2];
     const email=title.querySelector('p');
-    const manage=identity.querySelector('[aria-label="Identity management"]');
+    const manage=identity.closest('section[aria-label="Customer identity"]').querySelector('[aria-label="Identity management"]');
     const titleBox=title.getBoundingClientRect(), eventsBox=events.getBoundingClientRect();
     const manageBox=manage?.getBoundingClientRect();
-    const eventsValue=events.querySelector('dd').getBoundingClientRect();
+    const gridBottom=()=>identity.getBoundingClientRect().bottom;
     return {ratio:titleBox.width/eventsBox.width,
       emailFits:!email || email.getBoundingClientRect().height<parseFloat(getComputedStyle(email).fontSize)*1.9,
-      managementFits:!manageBox || eventsValue.right<=manageBox.left+2 || eventsValue.bottom<=manageBox.top+2 || eventsValue.top>=manageBox.bottom-2,
+      managementFits:!manageBox || gridBottom()<=manageBox.top+2,
+      managementPresent:!!manageBox,
       overflow:document.documentElement.scrollWidth>innerWidth+1};
   });
   assert.ok(layout.ratio>=1.98,context+": "+JSON.stringify(layout));
   assert.equal(layout.overflow,false,context);
-  assert.equal(layout.managementFits,true,context+": manage must not cover Events");
+  assert.equal(layout.managementPresent,true,context+": management controls must remain available");
+  assert.equal(layout.managementFits,true,context+": manage must not cover identity facts");
   if(requireSingleLineEmail) assert.equal(layout.emailFits,true,context);
 }
 const approvedActivityTypography={
