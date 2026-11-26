@@ -16,3 +16,11 @@ test("rejects arbitrary native text", () => {
   assert.deepEqual(nativeApplicationMetadata(() => ({ nativeBuildVersion: "https://private.example/token", nativeApplicationVersion: { secret: true } })),
     { nativeBuildVersion: null, applicationVersion: null, nativeMetadataAvailable: true });
 });
+test("preserves installed iOS CFBundleVersion without the optional native module", () => {
+  for (const load of [() => null, () => { throw new Error("module absent"); }]) {
+    assert.deepEqual(nativeApplicationMetadata(load, "62"),
+      { applicationVersion: null, nativeBuildVersion: "62", nativeMetadataAvailable: false });
+  }
+  assert.equal(nativeApplicationMetadata(() => ({ nativeBuildVersion: "63" }), "62").nativeBuildVersion, "63");
+  assert.equal(nativeApplicationMetadata(() => null, "https://private.example/token").nativeBuildVersion, null);
+});
