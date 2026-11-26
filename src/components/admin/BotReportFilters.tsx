@@ -16,7 +16,11 @@ export function BotReportFilters({ filters, now, history = false }: {
   const pathname = usePathname();
   const router = useRouter();
   const [query, setQuery] = useState(filters.query);
-  const lastQuery = useRef(filters.query);
+  const [previousQuery, setPreviousQuery] = useState(filters.query);
+  if (previousQuery !== filters.query) {
+    setPreviousQuery(filters.query);
+    if (query.trim() === previousQuery) setQuery(filters.query);
+  }
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<{ base: string; target: string } | null>(null);
   const scope = JSON.stringify([filters.range, filters.from, filters.to]);
@@ -37,7 +41,6 @@ export function BotReportFilters({ filters, now, history = false }: {
       timer.current = null;
       pending.current = null;
       const restored = new URLSearchParams(window.location.search).get("q")?.trim().slice(0, 100) ?? "";
-      lastQuery.current = restored;
       setQuery(restored);
     }
     window.addEventListener("popstate", restore);
@@ -50,7 +53,9 @@ export function BotReportFilters({ filters, now, history = false }: {
   function navigate(changes: Record<string, string>) {
     const current = window.location.search.slice(1);
     const base = pending.current?.base === current ? pending.current.target : current;
-    const target = botHref(pathname, new URLSearchParams(base), { ...changes, page: "" });
+    const params = new URLSearchParams(base);
+    if (changes.q !== undefined && changes.q === (params.get("q")?.trim() ?? "")) return;
+    const target = botHref(pathname, params, { ...changes, page: "" });
     const search = target.split("?")[1] ?? "";
     if (search === base) return;
     pending.current = { base: current, target: search };
@@ -62,8 +67,6 @@ export function BotReportFilters({ filters, now, history = false }: {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       timer.current = null;
-      if (value.trim() === lastQuery.current) return;
-      lastQuery.current = value.trim();
       navigate({ q: value.trim() });
     }, 350);
   }
