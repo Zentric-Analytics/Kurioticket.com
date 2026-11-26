@@ -33,14 +33,14 @@ export type FullDeviceHistoryResult =
   | { status: "not_found" }
   | { status: "unavailable" };
 
-export async function loadAdminDeviceSessions(userId: string, timeZone = "UTC", now = new Date()): Promise<DeviceSessionResult> {
+export async function loadAdminDeviceSessions(userId: string, timeZone = "UTC", now = new Date(), range: "today" | "all" = "today"): Promise<DeviceSessionResult> {
   try {
     const db = getOptionalPrisma();
     if (!db) return { status: "unavailable" };
     const sessions = await db.accountSession.findMany({
-      where: { userId, lastSeenAt: deviceTodayWindow(now, timeZone) },
+      where: { userId, lastSeenAt: range === "all" ? { lte: now } : deviceTodayWindow(now, timeZone) },
       orderBy: [{ lastSeenAt: "desc" }, { id: "desc" }],
-      take: 3,
+      take: 1,
       select: {
         id: true, client: true, platform: true,
         deviceLabel: true, browser: true, os: true, locationLabel: true,
