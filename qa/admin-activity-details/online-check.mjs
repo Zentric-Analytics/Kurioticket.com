@@ -11,10 +11,11 @@ try {
     const rows=page.getByTestId("online-user-row");
     await expect(rows).toHaveCount(3);
     const guest=rows.filter({hasText:"Desktop web"});
-    const noDetails=rows.filter({hasText:"iOS app"});
+    const noDetails=rows.filter({has:page.getByRole("cell",{name:"iOS",exact:true})});
+    await expect(noDetails).toHaveCount(1);
     await expect(guest.getByTestId("online-user-location")).toHaveText("Nigeria");
     await expect(noDetails.getByTestId("online-user-location")).toHaveText("Unavailable");
-    await expect(rows.filter({hasText:"Android app"})).toHaveCount(0);
+    await expect(rows.filter({has:page.getByRole("cell",{name:"Android",exact:true})})).toHaveCount(0);
     const guestHref=await guest.getByRole("link",{name:"View Activity"}).getAttribute("href");
     const otherHref=await noDetails.getByRole("link",{name:"View Activity"}).getAttribute("href");
     assert.notEqual(guestHref,otherHref);

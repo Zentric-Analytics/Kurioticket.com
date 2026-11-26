@@ -34,7 +34,10 @@ try {
       assert.ok(timestamps.every((at,i)=>i===0||at<=timestamps[i-1]));
       if(kind==="user") {
         await expect(page.locator('[data-activity-id="d-qa-fixture-access"]')).toHaveCount(1);
-        await page.getByRole("link",{name:"Device & Access",exact:true}).click();
+        const accessTab=page.getByRole("navigation",{name:"Activity categories"}).getByRole("link",{name:"Device & Access",exact:true});
+        await accessTab.click();
+        await expect(accessTab).toHaveAttribute("aria-current","page");
+        await expect(page).toHaveURL(u=>u.searchParams.get("tab")==="access");
         await expect(page.locator("[data-activity-id]")).toHaveCount(1);
         await expect(page.getByRole("button",{name:/Activity product/})).toHaveCount(0);
         await expect(page.getByRole("button",{name:/Activity type/})).toHaveCount(0);
@@ -56,6 +59,7 @@ try {
     for(let n=0;n<51;n++){
       const rows=page.locator("[data-activity-id]");
       await expect(rows).toHaveCount(n===50?5:20);
+      await expect(rows.first()).toHaveAttribute("data-activity-id","s-qa-complete-"+String(n*20).padStart(4,"0"));
       ids.push(...await rows.evaluateAll(nodes=>nodes.map(n=>n.dataset.activityId)));
       const older=page.getByRole("link",{name:"Load older activity"});
       if(n===50){await expect(older).toHaveCount(0);break;}

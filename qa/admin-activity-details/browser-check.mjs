@@ -398,7 +398,7 @@ try {
   await page.getByRole("link",{name:"View all activity"}).click();
   await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all"));
   await expect(activityRows).toHaveCount(3);
-  await expect(page.getByRole("link",{name:"Pages visited",exact:true})).toHaveCount(0);
+  await expect(page.getByRole("navigation",{name:"Activity categories"}).getByRole("link",{name:"Pages visited",exact:true})).toHaveCount(0);
   await expect(page.getByRole("link",{name:"Pages visited history",exact:true})).toHaveCount(0);
   await page.goto(operationalPath+"/all?range=all&tab=searches&stage=SEARCH_COMPLETED&product=FLIGHT&q=ATL");
   await expect(activityRows).toHaveCount(1);
@@ -477,6 +477,7 @@ try {
     await page.getByRole("link",{name:"Load older activity"}).click();
     await expect(page).toHaveURL(/cursor=/);
     await expect(activityRows).toHaveCount(20);
+    await expect(activityRows.first()).toHaveAttribute("data-activity-id","s-qa-complete-0020");
     const next=await activityRows.evaluateAll(nodes=>nodes.map(n=>n.dataset.activityId));
     assert.equal(new Set([...ids,...next]).size,40);
     assert.equal(ids[0],"s-qa-complete-0000");
