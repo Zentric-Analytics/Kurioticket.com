@@ -64,6 +64,39 @@ test("a guest uses a memory-only signed web credential independently of optional
 
 });
 
+test("staging preview observes only verified guest access, never production or authenticated access", async () => {
+  const prior = process.env.GUEST_FIRST_ACCESS_PREVIEW;
+  const edge = process.env.RENDER;
+  try {
+    process.env.GUEST_FIRST_ACCESS_PREVIEW = "true";
+    process.env.RENDER = "true";
+    const { handler, records } = fixture();
+    const post = handler("web", "staging");
+    const headers = {cookie:"kt_analytics_consent=declined","cf-ipcountry":"NG",
+      "user-agent":"Mozilla/5.0 (Windows NT 10.0) Chrome/140.0.0.0"};
+    const first = await post(web(headers));
+    assert.equal(first.status,202);
+    assert.equal(records.length,0);
+    const token = first.headers.get(tokenHeader);
+    assert.ok(token);
+    const response = await post(web({...headers,[tokenHeader]:token}));
+    assert.equal(response.status,204);
+    assert.equal(response.headers.get("set-cookie"),null);
+    assert.deepEqual(records[0].guestAccess,{countryCode:"NG",deviceLabel:"Windows computer",browser:"Chrome 140",os:"Windows"});
+    await post(web({[tokenHeader]:token,cookie:"__Secure-next-auth.session-token.0=jwt"}));
+    assert.equal(records[1].guestAccess,undefined);
+    const production = handler("web","production");
+    const prodToken = (await production(web(headers))).headers.get(tokenHeader);
+    assert.ok(prodToken);
+    await production(web({...headers,[tokenHeader]:prodToken}));
+    assert.equal(records[2].guestAccess,undefined);
+  } finally {
+    if (prior === undefined) delete process.env.GUEST_FIRST_ACCESS_PREVIEW;
+    else process.env.GUEST_FIRST_ACCESS_PREVIEW = prior;
+    if (edge === undefined) delete process.env.RENDER; else process.env.RENDER = edge;
+  }
+});
+
 test("native guest credentials are transport and environment bound and transition to verified account sessions", async () => {
   const { handler, records } = fixture();
   const post = handler("native");

@@ -126,3 +126,24 @@ test("recorded location strings are trimmed and invalid characters or oversized 
     assert.equal(invalid.rows[0].locationLabel, null);
   }
 });
+
+test("live guest preview uses only a validated current observation and an opaque reference",()=>{
+  const first = new Date(+now-30000).toISOString();
+  const access = {reference:"A".repeat(43),firstSeenAt:first,countryCode:"NG",deviceLabel:"iOS device",browser:null,os:"iOS"};
+  const snapshot = buildAdminOnlineUsersSnapshot([
+    {...observation("private-source","ios",5),liveAccess:access},
+    observation("other-private-source","android",2,null,false,"Unrelated country"),
+  ],now);
+  assert.equal(snapshot.total,2);
+  const row = snapshot.rows.find(r=>r.liveAccess);
+  assert.equal(row?.locationLabel,"Nigeria");
+  assert.equal(row?.liveAccess?.firstSeenAt,first);
+  assert.equal(snapshot.rows.find(r=>!r.liveAccess)?.locationLabel,null);
+  assert.doesNotMatch(JSON.stringify(snapshot),/private-source/);
+  const stale = buildAdminOnlineUsersSnapshot([
+    {...observation("private-source","ios",20),liveAccess:access},
+    observation("private-source","ios",1),
+  ],now);
+  assert.equal(stale.rows[0].liveAccess,undefined);
+  assert.equal(stale.rows[0].locationLabel,null);
+});

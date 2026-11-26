@@ -46,6 +46,31 @@ async function pruneExpiredPresence(environment: PublicEnvironment, now: Date) {
     // Exclusion from the rolling snapshot never depends on a physical deletion.
     console.warn("[online-presence] expired session cleanup failed");
   }
+  // Stale preview fields must not remain on a row kept alive by an account
+  // or a disabled preview. Keep this separate from canonical retention and
+  // tolerate a not-yet-applied additive migration.
+  if (environment === "staging") {
+    try {
+      const cutoff = new Date(+now - retainedForMs);
+      await db.$executeRaw`
+        UPDATE "OnlinePresenceSession"
+        SET "guestFirstSeenAt" = NULL, "guestObservedAt" = NULL,
+          "guestCountryCode" = NULL, "guestDeviceLabel" = NULL,
+          "guestBrowser" = NULL, "guestOs" = NULL
+        WHERE ("environment", "sourceId") IN (
+          SELECT "environment", "sourceId" FROM "OnlinePresenceSession"
+          WHERE "environment" = ${environment} AND "guestObservedAt" IS NOT NULL
+            AND ("accountSessionId" IS NOT NULL
+              OR "guestObservedAt" <> "lastSeenAt"
+              OR "guestObservedAt" < ${cutoff}
+              OR ${!guestFirstAccessPreviewEnabled(environment)})
+          ORDER BY "guestObservedAt" LIMIT 10000 FOR UPDATE SKIP LOCKED
+        )
+      `;
+    } catch {
+      // Do not alter canonical presence when optional preview storage fails.
+    }
+  }
 }
 
 async function writeOnlinePresence(db: Prisma.TransactionClient, { environment, sourceId, platform, accountSessionId, now }: OnlinePresenceHeartbeat) {

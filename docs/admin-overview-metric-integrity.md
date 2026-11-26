@@ -114,3 +114,5 @@ authorization plus an exact current observation. It never joins operational
 search or Analytics visitor IDs. Historical guest first-access association and
 retention require a separate reviewed design. This preview does not implement
 that association and is not a substitute for the requested historical activity view.
+
+Staging retention sweeps also clear preview fields on account-owned rows, stale observations and when the preview is disabled. Physical cleanup is best effort; logical visibility is restricted to exact current guest observations. The preview needs database-backed expiry and transition testing before activation.
