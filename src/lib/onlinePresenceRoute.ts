@@ -6,6 +6,7 @@ import type { PublicEnvironment } from "@/lib/stagingSafety";
 import type { OnlinePresencePlatform } from "./onlinePresence";
 import { sessionDeviceObservation, type SessionDeviceObservation } from "./sessionDeviceObservation";
 import { guestFirstAccessObservation, guestFirstAccessPreviewEnabled, type GuestAccessObservation } from "./guestFirstAccessObservation";
+import { guestLiveCountryEnabled, guestLiveCountryObservation } from "./guestLiveCountry";
 import {
   equalPresenceSignatures,
   presenceTokenHeader,
@@ -22,6 +23,8 @@ export type OnlinePresenceHeartbeat = {
   /** Only attached to a verified account session, never an anonymous presence ID. */
   device?: SessionDeviceObservation;
   guestAccess?: GuestAccessObservation;
+  /** Country only, separate from the first-access/device preview. */
+  guestLiveCountryCode?: string | null;
 };
 
 type Dependencies = {
@@ -131,7 +134,10 @@ export function createOnlinePresenceHandler(transport: PresenceTransport, depend
           accountSessionId: account?.id ?? null,
           ...(account ? { device: sessionDeviceObservation(request, verifiedPlatform) } : {}),
           ...(!account && guestFirstAccessPreviewEnabled(environment) ? {
-            guestAccess: guestFirstAccessObservation(request, verifiedPlatform, process.env.RENDER === "true"),
+            guestAccess: guestFirstAccessObservation(request, verifiedPlatform, false),
+          } : {}),
+          ...(!account && guestLiveCountryEnabled(environment) ? {
+            guestLiveCountryCode: guestLiveCountryObservation(request, environment),
           } : {}),
           now,
         });

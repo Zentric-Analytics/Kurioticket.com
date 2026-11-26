@@ -82,7 +82,7 @@ test("staging preview observes only verified guest access, never production or a
     const response = await post(web({...headers,[tokenHeader]:token}));
     assert.equal(response.status,204);
     assert.equal(response.headers.get("set-cookie"),null);
-    assert.deepEqual(records[0].guestAccess,{countryCode:"NG",deviceLabel:"Windows computer",browser:"Chrome 140",os:"Windows"});
+    assert.deepEqual(records[0].guestAccess,{countryCode:null,deviceLabel:"Windows computer",browser:"Chrome 140",os:"Windows"});
     await post(web({[tokenHeader]:token,cookie:"__Secure-next-auth.session-token.0=jwt"}));
     assert.equal(records[1].guestAccess,undefined);
     const production = handler("web","production");
@@ -218,4 +218,52 @@ test("website monitoring detects invalid or conflicting public origins", () => {
   assert.equal(hasConsistentWebsitePresenceOrigin("not a URL", undefined), false);
   assert.equal(hasConsistentWebsitePresenceOrigin("http://staging.kurioticket.com", "http://staging.kurioticket.com",
     "https://staging.kurioticket.com"), false);
+});
+
+test("independent live-country capture requires an authenticated edge and returned presence credential on all transports",async()=>{
+  const keys=["GUEST_FIRST_ACCESS_PREVIEW","GUEST_LIVE_COUNTRY_ENABLED","BOT_EDGE_SECRET","RENDER"] as const;
+  const before=keys.map(key=>process.env[key]);
+  try {
+    delete process.env.GUEST_FIRST_ACCESS_PREVIEW;
+    process.env.GUEST_LIVE_COUNTRY_ENABLED="true";
+    process.env.BOT_EDGE_SECRET="qa-only-country-edge-assertion-material";
+    process.env.RENDER="true";
+    const {handler,records}=fixture();
+    for(const platform of ["desktop_web","mobile_web","ios","android"] as const){
+      const isNative=platform==="ios"||platform==="android";
+      const post=handler(isNative?"native":"web","staging");
+      const send=(headers:Record<string,string>)=>post(isNative?native({"x-mobile-platform":platform,...headers}):web({"sec-ch-ua-mobile":platform==="mobile_web"?"?1":"?0",cookie:"kt_analytics_consent=declined",...headers}));
+      const edge={"cf-ipcountry":"NG","cf-ipcity":"Lagos","cf-connecting-ip":"203.0.113.10","x-kurioticket-edge-auth":process.env.BOT_EDGE_SECRET!};
+      const count=records.length;
+      const first=await send(edge);
+      assert.equal(first.status,202);
+      assert.equal(records.length,count);
+      const token=first.headers.get(tokenHeader);
+      assert.ok(token);
+      const response=await send({...edge,[tokenHeader]:token});
+      assert.equal(response.status,204);
+      assert.equal(response.headers.get("set-cookie"),null);
+      assert.equal(records.at(-1)?.platform,platform);
+      assert.equal(records.at(-1)?.guestLiveCountryCode,"NG");
+      assert.equal(records.at(-1)?.guestAccess,undefined);
+      assert.doesNotMatch(JSON.stringify(records.at(-1)),/Lagos|203\.0\.113|qa-only-country-edge/);
+      await send({"cf-ipcountry":"NG",[tokenHeader]:token});
+      assert.equal(records.at(-1)?.guestLiveCountryCode,null);
+      await send({...edge,"cf-ipcountry":"XX",[tokenHeader]:token});
+      assert.equal(records.at(-1)?.guestLiveCountryCode,null);
+      const signedIn: Record<string, string> = isNative ? { authorization: "Bearer valid" } : { cookie: "next-auth.session-token=jwt" };
+      await send({...edge,...signedIn,[tokenHeader]:token});
+      assert.equal(records.at(-1)?.accountSessionId,"canonical-session");
+      assert.equal(records.at(-1)?.guestLiveCountryCode,undefined);
+    }
+    const prod=handler("web","production");
+    const token=(await prod(web())).headers.get(tokenHeader)!;
+    await prod(web({[tokenHeader]:token,"cf-ipcountry":"NG","x-kurioticket-edge-auth":process.env.BOT_EDGE_SECRET!}));
+    assert.equal(records.at(-1)?.guestLiveCountryCode,undefined);
+    delete process.env.GUEST_LIVE_COUNTRY_ENABLED;
+    const disabled=handler("web","staging");
+    const disabledToken=(await disabled(web())).headers.get(tokenHeader)!;
+    await disabled(web({[tokenHeader]:disabledToken,"cf-ipcountry":"NG","x-kurioticket-edge-auth":process.env.BOT_EDGE_SECRET!}));
+    assert.equal(records.at(-1)?.guestLiveCountryCode,undefined);
+  } finally {keys.forEach((key,index)=>{if(before[index]===undefined)delete process.env[key];else process.env[key]=before[index];});}
 });
