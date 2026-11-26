@@ -1,3 +1,5 @@
+import { proxy as botProxy } from "./src/lib/requestIngress";
+import { automationSignal } from "@/lib/botPolicy";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
@@ -5,8 +7,13 @@ import { REGION_COOKIE_KEY, REGION_OVERRIDE_COOKIE_KEY } from "@/config/regionCo
 import { countryToRegion, normalizeRegion } from "@/lib/region/detectRegion";
 import { resolveAuthSecret } from "@/lib/authSecret";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
+  const response = await botProxy(request);
   const pathname = request.nextUrl.pathname;
+  if (!(response instanceof NextResponse) || !response.headers.has("x-middleware-next") || automationSignal(request) ||
+    pathname.startsWith("/_next/static") || pathname.startsWith("/_next/image") || pathname.startsWith("/favicon.ico")) {
+    return response;
+  }
   const secret = resolveAuthSecret(process.env);
   const token = secret ? await getToken({ req: request, secret }) : null;
 
@@ -23,7 +30,6 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const response = NextResponse.next();
   const selectedRegion = normalizeRegion(request.cookies.get(REGION_OVERRIDE_COOKIE_KEY)?.value);
 
   if (selectedRegion) {
@@ -55,7 +61,3 @@ export async function middleware(request: NextRequest) {
 
   return response;
 }
-
-export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
-};

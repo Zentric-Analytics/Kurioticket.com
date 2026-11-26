@@ -77,3 +77,27 @@ test("invalid origin IP, DNS outage and unverified hostname cannot block people"
     ...outage, reverseIp: async () => { throw new Error("DNS unavailable"); },
   }), null);
 });
+
+test("Applebot, YandexBot, Baiduspider and Slurp require forward-confirmed official hostnames", async () => {
+  const fixtures = [
+    ["Applebot", "APPLEBOT", "17-58-96-1.applebot.apple.com"],
+    ["YandexBot", "YANDEXBOT", "spider-5-255-253-1.yandex.com"],
+    ["Baiduspider", "BAIDUSPIDER", "baiduspider-123-125-71-1.crawl.baidu.com"],
+    ["Slurp", "SLURP", "b100.crawl.yahoo.net"],
+  ];
+  for (const [agent, identity, host] of fixtures) {
+    assert.equal(await verifySearchCrawler(flight(agent), reverseForward("192.0.2.1", host)), identity);
+    assert.equal(await verifySearchCrawler(flight(agent), reverseForward("192.0.2.1", host + ".example.net")), null);
+    assert.equal(await verifySearchCrawler(flight(agent), reverseForward("192.0.2.1", host, "192.0.2.2")), null);
+  }
+});
+
+test("DuckDuckBot uses the official published addresses", async (t) => {
+  t.mock.method(globalThis, "fetch", async (url: string) => {
+    assert.equal(url, "https://duckduckgo.com/duckduckbot.json");
+    return Response.json({ prefixes: [{ ipv4Prefix: "192.0.2.1/32" }, { ipv6Prefix: "2001:db8::1/128" }] });
+  });
+  assert.equal(await verifySearchCrawler(flight("DuckDuckBot"), reverseForward("192.0.2.1", "")), "DUCKDUCKBOT");
+  assert.equal(await verifySearchCrawler(flight("DuckDuckBot"), reverseForward("2001:db8::1", "")), "DUCKDUCKBOT");
+  assert.equal(await verifySearchCrawler(flight("DuckDuckBot"), reverseForward("192.0.2.2", "")), null);
+});
