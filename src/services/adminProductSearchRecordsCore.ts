@@ -1,4 +1,5 @@
 import { recordedHotelPropertyCount } from "@/lib/hotels/hotelResultAccounting";
+import { recordedCarOfferCount } from "@/lib/cars/carResultAccounting";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 import { resolveAdminTimeZone, viewerTodayStart } from "@/lib/adminLocalTime";
@@ -20,6 +21,8 @@ export type ProductSearchRecord = {
   outcome: "SUCCESS" | "PARTIAL" | "FAILED" | "ZERO_RESULTS";
   resultCount: number;
   hotelPropertyCount?: number | null;
+  /** Validated rental offer rows returned within the recorded car result groups. */
+  carOfferCount?: number | null;
   latencyMs: number | null;
   createdAt: string;
 };
@@ -152,6 +155,7 @@ function toRecord(row: SearchRow): ProductSearchRecord {
     outcome: row.status === "SUCCESS" && row.resultCount === 0 ? "ZERO_RESULTS" : row.status,
     resultCount: row.resultCount,
     ...(row.type === "HOTEL" ? { hotelPropertyCount: recordedHotelPropertyCount(row.type, row.query, row.resultCount) } : {}),
+    ...(row.type === "CAR" ? { carOfferCount: recordedCarOfferCount(row.type, row.query, row.resultCount) } : {}),
     latencyMs: row.latencyMs,
     createdAt: row.createdAt.toISOString(),
   };

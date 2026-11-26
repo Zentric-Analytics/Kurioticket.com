@@ -1,4 +1,5 @@
 import { countHotelInventory, type HotelResultAccounting } from "@/lib/hotels/hotelResultAccounting";
+import { countCarInventory, type CarResultAccounting } from "@/lib/cars/carResultAccounting";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { getPrisma } from "@/lib/prisma";
 import { isSandboxInventory } from "@/shared/presentation/sandboxInventory";
@@ -17,20 +18,25 @@ const scopeKey = Symbol.for("kurioticket.production-sandbox-request.v1");
 // Aliased server modules must share request context, never inventory or policy values.
 const requestScopes = globalThis as unknown as Record<symbol, AsyncLocalStorage<Grant | null>>;
 const scope = requestScopes[scopeKey] ??= new AsyncLocalStorage<Grant | null>();
-type FinalPublication={hotel?:true;value?:{count:number;status:"SUCCESS"|"PARTIAL"|"FAILED";hotelResultAccounting?:HotelResultAccounting|null}};
+type FinalPublication={hotel?:true;car?:true;value?:{count:number;status:"SUCCESS"|"PARTIAL"|"FAILED";hotelResultAccounting?:HotelResultAccounting|null;carResultAccounting?:CarResultAccounting|null}};
 const publicationKey=Symbol.for("kurioticket.search-final-publication.v1");
 const publicationStores=globalThis as unknown as Record<symbol,AsyncLocalStorage<FinalPublication>>;
 const publications=publicationStores[publicationKey]??=new AsyncLocalStorage<FinalPublication>();
 /** Capture inside the route; after-response writers retain only a private
  * request-local reference, never a process-global inventory/policy cache. */
-export function captureFinalSearchHistory(product?: "hotel") {
+export function captureFinalSearchHistory(product?: "hotel" | "car") {
  const publication=publications.getStore();
  if(publication && product==="hotel")publication.hotel=true;
+ if(publication && product==="car")publication.car=true;
  return <T extends {resultCount?:number;status?:string;query?:Record<string,unknown>}>(input:T):T=>{
   const final=publication?.value;
   if(!final)return input;
-  return {...input,resultCount:final.count,status:final.status,
-   ...(product==="hotel" && input.query ? {query:{...input.query,hotelResultAccounting:final.hotelResultAccounting??null}}:{})};
+  // Preserve explicit car failures/partial outcomes (e.g. unsupported/empty).
+  const status=product==="car" && input.status==="FAILED" ? "FAILED"
+   : product==="car" && input.status==="PARTIAL" && final.status==="SUCCESS" ? "PARTIAL" : final.status;
+  return {...input,resultCount:final.count,status,
+   ...(product==="hotel" && input.query ? {query:{...input.query,hotelResultAccounting:final.hotelResultAccounting??null}}:{}),
+   ...(product==="car" && input.query ? {query:{...input.query,carResultAccounting:final.carResultAccounting??null}}:{})};
  };
 }
 function publishFinalAccounting(payload:unknown) {
@@ -38,7 +44,8 @@ function publishFinalAccounting(payload:unknown) {
  if(!publication || !payload || typeof payload!=="object")return;
  const value=payload as {results?:unknown;status?:unknown};
  if(Array.isArray(value.results))publication.value={count:value.results.length,status:value.status==="unavailable"?"FAILED":value.status==="partial"?"PARTIAL":"SUCCESS",
-  ...(publication.hotel ? {hotelResultAccounting:countHotelInventory(value.results)}:{})};
+  ...(publication.hotel ? {hotelResultAccounting:countHotelInventory(value.results)}:{}),
+  ...(publication.car ? {carResultAccounting:countCarInventory(value.results)}:{})};
 }
 export function productionSandboxHost(env: Record<string, string | undefined> = process.env) {
     try {

@@ -64,6 +64,7 @@ jobs:
           await import("./src/services/providerHandoffActivity.test.ts");
           await import("./src/services/travel/hotelOperationalBinding.test.ts");
           await import("./src/lib/hotels/hotelResultAccounting.test.ts");
+          await import("./src/lib/cars/carResultAccounting.test.ts");
           await import("./src/lib/providerHandoffClient.test.ts");
           await import("./src/lib/operationalHandoffContext.test.ts");
           await import("./src/components/results/journeyEventWiring.test.ts");
