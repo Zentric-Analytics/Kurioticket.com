@@ -36,11 +36,11 @@ export default async function BotManagementPage({ searchParams }: { searchParams
       <BotReportFilters filters={filters} now={now.toISOString()} />
       {report.state === "unavailable" && <ReportUnavailable />}
       {report.state === "ready" && <section aria-label="Bot directory">
-        <nav aria-label="Bot categories" className="flex flex-wrap items-end gap-x-4 border-b border-[#D8E1EC] sm:gap-x-6">
+        <nav aria-label="Bot categories" className="flex items-end gap-x-1 overflow-x-auto border-b border-[#D8E1EC] sm:gap-x-6">
           {BOT_GROUPS.map(({ value, label }) => {
             const active = filters.group === value;
             return <Link key={value} scroll={false} prefetch={false} aria-current={active ? "page" : undefined}
-              className={"inline-flex min-h-10 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium focus-visible:outline-2 focus-visible:outline-[#004BB8] " +
+              className={"inline-flex min-h-10 shrink-0 items-center whitespace-nowrap border-b-2 px-0.5 text-[11px] font-medium focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#004BB8] sm:px-1 sm:text-[13px] " +
                 (active ? "border-[#004BB8] text-[#004BB8]" : "border-transparent text-slate-600 hover:text-slate-950")}
               href={botHref(BOT_DIRECTORY, params, { group: value, page: "" })}>
               {label} ({(report.counts[value || "all"] ?? 0).toLocaleString("en-US")})
