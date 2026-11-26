@@ -108,8 +108,8 @@ It creates no new cookie, raw IP, city, raw user agent, fingerprint, optional
 page history or persistent visitor ID. The existing writer is the fallback
 if preview storage fails. A new live interval or intervening account resets first seen.
 
-The Admin live View Activity key is a domain-separated HMAC of the internal
-source and first-seen timestamp; it is not a credential and requires Admin
+The Admin live View Activity key is a domain-separated HMAC of the existing
+hashed source and environment; it is not a credential and requires Admin
 authorization plus an exact current observation. It never joins operational
 search or Analytics visitor IDs. Historical guest first-access association and
 retention require a separate reviewed design. This preview does not implement
@@ -131,3 +131,51 @@ navigation key if it becomes active again; this is not a durable visitor identit
 When optional preview details are absent, first access is explicitly "Not recorded"
 and location/device details are unavailable. Production keeps its existing behavior.
 No historical search or visitor association is implemented by this read-only view.
+
+
+Guest activity navigation disables link prefetch and checks both the roster
+snapshot and the selected heartbeat against the live window at render time.
+Ambiguous references fail closed. The page labels the verification timestamp;
+an open page is a snapshot, not a continuous online-status guarantee.
+
+### Historical guest access continuity: proposal for privacy and engineering review
+
+This proposal is not authorization to retain additional customer history.
+Do not implement or activate the historical association until the privacy owner
+approves the purpose, lawful basis, exact fields, retention, disclosure and
+deletion treatment. Retain the present operational search and consent boundaries.
+
+Proposed evidence requirements for a guest who later makes a qualifying search:
+
+- Reuse an existing memory-only presence credential on the real search request
+  through a reviewed same-origin or native transport. Never place that credential
+  in a URL, new cookie, analytics event, persistent storage or an Admin response.
+- Independently verify its signature, expiry, transport and environment. Require
+  a current anonymous presence row with an exact source match, a recorded first
+  access and a verified heartbeat within the existing 90-second window.
+- Obtain the existing operational guest identity only from the server-admitted
+  search flow; never trust a client-supplied historical ID. Recheck ownership
+  and the live observation atomically before admitting any association. Exclude
+  authenticated, linked, expired, bot and conflicting identities. No IP, device
+  similarity, destination, time proximity or user-agent matching.
+- If historical retention is approved, attach only explicitly approved access
+  fields to the already-qualified operational history, with bounded retention
+  and deletion enforcement. Do not persist the presence credential, source
+  hash or live navigation reference in that history. Do not backfill old rows.
+- Existing consented page/journey evidence remains subject to the existing
+  consent and ownership checks, including withdrawal. Do not merge the optional
+  Analytics visitor and operational identities merely because a request has both.
+
+A full browser reload, lost memory credential, older native build or expired
+session can prevent an exact association. In that case display only the
+independently recorded history and mark first access unavailable; do not guess
+or create a persistent cross-session identifier to fill gaps.
+
+Required acceptance cases (isolated synthetic database and all four clients):
+arrival without a search; declined/granted/withdrawn consent; verified first
+search and repeated searches; unrelated simultaneous guests; expired or forged
+credentials; sign-in/out; missing memory credential; environment mismatch;
+recording and deletion failures; correct chronology, pagination, and exact
+identity-scoped navigation. No new optional page, filter or interaction writes
+may occur under rejected consent. No provider availability or result accounting
+changes are in scope. The approval and database/client integration remain open.

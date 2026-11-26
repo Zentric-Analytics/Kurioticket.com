@@ -122,3 +122,18 @@ export function buildAdminOnlineUsersSnapshot(
     platforms: counts, rows,
   };
 }
+
+/** Resolve one fresh live roster entry, never a historical identity or authorization.
+ * Recheck elapsed time after the asynchronous roster read. */
+export function resolveLiveGuestActivity(snapshot: AdminOnlineUsersSnapshot | null, reference: unknown, now: Date): OnlineIdentityRow | null {
+  if (!safeLiveGuestReference(reference) || snapshot?.status !== "ok" ||
+      snapshot.windowSeconds !== onlinePresenceWindowSeconds || !Number.isFinite(+now)) return null;
+  const observed = Date.parse(snapshot.observedAt);
+  const cutoff = +now - onlinePresenceWindowSeconds * 1000;
+  if (!Number.isFinite(observed) || observed <= cutoff || observed > +now) return null;
+  const matches = snapshot.rows.filter(row => row.liveReference === reference);
+  if (matches.length !== 1 || matches[0].kind !== "guest") return null;
+  const row = matches[0];
+  const seen = Date.parse(row.lastSeenAt);
+  return Number.isFinite(seen) && seen > cutoff && seen <= observed ? row : null;
+}

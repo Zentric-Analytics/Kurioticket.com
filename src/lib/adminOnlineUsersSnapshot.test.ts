@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildAdminOnlineUsersSnapshot, type RawPresenceRow } from "./adminOnlineUsersSnapshot";
+import { buildAdminOnlineUsersSnapshot, resolveLiveGuestActivity, type RawPresenceRow } from "./adminOnlineUsersSnapshot";
 
 const now = new Date("2026-11-21T20:00:00.000Z");
 function observation(
@@ -174,4 +174,42 @@ test("preview detail cannot be attached to a different live reference",()=>{
   assert.equal(snapshot.rows[0].liveReference,"A".repeat(43));
   assert.equal(snapshot.rows[0].liveAccess,undefined);
   assert.equal(snapshot.rows[0].locationLabel,null);
+});
+
+test("live activity resolution accepts exactly one fresh guest reference",()=>{
+  const reference = "A".repeat(43);
+  const snapshot = buildAdminOnlineUsersSnapshot([
+    {...observation("one","desktop_web",5),liveReference:reference},
+    {...observation("two","android",2),liveReference:"B".repeat(43)},
+  ],now);
+  assert.equal(resolveLiveGuestActivity(snapshot,reference,now)?.platforms[0],"desktop_web");
+  assert.equal(resolveLiveGuestActivity(snapshot,"B".repeat(43),now)?.platforms[0],"android");
+  assert.equal(resolveLiveGuestActivity(snapshot,"C".repeat(43),now),null);
+  assert.equal(resolveLiveGuestActivity(snapshot,"guest-1",now),null);
+});
+
+test("guest activity cannot resolve a stale heartbeat or a stale or future snapshot",()=>{
+  const reference = "A".repeat(43);
+  const snapshot = buildAdminOnlineUsersSnapshot([
+    {...observation("one","ios",89),liveReference:reference},
+  ],now);
+  assert.ok(resolveLiveGuestActivity(snapshot,reference,now));
+  assert.equal(resolveLiveGuestActivity(snapshot,reference,new Date(+now+1000)),null);
+  assert.equal(resolveLiveGuestActivity(snapshot,reference,new Date(+now+90000)),null);
+  assert.equal(resolveLiveGuestActivity(snapshot,reference,new Date(+now-1)),null);
+  assert.equal(resolveLiveGuestActivity({status:"unavailable",observedAt:now.toISOString(),windowSeconds:90},reference,now),null);
+});
+
+test("guest activity rejects ambiguous and authenticated roster matches",()=>{
+  const reference = "A".repeat(43);
+  const duplicate = buildAdminOnlineUsersSnapshot([
+    {...observation("one","ios",5),liveReference:reference},
+    {...observation("two","android",2),liveReference:reference},
+  ],now);
+  assert.equal(resolveLiveGuestActivity(duplicate,reference,now),null);
+  const account = buildAdminOnlineUsersSnapshot([
+    observation("one","ios",1,{id:"u-valid",name:"Account",role:"USER"}),
+  ],now);
+  assert.equal(resolveLiveGuestActivity(account,reference,now),null);
+  assert.equal(resolveLiveGuestActivity({...account,rows:account.rows.map(row=>({...row,liveReference:reference}))},reference,now),null);
 });
