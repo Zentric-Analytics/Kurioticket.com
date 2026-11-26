@@ -351,6 +351,9 @@ model OnlinePresenceSession {
   guestDeviceLabel String?
   guestBrowser     String?
   guestOs          String?
+  // Independent verified live country; never copied from older preview data.
+  guestLiveCountryCode String?
+  guestLiveCountryObservedAt DateTime?
   accountSession   AccountSession? @relation(fields: [accountSessionId], references: [id], onDelete: Cascade)
 
   @@id([environment, sourceId])

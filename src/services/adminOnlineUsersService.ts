@@ -4,6 +4,7 @@ import { adminLiveGuestReference } from "@/lib/adminLiveGuestReference";
 import { Prisma } from "@/generated/prisma/client";
 import { presenceSigningSecret } from "@/lib/onlinePresenceCredential";
 import { guestFirstAccessPreviewEnabled, safeLiveGuestAccess } from "@/lib/guestFirstAccessObservation";
+import { guestLiveCountryEnabled, safeGuestLiveCountry } from "@/lib/guestLiveCountry";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { onlinePresenceWindowSeconds } from "@/lib/onlinePresence";
 import { getOnlinePresenceSnapshot } from "@/services/onlinePresenceService";
@@ -84,14 +85,39 @@ export async function readAdminOnlineUsers(
       const reference = adminLiveGuestReference(environment, observation.sourceId, secret);
       if (reference) observation.liveReference = reference;
     }
+    // Country is independent of first access, permanent IDs and product searches.
+    if (secret && guestLiveCountryEnabled(environment)) {
+      try {
+        const countries = await db.$queryRaw<Array<{sourceId:string;lastSeenAt:Date;countryCode:string|null}>>(Prisma.sql`
+          SELECT "sourceId", "lastSeenAt", "guestLiveCountryCode" AS "countryCode"
+          FROM "OnlinePresenceSession"
+          WHERE "environment" = ${environment} AND "accountSessionId" IS NULL
+            AND "lastSeenAt" > ${cutoff} AND "lastSeenAt" <= ${now}
+            AND "guestLiveCountryObservedAt" = "lastSeenAt"
+          LIMIT ${maxObservations + 1}
+        `);
+        if (countries.length <= maxObservations) {
+          const bySource = new Map(countries.map(country => [country.sourceId, country]));
+          for (const observation of observations) {
+            if (observation.accountSessionId !== null || !observation.liveReference) continue;
+            const country = bySource.get(observation.sourceId);
+            if (country && +country.lastSeenAt === +observation.lastSeenAt) {
+              observation.liveCountryCode = safeGuestLiveCountry(country.countryCode);
+            }
+          }
+        }
+      } catch {
+        // Unknown country must not suppress a verified online session.
+      }
+    }
     if (secret && guestFirstAccessPreviewEnabled(environment)) {
       try {
         const details = await db.$queryRaw<Array<{
-          sourceId:string; lastSeenAt:Date; firstSeenAt:Date; countryCode:string|null;
+          sourceId:string; lastSeenAt:Date; firstSeenAt:Date;
           deviceLabel:string|null; browser:string|null; os:string|null;
         }>>(Prisma.sql`
           SELECT "sourceId", "lastSeenAt", "guestFirstSeenAt" AS "firstSeenAt",
-            "guestCountryCode" AS "countryCode", "guestDeviceLabel" AS "deviceLabel",
+            "guestDeviceLabel" AS "deviceLabel",
             "guestBrowser" AS "browser", "guestOs" AS "os"
           FROM "OnlinePresenceSession"
           WHERE "environment" = ${environment} AND "accountSessionId" IS NULL
@@ -110,7 +136,7 @@ export async function readAdminOnlineUsers(
             if (!reference) continue;
             const safe = safeLiveGuestAccess({
               reference, firstSeenAt:detail.firstSeenAt.toISOString(),
-              countryCode:detail.countryCode, deviceLabel:detail.deviceLabel,
+              countryCode:observation.liveCountryCode ?? null, deviceLabel:detail.deviceLabel,
               browser:detail.browser, os:detail.os,
             }, observation.lastSeenAt);
             if (safe) observation.liveAccess = safe;

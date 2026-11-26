@@ -7,6 +7,7 @@ import { onlinePresenceWindowSeconds, type OnlinePresenceSnapshot } from "@/lib/
 import { hasConsistentWebsitePresenceOrigin, presenceSigningSecret } from "@/lib/onlinePresenceCredential";
 import type { OnlinePresenceHeartbeat } from "@/lib/onlinePresenceRoute";
 import { guestFirstAccessPreviewEnabled } from "@/lib/guestFirstAccessObservation";
+import { guestLiveCountryEnabled, safeGuestLiveCountry } from "@/lib/guestLiveCountry";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 
 const retainedForMs = 15 * 60_000;
@@ -70,6 +71,24 @@ async function pruneExpiredPresence(environment: PublicEnvironment, now: Date) {
     } catch {
       // Do not alter canonical presence when optional preview storage fails.
     }
+    try {
+      const cutoff = new Date(+now - retainedForMs);
+      await db.$executeRaw`
+        UPDATE "OnlinePresenceSession"
+        SET "guestLiveCountryCode" = NULL, "guestLiveCountryObservedAt" = NULL
+        WHERE ("environment", "sourceId") IN (
+          SELECT "environment", "sourceId" FROM "OnlinePresenceSession"
+          WHERE "environment" = ${environment} AND "guestLiveCountryObservedAt" IS NOT NULL
+            AND ("accountSessionId" IS NOT NULL
+              OR "guestLiveCountryObservedAt" <> "lastSeenAt"
+              OR "guestLiveCountryObservedAt" < ${cutoff}
+              OR ${!guestLiveCountryEnabled(environment)})
+          ORDER BY "guestLiveCountryObservedAt" LIMIT 10000 FOR UPDATE SKIP LOCKED
+        )
+      `;
+    } catch {
+      // Country is optional; canonical presence remains available.
+    }
   }
 }
 
@@ -93,36 +112,44 @@ async function writeOnlinePresence(db: Prisma.TransactionClient, { environment, 
   `;
 }
 
-/** The preview preserves the existing verified source and write throttle.
- * A new live interval or authenticated state resets the first observation. */
-async function writeGuestAccessPresence(db: Prisma.TransactionClient, heartbeat: OnlinePresenceHeartbeat) {
-  const { environment, sourceId, platform, now, guestAccess } = heartbeat;
-  if (!guestAccess || heartbeat.accountSessionId !== null) throw new Error("Not a guest preview");
+/** Atomically tie optional country/device fields to the accepted heartbeat.
+ * Account transitions clear guest fields; older writes cannot restore them.
+ * Never use the legacy preview's less strictly verified country. */
+async function writeGuestPresenceDetails(db: Prisma.TransactionClient, heartbeat: OnlinePresenceHeartbeat) {
+  const { environment, sourceId, platform, now, accountSessionId } = heartbeat;
+  const preview = accountSessionId === null && guestFirstAccessPreviewEnabled(environment) ? heartbeat.guestAccess : undefined;
+  const country = accountSessionId === null && guestLiveCountryEnabled(environment)
+    ? safeGuestLiveCountry(heartbeat.guestLiveCountryCode) : null;
   const writeBefore = new Date(+now - writeThrottleMs);
   const liveCutoff = new Date(+now - onlinePresenceWindowSeconds * 1000);
   return db.$executeRaw`
     INSERT INTO "OnlinePresenceSession" AS current
       ("environment", "sourceId", "platform", "accountSessionId", "lastSeenAt",
-       "guestFirstSeenAt", "guestObservedAt", "guestCountryCode", "guestDeviceLabel", "guestBrowser", "guestOs")
-    VALUES (${environment}, ${sourceId}, ${platform}, NULL, ${now}, ${now}, ${now},
-      ${guestAccess.countryCode}, ${guestAccess.deviceLabel}, ${guestAccess.browser}, ${guestAccess.os})
+       "guestFirstSeenAt", "guestObservedAt", "guestCountryCode", "guestDeviceLabel", "guestBrowser", "guestOs",
+       "guestLiveCountryCode", "guestLiveCountryObservedAt")
+    VALUES (${environment}, ${sourceId}, ${platform}, ${accountSessionId}, ${now},
+       ${preview ? now : null}, ${preview ? now : null}, NULL, ${preview?.deviceLabel ?? null},
+       ${preview?.browser ?? null}, ${preview?.os ?? null}, ${country}, ${country ? now : null})
     ON CONFLICT ("environment", "sourceId") DO UPDATE SET
       "platform" = EXCLUDED."platform",
-      "accountSessionId" = NULL,
+      "accountSessionId" = EXCLUDED."accountSessionId",
       "lastSeenAt" = EXCLUDED."lastSeenAt",
-      "guestFirstSeenAt" = CASE WHEN current."accountSessionId" IS NULL
+      "guestFirstSeenAt" = CASE WHEN EXCLUDED."guestFirstSeenAt" IS NOT NULL
+        AND current."accountSessionId" IS NULL
         AND current."lastSeenAt" > ${liveCutoff}
         AND current."guestObservedAt" = current."lastSeenAt"
         AND current."guestFirstSeenAt" <= current."lastSeenAt"
         THEN current."guestFirstSeenAt" ELSE EXCLUDED."guestFirstSeenAt" END,
       "guestObservedAt" = EXCLUDED."guestObservedAt",
-      "guestCountryCode" = EXCLUDED."guestCountryCode",
+      "guestCountryCode" = NULL,
       "guestDeviceLabel" = EXCLUDED."guestDeviceLabel",
       "guestBrowser" = EXCLUDED."guestBrowser",
-      "guestOs" = EXCLUDED."guestOs"
+      "guestOs" = EXCLUDED."guestOs",
+      "guestLiveCountryCode" = EXCLUDED."guestLiveCountryCode",
+      "guestLiveCountryObservedAt" = EXCLUDED."guestLiveCountryObservedAt"
     WHERE current."lastSeenAt" <= EXCLUDED."lastSeenAt"
       AND (current."lastSeenAt" <= ${writeBefore}
-        OR current."accountSessionId" IS NOT NULL
+        OR current."accountSessionId" IS DISTINCT FROM EXCLUDED."accountSessionId"
         OR current."platform" IS DISTINCT FROM EXCLUDED."platform")
   `;
 }
@@ -130,10 +157,10 @@ async function writeGuestAccessPresence(db: Prisma.TransactionClient, heartbeat:
 export async function recordOnlinePresence(heartbeat: OnlinePresenceHeartbeat) {
   const db = getOptionalPrisma();
   if (!db) throw new Error("Online presence storage unavailable");
-  if (heartbeat.accountSessionId === null && heartbeat.guestAccess && guestFirstAccessPreviewEnabled(heartbeat.environment)) {
-    try { await writeGuestAccessPresence(db, heartbeat); }
+  if (guestLiveCountryEnabled(heartbeat.environment) || guestFirstAccessPreviewEnabled(heartbeat.environment)) {
+    try { await writeGuestPresenceDetails(db, heartbeat); }
     catch {
-      console.warn("[online-presence] guest access preview unavailable");
+      console.warn("[online-presence] optional guest observation unavailable");
       await writeOnlinePresence(db, heartbeat);
     }
   } else await writeOnlinePresence(db, heartbeat);
