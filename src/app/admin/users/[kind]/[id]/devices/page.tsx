@@ -57,7 +57,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
   const incoming = typeof raw.activityReturn === "string" ? raw.activityReturn : "";
   const directoryReturn = historyDirectoryReturnHref("devices", incoming);
   const safeActivity = activityJourneyReturnHref(incoming);
-  const activityReturn = safeActivity && (safeActivity === activityPath || safeActivity.startsWith(activityPath + "?"))
+  const activityReturn = safeActivity && (safeActivity === activityPath || safeActivity.startsWith(activityPath + "?") || safeActivity === activityPath + "/all" || safeActivity.startsWith(activityPath + "/all?"))
     ? safeActivity : activityPath;
   const backHref = directoryReturn ?? activityReturn;
   const backLabel = directoryReturn ? "Back to Device & Access" : "Back to Activity";
