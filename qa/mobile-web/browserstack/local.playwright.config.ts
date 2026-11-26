@@ -1,7 +1,8 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 
 const widths = [320, 375, 393, 430];
 const engines = ["chromium", "webkit", "firefox"] as const;
+const desktopDevice = { chromium: "Desktop Chrome", webkit: "Desktop Safari", firefox: "Desktop Firefox" };
 
 export default defineConfig({
   testDir: "../tests",
@@ -23,6 +24,7 @@ export default defineConfig({
     name: `${browserName}-${width}`,
     use: {
       browserName,
+      userAgent: devices[desktopDevice[browserName]].userAgent,
       isMobile: browserName !== "firefox",
       viewport: { width, height: width === 320 ? 568 : width >= 430 ? 932 : 844 },
     },

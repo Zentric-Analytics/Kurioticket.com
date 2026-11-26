@@ -12,11 +12,11 @@ export function trustedBotEdge(request: Request) {
 
   const ip = request.headers.get("cf-connecting-ip")?.trim() || "";
   const country = request.headers.get("cf-ipcountry") || "";
-  const ray = request.headers.get("cf-ray") || "";
+  const ray = request.headers.get("cf-ray")?.match(/^([a-f0-9]{16,32})(?:-[A-Z]{3})?$/)?.[1] ?? null;
   return {
     ip: isIP(ip) ? ip : null,
     country: /^[A-Z]{2}$/.test(country) ? country : null,
-    ray: /^[a-f0-9]{16,32}-[A-Z]{3}$/.test(ray) ? ray : null,
+    ray,
     automated: request.headers.get("x-kurioticket-edge-bot") === "automated",
   };
 }

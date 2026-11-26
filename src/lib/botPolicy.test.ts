@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { automationSignal, botAccess, botTarget, observeBot } from "./botPolicy";
+import { trustedBotEdge } from "./botEdge";
 import { crawlerCatalog } from "./botRegistry";
 
 const request = (path: string, agent: string, method = "GET", headers = {}) =>
@@ -52,4 +53,22 @@ test("activity paths do not retain query strings or arbitrary request parameters
   assert.equal(botTarget(request("/api/account/security/passkeys/private-id?token=secret", "GPTBot")).endpoint, "/api/:restricted");
   assert.equal(botTarget(request("/guides/private-slug?token=secret", "GPTBot")).endpoint, "/guides/:slug");
   assert.equal(botTarget(request("/images/private-path.jpg?token=secret", "GPTBot")).endpoint, "/images/:resource");
+});
+
+test("only the authenticated edge can supply a correlatable Ray ID and automation observation", (t) => {
+  const previous = process.env.BOT_EDGE_SECRET;
+  const secret = "fixture".repeat(5);
+  process.env.BOT_EDGE_SECRET = secret;
+  t.after(() => {
+    if (previous === undefined) delete process.env.BOT_EDGE_SECRET;
+    else process.env.BOT_EDGE_SECRET = previous;
+  });
+  const headers = {
+    "CF-Ray": "1234567890abcdef-LHR", "CF-Connecting-IP": "192.0.2.1",
+    "CF-IPCountry": "GB", "X-Kurioticket-Edge-Bot": "automated",
+  };
+  assert.equal(trustedBotEdge(request("/", "Mozilla/5.0", "GET", headers)), null);
+  assert.deepEqual(trustedBotEdge(request("/", "Mozilla/5.0", "GET", { ...headers, "X-Kurioticket-Edge-Auth": secret })), {
+    ray: "1234567890abcdef", ip: "192.0.2.1", country: "GB", automated: true,
+  });
 });
