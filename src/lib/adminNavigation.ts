@@ -4,6 +4,7 @@ import { activityJourneyReturnHref } from "./adminActivityJourneyNavigation";
 import {
   Activity,
   BookOpen,
+  Bot,
   Car,
   ClipboardList,
   FileText,
@@ -46,6 +47,7 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/users/online", parentHref: "/admin/users", label: "Online Users", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Review verified current account and guest presence across platforms." },
   { href: "/admin/users/devices", parentHref: "/admin/users", label: "Device & Access", icon: MonitorSmartphone, roles: ["ADMIN"], section: "operations", description: "Find registered users and their recorded device sessions." },
   { href: "/admin/users/pages", parentHref: "/admin/users", label: "Pages Visited", icon: FileText, roles: ["ADMIN"], section: "operations", description: "Find registered users and consented guests with recorded page visits." },
+  { href: "/admin/users/bots", parentHref: "/admin/users", label: "Bot Management", icon: Bot, roles: ["ADMIN"], section: "operations", description: "Review recorded bot identities and requests." },
   { href: "/admin/providers", label: "Providers", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Monitor provider configuration and health." },
   { href: "/admin/searches/activity", label: "Search Activity", icon: Search, roles: ["ADMIN"], section: "operations", description: "Review platform-wide search records, outcomes, and diagnostics." },
   { href: "/admin/confirmed-trips", label: "Trips", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Monitor provider-confirmed trips and their flight-status readiness." },
@@ -120,13 +122,14 @@ const workspaceSections: ReadonlyArray<{
   links: ReadonlyArray<{ href: string; label: string }>;
 }> = [
   {
-    label: "Users",
+    label: "Users & Bots",
     paths: ["/admin/users", "/admin/journeys"],
     links: [
       { href: "/admin/users", label: "Users Directory" },
       { href: "/admin/users/online", label: "Online Users" },
       { href: "/admin/users/devices", label: "Device & Access" },
       { href: "/admin/users/pages", label: "Pages Visited" },
+      { href: "/admin/users/bots", label: "Bot Management" },
     ],
   },
   {
