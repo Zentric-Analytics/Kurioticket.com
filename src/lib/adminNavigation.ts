@@ -215,7 +215,10 @@ export function isAdminWorkspaceSectionActive(pathname: string, href: string, ac
   if (history && ["/admin/users", "/admin/users/devices", "/admin/users/pages"].includes(destination)) {
     const activityPath = pathname.replace(/\/(devices|pages)\/?$/, "/activity");
     const returnPath = activityJourneyReturnHref(activityReturn)?.split("?")[0];
-    return destination === (returnPath === activityPath ? "/admin/users" : "/admin/users/" + history[1]);
+    // Both the compact overview and the full history belong to this identity.
+    // A different identity, external URL or unrelated directory remains invalid.
+    const fromActivity = returnPath === activityPath || returnPath === activityPath + "/all";
+    return destination === (fromActivity ? "/admin/users" : "/admin/users/" + history[1]);
   }
   // Only platform-wide monitoring belongs to the separate Platforms workspace.
   if (destination === "/admin/users") return (pathname === destination

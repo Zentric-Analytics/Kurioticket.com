@@ -90,7 +90,9 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
   const backHref = incomingReturn && (
     incomingReturn === route + "/activity"
     || incomingReturn.startsWith(route + "/activity?")
-  ) ? incomingReturn : route + "/activity";
+    || incomingReturn === route + "/activity/all"
+    || incomingReturn.startsWith(route + "/activity/all?")
+  ) ? incomingReturn : route + "/activity/all";
   const returnLink = <Link href={backHref} className={linkStyle}><ArrowLeft size={15} aria-hidden="true" /> Back to Activity</Link>;
 
   if (!requested.ok) return <div className="min-w-0 space-y-4 bg-white">

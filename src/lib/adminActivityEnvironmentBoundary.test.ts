@@ -4,6 +4,8 @@ import test from "node:test";
 
 const page = readFileSync(new URL("../app/admin/users/[kind]/[id]/activity/page.tsx", import.meta.url), "utf8");
 const timeline = readFileSync(new URL("../components/admin/ActivityTimeline.tsx", import.meta.url), "utf8");
+const unified = readFileSync(new URL("../components/admin/AdminUnifiedActivityList.tsx", import.meta.url), "utf8");
+const allActivity = readFileSync(new URL("../app/admin/users/[kind]/[id]/activity/all/page.tsx", import.meta.url), "utf8");
 const reader = readFileSync(new URL("../services/adminIdentityActivityService.ts", import.meta.url), "utf8");
 const filters = readFileSync(new URL("./adminIdentityActivity.ts", import.meta.url), "utf8");
 const dateQuery = readFileSync(new URL("./adminActivityDateQuery.ts", import.meta.url), "utf8");
@@ -70,38 +72,39 @@ test("Activity and Support use white non-Overview workspaces while preserving au
   assert.match(page, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
   assert.match(page, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
   assert.match(page, /text-\[12px\] font-normal text-\[#64748B\]/);
-  assert.match(page, /data-testid="activity-body-card"/);
+  assert.match(page, /<AdminUnifiedActivityList/);
+  assert.match(unified, /data-testid="unified-activity-list"/);
+  assert.match(allActivity, /await requireAdminSession\(path\)/);
+  assert.match(allActivity, /loadAdminUnifiedActivity\(kind,id,filters,cursor,now\)/);
   assert.match(page, /normalizeUserActivityQuery\(await searchParams, now, timeZone\)/);
   assert.match(dateQuery, /if \(raw\.tab === "journeys"\) delete raw\.tab/);
   assert.doesNotMatch(page, /Related records|const related =|label="Journeys"|value: "journeys"/);
   assert.doesNotMatch(timeline, /Show all|Hide all|Not linked to a journey/);
 });
 
-test("User Activity renders exactly two nested white workspace cards with a flat summary", () => {
+test("User Activity keeps identity, six metrics and one compact activity list in order", () => {
   const breadcrumb = page.indexOf('<nav aria-label="Breadcrumb"');
   const mainCard = page.indexOf('data-testid="activity-page-card"');
   const identity = page.indexOf('aria-label="Customer identity"');
   const summary = page.indexOf('aria-label="Activity summary"');
-  const body = page.indexOf('data-testid="activity-body-card"');
-  const history = page.indexOf('<AdminActivityOverview');
+  const history = page.indexOf('<AdminUnifiedActivityList');
   assert.ok(breadcrumb !== -1 && breadcrumb < mainCard, "breadcrumb stays outside the page card");
-  assert.ok(mainCard < identity && identity < summary && summary < body && body < history,
-    "identity, flat metrics and compact overview stay in order inside the main card");
+  assert.ok(mainCard < identity && identity < summary && summary < history);
   assert.equal((page.match(/data-testid="activity-page-card"/g) ?? []).length, 1);
-  assert.equal((page.match(/data-testid="activity-body-card"/g) ?? []).length, 1);
-  assert.match(page, /<AdminActivityOverview/);
-  assert.doesNotMatch(page, /<ActivityTimeline/);
-  const mainCardMarkup = page.slice(mainCard, identity);
-  assert.match(mainCardMarkup, /rounded-2xl border border-\[#E2E8F0\] bg-white/);
-  // Inspect only the summary section, not unrelated sibling links between it and the body card.
+  assert.equal((page.match(/<AdminUnifiedActivityList/g) ?? []).length, 1);
+  assert.doesNotMatch(page, /<ActivityTimeline|<AdminIdentityDeviceAccess|<PageViewRecords|<ActivityFiltersBar/);
+  assert.match(page.slice(mainCard, identity), /rounded-2xl border border-\[#E2E8F0\] bg-white/);
+  const identityMarkup = page.slice(identity, summary);
+  assert.match(identityMarkup, /data-testid="activity-identity-dividers"/);
   const summaryMarkup = page.slice(summary, page.indexOf("</section>", summary));
-  assert.doesNotMatch(summaryMarkup, /bg-(?:blue|sky|emerald|amber|\[#)/,
-    "Activity summary uses no colored background or metric dots");
-  assert.match(summaryMarkup, /data\.summary\.searches/);
-  assert.match(summaryMarkup, /data\.summary\.resultsViewed/);
-  assert.match(summaryMarkup, /data\.summary\.offersSelected/);
-  assert.match(summaryMarkup, /data\.summary\.providerHandoffs/);
-  assert.match(summaryMarkup, /data\.summary\.journeysTracked/);
-  assert.match(summaryMarkup, /lg:grid-cols-5/);
-  assert.doesNotMatch(summaryMarkup, /<h2/, "the five metrics replace the visible summary heading");
+  assert.doesNotMatch(summaryMarkup, /bg-(?:blue|sky|emerald|amber|\[#)/);
+  for (const metric of ["searches", "resultsViewed", "offersSelected", "providerHandoffs", "journeysTracked", "pagesVisited"]) {
+    assert.ok(summaryMarkup.includes("data.summary." + metric), metric);
+  }
+  assert.match(summaryMarkup, /xl:grid-cols-6/);
+  assert.match(summaryMarkup, /xl:border-l/);
+  assert.doesNotMatch(summaryMarkup, /activity-divider-|<h2/);
+  assert.match(unified, /View all activity/);
+  assert.match(allActivity, /<ActivityFiltersBar/);
+  assert.match(allActivity, /<AdminUnifiedActivityList/);
 });

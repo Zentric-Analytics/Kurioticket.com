@@ -419,9 +419,9 @@ test("compact page visits retain exact totals and full travel history; separate 
     assert.equal(summary.data.summary.searches, 40);
     assert.equal(summary.data.summary.pagesVisited, 46);
     const recent = summary.data.events.filter((event: Row) => event.stage === "PAGE_VIEW");
-    assert.equal(recent.length, 5);
-    assert.deepEqual(recent.map((row: Row) => row.id), Array.from({ length: 5 }, (_, i) => "e-qa-page-" + String(i).padStart(6, "0")));
-    assert.ok(scenario.calls.some(call => call.source === "analytics" && call.take === 5));
+    assert.equal(recent.length, 1);
+    assert.deepEqual(recent.map((row: Row) => row.id), ["e-qa-page-000000"]);
+    assert.ok(scenario.calls.some(call => call.source === "analytics" && call.take === 1));
     const pageFilters = { ...allFilters, tab: "pages" };
     const full = await scenario.load(pageFilters, undefined, "all");
     assert.equal(full.data.events.length, 46);

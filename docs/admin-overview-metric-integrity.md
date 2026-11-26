@@ -92,3 +92,92 @@ The Overview is an **operational summary and navigation surface**, not an exhaus
 This is **presentation-only**. The authenticated, environment-scoped canonical Overview reads, underlying database models, reconciliations, date windows, consent checks, failure rates, and provider classifications have not been changed. All operational search rows are deliberately separate from consented journey events; outbound redirects do not prove bookings. Configured credentials are not proof of successful email delivery, provider authorization or end-to-end sign-in. Active website users still uses the independent 90-second presence window. Provider health continues to use its independent 24-hour observation window. The selected period continues to apply to historical searches, journeys, redirects, and audit action totals. Recent Admin Activity continues to show the newest actions across all dates, now limited to three on the Overview.
 
 Full provider service breakdowns, failure reasons, call timings and last-error/success timestamps remain available at `/admin/providers`; full customer-journey rows at `/admin/journeys`; search operations at `/admin/searches/activity`; outbound redirects at `/admin/redirects`; support queues at `/admin/support`; deletion workflows at `/admin/account-deletions`; platform configuration at `/admin/system`; audit records at `/admin/logs`. The new Overview cards and sections include direct navigation shortcuts to these actual routes. No backend data or records have been removed or inferred. A failed overview read continues to show an unavailable state, not fabricated numbers.
+
+
+### Proposed staging-only guest access preview (not approved for activation)
+
+GUEST_FIRST_ACCESS_PREVIEW is disabled by default and always disabled in production.
+The nullable migration does not backfill existing records. Do not enable collection
+on customer traffic until the privacy owner confirms operational necessity, lawful
+basis, disclosures and retention; use isolated synthetic QA first.
+
+The preview observes first access only after the guest returns a verified presence
+credential. It stores coarse device information and trusted-edge country only in the
+existing short-lived presence row (90-second live window, 15-minute cleanup).
+It creates no new cookie, raw IP, city, raw user agent, fingerprint, optional
+page history or persistent visitor ID. The existing writer is the fallback
+if preview storage fails. A new live interval or intervening account resets first seen.
+
+The Admin live View Activity key is a domain-separated HMAC of the existing
+hashed source and environment; it is not a credential and requires Admin
+authorization plus an exact current observation. It never joins operational
+search or Analytics visitor IDs. Historical guest first-access association and
+retention require a separate reviewed design. This preview does not implement
+that association and is not a substitute for the requested historical activity view.
+
+Staging retention sweeps also clear preview fields on account-owned rows, stale observations and when the preview is disabled. Physical cleanup is best effort; logical visibility is restricted to exact current guest observations. The preview needs database-backed expiry and transition testing before activation.
+
+
+### Read-only staging live guest navigation
+
+The live View Activity action can use the existing verified guest roster even
+when GUEST_FIRST_ACCESS_PREVIEW is disabled. It does not start a new collection,
+set a cookie, or change counts or historical readers. Its domain-separated HMAC
+is computed from the existing hashed source and environment; it is not persisted
+or usable as a presence credential. Admin authorization and a fresh verified
+anonymous roster match are required on every page load. A signed-in, expired
+or unverified row cannot resolve. The same memory credential can regain the same
+navigation key if it becomes active again; this is not a durable visitor identity.
+When optional preview details are absent, first access is explicitly "Not recorded"
+and location/device details are unavailable. Production keeps its existing behavior.
+No historical search or visitor association is implemented by this read-only view.
+
+
+Guest activity navigation disables link prefetch and checks both the roster
+snapshot and the selected heartbeat against the live window at render time.
+Ambiguous references fail closed. The page labels the verification timestamp;
+an open page is a snapshot, not a continuous online-status guarantee.
+
+### Historical guest access continuity: proposal for privacy and engineering review
+
+This proposal is not authorization to retain additional customer history.
+Do not implement or activate the historical association until the privacy owner
+approves the purpose, lawful basis, exact fields, retention, disclosure and
+deletion treatment. Retain the present operational search and consent boundaries.
+
+Proposed evidence requirements for a guest who later makes a qualifying search:
+
+- Reuse an existing memory-only presence credential on the real search request
+  through a reviewed same-origin or native transport. Never place that credential
+  in a URL, new cookie, analytics event, persistent storage or an Admin response.
+- Independently verify its signature, expiry, transport and environment. Require
+  a current anonymous presence row with an exact source match, a recorded first
+  access and a verified heartbeat within the existing 90-second window.
+- Obtain the existing operational guest identity only from the server-admitted
+  search flow; never trust a client-supplied historical ID. Recheck ownership
+  and the live observation atomically before admitting any association. Exclude
+  authenticated, linked, expired, bot and conflicting identities. No IP, device
+  similarity, destination, time proximity or user-agent matching.
+- If historical retention is approved, attach only explicitly approved access
+  fields to the already-qualified operational history, with bounded retention
+  and deletion enforcement. Do not persist the presence credential, source
+  hash or live navigation reference in that history. Do not backfill old rows.
+- Existing consented page/journey evidence remains subject to the existing
+  consent and ownership checks, including withdrawal. Do not merge the optional
+  Analytics visitor and operational identities merely because a request has both.
+
+A full browser reload, lost memory credential, older native build or expired
+session can prevent an exact association. In that case display only the
+independently recorded history and mark first access unavailable; do not guess
+or create a persistent cross-session identifier to fill gaps.
+
+Required acceptance cases (isolated synthetic database and all four clients):
+arrival without a search; declined/granted/withdrawn consent; verified first
+search and repeated searches; unrelated simultaneous guests; expired or forged
+credentials; sign-in/out; missing memory credential; environment mismatch;
+recording and deletion failures; correct chronology, pagination, and exact
+identity-scoped navigation. No new optional page, filter or interaction writes
+may occur under rejected consent. No provider availability or result accounting
+changes are in scope. The approval and database/client integration remain open.
+
+**Current scope decision (2026-11-26):** Historical guest first-access continuity is explicitly deferred. No permanent guest identity on initial access, historical association, backfill, or new long-term guest retention is authorized by this change. The short-lived live-access/location preview remains staging-only, disabled by default, and subject to a separately verified trusted ingress and privacy-owner approval before activation. The read-only live guest navigation can operate without enabling the optional preview.

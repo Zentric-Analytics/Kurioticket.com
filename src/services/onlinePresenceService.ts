@@ -6,6 +6,7 @@ import { getOptionalPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { onlinePresenceWindowSeconds, type OnlinePresenceSnapshot } from "@/lib/onlinePresence";
 import { hasConsistentWebsitePresenceOrigin, presenceSigningSecret } from "@/lib/onlinePresenceCredential";
 import type { OnlinePresenceHeartbeat } from "@/lib/onlinePresenceRoute";
+import { guestFirstAccessPreviewEnabled } from "@/lib/guestFirstAccessObservation";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 
 const retainedForMs = 15 * 60_000;
@@ -45,6 +46,31 @@ async function pruneExpiredPresence(environment: PublicEnvironment, now: Date) {
     // Exclusion from the rolling snapshot never depends on a physical deletion.
     console.warn("[online-presence] expired session cleanup failed");
   }
+  // Stale preview fields must not remain on a row kept alive by an account
+  // or a disabled preview. Keep this separate from canonical retention and
+  // tolerate a not-yet-applied additive migration.
+  if (environment === "staging") {
+    try {
+      const cutoff = new Date(+now - retainedForMs);
+      await db.$executeRaw`
+        UPDATE "OnlinePresenceSession"
+        SET "guestFirstSeenAt" = NULL, "guestObservedAt" = NULL,
+          "guestCountryCode" = NULL, "guestDeviceLabel" = NULL,
+          "guestBrowser" = NULL, "guestOs" = NULL
+        WHERE ("environment", "sourceId") IN (
+          SELECT "environment", "sourceId" FROM "OnlinePresenceSession"
+          WHERE "environment" = ${environment} AND "guestObservedAt" IS NOT NULL
+            AND ("accountSessionId" IS NOT NULL
+              OR "guestObservedAt" <> "lastSeenAt"
+              OR "guestObservedAt" < ${cutoff}
+              OR ${!guestFirstAccessPreviewEnabled(environment)})
+          ORDER BY "guestObservedAt" LIMIT 10000 FOR UPDATE SKIP LOCKED
+        )
+      `;
+    } catch {
+      // Do not alter canonical presence when optional preview storage fails.
+    }
+  }
 }
 
 async function writeOnlinePresence(db: Prisma.TransactionClient, { environment, sourceId, platform, accountSessionId, now }: OnlinePresenceHeartbeat) {
@@ -67,10 +93,50 @@ async function writeOnlinePresence(db: Prisma.TransactionClient, { environment, 
   `;
 }
 
+/** The preview preserves the existing verified source and write throttle.
+ * A new live interval or authenticated state resets the first observation. */
+async function writeGuestAccessPresence(db: Prisma.TransactionClient, heartbeat: OnlinePresenceHeartbeat) {
+  const { environment, sourceId, platform, now, guestAccess } = heartbeat;
+  if (!guestAccess || heartbeat.accountSessionId !== null) throw new Error("Not a guest preview");
+  const writeBefore = new Date(+now - writeThrottleMs);
+  const liveCutoff = new Date(+now - onlinePresenceWindowSeconds * 1000);
+  return db.$executeRaw`
+    INSERT INTO "OnlinePresenceSession" AS current
+      ("environment", "sourceId", "platform", "accountSessionId", "lastSeenAt",
+       "guestFirstSeenAt", "guestObservedAt", "guestCountryCode", "guestDeviceLabel", "guestBrowser", "guestOs")
+    VALUES (${environment}, ${sourceId}, ${platform}, NULL, ${now}, ${now}, ${now},
+      ${guestAccess.countryCode}, ${guestAccess.deviceLabel}, ${guestAccess.browser}, ${guestAccess.os})
+    ON CONFLICT ("environment", "sourceId") DO UPDATE SET
+      "platform" = EXCLUDED."platform",
+      "accountSessionId" = NULL,
+      "lastSeenAt" = EXCLUDED."lastSeenAt",
+      "guestFirstSeenAt" = CASE WHEN current."accountSessionId" IS NULL
+        AND current."lastSeenAt" > ${liveCutoff}
+        AND current."guestObservedAt" = current."lastSeenAt"
+        AND current."guestFirstSeenAt" <= current."lastSeenAt"
+        THEN current."guestFirstSeenAt" ELSE EXCLUDED."guestFirstSeenAt" END,
+      "guestObservedAt" = EXCLUDED."guestObservedAt",
+      "guestCountryCode" = EXCLUDED."guestCountryCode",
+      "guestDeviceLabel" = EXCLUDED."guestDeviceLabel",
+      "guestBrowser" = EXCLUDED."guestBrowser",
+      "guestOs" = EXCLUDED."guestOs"
+    WHERE current."lastSeenAt" <= EXCLUDED."lastSeenAt"
+      AND (current."lastSeenAt" <= ${writeBefore}
+        OR current."accountSessionId" IS NOT NULL
+        OR current."platform" IS DISTINCT FROM EXCLUDED."platform")
+  `;
+}
+
 export async function recordOnlinePresence(heartbeat: OnlinePresenceHeartbeat) {
   const db = getOptionalPrisma();
   if (!db) throw new Error("Online presence storage unavailable");
-  await writeOnlinePresence(db, heartbeat);
+  if (heartbeat.accountSessionId === null && heartbeat.guestAccess && guestFirstAccessPreviewEnabled(heartbeat.environment)) {
+    try { await writeGuestAccessPresence(db, heartbeat); }
+    catch {
+      console.warn("[online-presence] guest access preview unavailable");
+      await writeOnlinePresence(db, heartbeat);
+    }
+  } else await writeOnlinePresence(db, heartbeat);
   // Device context is an optional enhancement to an authenticated canonical
   // session. Never associate anonymous presence credentials with a visitor.
   if (heartbeat.accountSessionId && heartbeat.device) {

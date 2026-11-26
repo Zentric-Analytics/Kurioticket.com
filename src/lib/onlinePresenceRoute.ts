@@ -5,6 +5,7 @@ import { isSameOriginRequest } from "@/lib/visitor-identity";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 import type { OnlinePresencePlatform } from "./onlinePresence";
 import { sessionDeviceObservation, type SessionDeviceObservation } from "./sessionDeviceObservation";
+import { guestFirstAccessObservation, guestFirstAccessPreviewEnabled, type GuestAccessObservation } from "./guestFirstAccessObservation";
 import {
   equalPresenceSignatures,
   presenceTokenHeader,
@@ -20,6 +21,7 @@ export type OnlinePresenceHeartbeat = {
   now: Date;
   /** Only attached to a verified account session, never an anonymous presence ID. */
   device?: SessionDeviceObservation;
+  guestAccess?: GuestAccessObservation;
 };
 
 type Dependencies = {
@@ -128,6 +130,9 @@ export function createOnlinePresenceHandler(transport: PresenceTransport, depend
           platform: verifiedPlatform,
           accountSessionId: account?.id ?? null,
           ...(account ? { device: sessionDeviceObservation(request, verifiedPlatform) } : {}),
+          ...(!account && guestFirstAccessPreviewEnabled(environment) ? {
+            guestAccess: guestFirstAccessObservation(request, verifiedPlatform, process.env.RENDER === "true"),
+          } : {}),
           now,
         });
       }

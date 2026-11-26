@@ -1,6 +1,9 @@
 import "server-only";
 
+import { adminLiveGuestReference } from "@/lib/adminLiveGuestReference";
 import { Prisma } from "@/generated/prisma/client";
+import { presenceSigningSecret } from "@/lib/onlinePresenceCredential";
+import { guestFirstAccessPreviewEnabled, safeLiveGuestAccess } from "@/lib/guestFirstAccessObservation";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { onlinePresenceWindowSeconds } from "@/lib/onlinePresence";
 import { getOnlinePresenceSnapshot } from "@/services/onlinePresenceService";
@@ -72,6 +75,51 @@ export async function readAdminOnlineUsers(
     `);
     // Never show a partial snapshot as a complete online roster.
     if (observations.length > maxObservations) return { ...base, status: "unavailable" };
+    // Optional projection; missing schema or storage does not suppress counts.
+    const secret = presenceSigningSecret();
+    // This staging-only link uses already recorded presence, even when the
+    // additional country/device/first-access preview is disabled.
+    for (const observation of observations) {
+      if (observation.accountSessionId !== null) continue;
+      const reference = adminLiveGuestReference(environment, observation.sourceId, secret);
+      if (reference) observation.liveReference = reference;
+    }
+    if (secret && guestFirstAccessPreviewEnabled(environment)) {
+      try {
+        const details = await db.$queryRaw<Array<{
+          sourceId:string; lastSeenAt:Date; firstSeenAt:Date; countryCode:string|null;
+          deviceLabel:string|null; browser:string|null; os:string|null;
+        }>>(Prisma.sql`
+          SELECT "sourceId", "lastSeenAt", "guestFirstSeenAt" AS "firstSeenAt",
+            "guestCountryCode" AS "countryCode", "guestDeviceLabel" AS "deviceLabel",
+            "guestBrowser" AS "browser", "guestOs" AS "os"
+          FROM "OnlinePresenceSession"
+          WHERE "environment" = ${environment} AND "accountSessionId" IS NULL
+            AND "lastSeenAt" > ${cutoff} AND "lastSeenAt" <= ${now}
+            AND "guestObservedAt" = "lastSeenAt" AND "guestFirstSeenAt" <= "lastSeenAt"
+          LIMIT ${maxObservations + 1}
+        `);
+        if (details.length <= maxObservations) {
+          const bySource = new Map(details.map(detail => [detail.sourceId, detail]));
+          for (const observation of observations) {
+            if (observation.accountSessionId !== null) continue;
+            const detail = bySource.get(observation.sourceId);
+            if (!detail || +detail.lastSeenAt !== +observation.lastSeenAt ||
+                !(detail.firstSeenAt instanceof Date) || !Number.isFinite(+detail.firstSeenAt)) continue;
+            const reference = observation.liveReference;
+            if (!reference) continue;
+            const safe = safeLiveGuestAccess({
+              reference, firstSeenAt:detail.firstSeenAt.toISOString(),
+              countryCode:detail.countryCode, deviceLabel:detail.deviceLabel,
+              browser:detail.browser, os:detail.os,
+            }, observation.lastSeenAt);
+            if (safe) observation.liveAccess = safe;
+          }
+        }
+      } catch {
+        // Fail closed on optional details, not on canonical presence.
+      }
+    }
     return buildAdminOnlineUsersSnapshot(observations, now);
   } catch {
     return { ...base, status: "unavailable" };

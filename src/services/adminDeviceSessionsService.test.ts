@@ -4,9 +4,9 @@ import test from "node:test";
 
 test("device history is account-scoped and excludes credentials and network identifiers", () => {
   const source = readFileSync("src/services/adminDeviceSessionsService.ts", "utf8");
-  assert.match(source, /where:\s*\{ userId, lastSeenAt: deviceTodayWindow\(now, timeZone\) \}/);
+  assert.match(source, /where:\s*\{ userId, lastSeenAt: range === "all" \? \{ lte: now \} : deviceTodayWindow\(now, timeZone\) \}/);
   assert.match(source, /const where = \{ userId, lastSeenAt: deviceHistoryWindow\(query, now, timeZone\), \.\.\.accountDevicePlatformWhere\(query.platform\) \}/);
-  assert.match(source, /take:\s*3/);
+  assert.match(source, /take:\s*1,/);
   assert.match(source, /deviceTodayWindow\(now, timeZone\)/);
   assert.match(source, /loadAdminFullDeviceHistory/);
   assert.match(source, /expiresAt: true, revokedAt: true, revokeReason: true/);
@@ -39,13 +39,21 @@ test("device history is account-scoped and excludes credentials and network iden
   assert.doesNotMatch(source, /select:\s*\{[^}]*userAgent/);
 });
 
-test("registered Activity embeds a heading-free Today preview with a separate full history", () => {
+test("Activity embeds the latest recorded access with a separate full history", () => {
   const activity = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx", "utf8");
   const preview = readFileSync("src/components/admin/AdminIdentityDeviceAccess.tsx", "utf8");
   const dedicated = readFileSync("src/app/admin/platforms/devices/page.tsx", "utf8");
   const history = readFileSync("src/app/admin/users/[kind]/[id]/devices/page.tsx", "utf8");
-  assert.match(activity, /kind === "user" \? await loadAdminDeviceSessions\(id, timeZone, now\) : null/);
-  assert.match(activity, /<AdminIdentityDeviceAccess/);
+  assert.match(activity, /kind === "user" \? await loadAdminDeviceSessions\(id, timeZone, now, "all"\) : null/);
+  assert.match(activity, /<AdminUnifiedActivityList/);
+  assert.match(activity, /loadAdminGuestAccessHistory/);
+  assert.match(activity, /deviceSessions.sessions\[0\]/);
+  assert.match(activity, /guestAccess.records\[0\]/);
+  const unified = readFileSync("src/services/adminUnifiedActivityService.ts", "utf8");
+  assert.match(unified, /row.guestId !== id/);
+  for (const field of ["deviceLabel", "browser", "os", "locationLabel"]) {
+    assert.ok(unified.includes("safeGuestDeviceDescription(row." + field + ', "' + field + '")'));
+  }
   assert.doesNotMatch(activity, /View account device &amp; access history/);
   assert.doesNotMatch(preview, /<h[123][^>]*>Device &amp; Access History/);
   assert.match(preview, /Today · \{formatAdminTimeZoneLabel\(timeZone\)\}/);

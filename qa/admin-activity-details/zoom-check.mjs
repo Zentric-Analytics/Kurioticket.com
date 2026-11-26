@@ -37,56 +37,34 @@ try {
       for (const kind of ["guest","user"]) {
         await page.goto(base+"/admin/users/"+kind+"/"+(kind === "guest" ? "qa-guest-activity-0001" : "qa-realistic-identity-0001")+"/activity");
         await applyZoom(zoom);
-        const layout = await page.evaluate(() => {
-          const info = document.querySelector('[data-testid="activity-info-grid"]');
-          const identity = info.querySelector('section[aria-label="Customer identity"] > div');
-          const summary = info.querySelector('section[aria-label="Activity summary"]');
-          const facts = [...identity.querySelectorAll('dl > div')];
-          const metrics = [...info.querySelectorAll('[data-testid="activity-metric"]')];
-          const metricRects = metrics.map(el=>el.getBoundingClientRect());
-          const infoRect = info.getBoundingClientRect();
-          const summaryRect = summary.getBoundingClientRect();
-          const epsilon=2;
-          const lineMatches = (el,x,top,bottom) => {
-            const rect = el.getBoundingClientRect();
-            return Math.abs(rect.left-x)<epsilon && Math.abs(rect.top-top)<epsilon
-              && Math.abs(rect.bottom-bottom)<epsilon
-              && parseFloat(getComputedStyle(el).borderLeftWidth)>0.5;
-          };
-          const shared = [40,60,80].map(n=>info.querySelector('[data-testid="activity-divider-'+n+'"]'));
-          const lower=info.querySelector('[data-testid="activity-divider-20"]');
-          const email = identity.firstElementChild.querySelector('p');
-          const dates = facts.slice(0,2).map(fact => fact.querySelector("time")).filter(Boolean);
-          const datesUnwrapped = dates.every(time => time.getBoundingClientRect().height < Number.parseFloat(getComputedStyle(time).lineHeight || "24")*1.5);
+
+        const layout=await page.evaluate(()=>{
+          const identity=document.querySelector('section[aria-label="Customer identity"]');
+          const grid=identity.querySelector("div.grid");
+          const summary=document.querySelector('section[aria-label="Activity summary"]');
+          const metrics=[...summary.querySelectorAll('[data-testid="activity-metric"]')];
+          const facts=[...grid.querySelectorAll("dl > div")];
+          const r=grid.getBoundingClientRect();
+          const lines=[40,60,80].map(n=>identity.querySelector('[data-testid="activity-divider-'+n+'"]').getBoundingClientRect());
+          const metricRects=metrics.map(el=>el.getBoundingClientRect());
+          const cols=innerWidth>=1280?6:3;
+          const dates=facts.slice(0,2).map(f=>f.querySelector("time")).filter(Boolean);
           return {
-            overflow:document.documentElement.scrollWidth > innerWidth+1,
-            horizontal:facts.every(fact => fact.getBoundingClientRect().top < identity.firstElementChild.getBoundingClientRect().bottom),
-            metricsCount: metrics.length,
-            noHeading: !summary.querySelector('h2'),
-            evenlySpaced: metricRects.length === 5 && metricRects.every(rect=>Math.abs(rect.width-metricRects[0].width)<1 && Math.abs(rect.top-metricRects[0].top)<1),
-            sharedConnected:shared.every((el,i)=>lineMatches(el,metricRects[i+2].left,infoRect.top,infoRect.bottom)),
-            partialConnected:lineMatches(lower,metricRects[1].left,summaryRect.top,summaryRect.bottom),
-            alignedFacts:facts.every((fact,i)=>Math.abs(fact.getBoundingClientRect().left-metricRects[i+2].left)<epsilon),
-            joint:Math.abs(identity.getBoundingClientRect().bottom-summaryRect.top)<epsilon &&
-              parseFloat(getComputedStyle(summary).borderTopWidth)>0.5,
-            edges:parseFloat(getComputedStyle(info).borderTopWidth)>0.5 &&
-              parseFloat(getComputedStyle(info).borderBottomWidth)>0.5,
-            startsAtLeft: Math.abs(metricRects[0].left-infoRect.left)<epsilon,
-            emailFits: !email || email.getBoundingClientRect().height < parseFloat(getComputedStyle(email).fontSize)*1.9,
-            datesUnwrapped,
+            overflow:document.documentElement.scrollWidth>innerWidth+1,
+            metricsCount:metrics.length,
+            noHeading:!summary.querySelector("h2"),
+            evenlySpaced:metricRects.every((m,i)=>Math.abs(m.width-metricRects[0].width)<2&&Math.abs(m.top-metricRects[Math.floor(i/cols)*cols].top)<2),
+            identityDividers:lines.every((l,i)=>Math.abs(l.left-(r.left+r.width*(i+2)/5))<2&&Math.abs(l.bottom-r.bottom)<2),
+            alignedFacts:facts.every((f,i)=>Math.abs(f.getBoundingClientRect().left-lines[i].left)<2),
+            datesUnwrapped:dates.every(t=>t.getBoundingClientRect().height<parseFloat(getComputedStyle(t).lineHeight||"24")*1.5),
             values:[...document.querySelectorAll('section[aria-label="Customer identity"] dd,[data-testid="activity-metric-value"]')].map(el=>getComputedStyle(el).fontSize)
           };
         });
         assert.equal(layout.overflow,false,JSON.stringify({width,zoom,kind,...layout}));
-        assert.equal(layout.horizontal,true,JSON.stringify({width,zoom,kind,...layout}));
-        assert.equal(layout.metricsCount,5,JSON.stringify({width,zoom,kind,...layout}));
-        assert.equal(layout.noHeading,true,JSON.stringify({width,zoom,kind,...layout}));
-        assert.equal(layout.evenlySpaced,true,JSON.stringify({width,zoom,kind,...layout}));
-        for (const key of ["sharedConnected","partialConnected","alignedFacts","joint","edges","startsAtLeft"])
+        assert.equal(layout.metricsCount,6,JSON.stringify(layout));
+        for(const key of ["noHeading","evenlySpaced","identityDividers","alignedFacts","datesUnwrapped"])
           assert.equal(layout[key],true,JSON.stringify({width,zoom,kind,...layout}));
-        assert.equal(layout.emailFits,true,JSON.stringify({width,zoom,kind,...layout}));
-        assert.equal(layout.datesUnwrapped,true,JSON.stringify({width,zoom,kind,...layout}));
-        assert.deepEqual(layout.values,Array(8).fill("16px"));
+        assert.deepEqual(layout.values,Array(9).fill("16px"));
         await screenshot(`after-activity-${kind}-${width}-zoom-${Math.round(zoom*100)}`,zoom);
       }
       await page.goto(base+"/before?kind=user");

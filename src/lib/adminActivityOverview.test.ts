@@ -184,7 +184,11 @@ test("recent search presentation is informational and leaves full Journey Histor
   assert.match(component,/Search record only/);
   assert.match(component,/View Journey History/);
   assert.doesNotMatch(component,/completeJourneyDetailHref|View journey for /);
-  assert.match(page,/<AdminActivityOverview/);
+  const full = readFileSync("src/app/admin/users/[kind]/[id]/activity/all/page.tsx","utf8");
+  const unified = readFileSync("src/components/admin/AdminUnifiedActivityList.tsx","utf8");
+  assert.match(page,/<AdminUnifiedActivityList/);
+  assert.match(unified,/View all activity/);
+  assert.match(full,/View journey history/);
   assert.match(history,/View journey <ChevronRight/);
 });
 
@@ -243,12 +247,17 @@ test("operational guest events appear directly in Activity without a second-page
   const page = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx", "utf8");
   const overview = readFileSync("src/components/admin/AdminActivityOverview.tsx", "utf8");
   const legacy = readFileSync("src/app/admin/users/[kind]/[id]/other/page.tsx", "utf8");
-  assert.match(page, /<AdminActivityOverview timeZone=\{timeZone\} events=\{data\.events\}/);
-  assert.match(page, /environment=\{environment\} operational=\{operational\}/);
+  const unified = readFileSync("src/components/admin/AdminUnifiedActivityList.tsx", "utf8");
+  const full = readFileSync("src/app/admin/users/[kind]/[id]/activity/all/page.tsx", "utf8");
+  assert.match(page, /<AdminUnifiedActivityList events=\{recentEvents\}/);
+  assert.match(page, /environment=\{environment\}/);
   assert.doesNotMatch(page, /otherHref|encodeURIComponent\(id\) \+ "\/other"/);
-  assert.match(overview, /<ActivityTimeline timeZone=\{timeZone\} events=\{events\} nextHref=\{null\} environment=\{environment\}/);
+  assert.match(unified, /data-activity-id=\{row\.id\}/);
+  assert.doesNotMatch(unified, /View recorded session activity/);
+  assert.match(full, /operational \? "Essential operational activity"/);
+  assert.match(full, /!operational \|\| tab\.value !== "pages"/);
+  assert.match(page, /redirect\(activityHref\(basePath \+ "\/all"/);
   assert.doesNotMatch(overview, /View recorded session activity|href=\{otherHref\}/);
-  assert.match(overview, /!operational \? <section/);
   assert.match(legacy, /loadAdminIdentityActivity\(kind, id, parsed\.filters, undefined, "all"\)/);
 });
 

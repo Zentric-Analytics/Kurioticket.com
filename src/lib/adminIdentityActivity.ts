@@ -5,7 +5,7 @@ import type { PublicEnvironment } from "./stagingSafety";
 
 export const ACTIVITY_PAGE_SIZE = 20;
 export const ACTIVITY_FETCH_LIMIT = ACTIVITY_PAGE_SIZE + 25;
-export const activityTabs = ["all", "searches", "journeys", "selections", "handoffs", "interactions", "pages"] as const;
+export const activityTabs = ["all", "searches", "journeys", "selections", "handoffs", "interactions", "pages", "access"] as const;
 export const activityStages = ["all", "SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED",
   "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "ACCOUNT_ACTIVITY", "PAGE_VIEW"] as const;
 export const activityProducts = ["all", "FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const;
@@ -108,6 +108,7 @@ const allJourneyStages: JourneyStage[] = ["SEARCH_COMPLETED", "RESULTS_VIEWED", 
 export function allowedActivityStages(filters: ActivityFilters): Set<ActivityStage> {
   const available: ActivityStage[] = filters.tab === "all"
     ? [...allJourneyStages, "ACCOUNT_ACTIVITY", "PAGE_VIEW"]
+    : filters.tab === "access" ? []
     : filters.tab === "pages" ? ["PAGE_VIEW"]
     : filters.tab === "journeys" ? allJourneyStages
     : filters.tab === "searches" ? ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED"]
@@ -116,7 +117,7 @@ export function allowedActivityStages(filters: ActivityFilters): Set<ActivitySta
     : ["PROVIDER_HANDOFF_STARTED"];
   return new Set(filters.stage === "all" ? available : available.filter(stage => stage === filters.stage));
 }
-export const activitySource = (id: string) => id.startsWith("j-") ? "j" : id.startsWith("s-") ? "s"
+export const activitySource = (id: string) => id.startsWith("d-") ? "d" : id.startsWith("j-") ? "j" : id.startsWith("s-") ? "s"
   : id.startsWith("r-") ? "r" : "e";
 function scope(kind: IdentityKind, id: string, filters: ActivityFilters, environment: PublicEnvironment) {
   // Preserve existing newest-first cursors; bind oldest-first tokens to their own order.
@@ -133,7 +134,7 @@ function readActivityCursor(input: string): (ActivityCursor & { scope: string })
     if (!item || typeof item !== "object") return null;
     const x = item as {v?: unknown; id?: unknown; at?: unknown; scope?: unknown};
     if (x.v !== 1 || typeof x.scope !== "string"
-      || typeof x.id !== "string" || !/^[jesr]-[a-z0-9_-]{6,80}$/i.test(x.id)
+      || typeof x.id !== "string" || !/^[djesr]-[a-z0-9_-]{6,100}$/i.test(x.id)
       || typeof x.at !== "string" || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(x.at)) return null;
     if (!Number.isFinite(new Date(x.at).getTime())) return null;
     return { id: x.id, at: x.at, scope: x.scope };

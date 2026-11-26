@@ -275,6 +275,9 @@ test("both history directories belong to Users and highlight exactly one subsect
     ["/admin/users/user/example123/pages", "/admin/users/pages"],
     ["/admin/users/guest/example123/pages", "/admin/users/pages"],
     ["/admin/users/user/example123/activity", "/admin/users"],
+    ["/admin/users/user/example123/activity/all", "/admin/users"],
+    ["/admin/users/guest/example123/activity/all", "/admin/users"],
+    ["/admin/users/online/guest/" + "A".repeat(43), "/admin/users/online"],
   ]) {
     const sections = getAdminWorkspaceSections(path, "ADMIN");
     assert.deepEqual(sections?.links.map(link => link.label), ["Users Directory", "Online Users", "Device & Access", "Pages Visited"]);
@@ -292,6 +295,11 @@ test("individual histories retain the originating Users workspace section", () =
       const links = getAdminWorkspaceSections(history, "ADMIN")!.links;
       const active = (context: string) => links.filter(link => isAdminWorkspaceSectionActive(history, link.href, context)).map(link => link.href);
       assert.deepEqual(active(activity + "?range=today&directory=role%3DALL"), ["/admin/users"]);
+      assert.deepEqual(active(activity + "/all?range=all&tab=searches&cursor=fixture-cursor"), ["/admin/users"]);
+      assert.deepEqual(active("/admin/users/" + kind + "/other123/activity/all"), ["/admin/users/" + section]);
+      assert.deepEqual(active("/admin/users/" + (kind === "user" ? "guest" : "user") + "/example123/activity/all"), ["/admin/users/" + section]);
+      assert.deepEqual(active(activity + "/all/unrelated"), ["/admin/users/" + section]);
+      assert.deepEqual(active("https://example.invalid" + activity + "/all"), ["/admin/users/" + section]);
       assert.deepEqual(active("/admin/users/" + section + "?range=all"), ["/admin/users/" + section]);
       assert.deepEqual(active("/admin/users/" + kind + "/other123/activity"), ["/admin/users/" + section]);
       assert.deepEqual(active("https://example.invalid" + activity), ["/admin/users/" + section]);

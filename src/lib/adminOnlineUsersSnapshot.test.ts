@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildAdminOnlineUsersSnapshot, type RawPresenceRow } from "./adminOnlineUsersSnapshot";
+import { buildAdminOnlineUsersSnapshot, resolveLiveGuestActivity, type RawPresenceRow } from "./adminOnlineUsersSnapshot";
 
 const now = new Date("2026-11-21T20:00:00.000Z");
 function observation(
@@ -125,4 +125,91 @@ test("recorded location strings are trimmed and invalid characters or oversized 
     ], now);
     assert.equal(invalid.rows[0].locationLabel, null);
   }
+});
+
+test("live guest preview uses only a validated current observation and an opaque reference",()=>{
+  const first = new Date(+now-30000).toISOString();
+  const access = {reference:"A".repeat(43),firstSeenAt:first,countryCode:"NG",deviceLabel:"iOS device",browser:null,os:"iOS"};
+  const snapshot = buildAdminOnlineUsersSnapshot([
+    {...observation("private-source","ios",5),liveReference:access.reference,liveAccess:access},
+    observation("other-private-source","android",2,null,false,"Unrelated country"),
+  ],now);
+  assert.equal(snapshot.total,2);
+  const row = snapshot.rows.find(r=>r.liveAccess);
+  assert.equal(row?.locationLabel,"Nigeria");
+  assert.equal(row?.liveAccess?.firstSeenAt,first);
+  assert.equal(snapshot.rows.find(r=>!r.liveAccess)?.locationLabel,null);
+  assert.doesNotMatch(JSON.stringify(snapshot),/private-source/);
+  const stale = buildAdminOnlineUsersSnapshot([
+    {...observation("private-source","ios",20),liveReference:access.reference,liveAccess:access},
+    observation("private-source","ios",1),
+  ],now);
+  assert.equal(stale.rows[0].liveAccess,undefined);
+  assert.equal(stale.rows[0].locationLabel,null);
+});
+
+test("verified live guest can be opened without recording optional access details",()=>{
+  const reference = "B".repeat(43);
+  const snapshot = buildAdminOnlineUsersSnapshot([
+    {...observation("source-one","ios",5),liveReference:reference},
+    {...observation("expired","android",90),liveReference:"C".repeat(43)},
+    {...observation("invalid-account","ios",1,null,true),liveReference:"D".repeat(43)},
+    {...observation("invalid-reference","mobile_web",2),liveReference:"raw-source"},
+    {...observation("account","desktop_web",3,{id:"u-valid",name:"Account",role:"USER"}),liveReference:"E".repeat(43)},
+  ],now);
+  assert.equal(snapshot.total,3);
+  const guest=snapshot.rows.find(r=>r.liveReference===reference);
+  assert.equal(guest?.kind,"guest");
+  assert.equal(guest?.liveAccess,undefined);
+  assert.equal(guest?.locationLabel,null);
+  assert.equal(snapshot.rows.filter(r=>r.liveReference).length,1);
+  assert.doesNotMatch(JSON.stringify(snapshot),/source-one|raw-source|expired|invalid-account/);
+});
+
+test("preview detail cannot be attached to a different live reference",()=>{
+  const snapshot=buildAdminOnlineUsersSnapshot([{
+    ...observation("source-one","ios",5),liveReference:"A".repeat(43),
+    liveAccess:{reference:"B".repeat(43),firstSeenAt:new Date(+now-30000).toISOString(),countryCode:"NG",deviceLabel:"iOS device",browser:null,os:"iOS"},
+  }],now);
+  assert.equal(snapshot.rows[0].liveReference,"A".repeat(43));
+  assert.equal(snapshot.rows[0].liveAccess,undefined);
+  assert.equal(snapshot.rows[0].locationLabel,null);
+});
+
+test("live activity resolution accepts exactly one fresh guest reference",()=>{
+  const reference = "A".repeat(43);
+  const snapshot = buildAdminOnlineUsersSnapshot([
+    {...observation("one","desktop_web",5),liveReference:reference},
+    {...observation("two","android",2),liveReference:"B".repeat(43)},
+  ],now);
+  assert.equal(resolveLiveGuestActivity(snapshot,reference,now)?.platforms[0],"desktop_web");
+  assert.equal(resolveLiveGuestActivity(snapshot,"B".repeat(43),now)?.platforms[0],"android");
+  assert.equal(resolveLiveGuestActivity(snapshot,"C".repeat(43),now),null);
+  assert.equal(resolveLiveGuestActivity(snapshot,"guest-1",now),null);
+});
+
+test("guest activity cannot resolve a stale heartbeat or a stale or future snapshot",()=>{
+  const reference = "A".repeat(43);
+  const snapshot = buildAdminOnlineUsersSnapshot([
+    {...observation("one","ios",89),liveReference:reference},
+  ],now);
+  assert.ok(resolveLiveGuestActivity(snapshot,reference,now));
+  assert.equal(resolveLiveGuestActivity(snapshot,reference,new Date(+now+1000)),null);
+  assert.equal(resolveLiveGuestActivity(snapshot,reference,new Date(+now+90000)),null);
+  assert.equal(resolveLiveGuestActivity(snapshot,reference,new Date(+now-1)),null);
+  assert.equal(resolveLiveGuestActivity({status:"unavailable",observedAt:now.toISOString(),windowSeconds:90},reference,now),null);
+});
+
+test("guest activity rejects ambiguous and authenticated roster matches",()=>{
+  const reference = "A".repeat(43);
+  const duplicate = buildAdminOnlineUsersSnapshot([
+    {...observation("one","ios",5),liveReference:reference},
+    {...observation("two","android",2),liveReference:reference},
+  ],now);
+  assert.equal(resolveLiveGuestActivity(duplicate,reference,now),null);
+  const account = buildAdminOnlineUsersSnapshot([
+    observation("one","ios",1,{id:"u-valid",name:"Account",role:"USER"}),
+  ],now);
+  assert.equal(resolveLiveGuestActivity(account,reference,now),null);
+  assert.equal(resolveLiveGuestActivity({...account,rows:account.rows.map(row=>({...row,liveReference:reference}))},reference,now),null);
 });

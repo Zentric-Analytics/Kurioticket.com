@@ -1,21 +1,19 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Plane, Building2, CarFront } from "lucide-react";
 
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
 import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
-import { AdminActivityOverview } from "@/components/admin/AdminActivityOverview";
-import { PageViewRecords } from "@/components/admin/PageViewRecords";
-import { AdminIdentityDeviceAccess } from "@/components/admin/AdminIdentityDeviceAccess";
+import { AdminUnifiedActivityList, type AccessPreview } from "@/components/admin/AdminUnifiedActivityList";
+import { platformLabel } from "@/components/admin/AdminIdentityDeviceAccess";
+import { loadAdminGuestAccessHistory } from "@/services/adminGuestAccessService";
 import { loadAdminDeviceSessions } from "@/services/adminDeviceSessionsService";
-import { journeyHistoryHrefFromActivity } from "@/lib/adminActivityOverview";
 import { pageHistoryHrefFromActivity } from "@/lib/adminPageHistory";
 import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { normalizeUserActivityQuery, safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
-import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
 import { withOptionalDb } from "@/lib/prisma";
@@ -28,13 +26,6 @@ type Params = { kind: string; id: string };
 type RawQuery = Record<string, string | string[] | undefined>;
 type PageProps = { params: Promise<Params>; searchParams: Promise<RawQuery> };
 
-const tabs = [
-  { value: "all", label: "All activity" },
-  { value: "searches", label: "Searches" },
-  { value: "selections", label: "Selections" },
-  { value: "handoffs", label: "Provider handoffs" },
-  { value: "interactions", label: "Saved, shared & alerts" },
-] as const;
 // Keep the UTC instant, but use a compact, unambiguous header label so
 // each date stays on one line beside the workspace sidebar at desktop zoom.
 const format = (at: Date, timeZone: string) => new Intl.DateTimeFormat("en-GB", {
@@ -118,12 +109,15 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const timeZone = await getAdminViewerTimeZone(session.user.id);
   const now = new Date();
   const raw = normalizeUserActivityQuery(await searchParams, now, timeZone);
-  // Legacy activity bookmarks still open this workspace; page views now have their own section.
-  if (raw.tab === "pages") delete raw.tab;
-  if (raw.stage === "PAGE_VIEW") delete raw.stage;
-  if (raw.type === "PAGE_VIEW") delete raw.type;
-  const filtersResult = parseActivityFilters(raw, timeZone);
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
+  // Preserve existing filtered Activity bookmarks at the new full-history route.
+  // Never silently broaden an invalid query, or reintroduce old cursor semantics.
+  const hasDetailFilter = ["tab", "stage", "product", "q"].some(key =>
+    typeof raw[key] === "string" && raw[key] !== "" && raw[key] !== "all");
+  if (hasDetailFilter && !Object.values(raw).some(Array.isArray)) {
+    redirect(activityHref(basePath + "/all", safeActivityQueryParams(raw), { cursor: null, order: null }));
+  }
+  const filtersResult = parseActivityFilters(raw, timeZone);
   const backHref = safeDirectoryHref(raw);
   const queryParams = safeActivityQueryParams(raw);
   if (!filtersResult.ok) return <div className="space-y-4">
@@ -147,23 +141,30 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       action={<Link className={buttonClass} href={activityHref(basePath, queryParams, { cursor: null, order: null })}>Return to newest activity</Link>} />
   </div>;
   const data = result.data;
-  const deviceSessions = kind === "user" ? await loadAdminDeviceSessions(id, timeZone, now) : null;
+  const deviceSessions = kind === "user" ? await loadAdminDeviceSessions(id, timeZone, now, "all") : null;
+  const guestAccess = kind === "guest" ? await loadAdminGuestAccessHistory(id, { range: "all", page: 1 }, timeZone, now) : null;
   const environment = data.environment;
   const operational = data.source === "operational";
-  const order = filters.order === "oldest" ? "oldest" : "newest";
   const activityReturn = activityHref(basePath, queryParams, {});
   // Keep the reporting window while letting page visits ignore travel-specific filters.
   const pageFilters: ActivityFilters = { ...filters, tab: "pages", stage: "all", product: "all", q: "", order: "newest" };
   const pagesHref = pageHistoryHrefFromActivity(kind, id, pageFilters, typeof raw.range === "string" ? raw.range : undefined, activityReturn);
-  // The unfiltered overview already includes the five newest page records and total.
+  // The unfiltered overview already includes the newest page record and total.
   // Only issue a separate compact, owner-scoped read when travel filters exclude them.
   const pageSummaryResult = operational ? null
     : filters.tab === "all" && filters.stage === "all" && filters.product === "all" && !filters.q
       ? result
       : await loadAdminIdentityActivity(kind, id, pageFilters, undefined, "summary");
   const pageSummary = pageSummaryResult?.status === "ok" ? pageSummaryResult.data : null;
-  const journeyHistoryHref = journeyHistoryHrefFromActivity(kind, id, filters,
-    typeof raw.range === "string" ? raw.range : undefined, activityReturn);
+  const accessHref = basePath.replace(/\/activity$/, "/devices") + "?range=all&activityReturn=" + encodeURIComponent(activityReturn);
+  const latestDevice = deviceSessions?.status === "ok" ? deviceSessions.sessions[0] : undefined;
+  const latestGuest = guestAccess?.status === "ok" ? guestAccess.records[0] : undefined;
+  const access: AccessPreview | null = latestDevice
+    ? { at: latestDevice.lastSeenAt, href: accessHref, detail: [platformLabel(latestDevice), latestDevice.deviceLabel, latestDevice.os, latestDevice.browser, latestDevice.locationLabel ?? "Location unavailable"].filter(Boolean).join(" · ") }
+    : latestGuest ? { at: latestGuest.at, href: accessHref, detail: [latestGuest.platform, latestGuest.deviceLabel, latestGuest.os, latestGuest.browser, latestGuest.locationLabel ?? "Location unavailable", latestGuest.evidence === "search" ? "Search access observation" : latestGuest.evidence === "handoff" ? "Handoff access observation" : "Page access observation"].filter(Boolean).join(" · ") }
+    : null;
+  const recentEvents = [...data.events.filter(event => event.stage !== "PAGE_VIEW"), ...(pageSummary?.events.filter(event => event.stage === "PAGE_VIEW") ?? [])];
+  const allHref = activityHref(basePath + "/all", queryParams, { cursor: null });
 
   return <div className="min-w-0 space-y-6 bg-white pb-2 text-[#0F172A]">
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[13px] text-[#475569]">
@@ -178,16 +179,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       className="min-w-0 space-y-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5 lg:p-6">
       <div data-testid="activity-info-grid"
         className="relative min-w-0 lg:-mx-6 lg:-mt-6 lg:border-y lg:border-[#E2E8F0]">
-        {/* These three rules span the entire information grid, including its
-            top and bottom boundaries. No independent inset fact borders. */}
-        <div aria-hidden="true" data-testid="activity-shared-dividers"
-          className="pointer-events-none absolute inset-0 hidden lg:block">
-          <span data-testid="activity-divider-40" className="absolute inset-y-0 left-[40%] border-l border-[#E2E8F0]" />
-          <span data-testid="activity-divider-60" className="absolute inset-y-0 left-[60%] border-l border-[#E2E8F0]" />
-          <span data-testid="activity-divider-80" className="absolute inset-y-0 left-[80%] border-l border-[#E2E8F0]" />
-        </div>
       <section aria-label="Customer identity" className="relative min-w-0">
-        <div className={activityColumns + " lg:items-start lg:py-6"}>
+        <div data-testid="activity-identity-facts" className={activityColumns + " relative lg:items-start lg:py-4"}>
           <div className="flex min-w-0 items-center gap-4 lg:col-span-2 lg:gap-3 lg:px-3 min-[1700px]:gap-4 min-[1700px]:px-6">
             <span aria-hidden="true"
               className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold min-[1100px]:hidden min-[1700px]:flex">
@@ -214,35 +207,40 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             <Fact label={kind === "guest" ? "First seen" : "Joined"} className="lg:border-l-0 lg:pl-2 2xl:pl-6"><HeaderTime timeZone={timeZone} at={data.firstSeenAt}/></Fact>
             <Fact label="Last seen" className="lg:border-l-0 lg:pl-2 2xl:pl-6">{data.lastSeenAvailable === false ? "Unavailable" : data.lastSeenAt ? <HeaderTime timeZone={timeZone} at={data.lastSeenAt}/> : "—"}</Fact>
             <Fact label="Events" testId="activity-events-fact"
-              className={"lg:border-l-0 lg:pl-6 " + (kind === "user" || data.source === "visitor" ? "lg:pr-28" : "")}>
+              className="lg:border-l-0 lg:pl-6 lg:pr-3">
               {data.events.length - data.events.filter(event => event.stage === "PAGE_VIEW").length + (data.summary.pagesVisited ?? 0)}
             </Fact>
           </dl>
+        {/* Identity has five columns; the six metrics below have their own grid. */}
+        <div aria-hidden="true" data-testid="activity-identity-dividers"
+          className="pointer-events-none absolute inset-0 hidden lg:block">
+          <span data-testid="activity-divider-40" className="absolute inset-y-0 left-[40%] border-l border-[#E2E8F0]" />
+          <span data-testid="activity-divider-60" className="absolute inset-y-0 left-[60%] border-l border-[#E2E8F0]" />
+          <span data-testid="activity-divider-80" className="absolute inset-y-0 left-[80%] border-l border-[#E2E8F0]" />
+        </div>
+        </div>
 
           {(kind === "user" || (kind === "guest" && data.source === "visitor")) ? <div
-            className="flex min-w-0 justify-start lg:absolute lg:right-2 lg:top-1/2 lg:-translate-y-1/2"
+            className="flex min-w-0 justify-end pt-3 lg:px-3 lg:pb-3 lg:pt-0"
             aria-label="Identity management">
             {kind === "guest"
               ? <GuestTrackingActions visitorId={id} backHref={backHref} />
               : <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>}
           </div> : null}
-        </div>
       </section>
 
       <section aria-label="Activity summary" className="relative min-w-0 border-y border-[#E2E8F0] py-4 lg:border-b-0 lg:py-5">
-        {/* The 20% line begins at the separator, since identity spans two cells above. */}
-        <span aria-hidden="true" data-testid="activity-divider-20"
-          className="pointer-events-none absolute inset-y-0 left-[20%] hidden border-l border-[#E2E8F0] lg:block" />
-        <div data-testid="activity-metrics-grid" className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-0">
+        <div data-testid="activity-metrics-grid" className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 xl:grid-cols-6 lg:gap-x-0">
           {([
             { label: "Searches", count: data.summary.searches },
             { label: "Results viewed", count: data.summary.resultsViewed },
             { label: "Offers selected", count: data.summary.offersSelected },
             { label: "Provider handoffs", count: data.summary.providerHandoffs },
             { label: "Journeys tracked", count: data.summary.journeysTracked },
+            { label: "Pages visited", count: data.summary.pagesVisited ?? 0 },
           ]).map(({label,count}) => <div key={label} data-testid="activity-metric"
-            className="min-w-0 pr-2 sm:pr-3 lg:px-6">
-            <span data-testid="activity-metric-label" className="block text-[12px] font-normal text-[#64748B] lg:whitespace-nowrap">{label}</span>
+            className="min-w-0 pr-2 sm:pr-3 lg:px-3 xl:border-l xl:border-[#E2E8F0] xl:first:border-l-0">
+            <span data-testid="activity-metric-label" className="block break-words text-[12px] font-normal text-[#64748B]">{label}</span>
             <span data-testid="activity-metric-value" className="mt-1 block text-[16px] font-medium leading-6 tabular-nums text-[#0F172A]">{count}</span>
             {label === "Searches" && data.summary.searchProducts ? <div aria-label="Searches by product"
               className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-1 text-[11px] sm:gap-x-3 sm:text-xs leading-4 text-[#64748B]">
@@ -261,40 +259,10 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       </section>
       </div>
 
-      {kind === "user" ? <AdminIdentityDeviceAccess timeZone={timeZone} kind={kind} result={deviceSessions}
-        historyHref={"/admin/users/user/" + encodeURIComponent(id) + "/devices?range=all&activityReturn=" + encodeURIComponent(activityReturn)} /> : null}
-
-      {!operational ? <div data-testid="activity-page-visits-summary" className="min-w-0 space-y-2 border-t border-[#E2E8F0] pt-4">
-        {pageSummary && pageSummary.source !== "operational" ? <>
-          <p className="text-[12px] text-[#64748B]">Page visits use the selected date range only.</p>
-          <PageViewRecords timeZone={timeZone} key={pagesHref} events={pageSummary.events} count={pageSummary.summary.pagesVisited ?? 0}
-            full={false} href={pagesHref} operational={false}/>
-        </> : <section aria-label="Pages visited" className="space-y-2">
-          <h2 className="text-[15px] font-semibold">Pages visited</h2>
-          <p className="text-[13px] text-[#64748B]">Page visit history is unavailable. This does not mean there are no recorded visits.</p>
-          <Link href={pagesHref} className={buttonClass}>View all pages visited</Link>
-        </section>}
-      </div> : null}
-
-      <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
-        <section aria-label="Activity filters" className="min-w-0">
-          <ActivityFiltersBar timeZone={timeZone} now={now.toISOString()} path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
-            initial={{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order,
-              from:filters.from,to:filters.to,range:typeof raw.range === "string" && ["today","24h","7d","30d","all","custom"].includes(raw.range) ? raw.range : (filters.from || filters.to ? "custom" : "today")}}
-            tabs={<nav aria-label="Activity tabs" className="flex max-w-full shrink-0 gap-7 overflow-x-auto">
-              {tabs.map(tab => <Link key={tab.value}
-                href={activityHref(basePath, queryParams, { tab: tab.value, cursor: null, stage: null })}
-                aria-current={filters.tab === tab.value ? "page" : undefined}
-                className={"focus-ring relative shrink-0 whitespace-nowrap rounded-sm py-3 text-[13px] font-medium text-[#475569] " +
-                  (filters.tab === tab.value ? "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#004BB8]" : "")}>
-                  {tab.label}
-                </Link>)}
-            </nav>} />
-        </section>
-
-        <AdminActivityOverview timeZone={timeZone} events={data.events} journeyHistoryHref={journeyHistoryHref}
-          environment={environment} operational={operational}/>
-      </div>
+      <AdminUnifiedActivityList events={recentEvents} timeZone={timeZone} environment={environment}
+        overview access={access} accessHref={accessHref} accessUnavailable={kind === "user" ? deviceSessions?.status !== "ok" : guestAccess?.status !== "ok"}
+        pagesHref={!operational ? pagesHref : undefined} pagesUnavailable={!operational && !pageSummary}
+        allHref={allHref}/>
     </section>
   </div>;
 }
