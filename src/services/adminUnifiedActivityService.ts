@@ -4,14 +4,11 @@ import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { ACTIVITY_PAGE_SIZE, activityWindow, decodeActivityCursor, encodeActivityCursor, type ActivityCursor, type ActivityFilters } from "@/lib/adminIdentityActivity";
 import { type ActivityRow, type IdentityKind } from "@/lib/adminIdentityJourney";
-import { accountDevicePlatform, recordedDevicePlatformLabels } from "@/lib/adminDevicePlatform";
 import { guestAccessRecordsSql, accessDatePredicate } from "@/lib/adminGuestAccessSql";
-import { safeGuestDeviceDescription } from "@/lib/guestAccessObservation";
 import { loadAdminIdentityActivity, type ActivityReadResult } from "@/services/adminIdentityActivityService";
 
 type DeviceRow = { id: string; at: Date; detail: string; label: string };
 const pageSize = ACTIVITY_PAGE_SIZE;
-const platformLabels: Record<string,string> = recordedDevicePlatformLabels;
 function deviceSeek(cursor: ActivityCursor | undefined) {
   if (!cursor) return Prisma.empty;
   const at = new Date(cursor.at);
