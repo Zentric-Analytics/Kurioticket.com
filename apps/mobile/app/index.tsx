@@ -7,6 +7,7 @@ import { runBootstrap, type BootstrapState } from "../src/launch/bootstrap";
 import { restoreAuthenticatedSession } from "../src/features/auth/authApi";
 import { getStartupRoute } from "../src/launch/startupRoute";
 import { ensureLatestUpdate } from "../src/updates/ensureLatestUpdate";
+import { recordStartupDiagnostic } from "../src/diagnostics/startupDiagnostics";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -23,8 +24,8 @@ export default function Index() {
       .then((nextState) => {
         if (runId === bootstrapId.current) setState(nextState);
       })
-      .catch((error) => {
-        if (process.env.NODE_ENV !== "production") console.warn("[mobile-bootstrap] unexpected bootstrap failure", error);
+      .catch(() => {
+        recordStartupDiagnostic("bootstrap", "error");
         if (runId === bootstrapId.current) setState({ status: "offline" });
       });
   }, []);

@@ -151,3 +151,23 @@ test("foreground update failures do not block later resume checks", async () => 
   await flush();
   assert.equal(checks, 2);
 });
+
+test("classifies download versus activation failure without retaining native error text", async () => {
+  const previous = console.info;
+  const lines: string[] = [];
+  console.info = (...args) => lines.push(args.join(" "));
+  try {
+    assert.equal(await ensureLatestUpdate(client({
+      checkForUpdateAsync: async () => ({ isAvailable: true }),
+      fetchUpdateAsync: async () => { throw new Error("secret-url"); },
+    })), "error");
+    assert.match(lines.at(-1)!, /"boundary":"update-download".*"outcome":"error"/);
+    assert.equal(await ensureLatestUpdate(client({
+      checkForUpdateAsync: async () => ({ isAvailable: true }),
+      fetchUpdateAsync: async () => ({ isNew: true }),
+      reloadAsync: async () => { throw new Error("private-token"); },
+    })), "error");
+    assert.match(lines.at(-1)!, /"boundary":"update-activation".*"outcome":"error"/);
+    assert.doesNotMatch(lines.join(" "), /secret-url|private-token/);
+  } finally { console.info = previous; }
+});

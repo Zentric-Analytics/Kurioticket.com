@@ -8,6 +8,12 @@ import { kayakCarCardModel, kayakFlightCardModel, kayakHotelCardModel } from "@/
 import { groupKayakCarResults } from "@/lib/cars/carResults";
 import { isKayakSandboxEnabled, KayakError, KayakPartialSearchError, KayakSandboxClient, type KayakVertical } from "./kayakSandbox";
 import { resolveRegularKayakSearch } from "./kayakRegularSearch";
+import { kayakCorrelation } from "./kayakRequestDiagnostics";
+
+function reportProviderRows(requestId: string | undefined, vertical: KayakVertical, status: "success" | "failed", rawRows: number, normalizedRows: number) {
+  try { console.info("[kayak-search:provider-outcome]", JSON.stringify({ ...kayakCorrelation(requestId), vertical, status, rawRows, normalizedRows })); }
+  catch { /* An operational log sink cannot discard valid inventory. */ }
+}
 
 export type KayakRequestContext = { clientIp: string; userAgent?: string; trackId?: string; requestId?: string; signal?: AbortSignal };
 
@@ -41,9 +47,12 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
     const fresh=await currentSandboxGrant();
     return fresh && fresh.revision === grant?.revision ? results.map(result=>displayOnlyInventory(result,fresh.revision)) : [];
   };
-  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, production ? context.userAgent : kayakProviderUserAgent(vertical, context.userAgent), context.clientIp, undefined,
-    diagnostic => console.warn("[kayak-search:http-rejection]", JSON.stringify({ ...diagnostic, requestId: context.requestId })),
-    diagnostic => console.info("[kayak-search:car-request]", JSON.stringify({ ...diagnostic, requestId: context.requestId })));
+  const correlation = kayakCorrelation(context.requestId);
+  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, production ? context.userAgent : kayakProviderUserAgent(vertical, context.userAgent), context.clientIp,
+    timing => console.info("[kayak-search:stage-timing]", JSON.stringify({ ...timing, ...correlation })),
+    diagnostic => console.warn("[kayak-search:http-rejection]", JSON.stringify({ ...diagnostic, ...correlation })),
+    diagnostic => console.info("[kayak-search:car-request]", JSON.stringify({ ...diagnostic, ...correlation })),
+    { ...correlation, incomingUserAgent: context.userAgent, product: vertical });
   try {
     const trackId = context.trackId || crypto.randomUUID();
     const resolved = await resolveRegularKayakSearch(vertical, criteria, (term, requested = "hotels") => client.places(requested, term, trackId, context.signal));
@@ -63,19 +72,23 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
       await client.search(resolved.search, trackId, context.signal),
       crypto.randomUUID(),
     );
-    return { provider: "KAYAK sandbox", results: await protect(offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; })), status: "success", latencyMs: Date.now() - startedAt };
+    const results = await protect(offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; }));
+    reportProviderRows(context.requestId, vertical, "success", offers.length, results.length);
+    return { provider: "KAYAK sandbox", results, status: "success", latencyMs: Date.now() - startedAt };
   } catch (error) {
     const reason = error instanceof KayakError ? error.code : "unavailable";
     // A 403 can reject the client agent, not just the key. Keep the real agent
     // and safe status evidence; never log credential-bearing URLs or bodies.
-    console.warn("[kayak-search:rejection]", { vertical, category: reason,
+    console.warn("[kayak-search:rejection]", { ...correlation, vertical, category: reason,
       httpStatus: error instanceof KayakError ? error.httpStatus : undefined });
     const errorCategory = reason === "timeout" ? "timeout" : reason === "unauthorized" ? "auth" : reason === "invalid_response" ? "invalid_response" : reason === "unavailable" ? "network" : "server";
     const errorReason = reason === "timeout" ? "provider_timeout" : reason === "unauthorized" ? "provider_auth_error" : reason === "invalid_response" ? "provider_invalid_response" : reason === "unavailable" ? "provider_network_error" : "provider_server_error";
     const results = error instanceof KayakPartialSearchError
       ? scopeKayakOfferIds(error.offers, crypto.randomUUID()).flatMap(offer => { const value = map?.(offer); return value ? [value] : []; })
       : [];
-    return { provider: "KAYAK sandbox", results: await protect(results), status: "failed", latencyMs: Date.now() - startedAt, error: reason, errorCategory, errorReason };
+    const retained = await protect(results);
+    reportProviderRows(context.requestId, vertical, "failed", error instanceof KayakPartialSearchError ? error.offers.length : 0, retained.length);
+    return { provider: "KAYAK sandbox", results: retained, status: "failed", latencyMs: Date.now() - startedAt, error: reason, errorCategory, errorReason };
   }
 }
 
@@ -103,7 +116,10 @@ export const searchKayakHotels = (criteria: HotelSearchParams, context?: KayakRe
 export async function searchKayakHotelBatch(criteria: HotelSearchParams, context: KayakRequestContext, snapshot: string, checkpoint?: import("./kayakSandbox").KayakHotelBatchCheckpoint) {
   if (productionSandboxHost() || !isKayakSandboxEnabled() || !context.clientIp) throw new Error("Hotel batch execution unavailable");
   const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined,
-    kayakProviderUserAgent("hotels", context.userAgent), context.clientIp);
+    kayakProviderUserAgent("hotels", context.userAgent), context.clientIp,
+    timing => console.info("[kayak-search:stage-timing]", JSON.stringify({ ...timing, ...kayakCorrelation(context.requestId) })),
+    diagnostic => console.warn("[kayak-search:http-rejection]", JSON.stringify({ ...diagnostic, ...kayakCorrelation(context.requestId) })),
+    undefined, { ...kayakCorrelation(context.requestId), incomingUserAgent: context.userAgent, product: "hotels" });
   const trackId = context.trackId || crypto.randomUUID();
   const resolved = await resolveRegularKayakSearch("hotels", kayakProviderCriteria(criteria as unknown as Record<string,unknown>),
     (term, vertical = "hotels") => client.places(vertical, term, trackId, context.signal));

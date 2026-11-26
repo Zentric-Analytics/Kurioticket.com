@@ -8,6 +8,7 @@ import { kayakImageUrl, kayakImages, kayakFlightLegs, kayakFlightAttributes, kay
 import { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
 import { kayakRejectionDiagnostics } from "./kayakRejectionDiagnostics";
 import { carRequestDiagnostics } from "./carRequestDiagnostics";
+import { kayakAgentKind, kayakCorrelation, type KayakPhaseDiagnostic, type KayakRequestPhase } from "./kayakRequestDiagnostics";
 import type { FlightFareTerm, FlightOptionalService, FlightProviderCondition, FlightAirlineBaggagePolicy, FlightProviderDetails } from "@/lib/types";
 export { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
 
@@ -399,6 +400,7 @@ export type KayakHotelBatch = {
  * Continuations carry server-authenticated page state; no unfinished response
  * is treated as complete inventory. Regular full searches remain unchanged. */
 export class KayakSandboxClient {
+  private readonly hotelPagesRequested = new Set<string>();
   constructor(
     private readonly key: string,
     private readonly fetcher: typeof fetch = fetch,
@@ -412,6 +414,9 @@ export class KayakSandboxClient {
       console.warn("[kayak-search:http-rejection]", JSON.stringify(diagnostic)),
     private readonly reportRequest = (diagnostic: ReturnType<typeof carRequestDiagnostics>) =>
       console.info("[kayak-search:car-request]", JSON.stringify(diagnostic)),
+    private readonly diagnosticContext: { requestId?: string; incomingUserAgent?: string; product?: KayakVertical } = {},
+    private readonly reportPhase: (diagnostic: KayakPhaseDiagnostic) => void = diagnostic =>
+      console.info("[kayak-search:request-phase]", JSON.stringify(diagnostic)),
   ) {}
 
   private async request(
@@ -423,6 +428,7 @@ export class KayakSandboxClient {
     empty = false,
     retryTransient = false,
     pause = this.pause,
+    requestPhase?: KayakRequestPhase,
   ): Promise<ObjectValue> {
     if (!this.key.trim()) throw new KayakError("unauthorized");
     const url = new URL(path, KAYAK_SANDBOX_ORIGIN);
@@ -432,6 +438,26 @@ export class KayakSandboxClient {
       userTrackId,
     }).toString();
     const serializedBody = body ? JSON.stringify(body) : undefined;
+    const product = path.includes("/flight/") || path.endsWith("/flights") ? "flights"
+      : path.includes("/car/") || path.endsWith("/cars") ? "cars"
+      : path.includes("hotels") ? "hotels"
+      : ["flights", "hotels", "cars"].includes(this.diagnosticContext.product ?? "") ? this.diagnosticContext.product! : "unknown";
+    let phase = requestPhase ?? (path.includes("/autocomplete/") ? "location"
+      : path.includes("constants-mapping") ? "metadata"
+      : object(body).searchStartParameters ? "initial"
+      : object(body).searchId ? "poll"
+      : Number(query.pageIndex) > 0 ? "pages" : "initial");
+    if (!requestPhase && path === "/api/3.0/hotels") {
+      const page = query.pageIndex || "0";
+      phase = this.hotelPagesRequested.has(page) ? "poll" : Number(page) > 0 ? "pages" : "initial";
+      this.hotelPagesRequested.add(page);
+    }
+    const report = (outcome: KayakPhaseDiagnostic["outcome"], attempt: number, httpStatus?: number) => {
+      try { this.reportPhase({ ...kayakCorrelation(this.diagnosticContext.requestId), provider: "kayak_sandbox",
+        product, phase, outcome, attempt, agentKind: kayakAgentKind(this.userAgent),
+        incomingAgentKind: kayakAgentKind(this.diagnosticContext.incomingUserAgent ?? this.userAgent),
+        ...(httpStatus !== undefined ? { httpStatus } : {}) }); } catch { /* Sink failure cannot affect execution. */ }
+    };
     if (path === "/i/api/affiliate/search/car/v1/poll" && object(body).searchStartParameters && serializedBody) {
       try { this.reportRequest(carRequestDiagnostics(serializedBody, this.userAgent, this.clientIp)); }
       catch { /* Observability cannot affect provider access. */ }
@@ -446,6 +472,7 @@ export class KayakSandboxClient {
         if (!checkRateLimit("production-sandbox-kayak",250,3600000).allowed) throw new KayakError("rate_limited");
       }
       try {
+        report("started", attempt);
         const response = await this.fetcher(url, {
           method: body ? "POST" : "GET",
           cache: "no-store",
@@ -461,6 +488,7 @@ export class KayakSandboxClient {
           },
           ...(serializedBody ? { body: serializedBody } : {}),
         });
+        report("response", attempt, response.status);
         if (!response.ok) {
           if (response.status === 403) {
             try { this.reportRejection(await kayakRejectionDiagnostics(response, path, body ? "POST" : "GET", this.userAgent)); }
@@ -490,6 +518,7 @@ export class KayakSandboxClient {
           throw new KayakError("invalid_response");
         return parsed as ObjectValue;
       } catch (error) {
+        report("failed", attempt, error instanceof KayakError ? error.httpStatus : undefined);
         if (error instanceof KayakError) throw error;
         // Fetch exceptions can contain the credential-bearing request URL. Never log/rethrow them.
         if (signal.aborted) throw new KayakError("timeout");
@@ -632,13 +661,14 @@ export class KayakSandboxClient {
     const request = async (...args: Parameters<KayakSandboxClient["request"]>) => {
       const [path, , query, body] = args;
       const stage: SearchStage = path.includes("constants-mapping") ? "metadata"
+        : object(body).searchStartParameters ? "initial"
         : Number(query.pageIndex) > 0 || object(object(body).resultParameters).pageNumber !== undefined ? "pages"
         : object(body).searchId || timing.stages.initial.operations > 0 ? "poll" : "initial";
       const entry = timing.stages[stage];
       entry.operations++;
       const start = performance.now();
       const previousWait = timing.waitMs;
-      try { return await this.request(args[0], args[1], args[2], args[3], args[4], args[5], args[6], pause); }
+      try { return await this.request(args[0], args[1], args[2], args[3], args[4], args[5], args[6], pause, stage); }
       finally { entry.elapsedMs += Math.max(0, performance.now() - start - (timing.waitMs - previousWait)); }
     };
     const pause = async (ms: number) => {

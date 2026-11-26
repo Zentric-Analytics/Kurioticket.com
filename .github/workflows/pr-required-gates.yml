@@ -78,6 +78,16 @@ jobs:
         run: >-
           node --input-type=module --import jiti/register -e
           'await import("./src/lib/productionSandboxPolicy.test.ts");'
+      - name: Validate sanitized supplier phase correlation
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --test --import jiti/register
+          src/services/travel/kayakRequestDiagnostics.test.ts
+          src/services/travel/kayakRejectionDiagnostics.test.ts
+          src/services/travel/kayakMetasearchProvider.test.ts
+
       - name: Validate admin operational read contracts
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json

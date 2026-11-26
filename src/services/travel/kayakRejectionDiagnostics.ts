@@ -1,3 +1,4 @@
+import { kayakAgentKind } from "./kayakRequestDiagnostics";
 /** Fixed categories only. Never retain provider text, URLs, query, IP or credentials. */
 export async function kayakRejectionDiagnostics(response: Response, path: string, method: string, agent: string) {
   const contentType = response.headers.get("content-type") || "";
@@ -41,7 +42,7 @@ export async function kayakRejectionDiagnostics(response: Response, path: string
       : path === "/api/3.0/hotels" ? "hotels" : "other",
     method: method === "POST" ? "POST" : "GET",
     httpStatus: response.status,
-    agentKind: /^(okhttp|dalvik)\//i.test(agent) ? "android_transport" : /^Mozilla\//.test(agent) ? "browser" : "other",
+    agentKind: kayakAgentKind(agent),
     contentType: /json/i.test(contentType) ? "json" : /html/i.test(contentType) ? "html" : /text/i.test(contentType) ? "text" : "other",
     serverKind: /cloudflare/i.test(server) ? "cloudflare" : /akamai/i.test(server) ? "akamai" : "other",
     evidenceTerms: Object.entries(terms).filter(([, pattern]) => pattern.test(sample)).map(([term]) => term),
