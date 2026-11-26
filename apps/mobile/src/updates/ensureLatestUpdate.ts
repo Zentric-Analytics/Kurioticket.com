@@ -1,4 +1,5 @@
 import { recordUpdateCheckResult } from "./updateCheckDiagnostics";
+import { recordStartupDiagnostic, type StartupBoundary } from "../diagnostics/startupDiagnostics";
 
 export type UpdateClient = {
   isEnabled: boolean;
@@ -11,7 +12,11 @@ export type UpdateCheckResult = "disabled" | "current" | "reloading" | "timeout"
 export type UpdateAppState = "active" | "background" | "inactive" | "unknown" | "extension";
 
 export async function ensureLatestUpdate(client: UpdateClient, timeoutMs = 8_000): Promise<UpdateCheckResult> {
+  let phase: StartupBoundary = "update-check";
+  const started = Date.now();
+  const report = (outcome: Parameters<typeof recordStartupDiagnostic>[1]) => recordStartupDiagnostic(phase, outcome, Date.now() - started);
   if (!client.isEnabled) {
+    report("disabled");
     recordUpdateCheckResult("disabled");
     return "disabled";
   }
@@ -21,21 +26,31 @@ export async function ensureLatestUpdate(client: UpdateClient, timeoutMs = 8_000
   const deadline = new Promise<UpdateCheckResult>((resolve) => {
     timeout = setTimeout(() => {
       expired = true;
+      report("timeout");
       resolve("timeout");
     }, timeoutMs);
   });
 
   const update = (async (): Promise<UpdateCheckResult> => {
     try {
+      report("started");
       const check = await client.checkForUpdateAsync();
+      if (!expired) report(check.isAvailable ? "available" : "current");
       if (!check.isAvailable || expired) return expired ? "timeout" : "current";
 
+      phase = "update-download";
+      report("started");
       const fetched = await client.fetchUpdateAsync();
+      report(fetched.isNew ? expired ? "downloaded-after-deadline" : "downloaded" : "current");
       if (!fetched.isNew || expired) return expired ? "timeout" : "current";
 
+      phase = "update-activation";
+      report("started");
       await client.reloadAsync();
+      report("reloading");
       return "reloading";
     } catch {
+      if (!expired) report("error");
       return expired ? "timeout" : "error";
     }
   })();

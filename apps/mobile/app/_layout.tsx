@@ -15,6 +15,7 @@ import { AppThemeProvider, useAppTheme } from "../src/theme/AppTheme";
 import { useEffect } from "react";
 import { buildStartupLog } from "../src/diagnostics/buildDiagnostics";
 import { getRuntimeDiagnostics } from "../src/diagnostics/runtimeDiagnostics";
+import { recordNativeUpdateFailures } from "../src/diagnostics/nativeUpdateDiagnostics";
 import { AppState, View } from "react-native";
 import { FeatureAvailabilityProvider } from "../src/features/availability/FeatureAvailability";
 import { MobileLocalizationProvider } from "../src/localization/MobileLocalizationProvider";
@@ -38,6 +39,7 @@ export default function RootLayout() {
     Inter_900Black,
   });
   useEffect(() => { console.info(buildStartupLog(getRuntimeDiagnostics())); }, []);
+  useEffect(() => { if (Updates.isEnabled) void recordNativeUpdateFailures(() => Updates.readLogEntriesAsync(60_000)); }, []);
   useEffect(() => startVisitorIdentity(), []);
   useEffect(() => {
     const handleAppStateChange = createForegroundUpdateHandler(
