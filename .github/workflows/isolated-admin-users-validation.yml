@@ -1,0 +1,139 @@
+# Temporary validation branch only. Do not merge this workflow into dev/main.
+name: Isolated Admin Users validation
+on:
+  push:
+    branches: [qa/admin-users-activity-validation-20261126]
+permissions:
+  contents: read
+concurrency:
+  group: isolated-admin-users-validation
+  cancel-in-progress: true
+env:
+  JITI_TSCONFIG_PATHS: ./tsconfig.json
+  JITI_JSX: "true"
+  GUEST_FIRST_ACCESS_PREVIEW: "false"
+  CI: "true"
+jobs:
+  web-build-and-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Users and Essential regression tests
+        run: >-
+          node --test --import jiti/register
+          src/lib/adminLiveGuestReference.test.ts
+          src/lib/guestFirstAccessObservation.test.ts
+          src/lib/adminOnlineUsersSnapshot.test.ts
+          src/lib/adminUnifiedActivityPage.test.ts
+          src/components/admin/AdminUnifiedActivityList.test.ts
+          src/lib/adminActivityJourneyNavigation.test.ts
+          src/lib/adminPageHistory.test.ts
+          src/lib/adminGuestAccess.test.ts
+          src/services/adminDeviceSessionsService.test.ts
+          src/services/adminUserPopulationMetrics.test.ts
+          src/lib/adminActivityOverview.test.ts
+          src/lib/adminIdentityActivityComplete.test.ts
+          src/lib/adminIdentityActivity.test.ts
+          src/lib/adminIdentityJourney.test.ts
+          src/lib/adminActivityEnvironmentBoundary.test.ts
+          src/components/admin/ActivityTimeline.test.ts
+          src/lib/onlinePresenceRoute.test.ts
+          src/lib/websiteOnlinePresenceClient.test.ts
+          src/lib/onlinePresencePlatformMetrics.test.ts
+          src/lib/sessionDeviceObservation.test.ts
+          src/lib/operationalSearchSession.test.ts
+          src/lib/operationalHandoffContext.test.ts
+          src/lib/analyticsConsentClient.test.ts
+          src/lib/hotels/hotelResultAccounting.test.ts
+          src/services/analyticsService.test.ts
+          src/app/api/cars/search/route.test.ts
+      - name: Full web regression suite
+        if: always()
+        run: npm test
+  database-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kurioticket_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kurioticket_ci"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/kurioticket_ci?schema=public
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx prisma validate
+      - run: npm run check:migration-timestamps
+      - run: npx prisma migrate deploy
+      - run: node scripts/verify-production-schema.mjs
+      - run: npx prisma migrate status
+  visual-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Existing Admin visual QA (synthetic fixture)
+        run: node qa/admin-activity-details/run.mjs
+        env:
+          ADMIN_ACTIVITY_QA_BASE: d691874882be5eed4bedd8fb9c2f4ccb802183a6
+          ADMIN_ACTIVITY_QA_WORK: ${{ runner.temp }}
+          ADMIN_ACTIVITY_QA_OUTPUT: ${{ runner.temp }}/admin-customer-activity-screenshots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: isolated-admin-activity-visual-evidence
+          path: ${{ runner.temp }}/admin-customer-activity-screenshots/
+          if-no-files-found: warn
+  mobile-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APP_VARIANT: preview
+      APP_BUILD_MODE: release
+      EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm --prefix apps/mobile ci
+      - run: npm --prefix apps/mobile run typecheck
+      - run: npm --prefix apps/mobile test
+      - run: npm run travel:parity
