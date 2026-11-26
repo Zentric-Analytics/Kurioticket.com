@@ -73,6 +73,7 @@ test("the dedicated history requires admin access and both activity summaries st
   assert.doesNotMatch(activity, /<PageViewRecords|<AdminIdentityDeviceAccess/);
   assert.match(unified, /pages.slice\(0, 1\)/);
   assert.match(unified, /View all activity/);
-  assert.match(unified, /carResultSummary\(row.resultCount, row.carOfferCount\)/);
+  assert.match(unified, /Rental offer count unavailable/);
+  assert.doesNotMatch(unified, /carResultAccounting|carOfferCount/);
   assert.doesNotMatch(overview, /PageViewRecords/);
 });

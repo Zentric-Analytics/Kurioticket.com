@@ -65,7 +65,7 @@ test("full activity retains all supplied eligible records", () => {
   }
 });
 
-test("car accounting preserves verified counts and unknown offers", () => {
+test("car activity presents the stored scalar without inferring rental offers", () => {
   const row: ActivityRow = {
     id: "s-car-test",
     at,
@@ -74,7 +74,6 @@ test("car accounting preserves verified counts and unknown offers", () => {
     detail: "CAR · Lagos · SUCCESS",
     product: "CAR",
     resultCount: 549,
-    carOfferCount: 2547,
   };
 
   const render = (event: ActivityRow) =>
@@ -86,10 +85,7 @@ test("car accounting preserves verified counts and unknown offers", () => {
       }
     ));
 
-  assert.match(render(row), /549 car result groups/);
-  assert.match(render(row), /2,547 rental offers/);
-  assert.match(
-    render({ ...row, carOfferCount: null }),
-    /Rental offers not recorded/
-  );
+  assert.match(render(row), /549 recorded results/);
+  assert.match(render(row), /Rental offer count unavailable/);
+  assert.doesNotMatch(render(row), /car result groups|2,547 rental offers/);
 });

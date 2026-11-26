@@ -16,8 +16,6 @@ export type RecentSearchSummary = {
   platform: "WEB" | "IOS" | "ANDROID" | null;
   resultCount: number | null;
   hotelPropertyCount?: number | null;
-  /** Validated rental offer rows returned within the recorded car result groups. */
-  carOfferCount?: number | null;
   providers: string[];
   eventCount: number;
   searches: number;
@@ -83,8 +81,7 @@ export function activityOverviewRows(events: readonly ActivityRow[], limit = 10)
         id: searchId, at: event.at, searchedAt: null,
         journeyId: event.journeyId ?? null, product: event.product ?? null,
         route: null, searchStatus: null, platform: event.platform ?? null,
-        resultCount: event.resultCount ?? null, hotelPropertyCount: event.hotelPropertyCount ?? null,
-        ...(event.product === "CAR" ? { carOfferCount: event.carOfferCount ?? null } : {}), providers: [], eventCount: 0,
+        resultCount: event.resultCount ?? null, hotelPropertyCount: event.hotelPropertyCount ?? null, providers: [], eventCount: 0,
         searches: 0, resultsViewed: 0, offersSelected: 0, handoffs: 0,
         saved: 0, unsaved: 0, shared: 0, priceAlertsCreated: 0,
       };
@@ -99,7 +96,6 @@ export function activityOverviewRows(events: readonly ActivityRow[], limit = 10)
     if (typeof event.resultCount === "number") {
       item.resultCount = event.resultCount;
       item.hotelPropertyCount = event.hotelPropertyCount ?? null;
-      if (item.product === "CAR" || event.product === "CAR") item.carOfferCount = event.carOfferCount ?? null;
     }
     item.eventCount++;
     if (!item.product && event.product) item.product = event.product;

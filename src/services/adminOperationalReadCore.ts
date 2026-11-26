@@ -1,5 +1,4 @@
 import { recordedHotelPropertyCount } from "@/lib/hotels/hotelResultAccounting";
-import { recordedCarOfferCount } from "@/lib/cars/carResultAccounting";
 import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { applicationMetadata } from "@/lib/application-source";
 import { handoffEvidenceDetailSql, handoffEvidenceListSql, handoffOperationalSessionId, type HandoffEvidenceRow } from "./adminHandoffEvidence";
@@ -566,7 +565,6 @@ function searchDto(row: SearchRow, environment: PublicEnvironment, exactLogs: re
     checkOut: row.checkOut?.toISOString() ?? null,
     resultCount: row.resultCount,
     ...(row.type === "HOTEL" ? { hotelPropertyCount: recordedHotelPropertyCount(row.type, row.query, row.resultCount) } : {}),
-    ...(row.type === "CAR" ? { carOfferCount: recordedCarOfferCount(row.type, row.query, row.resultCount) } : {}),
     latencyMs: row.latencyMs,
     status: row.status,
     providers,

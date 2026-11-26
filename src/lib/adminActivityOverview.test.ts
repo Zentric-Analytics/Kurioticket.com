@@ -278,14 +278,3 @@ test("recent search summaries preserve one authoritative hotel count pair", () =
   assert.equal(summary.handoffs, 1);
   assert.equal(activityOverviewRows([{ ...search, hotelPropertyCount: undefined }]).searches[0].hotelPropertyCount, null);
 });
-
-test("recent car summaries retain the exact recorded group and offer counts", () => {
-  const now = new Date("2026-11-25T10:00:00Z");
-  const search: ActivityRow = { id: "s-car", at: now, stage: "SEARCH_COMPLETED", product: "CAR", searchHistoryId: "car-search", label: "Search completed", detail: "CAR · LHR · SUCCESS", resultCount: 549, carOfferCount: 2547 };
-  const handoff: ActivityRow = { id: "r-car", at: now, stage: "PROVIDER_HANDOFF_STARTED", product: "CAR", searchHistoryId: "car-search", label: "Provider handoff", detail: "CAR · LHR · KAYAK sandbox" };
-  const summary = activityOverviewRows([handoff, search]).searches[0];
-  assert.equal(summary.resultCount, 549);
-  assert.equal(summary.carOfferCount, 2547);
-  assert.equal(summary.handoffs, 1);
-  assert.equal(activityOverviewRows([{ ...search, carOfferCount: undefined }]).searches[0].carOfferCount, null);
-});

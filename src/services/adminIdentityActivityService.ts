@@ -1,5 +1,4 @@
 import { recordedHotelPropertyCount } from "@/lib/hotels/hotelResultAccounting";
-import { recordedCarOfferCount } from "@/lib/cars/carResultAccounting";
 import "server-only";
 
 import { Prisma } from "@/generated/prisma/client";
@@ -528,7 +527,6 @@ export async function loadAdminIdentityActivity(
         platform: safeSearchPlatform(event.searchHistory?.query),
         resultCount: event.searchHistory?.resultCount ?? null,
         hotelPropertyCount: recordedHotelPropertyCount(event.searchHistory?.type, event.searchHistory?.query, event.searchHistory?.resultCount),
-        ...(event.searchHistory?.type === "CAR" ? { carOfferCount: recordedCarOfferCount(event.searchHistory.type, event.searchHistory.query, event.searchHistory.resultCount) } : {}),
       }] : [];
     });
     const legacy: ActivityRow[] = [
@@ -537,7 +535,6 @@ export async function loadAdminIdentityActivity(
         searchHistoryId: s.id, dedupeKey: "search:" + s.id,
         platform: safeSearchPlatform(s.query), resultCount: s.resultCount,
         hotelPropertyCount: recordedHotelPropertyCount(s.type, s.query, s.resultCount),
-        ...(s.type === "CAR" ? { carOfferCount: recordedCarOfferCount(s.type, s.query, s.resultCount) } : {}),
         label: "Search completed", detail: [s.type, [s.origin, s.destination].filter(Boolean).join(" → "), s.status].filter(Boolean).join(" · "),
         at: s.createdAt,
       })),

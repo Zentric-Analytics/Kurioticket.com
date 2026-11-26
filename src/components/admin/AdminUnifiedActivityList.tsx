@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Monitor, FileText, Search, ExternalLink, CircleDot, ChevronRight } from "lucide-react";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
 import { hotelResultSummary } from "@/lib/hotels/hotelResultAccounting";
-import { carResultSummary } from "@/lib/cars/carResultAccounting";
 import { PageViewDetails } from "@/components/admin/PageViewRecords";
 
 export type AccessPreview = { at: Date; detail: string; href: string };
@@ -16,7 +15,7 @@ function describe(row: ActivityRow) {
     const last = parts.length - 1;
     parts[last] = outcomes[parts[last]] ?? parts[last];
     if (typeof row.resultCount === "number" && Number.isSafeInteger(row.resultCount) && row.resultCount >= 0) {
-      parts.push(row.product === "HOTEL" ? hotelResultSummary(row.resultCount, row.hotelPropertyCount) : row.product === "CAR" ? carResultSummary(row.resultCount, row.carOfferCount) : row.resultCount.toLocaleString("en-US") + (row.resultCount === 1 ? " result returned" : " results returned"));
+      parts.push(row.product === "HOTEL" ? hotelResultSummary(row.resultCount, row.hotelPropertyCount) : row.product === "CAR" ? row.resultCount.toLocaleString("en-US") + (row.resultCount === 1 ? " recorded result" : " recorded results") + " · Rental offer count unavailable" : row.resultCount.toLocaleString("en-US") + (row.resultCount === 1 ? " result returned" : " results returned"));
     }
   }
   return parts.join(" · ");
