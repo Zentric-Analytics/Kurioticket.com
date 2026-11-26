@@ -70,7 +70,7 @@ export function parsePageHistoryQuery(raw: RawActivityQuery, now: Date, timeZone
 export function pageHistoryBackHref(kind: IdentityKind, id: string, incoming: unknown) {
   const path = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
   const safe = activityJourneyReturnHref(incoming);
-  return safe && (safe === path || safe.startsWith(path + "?")) ? safe : path;
+  return safe && (safe === path || safe.startsWith(path + "?") || safe === path + "/all" || safe.startsWith(path + "/all?")) ? safe : path;
 }
 
 export function pageHistoryHref(path: string, query: PageHistoryQuery, returnHref: string) {
