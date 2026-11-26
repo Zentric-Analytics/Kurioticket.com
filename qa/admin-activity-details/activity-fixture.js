@@ -92,7 +92,7 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     && (!fromBound || row.at >= fromBound)
     && (!toBound || row.at < toBound)
     && (!pageHistory || pageHistory.platform === "all" || row.pageView?.platform === ({ios:"iOS app",android:"Android app",mobile:"Mobile web",desktop:"Desktop web"})[pageHistory.platform]);
-  const sourceRows = id === "qa-operational-guest-0001" ? operationalRecorded
+  const sourceRows = id === "qa-operational-guest-0001" || id === "12345678-1234-4123-8123-123456789abc" ? operationalRecorded
     : id === "qa-complete-history-0001" ? completeHistory
     : id === "qa-page-history-0001" ? pageVisitHistory
     : id === "qa-lagos-midnight-0001" ? localCalendarHistory
@@ -138,7 +138,7 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     role: kind === "guest" ? null : "USER",
     status: kind === "guest" ? "Anonymous" : "ACTIVE",
     firstSeenAt: time(39), lastSeenAt: time(48), environment: "staging",
-    source: kind === "guest" ? (id === "qa-operational-guest-0001" ? "operational" : "visitor") : "account",
+    source: kind === "guest" ? (id === "qa-operational-guest-0001" || id === "12345678-1234-4123-8123-123456789abc" ? "operational" : "visitor") : "account",
     events: rows,
     summary,
     nextCursor,

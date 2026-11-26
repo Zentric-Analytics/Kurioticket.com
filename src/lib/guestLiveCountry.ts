@@ -26,12 +26,14 @@ const lookupTimeoutMs = 1200;
 const maxPending = 8;
 const cacheSecret = randomBytes(32);
 
-/** Render's public managed ingress overwrites CF-Connecting-IP.
+/** Render's public Cloudflare ingress rejects client-supplied CF-Connecting-IP.
+ * Private-network requests bypass this protection. RENDER and Host alone are
+ * not proof of public ingress. Explicitly opt in ONLY after confirming that
+ * these heartbeat endpoints cannot be reached via an untrusted private path.
  * https://render.com/articles/host-pocketbase-on-render
- * Only for approximate country, never authentication or bot verification.
- * No untrusted country or forwarding headers; reject Worker forwarding. */
+ * Country estimate only; never authentication or bot verification. */
 export function renderGuestCountryIp(request: Request): string | null {
-  if (process.env.RENDER !== "true") return null;
+  if (process.env.RENDER !== "true" || process.env.GUEST_LIVE_RENDER_INGRESS_VERIFIED !== "true") return null;
   try {
     const host = new URL(request.url).hostname.toLowerCase();
     const configured = process.env.NEXT_PUBLIC_APP_URL;

@@ -28,7 +28,7 @@ export async function loadAdminGuestAccessHistory(id, query) {
     ? Array.from({ length: consented ? 2 : 1 }, (_, i) => ({
       id: "access-" + i, source, evidence: consented ? "page" : "search",
       platform: consented ? "iOS app" : "Android app", at: new Date(+now - i * 1000),
-      deviceLabel: consented ? "iOS device" : null, os: consented ? "iOS" : null, browser: null, locationLabel: null,
+      deviceLabel: consented ? "iOS device" : null, os: consented ? "iOS" : null, browser: null, locationLabel: operational ? "Nigeria" : null,
     })) : [];
   return { status: "ok", records: records.slice((query.page - 1) * 20, query.page * 20), total: records.length,
     firstSeenAt: records.at(-1)?.at ?? null, lastSeenAt: records[0]?.at ?? null };

@@ -174,7 +174,7 @@ jobs:
       - name: Validate live guest country on disposable PostgreSQL
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json
-        run: GUEST_COUNTRY_TEST_DATABASE_URL="$DATABASE_URL" node --test --import jiti/register src/lib/liveGuestPresenceWrite.test.ts
+        run: GUEST_COUNTRY_TEST_DATABASE_URL="$DATABASE_URL" node --test --import jiti/register src/lib/liveGuestPresenceWrite.test.ts src/lib/adminGuestAccessPostgres.test.ts
       - name: Verify Issue 3 upgrade from representative legacy data
         run: node scripts/validate-four-system-upgrade.mjs
 

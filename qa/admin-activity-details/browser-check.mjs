@@ -306,7 +306,8 @@ try {
   await page.getByTestId("history-directory-row").getByRole("link",{name:/View history for/}).click();
   await expect(page.getByTestId("guest-access-row")).toHaveCount(1);
   await expect(page.getByTestId("guest-access-row")).toContainText("Operational");
-  await expect(page.getByTestId("guest-access-row")).toContainText("Unavailable");
+  await expect(page.getByTestId("guest-access-row").getByTestId("guest-access-location")).toHaveText("Nigeria");
+  await expect(page.getByTestId("guest-access-row")).toContainText("Browser / OS unavailable");
   await page.getByRole("link",{name:"Back to Device & Access",exact:true}).click();
   await expect(page).toHaveURL(url => url.pathname === "/admin/users/devices" && url.searchParams.get("platform")==="android");
   await page.setViewportSize({width:320,height:800});
@@ -383,6 +384,14 @@ try {
   // without an extra Other Activity page or a fictitious consented journey.
   const operationalPath = base + "/admin/users/guest/qa-operational-guest-0001/activity";
   await page.setViewportSize({width:1280,height:900});
+  // The same already-recorded access country is available from both entry points.
+  await page.goto(base + "/admin/users/guest/12345678-1234-4123-8123-123456789abc/activity?range=all");
+  const countryAccess=page.locator('[data-activity-id="latest-access-summary"]');
+  await expect(countryAccess).toContainText("Nigeria");
+  await countryAccess.getByRole("link",{name:"View access history"}).click();
+  await expect(page.getByTestId("guest-access-location")).toHaveText("Nigeria");
+  await page.getByRole("link",{name:"Back to Activity",exact:true}).click();
+  await expect(countryAccess).toContainText("Nigeria");
   await page.goto(operationalPath + "?range=all");
   await expect(page.getByText("Essential operational activity")).toBeVisible();
   await expect(page.getByRole("button",{name:/Manage guest/})).toHaveCount(0);

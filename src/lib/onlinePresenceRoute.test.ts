@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test, {beforeEach,afterEach} from "node:test";
 import { createHmac } from "node:crypto";
+import { createGuestCountryResolver, type resolveGuestLiveCountry } from "./guestLiveCountry";
 import { isWebsiteOnlinePresenceRoute } from "./onlinePresence";
 import { createOnlinePresenceHandler, type OnlinePresenceHeartbeat } from "./onlinePresenceRoute";
 import { hasConsistentWebsitePresenceOrigin, renewPresenceCredential } from "./onlinePresenceCredential";
@@ -16,7 +17,7 @@ let savedPublicUrl:string|undefined,savedAuthUrl:string|undefined;
 beforeEach(()=>{savedPublicUrl=process.env.NEXT_PUBLIC_APP_URL;savedAuthUrl=process.env.NEXTAUTH_URL;process.env.NEXT_PUBLIC_APP_URL=origin;process.env.NEXTAUTH_URL=origin;});
 afterEach(()=>{if(savedPublicUrl===undefined)delete process.env.NEXT_PUBLIC_APP_URL;else process.env.NEXT_PUBLIC_APP_URL=savedPublicUrl;if(savedAuthUrl===undefined)delete process.env.NEXTAUTH_URL;else process.env.NEXTAUTH_URL=savedAuthUrl;});
 
-function fixture() {
+function fixture(resolveGuestCountry?: typeof resolveGuestLiveCountry) {
   const records: OnlinePresenceHeartbeat[] = [];
   const handler = (transport: "web" | "native", environment: "staging" | "production" = "production") =>
     createOnlinePresenceHandler(transport, {
@@ -26,6 +27,7 @@ function fixture() {
       now: () => now,
       authenticate: async () => ({ id: "canonical-session", platform: transport === "native" ? "ios" : null }),
       admit: () => true,
+      resolveGuestCountry,
       record: async (record) => { records.push(record); },
     });
   return { handler, records };
@@ -266,4 +268,37 @@ test("independent live-country capture requires an authenticated edge and return
     await disabled(web({[tokenHeader]:disabledToken,"cf-ipcountry":"NG","x-kurioticket-edge-auth":process.env.BOT_EDGE_SECRET!}));
     assert.equal(records.at(-1)?.guestLiveCountryCode,undefined);
   } finally {keys.forEach((key,index)=>{if(before[index]===undefined)delete process.env[key];else process.env[key]=before[index];});}
+});
+
+test("public ingress fallback on verified guest heartbeat works without analytics or historical access",async()=>{
+  const keys=["GUEST_LIVE_COUNTRY_ENABLED","GUEST_LIVE_RENDER_INGRESS_VERIFIED","GUEST_FIRST_ACCESS_PREVIEW","RENDER"] as const;
+  const before=keys.map(k=>process.env[k]);
+  try {
+    process.env.GUEST_LIVE_COUNTRY_ENABLED="true";
+    process.env.GUEST_LIVE_RENDER_INGRESS_VERIFIED="true";
+    process.env.RENDER="true";
+    delete process.env.GUEST_FIRST_ACCESS_PREVIEW;
+    const calls:string[]=[];
+    const {handler,records}=fixture(createGuestCountryResolver(async ip=>{calls.push(ip);return "NG";}));
+    const headers={"cf-connecting-ip":"8.8.8.8","cf-ipcountry":"US"};
+    for(const transport of ["web","native"] as const){
+      const post=handler(transport,"staging");
+      const send=(h:Record<string,string>)=>post(transport==="web"?web({cookie:"kt_analytics_consent=declined",...h}):native(h));
+      const count=records.length;
+      const lookups=calls.length;
+      const first=await send(headers);
+      assert.equal(first.status,202);
+      assert.equal(calls.length,lookups);
+      assert.equal(records.length,count);
+      const token=first.headers.get(tokenHeader);
+      assert.ok(token);
+      const response=await send({...headers,[tokenHeader]:token});
+      assert.equal(response.status,204);
+      assert.equal(response.headers.get("set-cookie"),null);
+      assert.equal(records.at(-1)?.guestLiveCountryCode,"NG");
+      assert.equal(records.at(-1)?.guestAccess,undefined);
+      assert.doesNotMatch(JSON.stringify(records.at(-1)),/8\.8\.8\.8/);
+    }
+    assert.deepEqual(calls,["8.8.8.8"]);
+  } finally {keys.forEach((k,i)=>{if(before[i]===undefined)delete process.env[k];else process.env[k]=before[i];});}
 });
