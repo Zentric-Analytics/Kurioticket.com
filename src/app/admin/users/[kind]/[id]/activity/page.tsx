@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Plane, Building2, CarFront } from "lucide-react";
 
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
@@ -109,11 +109,15 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const timeZone = await getAdminViewerTimeZone(session.user.id);
   const now = new Date();
   const raw = normalizeUserActivityQuery(await searchParams, now, timeZone);
-  // Legacy activity bookmarks still open this workspace; page views now have their own section.
-  // The overview is always an identity summary. Detailed filters live in All Activity.
-  delete raw.tab; delete raw.stage; delete raw.type; delete raw.product; delete raw.q;
-  const filtersResult = parseActivityFilters(raw, timeZone);
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
+  // Preserve existing filtered Activity bookmarks at the new full-history route.
+  // Never silently broaden an invalid query, or reintroduce old cursor semantics.
+  const hasDetailFilter = ["tab", "stage", "product", "q"].some(key =>
+    typeof raw[key] === "string" && raw[key] !== "" && raw[key] !== "all");
+  if (hasDetailFilter && !Object.values(raw).some(Array.isArray)) {
+    redirect(activityHref(basePath + "/all", safeActivityQueryParams(raw), { cursor: null, order: null }));
+  }
+  const filtersResult = parseActivityFilters(raw, timeZone);
   const backHref = safeDirectoryHref(raw);
   const queryParams = safeActivityQueryParams(raw);
   if (!filtersResult.ok) return <div className="space-y-4">
@@ -175,15 +179,14 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       className="min-w-0 space-y-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5 lg:p-6">
       <div data-testid="activity-info-grid"
         className="relative min-w-0 lg:-mx-6 lg:-mt-6 lg:border-y lg:border-[#E2E8F0]">
-        {/* These three rules span the entire information grid, including its
-            top and bottom boundaries. No independent inset fact borders. */}
-        <div aria-hidden="true" data-testid="activity-shared-dividers"
+      <section aria-label="Customer identity" className="relative min-w-0">
+        {/* Identity has five columns; the six metrics below have their own grid. */}
+        <div aria-hidden="true" data-testid="activity-identity-dividers"
           className="pointer-events-none absolute inset-0 hidden lg:block">
           <span data-testid="activity-divider-40" className="absolute inset-y-0 left-[40%] border-l border-[#E2E8F0]" />
           <span data-testid="activity-divider-60" className="absolute inset-y-0 left-[60%] border-l border-[#E2E8F0]" />
           <span data-testid="activity-divider-80" className="absolute inset-y-0 left-[80%] border-l border-[#E2E8F0]" />
         </div>
-      <section aria-label="Customer identity" className="relative min-w-0">
         <div className={activityColumns + " lg:items-start lg:py-6"}>
           <div className="flex min-w-0 items-center gap-4 lg:col-span-2 lg:gap-3 lg:px-3 min-[1700px]:gap-4 min-[1700px]:px-6">
             <span aria-hidden="true"
@@ -227,7 +230,6 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       </section>
 
       <section aria-label="Activity summary" className="relative min-w-0 border-y border-[#E2E8F0] py-4 lg:border-b-0 lg:py-5">
-        {/* The 20% line begins at the separator, since identity spans two cells above. */}
         <div data-testid="activity-metrics-grid" className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 xl:grid-cols-6 lg:gap-x-0">
           {([
             { label: "Searches", count: data.summary.searches },
@@ -237,8 +239,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             { label: "Journeys tracked", count: data.summary.journeysTracked },
             { label: "Pages visited", count: data.summary.pagesVisited ?? 0 },
           ]).map(({label,count}) => <div key={label} data-testid="activity-metric"
-            className="min-w-0 pr-2 sm:pr-3 lg:px-4">
-            <span data-testid="activity-metric-label" className="block text-[12px] font-normal text-[#64748B] lg:whitespace-nowrap">{label}</span>
+            className="min-w-0 pr-2 sm:pr-3 lg:px-3 xl:border-l xl:border-[#E2E8F0] xl:first:border-l-0">
+            <span data-testid="activity-metric-label" className="block break-words text-[12px] font-normal text-[#64748B]">{label}</span>
             <span data-testid="activity-metric-value" className="mt-1 block text-[16px] font-medium leading-6 tabular-nums text-[#0F172A]">{count}</span>
             {label === "Searches" && data.summary.searchProducts ? <div aria-label="Searches by product"
               className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-1 text-[11px] sm:gap-x-3 sm:text-xs leading-4 text-[#64748B]">

@@ -192,9 +192,9 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
         Online presence could not be verified. This does not mean nobody is online.
       </div> : !rows.length ? <div className="rounded-lg border border-[#E2E8F0] p-5 text-[13px] text-[#475569]">
         No online users match the selected filters.
-      </div> : <div className="admin-responsive-records min-w-0 overflow-x-auto" role="region"
+      </div> : <div className="admin-responsive-records min-w-0 max-w-full" role="region"
           aria-label="Current online identities" tabIndex={0}>
-        <table className="w-full min-w-[900px] table-fixed text-left text-[13px]">
+        <table className="w-full min-w-0 table-fixed text-left text-[13px]">
           <thead className="border-b border-[#E2E8F0] text-[11px] font-medium text-[#64748B]">
             <tr>
               <th className="w-[24%] px-3 py-3 font-medium">IDENTITY</th>
@@ -209,32 +209,32 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
           <tbody className="divide-y divide-[#E2E8F0]">
             {visible.map(row => <tr key={row.kind + ":" + row.id}
               data-testid="online-user-row" className="align-middle hover:bg-[#F8FAFC]">
-              <td className="break-words px-3 py-3">
+              <td data-label="Identity" className="break-words px-3 py-3">
                 <p className="font-medium text-[#0F172A]">{row.name}</p>
                 {row.email ? <p className="mt-0.5 break-all text-[11px] text-[#64748B]">{row.email}</p> : null}
               </td>
-              <td className="px-3 py-3 text-[#475569]">
+              <td data-label="Type" className="px-3 py-3 text-[#475569]">
                 {row.kind === "guest" ? "Guest" : roleNames[row.role ?? "USER"]}
               </td>
-              <td className="px-3 py-3">
+              <td data-label="Platforms" className="px-3 py-3">
                 <div className="flex flex-wrap gap-1.5">{row.platforms.map(platform =>
                   <span key={platform} className="rounded-md border border-[#E2E8F0] px-2 py-1 text-[11px] text-[#475569]">
                     {platformNames[platform]}
                   </span>)}</div>
               </td>
-              <td className="break-words px-3 py-3 text-[#475569]" data-testid="online-user-location"
+              <td data-label="Location" className="break-words px-3 py-3 text-[#475569]" data-testid="online-user-location"
                   title={row.locationLabel ? row.kind === "guest" ? "Approximate country from live access" : "Approximate location from a recorded device session" : "No verified location recorded"}>
                 {row.locationLabel ?? "Unavailable"}
               </td>
-              <td className="px-3 py-3 tabular-nums text-[#475569]">
+              <td data-label="Last seen" className="px-3 py-3 tabular-nums text-[#475569]">
                 <time dateTime={row.lastSeenAt}>{clock(timeZone).format(new Date(row.lastSeenAt))}</time>
               </td>
-              <td className="px-3 py-3">
+              <td data-label="Status" className="px-3 py-3">
                 <span className="inline-flex items-center gap-1.5 font-medium text-[#15803D]">
                   <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-[#16A34A]" />Online
                 </span>
               </td>
-              <td className="px-3 py-3">
+              <td data-label="Activity" className="px-3 py-3">
                 {row.kind === "registered" ? <Link href={"/admin/users/user/" + encodeURIComponent(row.id) + "/activity"}
                   className="focus-ring font-medium text-[#004BB8] hover:underline">View Activity</Link>
                   : row.liveReference && /^[A-Za-z0-9_-]{43}$/.test(row.liveReference) ? <Link prefetch={false} href={"/admin/users/online/guest/" + encodeURIComponent(row.liveReference)}

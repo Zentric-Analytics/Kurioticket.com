@@ -9,25 +9,22 @@ try {
   // Scope this historical navigation fixture explicitly without changing the UI default.
   const path = "/admin/users/guest/qa-guest-activity-0001/activity?tab=searches&q=LOS&range=all&directory=tab%3Dguests";
   await page.goto(base + path);
-  await expect(page.getByTestId('activity-journey-row')).toHaveCount(1);
-  await expect(page.locator('[data-activity-id]')).toHaveCount(0);
-  // Summary rows are intentionally informational; full detail stays in Journey History.
-  const summaryRow = page.getByTestId('activity-journey-row').first();
-  await expect(summaryRow).toContainText('Flight search');
-  await expect(summaryRow).toContainText('LOS → IST');
-  await expect(summaryRow).toContainText('recorded stages');
-  await expect(summaryRow.getByRole('link')).toHaveCount(0);
-  await expect(page.getByRole('link',{name:/View Journey History/})).toBeVisible();
+
+  await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all"));
+  await expect(page.locator('[data-activity-id]')).toHaveCount(2);
+  await expect(page.getByTestId("unified-activity-list")).toContainText("LOS → IST");
+  await expect(page.getByRole('link',{name:/View journey history/i})).toBeVisible();
   const longDirectory = "客".repeat(1000);
   await page.goto(base + "/admin/users/guest/qa-guest-activity-0001/activity?" + new URLSearchParams({q:"LOS",range:"all",directory:longDirectory}));
-  await expect(page.getByTestId('activity-journey-row')).toHaveCount(1);
-  await expect(page.getByTestId('activity-journey-row').getByRole('link')).toHaveCount(0);
-  const historyLink = page.getByRole('link',{name:/View Journey History/});
+
+  await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all"));
+  await expect(page.locator('[data-activity-id]')).toHaveCount(4);
+  const historyLink = page.getByRole('link',{name:/View journey history/i});
   assert.ok((await historyLink.getAttribute('href')).length < 8192);
   await historyLink.click();
   await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/journeys\?/);
   await page.getByRole('navigation',{name:'Breadcrumb'}).getByRole('link',{name:'Activity',exact:true}).click();
-  await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/activity\?/);
+  await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/activity\/all\?/);
   assert.equal(new URL(page.url()).searchParams.get("directory"),longDirectory);
   assert.equal(new URL(page.url()).searchParams.get("q"),"LOS");
   assert.equal(new URL(page.url()).searchParams.get("range"),"all");
@@ -37,7 +34,7 @@ try {
   const parent = "/admin/users/guest/qa-guest-activity-0001/activity?"
     + new URLSearchParams({range:"all",product:"FLIGHT",q:"LOS",directory:"tab=guests"});
   await page.goto(base+parent);
-  const toHistory = page.getByRole("link",{name:/View Journey History/});
+  const toHistory = page.getByRole("link",{name:/View journey history/i});
   await expect(toHistory).toBeVisible();
   await toHistory.click();
   await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/journeys\?/);
@@ -83,7 +80,7 @@ try {
   // The normal Journey History page returns through its sole Activity breadcrumb.
   await expect(page.getByRole("link",{name:"Back to Activity"})).toHaveCount(0);
   await page.getByRole("navigation",{name:"Breadcrumb"}).getByRole("link",{name:"Activity",exact:true}).click();
-  await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/activity\?/);
+  await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/activity\/all\?/);
   const parentReturn = new URL(page.url());
   assert.equal(parentReturn.searchParams.get("product"),"FLIGHT");
   assert.equal(parentReturn.searchParams.get("q"),"LOS");

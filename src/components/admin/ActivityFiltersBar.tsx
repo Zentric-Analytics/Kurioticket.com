@@ -73,6 +73,7 @@ export function ActivityFiltersBar({ path, initial, directory, tabs, timeZone, n
     setEditingCustom(false);
     update({ range, from: "", to: "" });
   };
+  const accessOrPages = values.tab === "access" || values.tab === "pages";
   const validCustom = Boolean(adminCalendarRange(draftDates.from, draftDates.to, timeZone));
   const customDates = initial.range === "custom" && draftDates.from === initialDates.from && draftDates.to === initialDates.to
     ? { from: initial.from, to: initial.to }
@@ -86,21 +87,21 @@ export function ActivityFiltersBar({ path, initial, directory, tabs, timeZone, n
     <label className="relative block min-w-0">
       <span className="sr-only">Search activity</span>
       <Search aria-hidden="true" size={16} className="pointer-events-none absolute left-3 top-3.5 text-[#64748B]" />
-      <input aria-label="Search activity" value={values.q} maxLength={80} placeholder="Route, destination, or provider"
+      <input aria-label="Search activity" value={values.q} maxLength={80} placeholder={values.tab === "access" ? "Platform or access type" : values.tab === "pages" ? "Page or screen" : "Route, destination, or provider"}
         onChange={e => update({q:e.target.value})}
         onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }}
         className="h-11 w-full min-w-0 rounded-lg border border-[#E2E8F0] bg-white pl-9 pr-3 text-[13px] text-[#0F172A] outline-none placeholder:text-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
     </label>
     <div className="min-w-0 border-b border-[#E2E8F0] pb-2">
-      <div data-testid="activity-filters-row" className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_minmax(120px,0.7fr)]">
+      <div data-testid="activity-filters-row" className={"grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 " + (accessOrPages ? "lg:grid-cols-[minmax(0,1fr)_120px]" : "lg:grid-cols-[repeat(3,minmax(0,1fr))_minmax(120px,0.7fr)]")}>
         <SearchMonitorSelect label="Date range" name="range" value={editingCustom ? "custom" : values.range} options={rangeOptions}
           appearance="fare" timeZoneLabel={formatAdminTimeZoneLabel(timeZone, new Date(now))} onValueChange={setRange} />
-        <SearchMonitorSelect label="Activity product" name="product" value={values.product}
+        {!accessOrPages ? <><SearchMonitorSelect label="Activity product" name="product" value={values.product}
           options={options.product.map(([value,label])=>({value,label}))} appearance="fare"
           onValueChange={product=>update({product})} />
         <SearchMonitorSelect label="Activity type" name="stage" value={values.stage}
           options={options.stage.map(([value,label])=>({value,label}))} appearance="fare"
-          onValueChange={stage=>update({stage})} />
+          onValueChange={stage=>update({stage})} /></> : null}
         <button type="button" onClick={() => navigate((editingCustom || values.range === "custom") && validCustom
           ? { ...values, range: "custom", ...customDates } : values)}
           disabled={pending || ((editingCustom || values.range === "custom") && !validCustom)}

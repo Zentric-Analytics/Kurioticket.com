@@ -63,6 +63,7 @@ export async function loadAdminUnifiedActivity(kind: IdentityKind, id: string, f
         concat_ws(' · ', CASE WHEN s."client" = 'MOBILE' AND s."platform" = 'ios' THEN 'iOS app'
           WHEN s."client" = 'MOBILE' AND s."platform" = 'android' THEN 'Android app'
           WHEN s."client" = 'MOBILE' THEN 'Mobile app'
+          WHEN s."client" <> 'WEB' THEN 'Unknown'
           WHEN s."deviceLabel" = 'Mobile device' OR strpos(s."deviceLabel", 'iPhone') > 0 OR strpos(s."deviceLabel", 'iPad') > 0 OR strpos(s."deviceLabel", 'Android') > 0 THEN 'Mobile web'
           WHEN s."deviceLabel" = 'Desktop device' OR strpos(s."deviceLabel", 'computer') > 0 OR right(s."deviceLabel", 3) = 'Mac' THEN 'Desktop web'
           ELSE 'Website' END,
