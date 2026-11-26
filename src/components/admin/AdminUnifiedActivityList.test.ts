@@ -21,6 +21,7 @@ const pages: ActivityRow[] = [1, 2, 3].map(i => ({
   stage: "PAGE_VIEW",
   label: "Page visited",
   detail: "/support",
+  pageView: { path: "/support", previousPath: null, transport: "native", platform: "iOS app", href: null },
 }));
 
 test("overview shows one latest page and one access record", () => {
@@ -40,6 +41,8 @@ test("overview shows one latest page and one access record", () => {
   ));
 
   assert.match(html, /e-page-1/);
+  assert.match(html, /iOS app/);
+  assert.match(html, /Screen route/);
   assert.doesNotMatch(html, /e-page-2|e-page-3/);
   assert.equal(
     (html.match(/data-activity-id="latest-access-summary"/g) || []).length,

@@ -3,7 +3,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { ACTIVITY_PAGE_SIZE, activityWindow, decodeActivityCursor, encodeActivityCursor, type ActivityCursor, type ActivityFilters } from "@/lib/adminIdentityActivity";
-import { type ActivityRow, type IdentityKind } from "@/lib/adminIdentityJourney";
+import type { IdentityKind } from "@/lib/adminIdentityJourney";
+import { mergeUnifiedActivityPage } from "@/lib/adminUnifiedActivityPage";
 import { guestAccessRecordsSql, accessDatePredicate } from "@/lib/adminGuestAccessSql";
 import { loadAdminIdentityActivity, type ActivityReadResult } from "@/services/adminIdentityActivityService";
 
@@ -24,10 +25,7 @@ function deviceSeek(cursor: ActivityCursor | undefined) {
     ? Prisma.sql`AND ("at" < ${at} OR ("at" = ${at} AND "id" > ${cursor.id}))`
     : Prisma.sql`AND "at" < ${at}`;
 }
-export function mergeUnifiedActivityPage(events: ActivityRow[], access: ActivityRow[], hasMoreEvents: boolean) {
-  const rows = [...events, ...access].sort((a,b) => +b.at - +a.at || a.id.localeCompare(b.id));
-  return { rows: rows.slice(0, pageSize), hasMore: rows.length > pageSize || hasMoreEvents };
-}
+
 
 /** Reuse the existing consent- and environment-scoped reader for every travel,
  * account and page event. Access observations are projected independently;
@@ -100,7 +98,7 @@ export async function loadAdminUnifiedActivity(kind: IdentityKind, id: string, f
       return {id: row.id, at: row.at, label: row.label, detail};
     });
 
-    const merged = mergeUnifiedActivityPage(result.data.events, safeAccess, Boolean(result.data.nextCursor));
+    const merged = mergeUnifiedActivityPage(result.data.events, safeAccess, Boolean(result.data.nextCursor), pageSize);
     const last = merged.rows.at(-1);
     return { status:"ok", data: {...result.data, events: merged.rows,
       nextCursor: merged.hasMore && last ? encodeActivityCursor(last, kind, id, filters, environment) : null }};

@@ -35,7 +35,7 @@ export function AdminUnifiedActivityList({ events, timeZone, environment, overvi
   if (overview && access) rows.push({ id: "latest-access-summary", at: access.at, label: "Latest recorded access", detail: access.detail, href: access.href, access: true });
   rows.sort((a,b) => +b.at - +a.at || a.id.localeCompare(b.id));
   const date = new Intl.DateTimeFormat("en-GB", { day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:false,timeZone });
-  return <section aria-label={overview ? "Recent activity" : "All activity"} className="min-w-0 space-y-2">
+  return <section data-testid="unified-activity-list" aria-label={overview ? "Recent activity" : "All activity"} className="min-w-0 space-y-2">
     <div className="flex flex-wrap items-center justify-between gap-2 pb-2">
       <h2 className="text-[16px] font-semibold">{overview ? "Recent activity" : "Activity history"}</h2>
       {allHref ? <Link href={allHref} className="focus-ring inline-flex items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline">View all activity <ChevronRight size={14} aria-hidden="true"/></Link> : null}
@@ -53,7 +53,10 @@ export function AdminUnifiedActivityList({ events, timeZone, environment, overvi
                 <p className="text-[13px] font-medium text-[#0F172A]">{row.label}</p>
                 <time className="shrink-0 text-[12px] tabular-nums text-[#64748B]" dateTime={row.at.toISOString()}>{date.format(row.at)}</time>
               </div>
-              {row.event?.pageView ? <PageViewDetails row={row.event}/> : <p className="mt-1 break-words text-[12px] text-[#64748B]">{row.detail || "No additional details recorded"}</p>}
+              {row.event?.pageView ? <div className="mt-1 space-y-0.5">
+                <PageViewDetails row={row.event}/>
+                <p className="break-words text-[12px] text-[#64748B]">{row.event.pageView.platform}</p>
+              </div> : <p className="mt-1 break-words text-[12px] text-[#64748B]">{row.detail || "No additional details recorded"}</p>}
               {href ? <Link href={href} className="focus-ring mt-1 inline-flex items-center gap-1 text-[12px] text-[#004BB8] hover:underline">{row.access ? "View access history" : row.event?.stage === "PAGE_VIEW" ? "View pages visited" : "View original search"} <ChevronRight size={12} aria-hidden="true"/></Link> : null}
             </div>
           </li>;
