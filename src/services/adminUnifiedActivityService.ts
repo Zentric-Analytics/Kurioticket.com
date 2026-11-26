@@ -8,13 +8,13 @@ import { mergeUnifiedActivityPage } from "@/lib/adminUnifiedActivityPage";
 import { guestAccessRecordsSql, accessDatePredicate } from "@/lib/adminGuestAccessSql";
 import { loadAdminIdentityActivity, type ActivityReadResult } from "@/services/adminIdentityActivityService";
 
-import { safeGuestDeviceDescription } from "@/lib/guestAccessObservation";
+import { recordedGuestAccessLocation, safeGuestDeviceDescription } from "@/lib/guestAccessObservation";
 
 type DeviceRow = {
   id: string; at: Date; detail: string; label: string;
   guestId?: string; guestSource?: string; evidence?: string;
   deviceLabel?: string | null; browser?: string | null;
-  os?: string | null; locationLabel?: string | null;
+  os?: string | null; locationLabel?: string | null; recordedCountryCode?: string | null;
 };
 const pageSize = ACTIVITY_PAGE_SIZE;
 function deviceSeek(cursor: ActivityCursor | undefined) {
@@ -54,7 +54,7 @@ export async function loadAdminUnifiedActivity(kind: IdentityKind, id: string, f
           WHEN 'ios' THEN 'iOS app' WHEN 'android' THEN 'Android app' WHEN 'web' THEN 'Website'
           WHEN 'native' THEN 'Mobile app' ELSE 'Unknown' END) AS "detail",
         "guestId", "guestSource", "evidence",
-        "deviceLabel", "browser", "os", "locationLabel"
+        "deviceLabel", "browser", "os", "locationLabel", "recordedCountryCode"
       FROM (${guestAccessRecordsSql({range:"all",page:1}, environment, now, id, filters.timeZone ?? "UTC")}) observed
       WHERE ${accessDatePredicate(Prisma.sql`"at"`, window)}
         AND ${filters.tab === "access"}
@@ -93,8 +93,7 @@ export async function loadAdminUnifiedActivity(kind: IdentityKind, id: string, f
         optional ? safeGuestDeviceDescription(row.deviceLabel, "deviceLabel") : null,
         optional ? safeGuestDeviceDescription(row.browser, "browser") : null,
         optional ? safeGuestDeviceDescription(row.os, "os") : null,
-        (optional ? safeGuestDeviceDescription(row.locationLabel, "locationLabel") : null)
-          ?? "Location unavailable",
+        recordedGuestAccessLocation(row) ?? "Location unavailable",
       ].filter(Boolean).join(" · ") : row.detail;
       return {id: row.id, at: row.at, label: row.label, detail};
     });

@@ -223,7 +223,7 @@ const logLookupFailure = ({
  * Strict callers disable the legacy /me fallback so the origin server's country
  * can never be mistaken for the search user's country. */
 export const resolveIpinfoLiteCountryContext = async (
-  visitorIp?: string | null, options: { allowMeFallback?: boolean } = {},
+  visitorIp?: string | null, options: { allowMeFallback?: boolean; timeoutMs?: number } = {},
 ): Promise<CountryContext | null> => {
   const token = process.env.IPINFO_TOKEN?.trim();
   const hasVisitorIp = Boolean(visitorIp);
@@ -237,7 +237,10 @@ export const resolveIpinfoLiteCountryContext = async (
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const requestedTimeout = options.timeoutMs;
+  const timeoutMs = typeof requestedTimeout === "number" && Number.isFinite(requestedTimeout)
+    ? Math.max(1, Math.min(REQUEST_TIMEOUT_MS, requestedTimeout)) : REQUEST_TIMEOUT_MS;
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const initialResult = await fetchIpinfoLiteCountryContext({

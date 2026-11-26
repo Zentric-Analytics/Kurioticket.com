@@ -46,6 +46,7 @@ export function guestAccessRecordsSql(query: DeviceHistoryQuery, environment: Pu
         ${type} || ':' || x."id" AS "recordId", ${type}::text AS "evidence",
         CASE ${source} WHEN 'IOS' THEN 'ios' WHEN 'ANDROID' THEN 'android' WHEN 'WEB' THEN 'web' ELSE 'unknown' END AS "platform",
         NULL::text AS "deviceLabel", NULL::text AS "browser", NULL::text AS "os", NULL::text AS "locationLabel",
+        ${type === "search" ? Prisma.sql`CASE WHEN jsonb_typeof(x."query" #> '{searchNetwork,countryCode}') = 'string' THEN x."query" #>> '{searchNetwork,countryCode}' END` : Prisma.sql`NULL::text`} AS "recordedCountryCode",
         x."createdAt" AS "at"
       FROM ${table}
       WHERE x."userId" IS NULL AND x."visitorId" IS NULL
@@ -73,6 +74,7 @@ export function guestAccessRecordsSql(query: DeviceHistoryQuery, environment: Pu
       CASE WHEN a."metadata"->'guestAccess'->>'version' = '1' THEN a."metadata"->'guestAccess'->>'browser' END AS "browser",
       CASE WHEN a."metadata"->'guestAccess'->>'version' = '1' THEN a."metadata"->'guestAccess'->>'os' END AS "os",
       CASE WHEN a."metadata"->'guestAccess'->>'version' = '1' THEN a."metadata"->'guestAccess'->>'locationLabel' END AS "locationLabel",
+      NULL::text AS "recordedCountryCode",
       a."createdAt" AS "at"
     FROM "AnalyticsEvent" a JOIN "Visitor" v ON v."id" = a."visitorId"
     WHERE a."type" = 'PAGE_VIEW' AND a."name" = 'page_viewed'

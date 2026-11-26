@@ -1,4 +1,6 @@
+import { createHmac, randomBytes } from "node:crypto";
 import { trustedBotEdge } from "./botEdge";
+import { publicVisitorIp, resolveIpinfoLiteCountryContext } from "./geo/ipinfo";
 import { isIsoCountryCode, normalizeCountryCode } from "./geo/context";
 import type { PublicEnvironment } from "./stagingSafety";
 
@@ -16,3 +18,75 @@ export function guestLiveCountryObservation(request: Request, environment: Publi
   if (!guestLiveCountryEnabled(environment)) return null;
   return safeGuestLiveCountry(trustedBotEdge(request)?.country);
 }
+
+type CountryLookup = (ip: string) => Promise<string | null>;
+const maxEntries = 1024;
+const cacheMs = 90_000;
+const lookupTimeoutMs = 1200;
+const maxPending = 8;
+const cacheSecret = randomBytes(32);
+
+/** Render's public managed ingress overwrites CF-Connecting-IP.
+ * https://render.com/articles/host-pocketbase-on-render
+ * Only for approximate country, never authentication or bot verification.
+ * No untrusted country or forwarding headers; reject Worker forwarding. */
+export function renderGuestCountryIp(request: Request): string | null {
+  if (process.env.RENDER !== "true") return null;
+  try {
+    const host = new URL(request.url).hostname.toLowerCase();
+    const configured = process.env.NEXT_PUBLIC_APP_URL;
+    const publicHost = configured ? new URL(configured).hostname.toLowerCase() : "";
+    const renderHost = process.env.RENDER_EXTERNAL_HOSTNAME?.trim().toLowerCase() ?? "";
+    if (host !== publicHost && host !== renderHost) return null;
+  } catch { return null; }
+  if (request.headers.has("cf-worker")) return null;
+  const ip = publicVisitorIp(request.headers.get("cf-connecting-ip"));
+  return ip && ip.toLowerCase() !== "2a06:98c0:3600::103" ? ip : null;
+}
+
+const defaultLookup: CountryLookup = async ip => {
+  if (!process.env.IPINFO_TOKEN?.trim()) return null;
+  return (await resolveIpinfoLiteCountryContext(ip, {
+    allowMeFallback: false, timeoutMs: lookupTimeoutMs,
+  }))?.countryCode ?? null;
+};
+
+/** Short-lived process-local country cache keyed by a random-process HMAC.
+ * No raw IP cache key, permanent identity or association to guest history. */
+export function createGuestCountryResolver(lookup: CountryLookup = defaultLookup) {
+  const cache = new Map<string,{country:string|null;expiresAt:number}>();
+  const pending = new Map<string,Promise<string|null>>();
+  return async (request: Request, environment: PublicEnvironment): Promise<string | null> => {
+    if (!guestLiveCountryEnabled(environment)) return null;
+    const edge = trustedBotEdge(request);
+    const country = safeGuestLiveCountry(edge?.country);
+    if (country) return country;
+    const ip = edge ? publicVisitorIp(edge.ip) : renderGuestCountryIp(request);
+    if (!ip || ip.toLowerCase() === "2a06:98c0:3600::103") return null;
+    const key = createHmac("sha256",cacheSecret).update(ip).digest("base64url");
+    const now = Date.now();
+    for (const [k,v] of cache) if (v.expiresAt <= now) cache.delete(k);
+    const hit = cache.get(key);
+    if (hit) return hit.country;
+    const running = pending.get(key);
+    if (running) return running;
+    if (pending.size >= maxPending) return null;
+    let timeout: ReturnType<typeof setTimeout>;
+    const deadline = new Promise<null>(resolve => { timeout = setTimeout(() => resolve(null),lookupTimeoutMs); });
+    const work = Promise.resolve().then(() => lookup(ip)).then(safeGuestLiveCountry, () => null);
+    const result = Promise.race([work,deadline]).then(value => {
+      clearTimeout(timeout!);
+      if (cache.size >= maxEntries) {
+        const oldest = cache.keys().next().value;
+        if (oldest !== undefined) cache.delete(oldest);
+      }
+      cache.set(key,{country:value,expiresAt:Date.now()+cacheMs});
+      return value;
+    });
+    pending.set(key,result);
+    // Do not free a provider slot before its underlying lookup settles.
+    void work.then(() => {pending.delete(key);}, () => {pending.delete(key);});
+    return result;
+  };
+}
+export const resolveGuestLiveCountry = createGuestCountryResolver();

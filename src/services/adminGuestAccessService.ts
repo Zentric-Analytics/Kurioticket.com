@@ -5,7 +5,7 @@ import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { guestAccessHistorySql } from "@/lib/adminGuestAccessSql";
 import { DEVICE_HISTORY_PAGE_SIZE, type DeviceHistoryQuery } from "@/lib/adminDeviceHistory";
 import { recordedDevicePlatformLabels, type RecordedDevicePlatform } from "@/lib/adminDevicePlatform";
-import { safeGuestDeviceDescription } from "@/lib/guestAccessObservation";
+import { recordedGuestAccessLocation, safeGuestDeviceDescription } from "@/lib/guestAccessObservation";
 import { validActivityIdentity } from "@/lib/adminIdentityActivity";
 
 export type GuestAccessRecord = {
@@ -13,7 +13,7 @@ export type GuestAccessRecord = {
   platform: string; deviceLabel: string | null; browser: string | null; os: string | null; locationLabel: string | null; at: Date;
 };
 type Stored = { guestId: string | null; guestSource: string | null; recordId: string | null; evidence: string | null; platform: string | null;
-  deviceLabel: string | null; browser: string | null; os: string | null; locationLabel: string | null; at: Date | null;
+  deviceLabel: string | null; browser: string | null; os: string | null; locationLabel: string | null; recordedCountryCode: string | null; at: Date | null;
   total: bigint; firstSeenAt: Date | null; lastSeenAt: Date | null };
 export type GuestAccessHistoryResult = { status: "ok"; records: GuestAccessRecord[]; total: number; firstSeenAt: Date | null; lastSeenAt: Date | null } | { status: "unavailable" | "not_found" };
 
@@ -42,7 +42,7 @@ export async function loadAdminGuestAccessHistory(id: string, query: DeviceHisto
         deviceLabel: optional ? safeGuestDeviceDescription(row.deviceLabel, "deviceLabel") : null,
         browser: optional ? safeGuestDeviceDescription(row.browser, "browser") : null,
         os: optional ? safeGuestDeviceDescription(row.os, "os") : null,
-        locationLabel: optional ? safeGuestDeviceDescription(row.locationLabel, "locationLabel") : null });
+        locationLabel: recordedGuestAccessLocation(row) });
     }
     if (records.length !== Math.max(0, Math.min(DEVICE_HISTORY_PAGE_SIZE, total - (query.page - 1) * DEVICE_HISTORY_PAGE_SIZE)))
       throw new Error("Incomplete guest history page");
