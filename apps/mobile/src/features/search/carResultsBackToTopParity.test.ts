@@ -40,7 +40,7 @@ test("native Cars retains its stable virtualized FlatList scrolling", () => {
   assert.match(owner, /windowSize=\{CAR_RESULT_WINDOW_SIZE\}/);
   assert.match(owner, /contentContainerStyle=\{\[r\.body,\{paddingBottom:Math\.max\(insets\.bottom \+ 64,64\)\}\]\}/);
   assert.match(cars, /<SafeAreaView style=\{\[r\.safe,\{backgroundColor:headerSurfaceColor\}\]\} edges=\{\[\]\}>/);
-  assert.match(resultsShell, /<SafeAreaView[^>]*edges=\{\["top"\]\}>\s*<ResultsAvailabilityNotice \/>\s*<View style=\{styles\.safe\}>\{content\}<\/View>\s*<\/SafeAreaView>/);
+  assert.match(resultsShell, /<SafeAreaView[^>]*edges=\{\["top"\]\}>\s*<ResultsAvailabilityNotice carPreview=\{product === "car"\} \/>\s*<View style=\{styles\.safe\}>\{content\}<\/View>\s*<\/SafeAreaView>/);
   assert.match(resultsShell, /if \(initializing\) content = <NativeTravelSearchLoadingScreen product=\{product\} includeTopInset=\{false\} \/>/);
   assert.match(cars, /status==="loading"\?<View style=\{StyleSheet\.absoluteFill\}><NativeBrandedSearchLoading product="car" includeTopInset=\{false\}/);
   assert.match(cars, /importantForAccessibility=\{status==="loading"\?"no-hide-descendants":"auto"\}/);

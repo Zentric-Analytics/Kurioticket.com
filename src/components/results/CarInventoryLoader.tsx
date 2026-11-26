@@ -1,5 +1,6 @@
 "use client";
 import { useSandboxResultState } from "./useSandboxResults";
+import { carUnsupportedSearchMessage } from "@/shared/cars/carSearchFeedback";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { CarsResultsClient } from "./CarsResultsClient";
@@ -22,7 +23,7 @@ export function CarInventoryLoader({ values, fallback }: {
   const [transportError, setError] = useState(false);
   const error=transportError||displayUnavailable;
   const [invalidSearch, setInvalidSearch] = useState(false);
-  const [unsupported, setUnsupported] = useState(false);
+  const [unsupported, setUnsupported] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const returnIntentRef = useRef<{ key: string; returning: boolean } | null>(null);
   const [expiredReturn, setExpiredReturn] = useState(false);
@@ -55,7 +56,8 @@ export function CarInventoryLoader({ values, fallback }: {
       body: JSON.stringify(values), signal: controller.signal,
     }).then(async response => {
       if (response.status === 422) {
-        if (active) setUnsupported(true);
+        const body = await response.json().catch(() => null);
+        if (active) setUnsupported(carUnsupportedSearchMessage(body?.warningCategory));
         return;
       }
       if (response.status === 400) {
@@ -97,7 +99,7 @@ export function CarInventoryLoader({ values, fallback }: {
   </main>;
   if (invalidSearch) return <CarsResultsClient values={values} initialResults={[]} inventoryStatus="invalid-search" />;
   if (unsupported) return <main className="page-shell py-8">
-    <p role="alert">These rental locations could not be verified or are unsupported. Select the locations again, then search.</p>
+    <p role="alert">{unsupported}</p>
     <a className="mt-4 inline-block rounded border px-4 py-2" href={carSearchRecoveryHref(values)}>Change search</a>
   </main>;
   if (error) return <main className="page-shell py-8">

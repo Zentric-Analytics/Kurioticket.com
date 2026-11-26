@@ -40,7 +40,7 @@ export function TravelResultsScreen({ product }: { product: Product }) {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}>
-      <ResultsAvailabilityNotice />
+      <ResultsAvailabilityNotice carPreview={product === "car"} />
       <View style={styles.safe}>{content}</View>
     </SafeAreaView>
   );

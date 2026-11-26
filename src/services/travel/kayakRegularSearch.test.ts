@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { resolveRegularKayakSearch, regularKayakRequest } from "./kayakRegularSearch";
 import { KayakSandboxClient } from "./kayakSandbox";
 import { issueLocationSelection } from "@/lib/locations/selectionAuthority";
+import { driverAgeOptions } from "@/lib/cars/carsSearchUtils";
 
 const hotel = { destination: "Boston, Massachusetts, United States", checkIn: "2099-10-12", checkOut: "2099-10-17", guests: "2", rooms: "1", currency: "JPY" };
 
@@ -335,5 +336,54 @@ test("future rental-local pickup preserves the exact user-selected time", async 
   if (result.supported && result.search.vertical === "cars") {
     assert.equal(result.search.departure, "2026-09-26");
     assert.equal(result.search.pickupTime, "00:30");
+  }
+});
+
+test("staging canonical car resolution preserves verified locations, exact times and all supported UI age choices", async () => {
+  const env = { NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL, TRAVEL_PROVIDER_MODE: process.env.TRAVEL_PROVIDER_MODE };
+  try {
+    process.env.NEXT_PUBLIC_APP_URL = "https://staging.kurioticket.com";
+    process.env.TRAVEL_PROVIDER_MODE = "staging";
+    const dates = { pickupDate: "2099-10-12", dropoffDate: "2099-10-17", pickupTime: "10:30", dropoffTime: "16:45" };
+    for (const code of ["CDG", "PAE", "LHR", "JFK", "IAH"]) {
+      for (const driverAge of driverAgeOptions) {
+        const criteria = { ...dates, pickupLocation: code, dropoffLocation: code, driverAge };
+        const result = await resolveRegularKayakSearch("cars", criteria, async () => assert.fail("exact airport code must not rediscover"));
+        assert.deepEqual(result, { supported: true, search: { vertical: "cars", origin: code, departure: dates.pickupDate, returnDate: dates.dropoffDate, pickupTime: dates.pickupTime, dropoffTime: dates.dropoffTime } });
+        assert.equal(criteria.driverAge, driverAge);
+      }
+    }
+    const target = locationTarget("kayak", "BOS", "cars");
+    const criteria = { ...dates, pickupLocation: "Boston, Massachusetts, United States", pickupLocationTarget: target, dropoffLocationTarget: target, driverAge: "20" };
+    const result = await resolveRegularKayakSearch("cars", criteria, async () => assert.fail("verified selection must not rediscover"));
+    assert.equal(result.supported, true);
+    if (!result.supported) return;
+    const fetcher: typeof fetch = async (_url, init) => {
+      const body = JSON.parse(String(init?.body));
+      assert.deepEqual(body.searchStartParameters, {
+        pickup: { location: { type: "airport", value: "BOS" }, date: dates.pickupDate, hour: 10, minute: 30 },
+        dropoff: { date: dates.dropoffDate, hour: 16, minute: 45 },
+      });
+      assert.doesNotMatch(JSON.stringify(body), /driverAge|driver_age/);
+      return Response.json({ status: "complete", currency: "USD", priceMode: "total", results: [] });
+    };
+    await new KayakSandboxClient("test-key", fetcher).search(result.search, "test-track");
+    for (const pickupLocation of ["Airport", "City center", "Hotel area", "Train station"]) {
+      const invalid = await resolveRegularKayakSearch("cars", { ...dates, pickupLocation, driverAge: "18" }, async () => []);
+      assert.equal(invalid.supported, false, "generic category is not a verified location");
+    }
+    const badAge = await resolveRegularKayakSearch("cars", { ...dates, pickupLocation: "CDG", driverAge: "71" }, async () => []);
+    assert.equal(badAge.supported, false);
+    const oneWay = await resolveRegularKayakSearch("cars", { ...dates, pickupLocation: "CDG", dropoffLocation: "LHR", driverAge: "20" }, async () => []);
+    assert.equal(oneWay.supported, false);
+    const badTarget = await resolveRegularKayakSearch("cars", { ...dates, pickupLocation: "CDG", pickupLocationTarget: "invalid", driverAge: "20" }, async () => assert.fail("invalid explicit target must not rediscover"));
+    assert.equal(badTarget.supported, false);
+    process.env.TRAVEL_PROVIDER_MODE = "production";
+    assert.equal((await resolveRegularKayakSearch("cars", { ...dates, pickupLocation: "CDG", driverAge: "20" }, async () => [])).supported, false);
+  } finally {
+    for (const [name, value] of Object.entries(env)) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
   }
 });

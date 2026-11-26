@@ -69,7 +69,7 @@ test("native Cars keeps the white filter rail and curved surface below its Hotel
   assert.match(cars, /const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
   assert.match(cars, /const headerSurfaceColor = theme\.dark \? theme\.background : "#FFFFFF"/);
   assert.match(cars, /<SafeAreaView style=\{\[r\.safe,\{backgroundColor:headerSurfaceColor\}\]\} edges=\{\[\]\}>/);
-  assert.match(resultsShell, /<SafeAreaView[^>]*edges=\{\["top"\]\}>\s*<ResultsAvailabilityNotice \/>\s*<View style=\{styles\.safe\}>\{content\}<\/View>\s*<\/SafeAreaView>/);
+  assert.match(resultsShell, /<SafeAreaView[^>]*edges=\{\["top"\]\}>\s*<ResultsAvailabilityNotice carPreview=\{product === "car"\} \/>\s*<View style=\{styles\.safe\}>\{content\}<\/View>\s*<\/SafeAreaView>/);
   assert.match(cars, /<View style=\{\[r\.carHeaderBackdrop,\{backgroundColor:carCanvasColor\}\]\}>/);
   assert.match(cars, /<View style=\{\[r\.carHeaderSurface,\{backgroundColor:headerSurfaceColor,borderBottomColor:theme\.dark\?theme\.border:"#D8E1EC"\}\]\}>/);
   assert.match(cars, /carHeaderSurface:\{borderBottomLeftRadius:28,borderBottomRightRadius:0,borderBottomWidth:StyleSheet\.hairlineWidth,overflow:"hidden"\}/);

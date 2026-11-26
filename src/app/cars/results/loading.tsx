@@ -17,7 +17,7 @@ export default function Loading() {
         carsResultsMobileInlineSearch
         stableMobileSafeAreaTop
       />
-      <ResultsAvailabilityNotice />
+      <ResultsAvailabilityNotice carPreview />
       <SearchResultsLoadingTransition searchType="car" />
     </>
   );

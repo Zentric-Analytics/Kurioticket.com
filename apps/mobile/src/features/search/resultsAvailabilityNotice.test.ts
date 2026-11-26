@@ -7,6 +7,7 @@ import test from "node:test";
 import ts from "typescript";
 import type { ReactNode } from "react";
 import { RESULTS_AVAILABILITY_NOTICE } from "../../../../../src/shared/presentation/resultsAvailabilityNotice";
+import { CAR_SANDBOX_AGE_NOTICE } from "../../../../../src/shared/cars/carSearchFeedback";
 
 // Use one React/renderer pair. Native host adapters below preserve accessibility
 // and safe-area props; these are component tests, not device visual tests.
@@ -52,6 +53,7 @@ function fixture({ state = "populated", dark = false, platform = "ios", validHot
     "../../theme/AppTheme": { useAppTheme: () => ({ theme }) },
     "./travelSearchModel": { buildSearchPlan: () => ({ plan: validHotel ? { key: "search" } : null }) },
     "../../../../../src/shared/presentation/resultsAvailabilityNotice": { RESULTS_AVAILABILITY_NOTICE },
+    "../../../../../src/shared/cars/carSearchFeedback": { CAR_SANDBOX_AGE_NOTICE },
   };
   function load<T>(file: string): T {
     const exports: Record<string, unknown> = {};
@@ -77,6 +79,7 @@ for (const platform of ["ios", "android"]) {
         const html = renderToString(React.createElement(f.TravelResultsScreen, { product }));
         assert.equal(html.split(copy).length - 1, 1);
         assert.equal((html.match(/data-testid="results-availability-notice"/g) ?? []).length, 1);
+        assert.equal(html.split(CAR_SANDBOX_AGE_NOTICE).length - 1, product === "car" ? 1 : 0);
         assert.equal((html.match(/data-edges="\[&quot;top&quot;\]"/g) ?? []).length, 1, "only the screen shell owns the top inset");
         assert.doesNotMatch(html, /<article[^>]*>[\s\S]*?Results are not bookable[\s\S]*?<\/article>/);
         if (state === "initializing") {
