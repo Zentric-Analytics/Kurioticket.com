@@ -251,7 +251,7 @@ test("independent live-country capture requires an authenticated edge and return
       assert.equal(records.at(-1)?.guestLiveCountryCode,null);
       await send({...edge,"cf-ipcountry":"XX",[tokenHeader]:token});
       assert.equal(records.at(-1)?.guestLiveCountryCode,null);
-      const signedIn=isNative?{authorization:"Bearer valid"}:{cookie:"next-auth.session-token=jwt"};
+      const signedIn: Record<string, string> = isNative ? { authorization: "Bearer valid" } : { cookie: "next-auth.session-token=jwt" };
       await send({...edge,...signedIn,[tokenHeader]:token});
       assert.equal(records.at(-1)?.accountSessionId,"canonical-session");
       assert.equal(records.at(-1)?.guestLiveCountryCode,undefined);
