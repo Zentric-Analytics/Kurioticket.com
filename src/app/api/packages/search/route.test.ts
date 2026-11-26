@@ -54,11 +54,12 @@ test("verified bot package search executes once and records one BOT search, not 
       checkRateLimit: () => { rateCalls++; return { allowed: true }; },
       getClientIp: () => "203.0.113.1",
     },
+    "@/lib/botSecurity": { withBotSearch: async (_: Request, run: (value: unknown) => unknown) => {
+      verificationCalls++;
+      return run({ crawler: { name: "GOOGLEBOT", evidence: "VERIFIED_DNS" }, requestId: "bot-package",
+        reserve: async () => null, outcome: () => undefined });
+    } },
     "@/lib/searchCrawlerGate": {
-      identifySearchCrawler: async () => {
-        verificationCalls++;
-        return { name: "GOOGLEBOT", evidence: "VERIFIED_DNS" };
-      },
       searchCrawlerMetadata: (crawler: { name: string; evidence: string } | null) => crawler ? ({
         identifiedCrawler: crawler.name, crawlerEvidence: crawler.evidence,
         ...(crawler.evidence === "VERIFIED_DNS" ? { verifiedCrawler: crawler.name } : {}),
@@ -86,7 +87,7 @@ test("verified bot package search executes once and records one BOT search, not 
   assert.equal(response.status, 200);
   assert.equal(providerCalls, 1);
   assert.equal(verificationCalls, 1);
-  assert.equal(rateCalls, 1);
+  assert.equal(rateCalls, 0);
   assert.equal(recorded.length, 0, "history is deferred until after the response");
   assert.equal(deferred.length, 1);
   await deferred[0]();

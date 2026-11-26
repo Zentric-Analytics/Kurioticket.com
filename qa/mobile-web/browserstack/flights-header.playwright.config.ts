@@ -1,4 +1,4 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "../tests",
@@ -10,6 +10,7 @@ export default defineConfig({
   use: {
     baseURL: "http://127.0.0.1:3010",
     browserName: "chromium",
+    userAgent: devices["Desktop Chrome"].userAgent,
     viewport: { width: 390, height: 844 },
     isMobile: true,
     hasTouch: true,

@@ -33,7 +33,9 @@ for (const [name, environment, expected] of [
   test(`server and middleware share canonical secret: ${name}`, async () => {
     const server = load("src/lib/env.ts", { "./authSecret": { resolveAuthSecret }, "./stagingSafety": {} }, environment);
     const calls: unknown[] = [];
-    const middleware = load("middleware.ts", {
+    const middleware = load("src/proxy.ts", {
+      "@/lib/requestIngress": { proxy: () => NextResponse.next() },
+      "@/lib/botPolicy": { automationSignal: () => null },
       "next/server": { NextResponse },
       "next-auth/jwt": { getToken: async (input: { secret: string }) => { calls.push(input.secret); return null; } },
       "@/config/regionConfig": { REGION_COOKIE_KEY: "region", REGION_OVERRIDE_COOKIE_KEY: "override" },
@@ -42,7 +44,7 @@ for (const [name, environment, expected] of [
     }, environment);
     assert.equal(resolveAuthSecret(environment), expected);
     assert.equal(server.getAuthSecret(), expected);
-    const response = await middleware.middleware(new NextRequest("https://fixture.invalid/dashboard")) as Response;
+    const response = await middleware.proxy(new NextRequest("https://fixture.invalid/dashboard")) as Response;
     assert.equal(response.status, 200); // middleware is an early UX aid, not the canonical guard
     assert.deepEqual(calls, expected ? [expected] : []);
   });
@@ -63,7 +65,9 @@ test("installed token verifier rejects absent and malformed tokens", async () =>
 
 test("middleware preserves MFA redirects, API denial, exemptions, and verified access", async () => {
   let verified = false;
-  const boundary = load("middleware.ts", {
+  const boundary = load("src/proxy.ts", {
+    "@/lib/requestIngress": { proxy: () => NextResponse.next() },
+    "@/lib/botPolicy": { automationSignal: () => null },
     "next/server": { NextResponse },
     "next-auth/jwt": { getToken: async () => ({ twoFactorEnabled: true, twoFactorVerified: verified }) },
     "@/config/regionConfig": { REGION_COOKIE_KEY: "region", REGION_OVERRIDE_COOKIE_KEY: "override" },
@@ -71,20 +75,20 @@ test("middleware preserves MFA redirects, API denial, exemptions, and verified a
     "@/lib/authSecret": { resolveAuthSecret },
   }, { AUTH_SECRET: "fixture-only" });
   for (const path of ["/dashboard?tab=trips", "/account/security"]) {
-    const response = await boundary.middleware(new NextRequest(`https://fixture.invalid${path}`)) as Response;
+    const response = await boundary.proxy(new NextRequest(`https://fixture.invalid${path}`)) as Response;
     assert.equal(response.status, 307);
     const target = new URL(response.headers.get("location")!);
     assert.equal(target.pathname, "/auth/two-factor");
     assert.equal(target.searchParams.get("callbackUrl"), path);
   }
-  const denied = await boundary.middleware(new NextRequest("https://fixture.invalid/api/account/profile")) as Response;
+  const denied = await boundary.proxy(new NextRequest("https://fixture.invalid/api/account/profile")) as Response;
   assert.equal(denied.status, 403);
   assert.deepEqual(await denied.json(), { error: "Two-factor verification required." });
   for (const path of ["/auth/two-factor", "/api/auth/two-factor", "/api/auth/signout"]) {
-    assert.equal((await boundary.middleware(new NextRequest(`https://fixture.invalid${path}`)) as Response).status, 200);
+    assert.equal((await boundary.proxy(new NextRequest(`https://fixture.invalid${path}`)) as Response).status, 200);
   }
   verified = true;
-  assert.equal((await boundary.middleware(new NextRequest("https://fixture.invalid/account")) as Response).status, 200);
+  assert.equal((await boundary.proxy(new NextRequest("https://fixture.invalid/account")) as Response).status, 200);
 });
 
 test("actual database-backed session and admin boundaries reject stale, invalid, non-admin and incomplete-MFA claims", async () => {

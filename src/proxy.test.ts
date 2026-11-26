@@ -3,17 +3,18 @@ import test from "node:test";
 
 import { NextRequest } from "next/server";
 
-import { proxy, shouldDisableStagingDocumentCache } from "@/proxy";
+import { proxy } from "@/proxy";
+import { shouldDisableStagingDocumentCache } from "@/lib/requestIngress";
 
-test("staging document responses cannot retain HTML across deployments", () => {
+test("staging document responses cannot retain HTML across deployments", async () => {
   const request = new NextRequest("https://staging.kurioticket.com/deals", {
     headers: { "sec-fetch-dest": "document" },
   });
   assert.equal(shouldDisableStagingDocumentCache(request), true);
-  assert.equal(proxy(request).headers.get("Cache-Control"), "no-store, max-age=0");
+  assert.equal((await proxy(request)).headers.get("Cache-Control"), "no-store, max-age=0");
 });
 
-test("Production and non-document requests keep their existing cache policy", () => {
+test("Production and non-document requests keep their existing cache policy", async () => {
   const production = new NextRequest("https://kurioticket.com/deals", {
     headers: { "sec-fetch-dest": "document" },
   });
@@ -22,6 +23,6 @@ test("Production and non-document requests keep their existing cache policy", ()
   });
   assert.equal(shouldDisableStagingDocumentCache(production), false);
   assert.equal(shouldDisableStagingDocumentCache(stagingAsset), false);
-  assert.equal(proxy(production).headers.get("Cache-Control"), null);
-  assert.equal(proxy(stagingAsset).headers.get("Cache-Control"), null);
+  assert.equal((await proxy(production)).headers.get("Cache-Control"), null);
+  assert.equal((await proxy(stagingAsset)).headers.get("Cache-Control"), null);
 });

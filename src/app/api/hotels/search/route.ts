@@ -1,9 +1,10 @@
+import { withBotSearch } from "@/lib/botSecurity";
 import { countHotelInventory } from "@/lib/hotels/hotelResultAccounting";
 import { withProductionSandboxRequest, captureFinalSearchHistory, productionSandboxHost } from "@/lib/productionSandboxPolicy";
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession, operationalSessionMetadata } from "@/lib/operationalSearchSession";
-import { identifySearchCrawler, searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
+import { searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { createHash } from "node:crypto";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicHotel } from "@/lib/searchCache";
@@ -25,16 +26,17 @@ import { resolveSearchRequestId } from "@/lib/search-journey";
 import { returnedKayakHotelSnapshot, rememberHotelOperationalBinding } from "@/services/travel/hotelOperationalBinding";
 
 export async function POST(request: Request) {
+ return withBotSearch(request, async bot => {
  return withProductionSandboxRequest(request, async () => {
   const projectHistory=captureFinalSearchHistory("hotel");
   const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(input));
 
-  const crawler = await identifySearchCrawler(request);
-  const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
+  const crawler = bot?.crawler ?? null;
+  const requestId = bot?.requestId ?? resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("HOTEL_SEARCH_ENABLED"))) return NextResponse.json({ error: "Hotel search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
   const ip = getClientIp(request);
-  const rate = checkRateLimit(`hotel-search:${ip}`, 35, 60_000);
-  if (!rate.allowed) {
+  const rate = bot ? null : checkRateLimit(`hotel-search:${ip}`, 35, 60_000);
+  if (rate && !rate.allowed) {
     return NextResponse.json({ error: "Too many searches. Please pause for a moment." }, { status: 429 });
   }
 
@@ -44,7 +46,7 @@ export async function POST(request: Request) {
     new URL(request.url).searchParams.get("provider");
   const providerMode: HotelProviderMode | null =
     requestedProvider === "kayak-sandbox" ? requestedProvider : null;
-  if (requestedProvider && !providerMode) {
+  if (requestedProvider && (!providerMode || bot)) {
     return NextResponse.json(
       { error: "Unsupported Hotel provider mode." },
       { status: 400 },
@@ -100,10 +102,13 @@ export async function POST(request: Request) {
     userAgent: request.headers.get("user-agent") || undefined,
     signal: request.signal,
   };
+  const botDenial = await bot?.reserve();
+  if (botDenial) return botDenial;
   const aggregate = providerMode
     ? await searchHotelsByProvider(providerSearch, providerMode, { kayak: kayakContext, requestId, signal: request.signal, defer: after })
-    : await searchHotels(providerSearch, { kayak: kayakContext, defer: after });
+    : await searchHotels(providerSearch, { kayak: kayakContext, defer: after, ...(bot ? { requestId, signal: request.signal } : {}) });
   if (aggregate.unavailableMessage) {
+    bot?.outcome("FAILED");
     after(async () => {
       try {
         const { userId, visitorId, ...application } = await resolveSearchIdentity();
@@ -167,6 +172,7 @@ export async function POST(request: Request) {
     })),
   });
   const status = hotelSearchRecordedStatus(aggregate.providerStatuses, returnedResults.length);
+  bot?.outcome(returnedResults.length === 0 && status === "SUCCESS" ? "EMPTY" : status);
 
   after(async () => {
     const { userId, visitorId, ...application } = await resolveSearchIdentity();
@@ -215,6 +221,7 @@ export async function POST(request: Request) {
     latencyMs: aggregate.latencyMs,
   }), operationalSession);
 
+ });
  });
 }
 

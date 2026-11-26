@@ -179,3 +179,5 @@ recording and deletion failures; correct chronology, pagination, and exact
 identity-scoped navigation. No new optional page, filter or interaction writes
 may occur under rejected consent. No provider availability or result accounting
 changes are in scope. The approval and database/client integration remain open.
+
+**Current scope decision (2026-11-26):** Historical guest first-access continuity is explicitly deferred. No permanent guest identity on initial access, historical association, backfill, or new long-term guest retention is authorized by this change. The short-lived live-access/location preview remains staging-only, disabled by default, and subject to a separately verified trusted ingress and privacy-owner approval before activation. The read-only live guest navigation can operate without enabling the optional preview.
