@@ -16,7 +16,15 @@ test("Users distinguishes database-read failures from truly empty account and gu
   assert.match(users, /Retry directory/);
   assert.match(users, /href=\{link\}/);
   assert.match(users, /<AdminUsersToolbar timeZone=\{timeZone\} now=\{now\.toISOString\(\)\} query=\{q\} role=\{role\} status=\{status\} tab=\{tab\}/);
-  assert.match(users, /<AdminIdentityTable rows=\{result\.rows\}/);
+  // Location is optional enrichment of the successful directory result.
+  // A database failure must still render the explicit unavailable state.
+  assert.ok(users.indexOf("if (result === null) {") < users.indexOf("const guestLocations = await loadAdminGuestRecordedLocations("));
+  assert.match(users, /const rowsWithLocations = result\.rows\.map\(row => row\.kind === "guest" \? \{/);
+  assert.match(users, /\.\.\.row, lastRecordedLocation: guestLocations\.get\(guestRecordedLocationKey\(row\.record\.id,\s*row\.guestSource === "operational" \? "operational" : "consented"\)\) \?\? null,\s*\} : row\);/);
+  assert.match(users, /<AdminIdentityTable rows=\{rowsWithLocations\}/);
+  const locations = readFileSync("src/services/adminGuestRecordedLocationsService.ts", "utf8");
+  assert.match(locations, /return withOptionalDb\(async db => \{/);
+  assert.match(locations, /\}, new Map<string, RecordedGuestLocation>\(\)\);/);
   assert.match(db, /catch \(error\) \{[\s\S]*?return fallback/);
 });
 
