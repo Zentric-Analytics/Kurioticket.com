@@ -4,7 +4,7 @@ import { activityJourneyReturnHref } from "./adminActivityJourneyNavigation";
 import { isAdminReportingRange, type AdminReportingRange } from "./adminReportingRanges";
 import type { ActivityRow, IdentityKind } from "./adminIdentityJourney";
 
-export const PAGE_VIEW_SUMMARY_LIMIT = 5;
+export const PAGE_VIEW_SUMMARY_LIMIT = 1;
 export const PAGE_HISTORY_MAX_PAGE = 1_000_000;
 export const PAGE_HISTORY_PLATFORMS = [
   { value: "all", label: "All platforms" },
