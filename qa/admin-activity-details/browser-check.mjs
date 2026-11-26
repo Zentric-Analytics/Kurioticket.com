@@ -203,7 +203,7 @@ try {
   await page.getByRole("link",{name:"View pages visited",exact:true}).click();
   await expect(page).toHaveURL(url => url.pathname === "/admin/users/user/qa-page-history-0001/pages");
   await expect(page.getByRole("heading",{name:"Pages Visited History"})).toBeVisible();
-  await expect(page.getByRole("complementary",{name:"Users navigation"}).getByRole("link",{name:"Users Directory",exact:true})).toHaveAttribute("aria-current","page");
+  await expect(page.getByRole("complementary",{name:"Users & Bots navigation"}).getByRole("link",{name:"Users Directory",exact:true})).toHaveAttribute("aria-current","page");
   await expect(page.getByTestId("page-view-row")).toHaveCount(20);
   await page.getByRole("link",{name:"Next",exact:true}).click();
   await expect(page.getByTestId("page-view-row")).toHaveCount(20);
@@ -235,14 +235,14 @@ try {
   await page.getByRole("link",{name:"Pages visited history",exact:true}).click();
   await expect(page).toHaveURL(u=>u.pathname.endsWith("/pages")&&!u.searchParams.has("q")&&!u.searchParams.has("product"));
   await expect(page.getByTestId("pages-visited-total")).toHaveText("45");
-  await expect(page.getByRole("complementary",{name:"Users navigation"}).getByRole("link",{name:"Users Directory",exact:true})).toHaveAttribute("aria-current","page");
+  await expect(page.getByRole("complementary",{name:"Users & Bots navigation"}).getByRole("link",{name:"Users Directory",exact:true})).toHaveAttribute("aria-current","page");
   await page.getByRole("link",{name:"Back to Activity",exact:true}).click();
   await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all")&&u.searchParams.get("range")==="all"&&u.searchParams.get("tab")==="searches"&&u.searchParams.get("product")==="FLIGHT"&&u.searchParams.get("q")==="unmatched");
   console.log("PASS compact page preview, full history, filters and exact return");
   
   // New directory entry points reuse the real individual history routes.
   await page.setViewportSize({width:1280,height:900});
-  const usersSidebar = page.getByRole("navigation",{name:"Users subsections"});
+  const usersSidebar = page.getByRole("navigation",{name:"Users & Bots subsections"});
   await usersSidebar.getByRole("link",{name:"Device & Access",exact:true}).click();
   await expect(page).toHaveURL(url => url.pathname === "/admin/users/devices");
   await expect(page.getByRole("heading",{name:"Device & Access",exact:true})).toBeVisible();

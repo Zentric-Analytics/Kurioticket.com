@@ -31,7 +31,7 @@ try {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(url);
     await expect(page.locator('section[aria-label="Online Users"]')).toHaveCount(0);
-    await expect(page.getByRole("navigation",{name:"Users subsections"})
+    await expect(page.getByRole("navigation",{name:"Users & Bots subsections"})
       .getByRole("link",{name:"Online Users",exact:true})).toBeVisible();
     const population = page.locator('section[aria-label="User population metrics"]');
     await expect(population).toContainText("Consented guest");
@@ -125,7 +125,7 @@ try {
   await expect(live.locator('[data-testid="online-platform-metric"]')).toHaveCount(4);
   assert.deepEqual((await live.locator('p.tabular-nums').allTextContents()).map(text => text.trim()),
     ["3","1","0","3"]);
-  await expect(page.getByRole("navigation",{name:"Users subsections"}).getByRole("link",{name:"Online Users"}))
+  await expect(page.getByRole("navigation",{name:"Users & Bots subsections"}).getByRole("link",{name:"Online Users"}))
     .toHaveAttribute("aria-current","page");
   await expect(page.getByTestId("online-user-row")).toHaveCount(3);
   await expect(page.getByRole("columnheader",{name:"LOCATION"})).toBeVisible();
