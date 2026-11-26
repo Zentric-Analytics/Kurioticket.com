@@ -344,6 +344,13 @@ model OnlinePresenceSession {
   platform         String
   accountSessionId String?
   lastSeenAt       DateTime
+  // Optional staging preview, subject to the same presence retention.
+  guestFirstSeenAt DateTime?
+  guestObservedAt  DateTime?
+  guestCountryCode String?
+  guestDeviceLabel String?
+  guestBrowser     String?
+  guestOs          String?
   accountSession   AccountSession? @relation(fields: [accountSessionId], references: [id], onDelete: Cascade)
 
   @@id([environment, sourceId])

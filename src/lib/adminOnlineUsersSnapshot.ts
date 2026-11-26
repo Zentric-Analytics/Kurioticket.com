@@ -1,4 +1,5 @@
 import { onlinePresenceWindowSeconds, type OnlinePresencePlatformCounts } from "@/lib/onlinePresence";
+import { liveGuestCountryName, safeLiveGuestAccess, type LiveGuestAccess } from "./guestFirstAccessObservation";
 
 export type OnlineIdentityRow = {
   id: string;
@@ -10,6 +11,7 @@ export type OnlineIdentityRow = {
   locationLabel: string | null;
   platforms: Array<"desktop_web" | "mobile_web" | "ios" | "android" | "unclassified">;
   lastSeenAt: string;
+  liveAccess?: LiveGuestAccess;
 };
 export type AdminOnlineUsersSnapshot =
   | { status: "ok"; observedAt: string; windowSeconds: number; total: number;
@@ -22,6 +24,7 @@ export type RawPresenceRow = {
   sourceId: string; platform: string | null; accountSessionId: string | null;
   userId: string | null; name: string | null; email: string | null; role: string | null;
   locationLabel: string | null; lastSeenAt: Date;
+  liveAccess?: LiveGuestAccess;
 };
 const platformKeys = ["desktop_web", "mobile_web", "ios", "android"] as const;
 function normalizePlatform(value: string | null): Platform {
@@ -45,7 +48,7 @@ export function buildAdminOnlineUsersSnapshot(
     row: OnlineIdentityRow;
     platforms: Set<Platform>;
   }>();
-  const guests = new Map<string, { platforms: Set<Platform>; lastSeenAt: Date }>();
+  const guests = new Map<string, { platforms: Set<Platform>; lastSeenAt: Date; liveAccess: LiveGuestAccess | null }>();
   for (const observation of observations) {
     const at = observation.lastSeenAt.getTime();
     if (!Number.isFinite(at) || at <= cutoff || at > now.getTime()) continue;
@@ -56,8 +59,12 @@ export function buildAdminOnlineUsersSnapshot(
       const prior = guests.get(observation.sourceId);
       if (prior) {
         prior.platforms.add(platform);
-        if (at > prior.lastSeenAt.getTime()) prior.lastSeenAt = observation.lastSeenAt;
-      } else guests.set(observation.sourceId, { platforms: new Set([platform]), lastSeenAt: observation.lastSeenAt });
+        if (at > prior.lastSeenAt.getTime()) {
+          prior.lastSeenAt = observation.lastSeenAt;
+          prior.liveAccess = safeLiveGuestAccess(observation.liveAccess, observation.lastSeenAt);
+        }
+      } else guests.set(observation.sourceId, { platforms: new Set([platform]), lastSeenAt: observation.lastSeenAt,
+        liveAccess: safeLiveGuestAccess(observation.liveAccess, observation.lastSeenAt) });
       continue;
     }
     // Missing or invalid session joins must not count as guests or users.
@@ -90,7 +97,9 @@ export function buildAdminOnlineUsersSnapshot(
     b.lastSeenAt.getTime() - a.lastSeenAt.getTime()).map((guest, index): OnlineIdentityRow => ({
     // This is only a per-snapshot display key; never a stable anonymous identifier.
     id: "guest-" + (index + 1),
-    kind: "guest", name: "Guest session", email: null, role: null, locationLabel: null,
+    kind: "guest", name: "Guest session", email: null, role: null,
+    locationLabel: liveGuestCountryName(guest.liveAccess?.countryCode),
+    ...(guest.liveAccess ? { liveAccess: guest.liveAccess } : {}),
     platforms: [...guest.platforms].sort(), lastSeenAt: guest.lastSeenAt.toISOString(),
   }));
   const rows = [...registered, ...anonymous].sort((a, b) =>

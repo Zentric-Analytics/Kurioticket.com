@@ -92,3 +92,25 @@ The Overview is an **operational summary and navigation surface**, not an exhaus
 This is **presentation-only**. The authenticated, environment-scoped canonical Overview reads, underlying database models, reconciliations, date windows, consent checks, failure rates, and provider classifications have not been changed. All operational search rows are deliberately separate from consented journey events; outbound redirects do not prove bookings. Configured credentials are not proof of successful email delivery, provider authorization or end-to-end sign-in. Active website users still uses the independent 90-second presence window. Provider health continues to use its independent 24-hour observation window. The selected period continues to apply to historical searches, journeys, redirects, and audit action totals. Recent Admin Activity continues to show the newest actions across all dates, now limited to three on the Overview.
 
 Full provider service breakdowns, failure reasons, call timings and last-error/success timestamps remain available at `/admin/providers`; full customer-journey rows at `/admin/journeys`; search operations at `/admin/searches/activity`; outbound redirects at `/admin/redirects`; support queues at `/admin/support`; deletion workflows at `/admin/account-deletions`; platform configuration at `/admin/system`; audit records at `/admin/logs`. The new Overview cards and sections include direct navigation shortcuts to these actual routes. No backend data or records have been removed or inferred. A failed overview read continues to show an unavailable state, not fabricated numbers.
+
+
+### Proposed staging-only guest access preview (not approved for activation)
+
+GUEST_FIRST_ACCESS_PREVIEW is disabled by default and always disabled in production.
+The nullable migration does not backfill existing records. Do not enable collection
+on customer traffic until the privacy owner confirms operational necessity, lawful
+basis, disclosures and retention; use isolated synthetic QA first.
+
+The preview observes first access only after the guest returns a verified presence
+credential. It stores coarse device information and trusted-edge country only in the
+existing short-lived presence row (90-second live window, 15-minute cleanup).
+It creates no new cookie, raw IP, city, raw user agent, fingerprint, optional
+page history or persistent visitor ID. The existing writer is the fallback
+if preview storage fails. A new live interval or intervening account resets first seen.
+
+The Admin live View Activity key is a domain-separated HMAC of the internal
+source and first-seen timestamp; it is not a credential and requires Admin
+authorization plus an exact current observation. It never joins operational
+search or Analytics visitor IDs. Historical guest first-access association and
+retention require a separate reviewed design. This preview does not implement
+that association and is not a substitute for the requested historical activity view.

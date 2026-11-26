@@ -223,7 +223,7 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
                   </span>)}</div>
               </td>
               <td className="break-words px-3 py-3 text-[#475569]" data-testid="online-user-location"
-                  title={row.locationLabel ? "Approximate location from a recorded device session" : "No verified location recorded"}>
+                  title={row.locationLabel ? row.kind === "guest" ? "Approximate country from live access" : "Approximate location from a recorded device session" : "No verified location recorded"}>
                 {row.locationLabel ?? "Unavailable"}
               </td>
               <td className="px-3 py-3 tabular-nums text-[#475569]">
@@ -237,6 +237,8 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
               <td className="px-3 py-3">
                 {row.kind === "registered" ? <Link href={"/admin/users/user/" + encodeURIComponent(row.id) + "/activity"}
                   className="focus-ring font-medium text-[#004BB8] hover:underline">View Activity</Link>
+                  : row.liveAccess && /^[A-Za-z0-9_-]{43}$/.test(row.liveAccess.reference) ? <Link href={"/admin/users/online/guest/" + encodeURIComponent(row.liveAccess.reference)}
+                    className="focus-ring font-medium text-[#004BB8] hover:underline" title="Current verified guest access only">View Activity</Link>
                   : <span className="text-[11px] text-[#64748B]">Not linked</span>}
               </td>
             </tr>)}
