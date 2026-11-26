@@ -256,6 +256,7 @@ test("operational guest events appear directly in Activity without a second-page
   assert.doesNotMatch(unified, /View recorded session activity/);
   assert.match(full, /operational \? "Essential operational activity"/);
   assert.match(full, /!operational \|\| tab\.value !== "pages"/);
+  assert.match(page, /redirect\(activityHref\(basePath \+ "\/all"/);
   assert.doesNotMatch(overview, /View recorded session activity|href=\{otherHref\}/);
   assert.match(legacy, /loadAdminIdentityActivity\(kind, id, parsed\.filters, undefined, "all"\)/);
 });

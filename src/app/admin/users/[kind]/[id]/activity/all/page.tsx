@@ -40,10 +40,13 @@ export default async function AdminAllActivityPage({params,searchParams}:Props) 
   }
   if (!raw.to) raw.to = now.toISOString();
   const parsed = parseActivityFilters(raw,timeZone);
+  const accessOrPages = parsed.ok && (parsed.filters.tab === "access" || parsed.filters.tab === "pages");
+  const incompatible = accessOrPages && (parsed.filters.product !== "all" ||
+    (parsed.filters.stage !== "all" && !(parsed.filters.tab === "pages" && parsed.filters.stage === "PAGE_VIEW")));
   const queryParams = safeActivityQueryParams(raw);
   const back = activityHref(base + "/activity",queryParams,{tab:null,stage:null,q:null,product:null});
   const breadcrumb = <Link href={back} className={linkClass}><ArrowLeft size={15} aria-hidden="true"/> Back to Activity</Link>;
-  if (!parsed.ok || Array.isArray(input.cursor)) return <div className="space-y-4">{breadcrumb}<AdminEmptyState title="Invalid activity filters" message={parsed.ok ? "Invalid activity page." : parsed.error} action={<Link href={path} className={linkClass}>Reset filters</Link>}/></div>;
+  if (!parsed.ok || Array.isArray(input.cursor) || incompatible) return <div className="space-y-4">{breadcrumb}<AdminEmptyState title="Invalid activity filters" message={!parsed.ok ? parsed.error : incompatible ? "Product and travel activity types do not apply to this category." : "Invalid activity page."} action={<Link href={path} className={linkClass}>Reset filters</Link>}/></div>;
   const filters = parsed.filters;
   const result = await loadAdminUnifiedActivity(kind,id,filters,cursor,now);
   if (result.status === "not_found") notFound();
@@ -66,7 +69,7 @@ export default async function AdminAllActivityPage({params,searchParams}:Props) 
         initial={{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order:"newest",from:filters.from,to:filters.to,range}}
         tabs={<nav aria-label="Activity categories" className="flex flex-wrap gap-x-5 gap-y-1">
           {tabs.filter(tab=>!operational || tab.value !== "pages").map(tab=><Link key={tab.value}
-            href={activityHref(path,queryParams,{tab:tab.value,cursor:null,stage:null,product:tab.value==="access"?null:queryParams.product ?? null,q:tab.value==="access"?null:queryParams.q ?? null})}
+            href={activityHref(path,queryParams,{tab:tab.value,cursor:null,stage:null,product:tab.value==="access"||tab.value==="pages"?null:queryParams.product ?? null,q:tab.value==="access"||tab.value==="pages"?null:queryParams.q ?? null})}
             aria-current={filters.tab===tab.value?"page":undefined}
             className={"focus-ring whitespace-nowrap border-b-2 px-1 py-2 text-[13px] font-medium " + (filters.tab===tab.value?"border-[#004BB8] text-[#004BB8]":"border-transparent text-[#475569]")}>{tab.label}</Link>)}
         </nav>}/>

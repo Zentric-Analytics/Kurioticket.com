@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Plane, Building2, CarFront } from "lucide-react";
 
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
@@ -109,11 +109,15 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const timeZone = await getAdminViewerTimeZone(session.user.id);
   const now = new Date();
   const raw = normalizeUserActivityQuery(await searchParams, now, timeZone);
-  // Legacy activity bookmarks still open this workspace; page views now have their own section.
-  // The overview is always an identity summary. Detailed filters live in All Activity.
-  delete raw.tab; delete raw.stage; delete raw.type; delete raw.product; delete raw.q;
-  const filtersResult = parseActivityFilters(raw, timeZone);
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
+  // Preserve existing filtered Activity bookmarks at the new full-history route.
+  // Never silently broaden an invalid query, or reintroduce old cursor semantics.
+  const hasDetailFilter = ["tab", "stage", "product", "q"].some(key =>
+    typeof raw[key] === "string" && raw[key] !== "" && raw[key] !== "all");
+  if (hasDetailFilter && !Object.values(raw).some(Array.isArray)) {
+    redirect(activityHref(basePath + "/all", safeActivityQueryParams(raw), { cursor: null, order: null }));
+  }
+  const filtersResult = parseActivityFilters(raw, timeZone);
   const backHref = safeDirectoryHref(raw);
   const queryParams = safeActivityQueryParams(raw);
   if (!filtersResult.ok) return <div className="space-y-4">
