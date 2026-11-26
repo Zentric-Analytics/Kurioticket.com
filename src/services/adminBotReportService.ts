@@ -151,7 +151,8 @@ export async function readBotDetails(id: string, raw: BotQuery) {
         where: historyWhere, orderBy: [{ timestamp: "desc" }, { id: "desc" }],
         skip: (page - 1) * BOT_PAGE_SIZE, take: BOT_PAGE_SIZE, omit: { retryKey: true },
       }) : [];
-      const requestIds = events.filter(event => event.dispatchedAt).map(event => event.id);
+      const dispatched = events.filter(event => event.dispatchedAt);
+      const requestIds = dispatched.map(event => event.id);
       const [searches, providers] = requestIds.length ? await Promise.all([
         db.searchHistory.findMany({
           where: { ...searchWhere, requestId: { in: requestIds } },
@@ -159,6 +160,7 @@ export async function readBotDetails(id: string, raw: BotQuery) {
         }),
         db.apiProviderLog.findMany({
           where: {
+            createdAt: { gte: new Date(Math.min(...dispatched.map(event => event.timestamp.getTime()))) },
             AND: [{ metadata: { path: ["environment"], equals: environment } }],
             OR: requestIds.map(requestId => ({ metadata: { path: ["requestId"], equals: requestId } })),
           },
