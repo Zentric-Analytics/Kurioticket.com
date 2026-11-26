@@ -8,7 +8,7 @@ export async function readAdminOnlineUsers(environment, now=new Date()) {
     const lastSeenAt=new Date(+now-seconds*1000);
     const liveReference=adminLiveGuestReference(environment,sourceId,secret);
     return {sourceId,platform,accountSessionId:null,userId:null,name:null,email:null,role:null,locationLabel:null,lastSeenAt,liveReference,
-      ...(details?{liveAccess:{reference:liveReference,firstSeenAt:new Date(+now-60000).toISOString(),countryCode:"NG",deviceLabel:"Windows computer",browser:"Chrome 140",os:"Windows"}}:{})};
+      ...(details?{liveCountryCode:"NG"}:{})};
   };
   return buildAdminOnlineUsersSnapshot([
     guest("a","desktop_web",2,true),guest("b","ios",4,false),guest("c","android",95,true),
