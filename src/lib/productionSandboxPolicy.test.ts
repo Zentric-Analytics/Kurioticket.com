@@ -99,3 +99,27 @@ test("after-response operational history observes final authorization counts and
  assert(project);assert.deepEqual(project({resultCount:1,status:"SUCCESS",requestId:"synthetic"}),{resultCount:0,status:"FAILED",requestId:"synthetic"});
  assert.deepEqual(captureFinalSearchHistory()({resultCount:3,status:"SUCCESS"}),{resultCount:3,status:"SUCCESS"});
 });
+
+test("hotel history accounts only for the final permitted inventory, including a fully removed response", async () => {
+  for (const preserveLive of [true, false]) {
+    let current = state();
+    let project: ReturnType<typeof captureFinalSearchHistory> | undefined;
+    const live = [{ id: "live-1", provider: "Live hotels", propertyGroupId: "live-property" }, { id: "live-2", provider: "Live hotels", propertyGroupId: "live-property" }];
+    const inventory = [{ ...result(), propertyGroupId: "sandbox-property" }, ...(preserveLive ? live : [])];
+    const response = await withProductionSandboxRequest(request(), async () => {
+      project = captureFinalSearchHistory("hotel");
+      assert.ok(await currentSandboxGrant());
+      current = state(false);
+      return Response.json({ results: inventory, status: "available" });
+    }, async () => current);
+    assert.deepEqual((await response.json()).results, preserveLive ? live : []);
+    assert.ok(project);
+    const history = project({ resultCount: inventory.length, status: "SUCCESS", query: {
+      environment: "production", destination: "Paris", hotelResultAccounting: { version: 1, offerCount: inventory.length, propertyCount: preserveLive ? 2 : 1 },
+    } });
+    assert.equal(history.resultCount, preserveLive ? 2 : 0);
+    assert.equal(history.status, preserveLive ? "PARTIAL" : "FAILED");
+    assert.deepEqual(history.query.hotelResultAccounting, { version: 1, offerCount: preserveLive ? 2 : 0, propertyCount: preserveLive ? 1 : 0 });
+    assert.equal(history.query.destination, "Paris");
+  }
+});

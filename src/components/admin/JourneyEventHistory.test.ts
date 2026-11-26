@@ -30,7 +30,7 @@ test("history keeps every repeated event in supplied order in one four-column ta
 test("destination-only searches, zero results and complete source paths remain readable", () => {
   const html = render([{ ...event, sourcePage: "/hotels/details/" + "a".repeat(300) }]);
   assert.match(html, /Paris, France/);
-  assert.match(html, /0 results/);
+  assert.match(html, /Property groups not recorded · 0 recorded results/);
   assert.match(html, /Success/);
   assert.match(html, new RegExp("/hotels/details/" + "a".repeat(300)));
   assert.doesNotMatch(html, /—|→ Paris|truncate|line-clamp/);
@@ -82,4 +82,9 @@ test("verified result actions appear as individual chronological steps without i
   assert.match(html, /Step 6/);
   assert.ok(html.indexOf('data-journey-event="search-1"') < html.indexOf('data-journey-event="save-1"'));
   assert.ok(html.indexOf('data-journey-event="share-1"') < html.indexOf('data-journey-event="unsave-1"'));
+});
+
+test("journey history shows property and offer counts only when recorded", () => {
+  assert.match(render([{ ...event, search: { ...search, resultCount: 1653, hotelPropertyCount: 422 } }]), /422 property groups · 1,653 offers/);
+  assert.match(render([{ ...event, search: { ...search, resultCount: 0, hotelPropertyCount: 0 } }]), /0 property groups · 0 offers/);
 });

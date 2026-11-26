@@ -9,13 +9,14 @@ import { resolveSearchRequestId } from "@/lib/search-journey";
 import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
 import { operationalSessionMetadata, type OperationalSessionReference } from "@/lib/operationalSearchSession";
 import { returnedKayakHotelSnapshot } from "@/services/travel/hotelOperationalBinding";
+import { countHotelInventory, readHotelResultAccounting } from "@/lib/hotels/hotelResultAccounting";
 
 const providerDiagnostic = "KAYAK HTTP 403: synthetic provider authentication failure";
 const requestId = "78e1de9e-6dfe-494f-9fdb-83726d83bf64";
 const hotelSnapshot = "11111111-1111-4111-8111-111111111111";
 type History = { requestId: string; type: string; status: string; userId: string | null; visitorId: string | null; resultCount: number; query: unknown; latencyMs: number };
 
-function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; operationalGuest?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string; withOffers?: boolean; scopedHotelOffers?: boolean; bindingUnavailable?: boolean; rateLimited?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT"; declaredCrawler?: string; applicationSource?: "WEB" | "IOS" | "ANDROID" | "UNKNOWN" } = {}) {
+function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; operationalGuest?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string; withOffers?: boolean; scopedHotelOffers?: boolean; rejectedHotelOffer?: boolean; bindingUnavailable?: boolean; rateLimited?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT"; declaredCrawler?: string; applicationSource?: "WEB" | "IOS" | "ANDROID" | "UNKNOWN" } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: History[] = [];
   const providerCalls: Array<{ metadata: Record<string, unknown>; status: string; errorMessage?:string }> = [];
@@ -27,7 +28,12 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
   const bindingCalls: Array<{ snapshot: string; requestId: string; sessionId: string | undefined; userId: string | null }> = [];
   const aggregate = {
     results: options.scopedHotelOffers
-      ? [{ id: `kayak-sandbox:${hotelSnapshot}:1:1`, provider: "KAYAK sandbox", price: 199, currency: "USD" }]
+      ? [
+          { id: `kayak-sandbox:${hotelSnapshot}:1:1`, provider: "KAYAK sandbox", propertyGroupId: "property-a", price: 199, currency: "USD" },
+          { id: `kayak-sandbox:${hotelSnapshot}:1:2`, provider: "KAYAK sandbox", propertyGroupId: "property-a", price: 299, currency: "USD" },
+          { id: `kayak-sandbox:${hotelSnapshot}:2:1`, provider: "KAYAK sandbox", propertyGroupId: "property-b", price: 399, currency: "USD" },
+          ...(options.rejectedHotelOffer ? [{ id: "catalogue-only", provider: "Kurioticket catalogue", price: 99, currency: "USD" }] : []),
+        ]
       : options.withOffers ? [{ id: "actionable-offer", price: 199, currency: "USD" }] : [],
     warnings: [providerDiagnostic], latencyMs: 42,
     ...(options.available ? {} : { unavailableMessage: providerDiagnostic }),
@@ -43,7 +49,7 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
     "@/lib/rate-limit": { getClientIp: () => "192.0.2.1", checkRateLimit: (key: string, limit: number, period: number) => { rates.push([key, limit, period]); return { allowed: !options.rateLimited }; } },
     "@/lib/searchCache": { toPublicFlight: (value: unknown) => value, toPublicHotel: (value: unknown) => value },
     "@/lib/validation": { flightSearchSchema: schema, hotelSearchSchema: schema },
-    "@/lib/travel/searchContract": { classifyFlights: (results: unknown[]) => ({ results }), classifyHotels: (results: unknown[]) => ({ results }) },
+    "@/lib/travel/searchContract": { classifyFlights: (results: unknown[]) => ({ results }), classifyHotels: (results: Array<{provider?:string}>) => ({ results: results.filter(result => result.provider !== "Kurioticket catalogue") }) },
     "@/services/operationalActivityService": {
       logSearchHistory: async (input: History) => { if (options.loggingFails) throw new Error("storage unavailable"); histories.push(structuredClone(input)); },
       logProviderCall: async (input: typeof providerCalls[number]) => { providerCalls.push(structuredClone(input)); },
@@ -83,6 +89,7 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
     "@/lib/kayak-client-ip": { getKayakClientIp: () => "192.0.2.1" },
     "./providerDiagnostics": { logNativeFlightProviderDiagnostics: () => undefined },
     "@/services/travel/kayakSandbox": { isKayakSandboxEnabled: () => false },
+    "@/lib/hotels/hotelResultAccounting": { countHotelInventory },
     "@/services/travel/hotelOperationalBinding": {
       returnedKayakHotelSnapshot,
       rememberHotelOperationalBinding: async (snapshot: string, searchId: string, session: OperationalSessionReference | undefined, userId: string | null) => {
@@ -151,7 +158,7 @@ for (const product of ["flight", "hotel"] as const) {
       userId: "verified-account", visitorId: "consented-visitor", requestId,
       type: product.toUpperCase(), destination: fixture.criteria.destination,
       ...(product === "flight" ? { origin: "BOS" } : { checkIn: new Date("2099-05-01"), checkOut: new Date("2099-05-02") }),
-      query: fixture.criteria, resultCount: 0, latencyMs: 42, status: "FAILED",
+      query: product === "hotel" ? { ...fixture.criteria, hotelResultAccounting: countHotelInventory([]) } : fixture.criteria, resultCount: 0, latencyMs: 42, status: "FAILED",
     });
     assert.equal(fixture.providerCalls.length, 1, "existing provider diagnostics remain recorded");
     assert.equal((fixture.providerCalls[0] as { errorMessage: string }).errorMessage, providerDiagnostic);
@@ -193,6 +200,7 @@ for (const product of ["flight", "hotel"] as const) {
     assert.equal(fixture.histories.length, 1);
     assert.equal(fixture.histories[0].status, "SUCCESS");
     assert.deepEqual(fixture.bindingCalls, [], "empty searches do not establish inventory bindings");
+    if (product === "hotel") assert.deepEqual(readHotelResultAccounting(fixture.histories[0].query, 0), { version: 1, offerCount: 0, propertyCount: 0 });
   });
 }
 
@@ -208,6 +216,8 @@ for (const anonymous of [true, false]) {
     assert.equal(fixture.histories.length, 0, "history is still deferred");
     await fixture.deferred[0]();
     assert.equal(fixture.histories[0].requestId, requestId);
+    assert.equal(fixture.histories[0].resultCount, 3);
+    assert.deepEqual(readHotelResultAccounting(fixture.histories[0].query, 3), { version: 1, offerCount: 3, propertyCount: 2 });
     assert.equal((fixture.histories[0].query as Record<string, unknown>).operationalHotelSnapshotId, hotelSnapshot);
     assert.equal(fixture.histories[0].userId, anonymous ? null : "verified-account");
     assert.equal(fixture.lookups(), 1, "binding and history reuse the same resolved identity");
@@ -224,6 +234,7 @@ test("hotel returns valid inventory and records history even if binding storage 
   await fixture.deferred[0]();
   assert.equal(fixture.histories[0].status, "SUCCESS");
   assert.equal((fixture.histories[0].query as Record<string, unknown>).operationalHotelSnapshotId, undefined);
+  assert.deepEqual(readHotelResultAccounting(fixture.histories[0].query, 3), { version: 1, offerCount: 3, propertyCount: 2 });
   assert.deepEqual(fixture.analyticsEvents, []);
 });
 
@@ -382,4 +393,15 @@ test("PerplexityBot executes one search despite nine nearby fares, marked as dec
   assert.equal(fixture.lookups(), 0);
   assert.deepEqual(fixture.analyticsEvents, []);
   assert.equal(fixture.providerCalls.length, 10);
+});
+
+test("hotel operational counts exclude inventory rejected by the public classifier", async () => {
+  const fixture = routeFixture("hotel", { available: true, scopedHotelOffers: true, rejectedHotelOffer: true, operationalGuest: true, anonymous: true });
+  const response = await fixture.post();
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).results.length, 3);
+  await fixture.deferred[0]();
+  assert.equal(fixture.histories[0].resultCount, 3);
+  assert.deepEqual(readHotelResultAccounting(fixture.histories[0].query, 3), { version: 1, offerCount: 3, propertyCount: 2 });
+  assert.deepEqual(fixture.analyticsEvents, []);
 });

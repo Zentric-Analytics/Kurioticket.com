@@ -1,3 +1,4 @@
+import { advanceHotelResultAccounting } from "@/lib/hotels/hotelResultAccounting";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { getOptionalPrisma } from "@/lib/prisma";
 import {
@@ -71,7 +72,7 @@ export type SearchHistoryInput = ApplicationAttribution & {
  * Never delay search recording or overwrite later verified network evidence. */
 async function enrichRecordedSearchCountry(
   db: SearchJourneyDatabase,
-  history: { id: string; query: Prisma.JsonValue },
+  history: { id: string; requestId: string | null; query: Prisma.JsonValue },
   countryLookup?: (ip: string) => Promise<string | null>,
 ) {
   const observed = recordedSearchNetwork(history.query);
@@ -85,6 +86,9 @@ async function enrichRecordedSearchCountry(
   if (!country) return;
   try {
     await db.$transaction(async tx => {
+      // The query also holds the cumulative hotel counts. Share the existing
+      // search request lock so enrichment cannot overwrite a newer batch.
+      if (history.requestId) await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('search-history-request'), hashtext(${history.requestId}))`;
       const current = await tx.searchHistory.findUnique({
         where: { id: history.id },
         select: { query: true },
@@ -276,6 +280,7 @@ export function createSearchJourneyService(
               where: { id: existing.id },
               data: {
                 resultCount: Math.max(existing.resultCount, input.resultCount),
+                ...(input.type === "HOTEL" ? { query: advanceHotelResultAccounting(original, existing.resultCount, input.query, input.resultCount) as Prisma.InputJsonValue } : {}),
                 latencyMs: Math.max(existing.latencyMs ?? 0, input.latencyMs),
                 status: input.completed === false ? "PARTIAL" : input.status,
               },

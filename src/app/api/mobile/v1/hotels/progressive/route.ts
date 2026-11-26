@@ -1,3 +1,5 @@
+import { countHotelInventory } from "@/lib/hotels/hotelResultAccounting";
+import { isProviderHotelResult } from "@/services/travel/hotelInventorySource";
 import { searchHotelBatch, hotelSearchRequiresCanonicalResponse } from "@/services/travel/hotelAggregator";
 import { productionSandboxHost } from "@/lib/productionSandboxPolicy";
 import { POST as canonicalHotelSearch } from "@/app/api/hotels/search/route";
@@ -112,7 +114,7 @@ export async function POST(request: Request) {
         await Promise.all([
           logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
             checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
-            query: recordedSearch(), resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
+            query: { ...recordedSearch(), hotelResultAccounting: countHotelInventory([]) }, resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
           ...(visitorId ? [trackAnalyticsEvent({ ...application, userId, visitorId, type: "SEARCH",
             name: "hotel_search", metadata: { destination: search.destination, resultCount: 0, progressive: true, unsupported: true, trackId } })] : []),
           logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search", status: "DISABLED",
@@ -131,6 +133,9 @@ export async function POST(request: Request) {
       if (await rememberHotelOperationalBinding(snapshot, trackId, operationalSession.reference, owner.userId)) operationalHotelSnapshotId = snapshot;
     }
     const classified = classifyHotels(results.map(toPublicHotel), [], trackId);
+    // Match the canonical classifier's inventory admission rule for all pages.
+    const returnedCumulative = cumulative.filter(isProviderHotelResult);
+    const hotelResultAccounting = countHotelInventory(returnedCumulative);
     const now = Date.now();
     const nextCursor = batch.checkpoint ? encode({
       search, trackId, snapshot, checkpoint: batch.checkpoint,
@@ -144,14 +149,14 @@ export async function POST(request: Request) {
       await logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true,
         completed: nextCursor === null, type: "HOTEL", destination: search.destination,
         checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
-        query: recordedSearch(), resultCount: cumulative.length, latencyMs: Date.now() - startedAt,
+        query: { ...recordedSearch(), hotelResultAccounting }, resultCount: returnedCumulative.length, latencyMs: Date.now() - startedAt,
         status: nextCursor ? "PARTIAL" : "SUCCESS" });
       if (!nextCursor) {
         await Promise.all([
           ...(visitorId ? [trackAnalyticsEvent({ ...application, userId, visitorId, type: "SEARCH",
-            name: "hotel_search", metadata: { destination: search.destination, resultCount: cumulative.length, progressive: true, trackId } })] : []),
+            name: "hotel_search", metadata: { destination: search.destination, resultCount: returnedCumulative.length, progressive: true, trackId } })] : []),
           logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search", status: "SUCCESS",
-            latencyMs: Date.now() - startedAt, metadata: { ...application, progressive: true, trackId, resultCount: cumulative.length } }),
+            latencyMs: Date.now() - startedAt, metadata: { ...application, progressive: true, trackId, resultCount: returnedCumulative.length } }),
         ]);
       }
     });
@@ -165,7 +170,7 @@ export async function POST(request: Request) {
       await Promise.all([
         logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
           checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
-          query: recordedSearch(), resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
+          query: { ...recordedSearch(), hotelResultAccounting: countHotelInventory([]) }, resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
         ...(visitorId ? [trackAnalyticsEvent({ ...application, userId, visitorId, type: "SEARCH",
           name: "hotel_search", metadata: { destination: search.destination, resultCount: 0, progressive: true, failed: true, trackId } })] : []),
         logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search",

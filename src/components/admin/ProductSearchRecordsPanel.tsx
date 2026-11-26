@@ -1,4 +1,5 @@
 "use client";
+import { hotelResultSummary } from "@/lib/hotels/hotelResultAccounting";
 
 import * as React from "react";
 import { Fragment, useEffect, useId, useState, useSyncExternalStore } from "react";
@@ -235,7 +236,7 @@ export function ProductSearchRecordsPanel({ product, timeZone = "UTC" }: { produ
                       {statusLabel(record.outcome)}
                     </span>
                   </td>
-                  <td data-label="Results" className="px-3 py-3 text-right tabular-nums">{record.resultCount}</td>
+                  <td data-label="Results" className="px-3 py-3 text-right tabular-nums">{product === "HOTEL" ? <span className="block whitespace-normal break-words leading-4">{hotelResultSummary(record.resultCount, record.hotelPropertyCount)}</span> : record.resultCount}</td>
                   <td data-label="Latency" className="whitespace-nowrap px-3 py-3 text-right tabular-nums">{record.latencyMs === null ? "—" : record.latencyMs + " ms"}</td>
                   <td data-label="Action" className="px-2 py-3 text-center">
                     <button type="button" aria-expanded={expanded} aria-controls={disclosureId + "-" + record.id}
@@ -264,7 +265,10 @@ export function ProductSearchRecordsPanel({ product, timeZone = "UTC" }: { produ
                           <Field label={product === "HOTEL" ? "Destination" : "Pick-up"} value={product === "HOTEL" ? detail.data.search.destination : detail.data.search.origin} />
                           <Field label={product === "HOTEL" ? "Stay dates" : "Drop-off"} value={product === "HOTEL" ? dateOnly(detail.data.search.checkIn) + " → " + dateOnly(detail.data.search.checkOut) : detail.data.search.destination} />
                           <Field label="Outcome" value={statusLabel(detail.data.search.outcome)} />
-                          <Field label="Results" value={String(detail.data.search.resultCount)} />
+                          {product === "HOTEL" ? <>
+                            <Field label="Property groups returned" value={detail.data.search.hotelPropertyCount == null ? "Not recorded" : detail.data.search.hotelPropertyCount.toLocaleString()} />
+                            <Field label={detail.data.search.hotelPropertyCount == null ? "Recorded results" : "Individual offers returned"} value={detail.data.search.resultCount.toLocaleString()} />
+                          </> : <Field label="Results" value={String(detail.data.search.resultCount)} />}
                           <Field label="Latency" value={detail.data.search.latencyMs === null ? "Unavailable" : detail.data.search.latencyMs + " ms"} />
                           <Field label="Provider correlation" value={detail.data.providerEvidence === "exact" ? "Exact request-linked observations" : "No verified provider observations"} />
                         </dl>

@@ -1,3 +1,4 @@
+import { countHotelInventory } from "@/lib/hotels/hotelResultAccounting";
 import { withProductionSandboxRequest, captureFinalSearchHistory, productionSandboxHost } from "@/lib/productionSandboxPolicy";
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { after, NextResponse } from "next/server";
@@ -25,7 +26,7 @@ import { returnedKayakHotelSnapshot, rememberHotelOperationalBinding } from "@/s
 
 export async function POST(request: Request) {
  return withProductionSandboxRequest(request, async () => {
-  const projectHistory=captureFinalSearchHistory();
+  const projectHistory=captureFinalSearchHistory("hotel");
   const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(input));
 
   const crawler = await identifySearchCrawler(request);
@@ -110,7 +111,7 @@ export async function POST(request: Request) {
           logSearchHistory({ ...application,
             userId, visitorId, requestId, type: "HOTEL", destination: search.destination,
             checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
-            query: recordedSearch, resultCount: 0, latencyMs: aggregate.latencyMs, status: "FAILED",
+            query: { ...recordedSearch, hotelResultAccounting: countHotelInventory([]) }, resultCount: 0, latencyMs: aggregate.latencyMs, status: "FAILED",
           }),
           ...aggregate.providerStatuses.map((provider) =>
             logProviderCall({
@@ -143,6 +144,10 @@ export async function POST(request: Request) {
   }
 
   const publicResults = aggregate.results.map(toPublicHotel);
+  const classified = classifyHotels(publicResults, aggregate.warnings, requestId);
+  // Count only the inventory actually admitted to the public response.
+  const returnedResults = classified.results;
+  const hotelResultAccounting = countHotelInventory(returnedResults);
   // Server-side offer membership, independent of client memory/consent. Only
   // current staging KAYAK snapshots have this inventory identity contract.
   const snapshot = !productionSandboxHost() && operationalSession?.reference.environment === "staging"
@@ -153,15 +158,15 @@ export async function POST(request: Request) {
   console.info("[hotel-search-summary]", {
     requestId,
     searchFingerprint: createHash("sha256").update(JSON.stringify(providerSearch)).digest("hex"),
-    offerCount: publicResults.length,
-    propertyCount: new Set(publicResults.map(result => JSON.stringify([result.provider, result.propertyGroupId ?? result.id]))).size,
+    offerCount: returnedResults.length,
+    propertyCount: hotelResultAccounting?.propertyCount ?? null,
     latencyMs: aggregate.latencyMs,
     providers: aggregate.providerStatuses.map(provider => ({
       provider: provider.provider, status: provider.status, offerCount: provider.results.length,
       latencyMs: provider.latencyMs, error: sanitizeProviderError(provider.error),
     })),
   });
-  const status = hotelSearchRecordedStatus(aggregate.providerStatuses, publicResults.length);
+  const status = hotelSearchRecordedStatus(aggregate.providerStatuses, returnedResults.length);
 
   after(async () => {
     const { userId, visitorId, ...application } = await resolveSearchIdentity();
@@ -174,8 +179,8 @@ export async function POST(request: Request) {
       destination: search.destination,
       checkIn: new Date(search.checkIn),
       checkOut: new Date(search.checkOut),
-      query: { ...recordedSearch, ...(operationalHotelSnapshotId ? { operationalHotelSnapshotId } : {}) },
-      resultCount: publicResults.length,
+      query: { ...recordedSearch, hotelResultAccounting, ...(operationalHotelSnapshotId ? { operationalHotelSnapshotId } : {}) },
+      resultCount: returnedResults.length,
       latencyMs: aggregate.latencyMs,
       status,
     }),
@@ -186,7 +191,7 @@ export async function POST(request: Request) {
       name: "hotel_search",
       metadata: {
         destination: search.destination,
-        resultCount: publicResults.length,
+        resultCount: returnedResults.length,
       },
     })]),
     ...aggregate.providerStatuses.map((provider) =>
@@ -203,7 +208,6 @@ export async function POST(request: Request) {
     ]);
   });
 
-  const classified = classifyHotels(publicResults, aggregate.warnings, requestId);
   return attachOperationalSearchSession(NextResponse.json({
     ...classified,
     source: providerMode || classified.source,

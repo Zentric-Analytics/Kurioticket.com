@@ -1,3 +1,4 @@
+import { recordedHotelPropertyCount } from "@/lib/hotels/hotelResultAccounting";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 import { resolveAdminTimeZone, viewerTodayStart } from "@/lib/adminLocalTime";
@@ -18,6 +19,7 @@ export type ProductSearchRecord = {
   status: "SUCCESS" | "PARTIAL" | "FAILED";
   outcome: "SUCCESS" | "PARTIAL" | "FAILED" | "ZERO_RESULTS";
   resultCount: number;
+  hotelPropertyCount?: number | null;
   latencyMs: number | null;
   createdAt: string;
 };
@@ -62,7 +64,7 @@ const filters: readonly ProductSearchFilter[] = ["ALL", "EXCEPTIONS", "SUCCESS",
 const windows: readonly ProductSearchWindow[] = ["today", "24h", "7d", "30d", "all"];
 const searchSelect = {
   id: true, requestId: true, type: true, origin: true, destination: true,
-  checkIn: true, checkOut: true, status: true, resultCount: true,
+  checkIn: true, checkOut: true, status: true, resultCount: true, query: true,
   latencyMs: true, createdAt: true,
 } satisfies Prisma.SearchHistorySelect;
 type SearchRow = Prisma.SearchHistoryGetPayload<{ select: typeof searchSelect }>;
@@ -149,6 +151,7 @@ function toRecord(row: SearchRow): ProductSearchRecord {
     status: row.status,
     outcome: row.status === "SUCCESS" && row.resultCount === 0 ? "ZERO_RESULTS" : row.status,
     resultCount: row.resultCount,
+    ...(row.type === "HOTEL" ? { hotelPropertyCount: recordedHotelPropertyCount(row.type, row.query, row.resultCount) } : {}),
     latencyMs: row.latencyMs,
     createdAt: row.createdAt.toISOString(),
   };

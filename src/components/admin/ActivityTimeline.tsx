@@ -1,4 +1,5 @@
 "use client";
+import { hotelResultSummary } from "@/lib/hotels/hotelResultAccounting";
 
 import Link from "next/link";
 import {
@@ -38,7 +39,7 @@ function activityDetail(row: ActivityRow) {
     if (outcome) parts[last] = outcome;
   }
   if (row.stage === "SEARCH_COMPLETED" && typeof row.resultCount === "number" && Number.isSafeInteger(row.resultCount) && row.resultCount >= 0) {
-    parts.push(new Intl.NumberFormat("en-US").format(row.resultCount) + (row.resultCount === 1 ? " result returned" : " results returned"));
+    parts.push(row.product === "HOTEL" ? hotelResultSummary(row.resultCount, row.hotelPropertyCount) : new Intl.NumberFormat("en-US").format(row.resultCount) + (row.resultCount === 1 ? " result returned" : " results returned"));
   }
   return parts.join(" · ");
 }

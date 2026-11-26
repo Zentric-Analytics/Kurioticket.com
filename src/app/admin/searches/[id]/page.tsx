@@ -90,8 +90,11 @@ function SearchDetailContent({ search, timeZone }: { search: AdminSearchActivity
           </div>
           <StatusDot status={diagnostic.outcome === "ZERO_RESULTS" ? "ZERO_RESULTS" : search.status} label={searchDetailOutcomeLabel(diagnostic.outcome)} />
         </div>
-        <div className="mt-4 grid grid-cols-2 border-t border-[#E5E7EB] pt-3 sm:grid-cols-3">
-          <Metric label="Results found" value={search.resultCount.toLocaleString()} />
+        <div className={"mt-4 grid grid-cols-2 gap-y-3 border-t border-[#E5E7EB] pt-3 " + (search.product === "HOTEL" ? "sm:grid-cols-4" : "sm:grid-cols-3")}>
+          {search.product === "HOTEL" ? <>
+            <Metric label="Property groups returned" value={search.hotelPropertyCount == null ? "Not recorded" : search.hotelPropertyCount.toLocaleString()} />
+            <Metric label={search.hotelPropertyCount == null ? "Recorded results" : "Individual offers returned"} value={search.resultCount.toLocaleString()} />
+          </> : <Metric label="Results found" value={search.resultCount.toLocaleString()} />}
           <Metric label="Duration" value={searchDetailDuration(search.latencyMs)} />
           <Metric label="Providers" value={search.providerTelemetry ? String(search.providerTelemetry.total) : "—"} />
         </div>
