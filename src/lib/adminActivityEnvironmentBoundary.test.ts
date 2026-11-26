@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const page = readFileSync(new URL("../app/admin/users/[kind]/[id]/activity/page.tsx", import.meta.url), "utf8");
+const workspace = readFileSync(new URL("../components/admin/AdminCustomerActivityWorkspace.tsx", import.meta.url), "utf8");
+const live = readFileSync(new URL("../components/admin/AdminLiveGuestActivity.tsx", import.meta.url), "utf8");
 const timeline = readFileSync(new URL("../components/admin/ActivityTimeline.tsx", import.meta.url), "utf8");
 const unified = readFileSync(new URL("../components/admin/AdminUnifiedActivityList.tsx", import.meta.url), "utf8");
 const allActivity = readFileSync(new URL("../app/admin/users/[kind]/[id]/activity/all/page.tsx", import.meta.url), "utf8");
@@ -46,11 +48,12 @@ test("Activity summary counts filter-wide records instead of paginated timeline 
   assert.match(reader, /canonicalForVisitor\(visitorId\)/);
   assert.match(reader, /visitorIds\.map\(visitorId => canonicalForVisitor\(visitorId\)\)/);
   assert.match(reader, /const summary: IdentityActivitySummary/);
-  assert.match(page, /data\.summary\.searches/);
-  assert.match(page, /data\.summary\.resultsViewed/);
-  assert.match(page, /data\.summary\.offersSelected/);
-  assert.match(page, /data\.summary\.providerHandoffs/);
-  assert.match(page, /data\.summary\.journeysTracked/);
+  assert.match(workspace, /summary\?\.searches/);
+  assert.match(workspace, /summary\?\.resultsViewed/);
+  assert.match(workspace, /summary\?\.offersSelected/);
+  assert.match(workspace, /summary\?\.providerHandoffs/);
+  assert.match(workspace, /summary\?\.journeysTracked/);
+  assert.match(page, /summary=\{data\.summary\}/);
   assert.doesNotMatch(page, /Counts reflect loaded events only\./);
 });
 
@@ -68,10 +71,10 @@ test("Activity and Support use white non-Overview workspaces while preserving au
   assert.match(shell, /const whiteWorkspace = .*usersDirectory \|\| visitorJourneysWorkspace \|\| searchesWorkspace \|\| supportWorkspace\s+\|\| providersWorkspace \|\| providerReportingWorkspace \|\| hotelCarsWorkspace \|\| accountDeletionWorkspace \|\| accountDeletionDetail \|\| contentWorkspace \|\| notificationsWorkspace \|\| homepageFaresWorkspace \|\| !isOverview;/);
   assert.match(shell, /const hotelCarsWorkspace = pathname === "\/admin\/hotels" \|\| pathname === "\/admin\/hotels\/" \|\| pathname === "\/admin\/cars" \|\| pathname === "\/admin\/cars\/";/);
   assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
-  assert.match(page, /space-y-6 bg-white/);
-  assert.match(page, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
-  assert.match(page, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
-  assert.match(page, /text-\[12px\] font-normal text-\[#64748B\]/);
+  assert.match(workspace, /space-y-6 bg-white/);
+  assert.match(workspace, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
+  assert.match(workspace, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
+  assert.match(workspace, /text-\[12px\] font-normal text-\[#64748B\]/);
   assert.match(page, /<AdminUnifiedActivityList/);
   assert.match(unified, /data-testid="unified-activity-list"/);
   assert.match(allActivity, /await requireAdminSession\(path\)/);
@@ -82,29 +85,44 @@ test("Activity and Support use white non-Overview workspaces while preserving au
   assert.doesNotMatch(timeline, /Show all|Hide all|Not linked to a journey/);
 });
 
-test("User Activity keeps identity, six metrics and one compact activity list in order", () => {
-  const breadcrumb = page.indexOf('<nav aria-label="Breadcrumb"');
-  const mainCard = page.indexOf('data-testid="activity-page-card"');
-  const identity = page.indexOf('aria-label="Customer identity"');
-  const summary = page.indexOf('aria-label="Activity summary"');
-  const history = page.indexOf('<AdminUnifiedActivityList');
-  assert.ok(breadcrumb !== -1 && breadcrumb < mainCard, "breadcrumb stays outside the page card");
+test("User Activity keeps one shared identity, six metrics and compact activity list in order", () => {
+  const breadcrumb = workspace.indexOf('<nav aria-label="Breadcrumb"');
+  const mainCard = workspace.indexOf('data-testid="activity-page-card"');
+  const identity = workspace.indexOf('aria-label="Customer identity"');
+  const summary = workspace.indexOf('aria-label="Activity summary"');
+  const history = workspace.indexOf('{children}',summary);
+  assert.ok(breadcrumb !== -1 && breadcrumb < mainCard);
   assert.ok(mainCard < identity && identity < summary && summary < history);
-  assert.equal((page.match(/data-testid="activity-page-card"/g) ?? []).length, 1);
-  assert.equal((page.match(/<AdminUnifiedActivityList/g) ?? []).length, 1);
+  assert.equal((workspace.match(/data-testid="activity-page-card"/g) ?? []).length,1);
+  assert.equal((page.match(/<AdminUnifiedActivityList/g) ?? []).length,1);
+  assert.match(page, /<AdminCustomerActivityWorkspace/);
+  assert.match(live, /<AdminCustomerActivityWorkspace/);
   assert.doesNotMatch(page, /<ActivityTimeline|<AdminIdentityDeviceAccess|<PageViewRecords|<ActivityFiltersBar/);
-  assert.match(page.slice(mainCard, identity), /rounded-2xl border border-\[#E2E8F0\] bg-white/);
-  const identityMarkup = page.slice(identity, summary);
-  assert.match(identityMarkup, /data-testid="activity-identity-dividers"/);
-  const summaryMarkup = page.slice(summary, page.indexOf("</section>", summary));
-  assert.doesNotMatch(summaryMarkup, /bg-(?:blue|sky|emerald|amber|\[#)/);
-  for (const metric of ["searches", "resultsViewed", "offersSelected", "providerHandoffs", "journeysTracked", "pagesVisited"]) {
-    assert.ok(summaryMarkup.includes("data.summary." + metric), metric);
+  assert.match(workspace.slice(mainCard,identity), /rounded-2xl border border-\[#E2E8F0\] bg-white/);
+  assert.match(workspace.slice(identity,summary), /data-testid="activity-identity-dividers"/);
+  const metrics = workspace.slice(summary,workspace.indexOf("</section>",summary));
+  assert.doesNotMatch(metrics, /bg-(?:blue|sky|emerald|amber|\[#)/);
+  for (const metric of ["searches","resultsViewed","offersSelected","providerHandoffs","journeysTracked","pagesVisited"]) {
+    assert.ok(metrics.includes("summary?."+metric) || metrics.includes("summary."+metric),metric);
   }
-  assert.match(summaryMarkup, /xl:grid-cols-6/);
-  assert.match(summaryMarkup, /xl:border-l/);
-  assert.doesNotMatch(summaryMarkup, /activity-divider-|<h2/);
-  assert.match(unified, /View all activity/);
-  assert.match(allActivity, /<ActivityFiltersBar/);
-  assert.match(allActivity, /<AdminUnifiedActivityList/);
+  assert.match(metrics,/xl:grid-cols-6/);
+  assert.match(metrics,/xl:border-l/);
+  assert.doesNotMatch(metrics,/activity-divider-|<h2/);
+  assert.match(unified,/View all activity/);
+  assert.match(allActivity,/<ActivityFiltersBar/);
+  assert.match(allActivity,/<AdminUnifiedActivityList/);
+});
+
+test("live reference takes the same route before any permanent identity read and retains admin and environment checks",()=>{
+  for(const route of [page,allActivity]){
+    assert.ok(route.indexOf('if (kind === "live-guest")') < route.indexOf("if (!validActivityIdentity(kind"));
+    assert.match(route,/<AdminLiveGuestActivity reference=\{id\}/);
+  }
+  assert.match(live,/await requireAdminSession\("\/admin\/users"\)/);
+  assert.match(live,/safeReference && environment === "staging"/);
+  assert.match(live,/resolveLiveGuestActivity\(snapshot, reference, new Date\(\)\)/);
+  assert.match(live,/eventCount=\{null\} summary=\{null\}/);
+  assert.match(live,/allHref=\{path \+ "\/all"\}/);
+  assert.doesNotMatch(live,/loadAdminIdentityActivity|loadAdminUnifiedActivity|loadAdminGuestAccessHistory|CopyIdentityId|GuestTrackingActions/);
+  assert.match(workspace,/aria-label="Unavailable"/);
 });

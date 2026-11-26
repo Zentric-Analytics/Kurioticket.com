@@ -279,6 +279,7 @@ test("both history directories belong to Users and highlight exactly one subsect
     ["/admin/users/guest/example123/activity/all", "/admin/users"],
     ["/admin/users/online/guest/" + "A".repeat(43), "/admin/users/online"],
     ["/admin/users/live-guest/" + "A".repeat(43) + "/activity", "/admin/users"],
+    ["/admin/users/live-guest/" + "A".repeat(43) + "/activity/all", "/admin/users"],
   ]) {
     const sections = getAdminWorkspaceSections(path, "ADMIN");
     assert.deepEqual(sections?.links.map(link => link.label), ["Users Directory", "Online Users", "Device & Access", "Pages Visited"]);

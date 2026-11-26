@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Plane, Building2, CarFront } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { AdminCustomerActivityWorkspace } from "@/components/admin/AdminCustomerActivityWorkspace";
+import { AdminLiveGuestActivity } from "@/components/admin/AdminLiveGuestActivity";
 
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
 import { UserStatusActions } from "@/components/admin/UserStatusActions";
@@ -11,7 +13,6 @@ import { platformLabel } from "@/components/admin/AdminIdentityDeviceAccess";
 import { loadAdminGuestAccessHistory } from "@/services/adminGuestAccessService";
 import { loadAdminDeviceSessions } from "@/services/adminDeviceSessionsService";
 import { pageHistoryHrefFromActivity } from "@/lib/adminPageHistory";
-import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { normalizeUserActivityQuery, safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
 import { requireAdminSession } from "@/lib/auth-guards";
@@ -26,15 +27,6 @@ type Params = { kind: string; id: string };
 type RawQuery = Record<string, string | string[] | undefined>;
 type PageProps = { params: Promise<Params>; searchParams: Promise<RawQuery> };
 
-// Keep the UTC instant, but use a compact, unambiguous header label so
-// each date stays on one line beside the workspace sidebar at desktop zoom.
-const format = (at: Date, timeZone: string) => new Intl.DateTimeFormat("en-GB", {
-  day: "numeric", month: "short", year: "numeric",
-  hour: "2-digit", minute: "2-digit", hour12: false, timeZone,
-}).format(at);
-// One common desktop grid: guest/customer identity spans two fifths, while
-// First seen/Joined, Last seen and Events each occupy one fifth.
-const activityColumns = "grid min-w-0 w-full gap-y-4 lg:grid-cols-5 lg:gap-y-0";
 const buttonClass = "focus-ring inline-flex items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
 
 function safeDirectoryHref(raw: RawQuery) {
@@ -56,18 +48,6 @@ function safeDirectoryHref(raw: RawQuery) {
     if (safe.get("date") === "custom") safe.set("date", "all");
   }
   return "/admin/users" + (safe.size ? "?" + safe.toString() : "");
-}
-function HeaderTime({ at, timeZone }: { at: Date; timeZone: string }) {
-  const label = format(at, timeZone);
-  return <time dateTime={at.toISOString()} title={label + " " + formatAdminTimeZoneLabel(timeZone, at)}>{label}</time>;
-}
-function Fact({ label, children, className = "", testId }: {
-  label: string; children: React.ReactNode; className?: string; testId?: string;
-}) {
-  return <div data-testid={testId} className={"min-w-0 border-l border-[#E2E8F0] pl-4 sm:pl-5 " + className}>
-    <dt className="text-[12px] font-normal text-[#64748B]">{label}</dt>
-    <dd className="mt-1 break-words text-[16px] font-medium leading-6 tabular-nums text-[#0F172A]">{children}</dd>
-  </div>;
 }
 
 function RegisteredManage({ id, email, role, status, actorId }: {
@@ -104,6 +84,8 @@ async function fallbackManage(kind: string, id: string, actorId: string): Promis
 
 export default async function AdminIdentityActivityPage({ params, searchParams }: PageProps) {
   const { kind, id } = await params;
+  // The reserved live-reference route never reaches historical identity readers.
+  if (kind === "live-guest") return <AdminLiveGuestActivity reference={id}/>;
   if (!validActivityIdentity(kind, id)) notFound();
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
   const timeZone = await getAdminViewerTimeZone(session.user.id);
@@ -166,103 +148,28 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const recentEvents = [...data.events.filter(event => event.stage !== "PAGE_VIEW"), ...(pageSummary?.events.filter(event => event.stage === "PAGE_VIEW") ?? [])];
   const allHref = activityHref(basePath + "/all", queryParams, { cursor: null });
 
-  return <div className="min-w-0 space-y-6 bg-white pb-2 text-[#0F172A]">
-    <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[13px] text-[#475569]">
-      <Link href={backHref} className="focus-ring inline-flex items-center gap-1.5 rounded-sm hover:text-[#004BB8]">
-        <ArrowLeft size={16} aria-hidden="true" /> Users
-      </Link>
-      <span aria-hidden="true">/</span>
-      <span className="font-medium text-[#0F172A]">Activity</span>
-    </nav>
-
-    <section data-testid="activity-page-card" aria-label="Customer activity workspace"
-      className="min-w-0 space-y-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5 lg:p-6">
-      <div data-testid="activity-info-grid"
-        className="relative min-w-0 lg:-mx-6 lg:-mt-6 lg:border-y lg:border-[#E2E8F0]">
-      <section aria-label="Customer identity" className="relative min-w-0">
-        <div data-testid="activity-identity-facts" className={activityColumns + " relative lg:items-start lg:py-4"}>
-          <div className="flex min-w-0 items-center gap-4 lg:col-span-2 lg:gap-3 lg:px-3 min-[1700px]:gap-4 min-[1700px]:px-6">
-            <span aria-hidden="true"
-              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold min-[1100px]:hidden min-[1700px]:flex">
-              {(kind === "guest" ? "G" : (data.title || "U").slice(0,1)).toUpperCase()}
-            </span>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="break-words text-xl font-semibold [overflow-wrap:anywhere]">
-                  {kind === "guest" ? operational ? "Guest session" : "Visitor" : data.title}
-                </h1>
-                <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs">
-                  {kind === "guest" ? operational ? "Essential operational activity" : "Consented guest" : data.status === "ACTIVE" ? "Active" : data.status}
-                </span>
-              </div>
-              {data.email ? <p className="mt-1 break-words text-sm text-[#475569] [overflow-wrap:anywhere]">{data.email}</p> : null}
-              <div className="mt-1 flex min-w-0 items-center gap-2">
-                <code className="max-w-[240px] truncate text-xs" title={id}>{id}</code>
-                <CopyIdentityId id={id} kind={kind}/>
-              </div>
-            </div>
-          </div>
-
-          <dl className="grid min-w-0 grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:contents">
-            <Fact label={kind === "guest" ? "First seen" : "Joined"} className="lg:border-l-0 lg:pl-2 2xl:pl-6"><HeaderTime timeZone={timeZone} at={data.firstSeenAt}/></Fact>
-            <Fact label="Last seen" className="lg:border-l-0 lg:pl-2 2xl:pl-6">{data.lastSeenAvailable === false ? "Unavailable" : data.lastSeenAt ? <HeaderTime timeZone={timeZone} at={data.lastSeenAt}/> : "—"}</Fact>
-            <Fact label="Events" testId="activity-events-fact"
-              className="lg:border-l-0 lg:pl-6 lg:pr-3">
-              {data.events.length - data.events.filter(event => event.stage === "PAGE_VIEW").length + (data.summary.pagesVisited ?? 0)}
-            </Fact>
-          </dl>
-        {/* Identity has five columns; the six metrics below have their own grid. */}
-        <div aria-hidden="true" data-testid="activity-identity-dividers"
-          className="pointer-events-none absolute inset-0 hidden lg:block">
-          <span data-testid="activity-divider-40" className="absolute inset-y-0 left-[40%] border-l border-[#E2E8F0]" />
-          <span data-testid="activity-divider-60" className="absolute inset-y-0 left-[60%] border-l border-[#E2E8F0]" />
-          <span data-testid="activity-divider-80" className="absolute inset-y-0 left-[80%] border-l border-[#E2E8F0]" />
-        </div>
-        </div>
-
-          {(kind === "user" || (kind === "guest" && data.source === "visitor")) ? <div
-            className="flex min-w-0 justify-end pt-3 lg:px-3 lg:pb-3 lg:pt-0"
-            aria-label="Identity management">
-            {kind === "guest"
-              ? <GuestTrackingActions visitorId={id} backHref={backHref} />
-              : <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>}
-          </div> : null}
-      </section>
-
-      <section aria-label="Activity summary" className="relative min-w-0 border-y border-[#E2E8F0] py-4 lg:border-b-0 lg:py-5">
-        <div data-testid="activity-metrics-grid" className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 xl:grid-cols-6 lg:gap-x-0">
-          {([
-            { label: "Searches", count: data.summary.searches },
-            { label: "Results viewed", count: data.summary.resultsViewed },
-            { label: "Offers selected", count: data.summary.offersSelected },
-            { label: "Provider handoffs", count: data.summary.providerHandoffs },
-            { label: "Journeys tracked", count: data.summary.journeysTracked },
-            { label: "Pages visited", count: data.summary.pagesVisited ?? 0 },
-          ]).map(({label,count}) => <div key={label} data-testid="activity-metric"
-            className="min-w-0 pr-2 sm:pr-3 lg:px-3 xl:border-l xl:border-[#E2E8F0] xl:first:border-l-0">
-            <span data-testid="activity-metric-label" className="block break-words text-[12px] font-normal text-[#64748B]">{label}</span>
-            <span data-testid="activity-metric-value" className="mt-1 block text-[16px] font-medium leading-6 tabular-nums text-[#0F172A]">{count}</span>
-            {label === "Searches" && data.summary.searchProducts ? <div aria-label="Searches by product"
-              className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-1 text-[11px] sm:gap-x-3 sm:text-xs leading-4 text-[#64748B]">
-              {([
-                { label: "Flights", count: data.summary.searchProducts.flights, Icon: Plane },
-                { label: "Hotels", count: data.summary.searchProducts.hotels, Icon: Building2 },
-                { label: "Cars", count: data.summary.searchProducts.cars, Icon: CarFront },
-              ]).map(({label, count, Icon}) => <span key={label} aria-label={label + ": " + count} title={label}
-                className="inline-flex items-center gap-0.5 tabular-nums sm:gap-1"><Icon size={12} aria-hidden="true" />{count}</span>)}
-              {data.summary.searchProducts.other > 0 ? <span aria-label={"Other or unknown: " + data.summary.searchProducts.other}>
-                Other: {data.summary.searchProducts.other}
-              </span> : null}
-            </div> : null}
-          </div>)}
-        </div>
-      </section>
+  return <AdminCustomerActivityWorkspace
+    backHref={backHref}
+    title={kind === "guest" ? operational ? "Guest session" : "Visitor" : data.title}
+    badge={kind === "guest" ? operational ? "Essential operational activity" : "Consented guest" : data.status === "ACTIVE" ? "Active" : data.status}
+    avatar={(kind === "guest" ? "G" : (data.title || "U").slice(0,1)).toUpperCase()}
+    firstLabel={kind === "guest" ? "First seen" : "Joined"}
+    firstSeenAt={data.firstSeenAt} lastSeenAt={data.lastSeenAt} lastSeenAvailable={data.lastSeenAvailable}
+    eventCount={data.events.length - data.events.filter(event => event.stage === "PAGE_VIEW").length + (data.summary.pagesVisited ?? 0)}
+    summary={data.summary} timeZone={timeZone}
+    identityDetails={<>
+      {data.email ? <p className="mt-1 break-words text-sm text-[#475569] [overflow-wrap:anywhere]">{data.email}</p> : null}
+      <div className="mt-1 flex min-w-0 items-center gap-2">
+        <code className="max-w-[240px] truncate text-xs" title={id}>{id}</code>
+        <CopyIdentityId id={id} kind={kind}/>
       </div>
-
+    </>}
+    management={kind === "user"
+      ? <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
+      : data.source === "visitor" ? <GuestTrackingActions visitorId={id} backHref={backHref} /> : null}>
       <AdminUnifiedActivityList events={recentEvents} timeZone={timeZone} environment={environment}
         overview access={access} accessHref={accessHref} accessUnavailable={kind === "user" ? deviceSessions?.status !== "ok" : guestAccess?.status !== "ok"}
         pagesHref={!operational ? pagesHref : undefined} pagesUnavailable={!operational && !pageSummary}
         allHref={allHref}/>
-    </section>
-  </div>;
+  </AdminCustomerActivityWorkspace>;
 }

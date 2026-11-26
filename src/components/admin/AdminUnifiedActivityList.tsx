@@ -31,7 +31,7 @@ export function AdminUnifiedActivityList({ events, timeZone, environment, overvi
   const selected = overview ? [...travel.slice(0, 8), ...pages.slice(0, 1)] : ordered;
   const rows: ListRow[] = selected.map(event => ({ id: event.id, at: event.at, label: event.label, detail: describe(event), event,
     access: event.id.startsWith("d-") }));
-  if (overview && access) rows.push({ id: "latest-access-summary", at: access.at, label: access.label ?? "Latest recorded access", detail: access.detail, href: access.href, access: true });
+  if (access) rows.push({ id: "latest-access-summary", at: access.at, label: access.label ?? "Latest recorded access", detail: access.detail, href: access.href, access: true });
   rows.sort((a,b) => +b.at - +a.at || a.id.localeCompare(b.id));
   const date = new Intl.DateTimeFormat("en-GB", { day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:false,timeZone });
   return <section data-testid="unified-activity-list" aria-label={overview ? "Recent activity" : "All activity"} className="min-w-0 space-y-2">

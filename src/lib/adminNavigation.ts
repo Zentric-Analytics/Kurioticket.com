@@ -223,7 +223,7 @@ export function isAdminWorkspaceSectionActive(pathname: string, href: string, ac
   // Only platform-wide monitoring belongs to the separate Platforms workspace.
   if (destination === "/admin/users") return (pathname === destination
     || pathname === "/admin/journeys" || pathname.startsWith("/admin/journeys/")
-    || /^\/admin\/users\/live-guest\/[A-Za-z0-9_-]{43}\/activity\/?$/.test(pathname)
+    || /^\/admin\/users\/live-guest\/[A-Za-z0-9_-]{43}\/activity(?:\/all)?\/?$/.test(pathname)
     || /^\/admin\/users\/(?:user|guest)\/[^/]+(?:\/.*)?$/.test(pathname));
   if (destination === "/admin/providers" || destination === "/admin/content"
     || destination === "/admin/system") return pathname === destination;

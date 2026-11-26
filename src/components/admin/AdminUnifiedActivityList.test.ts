@@ -89,3 +89,14 @@ test("car activity presents the stored scalar without inferring rental offers", 
   assert.match(render(row), /Rental offer count unavailable/);
   assert.doesNotMatch(render(row), /car result groups|2,547 rental offers/);
 });
+
+test("full live Activity shows only the verified access, with no fabricated historical links", () => {
+  const html=renderToStaticMarkup(createElement(AdminUnifiedActivityList,{
+    events:[],environment:"staging",timeZone:"UTC",
+    access:{at,detail:"Desktop web",label:"Latest verified access"},
+  }));
+  assert.match(html,/Activity history/);
+  assert.equal((html.match(/data-activity-id="latest-access-summary"/g)??[]).length,1);
+  assert.match(html,/Latest verified access/);
+  assert.doesNotMatch(html,/View access history|View original search|View pages visited|No recorded activity matches/);
+});
