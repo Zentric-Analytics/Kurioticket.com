@@ -18,6 +18,8 @@ does not invent an installed build from update-owned configuration. Native build
 reporting remains unavailable on that binary until a separately authorized
 native release includes expo-application. Package-manager evidence is required
 in the meantime. No dependency or native runtime change is made here.
+On iOS the existing ExpoConstants buildNumber fallback is preserved: SDK54 reads
+it directly from the installed Info.plist CFBundleVersion, not the OTA manifest.
 
 Server-only `[kayak-search:request-phase]` records use validated server UUID
 request IDs, product, original and supplier agent categories, phase, attempt and
