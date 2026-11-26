@@ -24,8 +24,11 @@ export function guestFirstAccessObservation(request: Request, platform: OnlinePr
   };
 }
 export type LiveGuestAccess = GuestAccessObservation & { reference: string; firstSeenAt: string };
+export function safeLiveGuestReference(value: unknown): string | null {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{43}$/.test(value) ? value : null;
+}
 export function safeLiveGuestAccess(value: LiveGuestAccess | null | undefined, lastSeenAt: Date): LiveGuestAccess | null {
-  if (!value || !/^[A-Za-z0-9_-]{43}$/.test(value.reference)) return null;
+  if (!value || !safeLiveGuestReference(value.reference)) return null;
   const first = new Date(value.firstSeenAt);
   if (!Number.isFinite(+first) || !Number.isFinite(+lastSeenAt) || +first > +lastSeenAt ||
       first.toISOString() !== value.firstSeenAt) return null;

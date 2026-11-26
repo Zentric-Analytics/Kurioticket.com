@@ -131,7 +131,7 @@ test("live guest preview uses only a validated current observation and an opaque
   const first = new Date(+now-30000).toISOString();
   const access = {reference:"A".repeat(43),firstSeenAt:first,countryCode:"NG",deviceLabel:"iOS device",browser:null,os:"iOS"};
   const snapshot = buildAdminOnlineUsersSnapshot([
-    {...observation("private-source","ios",5),liveAccess:access},
+    {...observation("private-source","ios",5),liveReference:access.reference,liveAccess:access},
     observation("other-private-source","android",2,null,false,"Unrelated country"),
   ],now);
   assert.equal(snapshot.total,2);
@@ -141,9 +141,37 @@ test("live guest preview uses only a validated current observation and an opaque
   assert.equal(snapshot.rows.find(r=>!r.liveAccess)?.locationLabel,null);
   assert.doesNotMatch(JSON.stringify(snapshot),/private-source/);
   const stale = buildAdminOnlineUsersSnapshot([
-    {...observation("private-source","ios",20),liveAccess:access},
+    {...observation("private-source","ios",20),liveReference:access.reference,liveAccess:access},
     observation("private-source","ios",1),
   ],now);
   assert.equal(stale.rows[0].liveAccess,undefined);
   assert.equal(stale.rows[0].locationLabel,null);
+});
+
+test("verified live guest can be opened without recording optional access details",()=>{
+  const reference = "B".repeat(43);
+  const snapshot = buildAdminOnlineUsersSnapshot([
+    {...observation("source-one","ios",5),liveReference:reference},
+    {...observation("expired","android",90),liveReference:"C".repeat(43)},
+    {...observation("invalid-account","ios",1,null,true),liveReference:"D".repeat(43)},
+    {...observation("invalid-reference","mobile_web",2),liveReference:"raw-source"},
+    {...observation("account","desktop_web",3,{id:"u-valid",name:"Account",role:"USER"}),liveReference:"E".repeat(43)},
+  ],now);
+  assert.equal(snapshot.total,3);
+  const guest=snapshot.rows.find(r=>r.liveReference===reference);
+  assert.equal(guest?.kind,"guest");
+  assert.equal(guest?.liveAccess,undefined);
+  assert.equal(guest?.locationLabel,null);
+  assert.equal(snapshot.rows.filter(r=>r.liveReference).length,1);
+  assert.doesNotMatch(JSON.stringify(snapshot),/source-one|raw-source|expired|invalid-account/);
+});
+
+test("preview detail cannot be attached to a different live reference",()=>{
+  const snapshot=buildAdminOnlineUsersSnapshot([{
+    ...observation("source-one","ios",5),liveReference:"A".repeat(43),
+    liveAccess:{reference:"B".repeat(43),firstSeenAt:new Date(+now-30000).toISOString(),countryCode:"NG",deviceLabel:"iOS device",browser:null,os:"iOS"},
+  }],now);
+  assert.equal(snapshot.rows[0].liveReference,"A".repeat(43));
+  assert.equal(snapshot.rows[0].liveAccess,undefined);
+  assert.equal(snapshot.rows[0].locationLabel,null);
 });

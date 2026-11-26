@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createHmac } from "node:crypto";
+import { adminLiveGuestReference } from "@/lib/adminLiveGuestReference";
 import { Prisma } from "@/generated/prisma/client";
 import { presenceSigningSecret } from "@/lib/onlinePresenceCredential";
 import { guestFirstAccessPreviewEnabled, safeLiveGuestAccess } from "@/lib/guestFirstAccessObservation";
@@ -77,6 +77,13 @@ export async function readAdminOnlineUsers(
     if (observations.length > maxObservations) return { ...base, status: "unavailable" };
     // Optional projection; missing schema or storage does not suppress counts.
     const secret = presenceSigningSecret();
+    // This staging-only link uses already recorded presence, even when the
+    // additional country/device/first-access preview is disabled.
+    for (const observation of observations) {
+      if (observation.accountSessionId !== null) continue;
+      const reference = adminLiveGuestReference(environment, observation.sourceId, secret);
+      if (reference) observation.liveReference = reference;
+    }
     if (secret && guestFirstAccessPreviewEnabled(environment)) {
       try {
         const details = await db.$queryRaw<Array<{
@@ -99,10 +106,8 @@ export async function readAdminOnlineUsers(
             const detail = bySource.get(observation.sourceId);
             if (!detail || +detail.lastSeenAt !== +observation.lastSeenAt ||
                 !(detail.firstSeenAt instanceof Date) || !Number.isFinite(+detail.firstSeenAt)) continue;
-            // Domain-separated, live-only navigation key, not a credential.
-            const reference = createHmac("sha256", secret).update(JSON.stringify([
-              "admin-live-guest-access-v1", environment, detail.sourceId, detail.firstSeenAt.toISOString(),
-            ])).digest("base64url");
+            const reference = observation.liveReference;
+            if (!reference) continue;
             const safe = safeLiveGuestAccess({
               reference, firstSeenAt:detail.firstSeenAt.toISOString(),
               countryCode:detail.countryCode, deviceLabel:detail.deviceLabel,

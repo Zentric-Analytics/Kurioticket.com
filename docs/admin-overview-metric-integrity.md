@@ -116,3 +116,18 @@ retention require a separate reviewed design. This preview does not implement
 that association and is not a substitute for the requested historical activity view.
 
 Staging retention sweeps also clear preview fields on account-owned rows, stale observations and when the preview is disabled. Physical cleanup is best effort; logical visibility is restricted to exact current guest observations. The preview needs database-backed expiry and transition testing before activation.
+
+
+### Read-only staging live guest navigation
+
+The live View Activity action can use the existing verified guest roster even
+when GUEST_FIRST_ACCESS_PREVIEW is disabled. It does not start a new collection,
+set a cookie, or change counts or historical readers. Its domain-separated HMAC
+is computed from the existing hashed source and environment; it is not persisted
+or usable as a presence credential. Admin authorization and a fresh verified
+anonymous roster match are required on every page load. A signed-in, expired
+or unverified row cannot resolve. The same memory credential can regain the same
+navigation key if it becomes active again; this is not a durable visitor identity.
+When optional preview details are absent, first access is explicitly "Not recorded"
+and location/device details are unavailable. Production keeps its existing behavior.
+No historical search or visitor association is implemented by this read-only view.

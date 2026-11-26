@@ -1,5 +1,5 @@
 import { onlinePresenceWindowSeconds, type OnlinePresencePlatformCounts } from "@/lib/onlinePresence";
-import { liveGuestCountryName, safeLiveGuestAccess, type LiveGuestAccess } from "./guestFirstAccessObservation";
+import { liveGuestCountryName, safeLiveGuestAccess, safeLiveGuestReference, type LiveGuestAccess } from "./guestFirstAccessObservation";
 
 export type OnlineIdentityRow = {
   id: string;
@@ -11,6 +11,7 @@ export type OnlineIdentityRow = {
   locationLabel: string | null;
   platforms: Array<"desktop_web" | "mobile_web" | "ios" | "android" | "unclassified">;
   lastSeenAt: string;
+  liveReference?: string;
   liveAccess?: LiveGuestAccess;
 };
 export type AdminOnlineUsersSnapshot =
@@ -24,6 +25,7 @@ export type RawPresenceRow = {
   sourceId: string; platform: string | null; accountSessionId: string | null;
   userId: string | null; name: string | null; email: string | null; role: string | null;
   locationLabel: string | null; lastSeenAt: Date;
+  liveReference?: string;
   liveAccess?: LiveGuestAccess;
 };
 const platformKeys = ["desktop_web", "mobile_web", "ios", "android"] as const;
@@ -48,7 +50,7 @@ export function buildAdminOnlineUsersSnapshot(
     row: OnlineIdentityRow;
     platforms: Set<Platform>;
   }>();
-  const guests = new Map<string, { platforms: Set<Platform>; lastSeenAt: Date; liveAccess: LiveGuestAccess | null }>();
+  const guests = new Map<string, { platforms: Set<Platform>; lastSeenAt: Date; liveReference: string | null; liveAccess: LiveGuestAccess | null }>();
   for (const observation of observations) {
     const at = observation.lastSeenAt.getTime();
     if (!Number.isFinite(at) || at <= cutoff || at > now.getTime()) continue;
@@ -56,15 +58,19 @@ export function buildAdminOnlineUsersSnapshot(
     if (observation.accountSessionId === null) {
       // The signed anonymous source is a temporary presence credential,
       // NOT a linked visitor ID; never reveal it or invent a customer identity.
+      const reference = safeLiveGuestReference(observation.liveReference);
+      const access = safeLiveGuestAccess(observation.liveAccess, observation.lastSeenAt);
+      const verifiedAccess = reference && access?.reference === reference ? access : null;
       const prior = guests.get(observation.sourceId);
       if (prior) {
         prior.platforms.add(platform);
         if (at > prior.lastSeenAt.getTime()) {
           prior.lastSeenAt = observation.lastSeenAt;
-          prior.liveAccess = safeLiveGuestAccess(observation.liveAccess, observation.lastSeenAt);
+          prior.liveReference = reference;
+          prior.liveAccess = verifiedAccess;
         }
       } else guests.set(observation.sourceId, { platforms: new Set([platform]), lastSeenAt: observation.lastSeenAt,
-        liveAccess: safeLiveGuestAccess(observation.liveAccess, observation.lastSeenAt) });
+        liveReference: reference, liveAccess: verifiedAccess });
       continue;
     }
     // Missing or invalid session joins must not count as guests or users.
@@ -99,6 +105,7 @@ export function buildAdminOnlineUsersSnapshot(
     id: "guest-" + (index + 1),
     kind: "guest", name: "Guest session", email: null, role: null,
     locationLabel: liveGuestCountryName(guest.liveAccess?.countryCode),
+    ...(guest.liveReference ? { liveReference: guest.liveReference } : {}),
     ...(guest.liveAccess ? { liveAccess: guest.liveAccess } : {}),
     platforms: [...guest.platforms].sort(), lastSeenAt: guest.lastSeenAt.toISOString(),
   }));
