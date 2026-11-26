@@ -8,13 +8,13 @@ const now = new Date("2026-11-24T16:40:00.000Z");
 const activityPath = "/admin/users/user/qa-account-0001/activity";
 const historyPath = "/admin/users/user/qa-account-0001/pages";
 
-test("page visit summaries keep the five newest recorded visits without mutating the input", () => {
+test("page visit summaries keep the latest recorded visit without mutating the input", () => {
   const rows: ActivityRow[] = Array.from({length: 12}, (_, i) => ({
     id: "e-qa-page-" + i, at: new Date(+now - (11 - i) * 1000), stage: "PAGE_VIEW",
     label: "Support", detail: "/support", pageView: { path: "/support", previousPath: null, transport: "native", platform: "iOS app", href: null },
   }));
   rows.push({ id: "s-qa-other", at: now, stage: "SEARCH_COMPLETED", label: "Search", detail: "Search" });
-  assert.deepEqual(recentPageViews(rows).map(row => row.id), [11, 10, 9, 8, 7].map(i => "e-qa-page-" + i));
+  assert.deepEqual(recentPageViews(rows).map(row => row.id), [11].map(i => "e-qa-page-" + i));
   assert.equal(rows.length, 13);
   assert.equal(rows[0].id, "e-qa-page-0");
 });
@@ -68,7 +68,11 @@ test("the dedicated history requires admin access and both activity summaries st
   assert.match(activity, /data\.summary\.pagesVisited/);
   assert.match(activity, /loadAdminIdentityActivity\(kind, id, pageFilters, undefined, "summary"\)/);
   assert.match(activity, /pageFilters: ActivityFilters = \{ \.\.\.filters, tab: "pages", stage: "all", product: "all", q: "", order: "newest" \}/);
-  assert.ok(activity.indexOf("<PageViewRecords") > activity.indexOf("<AdminIdentityDeviceAccess"));
-  assert.ok(activity.indexOf("<PageViewRecords") < activity.indexOf('data-testid="activity-body-card"'));
+  const unified = readFileSync("src/components/admin/AdminUnifiedActivityList.tsx", "utf8");
+  assert.match(activity, /<AdminUnifiedActivityList/);
+  assert.doesNotMatch(activity, /<PageViewRecords|<AdminIdentityDeviceAccess/);
+  assert.match(unified, /pages.slice\(0, 1\)/);
+  assert.match(unified, /View all activity/);
+  assert.match(unified, /carResultSummary\(row.resultCount, row.carOfferCount\)/);
   assert.doesNotMatch(overview, /PageViewRecords/);
 });
