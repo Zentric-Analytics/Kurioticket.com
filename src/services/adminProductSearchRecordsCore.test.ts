@@ -221,3 +221,22 @@ test("database outage returns unavailable, not an invented empty directory", asy
   assert.equal((await failed.reader.list(params("HOTEL"))).status, "unavailable");
   assert.equal((await failed.reader.detail("search_123456", params("HOTEL"))).status, "unavailable");
 });
+
+test("hotel records expose validated counts without raw query metadata", async () => {
+  const known = record({ status: "SUCCESS", resultCount: 1653, query: { environment: "staging", privateField: "do-not-expose", hotelResultAccounting: { version: 1, offerCount: 1653, propertyCount: 422 } } });
+  const legacy = record({ id: "search_legacy", resultCount: 1653 });
+  const invalid = record({ id: "search_invalid", resultCount: 1900, query: { hotelResultAccounting: { version: 1, offerCount: 1653, propertyCount: 422 } } });
+  const { reader } = setup({ records: [known, legacy, invalid], detail: known });
+  const list = await reader.list(params("HOTEL", "ALL"));
+  assert.equal(list.status, "ok");
+  if (list.status !== "ok") return;
+  assert.deepEqual(list.data.items.map(row => row.hotelPropertyCount), [422, null, null]);
+  assert.doesNotMatch(JSON.stringify(list), /privateField|do-not-expose|hotelResultAccounting/);
+  const detail = await reader.detail("search_123456", params("HOTEL"));
+  assert.equal(detail.status, "ok");
+  if (detail.status === "ok") {
+    assert.equal(detail.data.search.hotelPropertyCount, 422);
+    assert.equal(detail.data.search.resultCount, 1653);
+    assert.doesNotMatch(JSON.stringify(detail), /privateField|do-not-expose|hotelResultAccounting/);
+  }
+});

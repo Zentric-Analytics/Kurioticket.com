@@ -267,3 +267,14 @@ test("operational search and handoff share a search card without creating a beha
   assert.equal(summary.searches[0].resultsViewed, 0);
   assert.equal(summary.unlinkedStageCount, 1);
 });
+
+test("recent search summaries preserve one authoritative hotel count pair", () => {
+  const now = new Date("2026-11-25T10:00:00Z");
+  const search: ActivityRow = { id: "s-hotel", at: now, stage: "SEARCH_COMPLETED", product: "HOTEL", searchHistoryId: "hotel-search", label: "Search completed", detail: "HOTEL · Paris · SUCCESS", resultCount: 1653, hotelPropertyCount: 422 };
+  const handoff: ActivityRow = { id: "r-hotel", at: now, stage: "PROVIDER_HANDOFF_STARTED", product: "HOTEL", searchHistoryId: "hotel-search", label: "Provider handoff", detail: "HOTEL · Paris · KAYAK sandbox" };
+  const summary = activityOverviewRows([handoff, search]).searches[0];
+  assert.equal(summary.resultCount, 1653);
+  assert.equal(summary.hotelPropertyCount, 422);
+  assert.equal(summary.handoffs, 1);
+  assert.equal(activityOverviewRows([{ ...search, hotelPropertyCount: undefined }]).searches[0].hotelPropertyCount, null);
+});

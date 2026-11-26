@@ -63,10 +63,21 @@ jobs:
           await import("./src/services/providerHandoffStore.test.ts");
           await import("./src/services/providerHandoffActivity.test.ts");
           await import("./src/services/travel/hotelOperationalBinding.test.ts");
+          await import("./src/lib/hotels/hotelResultAccounting.test.ts");
           await import("./src/lib/providerHandoffClient.test.ts");
           await import("./src/lib/operationalHandoffContext.test.ts");
           await import("./src/components/results/journeyEventWiring.test.ts");
           await import("./src/app/api/flights/search/terminalHistory.test.ts");'
+      # This suite temporarily changes process.env and global fetch via root
+      # hooks. Run it in its own process so production restrictions cannot leak
+      # into staging, consent, Support, or handoff fixtures.
+      - name: Validate production sandbox policy and final hotel accounting
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/lib/productionSandboxPolicy.test.ts");'
       - name: Validate admin operational read contracts
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json
@@ -77,6 +88,8 @@ jobs:
           await import("./src/services/adminOperationalReadCore.test.ts");
           await import("./src/lib/adminIdentityActivityComplete.test.ts");
           await import("./src/lib/adminActivityOverview.test.ts");
+          await import("./src/services/adminJourneyCore.test.ts");
+          await import("./src/components/admin/JourneyEventHistory.test.ts");
           await import("./src/components/admin/ActivityTimeline.test.ts");'
       - name: Validate Platform Health refresh and investigation UI contracts
         env:

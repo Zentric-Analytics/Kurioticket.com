@@ -6,6 +6,8 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import ts from "typescript";
 import type { OperationalSessionReference } from "@/lib/operationalSearchSession";
 import { handoffTrackingId } from "@/services/providerHandoffStore";
+import { countHotelInventory, readHotelResultAccounting } from "@/lib/hotels/hotelResultAccounting";
+import { isProviderHotelResult } from "./hotelInventorySource";
 import { createHotelOperationalBindingStore, kayakHotelSnapshot, returnedKayakHotelSnapshot } from "./hotelOperationalBinding";
 
 const snapshot = "11111111-1111-4111-8111-111111111111";
@@ -151,7 +153,7 @@ test("actual Android progressive route refuses an ownership-changing replay befo
       hotelSearchRequiresCanonicalResponse: () => false,
       searchHotelBatch: async (_search: unknown, _context: unknown, snapshotId: string, checkpoint?: unknown) => {
         providerCalls++;
-        const first = result(snapshotId, "1:1"), second = result(snapshotId, "1:2");
+        const first = { ...result(snapshotId, "1:1"), propertyGroupId: "same-property" }, second = { ...result(snapshotId, "1:2"), propertyGroupId: "same-property" };
         return { supported: true, results: checkpoint ? [second] : [first], cumulative: checkpoint ? [first, second] : [first],
           batch: { providerRows: 2, checkpoint: checkpoint ? null : { nextPage: 1, total: 2, pageHashes: ["a".repeat(43)] } } };
       },
@@ -180,6 +182,8 @@ test("actual Android progressive route refuses an ownership-changing replay befo
     "@/lib/searchCache": { toPublicHotel: (value: unknown) => value },
     "@/lib/travel/searchContract": { classifyHotels: (results: unknown[], _warnings: unknown[], requestId: string) => ({ results, requestId, status: "available" }) },
     "@/services/travel/hotelOperationalBinding": { rememberHotelOperationalBinding: store.remember, resolveHotelOperationalBinding: store.resolve, returnedKayakHotelSnapshot },
+    "@/lib/hotels/hotelResultAccounting": { countHotelInventory },
+    "@/services/travel/hotelInventorySource": { isProviderHotelResult },
   };
   runInNewContext(compiled, { exports: exported, Request, Response, Headers, URL, Buffer, process: { env: { KAYAK_SANDBOX_API_KEY: "synthetic-cursor-key" } },
     require: (name: string) => {
@@ -199,6 +203,7 @@ test("actual Android progressive route refuses an ownership-changing replay befo
   assert.equal(histories.length, 1);
   assert.equal(histories[0].requestId, page.requestId);
   assert.ok(histories[0].query.operationalHotelSnapshotId);
+  assert.deepEqual(readHotelResultAccounting(histories[0].query, 1), { version: 1, offerCount: 1, propertyCount: 1 });
   assert.equal((await post({ cursor: page.nextCursor }, "account-b")).status, 400);
   assert.equal((await post({ cursor: page.nextCursor }, "account-a", "changed")).status, 400);
   assert.equal(providerCalls, 1, "a replay must not change cached inventory");
@@ -210,4 +215,5 @@ test("actual Android progressive route refuses an ownership-changing replay befo
   assert.equal(histories.length, 2);
   assert.equal(histories[1].requestId, page.requestId);
   assert.equal(histories[1].query.operationalHotelSnapshotId, histories[0].query.operationalHotelSnapshotId);
+  assert.deepEqual(readHotelResultAccounting(histories[1].query, 2), { version: 1, offerCount: 2, propertyCount: 1 });
 });

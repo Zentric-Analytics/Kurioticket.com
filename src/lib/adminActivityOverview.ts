@@ -15,6 +15,7 @@ export type RecentSearchSummary = {
   searchStatus: string | null;
   platform: "WEB" | "IOS" | "ANDROID" | null;
   resultCount: number | null;
+  hotelPropertyCount?: number | null;
   providers: string[];
   eventCount: number;
   searches: number;
@@ -80,7 +81,7 @@ export function activityOverviewRows(events: readonly ActivityRow[], limit = 10)
         id: searchId, at: event.at, searchedAt: null,
         journeyId: event.journeyId ?? null, product: event.product ?? null,
         route: null, searchStatus: null, platform: event.platform ?? null,
-        resultCount: event.resultCount ?? null, providers: [], eventCount: 0,
+        resultCount: event.resultCount ?? null, hotelPropertyCount: event.hotelPropertyCount ?? null, providers: [], eventCount: 0,
         searches: 0, resultsViewed: 0, offersSelected: 0, handoffs: 0,
         saved: 0, unsaved: 0, shared: 0, priceAlertsCreated: 0,
       };
@@ -92,7 +93,10 @@ export function activityOverviewRows(events: readonly ActivityRow[], limit = 10)
     }
     if (event.at > item.at) item.at = event.at;
     if (event.platform) item.platform = event.platform;
-    if (typeof event.resultCount === "number") item.resultCount = event.resultCount;
+    if (typeof event.resultCount === "number") {
+      item.resultCount = event.resultCount;
+      item.hotelPropertyCount = event.hotelPropertyCount ?? null;
+    }
     item.eventCount++;
     if (!item.product && event.product) item.product = event.product;
     if (event.provider && !item.providers.includes(event.provider)) item.providers.push(event.provider);

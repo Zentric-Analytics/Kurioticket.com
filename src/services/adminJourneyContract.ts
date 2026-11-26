@@ -60,6 +60,8 @@ export type AdminJourneySearch = {
   checkOut: string | null;
   status: "SUCCESS" | "PARTIAL" | "FAILED";
   resultCount: number;
+  /** Validated provider-scoped property groups; null/absent for older records. */
+  hotelPropertyCount?: number | null;
   latencyMs: number | null;
   details?: AdminJourneySearchDetails | null;
 };

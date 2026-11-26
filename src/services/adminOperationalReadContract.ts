@@ -88,6 +88,8 @@ export type AdminSearchRead = {
   checkIn: string | null;
   checkOut: string | null;
   resultCount: number;
+  /** Validated provider-scoped property groups; null/absent for older records. */
+  hotelPropertyCount?: number | null;
   latencyMs: number | null;
   status: AdminSearchStatus;
   providers: string[];

@@ -1,3 +1,4 @@
+import { recordedHotelPropertyCount } from "@/lib/hotels/hotelResultAccounting";
 import "server-only";
 
 import { Prisma } from "@/generated/prisma/client";
@@ -525,6 +526,7 @@ export async function loadAdminIdentityActivity(
         ...row,
         platform: safeSearchPlatform(event.searchHistory?.query),
         resultCount: event.searchHistory?.resultCount ?? null,
+        hotelPropertyCount: recordedHotelPropertyCount(event.searchHistory?.type, event.searchHistory?.query, event.searchHistory?.resultCount),
       }] : [];
     });
     const legacy: ActivityRow[] = [
@@ -532,6 +534,7 @@ export async function loadAdminIdentityActivity(
         id: "s-" + s.id, stage: "SEARCH_COMPLETED" as const, product: s.type,
         searchHistoryId: s.id, dedupeKey: "search:" + s.id,
         platform: safeSearchPlatform(s.query), resultCount: s.resultCount,
+        hotelPropertyCount: recordedHotelPropertyCount(s.type, s.query, s.resultCount),
         label: "Search completed", detail: [s.type, [s.origin, s.destination].filter(Boolean).join(" → "), s.status].filter(Boolean).join(" · "),
         at: s.createdAt,
       })),

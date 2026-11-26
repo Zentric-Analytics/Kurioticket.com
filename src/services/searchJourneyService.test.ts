@@ -377,3 +377,66 @@ test("optional storage failure is retryable only after an eligible visitor was e
   assert.deepEqual(await service.recordClientJourneyEvent({ ...client("visitor", randomUUID()), visitorId: null }), { accepted: false });
   assert.equal(await service.recordJourneyEvent({ visitorId: "visitor", type: "SEARCH_COMPLETED", eventKey: "search:unavailable" }), null);
 });
+
+test("progressive hotel inventory counts advance together without replacing original ownership or network metadata", async () => {
+  const f = fixture();
+  const requestId = randomUUID();
+  const first: SearchHistoryInput = {
+    requestId, type: "HOTEL", progressive: true, completed: false, status: "PARTIAL", latencyMs: 10,
+    resultCount: 500, query: { destination: "Paris", hotelResultAccounting: { version: 1, offerCount: 500, propertyCount: 120 } },
+  };
+  assert.ok(await f.service.recordSearchHistory(first));
+  const next = { ...first, resultCount: 1100, query: { destination: "Do not replace", hotelResultAccounting: { version: 1, offerCount: 1100, propertyCount: 290 } } };
+  assert.ok(await f.service.recordSearchHistory(next));
+  assert.ok(await f.service.recordSearchHistory(first));
+  const data = f.histories[0];
+  assert.equal(data.resultCount, 1100);
+  assert.deepEqual((data.query as Record<string, unknown>).hotelResultAccounting, next.query.hotelResultAccounting);
+  assert.equal((data.query as Record<string, unknown>).destination, "Paris");
+  assert.ok(await f.service.recordSearchHistory({ ...next, resultCount: 1653, query: { hotelResultAccounting: { version: 1, offerCount: 1653, propertyCount: 422 } }, completed: true, status: "SUCCESS" }));
+  assert.ok(await f.service.recordSearchHistory(first));
+  assert.equal(f.histories.length, 1);
+  assert.equal(data.resultCount, 1653);
+  assert.deepEqual((data.query as Record<string, unknown>).hotelResultAccounting, { version: 1, offerCount: 1653, propertyCount: 422 });
+  assert.equal(f.events.length, 0, "non-consented operational counts never create an optional journey");
+});
+
+test("a progressive terminal failure preserves the latest known cumulative inventory pair", async () => {
+  const f = fixture();
+  const first: SearchHistoryInput = { requestId: randomUUID(), type: "HOTEL", progressive: true,
+    completed: false, resultCount: 500, latencyMs: 10, status: "PARTIAL",
+    query: { hotelResultAccounting: { version: 1, offerCount: 500, propertyCount: 120 } } };
+  await f.service.recordSearchHistory(first);
+  await f.service.recordSearchHistory({ ...first, completed: true, resultCount: 0, status: "FAILED", query: { hotelResultAccounting: { version: 1, offerCount: 0, propertyCount: 0 } } });
+  assert.equal(f.histories[0].resultCount, 500);
+  assert.equal(f.histories[0].status, "FAILED");
+  assert.deepEqual((f.histories[0].query as Record<string, unknown>).hotelResultAccounting, first.query.hotelResultAccounting);
+});
+
+test("delayed country enrichment retains the latest progressive count pair", async () => {
+  let entered!: () => void;
+  let release!: () => void;
+  const lookupStarted = new Promise<void>(resolve => { entered = resolve; });
+  const mayComplete = new Promise<void>(resolve => { release = resolve; });
+  let lookups = 0;
+  const f = fixture(async () => {
+    lookups++;
+    if (lookups === 1) { entered(); await mayComplete; }
+    return "NG";
+  });
+  const first: SearchHistoryInput = {
+    requestId: randomUUID(), type: "HOTEL", progressive: true, completed: false,
+    status: "PARTIAL", resultCount: 500, latencyMs: 10,
+    query: { searchNetwork: { ipAddress: "8.8.8.8" }, hotelResultAccounting: { version: 1, offerCount: 500, propertyCount: 120 } },
+  };
+  const pending = f.service.recordSearchHistory(first);
+  try {
+    await lookupStarted;
+    assert.ok(await f.service.recordSearchHistory({ ...first, completed: true, status: "SUCCESS", resultCount: 1653,
+      query: { ...first.query, hotelResultAccounting: { version: 1, offerCount: 1653, propertyCount: 422 } } }));
+  } finally { release(); }
+  assert.ok(await pending);
+  assert.equal(f.histories[0].resultCount, 1653);
+  assert.deepEqual((f.histories[0].query as Record<string, unknown>).hotelResultAccounting, { version: 1, offerCount: 1653, propertyCount: 422 });
+  assert.deepEqual((f.histories[0].query as Record<string, unknown>).searchNetwork, { ipAddress: "8.8.8.8", countryCode: "NG" });
+});

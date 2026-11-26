@@ -811,3 +811,23 @@ test("server-owned hotel bindings recover missing references without Analytics, 
     if (previousMode === undefined) delete process.env.TRAVEL_PROVIDER_MODE; else process.env.TRAVEL_PROVIDER_MODE = previousMode;
   }
 });
+
+test("PostgreSQL stores cumulative hotel counts together, keeps original context and rejects a competing owner", async () => {
+  const requestId = randomUUID();
+  const owner = await account();
+  const other = await account();
+  const initial = { requestId, userId: owner.id, visitorId: null, type: "HOTEL" as const, destination: "Paris", progressive: true, completed: false, latencyMs: 10,
+    status: "PARTIAL" as const, resultCount: 500, query: { destination: "Paris", hotelResultAccounting: { version: 1, offerCount: 500, propertyCount: 120 } } };
+  assert.ok(await journey.recordSearchHistory(initial));
+  const final = { ...initial, completed: true, status: "SUCCESS" as const, resultCount: 1653, query: { destination: "Do not overwrite", hotelResultAccounting: { version: 1, offerCount: 1653, propertyCount: 422 } } };
+  assert.equal(await journey.recordSearchHistory({ ...final, userId: other.id }), null);
+  assert.ok(await journey.recordSearchHistory(final));
+  await journey.recordSearchHistory(initial);
+  const history = await db.searchHistory.findUniqueOrThrow({ where: { requestId } });
+  assert.equal(history.resultCount, 1653);
+  assert.equal(history.status, "SUCCESS");
+  const query = history.query as Record<string, unknown>;
+  assert.equal(query.destination, "Paris");
+  assert.deepEqual(query.hotelResultAccounting, final.query.hotelResultAccounting);
+  assert.equal(await db.journeyEvent.count({ where: { searchHistoryId: history.id } }), 0);
+});

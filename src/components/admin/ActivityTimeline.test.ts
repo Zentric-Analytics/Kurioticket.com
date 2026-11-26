@@ -248,3 +248,10 @@ test("only an independently verified operational handoff links to its original s
   assert.doesNotMatch(render([base]), /View original search|\/admin\/searches\//);
   assert.doesNotMatch(render([{ ...base, searchHistoryId: "original-search", journeyId: "consented-journey" }]), /View original search/);
 });
+
+test("hotel activity distinguishes properties, offers and unavailable historical counts", () => {
+  const base: ActivityRow = { id: "hotel-count", at, stage: "SEARCH_COMPLETED", label: "Search completed", detail: "HOTEL · Paris · SUCCESS", product: "HOTEL", resultCount: 1653 };
+  assert.match(render([{ ...base, hotelPropertyCount: 422 }]), /422 property groups · 1,653 offers/);
+  assert.match(render([base]), /Property groups not recorded · 1,653 recorded results/);
+  assert.match(render([{ ...base, resultCount: 0, hotelPropertyCount: 0 }]), /0 property groups · 0 offers/);
+});

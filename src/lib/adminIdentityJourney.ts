@@ -22,6 +22,7 @@ export type ActivityRow = {
   /** Sanitized, server-attributed search platform only. */
   platform?: "WEB" | "IOS" | "ANDROID" | null;
   resultCount?: number | null;
+  hotelPropertyCount?: number | null;
 };
 
 export type JourneyEventRecord = {

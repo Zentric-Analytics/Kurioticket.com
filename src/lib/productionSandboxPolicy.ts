@@ -1,3 +1,4 @@
+import { countHotelInventory, type HotelResultAccounting } from "@/lib/hotels/hotelResultAccounting";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { getPrisma } from "@/lib/prisma";
 import { isSandboxInventory } from "@/shared/presentation/sandboxInventory";
@@ -16,21 +17,28 @@ const scopeKey = Symbol.for("kurioticket.production-sandbox-request.v1");
 // Aliased server modules must share request context, never inventory or policy values.
 const requestScopes = globalThis as unknown as Record<symbol, AsyncLocalStorage<Grant | null>>;
 const scope = requestScopes[scopeKey] ??= new AsyncLocalStorage<Grant | null>();
-type FinalPublication={value?:{count:number;status:"SUCCESS"|"PARTIAL"|"FAILED"}};
+type FinalPublication={hotel?:true;value?:{count:number;status:"SUCCESS"|"PARTIAL"|"FAILED";hotelResultAccounting?:HotelResultAccounting|null}};
 const publicationKey=Symbol.for("kurioticket.search-final-publication.v1");
 const publicationStores=globalThis as unknown as Record<symbol,AsyncLocalStorage<FinalPublication>>;
 const publications=publicationStores[publicationKey]??=new AsyncLocalStorage<FinalPublication>();
 /** Capture inside the route; after-response writers retain only a private
  * request-local reference, never a process-global inventory/policy cache. */
-export function captureFinalSearchHistory() {
+export function captureFinalSearchHistory(product?: "hotel") {
  const publication=publications.getStore();
- return <T extends {resultCount?:number;status?:string}>(input:T):T=>publication?.value ? {...input,resultCount:publication.value.count,status:publication.value.status}:input;
+ if(publication && product==="hotel")publication.hotel=true;
+ return <T extends {resultCount?:number;status?:string;query?:Record<string,unknown>}>(input:T):T=>{
+  const final=publication?.value;
+  if(!final)return input;
+  return {...input,resultCount:final.count,status:final.status,
+   ...(product==="hotel" && input.query ? {query:{...input.query,hotelResultAccounting:final.hotelResultAccounting??null}}:{})};
+ };
 }
 function publishFinalAccounting(payload:unknown) {
  const publication=publications.getStore();
  if(!publication || !payload || typeof payload!=="object")return;
  const value=payload as {results?:unknown;status?:unknown};
- if(Array.isArray(value.results))publication.value={count:value.results.length,status:value.status==="unavailable"?"FAILED":value.status==="partial"?"PARTIAL":"SUCCESS"};
+ if(Array.isArray(value.results))publication.value={count:value.results.length,status:value.status==="unavailable"?"FAILED":value.status==="partial"?"PARTIAL":"SUCCESS",
+  ...(publication.hotel ? {hotelResultAccounting:countHotelInventory(value.results)}:{})};
 }
 export function productionSandboxHost(env: Record<string, string | undefined> = process.env) {
     try {
