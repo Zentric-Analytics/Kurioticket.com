@@ -1,6 +1,6 @@
 export const COUNTRY_CODE_PATTERN = /^[A-Za-z]{2}$/;
 
-const ISO_COUNTRY_CODES = [
+export const ISO_COUNTRY_CODES = [
   "AD",
   "AE",
   "AF",

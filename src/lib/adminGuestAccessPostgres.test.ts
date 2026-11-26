@@ -2,8 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { getPrisma } from "./prisma";
-import { guestAccessHistorySql } from "./adminGuestAccessSql";
-import { recordedGuestAccessLocation } from "./guestAccessObservation";
+import { guestAccessHistorySql, guestLatestRecordedLocationsSql } from "./adminGuestAccessSql";
+import { recordedGuestAccessLocation, recordedGuestLocationSummary } from "./guestAccessObservation";
 
 /** Disposable CI database only. Proves the actual SQL retains exact record
  * ownership and environment without importing a different search's country. */
@@ -42,6 +42,13 @@ test("saved search country reaches access history for the same operational guest
     assert.equal(recordedGuestAccessLocation(byId.get("handoff:"+redirectId)!),null);
     assert.ok(result.every(r=>r.deviceLabel===null&&r.browser===null&&r.os===null));
     assert.ok(!byId.has("search:"+ids[2])&&!byId.has("search:"+ids[3])&&!byId.has("search:"+ids[4]));
+    const locations = await db.$queryRaw<Array<Row & {at: Date}>>(guestLatestRecordedLocationsSql(
+      [owner, other], {range:"all",page:2,platform:"all"}, "staging", now));
+    assert.equal(locations.length, 2);
+    assert.deepEqual(recordedGuestLocationSummary(locations.find(r=>r.guestId===owner)!, now), {label:"Nigeria",at});
+    assert.deepEqual(recordedGuestLocationSummary(locations.find(r=>r.guestId===other)!, now), {label:"United Kingdom",at});
+    const none = await db.$queryRaw(guestLatestRecordedLocationsSql([], {range:"all",page:1}, "staging", now));
+    assert.deepEqual(none, []);
     assert.doesNotMatch(JSON.stringify(result,(_,v)=>typeof v==="bigint"?String(v):v),/203\.0\.113\.1|ipAddress/);
   } finally {
     await db.redirectLog.deleteMany({where:{id:redirectId}});

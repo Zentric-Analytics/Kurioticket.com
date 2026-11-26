@@ -48,7 +48,8 @@ export async function AdminLiveGuestActivity({ reference, full = false, input = 
     return <div className="min-w-0 space-y-5 bg-white pb-5 text-[#0F172A]">
       <nav aria-label="Breadcrumb"><Link href={path} prefetch={false} className={linkClass}><ArrowLeft size={15} aria-hidden="true"/> Back to Activity</Link></nav>
       <section className="min-w-0 space-y-4 rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
-        <header><h1 className="text-[20px] font-semibold">All activity</h1><p className="mt-1 text-[13px] text-[#475569]">Guest session · Live presence</p></header>
+        <header><h1 className="text-[20px] font-semibold">All activity</h1><p className="mt-1 text-[13px] text-[#475569]">Guest session · Live presence</p>
+          {row && valid ? <p data-testid="live-guest-location" className="mt-1 text-[12px] text-[#475569]">Current location: {row.locationLabel ?? "Unavailable"}</p> : null}</header>
         {row && valid ? <>
           <nav aria-label="Activity categories" className="flex flex-wrap gap-x-5 gap-y-1">
             {categories.map(tab => tab.value === "all" || tab.value === "access"
@@ -72,7 +73,7 @@ export async function AdminLiveGuestActivity({ reference, full = false, input = 
     eventCount={null} summary={null} timeZone={timeZone}
     identityDetails={row ? <div className="mt-1 space-y-0.5 break-words text-[12px] text-[#475569]">
       <p><span className="font-medium">Platform: </span><span>{platforms ?? "Unavailable"}</span></p>
-      <p><span className="font-medium">Location: </span><span>{row.locationLabel ?? "Unavailable"}</span></p>
+      <p data-testid="live-guest-location"><span className="font-medium">Current location: </span><span>{row.locationLabel ?? "Unavailable"}</span></p>
     </div> : null}>
     {row ? <>
       <p className="text-[12px] text-[#64748B]">{historyNote}</p>

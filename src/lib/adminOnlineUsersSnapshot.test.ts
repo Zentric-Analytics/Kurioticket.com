@@ -229,3 +229,29 @@ test("verified country is independent of optional first access and disappears on
   const oldPreview={...source,liveCountryCode:undefined,liveAccess:{reference,firstSeenAt:new Date(+now-20000).toISOString(),countryCode:"NG",deviceLabel:null,browser:null,os:null}};
   assert.equal(buildAdminOnlineUsersSnapshot([oldPreview],now).rows[0].locationLabel,null,"legacy preview cannot supply a country");
 });
+
+test("each platform and live activity resolve the same independently verified current country", () => {
+  const cases = [
+    ["desktop_web", "NG", "Nigeria"], ["mobile_web", "GB", "United Kingdom"],
+    ["ios", "CA", "Canada"], ["android", "JP", "Japan"],
+  ] as const;
+  const rows = cases.map(([platform, code], i) => ({
+    ...observation("source-" + i, platform, 5),
+    liveReference: String(i + 1).repeat(43), liveCountryCode: code,
+  }));
+  const snapshot = buildAdminOnlineUsersSnapshot(rows, now);
+  assert.equal(snapshot.guestSessions, 4);
+  for (const [platform, , name] of cases) {
+    const row = snapshot.rows.find(r => r.platforms.includes(platform))!;
+    assert.equal(row.locationLabel, name);
+    assert.equal(resolveLiveGuestActivity(snapshot, row.liveReference, now)?.locationLabel, name);
+  }
+  const changed = buildAdminOnlineUsersSnapshot([...rows, {
+    ...rows[0], lastSeenAt: new Date(+now - 1000), liveCountryCode: "CA",
+  }], now);
+  assert.equal(resolveLiveGuestActivity(changed, rows[0].liveReference, now)?.locationLabel, "Canada");
+  const unknown = buildAdminOnlineUsersSnapshot([...rows, {
+    ...rows[0], lastSeenAt: new Date(+now - 1000), liveCountryCode: null,
+  }], now);
+  assert.equal(resolveLiveGuestActivity(unknown, rows[0].liveReference, now)?.locationLabel, null);
+});

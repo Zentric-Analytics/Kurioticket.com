@@ -3,6 +3,7 @@ import { deviceHistoryWindow, DEVICE_HISTORY_PAGE_SIZE, type DeviceHistoryQuery 
 import { pageHistoryPlatformValues, pageHistoryTransport } from "./adminPageHistory";
 import { pageViewCatalog, type PageViewKey } from "./pageViewCatalog";
 import type { PublicEnvironment } from "./stagingSafety";
+import { ISO_COUNTRY_CODES, countryCodeToCountryName } from "./geo/context";
 
 export function accessDatePredicate(column: Prisma.Sql, window: { gte?: Date; lt?: Date; lte?: Date }) {
   return Prisma.sql`TRUE
@@ -25,8 +26,11 @@ export function accountDevicePlatformPredicate(platform: DeviceHistoryQuery["pla
  * existing consented PAGE_VIEW records; necessary guest activity uses only
  * already-retained anonymous operational search/handoff records. Never join
  * temporary presence IDs to visitors, or expose raw network data/credentials. */
-export function guestAccessRecordsSql(query: DeviceHistoryQuery, environment: PublicEnvironment, now: Date, id?: string, timeZone = "UTC") {
+export function guestAccessRecordsSql(query: DeviceHistoryQuery, environment: PublicEnvironment, now: Date, id?: string | readonly string[], timeZone = "UTC") {
   const window = deviceHistoryWindow(query, now, timeZone);
+  const identityPredicate = (column: Prisma.Sql) => typeof id === "string" ? Prisma.sql`AND ${column} = ${id}`
+    : id ? id.length ? Prisma.sql`AND ${column} IN (${Prisma.join([...id])})` : Prisma.sql`AND FALSE`
+    : Prisma.empty;
   const keys = Object.keys(pageViewCatalog) as PageViewKey[];
   const webKeys = keys.filter(key => pageViewCatalog[key].web.length > 0);
   const nativeKeys = keys.filter(key => pageViewCatalog[key].native.length > 0);
@@ -55,7 +59,7 @@ export function guestAccessRecordsSql(query: DeviceHistoryQuery, environment: Pu
         AND COALESCE(${source}, 'UNKNOWN') <> 'BOT'
         AND NOT EXISTS (SELECT 1 FROM "Visitor" existing WHERE existing."id" = ${session})
         AND ${accessDatePredicate(Prisma.sql`x."createdAt"`, window)}
-        ${id ? Prisma.sql`AND ${session} = ${id}` : Prisma.empty}
+        ${identityPredicate(session)}
         ${operationalPlatform ? Prisma.sql`AND ${source} = ${operationalPlatform}` : Prisma.empty}
     `;
   };
@@ -85,7 +89,7 @@ export function guestAccessRecordsSql(query: DeviceHistoryQuery, environment: Pu
       AND ${accessDatePredicate(Prisma.sql`a."createdAt"`, window)}
       AND ((a."metadata"->>'transport' = 'web' AND a."metadata"->>'pageKey' IN (${Prisma.join(webKeys)}))
         OR (a."metadata"->>'transport' = 'native' AND a."metadata"->>'pageKey' IN (${Prisma.join(nativeKeys)})))
-      ${id ? Prisma.sql`AND v."id" = ${id}` : Prisma.empty}
+      ${identityPredicate(Prisma.sql`v."id"`)}
       ${platforms.length ? Prisma.sql`AND a."metadata"->>'platform' IN (${Prisma.join(platforms)})` : Prisma.empty}
       ${transport ? Prisma.sql`AND a."metadata"->>'transport' = ${transport}` : Prisma.empty}
   `;
@@ -103,5 +107,29 @@ export function guestAccessHistorySql(id: string, query: DeviceHistoryQuery, env
       LIMIT ${DEVICE_HISTORY_PAGE_SIZE} OFFSET ${(query.page - 1) * DEVICE_HISTORY_PAGE_SIZE}
     ) r ON TRUE
     ORDER BY r."at" DESC NULLS LAST, r."recordId" ASC
+  `;
+}
+
+/** Latest actual location-bearing record per eligible identity and source,
+ * independent of pagination. The same access evidence/consent/environment
+ * predicates are used by the detail reader. A missing later observation
+ * remains missing; this is explicitly a dated historical summary, not a fill.
+ */
+export function guestLatestRecordedLocationsSql(
+  ids: readonly string[], query: DeviceHistoryQuery, environment: PublicEnvironment, now: Date, timeZone = "UTC",
+) {
+  const names = ISO_COUNTRY_CODES.map(code => countryCodeToCountryName(code) ?? code);
+  return Prisma.sql`
+    SELECT DISTINCT ON ("guestId", "guestSource")
+      "guestId", "guestSource", "evidence", "locationLabel", "recordedCountryCode", "at"
+    FROM (${guestAccessRecordsSql(query, environment, now, ids, timeZone)}) location_records
+    WHERE (
+      ("guestSource" = 'operational' AND "evidence" = 'search'
+        AND upper(btrim("recordedCountryCode")) IN (${Prisma.join([...ISO_COUNTRY_CODES])}))
+      OR ("guestSource" = 'consented' AND "evidence" = 'page'
+        AND length("locationLabel") BETWEEN 2 AND 100
+        AND regexp_replace("locationLabel", '^.*, ', '') IN (${Prisma.join(names)}))
+    )
+    ORDER BY "guestId", "guestSource", "at" DESC, "recordId" ASC
   `;
 }

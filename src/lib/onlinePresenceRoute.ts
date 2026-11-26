@@ -6,7 +6,7 @@ import type { PublicEnvironment } from "@/lib/stagingSafety";
 import type { OnlinePresencePlatform } from "./onlinePresence";
 import { sessionDeviceObservation, type SessionDeviceObservation } from "./sessionDeviceObservation";
 import { guestFirstAccessObservation, guestFirstAccessPreviewEnabled, type GuestAccessObservation } from "./guestFirstAccessObservation";
-import { guestLiveCountryEnabled, resolveGuestLiveCountry } from "./guestLiveCountry";
+import { guestLiveCountryEnabled, reportGuestCountryDiagnostic, resolveGuestLiveCountry, safeGuestLiveCountry } from "./guestLiveCountry";
 import {
   equalPresenceSignatures,
   presenceTokenHeader,
@@ -128,6 +128,22 @@ export function createOnlinePresenceHandler(transport: PresenceTransport, depend
       // A lost response or blocked cookie must not create a phantom session.
       if (!credential.newSource) {
         const verifiedPlatform = transport === "native" && account ? nativePlatform(account.platform) ?? platform : platform;
+        // Optional geolocation must never turn a valid heartbeat into a failed
+        // request. Only the server's verified current request may supply a country.
+        let country: string | null | undefined;
+        if (!account && environment === "staging") {
+          if (!guestLiveCountryEnabled(environment)) {
+            reportGuestCountryDiagnostic(environment, "disabled", verifiedPlatform);
+          } else {
+            try {
+              country = safeGuestLiveCountry(await (dependencies.resolveGuestCountry ?? resolveGuestLiveCountry)(request, environment));
+            } catch {
+              country = null;
+              reportGuestCountryDiagnostic(environment, "resolver_failed", verifiedPlatform);
+            }
+            reportGuestCountryDiagnostic(environment, country ? "heartbeat_country" : "heartbeat_country_unavailable", verifiedPlatform);
+          }
+        }
         await dependencies.record({
           environment,
           sourceId: credential.sourceId,
@@ -137,9 +153,7 @@ export function createOnlinePresenceHandler(transport: PresenceTransport, depend
           ...(!account && guestFirstAccessPreviewEnabled(environment) ? {
             guestAccess: guestFirstAccessObservation(request, verifiedPlatform, false),
           } : {}),
-          ...(!account && guestLiveCountryEnabled(environment) ? {
-            guestLiveCountryCode: await (dependencies.resolveGuestCountry ?? resolveGuestLiveCountry)(request, environment),
-          } : {}),
+          ...(country !== undefined ? { guestLiveCountryCode: country } : {}),
           now,
         });
       }

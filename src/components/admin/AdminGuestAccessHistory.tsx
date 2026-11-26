@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 import { AdminEmptyState } from "./AdminPageShell";
 import { AdminDeviceHistoryFilters } from "./AdminDeviceHistoryFilters";
 import { loadAdminGuestAccessHistory } from "@/services/adminGuestAccessService";
+import { getPublicEnvironment } from "@/lib/stagingSafety";
+import { AdminRecordedGuestLocation } from "./AdminRecordedGuestLocation";
+import { loadAdminGuestRecordedLocations, guestRecordedLocationKey } from "@/services/adminGuestRecordedLocationsService";
 import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { deviceHistoryHref, DEVICE_HISTORY_PAGE_SIZE, type DeviceHistoryQuery } from "@/lib/adminDeviceHistory";
 
@@ -24,6 +27,8 @@ export async function AdminGuestAccessHistory({ id, query, path, backHref, backL
   if (result.status !== "ok") return <div className="min-w-0 space-y-4 bg-white">{back}
     <AdminEmptyState title="Guest access unavailable" message="Guest access observations could not be loaded." action={<Link href={href(1)} className={linkClass}>Retry</Link>}/>
   </div>;
+  const locations = await loadAdminGuestRecordedLocations([id], query, getPublicEnvironment(), now, timeZone);
+  const location = locations.get(guestRecordedLocationKey(id, "consented")) ?? locations.get(guestRecordedLocationKey(id, "operational"));
   const totalPages = Math.max(1, Math.ceil(result.total / DEVICE_HISTORY_PAGE_SIZE));
   const columns = "lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.85fr)]";
   return <div className="min-w-0 space-y-5 bg-white pb-6 text-[#0F172A]">
@@ -41,6 +46,7 @@ export async function AdminGuestAccessHistory({ id, query, path, backHref, backL
       {result.total > 0 ? <div className="grid min-w-0 gap-2 rounded-lg bg-[#F8FAFC] p-3 text-[12px] sm:grid-cols-2">
         <div><span className="text-[#64748B]">First matching access</span><p className="mt-1 font-medium">{format(result.firstSeenAt, timeZone)}</p></div>
         <div><span className="text-[#64748B]">Last matching access</span><p className="mt-1 font-medium">{format(result.lastSeenAt, timeZone)}</p></div>
+        <div className="sm:col-span-2"><AdminRecordedGuestLocation location={location} timeZone={timeZone}/></div>
       </div> : null}
       {!result.records.length ? <AdminEmptyState title="No matching access observations"
         message={query.page > totalPages ? "No records remain on this page." : "No eligible guest access observations match this range and platform. Device details are only available when actually recorded."}

@@ -5,6 +5,9 @@ import { AdminHistoryDirectoryFilters } from "./AdminHistoryDirectoryFilters";
 import { HISTORY_DIRECTORY_LABELS, HISTORY_DIRECTORY_PAGE_SIZE, historyDirectoryHref, historyDirectoryPath, historyIdentityHref, parseHistoryDirectoryQuery, type HistorySection } from "@/lib/adminHistoryDirectory";
 import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { loadAdminHistoryDirectory } from "@/services/adminHistoryDirectoryService";
+import { getPublicEnvironment } from "@/lib/stagingSafety";
+import { AdminRecordedGuestLocation } from "./AdminRecordedGuestLocation";
+import { loadAdminGuestRecordedLocations, guestRecordedLocationKey } from "@/services/adminGuestRecordedLocationsService";
 
 const linkClass = "focus-ring inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-white px-3 text-[12px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
 const format = (date: Date, timeZone: string) => new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, timeZone }).format(date);
@@ -20,6 +23,9 @@ export async function AdminHistoryDirectory({ section, raw, timeZone }: { sectio
   const query = parsed.query;
   const now = new Date();
   const result = await loadAdminHistoryDirectory(section, query, now, timeZone);
+  const locations = section === "devices" && result.status === "ok"
+    ? await loadAdminGuestRecordedLocations(result.rows.filter(row => row.kind === "guest").map(row => row.id),
+      query, getPublicEnvironment(), now, timeZone) : new Map();
   const total = result.status === "ok" ? result.total : null;
   const totalPages = total === null ? 1 : Math.min(1_000_000, Math.max(1, Math.ceil(total / HISTORY_DIRECTORY_PAGE_SIZE)));
   const countLabel = section === "devices" ? "Records" : "Visits";
@@ -51,6 +57,8 @@ export async function AdminHistoryDirectory({ section, raw, timeZone }: { sectio
               <div className="min-w-0">
                 <Link href={href} className="focus-ring font-medium text-[#0F172A] [overflow-wrap:anywhere] hover:text-[#004BB8] hover:underline">{row.name}</Link>
                 <p className="break-all text-[12px] text-[#64748B]">{row.email ?? row.id}</p>
+                {section === "devices" && row.kind === "guest" ? <AdminRecordedGuestLocation
+                  location={locations.get(guestRecordedLocationKey(row.id, row.guestSource === "operational" ? "operational" : "consented"))} timeZone={timeZone}/> : null}
               </div>
             </div>
             <span className="min-w-0 text-[12px] text-[#475569]">{row.kind === "user" ? "Registered" : row.guestSource === "operational" ? "Guest" : "Consented guest"}</span>

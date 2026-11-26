@@ -12,6 +12,8 @@ import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { AdminUnifiedActivityList } from "@/components/admin/AdminUnifiedActivityList";
 import { AdminLiveGuestActivity } from "@/components/admin/AdminLiveGuestActivity";
+import { AdminRecordedGuestLocation } from "@/components/admin/AdminRecordedGuestLocation";
+import { loadAdminGuestRecordedLocations, guestRecordedLocationKey } from "@/services/adminGuestRecordedLocationsService";
 
 export const metadata = { title: "Admin All User Activity" };
 // Live session reads must not be served from a static route cache.
@@ -57,6 +59,9 @@ export default async function AdminAllActivityPage({params,searchParams}:Props) 
   if (result.status !== "ok") return <div className="space-y-4">{breadcrumb}<AdminEmptyState title="Activity history unavailable" message={result.status === "invalid_cursor" ? "The page link no longer matches the selected filters." : "Recorded activity could not be loaded. This does not mean no activity exists."} action={<Link href={activityHref(path,queryParams,{cursor:null})} className={linkClass}>Return to newest activity</Link>}/></div>;
   const data = result.data;
   const operational = data.source === "operational";
+  // This is the identity's dated all-time location summary, not a filter result.
+  const locations = kind === "guest" ? await loadAdminGuestRecordedLocations([id], { range: "all", page: 1 }, data.environment, now, timeZone) : null;
+  const recordedLocation = locations?.get(guestRecordedLocationKey(id, operational ? "operational" : "consented"));
   const returnHref = activityHref(path,queryParams,{cursor:cursor ?? null});
   const range = typeof raw.range === "string" ? raw.range : "today";
   const pagesHref = pageHistoryHrefFromActivity(kind,id,{...filters,tab:"pages",stage:"all",product:"all",q:""},range,returnHref);
@@ -66,7 +71,8 @@ export default async function AdminAllActivityPage({params,searchParams}:Props) 
     <nav aria-label="Breadcrumb">{breadcrumb}</nav>
     <section className="min-w-0 space-y-4 rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0"><h1 className="text-[20px] font-semibold">All activity</h1><p className="mt-1 break-words text-[13px] text-[#475569]">{data.title} · {operational ? "Essential operational activity" : data.source === "visitor" ? "Consented guest" : "Registered account"}</p></div>
+        <div className="min-w-0"><h1 className="text-[20px] font-semibold">All activity</h1><p className="mt-1 break-words text-[13px] text-[#475569]">{data.title} · {operational ? "Essential operational activity" : data.source === "visitor" ? "Consented guest" : "Registered account"}</p>
+          {kind === "guest" ? <AdminRecordedGuestLocation location={recordedLocation} timeZone={timeZone}/> : null}</div>
         <Link href={journeysHref} className={linkClass}>View journey history <ChevronRight size={14} aria-hidden="true"/></Link>
       </header>
       <ActivityFiltersBar timeZone={timeZone} now={now.toISOString()} path={path} directory={queryParams.directory ?? ""}

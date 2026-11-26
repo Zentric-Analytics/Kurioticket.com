@@ -6,6 +6,7 @@ import { AdminUsersToolbar } from "@/components/admin/AdminUsersToolbar";
 import { AdminUserPopulationCards } from "@/components/admin/AdminUserPopulationCards";
 import { readUserPopulationMetrics } from "@/services/adminUserPopulationMetrics";
 import { withOptionalDb } from "@/lib/prisma";
+import { loadAdminGuestRecordedLocations, guestRecordedLocationKey } from "@/services/adminGuestRecordedLocationsService";
 import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { requireAdminSession } from "@/lib/auth-guards";
@@ -162,6 +163,13 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       </div>
     );
   }
+  const guestLocations = await loadAdminGuestRecordedLocations(
+    result.rows.filter(row => row.kind === "guest").map(row => row.record.id),
+    { range: "all", page: 1 }, environment, now, timeZone);
+  const rowsWithLocations = result.rows.map(row => row.kind === "guest" ? {
+    ...row, lastRecordedLocation: guestLocations.get(guestRecordedLocationKey(row.record.id,
+      row.guestSource === "operational" ? "operational" : "consented")) ?? null,
+  } : row);
   return (
     <div className="w-full min-w-0 bg-white">
       <h1 className="sr-only">Users</h1>
@@ -170,7 +178,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         operationalNewCount={result.operationalNewCount} />
       <AdminUsersToolbar timeZone={timeZone} now={now.toISOString()} query={q} role={role} status={status} tab={tab} sort={sort} date={date} from={from || ""} to={to || ""}
         registeredCount={result.registeredCount} guestCount={result.guestCount} pageHref={link}>
-        <AdminIdentityTable rows={result.rows} pageHref={link} sort={sort} timeZone={timeZone} />
+        <AdminIdentityTable rows={rowsWithLocations} pageHref={link} sort={sort} timeZone={timeZone} />
       </AdminUsersToolbar>
     </div>
   );
