@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ChevronRight, UserRound } from "lucide-react";
 import { CopyIdentityId } from "./CopyIdentityId";
+import { AdminRecordedGuestLocation } from "./AdminRecordedGuestLocation";
+import type { RecordedGuestLocation } from "@/lib/guestAccessObservation";
 import type { AdminIdentitySort as IdentitySort, GuestDirectoryStatus } from "@/lib/adminIdentityDirectory";
 
 export type IdentityRow =
@@ -20,6 +22,7 @@ export type IdentityRow =
       kind: "guest";
       guestStatus?: GuestDirectoryStatus;
       guestSource?: "visitor" | "operational";
+      lastRecordedLocation?: RecordedGuestLocation | null;
       lastSeenAt?: Date | null;
       record: { id: string; firstSeenAt: Date; lastSeenAt: Date };
     };
@@ -158,6 +161,7 @@ export function AdminIdentityTable({
                           </span>
                           <CopyIdentityId id={record.id} kind={row.kind} />
                         </div>
+                        {row.kind === "guest" ? <AdminRecordedGuestLocation location={row.lastRecordedLocation} timeZone={timeZone}/> : null}
                       </div>
                     </div>
                   </td>

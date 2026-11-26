@@ -11,6 +11,8 @@ import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { AdminUnifiedActivityList, type AccessPreview } from "@/components/admin/AdminUnifiedActivityList";
 import { platformLabel } from "@/components/admin/AdminIdentityDeviceAccess";
 import { loadAdminGuestAccessHistory } from "@/services/adminGuestAccessService";
+import { AdminRecordedGuestLocation } from "@/components/admin/AdminRecordedGuestLocation";
+import { loadAdminGuestRecordedLocations, guestRecordedLocationKey } from "@/services/adminGuestRecordedLocationsService";
 import { loadAdminDeviceSessions } from "@/services/adminDeviceSessionsService";
 import { pageHistoryHrefFromActivity } from "@/lib/adminPageHistory";
 import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
@@ -129,6 +131,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const guestAccess = kind === "guest" ? await loadAdminGuestAccessHistory(id, { range: "all", page: 1 }, timeZone, now) : null;
   const environment = data.environment;
   const operational = data.source === "operational";
+  const locations = kind === "guest" ? await loadAdminGuestRecordedLocations([id], { range: "all", page: 1 }, environment, now, timeZone) : null;
+  const recordedLocation = locations?.get(guestRecordedLocationKey(id, operational ? "operational" : "consented"));
   const activityReturn = activityHref(basePath, queryParams, {});
   // Keep the reporting window while letting page visits ignore travel-specific filters.
   const pageFilters: ActivityFilters = { ...filters, tab: "pages", stage: "all", product: "all", q: "", order: "newest" };
@@ -165,6 +169,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         <code className="max-w-[240px] truncate text-xs" title={id}>{id}</code>
         <CopyIdentityId id={id} kind={kind}/>
       </div>
+      {kind === "guest" ? <AdminRecordedGuestLocation location={recordedLocation} timeZone={timeZone}/> : null}
     </>}
     management={kind === "user"
       ? <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>

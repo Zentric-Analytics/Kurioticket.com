@@ -22,9 +22,31 @@ export function guestLiveCountryObservation(request: Request, environment: Publi
 type CountryLookup = (ip: string) => Promise<string | null>;
 const maxEntries = 1024;
 const cacheMs = 90_000;
+// A transient provider failure is not evidence of an unknown location for the
+// entire live window. Retry on the next normal heartbeat without hammering it.
+const negativeCacheMs = 5_000;
 const lookupTimeoutMs = 1200;
 const maxPending = 8;
 const cacheSecret = randomBytes(32);
+
+type GuestCountryDiagnostic = "disabled" | "edge_country" | "render_ingress_not_verified" |
+  "no_trusted_public_ip" | "ipinfo_unconfigured" | "lookup_busy" |
+  "lookup_country" | "lookup_unavailable" | "resolver_failed" |
+  "heartbeat_country" | "heartbeat_country_unavailable" | "roster_country_read_failed";
+const diagnosticLastAt = new Map<string, number>();
+/** Staging-only, bounded operational diagnostics. Never log a location, IP,
+ * source credential, visitor identifier, request header, or provider response. */
+export function reportGuestCountryDiagnostic(
+  environment: PublicEnvironment, status: GuestCountryDiagnostic,
+  platform?: "desktop_web" | "mobile_web" | "ios" | "android",
+) {
+  if (environment !== "staging") return;
+  const key = status + ":" + (platform ?? "shared");
+  const now = Date.now();
+  if (now - (diagnosticLastAt.get(key) ?? -Infinity) < 60_000) return;
+  diagnosticLastAt.set(key, now);
+  console.info("[guest-live-country]", { status, ...(platform ? { platform } : {}) });
+}
 
 /** Render's public Cloudflare ingress rejects client-supplied CF-Connecting-IP.
  * Private-network requests bypass this protection. RENDER and Host alone are
@@ -62,9 +84,21 @@ export function createGuestCountryResolver(lookup: CountryLookup = defaultLookup
     if (!guestLiveCountryEnabled(environment)) return null;
     const edge = trustedBotEdge(request);
     const country = safeGuestLiveCountry(edge?.country);
-    if (country) return country;
+    if (country) {
+      reportGuestCountryDiagnostic(environment, "edge_country");
+      return country;
+    }
     const ip = edge ? publicVisitorIp(edge.ip) : renderGuestCountryIp(request);
-    if (!ip || ip.toLowerCase() === "2a06:98c0:3600::103") return null;
+    if (!ip || ip.toLowerCase() === "2a06:98c0:3600::103") {
+      reportGuestCountryDiagnostic(environment, !edge && process.env.RENDER === "true" &&
+        process.env.GUEST_LIVE_RENDER_INGRESS_VERIFIED !== "true"
+        ? "render_ingress_not_verified" : "no_trusted_public_ip");
+      return null;
+    }
+    if (lookup === defaultLookup && !process.env.IPINFO_TOKEN?.trim()) {
+      reportGuestCountryDiagnostic(environment, "ipinfo_unconfigured");
+      return null;
+    }
     const key = createHmac("sha256",cacheSecret).update(ip).digest("base64url");
     const now = Date.now();
     for (const [k,v] of cache) if (v.expiresAt <= now) cache.delete(k);
@@ -72,7 +106,10 @@ export function createGuestCountryResolver(lookup: CountryLookup = defaultLookup
     if (hit) return hit.country;
     const running = pending.get(key);
     if (running) return running;
-    if (pending.size >= maxPending) return null;
+    if (pending.size >= maxPending) {
+      reportGuestCountryDiagnostic(environment, "lookup_busy");
+      return null;
+    }
     let timeout: ReturnType<typeof setTimeout>;
     const deadline = new Promise<null>(resolve => { timeout = setTimeout(() => resolve(null),lookupTimeoutMs); });
     const work = Promise.resolve().then(() => lookup(ip)).then(safeGuestLiveCountry, () => null);
@@ -82,7 +119,8 @@ export function createGuestCountryResolver(lookup: CountryLookup = defaultLookup
         const oldest = cache.keys().next().value;
         if (oldest !== undefined) cache.delete(oldest);
       }
-      cache.set(key,{country:value,expiresAt:Date.now()+cacheMs});
+      cache.set(key,{country:value,expiresAt:Date.now()+(value ? cacheMs : negativeCacheMs)});
+      reportGuestCountryDiagnostic(environment, value ? "lookup_country" : "lookup_unavailable");
       return value;
     });
     pending.set(key,result);

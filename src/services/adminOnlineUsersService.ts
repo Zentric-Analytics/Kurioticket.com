@@ -4,7 +4,7 @@ import { adminLiveGuestReference } from "@/lib/adminLiveGuestReference";
 import { Prisma } from "@/generated/prisma/client";
 import { presenceSigningSecret } from "@/lib/onlinePresenceCredential";
 import { guestFirstAccessPreviewEnabled, safeLiveGuestAccess } from "@/lib/guestFirstAccessObservation";
-import { guestLiveCountryEnabled, safeGuestLiveCountry } from "@/lib/guestLiveCountry";
+import { guestLiveCountryEnabled, reportGuestCountryDiagnostic, safeGuestLiveCountry } from "@/lib/guestLiveCountry";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { onlinePresenceWindowSeconds } from "@/lib/onlinePresence";
 import { getOnlinePresenceSnapshot } from "@/services/onlinePresenceService";
@@ -32,7 +32,9 @@ export async function readAdminOnlineUsers(
   if (!db) return { ...base, status: "unavailable" };
   const cutoff = new Date(now.getTime() - onlinePresenceWindowSeconds * 1000);
   try {
-    const observations = await db.$queryRaw<RawPresenceRow[]>(Prisma.sql`
+    // Read country and its exact heartbeat in one SQL snapshot. A second
+    // country query can race a renewal and erase a genuinely available value.
+    const observationSql = (includeCountry: boolean) => Prisma.sql`
       SELECT p."sourceId", p."platform", p."accountSessionId", p."lastSeenAt",
         CASE WHEN u."status" = 'ACTIVE' AND u."role" IN ('USER', 'SUPPORT', 'ADMIN')
           AND u."emailVerified" IS NOT NULL
@@ -64,6 +66,9 @@ export async function readAdminOnlineUsers(
           AND s."sessionVersion" = u."sessionVersion"
           AND (NOT COALESCE(security."twoFactorEnabled", FALSE) OR s."assuranceLevel" <> 'PRIMARY')
           THEN s."locationLabel" ELSE NULL END AS "locationLabel"
+        ${includeCountry ? Prisma.sql`, CASE WHEN p."accountSessionId" IS NULL
+          AND p."guestLiveCountryObservedAt" = p."lastSeenAt"
+          THEN p."guestLiveCountryCode" ELSE NULL END AS "liveCountryCode"` : Prisma.empty}
       FROM "OnlinePresenceSession" p
       LEFT JOIN "AccountSession" s ON s."id" = p."accountSessionId"
       LEFT JOIN "User" u ON u."id" = s."userId"
@@ -73,42 +78,29 @@ export async function readAdminOnlineUsers(
         AND p."lastSeenAt" <= ${now}
       ORDER BY p."lastSeenAt" DESC, p."sourceId" ASC
       LIMIT ${maxObservations + 1}
-    `);
+    `;
+    const secret = presenceSigningSecret();
+    let observations: RawPresenceRow[];
+    if (secret && guestLiveCountryEnabled(environment)) {
+      try {
+        observations = await db.$queryRaw<RawPresenceRow[]>(observationSql(true));
+      } catch {
+        // A missing optional column or a temporary storage problem must not
+        // suppress canonical verified presence. Do not reuse an older country.
+        reportGuestCountryDiagnostic(environment, "roster_country_read_failed");
+        observations = await db.$queryRaw<RawPresenceRow[]>(observationSql(false));
+      }
+    } else observations = await db.$queryRaw<RawPresenceRow[]>(observationSql(false));
     // Never show a partial snapshot as a complete online roster.
     if (observations.length > maxObservations) return { ...base, status: "unavailable" };
     // Optional projection; missing schema or storage does not suppress counts.
-    const secret = presenceSigningSecret();
     // This staging-only link uses already recorded presence, even when the
     // additional country/device/first-access preview is disabled.
     for (const observation of observations) {
       if (observation.accountSessionId !== null) continue;
       const reference = adminLiveGuestReference(environment, observation.sourceId, secret);
       if (reference) observation.liveReference = reference;
-    }
-    // Country is independent of first access, permanent IDs and product searches.
-    if (secret && guestLiveCountryEnabled(environment)) {
-      try {
-        const countries = await db.$queryRaw<Array<{sourceId:string;lastSeenAt:Date;countryCode:string|null}>>(Prisma.sql`
-          SELECT "sourceId", "lastSeenAt", "guestLiveCountryCode" AS "countryCode"
-          FROM "OnlinePresenceSession"
-          WHERE "environment" = ${environment} AND "accountSessionId" IS NULL
-            AND "lastSeenAt" > ${cutoff} AND "lastSeenAt" <= ${now}
-            AND "guestLiveCountryObservedAt" = "lastSeenAt"
-          LIMIT ${maxObservations + 1}
-        `);
-        if (countries.length <= maxObservations) {
-          const bySource = new Map(countries.map(country => [country.sourceId, country]));
-          for (const observation of observations) {
-            if (observation.accountSessionId !== null || !observation.liveReference) continue;
-            const country = bySource.get(observation.sourceId);
-            if (country && +country.lastSeenAt === +observation.lastSeenAt) {
-              observation.liveCountryCode = safeGuestLiveCountry(country.countryCode);
-            }
-          }
-        }
-      } catch {
-        // Unknown country must not suppress a verified online session.
-      }
+      observation.liveCountryCode = reference ? safeGuestLiveCountry(observation.liveCountryCode) : null;
     }
     if (secret && guestFirstAccessPreviewEnabled(environment)) {
       try {

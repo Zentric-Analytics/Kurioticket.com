@@ -302,3 +302,28 @@ test("public ingress fallback on verified guest heartbeat works without analytic
     assert.deepEqual(calls,["8.8.8.8"]);
   } finally {keys.forEach((k,i)=>{if(before[i]===undefined)delete process.env[k];else process.env[k]=before[i];});}
 });
+
+test("an unavailable optional country resolver never breaks verified guest presence on any platform", async () => {
+  const keys = ["GUEST_LIVE_COUNTRY_ENABLED", "GUEST_FIRST_ACCESS_PREVIEW"] as const;
+  const before = keys.map(k => process.env[k]);
+  try {
+    process.env.GUEST_LIVE_COUNTRY_ENABLED = "true";
+    delete process.env.GUEST_FIRST_ACCESS_PREVIEW;
+    const { handler, records } = fixture(async () => { throw new Error("synthetic lookup failure"); });
+    for (const platform of ["desktop_web", "mobile_web", "ios", "android"] as const) {
+      const isNative = platform === "ios" || platform === "android";
+      const post = handler(isNative ? "native" : "web", "staging");
+      const send = (headers: Record<string, string>) => post(isNative
+        ? native({ "x-mobile-platform": platform, ...headers })
+        : web({ "sec-ch-ua-mobile": platform === "mobile_web" ? "?1" : "?0", ...headers }));
+      const token = (await send({})).headers.get(tokenHeader)!;
+      const result = await send({ [tokenHeader]: token });
+      assert.equal(result.status, 204);
+      assert.equal(records.at(-1)?.platform, platform);
+      assert.equal(records.at(-1)?.guestLiveCountryCode, null);
+      assert.equal(records.at(-1)?.accountSessionId, null);
+    }
+  } finally {
+    keys.forEach((key, index) => { if (before[index] === undefined) delete process.env[key]; else process.env[key] = before[index]; });
+  }
+});

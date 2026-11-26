@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { accountDevicePlatform, accountDevicePlatformWhere, pageViewDevicePlatform } from "./adminDevicePlatform";
-import { consentedGuestAccessObservation, recordedGuestAccessLocation, safeGuestDeviceDescription } from "./guestAccessObservation";
-import { guestAccessHistorySql } from "./adminGuestAccessSql";
+import { consentedGuestAccessObservation, recordedGuestAccessLocation, recordedGuestLocationSummary, safeGuestDeviceDescription } from "./guestAccessObservation";
+import { guestAccessHistorySql, guestLatestRecordedLocationsSql } from "./adminGuestAccessSql";
 
 test("platform filters match known recorded categories and leave absent evidence unclassified", () => {
   for (const [client, platform, deviceLabel, expected] of [
@@ -63,4 +63,22 @@ test("operational access projects only its own saved country, never another obse
   assert.match(statement,/THEN x\."query" #>> '\{searchNetwork,countryCode\}' END AS "recordedCountryCode"/);
   assert.doesNotMatch(statement,/ipAddress|cf-connecting-ip|OnlinePresenceSession/);
   assert.ok(sql.values.includes("staging"));
+});
+
+test("dated guest locations reject invalid evidence, unknown countries and future observations", () => {
+  const at = new Date("2026-11-26T12:00:00Z"), now = new Date(+at + 1000);
+  assert.deepEqual(recordedGuestLocationSummary({ guestSource: "operational", evidence: "search", recordedCountryCode: "CA", at }, now), { label: "Canada", at });
+  assert.deepEqual(recordedGuestLocationSummary({ guestSource: "consented", evidence: "page", locationLabel: "London, United Kingdom", at }, now), { label: "London, United Kingdom", at });
+  for (const value of ["Unknown", "ZZ", "Invented place", "Lagos, XX"]) {
+    assert.equal(recordedGuestLocationSummary({ guestSource: "consented", evidence: "page", locationLabel: value, at }, now), null);
+  }
+  assert.equal(recordedGuestLocationSummary({ guestSource: "operational", evidence: "handoff", recordedCountryCode: "CA", at }, now), null);
+  assert.equal(recordedGuestLocationSummary({ guestSource: "operational", evidence: "search", recordedCountryCode: "CA", at: new Date(+now + 1) }, now), null);
+  const id = "12345678-1234-4123-8123-123456789abc";
+  const sql = guestLatestRecordedLocationsSql([id], { range: "all", page: 2, platform: "all" }, "staging", now);
+  assert.match(sql.strings.join("?"), /SELECT DISTINCT ON \("guestId", "guestSource"\)/);
+  assert.match(sql.strings.join("?"), /ORDER BY "guestId", "guestSource", "at" DESC, "recordId" ASC/);
+  assert.doesNotMatch(sql.strings.join("?"), /OnlinePresenceSession|ipAddress|OFFSET/);
+  assert.ok(sql.values.includes(id) && sql.values.includes("staging") && sql.values.includes("CA"));
+  assert.match(guestLatestRecordedLocationsSql([], {range:"all",page:1}, "staging", now).strings.join("?"), /AND FALSE/);
 });
