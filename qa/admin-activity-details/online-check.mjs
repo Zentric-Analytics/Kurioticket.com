@@ -10,12 +10,19 @@ try {
     await page.goto(base+"/admin/users/online");
     const rows=page.getByTestId("online-user-row");
     await expect(rows).toHaveCount(3);
-    const guest=rows.filter({hasText:"Desktop web"});
-    const noDetails=rows.filter({has:page.getByRole("cell",{name:"iOS",exact:true})});
+    // Narrow panels render the same records as CSS grid rows. The actual
+    // platform badges retain their text, even when table-cell roles or names change.
+    const byPlatform=label=>rows.filter({has:page.locator('td[data-label="Platforms"] span').filter({hasText:new RegExp("^\\s*"+label+"\\s*$")})});
+    const guest=byPlatform("Desktop web");
+    const noDetails=byPlatform("iOS");
+    await expect(guest).toHaveCount(1);
     await expect(noDetails).toHaveCount(1);
+    await expect(guest.locator('td[data-label="Platforms"] span')).toHaveText("Desktop web");
+    await expect(noDetails.locator('td[data-label="Platforms"] span')).toHaveText("iOS");
     await expect(guest.getByTestId("online-user-location")).toHaveText("Nigeria");
     await expect(noDetails.getByTestId("online-user-location")).toHaveText("Unavailable");
-    await expect(rows.filter({has:page.getByRole("cell",{name:"Android",exact:true})})).toHaveCount(0);
+    await expect(byPlatform("Android")).toHaveCount(0);
+    await expect(byPlatform("Mobile web").getByRole("link",{name:"View Activity"})).toHaveAttribute("href","/admin/users/user/qa-registered-0001/activity");
     const guestHref=await guest.getByRole("link",{name:"View Activity"}).getAttribute("href");
     const otherHref=await noDetails.getByRole("link",{name:"View Activity"}).getAttribute("href");
     assert.notEqual(guestHref,otherHref);
@@ -32,8 +39,12 @@ try {
     await page.getByRole("link",{name:"Back to Online Users"}).click();
     await page.goto(base+otherHref);
     await expect(page.getByText("Not recorded",{exact:true})).toBeVisible();
+    await expect(page.getByText("iOS app",{exact:true})).toBeVisible();
+    await expect(page.getByText("Nigeria",{exact:true})).toHaveCount(0);
     await page.goto(base+"/admin/users/online/guest/"+"Z".repeat(43));
     await expect(page.getByText("This live guest session is no longer available or cannot be verified.")).toBeVisible();
+    await expect(page.getByText("First verified access",{exact:true})).toHaveCount(0);
+    console.log("PASS online roster and scoped live guest navigation at width",width);
   }
   assert.deepEqual(errors,[]);
   console.log("PASS online roster, verified guest location, missing preview, scoped links and responsive layout");

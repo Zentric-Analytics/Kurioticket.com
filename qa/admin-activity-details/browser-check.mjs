@@ -565,8 +565,15 @@ try {
   await expect(activityRows).toHaveCount(8);
   await expect(page.getByRole("link",{name:/Load (older|newer) activity/})).toHaveCount(0);
   await page.goto(fullUrl+"&cursor=bad");
-  await expect(page.getByRole("heading",{name:"Activity history unavailable"})).toBeVisible();
-  console.log("PASS empty and obsolete cursor");
+  // AdminEmptyState deliberately renders its title as a paragraph, not a heading.
+  await expect(page.getByText("Activity history unavailable",{exact:true})).toBeVisible();
+  await expect(page.getByText("The page link no longer matches the selected filters.",{exact:true})).toBeVisible();
+  await expect(activityRows).toHaveCount(0);
+  await page.getByRole("link",{name:"Return to newest activity",exact:true}).click();
+  await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all")&&!u.searchParams.has("cursor"));
+  await expect(page.getByTestId("unified-activity-list")).toBeVisible();
+  await expect(activityRows.first()).toBeVisible();
+  console.log("PASS empty, obsolete summary cursor, invalid full-history cursor and recovery");
 
   await page.goto(base+"/admin/users/user/qa-registered-0001/activity?range=all");
   await expect(page.getByRole("heading",{name:"QA registered customer"})).toBeVisible();
