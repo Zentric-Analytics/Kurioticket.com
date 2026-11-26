@@ -131,7 +131,7 @@ test("live guest preview uses only a validated current observation and an opaque
   const first = new Date(+now-30000).toISOString();
   const access = {reference:"A".repeat(43),firstSeenAt:first,countryCode:"NG",deviceLabel:"iOS device",browser:null,os:"iOS"};
   const snapshot = buildAdminOnlineUsersSnapshot([
-    {...observation("private-source","ios",5),liveReference:access.reference,liveAccess:access},
+    {...observation("private-source","ios",5),liveReference:access.reference,liveAccess:access,liveCountryCode:"NG"},
     observation("other-private-source","android",2,null,false,"Unrelated country"),
   ],now);
   assert.equal(snapshot.total,2);
@@ -141,7 +141,7 @@ test("live guest preview uses only a validated current observation and an opaque
   assert.equal(snapshot.rows.find(r=>!r.liveAccess)?.locationLabel,null);
   assert.doesNotMatch(JSON.stringify(snapshot),/private-source/);
   const stale = buildAdminOnlineUsersSnapshot([
-    {...observation("private-source","ios",20),liveReference:access.reference,liveAccess:access},
+    {...observation("private-source","ios",20),liveReference:access.reference,liveAccess:access,liveCountryCode:"NG"},
     observation("private-source","ios",1),
   ],now);
   assert.equal(stale.rows[0].liveAccess,undefined);
@@ -212,4 +212,20 @@ test("guest activity rejects ambiguous and authenticated roster matches",()=>{
   ],now);
   assert.equal(resolveLiveGuestActivity(account,reference,now),null);
   assert.equal(resolveLiveGuestActivity({...account,rows:account.rows.map(row=>({...row,liveReference:reference}))},reference,now),null);
+});
+
+test("verified country is independent of optional first access and disappears on a newer unknown heartbeat",()=>{
+  const reference="F".repeat(43);
+  const source={...observation("live-source","desktop_web",5),liveReference:reference,liveCountryCode:"NG"};
+  const current=buildAdminOnlineUsersSnapshot([source],now);
+  assert.equal(current.rows[0].locationLabel,"Nigeria");
+  assert.equal(current.rows[0].liveAccess,undefined);
+  assert.equal(resolveLiveGuestActivity(current,reference,now)?.locationLabel,"Nigeria");
+  assert.doesNotMatch(JSON.stringify(current),/live-source|liveCountryCode|firstSeenAt/);
+  assert.equal(buildAdminOnlineUsersSnapshot([source,{...source,lastSeenAt:new Date(+now-1000),liveCountryCode:null}],now).rows[0].locationLabel,null);
+  assert.equal(buildAdminOnlineUsersSnapshot([{...source,liveCountryCode:"XX"}],now).rows[0].locationLabel,null);
+  assert.equal(buildAdminOnlineUsersSnapshot([{...source,liveReference:undefined}],now).rows[0].locationLabel,null);
+  assert.equal(buildAdminOnlineUsersSnapshot([{...source,lastSeenAt:new Date(+now-90000)}],now).total,0);
+  const oldPreview={...source,liveCountryCode:undefined,liveAccess:{reference,firstSeenAt:new Date(+now-20000).toISOString(),countryCode:"NG",deviceLabel:null,browser:null,os:null}};
+  assert.equal(buildAdminOnlineUsersSnapshot([oldPreview],now).rows[0].locationLabel,null,"legacy preview cannot supply a country");
 });
