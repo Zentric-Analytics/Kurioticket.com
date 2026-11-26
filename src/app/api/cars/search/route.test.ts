@@ -49,8 +49,10 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
     "@/lib/productionSandboxPolicy": {withProductionSandboxRequest,captureFinalSearchHistory},
     "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
     "@/lib/application-source": { applicationMetadata },
+    "@/lib/botSecurity": { withBotSearch: async (_: Request, run: (value?: unknown) => unknown) =>
+      run(options.verifiedCrawler ? { crawler: { name: options.verifiedCrawler, evidence: "VERIFIED_DNS" },
+        requestId, reserve: async () => null, outcome: () => undefined } : undefined) },
     "@/lib/searchCrawlerGate": {
-      identifySearchCrawler: async () => options.verifiedCrawler ? { name: options.verifiedCrawler, evidence: "VERIFIED_DNS" } : null,
       searchCrawlerMetadata: (crawler: { name: string; evidence: string } | null) => crawler ? ({
         identifiedCrawler: crawler.name, crawlerEvidence: crawler.evidence,
         ...(crawler.evidence === "VERIFIED_DNS" ? { verifiedCrawler: crawler.name } : {}),

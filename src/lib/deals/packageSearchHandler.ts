@@ -1,20 +1,22 @@
+import { withBotSearch } from "@/lib/botSecurity";
 import { getIncludedProducts, parseDealsSearchParams, validateDealsSearch } from "@/lib/deals/dealsSearchParams";
 import { searchPackage } from "@/services/travel/packageOrchestrator";
 import { isFeatureEnabled as resolveFeatureEnabled } from "@/lib/feature-controls/service";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { identifySearchCrawler, searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
+import { searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { after } from "next/server";
-import { logSearchHistory } from "@/services/operationalActivityService";
+import { logProviderCall, logSearchHistory } from "@/services/operationalActivityService";
 
 const noStore = { "Cache-Control": "no-store" };
 
 export function createPackageSearchHandler(isFeatureEnabled = resolveFeatureEnabled) {
 return async function POST(request: Request) {
-  const crawler = await identifySearchCrawler(request);
-  const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
+ return withBotSearch(request, async bot => {
+  const crawler = bot?.crawler ?? null;
+  const requestId = bot?.requestId ?? (request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID());
   if (!(await isFeatureEnabled("DEALS_ENABLED"))) return Response.json({ error: "Package search is temporarily unavailable.", status: "unavailable", requestId }, { status: 503, headers: noStore });
-  const rate = checkRateLimit(`package-search:${getClientIp(request)}`, 25, 60_000);
-  if (!rate.allowed) return Response.json({ error: "Too many searches. Please pause for a moment.", requestId }, { status: 429, headers: noStore });
+  const rate = bot ? null : checkRateLimit(`package-search:${getClientIp(request)}`, 25, 60_000);
+  if (rate && !rate.allowed) return Response.json({ error: "Too many searches. Please pause for a moment.", requestId }, { status: 429, headers: noStore });
   let body: unknown;
   try { body = await request.json(); }
   catch { return Response.json({ error: "Invalid JSON request body." }, { status: 400, headers: noStore }); }
@@ -30,7 +32,21 @@ return async function POST(request: Request) {
   const errors = validateDealsSearch(query);
   if (Object.keys(errors).length) return Response.json({ error: "Package search needs more detail.", issues: errors }, { status: 400, headers: noStore });
   const started = performance.now();
-  const result = await searchPackage(query, requestId, {}, journey === "staged" ? "hotel-only" : "all");
+  const botDenial = await bot?.reserve();
+  if (botDenial) return botDenial;
+  const scope = journey === "staged" ? "hotel-only" : "all";
+  const result = await searchPackage(query, requestId, {}, scope, bot ? (product, providers) => {
+    after(async () => {
+      await Promise.all(providers.map(provider => logProviderCall({
+        provider: provider.provider,
+        service: "package-" + product + "-search",
+        status: provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
+        latencyMs: provider.latencyMs,
+        metadata: { applicationSource: "BOT", requestId },
+      })));
+    });
+  } : undefined);
+  bot?.outcome(result.status.toUpperCase());
   if (crawler) {
     // Count only a completed package-search execution. Internal flight/hotel/car
     // fan-out belongs to this one parent search, not three new bot searches.
@@ -45,6 +61,7 @@ return async function POST(request: Request) {
     });
   }
   return Response.json(result, { headers: noStore });
+ });
 }
 }
 export const POST = createPackageSearchHandler();

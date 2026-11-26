@@ -164,6 +164,13 @@ jobs:
       - name: Deploy migrations to clean PostgreSQL database
         run: npx prisma migrate deploy
 
+      - name: Verify bot policy and PostgreSQL quota enforcement
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+        run: |
+          BOT_TEST_DATABASE_URL="$DATABASE_URL" node --test --import jiti/register \
+            src/lib/botPolicy.test.ts src/lib/verifiedSearchCrawler.test.ts src/services/botActivityStore.test.ts
+
       - name: Verify Issue 3 upgrade from representative legacy data
         run: node scripts/validate-four-system-upgrade.mjs
 

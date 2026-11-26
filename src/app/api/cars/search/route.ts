@@ -1,9 +1,10 @@
+import { withBotSearch } from "@/lib/botSecurity";
 import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { applicationMetadata } from "@/lib/application-source";
 import { after } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession, operationalSessionMetadata } from "@/lib/operationalSearchSession";
-import { identifySearchCrawler, searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
+import { searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { logProviderCall, logSearchHistory as persistSearchHistory } from "@/services/operationalActivityService";
@@ -42,12 +43,13 @@ function canonicalSearch(value: unknown): LocationBoundCarSearchParams | null {
 }
 
 export async function POST(request: Request) {
+ return withBotSearch(request, async bot => {
  return withProductionSandboxRequest(request, async () => {
   const projectHistory=captureFinalSearchHistory();
   const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(input));
 
-  const crawler = await identifySearchCrawler(request);
-  const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
+  const crawler = bot?.crawler ?? null;
+  const requestId = bot?.requestId ?? resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("CAR_SEARCH_ENABLED"))) return Response.json({ error: "Car search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503, headers: noStore });
   let body: unknown;
   try { body = await request.json(); } catch { return Response.json({ error: "Invalid JSON request body.", requestId }, { status: 400, headers: noStore }); }
@@ -82,10 +84,13 @@ export async function POST(request: Request) {
       }
     });
   };
+  const botDenial = await bot?.reserve();
+  if (botDenial) return botDenial;
   try {
     const { results, status, warnings, providerStatuses, unsupported } = await searchCars(search, { requestId, kayak: { trackId: operationalSession?.reference.id, requestId, clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
     const response = classifyCars(results, search, requestId, warnings);
     if (unsupported) {
+      bot?.outcome("FAILED");
       recordSearch(0, "FAILED");
       after(async () => {
         try {
@@ -107,6 +112,7 @@ export async function POST(request: Request) {
       return attachOperationalSearchSession(Response.json({ ...response, code: "SEARCH_UNSUPPORTED", error: "The available providers cannot search these rental options. Please change your search." }, { status: 422, headers: noStore }), operationalSession);
     }
     if (status === "unavailable") {
+      bot?.outcome("FAILED");
       recordSearch(0, "FAILED");
       after(async () => {
         try {
@@ -128,6 +134,7 @@ export async function POST(request: Request) {
       return attachOperationalSearchSession(Response.json({ ...response, error: "Car search is temporarily unavailable." }, { status: 503, headers: noStore }), operationalSession);
     }
     const searchStatus = providerStatuses.some((provider) => provider.status === "failed") ? "PARTIAL" : "SUCCESS";
+    bot?.outcome(results.length === 0 && searchStatus === "SUCCESS" ? "EMPTY" : searchStatus);
     recordSearch(results.length, searchStatus);
     after(async () => {
       try {
@@ -148,9 +155,11 @@ export async function POST(request: Request) {
     });
     return attachOperationalSearchSession(Response.json(response, { headers: noStore }), operationalSession);
   } catch {
+    bot?.outcome("FAILED");
     recordSearch(0, "FAILED");
     return attachOperationalSearchSession(Response.json({ error: "Car search is temporarily unavailable.", requestId }, { status: 500, headers: noStore }), operationalSession);
   }
 
+ });
  });
 }

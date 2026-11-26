@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import nextConfig from "../../../next.config";
+import { NextRequest } from "next/server";
+import { proxy } from "@/proxy";
 import {
   buildDealsModifyUrl,
   buildDealsResultsUrl,
@@ -13,14 +14,11 @@ import {
 } from "@/lib/deals/dealsJourneyRoutes";
 
 test("Packages routes are canonical and legacy Deals routes redirect with nested paths", async () => {
-  const redirects = await nextConfig.redirects!();
-  assert.deepEqual(redirects, [
-    {
-      source: "/deals/:path*",
-      destination: "/packages/:path*",
-      permanent: true,
-    },
-  ]);
+  for (const path of ["", "/results", "/journey/hotel-results?mode=hotel-flight"]) {
+    const response = await proxy(new NextRequest("https://kurioticket.com/deals" + path));
+    assert.equal(response.status, 308);
+    assert.equal(response.headers.get("location"), "https://kurioticket.com/packages" + path);
+  }
 });
 
 test("public route builders retain every serialized search parameter on Packages URLs", () => {

@@ -15,6 +15,7 @@ function loadModule<T>(path: string) {
       if(name==="@/lib/productionSandboxPolicy")return {withProductionSandboxRequest,captureFinalSearchHistory};
       if (name === "next/server") return { NextResponse: { json: Response.json } };
       if (name === "@/lib/feature-controls/service") return { isFeatureEnabled: async () => false };
+      if (name === "@/lib/botSecurity") return { withBotSearch: (_: Request, run: () => unknown) => run() };
       if (name === "@/lib/searchCrawlerGate") return { identifySearchCrawler: async () => null, searchCrawlerMetadata: () => ({}) };
       if (name === "@/lib/search-journey") return { resolveSearchRequestId: () => "request-id" };
       if (name === "./handler" || name === "../search/handler") return loadModule("src/app/api/flights/search/handler.ts");

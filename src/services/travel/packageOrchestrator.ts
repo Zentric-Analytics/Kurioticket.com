@@ -43,6 +43,11 @@ export async function searchPackage(
   requestId = crypto.randomUUID(),
   overrides: Partial<Record<DealsProduct, () => Promise<PackageComponent>>> = {},
   scope: "all" | "hotel-only" = "all",
+  observeProviders?: (product: DealsProduct, statuses: readonly {
+    provider: string;
+    status: "success" | "failed" | "skipped";
+    latencyMs: number;
+  }[]) => void,
 ): Promise<CanonicalPackageSearchResponse> {
   const included = getIncludedProducts(query.mode);
   if (scope === "hotel-only") {
@@ -54,16 +59,19 @@ export async function searchPackage(
 
   if (included.flight) tasks.flight = overrides.flight?.() ?? isFeatureEnabled("FLIGHT_SEARCH_ENABLED").then((enabled) => enabled ? searchFlights(buildFlightApiPayload(query), { requestId: `${requestId}:flight` })
     .then((aggregate) => {
+    observeProviders?.("flight", aggregate.providerStatuses);
       if (aggregate.unavailableMessage) return unavailable(`${requestId}:flight`);
       const response = classifyFlights(aggregate.results.map(toPublicFlight), buildFlightApiPayload(query), aggregate.warnings, `${requestId}:flight`);
       return { status: response.results.length ? "success" : "empty", results: response.results, warnings: response.warnings, source: response.source, requestId: response.requestId };
     }) : unavailable(`${requestId}:flight`));
   if (included.hotel) tasks.hotel = overrides.hotel?.() ?? isFeatureEnabled("HOTEL_SEARCH_ENABLED").then((enabled) => enabled ? searchHotels(buildHotelApiPayload(query)).then((aggregate) => {
+    observeProviders?.("hotel", aggregate.providerStatuses);
     if (aggregate.unavailableMessage) return unavailable(`${requestId}:hotel`);
     const response = classifyHotels(aggregate.results.map(toPublicHotel), aggregate.warnings, `${requestId}:hotel`);
     return { status: response.results.length ? "success" : "empty", results: response.results, warnings: response.warnings, source: response.source, requestId: response.requestId };
   }) : unavailable(`${requestId}:hotel`));
   if (included.car) tasks.car = overrides.car?.() ?? isFeatureEnabled("CAR_SEARCH_ENABLED").then((enabled) => enabled ? searchCars(buildCarApiPayload(query)).then((aggregate) => {
+    observeProviders?.("car", aggregate.providerStatuses);
     if (aggregate.status === "unavailable" || aggregate.status === "invalid-search") return unavailable(`${requestId}:car`);
     const response = classifyCars(aggregate.results, buildCarApiPayload(query), `${requestId}:car`);
     return { status: response.results.length ? "success" : "empty", results: response.results, warnings: response.warnings, source: response.source, requestId: response.requestId };

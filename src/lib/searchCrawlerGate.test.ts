@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
+import { crawlerSignatures } from "./botRegistry";
 import type { VerifiedSearchCrawler } from "./verifiedSearchCrawler";
 
 type Identity = { name: string; evidence: "VERIFIED_DNS" | "DECLARED_USER_AGENT" };
@@ -18,6 +19,7 @@ function identification(verified: VerifiedSearchCrawler | null) {
   }).outputText;
   runInNewContext(compiled, {
     exports: exported, require: (key: string) => {
+      if (key === "@/lib/botRegistry") return { crawlerSignatures };
       assert.equal(key, "@/lib/verifiedSearchCrawler");
       return { verifySearchCrawler: async (request: Request) => {
         checked.push(request);
@@ -76,7 +78,7 @@ test("Perplexity, Meta, GoogleOther and other declared crawlers are Bots without
   assert.equal(f.checked.length, agents.length);
 });
 
-test("real web and native clients never become Bots from unknown or incidental headers", async () => {
+test("web and native clients stay unclassified and forged credentials never exempt bot claims", async () => {
   const f = identification(null);
   for (const agent of [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130",
@@ -89,8 +91,8 @@ test("real web and native clients never become Bots from unknown or incidental h
     { cookie: "authjs.session-token=signed-customer-session", "user-agent": "meta-webindexer/1.1" },
     { cookie: "__Secure-next-auth.session-token=signed-customer-session", "user-agent": "GoogleOther" },
   ];
-  for (const headers of protectedRequests) assert.equal(await f.identifySearchCrawler(botRequest(headers["user-agent"], headers)), null);
-  assert.deepEqual(f.checked, []);
+  for (const headers of protectedRequests) assert.ok(await f.identifySearchCrawler(botRequest(headers["user-agent"], headers)));
+  assert.equal(f.checked.length, protectedRequests.length);
   assert.equal(f.declaredSearchCrawler("Mozilla/5.0 Chrome/130"), null);
   assert.equal(f.declaredSearchCrawler("x".repeat(2049)), null);
   assert.deepEqual(JSON.parse(JSON.stringify(f.searchCrawlerMetadata(null))), {});

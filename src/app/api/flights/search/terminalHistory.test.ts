@@ -77,10 +77,14 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
         ? { userId: null, visitorId: null, ...attribution }
         : { userId: "verified-account", visitorId: "consented-visitor", ...attribution };
     } },
+    "@/lib/botSecurity": { withBotSearch: async (request: Request, run: (value?: unknown) => unknown) => {
+      if (options.declaredCrawler || options.verifiedCrawler && request.url.endsWith("/nearby-fare")) {
+        return new Response(null, { status: 403 });
+      }
+      return run(options.verifiedCrawler ? { crawler: { name: options.verifiedCrawler, evidence: "VERIFIED_DNS" },
+        requestId: "bot-request", reserve: async () => options.rateLimited ? new Response(null, { status: 429 }) : null, outcome: () => undefined } : undefined);
+    } },
     "@/lib/searchCrawlerGate": {
-      identifySearchCrawler: async () => options.verifiedCrawler
-        ? { name: options.verifiedCrawler, evidence: "VERIFIED_DNS" }
-        : options.declaredCrawler ? { name: options.declaredCrawler, evidence: "DECLARED_USER_AGENT" } : null,
       searchCrawlerMetadata: (crawler: { name: string; evidence: string } | null) => crawler ? ({
         identifiedCrawler: crawler.name, crawlerEvidence: crawler.evidence,
         ...(crawler.evidence === "VERIFIED_DNS" ? { verifiedCrawler: crawler.name } : {}),
@@ -343,11 +347,11 @@ for (const product of ["flight", "hotel"] as const) {
     assert.equal(response.headers.get("X-Synthetic-Operational-Session"), null);
     if (product === "flight") {
       for (let day = 2; day <= 10; day++) {
-        assert.equal((await fixture.postNearby(day)).status, 200);
+        assert.equal((await fixture.postNearby(day)).status, 403);
       }
     }
     await Promise.all(fixture.deferred.map(run => run()));
-    assert.equal(fixture.histories.length, 1, "one main search plus nine nearby fares is one BOT search");
+    assert.equal(fixture.histories.length, 1, "only the main search is dispatched and counted");
     const history = fixture.histories[0] as History & { applicationSource: string };
     assert.equal(history.applicationSource, "BOT");
     assert.equal(history.userId, null);
@@ -357,7 +361,7 @@ for (const product of ["flight", "hotel"] as const) {
     assert.equal(fixture.lookups(), 0, "bots never enter the user identity pipeline");
     assert.deepEqual(fixture.analyticsEvents, [], "bot searches are not human engagement events");
     assert.deepEqual(fixture.bindingCalls, [], "bots cannot establish customer inventory bindings");
-    assert.equal(fixture.providerCalls.length, product === "flight" ? 10 : 1);
+    assert.equal(fixture.providerCalls.length, 1);
     assert.ok(fixture.providerCalls.every(call => call.metadata.applicationSource === "BOT"));
   });
 }
@@ -371,28 +375,17 @@ test("failed verified bot flight searches are counted once, but rate-limited req
   assert.equal(failed.histories[0].status, "FAILED");
   const rateLimited = routeFixture("flight", { verifiedCrawler: "GOOGLEBOT", rateLimited: true });
   assert.equal((await rateLimited.post()).status, 429);
-  assert.equal((await rateLimited.postNearby(2)).status, 429);
+  assert.equal((await rateLimited.postNearby(2)).status, 403);
   assert.deepEqual(rateLimited.histories, []);
   assert.deepEqual(rateLimited.deferred, []);
 });
 
-test("PerplexityBot executes one search despite nine nearby fares, marked as declared and not DNS-verified", async () => {
-  const fixture = routeFixture("flight", {
-    declaredCrawler: "PERPLEXITYBOT", operationalGuest: true, available: true,
-    withOffers: true,
-  });
-  assert.equal((await fixture.post({ "user-agent": "PerplexityBot/1.0" })).status, 200);
-  for (let day = 2; day <= 10; day++) assert.equal((await fixture.postNearby(day)).status, 200);
-  await Promise.all(fixture.deferred.map(run => run()));
-  assert.equal(fixture.histories.length, 1);
-  const history = fixture.histories[0] as History & { applicationSource: string };
-  assert.equal(history.applicationSource, "BOT");
-  assert.equal((history.query as Record<string, unknown>).identifiedCrawler, "PERPLEXITYBOT");
-  assert.equal((history.query as Record<string, unknown>).crawlerEvidence, "DECLARED_USER_AGENT");
-  assert.equal((history.query as Record<string, unknown>).verifiedCrawler, undefined);
-  assert.equal(fixture.lookups(), 0);
-  assert.deepEqual(fixture.analyticsEvents, []);
-  assert.equal(fixture.providerCalls.length, 10);
+test("PerplexityBot is blocked before invoking providers or recording a search", async () => {
+  const fixture = routeFixture("flight", { declaredCrawler: "PERPLEXITYBOT", available: true });
+  assert.equal((await fixture.post({ "user-agent": "PerplexityBot/1.0" })).status, 403);
+  assert.deepEqual(fixture.deferred, []);
+  assert.deepEqual(fixture.histories, []);
+  assert.deepEqual(fixture.providerCalls, []);
 });
 
 test("hotel operational counts exclude inventory rejected by the public classifier", async () => {

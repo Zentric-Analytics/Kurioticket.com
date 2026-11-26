@@ -10,15 +10,6 @@ const nextConfig: NextConfig = {
   // The floating dev toolbar throws releasePointerCapture errors on touch devices.
   // Runtime and compile errors remain visible with the indicator disabled.
   devIndicators: false,
-  async redirects() {
-    return [
-      {
-        source: "/deals/:path*",
-        destination: "/packages/:path*",
-        permanent: true,
-      },
-    ];
-  },
   images: {
     qualities: [75, 92, 100],
     // Keep curated asset versions aligned with the shared image-source helper.

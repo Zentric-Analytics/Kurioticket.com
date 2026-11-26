@@ -1,4 +1,4 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 import { randomBytes } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -12,6 +12,8 @@ export default defineConfig({
   // first-visit consent dialog cannot cover controls under test.
   use: {
     baseURL: "http://127.0.0.1:3100",
+    // These browser sessions represent customers for ingress policy.
+    userAgent: devices[browserName === "webkit" ? "Desktop Safari" : "Desktop Chrome"].userAgent,
     trace: "retain-on-failure",
     storageState: {
       cookies: [{ name: "kt_analytics_denied", value: "1", domain: "127.0.0.1", path: "/", expires: -1, httpOnly: false, secure: false, sameSite: "Lax" }],

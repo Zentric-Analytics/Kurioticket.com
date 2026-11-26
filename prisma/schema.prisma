@@ -1313,3 +1313,64 @@ model ProviderResultCache {
   @@unique([vertical, resultId])
   @@index([expiresAt])
 }
+
+model BotRegistry {
+  id                 String   @id
+  environment        String
+  identityKey        String
+  name               String?
+  group              String
+  category           String?
+  owner              String?
+  verification       String
+  access             String
+  firstSeen          DateTime @default(now())
+  lastSeen           DateTime @default(now())
+  requests           BigInt   @default(0)
+  allowed            BigInt   @default(0)
+  denied             BigInt   @default(0)
+  rateLimited        BigInt   @default(0)
+  searchAttempts     BigInt   @default(0)
+  searches           BigInt   @default(0)
+  violations         BigInt   @default(0)
+  crawlWindow        DateTime?
+  crawlCount         Int      @default(0)
+  activities         BotActivity[]
+
+  @@unique([environment, identityKey])
+  @@index([environment, lastSeen, id])
+  @@index([environment, group, firstSeen])
+}
+
+model BotActivity {
+  id                 String   @id
+  botId              String
+  bot                BotRegistry @relation(fields: [botId], references: [id], onDelete: Restrict)
+  environment        String
+  timestamp          DateTime @default(now())
+  endpoint           String
+  method             String
+  kind               String
+  product            String?
+  declaredName       String?
+  verification       String
+  evidence           String?
+  ip                 String?
+  country            String?
+  userAgent          String?
+  edgeRay            String?
+  decision           String
+  reason             String
+  responseStatus     Int?
+  durationMs         Int?
+  dispatchedAt       DateTime?
+  retryKey           String?
+  executionOutcome   String?
+
+  @@unique([botId, retryKey])
+  @@index([botId, dispatchedAt])
+  @@index([botId, timestamp, id])
+  @@index([environment, timestamp, id])
+  @@index([timestamp])
+  @@index([environment, edgeRay])
+}

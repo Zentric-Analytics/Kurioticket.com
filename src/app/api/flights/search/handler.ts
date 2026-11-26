@@ -1,8 +1,9 @@
+import { withBotSearch } from "@/lib/botSecurity";
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import {withProductionSandboxRequest,captureFinalSearchHistory,productionSandboxInventory} from "@/lib/productionSandboxPolicy";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession, operationalSessionMetadata } from "@/lib/operationalSearchSession";
-import { identifySearchCrawler, searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
+import { searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicFlight } from "@/lib/searchCache";
 import { flightSearchSchema } from "@/lib/validation";
@@ -17,22 +18,23 @@ import { logNativeFlightProviderDiagnostics } from "./providerDiagnostics";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 
 export async function handleFlightSearch(request: Request, purpose: "customer" | "nearby-fare") {
+ return withBotSearch(request, async bot => {
  return withProductionSandboxRequest(request,async()=>{
   const projectHistory=captureFinalSearchHistory();
   const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(input));
-  const crawler = await identifySearchCrawler(request);
+  const crawler = bot?.crawler ?? null;
   const nearby = purpose === "nearby-fare";
   const routeStartedAt = performance.now();
   let providerStartedAt = routeStartedAt;
   // A client-supplied ID on this endpoint must never attach fare diagnostics
   // to another request's customer search.
-  const requestId = nearby
+  const requestId = bot?.requestId ?? (nearby
     ? `nearby-fare:${resolveSearchRequestId(null)}`
-    : resolveSearchRequestId(request.headers.get("x-search-request-id"));
+    : resolveSearchRequestId(request.headers.get("x-search-request-id")));
   if (!(await isFeatureEnabled("FLIGHT_SEARCH_ENABLED"))) return NextResponse.json({ error: "Flight search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
   const ip = getClientIp(request);
-  const rate = checkRateLimit(`flight-search:${ip}`, 35, 60_000);
-  if (!rate.allowed) {
+  const rate = bot ? null : checkRateLimit(`flight-search:${ip}`, 35, 60_000);
+  if (rate && !rate.allowed) {
     return NextResponse.json({ error: "Too many searches. Please pause for a moment." }, { status: 429 });
   }
 
@@ -54,6 +56,8 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
   const kayakClientIp = getKayakClientIp(request);
   const userAgent = request.headers.get("user-agent") || undefined;
 
+  const botDenial = await bot?.reserve();
+  if (botDenial) return botDenial;
   const aggregate = await searchFlights(parsed.data, {
     signal: request.signal,
     requestId,
@@ -95,6 +99,7 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
   const status = aggregate.unavailableMessage ? "FAILED"
     : aggregate.providerStatuses.some((provider) => provider.status === "failed") ? "PARTIAL" : "SUCCESS";
   const resultCount = status === "FAILED" ? 0 : aggregate.results.length;
+  bot?.outcome(resultCount === 0 && status === "SUCCESS" ? "EMPTY" : status);
 
   after(async () => {
     try {
@@ -199,5 +204,6 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
       "Server-Timing": serverTiming,
     },
   }), operationalSession);
+ });
  });
 }
