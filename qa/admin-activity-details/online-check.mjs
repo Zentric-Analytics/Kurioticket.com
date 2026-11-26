@@ -6,7 +6,7 @@ try {
   const page=await browser.newPage({viewport:{width:1280,height:900}});
   const errors=[];page.on("pageerror",e=>errors.push(e.message));
   const directorySelected=async()=>{
-    const sidebar=page.locator('[aria-label="Users subsections"]');
+    const sidebar=page.locator('[aria-label="Users & Bots subsections"]');
     await expect(sidebar.locator('a[href="/admin/users"]')).toHaveAttribute("aria-current","page");
     await expect(sidebar.locator('a[href="/admin/users/online"]')).not.toHaveAttribute("aria-current","page");
   };

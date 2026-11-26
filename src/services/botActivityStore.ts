@@ -10,6 +10,10 @@ export const BOT_SEARCH_COOLDOWN_MS = 30 * 60_000;
 export const BOT_DAILY_SEARCH_LIMIT = 5;
 export const BOT_ACTIVITY_RETENTION_DAYS = 90;
 
+export function botCrawlRequestsPerMinute(group: string) {
+  return group === "SEARCH_ENGINE" ? 600 : 120;
+}
+
 export function utcDayStart(now: Date) {
   return new Date(now.toISOString().slice(0, 10) + "T00:00:00.000Z");
 }
@@ -43,7 +47,7 @@ export async function recordBotAttempt(request: Request, bot: Bot, target: Targe
     const start = new Date(Math.floor(now.getTime() / 60_000) * 60_000);
     const crawlCount = registry.crawlWindow?.getTime() === start.getTime() ? registry.crawlCount : 0;
     const crawl = target.crawl && !reason;
-    const throttled = edgeBlock?.status === 429 || crawl && crawlCount >= (bot.group === "SEARCH_ENGINE" ? 600 : 120);
+    const throttled = edgeBlock?.status === 429 || crawl && crawlCount >= botCrawlRequestsPerMinute(bot.group);
     const searchPending = !reason && target.mainSearch;
     const status = edgeBlock?.status ?? (reason ? 403 : throttled ? 429 : null);
     const activity = await tx.botActivity.create({

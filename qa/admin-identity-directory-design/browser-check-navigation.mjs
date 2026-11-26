@@ -24,8 +24,8 @@ try {
     await expect(page.getByRole("heading", { name: "Users directory" })).toHaveCount(1);
     await expect(page.getByRole("region", { name: "Users directory" })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "User types" }).getByRole("link", { name: "All (30)" })).toBeVisible();
-    const workspace = page.getByRole("navigation", { name: "Users subsections" });
-    await expect(page.getByRole("complementary", { name: "Users navigation" }).getByRole("heading", { name: "Users", exact: true })).toBeVisible();
+    const workspace = page.getByRole("navigation", { name: "Users & Bots subsections" });
+    await expect(page.getByRole("complementary", { name: "Users & Bots navigation" }).getByRole("heading", { name: "Users & Bots", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Online Users", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Device & Access", exact: true })).toBeVisible();
@@ -38,13 +38,13 @@ try {
     }
     if (width >= 1024) {
       const layout = await page.evaluate(() => {
-        const sidebar = document.querySelector('aside[aria-label="Users navigation"]')?.getBoundingClientRect();
+        const sidebar = document.querySelector('aside[aria-label="Users & Bots navigation"]')?.getBoundingClientRect();
         const content = document.querySelector('[data-admin-page-content]')?.getBoundingClientRect();
         return { sideBySide: Boolean(sidebar && content && content.left > sidebar.right
           && Math.abs(sidebar.top - content.top) <= 1) };
       });
       assert.equal(layout.sideBySide, true, "Users workspace stays two-column at 100% desktop zoom");
-      const sidebarWidth = await page.locator('aside[aria-label="Users navigation"]').evaluate(node => node.getBoundingClientRect().width);
+      const sidebarWidth = await page.locator('aside[aria-label="Users & Bots navigation"]').evaluate(node => node.getBoundingClientRect().width);
       assert.ok(sidebarWidth >= 190 && sidebarWidth <= 201, "Compact sidebar must retain readable labels at " + width + "px: " + sidebarWidth);
       const contentWidth = await page.locator('[data-admin-page-content]').evaluate(node => node.getBoundingClientRect().width);
       assert.ok(contentWidth > sidebarWidth * 2, "Content workspace must receive the larger share at " + width + "px");
@@ -96,8 +96,8 @@ try {
       assert.ok(documentWidth <= width + 1, "Platforms navigation must not overflow at " + width + "px");
     }
     await page.goto(root + "/admin/users/user/example123/devices", { waitUntil: "networkidle" });
-    await expect(page.getByRole("complementary", { name: "Users navigation" })).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "Users subsections" })
+    await expect(page.getByRole("complementary", { name: "Users & Bots navigation" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Users & Bots subsections" })
       .getByRole("link", { name: "Device & Access", exact: true })).toHaveAttribute("aria-current", "page");
     await expect(page.getByRole("navigation", { name: "Platforms subsections" })).toHaveCount(0);
     checks.push("Platforms workspace and account device history navigation at " + width + "px");
@@ -178,9 +178,9 @@ try {
     }
     const journeys = page.getByRole("region", { name: "Journey records" });
     await expect(journeys).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "Users subsections" })
+    await expect(page.getByRole("navigation", { name: "Users & Bots subsections" })
       .getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
-    await expect(page.getByRole("navigation", { name: "Users subsections" })
+    await expect(page.getByRole("navigation", { name: "Users & Bots subsections" })
       .getByRole("link", { name: "Visitor Journeys", exact: true })).toHaveCount(0);
     await expect(journeys.locator("thead th")).toHaveCount(8);
     await expect(journeys.locator("tbody tr")).toHaveCount(4);
