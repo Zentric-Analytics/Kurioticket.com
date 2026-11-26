@@ -22,7 +22,8 @@ try {
     await expect(guest.getByTestId("online-user-location")).toHaveText("Nigeria");
     await expect(missing.getByTestId("online-user-location")).toHaveText("Unavailable");
     await expect(byPlatform("Android")).toHaveCount(0);
-    await expect(byPlatform("Mobile web").getByRole("link",{name:"View Activity"})).toHaveAttribute("href","/admin/users/user/qa-registered-0001/activity");
+    const registeredHref=await byPlatform("Mobile web").getByRole("link",{name:"View Activity"}).getAttribute("href");
+    assert.equal(registeredHref,"/admin/users/user/qa-registered-0001/activity");
     const guestHref=await guest.getByRole("link",{name:"View Activity"}).getAttribute("href");
     const otherHref=await missing.getByRole("link",{name:"View Activity"}).getAttribute("href");
     assert.notEqual(guestHref,otherHref);
@@ -41,14 +42,52 @@ try {
     await expect(card.getByText("Latest verified access",{exact:true})).toBeVisible();
     await expect(card.getByText("First verified access",{exact:true})).toHaveCount(0);
     await expect(card.getByRole("link",{name:"View access history"})).toHaveCount(0);
-    await expect(card.getByRole("region",{name:"Activity summary"})).toHaveCount(0);
+    const metrics=card.getByTestId("activity-metric-value");
+    await expect(metrics).toHaveCount(6);
+    await expect(metrics).toHaveText(Array(6).fill("—"));
+    await expect(metrics.locator('[aria-label="Unavailable"]')).toHaveCount(6);
+    await expect(card.getByTestId("activity-events-fact")).toContainText("—");
+    await expect(card.getByText("Historical activity cannot be attributed to this temporary session. Unavailable values are not zero.",{exact:true})).toBeVisible();
+    const layout=async()=>card.evaluate(el=>{
+      const identity=el.querySelector('[data-testid="activity-identity-facts"]');
+      const summary=el.querySelector('[data-testid="activity-metrics-grid"]');
+      return {wrapper:el.className,identity:identity.className,summary:summary.className,
+        identityCols:getComputedStyle(identity).gridTemplateColumns.split(" ").length,
+        metricCols:getComputedStyle(summary).gridTemplateColumns.split(" ").length,
+        labels:[...el.querySelectorAll('[data-testid="activity-metric-label"]')].map(v=>v.textContent),
+        metricFonts:[...el.querySelectorAll('[data-testid="activity-metric-value"]')].map(v=>getComputedStyle(v).fontSize),
+        dividerCount:el.querySelector('[data-testid="activity-identity-dividers"]').children.length,
+        facts:[...identity.querySelectorAll("dt")].map(v=>v.textContent)};
+    });
+    const liveLayout=await layout();
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
     await page.screenshot({path:output+"/live-guest-activity-"+width+".png",fullPage:true});
-    await card.getByRole("link",{name:"Back to Online Users"}).click();
-    await expect(page).toHaveURL(u=>u.pathname==="/admin/users/online");
+    await card.getByRole("link",{name:"View all activity"}).click();
+    await expect(page).toHaveURL(u=>u.pathname===guestHref+"/all");
+    await directorySelected();
+    await expect(page.getByRole("heading",{name:"All activity",exact:true})).toBeVisible();
+    await expect(page.locator("[data-activity-id]")).toHaveCount(1);
+    const categories=page.getByRole("navigation",{name:"Activity categories"});
+    await expect(categories.locator('[aria-disabled="true"]')).toHaveCount(5);
+    await categories.getByRole("link",{name:"Device & Access",exact:true}).click();
+    await expect(page).toHaveURL(u=>u.searchParams.get("tab")==="access");
+    await expect(page.locator("[data-activity-id]")).toHaveCount(1);
+    await page.goto(base+guestHref+"/all?tab=searches");
+    await expect(page.getByText("This filter is unavailable for a temporary guest session.")).toBeVisible();
+    await expect(page.locator("[data-activity-id]")).toHaveCount(0);
+    await page.getByRole("link",{name:"Reset filters"}).click();
+    await expect(page.locator("[data-activity-id]")).toHaveCount(1);
+    await page.getByRole("link",{name:"Back to Activity"}).click();
+    await expect(page).toHaveURL(u=>u.pathname===guestHref);
+    await page.goto(base+registeredHref);
+    await directorySelected();
+    await expect(card.getByTestId("activity-metric-value")).toHaveCount(6);
+    const accountLayout=await layout();
+    assert.deepEqual({...liveLayout,facts:["Joined","Last seen","Events"]},accountLayout,"guest must use identical registered layout at "+width);
+    await page.screenshot({path:output+"/registered-comparison-"+width+".png",fullPage:true});
     await page.goto(base+otherHref);
     await directorySelected();
-    await expect(card.getByText("Unavailable",{exact:true})).toBeVisible();
+    await expect(card.locator('section[aria-label="Customer identity"]').getByText("Unavailable",{exact:true})).toBeVisible();
     await expect(card.locator('section[aria-label="Customer identity"]').getByText("iOS app",{exact:true})).toBeVisible();
     await expect(card.getByText("Nigeria",{exact:true})).toHaveCount(0);
     const invalid="Z".repeat(43);
@@ -56,6 +95,10 @@ try {
     await expect(card.getByText("This live guest session is no longer available or cannot be verified.")).toBeVisible();
     await expect(card.locator("[data-activity-id]")).toHaveCount(0);
     await expect(card.getByText("Nigeria",{exact:true})).toHaveCount(0);
+    await expect(card.getByRole("link",{name:"View all activity"})).toHaveCount(0);
+    await page.goto(base+"/admin/users/live-guest/"+invalid+"/activity/all");
+    await expect(page.getByText("This live guest session is no longer available or cannot be verified.")).toBeVisible();
+    await expect(page.locator("[data-activity-id]")).toHaveCount(0);
     const ref=guestHref.split("/").at(-2);
     await page.goto(base+"/admin/users/online/guest/"+ref);
     await expect(page).toHaveURL(u=>u.pathname===guestHref);

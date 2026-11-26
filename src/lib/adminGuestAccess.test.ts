@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { accountDevicePlatform, accountDevicePlatformWhere, pageViewDevicePlatform } from "./adminDevicePlatform";
-import { consentedGuestAccessObservation, safeGuestDeviceDescription } from "./guestAccessObservation";
+import { consentedGuestAccessObservation, recordedGuestAccessLocation, safeGuestDeviceDescription } from "./guestAccessObservation";
 import { guestAccessHistorySql } from "./adminGuestAccessSql";
 
 test("platform filters match known recorded categories and leave absent evidence unclassified", () => {
@@ -45,4 +45,22 @@ test("guest observations remain behind the existing consent lock and are not new
   assert.deepEqual(sql.values.slice(-2), [20, 20]);
   assert.match(sql.strings.join("?"), /MIN\("at"\) AS "firstSeenAt", MAX\("at"\)/);
   assert.doesNotMatch(sql.strings.join("?"), /tokenHash|maskedIp|userAgent|OnlinePresenceSession/);
+});
+
+test("operational access projects only its own saved country, never another observation", () => {
+  const search = { guestSource: "operational", evidence: "search" };
+  assert.equal(recordedGuestAccessLocation({...search,recordedCountryCode:"NG"}), "Nigeria");
+  assert.equal(recordedGuestAccessLocation({...search,recordedCountryCode:"gb"}), "United Kingdom");
+  for(const country of [null,undefined,{},["NG"],"XX","T1","NGA","192.0.2.1","Nigeria"]) {
+    assert.equal(recordedGuestAccessLocation({...search,recordedCountryCode:country,locationLabel:"Nigeria"}),null);
+  }
+  assert.equal(recordedGuestAccessLocation({guestSource:"operational",evidence:"handoff",recordedCountryCode:"NG",locationLabel:"Nigeria"}),null);
+  assert.equal(recordedGuestAccessLocation({guestSource:"consented",evidence:"page",recordedCountryCode:"NG",locationLabel:"Lagos, Nigeria"}),"Lagos, Nigeria");
+  assert.equal(recordedGuestAccessLocation({guestSource:"consented",evidence:"page",recordedCountryCode:"NG"}),null);
+  const sql = guestAccessHistorySql("12345678-1234-4123-8123-123456789abc",{range:"all",page:1,platform:"all"},"staging",new Date("2026-11-26T18:00:00Z"));
+  const statement=sql.strings.join("?");
+  assert.match(statement,/jsonb_typeof\(x\."query" #> '\{searchNetwork,countryCode\}'\) = 'string'/);
+  assert.match(statement,/THEN x\."query" #>> '\{searchNetwork,countryCode\}' END AS "recordedCountryCode"/);
+  assert.doesNotMatch(statement,/ipAddress|cf-connecting-ip|OnlinePresenceSession/);
+  assert.ok(sql.values.includes("staging"));
 });

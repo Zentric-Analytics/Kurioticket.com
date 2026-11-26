@@ -6,7 +6,7 @@ import type { PublicEnvironment } from "@/lib/stagingSafety";
 import type { OnlinePresencePlatform } from "./onlinePresence";
 import { sessionDeviceObservation, type SessionDeviceObservation } from "./sessionDeviceObservation";
 import { guestFirstAccessObservation, guestFirstAccessPreviewEnabled, type GuestAccessObservation } from "./guestFirstAccessObservation";
-import { guestLiveCountryEnabled, guestLiveCountryObservation } from "./guestLiveCountry";
+import { guestLiveCountryEnabled, resolveGuestLiveCountry } from "./guestLiveCountry";
 import {
   equalPresenceSignatures,
   presenceTokenHeader,
@@ -35,6 +35,7 @@ type Dependencies = {
   now?: () => Date;
   authenticate: (request: Request) => Promise<{ id: string; platform: string | null } | null>;
   admit?: (request: Request, sourceId: string, newSource: boolean) => boolean;
+  resolveGuestCountry?: typeof resolveGuestLiveCountry;
   record: (heartbeat: OnlinePresenceHeartbeat) => Promise<void>;
   onFailure?: (environment: PublicEnvironment) => void;
 };
@@ -137,7 +138,7 @@ export function createOnlinePresenceHandler(transport: PresenceTransport, depend
             guestAccess: guestFirstAccessObservation(request, verifiedPlatform, false),
           } : {}),
           ...(!account && guestLiveCountryEnabled(environment) ? {
-            guestLiveCountryCode: guestLiveCountryObservation(request, environment),
+            guestLiveCountryCode: await (dependencies.resolveGuestCountry ?? resolveGuestLiveCountry)(request, environment),
           } : {}),
           now,
         });

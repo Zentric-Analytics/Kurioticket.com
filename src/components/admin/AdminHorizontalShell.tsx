@@ -201,7 +201,8 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   // Overview surface unchanged; route-specific flags remain for contract QA.
   const usersDirectory = pathname === "/admin/users" || pathname === "/admin/users/";
   const visitorJourneysWorkspace = pathname === "/admin/journeys" || pathname.startsWith("/admin/journeys/");
-  const userActivity = /^\/admin\/users\/(?:user|guest)\/[a-z0-9_-]{6,80}\/activity\/?$/i.test(pathname);
+  const userActivity = /^\/admin\/users\/(?:user|guest)\/[a-z0-9_-]{6,80}\/activity\/?$/i.test(pathname)
+    || /^\/admin\/users\/live-guest\/[A-Za-z0-9_-]{43}\/activity\/?$/.test(pathname);
   const searchDetail = /^\/admin\/searches\/[a-z0-9_-]{6,128}\/?$/i.test(pathname);
   const searchesWorkspace = pathname === "/admin/searches" || pathname === "/admin/searches/" || pathname === "/admin/searches/activity" || pathname === "/admin/searches/activity/" || searchDetail;
   const supportWorkspace = pathname === "/admin/support" || pathname.startsWith("/admin/support/");

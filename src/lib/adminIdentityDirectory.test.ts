@@ -238,8 +238,11 @@ test("Directory and Activity share a parameterized recorded account last-seen ex
   assert.match(directory, /\$\{adminRegisteredLastSeenSql\(environment\)\}/);
   assert.match(activity, /\$\{adminRegisteredLastSeenSql\(environment\)\}/);
   assert.match(activity, /account \? accountLastSeen : visitor\?\.lastSeenAt/);
-  assert.match(activityPage, /<Fact label="Last seen"/);
-  assert.doesNotMatch(activityPage, /<Fact label="Last active"/);
+  const workspace = readFileSync("src/components/admin/AdminCustomerActivityWorkspace.tsx", "utf8");
+  assert.match(activityPage, /<AdminCustomerActivityWorkspace/);
+  assert.match(activityPage, /lastSeenAt=\{data\.lastSeenAt\} lastSeenAvailable=\{data\.lastSeenAvailable\}/);
+  assert.match(workspace, /<Fact label="Last seen"/);
+  assert.doesNotMatch(activityPage + workspace, /<Fact label="Last active"/);
 });
 
 test("guest statuses use recorded expiry, not last seen or online presence", () => {

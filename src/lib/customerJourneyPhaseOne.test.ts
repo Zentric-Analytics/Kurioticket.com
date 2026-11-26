@@ -27,8 +27,12 @@ test("existing funnel metrics stay unchanged while exact per-search actions are 
   }
   assert.match(reader, /const funnelEvents/);
   assert.match(reader, /events: \{ some: funnelEvents \}/);
-  for (const label of ["Searches", "Results viewed", "Offers selected", "Provider handoffs", "Journeys tracked"]) {
-    assert.ok(read("src/app/admin/users/[kind]/[id]/activity/page.tsx").includes('label: "' + label + '"'), label);
+  const activityPage = read("src/app/admin/users/[kind]/[id]/activity/page.tsx");
+  const workspace = read("src/components/admin/AdminCustomerActivityWorkspace.tsx");
+  assert.match(activityPage, /<AdminCustomerActivityWorkspace/);
+  assert.match(activityPage, /summary=\{data\.summary\}/);
+  for (const [label, field] of [["Searches", "searches"], ["Results viewed", "resultsViewed"], ["Offers selected", "offersSelected"], ["Provider handoffs", "providerHandoffs"], ["Journeys tracked", "journeysTracked"]]) {
+    assert.ok(workspace.includes('label: "' + label + '", count: summary?.' + field), label);
   }
   assert.match(overview, /search\.saved/);
   assert.match(overview, /search\.unsaved/);

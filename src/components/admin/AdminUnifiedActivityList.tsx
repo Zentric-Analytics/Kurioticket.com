@@ -20,10 +20,10 @@ function describe(row: ActivityRow) {
   }
   return parts.join(" · ");
 }
-export function AdminUnifiedActivityList({ events, timeZone, environment, overview = false, access, accessHref, accessUnavailable, pagesHref, pagesUnavailable, allHref, nextHref }: {
+export function AdminUnifiedActivityList({ events, timeZone, environment, overview = false, access, accessHref, accessUnavailable, pagesHref, pagesUnavailable, allHref, allHrefPrefetch, nextHref }: {
   events: ActivityRow[]; timeZone: string; environment: string; overview?: boolean;
   access?: AccessPreview | null; accessHref?: string; accessUnavailable?: boolean; pagesHref?: string;
-  pagesUnavailable?: boolean; allHref?: string; nextHref?: string | null;
+  pagesUnavailable?: boolean; allHref?: string; allHrefPrefetch?: boolean; nextHref?: string | null;
 }) {
   const ordered = [...events].sort((a,b) => +b.at - +a.at || a.id.localeCompare(b.id));
   const pages = ordered.filter(row => row.stage === "PAGE_VIEW");
@@ -31,13 +31,13 @@ export function AdminUnifiedActivityList({ events, timeZone, environment, overvi
   const selected = overview ? [...travel.slice(0, 8), ...pages.slice(0, 1)] : ordered;
   const rows: ListRow[] = selected.map(event => ({ id: event.id, at: event.at, label: event.label, detail: describe(event), event,
     access: event.id.startsWith("d-") }));
-  if (overview && access) rows.push({ id: "latest-access-summary", at: access.at, label: access.label ?? "Latest recorded access", detail: access.detail, href: access.href, access: true });
+  if (access) rows.push({ id: "latest-access-summary", at: access.at, label: access.label ?? "Latest recorded access", detail: access.detail, href: access.href, access: true });
   rows.sort((a,b) => +b.at - +a.at || a.id.localeCompare(b.id));
   const date = new Intl.DateTimeFormat("en-GB", { day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:false,timeZone });
   return <section data-testid="unified-activity-list" aria-label={overview ? "Recent activity" : "All activity"} className="min-w-0 space-y-2">
     <div className="flex flex-wrap items-center justify-between gap-2 pb-2">
       <h2 className="text-[16px] font-semibold">{overview ? "Recent activity" : "Activity history"}</h2>
-      {allHref ? <Link href={allHref} className="focus-ring inline-flex items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline">View all activity <ChevronRight size={14} aria-hidden="true"/></Link> : null}
+      {allHref ? <Link href={allHref} prefetch={allHrefPrefetch} className="focus-ring inline-flex items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline">View all activity <ChevronRight size={14} aria-hidden="true"/></Link> : null}
     </div>
     {overview && (accessUnavailable || pagesUnavailable) ? <p role="status" className="text-[12px] text-[#64748B]">{accessUnavailable ? "Access information temporarily unavailable. " : ""}{pagesUnavailable ? "Page visit information temporarily unavailable." : ""}</p> : null}
     {!rows.length ? <p className="rounded-lg border border-[#E2E8F0] p-4 text-[13px] text-[#64748B]">No recorded activity matches this view.</p> :

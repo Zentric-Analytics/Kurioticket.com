@@ -71,7 +71,7 @@ await put("app/admin/users/pages/page.tsx", await readFile(path.join(source, "ap
 await put("mocks/history-directory.js", await readFile(path.join(qa, "history-directory-fixture.js"), "utf8"));
 await put("app/admin/users/[kind]/[id]/activity/page.tsx",
   await readFile(path.join(source, "app/admin/users/[kind]/[id]/activity/page.tsx"), "utf8"));
-for (const route of ["admin/users/[kind]/[id]/activity/all/page.tsx", "admin/users/online/page.tsx", "admin/users/online/guest/[reference]/page.tsx", "admin/users/live-guest/[reference]/activity/page.tsx"]) {
+for (const route of ["admin/users/[kind]/[id]/activity/all/page.tsx", "admin/users/online/page.tsx", "admin/users/online/guest/[reference]/page.tsx"]) {
   await put("app/" + route, await readFile(path.join(source, "app", route), "utf8"));
 }
 await put("mocks/online-users.js", await readFile(path.join(qa, "online-users-fixture.js"), "utf8"));

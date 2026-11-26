@@ -1,5 +1,6 @@
 import { pageViewDevicePlatform } from "./adminDevicePlatform";
 import { sessionDeviceObservation } from "./sessionDeviceObservation";
+import { countryCodeToCountryName, isIsoCountryCode, normalizeCountryCode } from "./geo/context";
 
 /** The caller must hold the existing consented, unlinked visitor row lock.
  * Only coarse fields already supported by the session observation helper;
@@ -22,4 +23,21 @@ export function safeGuestDeviceDescription(value: unknown, field: "deviceLabel" 
   if (field === "browser") return /^(?:Edge|Firefox|Chrome|Opera|Safari) \d{1,6}$/.test(value) ? value : null;
   if (field === "os") return /^(?:Android|iOS|Windows|macOS|Linux)$/.test(value) ? value : null;
   return /^[\p{L}\p{M} .,'()-]{2,100}$/u.test(value) ? value : null;
+}
+
+/** Project only the country from this exact existing search observation.
+ * Never link temporary presence or borrow locations from other records. */
+export function recordedGuestAccessLocation(row: {
+  guestSource?: string | null;
+  evidence?: string | null;
+  locationLabel?: unknown;
+  recordedCountryCode?: unknown;
+}): string | null {
+  if (row.guestSource === "consented" && row.evidence === "page") {
+    return safeGuestDeviceDescription(row.locationLabel, "locationLabel");
+  }
+  if (row.guestSource !== "operational" || row.evidence !== "search" ||
+      typeof row.recordedCountryCode !== "string") return null;
+  const code = normalizeCountryCode(row.recordedCountryCode);
+  return code && isIsoCountryCode(code) ? countryCodeToCountryName(code) ?? null : null;
 }

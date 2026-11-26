@@ -51,9 +51,18 @@ test("Activity embeds the latest recorded access with a separate full history", 
   assert.match(activity, /guestAccess.records\[0\]/);
   const unified = readFileSync("src/services/adminUnifiedActivityService.ts", "utf8");
   assert.match(unified, /row.guestId !== id/);
-  for (const field of ["deviceLabel", "browser", "os", "locationLabel"]) {
-    assert.ok(unified.includes("safeGuestDeviceDescription(row." + field + ', "' + field + '")'));
+  assert.match(unified, /const optional = kind === "guest" && row\.guestSource === "consented"/);
+  for (const field of ["deviceLabel", "browser", "os"]) {
+    assert.ok(unified.includes("optional ? safeGuestDeviceDescription(row." + field + ', "' + field + '") : null'), field);
   }
+  // Location uses the shared source-scoped projection: consented page observations
+  // retain their sanitized label, and operational searches expose only their own saved country.
+  assert.match(unified, /recordedGuestAccessLocation\(row\) \?\? "Location unavailable"/);
+  const observation = readFileSync("src/lib/guestAccessObservation.ts", "utf8");
+  assert.match(observation, /row\.guestSource === "consented" && row\.evidence === "page"/);
+  assert.match(observation, /safeGuestDeviceDescription\(row\.locationLabel, "locationLabel"\)/);
+  assert.match(observation, /row\.guestSource !== "operational" \|\| row\.evidence !== "search"/);
+  assert.match(observation, /isIsoCountryCode\(code\)/);
   assert.doesNotMatch(activity, /View account device &amp; access history/);
   assert.doesNotMatch(preview, /<h[123][^>]*>Device &amp; Access History/);
   assert.match(preview, /Today · \{formatAdminTimeZoneLabel\(timeZone\)\}/);

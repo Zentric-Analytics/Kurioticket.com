@@ -11,8 +11,11 @@ import { loadAdminUnifiedActivity } from "@/services/adminUnifiedActivityService
 import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { AdminUnifiedActivityList } from "@/components/admin/AdminUnifiedActivityList";
+import { AdminLiveGuestActivity } from "@/components/admin/AdminLiveGuestActivity";
 
 export const metadata = { title: "Admin All User Activity" };
+// Live session reads must not be served from a static route cache.
+export const dynamic = "force-dynamic";
 const tabs = [
   {value:"all",label:"All activity"},{value:"access",label:"Device & Access"},
   {value:"pages",label:"Pages visited"},{value:"searches",label:"Searches"},
@@ -24,6 +27,7 @@ type Props = {params:Promise<{kind:string;id:string}>;searchParams:Promise<Recor
 
 export default async function AdminAllActivityPage({params,searchParams}:Props) {
   const {kind,id} = await params;
+  if (kind === "live-guest") return <AdminLiveGuestActivity reference={id} full input={await searchParams}/>;
   if (!validActivityIdentity(kind,id)) notFound();
   const base = "/admin/users/" + kind + "/" + encodeURIComponent(id);
   const path = base + "/activity/all";
