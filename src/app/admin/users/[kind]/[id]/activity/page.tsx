@@ -110,9 +110,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const now = new Date();
   const raw = normalizeUserActivityQuery(await searchParams, now, timeZone);
   // Legacy activity bookmarks still open this workspace; page views now have their own section.
-  if (raw.tab === "pages") delete raw.tab;
-  if (raw.stage === "PAGE_VIEW") delete raw.stage;
-  if (raw.type === "PAGE_VIEW") delete raw.type;
+  // The overview is always an identity summary. Detailed filters live in All Activity.
+  delete raw.tab; delete raw.stage; delete raw.type; delete raw.product; delete raw.q;
   const filtersResult = parseActivityFilters(raw, timeZone);
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
   const backHref = safeDirectoryHref(raw);
@@ -146,7 +145,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   // Keep the reporting window while letting page visits ignore travel-specific filters.
   const pageFilters: ActivityFilters = { ...filters, tab: "pages", stage: "all", product: "all", q: "", order: "newest" };
   const pagesHref = pageHistoryHrefFromActivity(kind, id, pageFilters, typeof raw.range === "string" ? raw.range : undefined, activityReturn);
-  // The unfiltered overview already includes the five newest page records and total.
+  // The unfiltered overview already includes the newest page record and total.
   // Only issue a separate compact, owner-scoped read when travel filters exclude them.
   const pageSummaryResult = operational ? null
     : filters.tab === "all" && filters.stage === "all" && filters.product === "all" && !filters.q
@@ -229,17 +228,16 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
 
       <section aria-label="Activity summary" className="relative min-w-0 border-y border-[#E2E8F0] py-4 lg:border-b-0 lg:py-5">
         {/* The 20% line begins at the separator, since identity spans two cells above. */}
-        <span aria-hidden="true" data-testid="activity-divider-20"
-          className="pointer-events-none absolute inset-y-0 left-[20%] hidden border-l border-[#E2E8F0] lg:block" />
-        <div data-testid="activity-metrics-grid" className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-0">
+        <div data-testid="activity-metrics-grid" className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 xl:grid-cols-6 lg:gap-x-0">
           {([
             { label: "Searches", count: data.summary.searches },
             { label: "Results viewed", count: data.summary.resultsViewed },
             { label: "Offers selected", count: data.summary.offersSelected },
             { label: "Provider handoffs", count: data.summary.providerHandoffs },
             { label: "Journeys tracked", count: data.summary.journeysTracked },
+            { label: "Pages visited", count: data.summary.pagesVisited ?? 0 },
           ]).map(({label,count}) => <div key={label} data-testid="activity-metric"
-            className="min-w-0 pr-2 sm:pr-3 lg:px-6">
+            className="min-w-0 pr-2 sm:pr-3 lg:px-4">
             <span data-testid="activity-metric-label" className="block text-[12px] font-normal text-[#64748B] lg:whitespace-nowrap">{label}</span>
             <span data-testid="activity-metric-value" className="mt-1 block text-[16px] font-medium leading-6 tabular-nums text-[#0F172A]">{count}</span>
             {label === "Searches" && data.summary.searchProducts ? <div aria-label="Searches by product"
