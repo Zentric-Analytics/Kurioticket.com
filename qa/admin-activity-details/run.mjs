@@ -34,6 +34,8 @@ await put("next.config.mjs",
   'config.resolve.alias["@/services/adminJourneyService"]=path.resolve("mocks/journeys.js");\n' +
   'config.resolve.alias["@/lib/prisma"]=path.resolve("mocks/prisma.js");\n' +
   'config.resolve.alias["@/services/adminIdentityActivityService"]=path.resolve("mocks/activity.js");\n' +
+  'config.resolve.alias["@/services/adminUnifiedActivityService"]=path.resolve("mocks/activity.js");\n' +
+  'config.resolve.alias["@/services/adminOnlineUsersService"]=path.resolve("mocks/online-users.js");\n' +
   'config.resolve.alias["@/services/adminHistoryDirectoryService"]=path.resolve("mocks/history-directory.js");\n' +
   'config.resolve.alias["@/services/adminGuestAccessService"]=path.resolve("mocks/history-directory.js");\n' +
   'config.resolve.alias["@/services/onlinePresenceService"]=path.resolve("mocks/presence.js");\n' +
@@ -69,6 +71,11 @@ await put("app/admin/users/pages/page.tsx", await readFile(path.join(source, "ap
 await put("mocks/history-directory.js", await readFile(path.join(qa, "history-directory-fixture.js"), "utf8"));
 await put("app/admin/users/[kind]/[id]/activity/page.tsx",
   await readFile(path.join(source, "app/admin/users/[kind]/[id]/activity/page.tsx"), "utf8"));
+for (const route of ["admin/users/[kind]/[id]/activity/all/page.tsx", "admin/users/online/page.tsx", "admin/users/online/guest/[reference]/page.tsx"]) {
+  await put("app/" + route, await readFile(path.join(source, "app", route), "utf8"));
+}
+await put("mocks/online-users.js", await readFile(path.join(qa, "online-users-fixture.js"), "utf8"));
+await put("app/api/admin/users/online/route.js", 'import {readAdminOnlineUsers} from "@/services/adminOnlineUsersService"; export async function GET(){return Response.json(await readAdminOnlineUsers("staging"));}');
 await put("app/admin/users/[kind]/[id]/pages/page.tsx",
   await readFile(path.join(source, "app/admin/users/[kind]/[id]/pages/page.tsx"), "utf8"));
 await put("app/admin/users/[kind]/[id]/devices/page.tsx",
@@ -137,7 +144,7 @@ try {
     }
     if (!ready) throw new Error("QA fixture route did not compile successfully: " + route);
   }
-  for (const check of ["browser-check.mjs", "actions-check.mjs", "zoom-check.mjs", "journey-check.mjs"]) {
+  for (const check of ["browser-check.mjs", "actions-check.mjs", "zoom-check.mjs", "journey-check.mjs", "online-check.mjs"]) {
     const result = await new Promise((resolve, reject) => {
       const child = spawn(process.execPath, [path.join(qa, check)], {
         cwd: repo, stdio: "inherit",

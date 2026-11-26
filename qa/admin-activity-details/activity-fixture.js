@@ -1,6 +1,7 @@
 // QA ONLY: deterministic synthetic rows for rendering the actual Admin Activity route.
 // Never use this as production data or cite a generated screenshot as a staging result.
-import { activityWindow } from "@/lib/adminIdentityActivity";
+import { activityWindow, encodeActivityCursor, decodeActivityCursor } from "@/lib/adminIdentityActivity";
+import { mergeUnifiedActivityPage } from "@/lib/adminUnifiedActivityPage";
 
 const time = minute => new Date("2026-10-22T17:" + String(minute).padStart(2, "0") + ":00.000Z");
 const journey = (id, startedAt, props) => ({ journeyId: id, journeyStartedAt: startedAt, ...props });
@@ -81,7 +82,8 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     || (filters.tab === "journeys" && stage !== "ACCOUNT_ACTIVITY")
     || (filters.tab === "searches" && ["SEARCH_COMPLETED", "RESULTS_VIEWED"].includes(stage))
     || (filters.tab === "selections" && stage === "OFFER_SELECTED")
-    || (filters.tab === "handoffs" && stage === "PROVIDER_HANDOFF_STARTED");
+    || (filters.tab === "handoffs" && stage === "PROVIDER_HANDOFF_STARTED")
+    || (filters.tab === "interactions" && ["RESULT_SAVED","RESULT_UNSAVED","RESULT_SHARED","PRICE_ALERT_CREATED","ACCOUNT_ACTIVITY"].includes(stage));
   const { gte: fromBound, lt: toBound } = activityWindow(filters);
   const matches = row => tabMatch(row.stage)
     && (filters.stage === "all" || row.stage === filters.stage)
@@ -122,7 +124,7 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
   const selected = cursor ? ascendingPages.findIndex(page => page.cursor === cursor) : 0;
   const ordered = [...allMatched].sort((a,b) => (filters.order === "oldest" ? a.at - b.at : b.at - a.at) || a.id.localeCompare(b.id));
   const rows = pageHistory ? ordered.slice((pageHistory.page - 1) * 20, pageHistory.page * 20)
-    : readMode === "summary" ? [...ordered.filter(row => row.stage !== "PAGE_VIEW"), ...ordered.filter(row => row.stage === "PAGE_VIEW").slice(0, 5)]
+    : readMode === "summary" ? [...ordered.filter(row => row.stage !== "PAGE_VIEW"), ...ordered.filter(row => row.stage === "PAGE_VIEW").slice(0, 1)]
     : readMode === "all" ? ordered
     : filters.order === "oldest"
       ? (selected < 0 ? [] : ascendingPages[selected]?.rows ?? [])
@@ -141,4 +143,25 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     summary,
     nextCursor,
   } };
+}
+
+// QA ONLY. Use the real cursor and merge rules on deterministic sample rows.
+// The underlying SQL/authorization reader is covered independently by service tests.
+export async function loadAdminUnifiedActivity(kind,id,filters,cursorInput,now) {
+  const cursor=decodeActivityCursor(cursorInput,kind,id,filters,"staging");
+  if (cursor===null) return {status:"invalid_cursor"};
+  const result=await loadAdminIdentityActivity(kind,id,filters,undefined,"all");
+  if (result.status!=="ok") return result;
+  const after=row=>!cursor || +row.at < Date.parse(cursor.at) || (+row.at === Date.parse(cursor.at) && row.id.localeCompare(cursor.id)>0);
+  const matching=result.data.events.filter(after);
+  // Only the normal registered identity has independent device rows in this fixture.
+  // The synthetic large-history identity intentionally has travel events only.
+  const accessTime=new Date("2026-10-22T17:50:00Z");
+  const {gte,lt}=activityWindow(filters);
+  const includeDevice=kind==="user" && id==="qa-registered-0001" &&
+    ["access","all"].includes(filters.tab) && filters.product==="all" && filters.stage==="all" &&
+    (!gte || accessTime>=gte) && (!lt || accessTime<lt) && (!filters.q || "desktop web recorded device access".includes(filters.q.toLowerCase()));
+  const access=includeDevice ? [{id:"d-qa-fixture-access",at:accessTime,label:"Recorded device access",detail:"Desktop web · Windows computer · Location unavailable"}].filter(after):[];
+  const merged=mergeUnifiedActivityPage(matching.slice(0,20),access,matching.length>20,20);
+  return {status:"ok",data:{...result.data,events:merged.rows,nextCursor:merged.hasMore?encodeActivityCursor(merged.rows.at(-1),kind,id,filters,"staging"):null}};
 }

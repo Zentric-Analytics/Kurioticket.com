@@ -18,37 +18,53 @@ try {
       const id = kind === "guest" ? "qa-guest-activity-0001" : "qa-registered-0001";
       const path = "/admin/users/"+kind+"/"+id+"/activity?range=all";
       await page.goto(base+path);
-      await expect(page.getByTestId("activity-overview")).toBeVisible();
-      await expect(page.getByTestId("activity-journey-row")).toHaveCount(5);
-      await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
-      await expect(page.locator("[data-activity-id]")).toHaveCount(0);
-      await expect(page.getByRole("link",{name:/^View journey for /})).toHaveCount(0);
-      await expect(page.getByRole("link",{name:/View Journey History/})).toBeVisible();
-      const overflow = await page.evaluate(()=>document.documentElement.scrollWidth > innerWidth+1);
-      assert.equal(overflow,false,"Activity summary must fit "+width+"px");
+
+      await expect(page.getByTestId("unified-activity-list")).toBeVisible();
+      await expect(page.locator('[data-activity-id]:not([data-activity-id="latest-access-summary"])')).toHaveCount(8);
+      await expect(page.getByRole("link",{name:/View journey history/i})).toHaveCount(0);
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
       await page.screenshot({path:output+"/activity-summary-"+kind+"-"+width+".png",fullPage:true});
-      const other = "/admin/users/"+kind+"/"+id+"/other?range=all";
-      assert.ok(other.includes("/other?"));
-      await page.goto(base+other);
-      await expect(page.getByRole("heading",{name:"Other recorded activity"})).toBeVisible();
-      await expect(page.locator("[data-activity-id]")).toHaveCount(1);
+      await page.getByRole("link",{name:"View all activity"}).click();
+      await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all"));
       await expect(page.getByText("Price alert created")).toBeVisible();
-      await page.getByRole("link",{name:"Back to Activity"}).click();
+      await expect(page.getByRole("link",{name:/View journey history/i})).toBeVisible();
+      const ids=await page.locator("[data-activity-id]").evaluateAll(nodes=>nodes.map(n=>n.dataset.activityId));
+      assert.equal(new Set(ids).size,ids.length);
+      const timestamps=await page.locator("[data-activity-id] time").evaluateAll(nodes=>nodes.map(n=>Date.parse(n.dateTime)));
+      assert.ok(timestamps.every((at,i)=>i===0||at<=timestamps[i-1]));
+      if(kind==="user") {
+        await expect(page.locator('[data-activity-id="d-qa-fixture-access"]')).toHaveCount(1);
+        await page.getByRole("link",{name:"Device & Access",exact:true}).click();
+        await expect(page.locator("[data-activity-id]")).toHaveCount(1);
+        await expect(page.getByRole("button",{name:/Activity product/})).toHaveCount(0);
+        await expect(page.getByRole("button",{name:/Activity type/})).toHaveCount(0);
+      }
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+      await page.getByRole("link",{name:"Back to Activity",exact:true}).click();
       await expect(page).toHaveURL(/\/activity\?/);
-      await expect(page.getByTestId("activity-overview")).toBeVisible();
+      await expect(page.getByTestId("unified-activity-list")).toBeVisible();
       console.log("PASS summary and full other activity",kind,width);
     }
   }
   for(const kind of ["guest","user"]) {
     await page.goto(base+"/admin/users/"+kind+"/qa-complete-history-0001/activity?range=all");
-    await expect(page.getByTestId("activity-journey-row")).toHaveCount(10);
-    await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
-    await expect(page.locator("[data-activity-id]")).toHaveCount(0);
-    const other = "/admin/users/"+kind+"/qa-complete-history-0001/other?range=all";
-    await page.goto(base+other);
-    await expect(page.locator("[data-activity-id]")).toHaveCount(1005);
-    const ids=await page.locator("[data-activity-id]").evaluateAll(nodes=>nodes.map(n=>n.dataset.activityId));
-    assert.equal(new Set(ids).size,1005,"Complete other-event history is not truncated");
+
+    await expect(page.locator('[data-activity-id^="s-qa-complete-"]')).toHaveCount(8);
+    await page.getByRole("link",{name:"View all activity"}).click();
+    // Traverse every page, not merely a representative first page.
+    const ids=[];
+    for(let n=0;n<51;n++){
+      const rows=page.locator("[data-activity-id]");
+      await expect(rows).toHaveCount(n===50?5:20);
+      ids.push(...await rows.evaluateAll(nodes=>nodes.map(n=>n.dataset.activityId)));
+      const older=page.getByRole("link",{name:"Load older activity"});
+      if(n===50){await expect(older).toHaveCount(0);break;}
+      const next=await older.getAttribute("href");
+      await older.click();
+      await expect(page).toHaveURL(u=>u.pathname+u.search===next);
+    }
+    assert.equal(ids.length,1005);
+    assert.equal(new Set(ids).size,1005,"Complete unified history is neither truncated nor duplicated");
     assert.equal(ids[0],"s-qa-complete-0000");
     assert.equal(ids.at(-1),"s-qa-complete-1004");
     console.log("PASS complete separate non-journey event history",kind);

@@ -1,0 +1,17 @@
+// Synthetic live roster only. No live provider, credential, session, or network data.
+import { buildAdminOnlineUsersSnapshot } from "@/lib/adminOnlineUsersSnapshot";
+import { adminLiveGuestReference } from "@/lib/adminLiveGuestReference";
+const secret="synthetic-fixture-only-key-not-a-real-credential";
+export async function readAdminOnlineUsers(environment, now=new Date()) {
+  const guest=(digit,platform,seconds,details)=>{
+    const sourceId=digit.repeat(64);
+    const lastSeenAt=new Date(+now-seconds*1000);
+    const liveReference=adminLiveGuestReference(environment,sourceId,secret);
+    return {sourceId,platform,accountSessionId:null,userId:null,name:null,email:null,role:null,locationLabel:null,lastSeenAt,liveReference,
+      ...(details?{liveAccess:{reference:liveReference,firstSeenAt:new Date(+now-60000).toISOString(),countryCode:"NG",deviceLabel:"Windows computer",browser:"Chrome 140",os:"Windows"}}:{})};
+  };
+  return buildAdminOnlineUsersSnapshot([
+    guest("a","desktop_web",2,true),guest("b","ios",4,false),guest("c","android",95,true),
+    {sourceId:"d".repeat(64),platform:"mobile_web",accountSessionId:"qa-account",userId:"qa-registered-0001",name:"QA registered customer",email:"customer.qa@example.invalid",role:"USER",locationLabel:"Nigeria",lastSeenAt:new Date(+now-3000)}
+  ],now);
+}

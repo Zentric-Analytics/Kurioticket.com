@@ -14,84 +14,59 @@ const errors=[];
 page.on("pageerror",error=>errors.push(error.message));
 const url=base+"/admin/users/guest/qa-guest-activity-0001/activity?range=all";
 
+
+const activityRows = page.locator('[data-testid="unified-activity-list"] [data-activity-id]');
+const fullUrl = url.replace("/activity?", "/activity/all?");
 async function inspectActivityTypography(page) {
   return page.evaluate(() => {
     const identity = document.querySelector('section[aria-label="Customer identity"]');
     const summary = document.querySelector('section[aria-label="Activity summary"]');
     const root = identity?.closest('[data-testid="activity-page-card"]');
     const shell = document.querySelector("main")?.parentElement;
-    const bodyCard = document.querySelector('[data-testid="activity-body-card"]');
-    const factLabel = identity?.querySelector("dt");
-    const factValue = identity?.querySelector("dd");
-    const summaryValue = summary?.querySelector('[data-testid="activity-metric-value"]');
-    const summaryLabel = summary?.querySelector('[data-testid="activity-metric-label"]');
-    const searchInput = document.querySelector('input[aria-label="Search activity"]');
-    if (!root || !shell || !summary || !bodyCard || !factLabel || !factValue || !summaryValue || !summaryLabel || !searchInput)
-      throw new Error("Activity typography anchors missing");
     const css = element => getComputedStyle(element);
     return {
       rootBackground: css(root).backgroundColor,
       shellBackground: css(shell).backgroundColor,
       summaryBackground: css(summary).backgroundColor,
-      bodyBackground: css(bodyCard).backgroundColor,
       outerBorderColor: css(root).borderTopColor,
-      innerBorderColor: css(bodyCard).borderTopColor,
       primaryText: css(root).color,
-      factValueSize: css(factValue).fontSize,
-      factValueWeight: css(factValue).fontWeight,
-      factValueColor: css(factValue).color,
-      factLabelSize: css(factLabel).fontSize,
-      factLabelWeight: css(factLabel).fontWeight,
-      factLabelColor: css(factLabel).color,
-      summaryValueSize: css(summaryValue).fontSize,
-      summaryValueWeight: css(summaryValue).fontWeight,
-      summaryValueColor: css(summaryValue).color,
-      summaryLabelSize: css(summaryLabel).fontSize,
-      summaryLabelWeight: css(summaryLabel).fontWeight,
-      summaryLabelColor: css(summaryLabel).color,
+      factValueSize: css(identity.querySelector("dd")).fontSize,
+      factValueWeight: css(identity.querySelector("dd")).fontWeight,
+      factLabelSize: css(identity.querySelector("dt")).fontSize,
+      summaryValueSize: css(summary.querySelector('[data-testid="activity-metric-value"]')).fontSize,
+      summaryValueWeight: css(summary.querySelector('[data-testid="activity-metric-value"]')).fontWeight,
+      summaryLabelSize: css(summary.querySelector('[data-testid="activity-metric-label"]')).fontSize,
       dividerColor: css(summary).borderTopColor,
-      searchBackground: css(searchInput).backgroundColor,
     };
   });
 }
 async function expectAlignedColumns(page) {
   const layout = await page.evaluate(() => {
-    const info = document.querySelector('[data-testid="activity-info-grid"]');
-    const identity = info.querySelector('section[aria-label="Customer identity"] > div');
-    const summary = info.querySelector('section[aria-label="Activity summary"]');
-    const metrics = [...info.querySelectorAll('[data-testid="activity-metric"]')];
-    const facts = [...identity.querySelectorAll('dl > div')];
-    const shared = [40,60,80].map(n => info.querySelector('[data-testid="activity-divider-'+n+'"]'));
-    const partial = info.querySelector('[data-testid="activity-divider-20"]');
-    const metricRects = metrics.map(el => el.getBoundingClientRect());
-    const factRects = facts.map(el => el.getBoundingClientRect());
-    const infoRect = info.getBoundingClientRect();
-    const summaryRect = summary.getBoundingClientRect();
-    const boundary = (el, top, bottom, x) => {
-      const r=el.getBoundingClientRect();
-      return Math.abs(r.left-x)<2 && Math.abs(r.top-top)<2 && Math.abs(r.bottom-bottom)<2
-        && parseFloat(getComputedStyle(el).borderLeftWidth)>0.5;
-    };
+    const info=document.querySelector('[data-testid="activity-info-grid"]');
+    const identity=info.querySelector('section[aria-label="Customer identity"]');
+    const grid=identity.querySelector('div.grid');
+    const facts=[...grid.querySelectorAll('dl > div')];
+    const summary=info.querySelector('section[aria-label="Activity summary"]');
+    const metrics=[...summary.querySelectorAll('[data-testid="activity-metric"]')];
+    const r=identity.getBoundingClientRect(), box=summary.getBoundingClientRect();
+    const lines=[40,60,80].map(n=>identity.querySelector('[data-testid="activity-divider-'+n+'"]').getBoundingClientRect());
+    const rects=metrics.map(e=>e.getBoundingClientRect());
+    const cols=innerWidth>=1280 ? 6 : 3;
+    const e=2;
     return {
-      metricsCount:metrics.length,
-      equalWidths:metricRects.every(rect=>Math.abs(rect.width-metricRects[0].width)<1),
-      oneRow:metricRects.every(rect=>Math.abs(rect.top-metricRects[0].top)<1),
-      identitySpansTwo:Math.abs(identity.firstElementChild.getBoundingClientRect().width-2*metricRects[0].width)<2,
-      topAligned:facts.length===3 && factRects.every((rect,i)=>Math.abs(rect.left-metricRects[i+2].left)<2),
-      sharedConnected:shared.every((line,i)=>boundary(line,infoRect.top,infoRect.bottom,metricRects[i+2].left)),
-      lowerConnected:boundary(partial,summaryRect.top,summaryRect.bottom,metricRects[1].left),
-      horizontalConnected:Math.abs(summaryRect.top - identity.getBoundingClientRect().bottom)<2
-        && parseFloat(getComputedStyle(summary).borderTopWidth)>0.5,
-      topBottom:parseFloat(getComputedStyle(info).borderTopWidth)>0.5 &&
-        parseFloat(getComputedStyle(info).borderBottomWidth)>0.5,
-      customerFactsSameRow:factRects.every(rect=>Math.abs(rect.top-factRects[0].top)<2),
+      facts:facts.length===3,
+      metrics:metrics.length===6,
+      factsAligned:facts.every((f,i)=>Math.abs(f.getBoundingClientRect().left-lines[i].left)<e),
+      identityDividers:lines.every((l,i)=>Math.abs(l.left-(r.left+r.width*(i+2)/5))<e && Math.abs(l.top-r.top)<e && Math.abs(l.bottom-r.bottom)<e),
+      equalWidths:rects.every(m=>Math.abs(m.width-rects[0].width)<e),
+      metricRows:rects.every((m,i)=>Math.abs(m.top-rects[Math.floor(i/cols)*cols].top)<e),
+      inside:rects.every(m=>m.left>=box.left-e && m.right<=box.right+e),
+      joint:Math.abs(r.bottom-box.top)<e && parseFloat(getComputedStyle(summary).borderTopWidth)>0.5,
       noOverflow:document.documentElement.scrollWidth<=innerWidth+1,
     };
   });
-  for (const [key, value] of Object.entries(layout)) assert.equal(value,key==="metricsCount"?5:true,
-    "Unified full-height grid "+key+": "+JSON.stringify(layout));
+  for (const [key,value] of Object.entries(layout)) assert.equal(value,true,key+": "+JSON.stringify(layout));
 }
-
 async function expectHeaderTimePresentation(page, context) {
   const facts = page.locator('section[aria-label="Customer identity"] dl > div');
   for (const index of [0, 1]) {
@@ -105,59 +80,33 @@ async function expectHeaderTimePresentation(page, context) {
   }
 }
 
+
 async function expectBalancedDesktopHeader(page, context, requireSingleLineEmail = false) {
   const layout = await page.evaluate(() => {
-    const identity = document.querySelector('section[aria-label="Customer identity"] > div');
-    const metrics = document.querySelectorAll('[data-testid="activity-metric"]');
-    const events = document.querySelector('[data-testid="activity-events-fact"]');
-    const email = identity?.firstElementChild?.querySelector('p');
-    if (!identity || metrics.length!==5 || !events) throw new Error("Header and summary anchors missing");
-    const columns = identity.children[0].getBoundingClientRect();
-    const eventsRect = events.getBoundingClientRect();
-    const emailStyle = email ? getComputedStyle(email) : null;
-    const providerLabel = metrics[3].querySelector('[data-testid="activity-metric-label"]');
-    return {
-      firstToEventsRatio: columns.width / eventsRect.width,
-      emailHeight: email?.getBoundingClientRect().height ?? 0,
-      emailFontSize: emailStyle ? Number.parseFloat(emailStyle.fontSize) : 0,
-      providerLabelHeight: providerLabel.getBoundingClientRect().height,
-      providerLabelFontSize: Number.parseFloat(getComputedStyle(providerLabel).fontSize),
-      overflow: document.documentElement.scrollWidth > innerWidth + 1,
-      hasVisibleHeading: Boolean(document.querySelector('section[aria-label="Activity summary"] h2')),
-    };
+    const identity=document.querySelector('section[aria-label="Customer identity"] div.grid');
+    const title=identity.firstElementChild;
+    const facts=[...identity.querySelectorAll('dl > div')];
+    const events=facts[2];
+    const email=title.querySelector('p');
+    const manage=identity.querySelector('[aria-label="Identity management"]');
+    const titleBox=title.getBoundingClientRect(), eventsBox=events.getBoundingClientRect();
+    const manageBox=manage?.getBoundingClientRect();
+    const eventsValue=events.querySelector('dd').getBoundingClientRect();
+    return {ratio:titleBox.width/eventsBox.width,
+      emailFits:!email || email.getBoundingClientRect().height<parseFloat(getComputedStyle(email).fontSize)*1.9,
+      managementFits:!manageBox || eventsValue.right<=manageBox.left+2 || eventsValue.bottom<=manageBox.top+2 || eventsValue.top>=manageBox.bottom-2,
+      overflow:document.documentElement.scrollWidth>innerWidth+1};
   });
-  assert.ok(layout.firstToEventsRatio >= 1.98,
-    context + ": identity retains enough room beside compact facts: " + JSON.stringify(layout));
-  assert.equal(layout.hasVisibleHeading, false, context + ": summary has no visible heading");
-  assert.ok(layout.providerLabelHeight < layout.providerLabelFontSize * 1.9,
-    context + ": Provider handoffs label should not wrap across desktop lines: " + JSON.stringify(layout));
-  if (requireSingleLineEmail) assert.ok(layout.emailHeight < layout.emailFontSize * 1.9,
-    context + ": realistic desktop email should fit without wrapping: " + JSON.stringify(layout));
-  assert.equal(layout.overflow, false, context + ": no horizontal overflow");
+  assert.ok(layout.ratio>=1.98,context+": "+JSON.stringify(layout));
+  assert.equal(layout.overflow,false,context);
+  assert.equal(layout.managementFits,true,context+": manage must not cover Events");
+  if(requireSingleLineEmail) assert.equal(layout.emailFits,true,context);
 }
-
-const approvedActivityTypography = {
-  rootBackground: "rgb(255, 255, 255)",
-  shellBackground: "rgb(255, 255, 255)",
-  summaryBackground: "rgba(0, 0, 0, 0)",
-  bodyBackground: "rgb(255, 255, 255)",
-  outerBorderColor: "rgb(226, 232, 240)",
-  innerBorderColor: "rgb(226, 232, 240)",
-  primaryText: "rgb(15, 23, 42)",
-  factValueSize: "16px",
-  factValueWeight: "500",
-  factValueColor: "rgb(15, 23, 42)",
-  factLabelSize: "12px",
-  factLabelWeight: "400",
-  factLabelColor: "rgb(100, 116, 139)",
-  summaryValueSize: "16px",
-  summaryValueWeight: "500",
-  summaryValueColor: "rgb(15, 23, 42)",
-  summaryLabelSize: "12px",
-  summaryLabelWeight: "400",
-  summaryLabelColor: "rgb(100, 116, 139)",
-  dividerColor: "rgb(226, 232, 240)",
-  searchBackground: "rgb(255, 255, 255)",
+const approvedActivityTypography={
+  rootBackground:"rgb(255, 255, 255)", shellBackground:"rgb(255, 255, 255)",
+  summaryBackground:"rgba(0, 0, 0, 0)", outerBorderColor:"rgb(226, 232, 240)",
+  primaryText:"rgb(15, 23, 42)",factValueSize:"16px",factValueWeight:"500",factLabelSize:"12px",
+  summaryValueSize:"16px",summaryValueWeight:"500",summaryLabelSize:"12px",dividerColor:"rgb(226, 232, 240)",
 };
 
 try {
@@ -172,45 +121,29 @@ try {
     await page.setViewportSize({width,height:900});
     await page.goto(url);
     await expect(page.getByRole("heading",{name:"Visitor",exact:true})).toBeVisible();
-    await expect(page.getByRole("heading",{name:"Recent journeys"})).toBeVisible();
+
+    await expect(page.getByRole("heading",{name:"Recent activity"})).toBeVisible();
+    await expect(page.getByRole("heading",{name:"Recent journeys"})).toHaveCount(0);
     await expect(page.getByRole("heading",{name:"Other recorded activity"})).toHaveCount(0);
-    await expect(page.getByRole("heading",{name:"Activity history"})).toHaveCount(0);
     await expect(page.getByRole("heading",{name:"Activity summary"})).toHaveCount(0);
-    await expect(page.getByTestId("activity-metric")).toHaveCount(5);
+    await expect(page.getByTestId("activity-metric")).toHaveCount(6);
     await expect(page.getByRole("heading",{name:"Related records"})).toHaveCount(0);
-    const outerCard = page.getByTestId("activity-page-card");
+    const outerCard=page.getByTestId("activity-page-card");
     await expect(outerCard).toHaveCount(1);
-    await expect(outerCard).toBeVisible();
     await expect(outerCard.locator('section[aria-label="Customer identity"]')).toBeVisible();
     await expect(outerCard.locator('section[aria-label="Activity summary"]')).toBeVisible();
-    const facts = outerCard.locator('section[aria-label="Customer identity"] dl > div');
+    const facts=outerCard.locator('section[aria-label="Customer identity"] dl > div');
     await expect(facts).toHaveCount(3);
-    assert.ok(await facts.evaluateAll(nodes => nodes.every(node =>
-      node.firstElementChild?.tagName === "DT" && node.lastElementChild?.tagName === "DD"
-    )), "Each identity fact keeps a direct term-description grouping");
-
+    assert.ok(await facts.evaluateAll(nodes=>nodes.every(node=>node.firstElementChild?.tagName==="DT" && node.lastElementChild?.tagName==="DD")));
     await expect(outerCard.getByTestId("identity-device-access")).toHaveCount(0);
-    const filterRow = outerCard.getByTestId("activity-filters-row");
-    const tabsAfterFilters = outerCard.getByTestId("activity-tabs-after-filters");
-    await expect(filterRow).toBeVisible();
-    await expect(tabsAfterFilters).toBeVisible();
-    assert.ok(await filterRow.evaluate(el =>
-      el.getBoundingClientRect().bottom <= (document.querySelector('[data-testid="activity-tabs-after-filters"]')?.getBoundingClientRect().top ?? 0)
-    ), "Activity navigation must follow the filter controls");
-    if (width >= 1280) {
-      const y = await filterRow.locator("button").first().evaluate(el => el.getBoundingClientRect().top);
-      const buttons = await filterRow.locator("button").evaluateAll(items => items.map(el => el.getBoundingClientRect().top));
-      assert.ok(buttons.every(top => Math.abs(top - y) <= 15), "Desktop filters must share a balanced horizontal row");
-    }
-    await expect(outerCard.getByTestId("activity-body-card")).toBeVisible();
+    await expect(outerCard.getByTestId("page-view-records")).toHaveCount(0);
+    await expect(outerCard.getByTestId("activity-filters-row")).toHaveCount(0);
+    await expect(outerCard.getByTestId("unified-activity-list")).toHaveCount(1);
     await expect(outerCard.getByRole("navigation",{name:"Breadcrumb"})).toHaveCount(0);
     await expect(page.getByRole("navigation",{name:"Breadcrumb"})).toBeVisible();
-    await expect(page.locator('[data-testid="activity-page-card"] [data-testid="activity-body-card"]')).toHaveCount(1);
-    await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Journeys"})).toHaveCount(0);
-    // The summary has five metrics but no visible heading, info icon, or disclosure.
     await expect(outerCard.locator('section[aria-label="Activity summary"] button[aria-label="About activity data"]')).toHaveCount(0);
     await expect(outerCard.locator('section[aria-label="Activity summary"] [role="tooltip"]')).toHaveCount(0);
-    const guestManage = page.getByRole("button",{name:/Manage guest/});
+    const guestManage=page.getByRole("button",{name:/Manage guest/});
     await expect(guestManage).toBeVisible();
     await expect(guestManage).toHaveAttribute("aria-expanded","false");
     await guestManage.click();
@@ -218,18 +151,11 @@ try {
     await expect(page.getByRole("menuitem",{name:"Disable tracking"})).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(guestManage).toHaveAttribute("aria-expanded","false");
-    await expect(page.getByRole("button",{name:"Apply Filter",exact:true})).toHaveCount(0);
-    await expect(page.getByRole("button",{name:"Apply filters",exact:true})).toBeVisible();
-    await expect(page.getByRole("button",{name:"Date range: All time · UTC", exact:true})).toBeVisible();
-    await expect(page.getByRole("button",{name:"Activity product: All products"})).toBeVisible();
-    await expect(page.getByRole("button",{name:"Activity type: All activity types"})).toBeVisible();
-    await expect(page.getByRole("button",{name:/Sort activity/})).toHaveCount(0);
-    await expect(page.getByRole("textbox",{name:"Search activity"})).toBeVisible();
-    await expect(page.getByRole("link",{name:/Load (older|newer) activity/})).toHaveCount(0);
-    await expect(page.getByTestId("activity-overview")).toBeVisible();
-    await expect(page.getByTestId("activity-journey-row")).toHaveCount(5);
-    await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
-    await expect(page.locator("[data-activity-id]")).toHaveCount(0);
+    await expect(page.getByRole("link",{name:"View all activity"})).toHaveCount(1);
+    await expect(page.getByRole("link",{name:/View journey history/i})).toHaveCount(0);
+    await expect(activityRows).toHaveCount(8);
+    const stamps=await activityRows.locator("time").evaluateAll(nodes=>nodes.map(n=>Date.parse(n.dateTime)));
+    assert.ok(stamps.every((t,i)=>i===0||t<=stamps[i-1]));
     await expect(page.getByRole("button",{name:"Show all"})).toHaveCount(0);
     await expect(page.getByRole("button",{name:"Hide all"})).toHaveCount(0);
     const widths=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:window.innerWidth}));
@@ -252,16 +178,12 @@ try {
     await expectAlignedColumns(page);
     await expectHeaderTimePresentation(page, "Registered zoom " + zoom);
     await expectBalancedDesktopHeader(page, "Registered zoom " + zoom);
-    const inlineDevices = page.getByTestId("identity-device-access");
-    await expect(inlineDevices).toBeVisible();
-    await expect(inlineDevices.getByText("Today · UTC", { exact:true })).toBeVisible();
-    await expect(inlineDevices.getByRole("heading",{name:"Device & Access History"})).toHaveCount(0);
-    await expect(inlineDevices.getByTestId("device-session-row")).toHaveCount(3);
-    await expect(inlineDevices.getByTestId("device-today-list")).toBeVisible();
-    const fullDeviceHistory = inlineDevices.getByRole("link", {name:"View full history"});
-    await expect(fullDeviceHistory).toBeVisible();
-    assert.ok((await fullDeviceHistory.getAttribute("href"))?.includes("/admin/users/user/qa-registered-0001/devices?range=all"));
 
+    await expect(page.getByTestId("identity-device-access")).toHaveCount(0);
+    const latest=page.locator('[data-activity-id="latest-access-summary"]');
+    await expect(latest).toHaveCount(1);
+    await expect(latest.getByText("Latest recorded access")).toBeVisible();
+    await expect(latest.getByRole("link",{name:"View access history"})).toHaveAttribute("href",/\/admin\/users\/user\/qa-registered-0001\/devices\?range=all/);
     assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography);
     await page.screenshot({caret:"initial",path: output + "/after-desktop-zoom-equivalent-" + Math.round(zoom*100) + ".png",fullPage:true});
   }
@@ -271,14 +193,12 @@ try {
   await page.setViewportSize({width:1280,height:900});
   const pageActivityPath = "/admin/users/user/qa-page-history-0001/activity?range=all";
   await page.goto(base + pageActivityPath);
-  const visitSummary = page.getByTestId("page-view-records");
-  await expect(page.getByTestId("activity-page-visits-summary").getByTestId("page-view-records")).toHaveCount(1);
-  await expect(page.getByTestId("activity-body-card").getByTestId("page-view-records")).toHaveCount(0);
-  await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Pages visited",exact:true})).toHaveCount(0);
-  await expect(visitSummary.getByTestId("page-view-row")).toHaveCount(5);
-  await expect(visitSummary.getByTestId("pages-visited-total")).toHaveText("45");
+
+  await expect(page.getByTestId("page-view-records")).toHaveCount(0);
+  await expect(page.locator('[data-activity-id^="e-qa-page-"]')).toHaveCount(1);
+  await expect(page.getByRole("region",{name:"Activity summary"}).locator('[data-testid="activity-metric-value"]').last()).toHaveText("45");
   await expect(page.getByTestId("activity-events-fact")).toContainText("45");
-  await visitSummary.getByRole("link",{name:"View all pages visited"}).click();
+  await page.getByRole("link",{name:"View pages visited",exact:true}).click();
   await expect(page).toHaveURL(url => url.pathname === "/admin/users/user/qa-page-history-0001/pages");
   await expect(page.getByRole("heading",{name:"Pages Visited History"})).toBeVisible();
   await expect(page.getByRole("complementary",{name:"Users navigation"}).getByRole("link",{name:"Users Directory",exact:true})).toHaveAttribute("aria-current","page");
@@ -303,25 +223,21 @@ try {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1),false,"Page history must fit mobile viewport");
   await page.getByRole("link",{name:"Back to Activity",exact:true}).click();
   await expect(page).toHaveURL(url => url.pathname.endsWith("/activity") && url.searchParams.get("range")==="all" && !url.searchParams.has("platform"));
-  await expect(page.getByTestId("page-view-row")).toHaveCount(5);
-  await expect(page.getByTestId("pages-visited-total")).toHaveText("45");
-  // A travel tab and its text/product/stage filters cannot hide page visits.
+
+  await expect(page.locator('[data-activity-id^="e-qa-page-"]')).toHaveCount(1);
+  // Old filtered links move to All Activity; dedicated page history is independent.
   await page.goto(base + pageActivityPath + "&tab=searches&product=FLIGHT&stage=SEARCH_COMPLETED&q=unmatched");
-  const searchesTab = page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Searches",exact:true});
-  await expect(searchesTab).toHaveAttribute("aria-current","page");
-  await expect(page.getByTestId("page-view-row")).toHaveCount(5);
-  await expect(page.getByTestId("pages-visited-total")).toHaveText("45");
-  const pagesHistoryLink = page.getByTestId("page-view-records").getByRole("link",{name:"View all pages visited",exact:true});
-  await pagesHistoryLink.click();
-  await expect(page).toHaveURL(url => url.pathname.endsWith("/pages") && !url.searchParams.has("q") && !url.searchParams.has("product"));
+  await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all"));
+  await expect(page.getByRole("navigation",{name:"Activity categories"}).getByRole("link",{name:"Searches",exact:true})).toHaveAttribute("aria-current","page");
+  await expect(activityRows).toHaveCount(0);
+  await page.getByRole("link",{name:"Pages visited history",exact:true}).click();
+  await expect(page).toHaveURL(u=>u.pathname.endsWith("/pages")&&!u.searchParams.has("q")&&!u.searchParams.has("product"));
   await expect(page.getByTestId("pages-visited-total")).toHaveText("45");
   await expect(page.getByRole("complementary",{name:"Users navigation"}).getByRole("link",{name:"Users Directory",exact:true})).toHaveAttribute("aria-current","page");
   await page.getByRole("link",{name:"Back to Activity",exact:true}).click();
-  await expect(page).toHaveURL(url => url.pathname.endsWith("/activity") && url.searchParams.get("range")==="all" && url.searchParams.get("tab")==="searches" && url.searchParams.get("product")==="FLIGHT" && url.searchParams.get("q")==="unmatched");
-  await expect(searchesTab).toHaveAttribute("aria-current","page");
-  await expect(page.getByTestId("page-view-row")).toHaveCount(5);
-  console.log("PASS five recent page visits, separate history pagination, filters and return navigation");
-
+  await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all")&&u.searchParams.get("range")==="all"&&u.searchParams.get("tab")==="searches"&&u.searchParams.get("product")==="FLIGHT"&&u.searchParams.get("q")==="unmatched");
+  console.log("PASS compact page preview, full history, filters and exact return");
+  
   // New directory entry points reuse the real individual history routes.
   await page.setViewportSize({width:1280,height:900});
   const usersSidebar = page.getByRole("navigation",{name:"Users subsections"});
@@ -430,7 +346,7 @@ try {
   // Full device history uses its own date filters and returns records older than Today.
   await page.setViewportSize({width:1280,height:900});
   await page.goto(base + "/admin/users/user/qa-registered-0001/activity?range=all");
-  await page.getByTestId("identity-device-access").getByRole("link",{name:"View full history"}).click();
+  await page.locator('[data-activity-id="latest-access-summary"]').getByRole("link",{name:"View access history"}).click();
   await expect(page).toHaveURL(url => url.pathname === "/admin/users/user/qa-registered-0001/devices" && url.searchParams.get("range") === "all");
   await expect(page.getByRole("heading",{name:"Device & Access History"})).toBeVisible();
   await expect(page.locator('[data-testid="device-history-row"]:visible')).toHaveCount(5);
@@ -469,35 +385,31 @@ try {
   await expect(page.getByText("Essential operational activity")).toBeVisible();
   await expect(page.getByRole("button",{name:/Manage guest/})).toHaveCount(0);
   await expect(page.getByRole("link",{name:"View recorded session activity"})).toHaveCount(0);
-  await expect(page.getByRole("link",{name:"View Journey History"})).toHaveCount(0);
-  await expect(page.getByRole("heading",{name:"Activity history"})).toBeVisible();
-  await expect(page.getByRole("region",{name:"Activity summary"}).locator('[data-testid="activity-metric-value"]'))
-    .toHaveText(["2","0","0","1","0"]);
-  const operationalEvents = page.locator('[data-testid="activity-overview"] [data-activity-id]');
-  await expect(operationalEvents).toHaveCount(3);
-  assert.deepEqual(await operationalEvents.evaluateAll(nodes => nodes.map(node => node.dataset.activityId)),
-    ["s-qa-operational-flight","s-qa-operational-hotel","r-qa-operational-handoff"]);
-  await expect(operationalEvents.first()).toContainText("ATL → MCO");
-  await expect(operationalEvents.first()).toContainText("Partial");
-  assert.equal(await operationalEvents.evaluateAll(nodes => new Set(nodes.map(node => node.dataset.activityId)).size), 3);
-  await expect(page.getByTestId("activity-journey-row")).toHaveCount(0);
-  await page.goto(operationalPath + "?range=all&tab=searches&stage=SEARCH_COMPLETED&product=FLIGHT&q=ATL");
-  await expect(page.locator('[data-testid="activity-overview"] [data-activity-id]')).toHaveCount(1);
-  await expect(page.getByRole("region",{name:"Activity summary"}).locator('[data-testid="activity-metric-value"]'))
-    .toHaveText(["1","0","0","0","0"]);
-  await page.goto(operationalPath + "?range=all&tab=handoffs");
-  await expect(page.locator('[data-testid="activity-overview"] [data-activity-id]')).toHaveCount(1);
-  await expect(page.getByRole("region",{name:"Activity summary"}).locator('[data-testid="activity-metric-value"]'))
-    .toHaveText(["0","0","0","1","0"]);
-  await page.goto(operationalPath + "?range=all&product=CAR");
-  await expect(page.locator('[data-testid="activity-overview"] [data-activity-id]')).toHaveCount(0);
-  await expect(page.getByText("No activity matches your filters")).toBeVisible();
-  await page.setViewportSize({width:320,height:800});
-  await page.goto(operationalPath + "?range=all");
-  await expect(page.locator('[data-testid="activity-overview"] [data-activity-id]')).toHaveCount(3);
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),true,
-    "Operational guest activity must fit mobile without horizontal scroll");
 
+  await expect(page.getByRole("link",{name:/View journey history/i})).toHaveCount(0);
+  await expect(page.getByRole("heading",{name:"Recent activity"})).toBeVisible();
+  await expect(page.getByRole("region",{name:"Activity summary"}).locator('[data-testid="activity-metric-value"]')).toHaveText(["2","0","0","1","0","0"]);
+  await expect(activityRows).toHaveCount(3);
+  assert.deepEqual(await activityRows.evaluateAll(nodes=>nodes.map(n=>n.dataset.activityId)),["s-qa-operational-flight","s-qa-operational-hotel","r-qa-operational-handoff"]);
+  await expect(activityRows.first()).toContainText("ATL → MCO");
+  await expect(activityRows.first()).toContainText("Partial");
+  await page.getByRole("link",{name:"View all activity"}).click();
+  await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all"));
+  await expect(activityRows).toHaveCount(3);
+  await expect(page.getByRole("link",{name:"Pages visited",exact:true})).toHaveCount(0);
+  await expect(page.getByRole("link",{name:"Pages visited history",exact:true})).toHaveCount(0);
+  await page.goto(operationalPath+"/all?range=all&tab=searches&stage=SEARCH_COMPLETED&product=FLIGHT&q=ATL");
+  await expect(activityRows).toHaveCount(1);
+  await page.goto(operationalPath+"/all?range=all&tab=handoffs");
+  await expect(activityRows).toHaveCount(1);
+  await page.goto(operationalPath+"/all?range=all&product=CAR");
+  await expect(activityRows).toHaveCount(0);
+  await expect(page.getByText("No recorded activity matches this view.")).toBeVisible();
+  await page.setViewportSize({width:320,height:800});
+  await page.goto(operationalPath+"/all?range=all");
+  await expect(activityRows).toHaveCount(3);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
+  
   // Registered accounts use the same fact grid, including protected-admin labels.
   await page.setViewportSize({width:1024,height:900});
   await page.goto(base + "/admin/users/user/qa-registered-0001/activity?range=all");
@@ -530,75 +442,69 @@ try {
     await page.screenshot({caret:"initial",path:output+"/after-long-identity-"+width+".png",fullPage:true});
   }
 
-  // Summary metrics use all authorized records, while only the latest five
-  // actual journeys are rendered in the overview; other records live in detail.
+
+  // Exact total, compact recent events, and full history on a separate route.
   await page.goto(url);
-  let totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","5","1","6"]);
-  await expect(page.getByTestId("activity-journey-row")).toHaveCount(5);
-  await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
-  await expect(page.locator("[data-activity-id]")).toHaveCount(0);
+  const totals=page.getByRole("region",{name:"Activity summary"});
+  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","5","1","6","0"]);
+  await expect(activityRows).toHaveCount(8);
   await page.goto(url+"&cursor=older-qa-page");
-  totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","5","1","6"]);
+  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","5","1","6","0"]);
   await page.goto(url+"&tab=searches&stage=SEARCH_COMPLETED&product=FLIGHT&q=LOS");
-  totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["1","0","0","0","1"]);
-  await expect(page.getByTestId("activity-journey-row")).toHaveCount(1);
-  const historyUrl = new URL(await page.getByRole("link",{name:/View Journey History/}).getAttribute("href"),base);
+  await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all"));
+  await expect(activityRows).toHaveCount(1);
+  const historyUrl=new URL(await page.getByRole("link",{name:/View journey history/i}).getAttribute("href"),base);
   assert.equal(historyUrl.searchParams.get("product"),"FLIGHT");
   assert.equal(historyUrl.searchParams.get("stage"),"SEARCH_COMPLETED");
   assert.equal(historyUrl.searchParams.get("range"),"all");
-  assert.equal(historyUrl.searchParams.get("q"),null,"Journey filter must not invent a text-search equivalent");
-  await page.goto(url+"&tab=handoffs");
-  totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["0","0","0","1","1"]);
-  await page.goto(url+"&tab=journeys&q=LOS");
-  await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"All activity"})).toHaveAttribute("aria-current","page");
-  console.log("PASS filtered summary metrics, journey handoff and legacy cursor recovery");
-
-  for (const kind of ["guest","user"]) {
-    const fullUrl = base+"/admin/users/"+kind+"/qa-complete-history-0001/activity?range=all";
-    await page.goto(fullUrl);
-    await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
-    await expect(page.getByTestId("activity-journey-row")).toHaveCount(10);
-    await expect(page.locator("[data-activity-id]")).toHaveCount(0);
-    await expect(page.getByRole("link",{name:/View Journey History/})).toBeVisible();
-    const allHref = "/admin/users/"+kind+"/qa-complete-history-0001/other?range=all";
-    await page.goto(base+allHref);
-    await expect(page.locator("[data-activity-id]")).toHaveCount(1005);
-    const ids = await page.locator("[data-activity-id]").evaluateAll(nodes => nodes.map(n => n.dataset.activityId));
+  assert.equal(historyUrl.searchParams.get("q"),null);
+  await page.goto(fullUrl+"&tab=handoffs");
+  await expect(activityRows).toHaveCount(1);
+  await page.goto(fullUrl+"&tab=journeys&q=LOS");
+  await expect(page.getByRole("navigation",{name:"Activity categories"}).getByRole("link",{name:"All activity"})).toHaveAttribute("aria-current","page");
+  for(const kind of ["guest","user"]) {
+    const identityUrl=base+"/admin/users/"+kind+"/qa-complete-history-0001/activity?range=all";
+    await page.goto(identityUrl);
+    await expect(page.getByTestId("activity-metric-value").first()).toHaveText("1005");
+    // A registered overview may have a separate access preview; do not count it as search activity.
+    await expect(page.locator('[data-activity-id^="s-qa-complete-"]')).toHaveCount(8);
+    await page.getByRole("link",{name:"View all activity"}).click();
+    await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all"));
+    await expect(activityRows).toHaveCount(20);
+    const ids=await activityRows.evaluateAll(nodes=>nodes.map(n=>n.dataset.activityId));
+    await page.getByRole("link",{name:"Load older activity"}).click();
+    await expect(page).toHaveURL(/cursor=/);
+    await expect(activityRows).toHaveCount(20);
+    const next=await activityRows.evaluateAll(nodes=>nodes.map(n=>n.dataset.activityId));
+    assert.equal(new Set([...ids,...next]).size,40);
     assert.equal(ids[0],"s-qa-complete-0000");
-    assert.equal(ids.at(-1),"s-qa-complete-1004");
-    assert.equal(new Set(ids).size,1005);
-    await page.goto(fullUrl+"&product=FLIGHT&from=2026-10-22&to=2026-10-22");
-    await expect(page.getByRole("region",{name:"Activity summary"}).locator('[data-testid="activity-metric-value"]').first()).toHaveText("503");
-    await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
-    const filteredHref = "/admin/users/"+kind+"/qa-complete-history-0001/other?range=all&product=FLIGHT&from=2026-10-22&to=2026-10-22";
-    await page.goto(base+filteredHref);
+    assert.equal(next[0],"s-qa-complete-0020");
+    // Preserve the legacy complete history and its original filter contract.
+    const legacy=base+"/admin/users/"+kind+"/qa-complete-history-0001/other?range=all";
+    await page.goto(legacy);
+    await expect(page.locator("[data-activity-id]")).toHaveCount(1005);
+    await page.goto(legacy+"&product=FLIGHT&from=2026-10-22&to=2026-10-22");
     await expect(page.locator("[data-activity-id]")).toHaveCount(503);
   }
-  console.log("PASS five-row summary, complete separate other-event history, and product/date filters");
-
   await page.setViewportSize({width:1280,height:900});
   await page.goto(url+"&directory=sort%3Dname_asc%26identity%3DGUEST%26page%3D2");
-  await expect(page.getByTestId("activity-journey-row")).toHaveCount(5);
-  await expect(page.locator("[data-activity-id]")).toHaveCount(0);
+  await expect(activityRows).toHaveCount(8);
   await page.screenshot({caret:"initial",path:output+"/after-all-selections-visible-1280.png",fullPage:true});
-  await expect(page.getByRole("button",{name:"Show all"})).toHaveCount(0);
   const back=await page.getByRole("link",{name:"Users",exact:true}).last().getAttribute("href");
-  assert.ok(back.includes("sort=name_asc") && back.includes("identity=GUEST") && back.includes("page=2"));
+  assert.ok(back.includes("sort=name_asc")&&back.includes("identity=GUEST")&&back.includes("page=2"));
   await page.getByRole("button",{name:/Copy guest ID:/}).click();
   assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),"qa-guest-activity-0001");
-  console.log("PASS concise summary and identity controls");
+  console.log("PASS compact totals, unified history paging, legacy links and identity controls");
 
-  // Today's period must not include historical records from the fixture.
+
+  // Today is the default on both routes; filters belong only on full Activity.
   await page.goto(url.split("?")[0]);
-  await expect(page.getByRole("button",{name:"Date range: Today · UTC", exact:true})).toBeVisible();
-  await expect(page.getByTestId("activity-journey-row")).toHaveCount(0);
-  await expect(page.getByTestId("activity-other-row")).toHaveCount(0);
-  await page.goto(url);
-  await page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Searches",exact:true}).click();
+  await expect(activityRows).toHaveCount(0);
+  await page.getByRole("link",{name:"View all activity"}).click();
+  await expect(page.getByRole("button",{name:"Date range: Today · UTC",exact:true})).toBeVisible();
+  await expect(activityRows).toHaveCount(0);
+  await page.goto(fullUrl);
+  await page.getByRole("navigation",{name:"Activity categories"}).getByRole("link",{name:"Searches",exact:true}).click();
   await expect(page).toHaveURL(/tab=searches/);
   const search=page.getByRole("textbox",{name:"Search activity"});
   await search.fill("LOS");
@@ -621,7 +527,7 @@ try {
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page).not.toHaveURL(/product=FLIGHT/);
   // Legacy custom-date URLs remain editable without adding a fifth preset option.
-  await page.goto(url.split("?")[0]+"?range=custom&from=2026-10-01&to=2026-10-23");
+  await page.goto(fullUrl.split("?")[0]+"?range=custom&from=2026-10-01&to=2026-10-23");
   await expect(page.getByRole("button", { name: "Custom start date" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Custom end date" })).toBeVisible();
   await page.getByRole("button", { name: "Custom end date" }).click();
@@ -642,19 +548,21 @@ try {
   await expect(page).toHaveURL(/range=7d/);
   console.log("PASS custom dates and standard presets load only after Apply filters");
 
-  await page.goto(url+"&order=oldest");
+  await page.goto(fullUrl+"&order=oldest");
   await expect(page.getByRole("button",{name:/Sort activity/})).toHaveCount(0);
-  await page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Searches",exact:true}).click();
+  await page.getByRole("navigation",{name:"Activity categories"}).getByRole("link",{name:"Searches",exact:true}).click();
   await expect(page).not.toHaveURL(/order=oldest/);
   console.log("PASS hidden sort normalizes to newest");
 
   await page.goto(base+"/admin/users/guest/qa-no-events-0001/activity");
-  await expect(page.getByText("No recorded searches match these filters. Open Journey History to review full records.")).toBeVisible();
+  await expect(page.getByText("No recorded activity matches this view.")).toBeVisible();
   await page.screenshot({caret:"initial",path:output+"/after-approved-empty-state-1536.png",fullPage:true});
   await page.goto(url+"&cursor=bad");
   await expect(page.getByText("Activity page link expired")).toHaveCount(0);
-  await expect(page.getByTestId("activity-journey-row")).toHaveCount(5);
+  await expect(activityRows).toHaveCount(8);
   await expect(page.getByRole("link",{name:/Load (older|newer) activity/})).toHaveCount(0);
+  await page.goto(fullUrl+"&cursor=bad");
+  await expect(page.getByRole("heading",{name:"Activity history unavailable"})).toBeVisible();
   console.log("PASS empty and obsolete cursor");
 
   await page.goto(base+"/admin/users/user/qa-registered-0001/activity?range=all");
@@ -664,23 +572,23 @@ try {
   const accountCard = page.getByTestId("activity-page-card");
   await expect(accountCard.locator('section[aria-label="Activity summary"] button[aria-label="About activity data"]')).toHaveCount(0);
   await expect(accountCard.getByRole("button",{name:"Manage account for customer.qa@example.invalid"})).toBeVisible();
-  await expect(accountCard.getByTestId("activity-body-card")).toBeVisible();
+  await expect(accountCard.getByTestId("unified-activity-list")).toBeVisible();
   assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Registered Activity typography and palette");
   await expectAlignedColumns(page);
   await page.screenshot({caret:"initial",path:output+"/after-registered-activity-1280.png",fullPage:true});
 
-  const localCalendar = base + "/admin/users/guest/qa-lagos-midnight-0001/activity?range=custom&from=2026-10-22&to=2026-10-22";
+  const localCalendar = base + "/admin/users/guest/qa-lagos-midnight-0001/activity/all?range=custom&from=2026-10-22&to=2026-10-22";
   await page.goto(localCalendar);
   await expect(page.getByRole("button", { name: "Date range: Custom range · UTC", exact: true })).toBeVisible();
-  await expect(page.getByTestId("activity-journey-row")).toHaveCount(0);
+  await expect(activityRows).toHaveCount(0);
   const account = createHash("sha256").update("qa-admin").digest("hex").slice(0, 32);
   await context.addCookies([{
     name: "admin_reporting_tz_manual_" + account, value: "Africa/Lagos", url: base, httpOnly: true,
   }]);
   await page.reload();
   await expect(page.getByRole("button", { name: "Date range: Custom range · WAT (UTC+1)", exact: true })).toBeVisible();
-  await expect(page.getByTestId("activity-journey-row")).toContainText("Abuja");
-  await page.getByRole("link", { name: "View Journey History" }).click();
+  await expect(activityRows).toContainText("Abuja");
+  await page.getByRole("link", { name: /View journey history/i }).click();
   await expect(page.getByRole("button", { name: "Date range: Custom range · WAT (UTC+1)", exact: true })).toBeVisible();
   console.log("PASS administrator time zone controls calendar bounds and persists across Activity and Journey History");
 
