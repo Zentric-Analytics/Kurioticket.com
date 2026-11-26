@@ -88,10 +88,3 @@ test("journey history shows property and offer counts only when recorded", () =>
   assert.match(render([{ ...event, search: { ...search, resultCount: 1653, hotelPropertyCount: 422 } }]), /422 property groups · 1,653 offers/);
   assert.match(render([{ ...event, search: { ...search, resultCount: 0, hotelPropertyCount: 0 } }]), /0 property groups · 0 offers/);
 });
-
-test("car journey history shows both recorded counts and never invents old totals", () => {
-  const carSearch = { ...search, product: "CAR" as const, resultCount: 549 };
-  const carEvent = { ...event, product: "CAR" as const, search: carSearch };
-  assert.match(render([{ ...carEvent, search: { ...carSearch, carOfferCount: 2547 } }]), /549 car result groups · 2,547 rental offers/);
-  assert.match(render([carEvent]), /549 recorded results · Rental offers not recorded/);
-});

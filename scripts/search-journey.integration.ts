@@ -831,27 +831,3 @@ test("PostgreSQL stores cumulative hotel counts together, keeps original context
   assert.deepEqual(query.hotelResultAccounting, final.query.hotelResultAccounting);
   assert.equal(await db.journeyEvent.count({ where: { searchHistoryId: history.id } }), 0);
 });
-
-test("PostgreSQL records car groups and nested offers once without inventing optional journeys", async () => {
-  const owner = await account();
-  const other = await account();
-  for (const userId of [null, owner.id]) {
-    const requestId = randomUUID();
-    const input = { requestId, userId, visitorId: null, type: "CAR" as const, origin: "LHR", destination: "LHR",
-      resultCount: 549, latencyMs: 20, status: "SUCCESS" as const,
-      query: { pickupLocation: "LHR", carResultAccounting: { version: 1, groupCount: 549, offerCount: 2547 } } };
-    const first = await journey.recordSearchHistory(input);
-    assert.ok(first);
-    assert.equal(await journey.recordSearchHistory({ ...input, userId: other.id }), null);
-    const replay = await journey.recordSearchHistory({ ...input, resultCount: 1, query: { pickupLocation: "wrong", carResultAccounting: { version: 1, groupCount: 1, offerCount: 2 } } });
-    assert.deepEqual(replay, first);
-    const history = await db.searchHistory.findUniqueOrThrow({ where: { requestId } });
-    assert.equal(history.resultCount, 549);
-    assert.equal(history.visitorId, null);
-    assert.equal(history.userId, userId);
-    const metadata = history.query as Record<string, unknown>;
-    assert.equal(metadata.pickupLocation, "LHR");
-    assert.deepEqual(metadata.carResultAccounting, input.query.carResultAccounting);
-    assert.equal(await db.journeyEvent.count({ where: { searchHistoryId: history.id } }), 0);
-  }
-});

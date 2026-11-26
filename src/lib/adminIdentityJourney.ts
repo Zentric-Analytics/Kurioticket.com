@@ -23,8 +23,6 @@ export type ActivityRow = {
   platform?: "WEB" | "IOS" | "ANDROID" | null;
   resultCount?: number | null;
   hotelPropertyCount?: number | null;
-  /** Validated rental offer rows returned within the recorded car result groups. */
-  carOfferCount?: number | null;
 };
 
 export type JourneyEventRecord = {
