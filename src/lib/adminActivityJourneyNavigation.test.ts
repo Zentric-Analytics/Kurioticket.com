@@ -65,3 +65,27 @@ test("filtered Activity origin survives Journey History -> detail -> History nav
   assert.equal(decodeActivityJourneyReturn(detailToken), history);
   assert.equal(decodeActivityJourneyReturn(new URL(decodeActivityJourneyReturn(detailToken)!, "https://example.test").searchParams.get("activityReturn")),activity);
 });
+
+test("All Activity pagination context survives nested Journey History return", () => {
+  const params = new URLSearchParams({
+    tab:"access",range:"all",stage:"all",product:"all",
+    from:"2026-11-01T00:00:00.000Z",to:"2026-11-26T12:00:00.000Z",
+    q:"Device",directory:"q=guest",cursor:"a".repeat(1090),
+  });
+  const activity = "/admin/users/guest/qa-visitor-0001/activity/all?" + params;
+  const origin = encodeActivityJourneyReturn(activity);
+  assert.ok(origin && origin.length > 1000);
+  assert.equal(decodeActivityJourneyReturn(origin),activity);
+  const history = "/admin/users/guest/qa-visitor-0001/journeys?range=all&activityReturn=" + origin;
+  const detailToken = encodeActivityJourneyReturn(history);
+  assert.ok(detailToken);
+  assert.equal(decodeActivityJourneyReturn(detailToken),history);
+  assert.equal(decodeActivityJourneyReturn(new URL(history,"https://example.test").searchParams.get("activityReturn")),activity);
+  assert.equal(activityJourneyReturnHref("/admin/users/guest/qa-visitor-0001/activity?cursor=old"),"/admin/users/guest/qa-visitor-0001/activity");
+});
+
+test("oversized cursor is rejected from compact return context", () => {
+  const bad = "v1." + btoa(JSON.stringify({path:"/admin/users/guest/qa-visitor-0001/activity/all",filters:{cursor:"a".repeat(2049)}}))
+    .replaceAll("+","-").replaceAll("/","_").replace(/=+$/,"");
+  assert.equal(decodeActivityJourneyReturn(bad),null);
+});
