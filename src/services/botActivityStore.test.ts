@@ -60,11 +60,21 @@ test("PostgreSQL persists and serializes one identity across products and IPs", 
     else process.env.TRAVEL_PROVIDER_MODE = priorMode;
   }
 
+  const [{ now }] = await db.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
+  const yesterday = new Date(utcDayStart(now).getTime() - 86_400_000);
+  await db.botActivity.updateMany({
+    where: { botId: freshAttempt.botId, dispatchedAt: { not: null } }, data: { dispatchedAt: yesterday },
+  });
+  const race = await Promise.all(["flights", "hotels", "cars", "packages"].map((name, index) =>
+    attempt(name, "192.0.2." + (index + 10)).then(entry => reserve(entry, "distinct-" + index))));
+  assert.equal(race.filter(result => result.status === 0).length, 1);
+  assert.equal(race.filter(result => result.status === 429).length, 3);
+
   // Seed five recorded dispatches inside the current UTC day. The last one
   // may also be inside the cooldown. Retry must still extend to midnight.
-  const [{ now }] = await db.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
-  await db.botActivity.updateMany({ where: { botId: freshAttempt.botId }, data: { dispatchedAt: utcDayStart(now) } });
-  assert.equal(await db.botActivity.count({ where: { botId: freshAttempt.botId, dispatchedAt: { not: null } } }), 5);
+  await db.botActivity.updateMany({ where: { botId: freshAttempt.botId, dispatchedAt: { not: null } }, data: { dispatchedAt: yesterday } });
+  await db.botActivity.updateMany({ where: { id: { in: [...attempts.map(entry => entry.id), freshAttempt.id] } }, data: { dispatchedAt: utcDayStart(now) } });
+  assert.equal(await db.botActivity.count({ where: { botId: freshAttempt.botId, dispatchedAt: { gte: utcDayStart(now) } } }), 5);
   const limit = await reserve(await attempt("cars", "192.0.2.7"));
   assert.equal(limit.status, 429);
   assert.ok(limit.retryAfter && limit.retryAfter >= Math.floor((utcDayStart(now).getTime() + 86_400_000 - now.getTime()) / 1000));

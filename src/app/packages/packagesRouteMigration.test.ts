@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
-import { proxy } from "../../../proxy";
+import { proxy } from "@/proxy";
 import {
   buildDealsModifyUrl,
   buildDealsResultsUrl,

@@ -1,4 +1,4 @@
-import { proxy as botProxy } from "./src/lib/requestIngress";
+import { proxy as botProxy } from "@/lib/requestIngress";
 import { automationSignal } from "@/lib/botPolicy";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -61,3 +61,5 @@ export async function proxy(request: NextRequest) {
 
   return response;
 }
+
+export const config = { matcher: "/:path*" };

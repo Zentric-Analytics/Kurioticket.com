@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { NextRequest } from "next/server";
 
-import { proxy } from "../proxy";
+import { proxy } from "@/proxy";
 import { shouldDisableStagingDocumentCache } from "@/lib/requestIngress";
 
 test("staging document responses cannot retain HTML across deployments", async () => {

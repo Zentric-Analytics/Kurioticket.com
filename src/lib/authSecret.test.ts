@@ -33,8 +33,8 @@ for (const [name, environment, expected] of [
   test(`server and middleware share canonical secret: ${name}`, async () => {
     const server = load("src/lib/env.ts", { "./authSecret": { resolveAuthSecret }, "./stagingSafety": {} }, environment);
     const calls: unknown[] = [];
-    const middleware = load("proxy.ts", {
-      "./src/lib/requestIngress": { proxy: () => NextResponse.next() },
+    const middleware = load("src/proxy.ts", {
+      "@/lib/requestIngress": { proxy: () => NextResponse.next() },
       "@/lib/botPolicy": { automationSignal: () => null },
       "next/server": { NextResponse },
       "next-auth/jwt": { getToken: async (input: { secret: string }) => { calls.push(input.secret); return null; } },
@@ -65,8 +65,8 @@ test("installed token verifier rejects absent and malformed tokens", async () =>
 
 test("middleware preserves MFA redirects, API denial, exemptions, and verified access", async () => {
   let verified = false;
-  const boundary = load("proxy.ts", {
-    "./src/lib/requestIngress": { proxy: () => NextResponse.next() },
+  const boundary = load("src/proxy.ts", {
+    "@/lib/requestIngress": { proxy: () => NextResponse.next() },
     "@/lib/botPolicy": { automationSignal: () => null },
     "next/server": { NextResponse },
     "next-auth/jwt": { getToken: async () => ({ twoFactorEnabled: true, twoFactorVerified: verified }) },
