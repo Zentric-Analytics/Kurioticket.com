@@ -1,5 +1,4 @@
 import { hotelResultSummary } from "@/lib/hotels/hotelResultAccounting";
-import { carResultSummary } from "@/lib/cars/carResultAccounting";
 import Link from "next/link";
 import { ChevronRight, Route } from "lucide-react";
 import { activityOverviewRows } from "@/lib/adminActivityOverview";
@@ -57,7 +56,7 @@ export function AdminActivityOverview({
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[#64748B]">
                   {search.platform ? <span>Platform: <span className="font-medium text-[#334155]">{search.platform === "IOS" ? "iOS app" : search.platform === "ANDROID" ? "Android app" : "Website"}</span></span> : null}
                   {search.searchStatus ? <span>Status: <span className="font-medium text-[#334155]">{search.searchStatus.replaceAll("_", " ").toLowerCase()}</span></span> : null}
-                  {search.resultCount !== null ? search.product === "HOTEL" ? <span className="font-medium tabular-nums text-[#334155]">{hotelResultSummary(search.resultCount, search.hotelPropertyCount)}</span> : search.product === "CAR" ? <span className="font-medium tabular-nums text-[#334155]">{carResultSummary(search.resultCount, search.carOfferCount)}</span> : <span>Results returned: <span className="font-medium tabular-nums text-[#334155]">{search.resultCount}</span></span> : null}
+                  {search.resultCount !== null ? search.product === "HOTEL" ? <span className="font-medium tabular-nums text-[#334155]">{hotelResultSummary(search.resultCount, search.hotelPropertyCount)}</span> : <span>Results returned: <span className="font-medium tabular-nums text-[#334155]">{search.resultCount}</span></span> : null}
                   <span>{search.eventCount} recorded {search.eventCount === 1 ? "stage" : "stages"}</span>
                   {!search.journeyId ? <span>{search.handoffs > 0 ? "Operational search and handoffs" : "Search record only"}</span> : null}
                 </div>

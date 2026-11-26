@@ -90,8 +90,6 @@ export type AdminSearchRead = {
   resultCount: number;
   /** Validated provider-scoped property groups; null/absent for older records. */
   hotelPropertyCount?: number | null;
-  /** Validated rental offer rows returned within the recorded car result groups. */
-  carOfferCount?: number | null;
   latencyMs: number | null;
   status: AdminSearchStatus;
   providers: string[];

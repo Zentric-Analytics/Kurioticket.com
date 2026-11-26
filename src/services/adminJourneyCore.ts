@@ -1,5 +1,4 @@
 import { recordedHotelPropertyCount } from "@/lib/hotels/hotelResultAccounting";
-import { recordedCarOfferCount } from "@/lib/cars/carResultAccounting";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { isJourneySourcePath, journeySourcePath } from "@/lib/search-journey";
 import { toAdminPageView } from "@/lib/adminPageView";
@@ -379,7 +378,6 @@ function eventDto(row: EventRecord): AdminJourneyEvent {
       origin: text(row.origin), destination: text(row.destination), checkIn: row.checkIn?.toISOString() ?? null, checkOut: row.checkOut?.toISOString() ?? null,
       status: row.searchStatus, resultCount: count(row.resultCount ?? 0), latencyMs: row.latencyMs,
       ...(row.searchProduct === "HOTEL" ? { hotelPropertyCount: recordedHotelPropertyCount(row.searchProduct, row.searchQuery, row.resultCount) } : {}),
-      ...(row.searchProduct === "CAR" ? { carOfferCount: recordedCarOfferCount(row.searchProduct, row.searchQuery, row.resultCount) } : {}),
       details: safeAdminJourneySearchDetails(row.searchProduct, row.searchQuery),
     } : null,
     handoff: row.redirectLogId ? {

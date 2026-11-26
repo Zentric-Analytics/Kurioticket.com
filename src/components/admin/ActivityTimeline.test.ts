@@ -255,10 +255,3 @@ test("hotel activity distinguishes properties, offers and unavailable historical
   assert.match(render([base]), /Property groups not recorded · 1,653 recorded results/);
   assert.match(render([{ ...base, resultCount: 0, hotelPropertyCount: 0 }]), /0 property groups · 0 offers/);
 });
-
-test("car activity distinguishes group counts, rental offers and unknown historical totals", () => {
-  const base: ActivityRow = { id: "car-count", at, stage: "SEARCH_COMPLETED", label: "Search completed", detail: "CAR · LHR · SUCCESS", product: "CAR", resultCount: 549 };
-  assert.match(render([{ ...base, carOfferCount: 2547 }]), /549 car result groups · 2,547 rental offers/);
-  assert.match(render([base]), /549 recorded results · Rental offers not recorded/);
-  assert.match(render([{ ...base, resultCount: 0, carOfferCount: 0 }]), /0 car result groups · 0 rental offers/);
-});

@@ -1,5 +1,4 @@
 import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
-import { countCarInventory, readCarResultAccounting } from "@/lib/cars/carResultAccounting";
 import { applicationMetadata } from "@/lib/application-source";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -15,7 +14,7 @@ const query = {
   dropoffDate: "2099-05-02", dropoffTime: "10:00", driverAge: "30",
 };
 
-function fixture(t: TestContext, options: { status?: "available" | "unavailable"; consent?: boolean; failingLog?: boolean; failingProviderLog?: boolean; session?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT"; excludeInventory?: boolean; empty?: boolean } = {}) {
+function fixture(t: TestContext, options: { status?: "available" | "unavailable"; consent?: boolean; failingLog?: boolean; failingProviderLog?: boolean; session?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT" } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: Array<Record<string, unknown>> = [];
   const analytics: Array<Record<string, unknown>> = [];
@@ -43,15 +42,11 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
   };
   const provider = { provider: "fixture-provider", status: options.status === "unavailable" ? "failed" : "success", latencyMs: 12 };
   const fakeSearch = {
-    results: options.status === "unavailable" || options.empty ? [] : [
-      { id: "car-offer", offers: [{ id: "rate-a" }, { id: "rate-b" }] },
-      ...(options.excludeInventory ? [{ id: "not-public", offers: [{ id: "rate-c" }] }] : []),
-    ],
+    results: options.status === "unavailable" ? [] : [{ id: "car-offer" }],
     status: options.status ?? "available", warnings: [], providerStatuses: [provider],
   };
   const dependencies: Record<string, unknown> = {
     "@/lib/productionSandboxPolicy": {withProductionSandboxRequest,captureFinalSearchHistory},
-    "@/lib/cars/carResultAccounting": { countCarInventory },
     "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
     "@/lib/application-source": { applicationMetadata },
     "@/lib/searchCrawlerGate": {
@@ -102,7 +97,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
     } },
     "@/lib/travel/searchContract": { classifyCars: (results: unknown, search: unknown, id: string, warnings: unknown) => {
       check(results === fakeSearch.results && warnings === fakeSearch.warnings && id === requestId && JSON.stringify(search) === JSON.stringify(query), "classify the actual provider result and request");
-      return { results: options.excludeInventory ? fakeSearch.results.filter(row => row.id !== "not-public") : fakeSearch.results, requestId };
+      return { results: fakeSearch.results, requestId };
     } },
     "@/lib/feature-controls/service": { isFeatureEnabled: async (name: string) => {
       check(name === "CAR_SEARCH_ENABLED", "check the Cars feature flag");
@@ -151,14 +146,13 @@ test("car search records a consented history after returning provider results", 
   assert.equal(response.headers.get("X-Kt-Search-Session"), f.session!.credential);
   assert.equal(response.headers.get("Cache-Control"), "private, no-store");
   assert.match(response.headers.get("Vary") ?? "", /X-Kt-Search-Session/);
-  assert.deepEqual(await response.json(), { results: [{ id: "car-offer", offers: [{ id: "rate-a" }, { id: "rate-b" }] }], requestId });
+  assert.deepEqual(await response.json(), { results: [{ id: "car-offer" }], requestId });
   await f.flush();
   assert.equal(f.histories.length, 1);
   assert.equal(f.histories[0].type, "CAR");
   assert.equal(f.histories[0].visitorId, "consented-guest");
   assert.equal(f.histories[0].requestId, requestId);
   assert.equal(f.histories[0].resultCount, 1);
-  assert.deepEqual(readCarResultAccounting(f.histories[0].query, 1), { version: 1, groupCount: 1, offerCount: 2 });
   assert.equal(f.histories[0].status, "SUCCESS");
   assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionId, f.session!.reference.id);
   assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionExpiresAtMs, f.session!.reference.expiresAt.getTime());
@@ -211,7 +205,6 @@ test("unavailable car provider records a failed search without affecting the res
   await f.flush();
   assert.equal(f.histories[0].status, "FAILED");
   assert.equal(f.histories[0].resultCount, 0);
-  assert.deepEqual(readCarResultAccounting(f.histories[0].query, 0), { version: 1, groupCount: 0, offerCount: 0 });
   assert.equal(f.providerLogs[0].status, "FAILED");
 });
 
@@ -219,7 +212,7 @@ test("optional analytics failures do not interrupt a valid car search", async (t
   const f = fixture(t, { failingLog: true });
   const result = await f.post();
   assert.equal(result.status, 200);
-  assert.deepEqual(await result.json(), { results: [{ id: "car-offer", offers: [{ id: "rate-a" }, { id: "rate-b" }] }], requestId });
+  assert.deepEqual(await result.json(), { results: [{ id: "car-offer" }], requestId });
   await assert.doesNotReject(f.flush());
   assert.equal(f.histories.length, 0);
   assert.equal(f.providerLogs.length, 1);
@@ -229,7 +222,7 @@ test("optional provider diagnostics failures do not interrupt search history or 
   const f = fixture(t, { failingProviderLog: true });
   const response = await f.post();
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { results: [{ id: "car-offer", offers: [{ id: "rate-a" }, { id: "rate-b" }] }], requestId });
+  assert.deepEqual(await response.json(), { results: [{ id: "car-offer" }], requestId });
   await assert.doesNotReject(f.flush());
   assert.equal(f.histories.length, 1);
   assert.equal(f.histories[0].status, "SUCCESS");
@@ -252,24 +245,4 @@ test("verified bot makes a real car search counted once under BOT, with no guest
   assert.deepEqual(f.analytics, []);
   assert.equal(f.providerLogs.length, 1);
   assert.equal((f.providerLogs[0].metadata as Record<string, unknown>).applicationSource, "BOT");
-});
-
-test("car search records only classified group and offer counts without analytics consent", async (t) => {
-  const f = fixture(t, { excludeInventory: true, consent: false });
-  const response = await f.post();
-  assert.deepEqual((await response.json()).results, [{ id: "car-offer", offers: [{ id: "rate-a" }, { id: "rate-b" }] }]);
-  await f.flush();
-  assert.equal(f.histories.length, 1);
-  assert.equal(f.histories[0].resultCount, 1);
-  assert.deepEqual(readCarResultAccounting(f.histories[0].query, 1), { version: 1, groupCount: 1, offerCount: 2 });
-  assert.deepEqual(f.analytics, []);
-});
-
-test("a successful empty car search has a known zero pair, not a failure", async (t) => {
-  const f = fixture(t, { empty: true, consent: false });
-  assert.equal((await f.post()).status, 200);
-  await f.flush();
-  assert.equal(f.histories[0].status, "SUCCESS");
-  assert.deepEqual(readCarResultAccounting(f.histories[0].query, 0), { version: 1, groupCount: 0, offerCount: 0 });
-  assert.deepEqual(f.analytics, []);
 });
