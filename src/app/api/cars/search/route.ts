@@ -1,4 +1,5 @@
 import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
+import { countCarInventory, type CarResultAccounting } from "@/lib/cars/carResultAccounting";
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { applicationMetadata } from "@/lib/application-source";
 import { after } from "next/server";
@@ -43,7 +44,7 @@ function canonicalSearch(value: unknown): LocationBoundCarSearchParams | null {
 
 export async function POST(request: Request) {
  return withProductionSandboxRequest(request, async () => {
-  const projectHistory=captureFinalSearchHistory();
+  const projectHistory=captureFinalSearchHistory("car");
   const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(input));
 
   const crawler = await identifySearchCrawler(request);
@@ -62,7 +63,8 @@ export async function POST(request: Request) {
   const requestActivityIdentity = () => activityIdentity ??= crawler
     ? Promise.resolve({ userId: null, visitorId: null, applicationSource: "BOT" as const })
     : resolveRequestActivityIdentity(request, undefined, operationalSession);
-  const recordSearch = (resultCount: number, status: "SUCCESS" | "PARTIAL" | "FAILED") => {
+  const recordSearch = (resultCount: number, status: "SUCCESS" | "PARTIAL" | "FAILED",
+    carResultAccounting: CarResultAccounting | null = resultCount === 0 ? countCarInventory([]) : null) => {
     after(async () => {
       try {
         const { userId, visitorId, ...application } = await requestActivityIdentity();
@@ -70,11 +72,11 @@ export async function POST(request: Request) {
           logSearchHistory({ ...application,
             userId, visitorId, requestId, type: "CAR",
             origin: search.pickupLocation, destination: search.dropoffLocation,
-            query: recordedSearch, resultCount, latencyMs: Math.max(0, Math.round(performance.now() - started)), status,
+            query: { ...recordedSearch, carResultAccounting }, resultCount, latencyMs: Math.max(0, Math.round(performance.now() - started)), status,
           }),
           ...(crawler || !visitorId ? [] : [trackAnalyticsEvent({ ...application,
             userId, visitorId, type: "SEARCH", name: "car_search",
-            metadata: { resultCount },
+            metadata: { resultCount: projectHistory({ resultCount, status }).resultCount },
           })]),
         ]);
       } catch {
@@ -127,8 +129,10 @@ export async function POST(request: Request) {
       });
       return attachOperationalSearchSession(Response.json({ ...response, error: "Car search is temporarily unavailable." }, { status: 503, headers: noStore }), operationalSession);
     }
-    const searchStatus = providerStatuses.some((provider) => provider.status === "failed") ? "PARTIAL" : "SUCCESS";
-    recordSearch(results.length, searchStatus);
+    // Count only admitted inventory; production may further project both counts.
+    const searchStatus = response.status === "unavailable" ? "FAILED"
+      : response.status === "partial" || providerStatuses.some((provider) => provider.status === "failed") ? "PARTIAL" : "SUCCESS";
+    recordSearch(response.results.length, searchStatus, countCarInventory(response.results));
     after(async () => {
       try {
         const application = applicationMetadata(await requestActivityIdentity());

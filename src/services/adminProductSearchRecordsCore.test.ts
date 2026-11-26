@@ -240,3 +240,22 @@ test("hotel records expose validated counts without raw query metadata", async (
     assert.doesNotMatch(JSON.stringify(detail), /privateField|do-not-expose|hotelResultAccounting/);
   }
 });
+
+test("car records expose only validated nested rental offer counts", async () => {
+  const known = record({ type: "CAR", status: "SUCCESS", resultCount: 549, query: { environment: "staging", privateField: "do-not-expose", carResultAccounting: { version: 1, groupCount: 549, offerCount: 2547 } } });
+  const legacy = record({ id: "search_legacy", type: "CAR", resultCount: 549 });
+  const invalid = record({ id: "search_invalid", type: "CAR", resultCount: 550, query: { carResultAccounting: { version: 1, groupCount: 549, offerCount: 2547 } } });
+  const { reader } = setup({ records: [known, legacy, invalid], detail: known });
+  const list = await reader.list(params("CAR", "ALL"));
+  assert.equal(list.status, "ok");
+  if (list.status !== "ok") return;
+  assert.deepEqual(list.data.items.map(row => row.carOfferCount), [2547, null, null]);
+  assert.doesNotMatch(JSON.stringify(list), /privateField|do-not-expose|carResultAccounting/);
+  const detail = await reader.detail("search_123456", params("CAR"));
+  assert.equal(detail.status, "ok");
+  if (detail.status === "ok") {
+    assert.equal(detail.data.search.carOfferCount, 2547);
+    assert.equal(detail.data.search.resultCount, 549);
+    assert.doesNotMatch(JSON.stringify(detail), /privateField|do-not-expose|carResultAccounting/);
+  }
+});

@@ -1,5 +1,6 @@
 "use client";
 import { hotelResultSummary } from "@/lib/hotels/hotelResultAccounting";
+import { carResultSummary } from "@/lib/cars/carResultAccounting";
 
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
@@ -155,7 +156,7 @@ function SearchMonitorTableState({
                   ) : null}
                 </td>
                 <td data-label="Currency" className="px-2 py-3 align-top">{search.currency || "—"}</td>
-                <td data-label="Results" className="px-2 py-3 align-top">{search.product === "HOTEL" ? <span className="block whitespace-normal break-words leading-4">{hotelResultSummary(search.resultCount, search.hotelPropertyCount)}</span> : formatNumber(search.resultCount)}</td>
+                <td data-label="Results" className="px-2 py-3 align-top">{search.product === "HOTEL" ? <span className="block whitespace-normal break-words leading-4">{hotelResultSummary(search.resultCount, search.hotelPropertyCount)}</span> : search.product === "CAR" ? <span className="block whitespace-normal break-words leading-4">{carResultSummary(search.resultCount, search.carOfferCount)}</span> : formatNumber(search.resultCount)}</td>
                 <td data-label="Providers" className="px-2 py-3 align-top" title={search.providerTelemetry ? [search.providers.join(", "), search.providerTelemetry.successful + " successful", search.providerTelemetry.failed + " failed", search.providerTelemetry.degraded + " degraded", search.providerTelemetry.disabled + " disabled"].filter(Boolean).join(" · ") : "No exact provider telemetry recorded"}>{search.providerTelemetry ? search.providerTelemetry.total : "—"}</td>
                 <td data-label="Identity" className="px-2 py-3 align-top">{searchActivityIdentityLabels[search.identity.kind]}</td>
                 <td data-label="Status" className="px-2 py-3 align-top"><MonitorStatus status={search.status} /></td>
