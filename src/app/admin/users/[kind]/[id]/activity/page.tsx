@@ -23,6 +23,8 @@ import { ADMIN_IDENTITY_SORTS, ADMIN_IDENTITY_DATES, validAdminIdentityCustomDat
 import { loadAdminIdentityActivity } from "@/services/adminIdentityActivityService";
 
 export const metadata = { title: "Admin Customer Activity" };
+// Live session reads must not be served from a static route cache.
+export const dynamic = "force-dynamic";
 type Params = { kind: string; id: string };
 type RawQuery = Record<string, string | string[] | undefined>;
 type PageProps = { params: Promise<Params>; searchParams: Promise<RawQuery> };

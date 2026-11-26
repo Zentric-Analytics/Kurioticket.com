@@ -18,7 +18,7 @@ function HeaderTime({ at, timeZone }: { at: Date; timeZone: string }) {
   return <time dateTime={at.toISOString()} title={label + " " + formatAdminTimeZoneLabel(timeZone, at)}>{label}</time>;
 }
 function Fact({ label, children, className = "", testId }: {
-  label: string; children: React.ReactNode; className?: string; testId?: string;
+  label: string; children: ReactNode; className?: string; testId?: string;
 }) {
   return <div data-testid={testId} className={"min-w-0 border-l border-[#E2E8F0] pl-4 sm:pl-5 " + className}>
     <dt className="text-[12px] font-normal text-[#64748B]">{label}</dt>
@@ -125,9 +125,9 @@ export function AdminCustomerActivityWorkspace({
             {label === "Searches" && summary?.searchProducts ? <div aria-label="Searches by product"
               className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-1 text-[11px] sm:gap-x-3 sm:text-xs leading-4 text-[#64748B]">
               {([
-                { label: "Flights", count: summary?.searchProducts.flights, Icon: Plane },
-                { label: "Hotels", count: summary?.searchProducts.hotels, Icon: Building2 },
-                { label: "Cars", count: summary?.searchProducts.cars, Icon: CarFront },
+                { label: "Flights", count: summary.searchProducts.flights, Icon: Plane },
+                { label: "Hotels", count: summary.searchProducts.hotels, Icon: Building2 },
+                { label: "Cars", count: summary.searchProducts.cars, Icon: CarFront },
               ]).map(({label, count, Icon}) => <span key={label} aria-label={label + ": " + count} title={label}
                 className="inline-flex items-center gap-0.5 tabular-nums sm:gap-1"><Icon size={12} aria-hidden="true" />{count}</span>)}
               {summary.searchProducts.other > 0 ? <span aria-label={"Other or unknown: " + summary.searchProducts.other}>

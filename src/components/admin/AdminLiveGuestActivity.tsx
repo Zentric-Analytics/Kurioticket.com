@@ -46,7 +46,7 @@ export async function AdminLiveGuestActivity({ reference, full = false, input = 
       && (input.tab === undefined || input.tab === "all" || input.tab === "access");
     const active = input.tab === "access" ? "access" : "all";
     return <div className="min-w-0 space-y-5 bg-white pb-5 text-[#0F172A]">
-      <nav aria-label="Breadcrumb"><Link href={path} className={linkClass}><ArrowLeft size={15} aria-hidden="true"/> Back to Activity</Link></nav>
+      <nav aria-label="Breadcrumb"><Link href={path} prefetch={false} className={linkClass}><ArrowLeft size={15} aria-hidden="true"/> Back to Activity</Link></nav>
       <section className="min-w-0 space-y-4 rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
         <header><h1 className="text-[20px] font-semibold">All activity</h1><p className="mt-1 text-[13px] text-[#475569]">Guest session · Live presence</p></header>
         {row && valid ? <>
@@ -77,7 +77,7 @@ export async function AdminLiveGuestActivity({ reference, full = false, input = 
     {row ? <>
       <p className="text-[12px] text-[#64748B]">{historyNote}</p>
       <AdminUnifiedActivityList overview events={[]} timeZone={timeZone} environment={environment}
-        access={access} allHref={path + "/all"}/>
+        access={access} allHref={path + "/all"} allHrefPrefetch={false}/>
     </> : <p role="status" className="text-[13px] text-[#64748B]">{unavailable}</p>}
   </AdminCustomerActivityWorkspace>;
 }

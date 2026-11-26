@@ -117,6 +117,7 @@ test("live reference takes the same route before any permanent identity read and
   for(const route of [page,allActivity]){
     assert.ok(route.indexOf('if (kind === "live-guest")') < route.indexOf("if (!validActivityIdentity(kind"));
     assert.match(route,/<AdminLiveGuestActivity reference=\{id\}/);
+    assert.match(route,/export const dynamic = "force-dynamic"/);
   }
   assert.match(live,/await requireAdminSession\("\/admin\/users"\)/);
   assert.match(live,/safeReference && environment === "staging"/);

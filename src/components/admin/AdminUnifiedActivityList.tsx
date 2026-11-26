@@ -20,10 +20,10 @@ function describe(row: ActivityRow) {
   }
   return parts.join(" · ");
 }
-export function AdminUnifiedActivityList({ events, timeZone, environment, overview = false, access, accessHref, accessUnavailable, pagesHref, pagesUnavailable, allHref, nextHref }: {
+export function AdminUnifiedActivityList({ events, timeZone, environment, overview = false, access, accessHref, accessUnavailable, pagesHref, pagesUnavailable, allHref, allHrefPrefetch, nextHref }: {
   events: ActivityRow[]; timeZone: string; environment: string; overview?: boolean;
   access?: AccessPreview | null; accessHref?: string; accessUnavailable?: boolean; pagesHref?: string;
-  pagesUnavailable?: boolean; allHref?: string; nextHref?: string | null;
+  pagesUnavailable?: boolean; allHref?: string; allHrefPrefetch?: boolean; nextHref?: string | null;
 }) {
   const ordered = [...events].sort((a,b) => +b.at - +a.at || a.id.localeCompare(b.id));
   const pages = ordered.filter(row => row.stage === "PAGE_VIEW");
@@ -37,7 +37,7 @@ export function AdminUnifiedActivityList({ events, timeZone, environment, overvi
   return <section data-testid="unified-activity-list" aria-label={overview ? "Recent activity" : "All activity"} className="min-w-0 space-y-2">
     <div className="flex flex-wrap items-center justify-between gap-2 pb-2">
       <h2 className="text-[16px] font-semibold">{overview ? "Recent activity" : "Activity history"}</h2>
-      {allHref ? <Link href={allHref} className="focus-ring inline-flex items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline">View all activity <ChevronRight size={14} aria-hidden="true"/></Link> : null}
+      {allHref ? <Link href={allHref} prefetch={allHrefPrefetch} className="focus-ring inline-flex items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline">View all activity <ChevronRight size={14} aria-hidden="true"/></Link> : null}
     </div>
     {overview && (accessUnavailable || pagesUnavailable) ? <p role="status" className="text-[12px] text-[#64748B]">{accessUnavailable ? "Access information temporarily unavailable. " : ""}{pagesUnavailable ? "Page visit information temporarily unavailable." : ""}</p> : null}
     {!rows.length ? <p className="rounded-lg border border-[#E2E8F0] p-4 text-[13px] text-[#64748B]">No recorded activity matches this view.</p> :

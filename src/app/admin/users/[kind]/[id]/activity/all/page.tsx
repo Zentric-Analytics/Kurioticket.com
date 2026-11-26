@@ -14,6 +14,8 @@ import { AdminUnifiedActivityList } from "@/components/admin/AdminUnifiedActivit
 import { AdminLiveGuestActivity } from "@/components/admin/AdminLiveGuestActivity";
 
 export const metadata = { title: "Admin All User Activity" };
+// Live session reads must not be served from a static route cache.
+export const dynamic = "force-dynamic";
 const tabs = [
   {value:"all",label:"All activity"},{value:"access",label:"Device & Access"},
   {value:"pages",label:"Pages visited"},{value:"searches",label:"Searches"},
