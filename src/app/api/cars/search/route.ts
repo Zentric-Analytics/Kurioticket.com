@@ -1,4 +1,5 @@
 import { withBotSearch } from "@/lib/botSecurity";
+import { carUnsupportedCategory, carUnsupportedSearchMessage } from "@/shared/cars/carSearchFeedback";
 import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import { applicationMetadata } from "@/lib/application-source";
@@ -109,7 +110,9 @@ export async function POST(request: Request) {
           // Provider diagnostics are optional and must not affect the search response.
         }
       });
-      return attachOperationalSearchSession(Response.json({ ...response, code: "SEARCH_UNSUPPORTED", error: "The available providers cannot search these rental options. Please change your search." }, { status: 422, headers: noStore }), operationalSession);
+      // Additive, allowlisted classification. Never disclose provider diagnostics.
+      const warningCategory = carUnsupportedCategory(providerStatuses.map(provider => provider.errorReason));
+      return attachOperationalSearchSession(Response.json({ ...response, code: "SEARCH_UNSUPPORTED", warningCategory, error: carUnsupportedSearchMessage(warningCategory) }, { status: 422, headers: noStore }), operationalSession);
     }
     if (status === "unavailable") {
       bot?.outcome("FAILED");

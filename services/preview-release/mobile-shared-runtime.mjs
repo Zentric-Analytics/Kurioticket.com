@@ -47,6 +47,7 @@ export const mobileSharedRuntime = new Set([
   "src/services/travel/hotelInventorySource.ts",
   "src/services/travel/kayakSandboxPublic.ts",
   "src/shared/airports/index.ts",
+  "src/shared/cars/carSearchFeedback.ts",
   "src/shared/cars/rentalLocationClock.ts",
   "src/shared/destinations/editorial/africa.ts",
   "src/shared/destinations/editorial/asia.ts",

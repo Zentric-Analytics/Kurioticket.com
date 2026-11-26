@@ -6,7 +6,8 @@ import { FlatList, Image, Platform, Pressable, ScrollView, StyleSheet, Text, Vie
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, ChevronDown, SlidersHorizontal, SquarePen } from "lucide-react-native";
-import { travelApi, type CarResult } from "../../api/travelApi";
+import { travelApi, TravelApiError, type CarResult } from "../../api/travelApi";
+import { carUnsupportedSearchMessage } from "../../../../../src/shared/cars/carSearchFeedback";
 import { journeyEvents } from "../privacy/journeyEvents";
 import { recordNativeResultsPage } from "../privacy/useNativePageViews";
 import { normalizeJourneySortMode, normalizeJourneySortChoice } from "../../../../../src/lib/search-journey";
@@ -101,7 +102,7 @@ export function ApprovedCarResultsScreen() {
     setResultsRequestId(undefined);
     setStatus("loading");setMessage("");
     try{const response=await travelApi.searchCars(plan.plan.payload,{signal:controller.signal,requestId,sandboxDisplay:true});if(controller.signal.aborted||sequence!==searchSequence.current)return;const acceptance=acceptCanonicalResults(response.results,safeCanonicalCarResult);if(acceptance.rejectedIds.length)console.warn("[travel-search] canonical car results failed client safety checks",{requestId:response.requestId,canonicalCount:acceptance.canonicalCount,acceptedCount:acceptance.accepted.length,rejectedIds:acceptance.rejectedIds});setResults(acceptance.accepted);if(canonicalResultsWereSilentlyLost(acceptance)){setStatus("error");setMessage(searchUnavailableMessage("car"));}else{journeyEvents.rememberSearch(response.requestId,journeyResponseContext(response));setResultsRequestId(response.requestId);if(acceptance.accepted.length)await prefetchInitialCarImages(acceptance.accepted);if(controller.signal.aborted||sequence!==searchSequence.current)return;const presentation=presentSearchResults("car",acceptance.accepted.length,response);setStatus(presentation.status);setMessage(presentation.message);void recordRecentSearchBestEffort(buildRecentSearch("car",plan.plan.payload));}}
-    catch{if(controller.signal.aborted||sequence!==searchSequence.current)return;setStatus("error");setMessage(searchUnavailableMessage("car"));}
+    catch(error){if(controller.signal.aborted||sequence!==searchSequence.current)return;setStatus("error");setMessage(error instanceof TravelApiError && error.status === 422 ? carUnsupportedSearchMessage(error.details?.warningCategory) : searchUnavailableMessage("car"));}
   },[plan.plan?.key,retry]);
   useEffect(()=>{const executionKey=`${plan.plan?.key??"invalid"}:${retry}`;if(searchAbortTimer.current)clearTimeout(searchAbortTimer.current);searchAbortTimer.current=undefined;if(activeExecutionKey.current!==executionKey){activeExecutionKey.current=executionKey;void load();}return()=>{searchAbortTimer.current=setTimeout(()=>{if(activeExecutionKey.current!==executionKey)return;searchSequence.current+=1;activeSearch.current?.abort("screen-cleanup");activeExecutionKey.current=undefined;},0);};},[load,plan.plan?.key,retry]);
   useEffect(()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);carResultsApplyingTimer.current=undefined;setCarResultsApplying(false);return()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);};},[plan.plan?.key]);

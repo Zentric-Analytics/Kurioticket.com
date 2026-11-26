@@ -9,7 +9,7 @@ const cars = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "u
 test("flight, hotel, and car never route through legacy results during availability work", () => {
   assert.doesNotMatch(route, /LegacyTravelResultsScreen/);
   assert.match(route, /if \(initializing\) content = <NativeTravelSearchLoadingScreen product=\{product\} includeTopInset=\{false\} \/>;\s*else if \(!isMobileProductAvailable/);
-  assert.match(route, /<SafeAreaView[^>]*edges=\{\["top"\]\}>\s*<ResultsAvailabilityNotice \/>\s*<View[^>]*>\{content\}<\/View>\s*<\/SafeAreaView>/);
+  assert.match(route, /<SafeAreaView[^>]*edges=\{\["top"\]\}>\s*<ResultsAvailabilityNotice carPreview=\{product === "car"\} \/>\s*<View[^>]*>\{content\}<\/View>\s*<\/SafeAreaView>/);
   assert.match(route, /product === "car".*ApprovedCarResultsScreen/);
   assert.match(route, /ApprovedResultsScreen product=\{product\}/);
 });

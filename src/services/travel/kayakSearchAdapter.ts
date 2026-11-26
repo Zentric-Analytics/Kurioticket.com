@@ -1,5 +1,6 @@
 import type { FlightSearchParams } from "@/lib/types";
 import { kayakSearchSchema, type KayakSearch } from "./kayakSandbox";
+import { sandboxCarDriverAgeAllowed } from "./kayakCarAgePolicy";
 
 type AdaptedSearch =
   | { supported: true; search: KayakSearch }
@@ -22,8 +23,13 @@ export function adaptKayakHotelSearch(input: Record<string, string | undefined>)
     { supported: false, reasonCode: "unsupported_search", reason: "Choose a KAYAK destination, valid stay dates and up to six adults." };
 }
 
-export function adaptKayakCarSearch(input: Record<string, string | undefined>): AdaptedSearch {
-  if ((input.driverAge && input.driverAge !== "25") || (input.dropoffLocation && input.dropoffLocation !== input.pickupLocation) ||
+export function adaptKayakCarSearch(input: Record<string, string | undefined>, env: Record<string, string | undefined> = process.env): AdaptedSearch {
+  // Staging previews are not age-specific prices. Never substitute an age or
+  // add an undocumented supplier field; preserve the canonical request.
+  if (!sandboxCarDriverAgeAllowed(input.driverAge, env)) {
+    return { supported: false, reasonCode: "unsupported_search", reason: "The available car provider cannot verify the selected driver age." };
+  }
+  if ((input.dropoffLocation && input.dropoffLocation !== input.pickupLocation) ||
       (input.returnToDifferentLocation && input.returnToDifferentLocation !== "false") || input.vehicleType ||
       (input.currency && input.currency !== "USD")) {
     return { supported: false, reasonCode: "unsupported_search", reason: "Car sandbox searches require the same airport, no specific vehicle filter, and USD prices." };
