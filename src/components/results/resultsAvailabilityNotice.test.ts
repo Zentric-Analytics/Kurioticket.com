@@ -8,6 +8,7 @@ import { createElement, type ReactNode } from "react";
 import ts from "typescript";
 import { ResultsAvailabilityNotice } from "./ResultsAvailabilityNotice";
 import { RESULTS_AVAILABILITY_NOTICE } from "../../shared/presentation/resultsAvailabilityNotice";
+import { CAR_SANDBOX_AGE_NOTICE } from "../../shared/cars/carSearchFeedback";
 
 const requireFromRoot = createRequire(path.resolve("package.json"));
 const { renderToString } = requireFromRoot("react-dom/server") as { renderToString(node: ReactNode): string };
@@ -90,6 +91,7 @@ for (const product of products) {
     const page = load<{ default: Page }>(`src/app/${product}/results/page.tsx`, state).default;
     const html = renderToString(await page({ searchParams: Promise.resolve(query) }));
     assertOneNotice(html);
+    assert.equal(html.split(CAR_SANDBOX_AGE_NOTICE).length - 1, product === "cars" ? 1 : 0);
     if (state === "populated") {
       assert.match(html, /href="https:\/\/provider.example\/in\?offer=selected"/);
       assert.match(html, /data-offer-id="selected"/);
@@ -97,11 +99,15 @@ for (const product of products) {
   });
   test(`${product} route-level loading fallback renders one notice`, () => {
     const loading = load<{ default: () => ReactNode }>(`src/app/${product}/results/loading.tsx`, "loading").default;
-    assertOneNotice(renderToString(createElement(loading)));
+    const html = renderToString(createElement(loading));
+    assertOneNotice(html);
+    assert.equal(html.split(CAR_SANDBOX_AGE_NOTICE).length - 1, product === "cars" ? 1 : 0);
   });
   for (const supported of [true, false]) test(`${product} explicit sandbox route retains one notice (supported=${supported})`, async () => {
     const page = load<{ default: Page }>(`src/app/${product}/results/page.tsx`, "populated", supported).default;
-    assertOneNotice(renderToString(await page({ searchParams: Promise.resolve({ ...query, provider: "kayak-sandbox" }) })));
+    const html = renderToString(await page({ searchParams: Promise.resolve({ ...query, provider: "kayak-sandbox" }) }));
+    assertOneNotice(html);
+    assert.equal(html.split(CAR_SANDBOX_AGE_NOTICE).length - 1, product === "cars" ? 1 : 0);
   });
 }
 

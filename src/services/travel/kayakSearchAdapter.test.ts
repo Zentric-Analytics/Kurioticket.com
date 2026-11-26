@@ -18,10 +18,18 @@ test("car sandbox preserves supported rental criteria without silently changing 
   assert.deepEqual(adaptKayakCarSearch(input), { supported: true, search: {
     vertical: "cars", origin: "BOS", departure: input.pickupDate, returnDate: input.dropoffDate,
   } });
-  // No documented age parameter exists: preserve the historical default only,
-  // and report other ages as unsupported instead of implying age-specific prices.
-  assert.equal(adaptKayakCarSearch({ ...input, driverAge: "25" }).supported, true);
-  assert.equal(adaptKayakCarSearch({ ...input, driverAge: "21" }).supported, false);
+  const production = { NEXT_PUBLIC_APP_URL: "https://kurioticket.com", TRAVEL_PROVIDER_MODE: "production" };
+  const staging = { NEXT_PUBLIC_APP_URL: "https://staging.kurioticket.com", TRAVEL_PROVIDER_MODE: "staging" };
+  assert.equal(adaptKayakCarSearch({ ...input, driverAge: "25" }, production).supported, true);
+  assert.equal(adaptKayakCarSearch({ ...input, driverAge: "21" }, production).supported, false);
+  for (const age of ["18-70", "18", "20", "25", "30", "70"]) {
+    const criteria = { ...input, driverAge: age };
+    assert.deepEqual(adaptKayakCarSearch(criteria, staging), { supported: true, search: {
+      vertical: "cars", origin: "BOS", departure: input.pickupDate, returnDate: input.dropoffDate,
+    } });
+    assert.equal(criteria.driverAge, age);
+  }
+  for (const age of ["17", "71", "invalid"]) assert.equal(adaptKayakCarSearch({ ...input, driverAge: age }, staging).supported, false);
   for (const change of [{ pickupTime: "25:00" }, { dropoffLocation: "JFK" }, { vehicleType: "suv" }, { currency: "EUR" }]) {
     assert.equal(adaptKayakCarSearch({ ...input, ...change }).supported, false);
   }

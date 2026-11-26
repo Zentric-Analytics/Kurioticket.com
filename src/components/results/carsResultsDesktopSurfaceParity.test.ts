@@ -320,7 +320,7 @@ test("desktop and mobile car rates share an inline tracking control inside rate 
   // Header/notice are route-owned, not introduced by the rate picker or loader.
   assert.doesNotMatch(picker, /<AppHeader\b|<ResultsAvailabilityNotice\b/);
   assert.doesNotMatch(loading, /<AppHeader\b|<ResultsAvailabilityNotice\b/);
-  assert.match(route, /<ResultsAvailabilityNotice\s*\/>[\s\S]*?<Suspense/);
+  assert.match(route, /<ResultsAvailabilityNotice carPreview\s*\/>[\s\S]*?<Suspense/);
 
   // Actual card/picker/alert and pure helpers; only ancillary contexts/visuals
   // and HTTP replies are fixtures. No backend mutation or provider clickout.

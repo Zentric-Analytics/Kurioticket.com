@@ -1,5 +1,6 @@
 import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
 import { applicationMetadata } from "@/lib/application-source";
+import { carUnsupportedCategory, carUnsupportedSearchMessage } from "@/shared/cars/carSearchFeedback";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
@@ -14,7 +15,7 @@ const query = {
   dropoffDate: "2099-05-02", dropoffTime: "10:00", driverAge: "30",
 };
 
-function fixture(t: TestContext, options: { status?: "available" | "unavailable"; consent?: boolean; failingLog?: boolean; failingProviderLog?: boolean; session?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT" } = {}) {
+function fixture(t: TestContext, options: { status?: "available" | "unavailable"; consent?: boolean; failingLog?: boolean; failingProviderLog?: boolean; session?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT"; unsupported?: "unsupported_search" | "unsupported_location" } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: Array<Record<string, unknown>> = [];
   const analytics: Array<Record<string, unknown>> = [];
@@ -40,12 +41,13 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
     reference: { id: "38d77b62-f43d-40d5-9597-a6ff76f02c28", expiresAt: new Date("2099-05-01"), environment: "staging" },
     credential: "fixture-session-credential", transport: "native", newCredential: true,
   };
-  const provider = { provider: "fixture-provider", status: options.status === "unavailable" ? "failed" : "success", latencyMs: 12 };
+  const provider = { provider: "fixture-provider", status: options.unsupported ? "skipped" : options.status === "unavailable" ? "failed" : "success", latencyMs: 12, ...(options.unsupported ? { errorReason: options.unsupported, error: "private provider diagnostic" } : {}) };
   const fakeSearch = {
-    results: options.status === "unavailable" ? [] : [{ id: "car-offer" }],
-    status: options.status ?? "available", warnings: [], providerStatuses: [provider],
+    results: options.unsupported || options.status === "unavailable" ? [] : [{ id: "car-offer" }],
+    status: options.unsupported ? "unavailable" : options.status ?? "available", warnings: [], providerStatuses: [provider], unsupported: Boolean(options.unsupported),
   };
   const dependencies: Record<string, unknown> = {
+    "@/shared/cars/carSearchFeedback": { carUnsupportedCategory, carUnsupportedSearchMessage },
     "@/lib/productionSandboxPolicy": {withProductionSandboxRequest,captureFinalSearchHistory},
     "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
     "@/lib/application-source": { applicationMetadata },
@@ -248,3 +250,25 @@ test("verified bot makes a real car search counted once under BOT, with no guest
   assert.equal(f.providerLogs.length, 1);
   assert.equal((f.providerLogs[0].metadata as Record<string, unknown>).applicationSource, "BOT");
 });
+
+for (const category of ["unsupported_search", "unsupported_location"] as const) {
+  test("car API distinguishes " + category + " without new tracking or raw provider text", async (t) => {
+    const f = fixture(t, { unsupported: category, consent: false });
+    const response = await f.post();
+    assert.equal(response.status, 422);
+    assert.equal(response.headers.get("X-Kt-Search-Session"), f.session!.credential);
+    const data = await response.json();
+    assert.equal(data.code, "SEARCH_UNSUPPORTED");
+    assert.equal(data.warningCategory, category);
+    assert.equal(data.error, carUnsupportedSearchMessage(category));
+    assert.deepEqual(data.results, []);
+    assert.doesNotMatch(JSON.stringify(data), /private provider diagnostic/);
+    await f.flush();
+    assert.equal(f.histories.length, 1);
+    assert.equal(f.histories[0].status, "FAILED");
+    assert.equal(f.histories[0].resultCount, 0);
+    assert.equal((f.histories[0].query as Record<string, unknown>).driverAge, "30");
+    assert.deepEqual(f.analytics, []);
+    assert.equal(f.providerLogs[0].errorMessage, category);
+  });
+}

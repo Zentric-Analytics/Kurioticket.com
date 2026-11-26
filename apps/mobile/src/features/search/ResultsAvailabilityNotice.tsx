@@ -1,8 +1,9 @@
 import { StyleSheet, Text, View } from "react-native";
+import { CAR_SANDBOX_AGE_NOTICE } from "../../../../../src/shared/cars/carSearchFeedback";
 import { RESULTS_AVAILABILITY_NOTICE } from "../../../../../src/shared/presentation/resultsAvailabilityNotice";
 import { useAppTheme } from "../../theme/AppTheme";
 
-export function ResultsAvailabilityNotice() {
+export function ResultsAvailabilityNotice({ carPreview = false }: { carPreview?: boolean } = {}) {
   const { theme } = useAppTheme();
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -14,6 +15,7 @@ export function ResultsAvailabilityNotice() {
       >
         {RESULTS_AVAILABILITY_NOTICE}
       </Text>
+      {carPreview && <Text testID="car-sandbox-age-notice" accessible allowFontScaling style={[styles.text, { color: theme.textSecondary }]}>{CAR_SANDBOX_AGE_NOTICE}</Text>}
     </View>
   );
 }
