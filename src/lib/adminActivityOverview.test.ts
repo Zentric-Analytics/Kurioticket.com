@@ -255,7 +255,18 @@ test("operational guest events appear directly in Activity without a second-page
   assert.match(unified, /data-activity-id=\{row\.id\}/);
   assert.doesNotMatch(unified, /View recorded session activity/);
   assert.match(full, /operational \? "Essential operational activity"/);
-  assert.match(full, /!operational \|\| tab\.value !== "pages"/);
+  assert.match(full, /<AdminFullActivityWorkspace/);
+  // Keep the common category/action positions, but never provide operational
+  // guests a pages-history URL when that source has no consented page evidence.
+  const pagesCategory = /operational && tab\.value === "pages"\s*\? \{([^}]+)\}/.exec(full)?.[1];
+  const pagesHistory = /operational \? \{label:"Pages visited history",([^}]+)\}/.exec(full)?.[1];
+  assert.ok(pagesCategory);
+  assert.ok(pagesHistory);
+  for (const unavailable of [pagesCategory, pagesHistory]) {
+    assert.match(unavailable, /unavailableReason:/);
+    assert.doesNotMatch(unavailable, /href:/);
+  }
+  assert.match(full, /pagesHref=\{!operational\?pagesHref:undefined\}/);
   assert.match(page, /redirect\(activityHref\(basePath \+ "\/all"/);
   assert.doesNotMatch(overview, /View recorded session activity|href=\{otherHref\}/);
   assert.match(legacy, /loadAdminIdentityActivity\(kind, id, parsed\.filters, undefined, "all"\)/);
