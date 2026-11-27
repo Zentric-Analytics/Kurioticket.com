@@ -1,7 +1,7 @@
 import { confirmedOperatorNetwork } from "@/lib/operatorCrawlerNetwork";
 import { declaredSearchCrawler, identifySearchCrawler } from "@/lib/searchCrawlerGate";
 import { knownCrawler, recognizedCrawler, crawlerPolicy } from "@/lib/botRegistry";
-import { trustedBotEdge } from "@/lib/botEdge";
+import { trustedBotEdge, trustedBotIngress } from "@/lib/botEdge";
 
 type BotSearchProduct = "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE";
 
@@ -76,9 +76,10 @@ export function automationSignal(request: Request) {
 
 export async function observeBot(request: Request, signal: NonNullable<ReturnType<typeof automationSignal>>) {
   const catalog = recognizedCrawler(signal.declared);
+  const ingress = trustedBotIngress(request);
   const crawler = catalog?.category === "search" ? await identifySearchCrawler(request) : null;
   const verified = Boolean(crawler && crawler.evidence !== "DECLARED_USER_AGENT");
-  const operatorConfirmed = catalog?.category !== "search" && !signal.edge?.automated && await confirmedOperatorNetwork(signal.declared, signal.edge?.ip ?? null);
+  const operatorConfirmed = catalog?.category !== "search" && !signal.edge?.automated && await confirmedOperatorNetwork(signal.declared, ingress?.ip ?? null);
   const policy = crawlerPolicy(signal.declared, verified);
   // Keep existing evidence cohorts and verified quotas on their original registry IDs.
   const keyGroup = verified ? "SEARCH_ENGINE" : knownCrawler(signal.declared) && catalog?.category !== "search" && !signal.edge?.automated
@@ -89,17 +90,17 @@ export async function observeBot(request: Request, signal: NonNullable<ReturnTyp
     name: signal.declared,
     ...policy,
     verification: verified || operatorConfirmed ? "VERIFIED" : signal.edge?.automated && catalog ? "SUSPICIOUS"
-      : catalog?.category === "search" && signal.edge?.ip ? "UNVERIFIED"
+      : catalog?.category === "search" && ingress?.ip ? "UNVERIFIED"
       : signal.declared ? "DECLARED" : "UNVERIFIED",
     evidence: verified ? (crawler?.evidence === "VERIFIED_IP_RANGE" ? "OFFICIAL_IP_LIST" : "FORWARD_CONFIRMED_DNS")
       : operatorConfirmed ? "OFFICIAL_CRAWLER_NETWORK" : signal.edge?.automated ? "TRUSTED_EDGE_AUTOMATION" : signal.declared ? "USER_AGENT" : "AUTOMATION_SIGNATURE",
-    ip: signal.edge?.ip ?? null,
-    country: signal.edge?.country ?? null,
-    edgeRay: signal.edge?.ray ?? null,
-    networkAsn: signal.edge?.networkAsn ?? null,
-    networkOrganization: signal.edge?.networkOrganization ?? null,
-    networkSource: signal.edge && (signal.edge.ip || signal.edge.country || signal.edge.ray
-      || signal.edge.networkAsn || signal.edge.networkOrganization) ? "AUTHENTICATED_EDGE" : null,
+    ip: ingress?.ip ?? null,
+    country: ingress?.country ?? null,
+    edgeRay: ingress?.ray ?? null,
+    networkAsn: ingress?.networkAsn ?? null,
+    networkOrganization: ingress?.networkOrganization ?? null,
+    networkSource: ingress && (ingress.ip || ingress.country || ingress.ray
+      || ingress.networkAsn || ingress.networkOrganization) ? ingress.source : null,
     declaredName: signal.declared,
     // Keep crawler product tokens only. An arbitrary UA can contain secrets or personal data.
     userAgent: catalog?.agent ?? signal.declared,
