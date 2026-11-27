@@ -14,6 +14,7 @@ export const BOT_KINDS = [
   { value: "API", label: "API requests" },
   { value: "RESOURCE", label: "Resource requests" },
   { value: "SEARCH_ATTEMPT", label: "Search attempts" },
+  { value: "HISTORICAL_SEARCH", label: "Historical searches" },
 ] as const;
 export const BOT_DECISIONS = [
   { value: "ALLOWED", label: "Allowed" },
@@ -91,6 +92,17 @@ export function botType(bot: BotIdentity & { category: string | null }) {
     google: "Google additional services", seo: "SEO tools", archive: "Archiving", association: "App site association",
   };
   return category ? labels[category] ?? "Unknown" : "Unknown";
+}
+
+/** Historical registry entries are not proof of a verified current caller. */
+export function botRecordedVerification(bot: { verification: string; requests: bigint }) {
+  return bot.verification === "VERIFIED" && bot.requests === BigInt(0)
+    ? "Verified (historical searches)" : botVerification(bot.verification);
+}
+
+export function botRecordedAccess(bot: { access: string; requests: bigint }) {
+  return bot.requests === BigInt(0) && bot.access === "CRAWL_AND_LIMITED_SEARCH"
+    ? "Historical record" : botAccessLabel(bot.access);
 }
 
 export function botAccessLabel(access: string) {

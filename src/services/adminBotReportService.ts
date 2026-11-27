@@ -8,6 +8,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { recordedSearchCrawler } from "./adminOperationalReadCore";
 import { recordedBotSearchRows, type RecordedBotSearch } from "./recordedBotSearchHistory";
+import { botSearchNetwork, combinedBotHistory, historicalBotSearches, type BotHistoryPointer, type HistoricalBotSearch } from "./adminBotHistory";
 import { BOT_DAILY_SEARCH_LIMIT, nextSearchTime, utcDayStart } from "./botActivityStore";
 
 type Filters = ReturnType<typeof botFilters>;
@@ -47,7 +48,7 @@ function searchIdentity(query: string): Prisma.BotRegistryWhereInput | undefined
 
 const registrySelect = {
   id: true, identityKey: true, name: true, group: true, category: true, owner: true, access: true,
-  verification: true, firstSeen: true, lastSeen: true,
+  verification: true, firstSeen: true, lastSeen: true, requests: true,
 } satisfies Prisma.BotRegistrySelect;
 
 export async function readBotDirectory(raw: BotQuery) {
@@ -138,14 +139,19 @@ export async function readBotDetails(id: string, raw: BotQuery) {
       if (!bot) return null;
 
       const where = { botId: id, environment };
-      const historyWhere = {
-        ...where, timestamp: within(filters.window), kind: filters.kind, decision: filters.decision,
-      };
       const searchWhere = botSearchWhere(environment);
       const recorded = recordedBotSearchRows(environment);
-      const [observations, actualRows, total, quota, searchEvidence, relatedCohorts] = await Promise.all([
+      const history = combinedBotHistory(environment, id, bot.identityKey, {
+        window: filters.window ?? undefined, kind: filters.kind, decision: filters.decision,
+      });
+      const [observations, actualRows, totals, quota, searchEvidence, relatedCohorts, historicalRows] = await Promise.all([
         db.botActivity.findMany({
-          where, orderBy: [{ timestamp: "desc" }, { id: "desc" }], take: 20,
+          where: { ...where, OR: [
+            { ip: { not: null } }, { country: { not: null } },
+            { renderLogIp: { not: null } }, { renderLogCountry: { not: null } },
+            { reportedIp: { not: null } }, { reportedCountry: { not: null } },
+          ] },
+          orderBy: [{ timestamp: "desc" }, { id: "desc" }], take: 20,
           select: { ip: true, country: true, userAgent: true, declaredName: true, evidence: true,
             networkAsn: true, networkOrganization: true, networkSource: true, edgeRay: true,
             renderLogIp: true, renderLogCountry: true, reportedIp: true, reportedCountry: true },
@@ -153,7 +159,9 @@ export async function readBotDetails(id: string, raw: BotQuery) {
         db.$queryRaw<{ count: bigint }[]>`
           SELECT count(*) FROM (${recorded}) searches WHERE "botId" = ${id}
         `,
-        filters.window === null ? null : db.botActivity.count({ where: historyWhere }),
+        filters.window === null ? null : db.$queryRaw<{ count: bigint }[]>`
+          SELECT count(*) AS count FROM (${history}) timeline
+        `,
         bot.requests > BigInt(0) && bot.group === "SEARCH_ENGINE" && bot.verification === "VERIFIED" ? (async () => {
           const [{ now }] = await db.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
           const [last, used] = await Promise.all([
@@ -179,7 +187,12 @@ export async function readBotDetails(id: string, raw: BotQuery) {
           WHERE b.environment = ${environment} AND b.name = ${bot.name} AND b.id <> ${id}
           GROUP BY b.id, b.verification ORDER BY count(*) DESC, b.id LIMIT 10
         ` : Promise.resolve([]),
+        db.$queryRaw<{ count: bigint }[]>`
+          SELECT count(*) AS count FROM (${historicalBotSearches(environment)}) history
+          WHERE "identityKey" = ${bot.identityKey}
+        `,
       ]);
+      const total = totals === null ? null : Number(totals[0].count);
       const actual = Number(actualRows[0].count);
       const requestedSearchPage = typeof raw.searchPage === "string" && /^[1-9]\d{0,8}$/.test(raw.searchPage)
         ? Number(raw.searchPage) : 1;
@@ -189,18 +202,30 @@ export async function readBotDetails(id: string, raw: BotQuery) {
         ORDER BY "createdAt" DESC, id DESC OFFSET ${(searchPage - 1) * BOT_PAGE_SIZE} LIMIT ${BOT_PAGE_SIZE}
       ` : [];
       const page = Math.min(filters.page, Math.max(1, Math.ceil((total ?? 0) / BOT_PAGE_SIZE)));
-      const events = total ? await db.botActivity.findMany({
-        where: historyWhere, orderBy: [{ timestamp: "desc" }, { id: "desc" }],
-        skip: (page - 1) * BOT_PAGE_SIZE, take: BOT_PAGE_SIZE, omit: { retryKey: true },
-      }) : [];
+      const pointers = total ? await db.$queryRaw<BotHistoryPointer[]>`
+        SELECT id, timestamp, source FROM (${history}) timeline
+        ORDER BY timestamp DESC, source DESC, id DESC
+        OFFSET ${(page - 1) * BOT_PAGE_SIZE} LIMIT ${BOT_PAGE_SIZE}
+      ` : [];
+      const activityIds = pointers.filter(row => row.source === "activity").map(row => row.id);
+      const historicalIds = pointers.filter(row => row.source === "search").map(row => row.id);
+      const [events, historical] = await Promise.all([
+        activityIds.length ? db.botActivity.findMany({
+          where: { ...where, id: { in: activityIds } }, omit: { retryKey: true },
+        }) : [],
+        historicalIds.length ? db.$queryRaw<HistoricalBotSearch[]>`
+          SELECT * FROM (${historicalBotSearches(environment)}) history
+          WHERE "identityKey" = ${bot.identityKey} AND id IN (${Prisma.join(historicalIds)})
+        ` : [],
+      ]);
       const dispatched = events.filter(event => event.dispatchedAt);
       const requestIds = dispatched.map(event => event.id);
-      const [searches, providers] = requestIds.length ? await Promise.all([
-        db.searchHistory.findMany({
-          where: { ...searchWhere, requestId: { in: requestIds } },
-          select: { id: true, requestId: true, status: true, resultCount: true },
-        }),
-        db.apiProviderLog.findMany({
+      const [searches, providers] = await Promise.all([
+        activityIds.length ? db.searchHistory.findMany({
+          where: { ...searchWhere, requestId: { in: activityIds } },
+          select: { id: true, requestId: true, status: true, resultCount: true, query: true },
+        }) : [],
+        requestIds.length ? db.apiProviderLog.findMany({
           where: {
             createdAt: { gte: new Date(Math.min(...dispatched.map(event => event.timestamp.getTime()))) },
             AND: [{ metadata: { path: ["environment"], equals: environment } }],
@@ -208,20 +233,37 @@ export async function readBotDetails(id: string, raw: BotQuery) {
           },
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
           select: { id: true, provider: true, service: true, status: true, metadata: true },
-        }),
-      ]) : [[], []];
+        }) : [],
+      ]);
+      const live = events.map(event => {
+        const saved = searches.find(search => search.requestId === event.id);
+        return {
+          ...event, source: "activity" as const,
+          search: saved ? {
+            id: saved.id, status: saved.status, resultCount: saved.resultCount,
+            network: recordedSearchNetwork(saved.query),
+          } : undefined,
+          providers: providers.flatMap(({ metadata, ...provider }) =>
+            metadata && typeof metadata === "object" && !Array.isArray(metadata) && metadata.requestId === event.id ? [provider] : []),
+        };
+      });
+      const older = historical.map(({ network, ...row }) => ({
+        ...row, source: "search" as const, ...botSearchNetwork(network),
+      }));
+      const liveById = new Map(live.map(event => [event.id, event]));
+      const olderById = new Map(older.map(event => [event.id, event]));
+      const timeline = pointers.flatMap(pointer => {
+        const event = pointer.source === "activity" ? liveById.get(pointer.id) : olderById.get(pointer.id);
+        return event ? [event] : [];
+      });
       return {
-        bot, observations, actual, total, page, quota, searchPage, relatedCohorts,
+        bot, observations, actual, historicalActual: historicalRows[0].count,
+        total, page, quota, searchPage, relatedCohorts,
         searchEvidence: searchEvidence.map(row => recordedSearchNetwork(row.evidence)),
         recordedSearches: recordedSearches.map(({ evidence, ...row }) => ({
           ...row, network: recordedSearchNetwork(evidence), crawler: recordedSearchCrawler(evidence),
         })),
-        events: events.map(event => ({
-          ...event,
-          search: searches.find(search => search.requestId === event.id),
-          providers: providers.flatMap(({ metadata, ...provider }) =>
-            metadata && typeof metadata === "object" && !Array.isArray(metadata) && metadata.requestId === event.id ? [provider] : []),
-        })),
+        events: timeline,
       };
     }, { isolationLevel: "RepeatableRead" });
     if (!data) return { state: "missing" } as const;
