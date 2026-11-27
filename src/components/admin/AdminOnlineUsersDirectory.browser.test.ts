@@ -170,16 +170,23 @@ test("an identity already 89 seconds old expires after one second while an open 
         lastSeenAt:new Date(Date.parse(window.fixtureProps.initial.observedAt)-89000).toISOString()}:row)};
     window.fetch=async()=>{window.fixtureRequests++;return Response.json(window.fixtureProps.initial);};`;
   await withComponentBrowser(bundle(), setup, async page => {
-    await page.clock.install({ time: new Date(at) });
+    const observedTime = Date.parse(at);
+    // install() keeps ticking during browser actions. Pause before mounting so
+    // opening the filter cannot consume this sample's one remaining second.
+    await page.clock.install({ time: observedTime - 60_000 });
+    await page.clock.pauseAt(observedTime);
     await page.evaluate(() => (window as unknown as { fixtureMount: () => void }).fixtureMount());
     await expect(page.getByTestId("online-user-row").getByText("Online", { exact: true })).toHaveCount(25);
     const before = await page.getByTestId("online-user-row").allTextContents();
     const url = page.url();
     await page.getByRole("combobox", { name: "Identity type", exact: true }).click();
     await page.getByRole("listbox").waitFor();
+    assert.equal(await page.evaluate(() => Date.now()), observedTime);
     await page.clock.runFor(900);
+    assert.equal(await page.evaluate(() => Date.now()), observedTime + 900);
     await expect(page.getByTestId("online-user-row").getByText("Online", { exact: true })).toHaveCount(25);
     await page.clock.runFor(200);
+    assert.equal(await page.evaluate(() => Date.now()), observedTime + 1_100);
     await expect(page.getByTestId("online-user-row").getByText("Last observed", { exact: true })).toHaveCount(25);
     assert.equal(await page.getByTestId("online-user-row").getByText("Online", { exact: true }).count(), 0);
     await expect(page.getByRole("group", { name: "Last observed online counts", exact: true }).getByText("60", { exact: true })).toHaveCount(1);
