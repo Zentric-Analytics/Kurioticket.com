@@ -63,7 +63,12 @@ export default async function BotManagementPage({ searchParams }: { searchParams
                     <p className="text-xs text-slate-600">{botDirectorySubtitle(bot)}</p>
                   </td>
                   <td>{botType(bot)}</td>
-                  <td>{botVerification(bot.verification)}</td>
+                  <td>
+                    {botVerification(bot.verification)}
+                    {bot.verification !== "VERIFIED" && bot.activities[0]?.reportedNetworkMatch === "OFFICIAL_CRAWLER_RANGE_MATCH"
+                      && bot.activities[0].timestamp.getTime() === bot.lastSeen.getTime()
+                      && <p className="mt-0.5 text-xs text-slate-600">Official network match (reported IP)</p>}
+                  </td>
                   <td className="whitespace-nowrap"><span className={bot.access === "BLOCKED" ? "text-rose-700" : "text-slate-950"}>{botAccessLabel(bot.access)}</span></td>
                   <td className="whitespace-nowrap tabular-nums">{botDirectoryTime(bot.lastSeen)}</td>
                   <td><Link prefetch={false} className={reportLink + " inline-flex items-center gap-1 whitespace-nowrap"}
