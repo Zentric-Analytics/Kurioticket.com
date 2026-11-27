@@ -5,6 +5,7 @@ import { encodeCohort, decodeCohort, isCohortManifest } from "@/lib/search/cohor
 import { getPrisma } from "@/lib/prisma";
 import { runCacheWrite } from "@/lib/search/cacheWriteGate";
 import { publishCohort } from "@/lib/search/publishCohort";
+import { publishHotelCohortAliases } from "./publishHotelCohortAliases";
 import { Prisma } from "@/generated/prisma/client";
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
@@ -31,9 +32,9 @@ function boundedCacheWrite<T>(task: (db: Prisma.TransactionClient) => Promise<T>
 
 // Compress and bound each database value; a small manifest publishes only a
 // complete immutable generation. Compression is in the app, not PostgreSQL.
-async function writeSearchCohort(vertical: ProviderDetailsVertical, resultId: string, results: unknown[], search: unknown, now: number) {
+async function writeSearchCohort(vertical: ProviderDetailsVertical, resultId: string, results: unknown[], search: unknown, now: number, encoded?: Awaited<ReturnType<typeof encodeCohort>>) {
   const startedAt = performance.now();
-  const { manifest, chunks } = await encodeCohort(results, randomUUID());
+  const { manifest, chunks } = encoded ?? await encodeCohort(results, randomUUID());
   const encodedAt = performance.now();
   const deadline = Date.now() + 10_000;
   const write = (entries: { id: string; value: unknown; contextValue: unknown }[]) => {
@@ -168,6 +169,7 @@ export async function rememberProviderResults<T extends { id: string }>(
   results: T[],
   searchContext: unknown,
   now = Date.now(),
+  options: { requireComplete?: boolean } = {},
 ) {
   results = results.filter(result=>!productionSandboxInventory(result));
   if (!results.length) return;
@@ -193,7 +195,7 @@ export async function rememberProviderResults<T extends { id: string }>(
       )`);
       await runCacheWrite(() => getPrisma().$transaction(async db => {
         await db.$executeRaw`SET LOCAL statement_timeout = '4000ms'`;
-        await db.$executeRaw(Prisma.sql`
+        const persisted = await db.$executeRaw(Prisma.sql`
           INSERT INTO "ProviderResultCache" ("cacheKey", "vertical", "resultId", "normalizedResult", "searchContext", "expiresAt", "createdAt", "updatedAt")
           VALUES ${Prisma.join(rows)}
           ON CONFLICT ("cacheKey") DO UPDATE SET
@@ -201,10 +203,12 @@ export async function rememberProviderResults<T extends { id: string }>(
             "searchContext" = EXCLUDED."searchContext",
             "expiresAt" = EXCLUDED."expiresAt", "updatedAt" = CURRENT_TIMESTAMP
         `);
+        if (options.requireComplete && persisted !== rows.length) throw new Error("Provider inventory publication incomplete");
       }, { maxWait: 1000, timeout: 5000 }), deadline);
     }
   } catch {
     console.error("[provider-result-cache]", { event: "write_error", vertical });
+    if (options.requireComplete) throw new Error("Provider inventory publication unavailable");
   }
 }
 
@@ -299,12 +303,9 @@ export async function rememberHotelSearchCohort(
   if (!results.length) return true;
   const resultId = hotelSearchCohortId(search);
   try {
-    const snapshotIds = new Set(results.map(result => hotelSnapshotCohortId(search, result.id)).filter((id): id is string => id !== null));
-    for (const snapshotId of snapshotIds) {
-      const snapshotResults = results.filter(result => hotelSnapshotCohortId(search, result.id) === snapshotId);
-      await writeSearchCohort("hotel", snapshotId, snapshotResults, search, now);
-    }
-    await writeSearchCohort("hotel", resultId, results, search, now);
+    await publishHotelCohortAliases(results, resultId,
+      row => hotelSnapshotCohortId(search, row.id),
+      (key, rows, encoded) => writeSearchCohort("hotel", key, rows, search, now, encoded));
     return true;
   } catch {
     console.error("[provider-result-cache]", { event: "cohort_write_error", vertical: "hotel" });
@@ -332,4 +333,17 @@ export async function getHotelSearchCohort(
     console.error("[provider-result-cache]", { event: "cohort_read_error", vertical: "hotel" });
     return [];
   }
+}
+
+/** A continuation belongs to its signed snapshot, not the latest same-criteria search. */
+export async function getHotelSearchSnapshotCohort(search: HotelSearchParams, snapshot: string, now = Date.now()) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(snapshot)) return [];
+  const prefix = `kayak-sandbox:${snapshot}:`;
+  try {
+    const exact = await readSearchCohort("hotel", `${hotelSearchCohortId(search)}:snapshot:${snapshot}`, now) as NormalizedHotelResult[];
+    if (exact.length) return exact.filter(row => row.id.startsWith(prefix) && !productionSandboxInventory(row));
+    // Older rolling-deployment records may have only a criteria alias. It is
+    // eligible only when it still contains this exact server-owned snapshot.
+    return (await getHotelSearchCohort(search, now)).filter(row => row.id.startsWith(prefix));
+  } catch { return []; }
 }

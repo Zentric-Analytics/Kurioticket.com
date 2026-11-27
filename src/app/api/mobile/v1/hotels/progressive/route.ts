@@ -109,7 +109,7 @@ export async function POST(request: Request) {
   }
   const recordedSearch = () => ({ ...search, ...searchNetworkObservation(request), ...(operationalSession ? operationalSessionMetadata(operationalSession.reference) : {}), ...(operationalHotelSnapshotId ? { operationalHotelSnapshotId } : {}) });
   try {
-    const outcome = await searchHotelBatch(search,{clientIp:getKayakClientIp(request),userAgent:request.headers.get("user-agent")??undefined,trackId,requestId:trackId,signal:request.signal},snapshot,state?.checkpoint);
+    const outcome = await searchHotelBatch(search,{clientIp:getKayakClientIp(request),userAgent:request.headers.get("user-agent")??undefined,trackId,requestId:trackId,signal:request.signal},snapshot,state?.checkpoint,{defer:after});
     if (!outcome.supported) {
       after(async () => {
         const { userId, visitorId, ...application } = await resolveSearchIdentity();

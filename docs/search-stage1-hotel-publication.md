@@ -1,0 +1,11 @@
+# Stage 1 hotel publication
+
+Progressive batches now supply the existing Next.js after scheduler to the central hotel persistence service. Complete snapshot/criteria cohorts are still atomically published before response release. Only after publication succeeds are individual-row writes scheduled as optional work. Scheduler or optional write failure cannot invalidate the complete fallback. If no cohort is available, individual fallback publication remains awaited and database failures propagate instead of being silently treated as complete publication.
+
+Snapshot and criteria aliases share one encoded immutable generation only when they describe exactly the same full inventory. Mixed snapshots receive separate encodings and criteria receive the complete accumulated inventory. Chunk/manifest formats, keys, ownership, expiry, reader compatibility, all rates and provider details semantics are preserved. No cursor, supplier identity, credential, IP or session authorization is changed.
+
+Continuations read their signed snapshot alias before a legacy same-criteria fallback, so another same-criteria search cannot replace their accumulation. Legacy fallback is filtered to the exact snapshot. Required individual fallback verifies affected row counts and fails closed on database errors or incomplete writes; optional legacy writes retain their existing best-effort behavior.
+
+Tests cover delayed/failed optional writes, scheduler failure, required fallback failure, exact and mixed snapshot aliases, concurrent publication, unchanged decode/rolling-reader formats, publication failure and forwarding the scheduler through the actual central batch service. Existing snapshot/cursor ownership and resilience tests remain required. Historical approximately 20.7-second waiting is comparison evidence, not a promised gain. Real timing/details during progressive loading must be verified after owner-authorized staging delivery.
+
+Rollback is a scoped revert of this unit. Readers retain the existing format; immutable old generations expire normally. No migration, database edit or production change is needed.
