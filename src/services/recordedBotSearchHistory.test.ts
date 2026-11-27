@@ -7,7 +7,7 @@ import { combinedBotHistory } from "./adminBotHistory";
 import { getPrisma } from "@/lib/prisma";
 import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { recordedSearchCrawler } from "./adminOperationalReadCore";
-import { botNetworkIpCandidatePage, detailHistoryQuery, recordedBotSearchRows, summarizeBotNetwork, summarizeBotNetworkPaged, type BotNetworkIpCandidate, type RecordedBotSearch } from "./recordedBotSearchHistory";
+import { declareBotNetworkIpCursor, detailHistoryQuery, recordedBotSearchRows, summarizeBotNetwork, summarizeBotNetworkPaged, type BotNetworkIpCandidate, type RecordedBotSearch } from "./recordedBotSearchHistory";
 
 test("recorded bot searches reconcile legacy and linked records exactly once, without changing authorization", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
   const previousUrl = process.env.DATABASE_URL;
@@ -164,14 +164,24 @@ test("recorded bot searches reconcile legacy and linked records exactly once, wi
     combinedBotHistory(environment, verified.id, verified.identityKey, { window: undefined },
       Prisma.sql`SELECT id, "createdAt" AS timestamp FROM recorded WHERE "activityId" IS NULL`), true, 1, 1));
   let fallbackPages = 0;
-  const crowdedNetwork = await summarizeBotNetworkPaged(
-    crowded.networkIpCandidates, crowded.networkCountryCodes, async offset => {
-      fallbackPages++;
-      const [batch] = await db.$queryRaw<{ candidates: BotNetworkIpCandidate[] }[]>(
-        botNetworkIpCandidatePage(environment, verified.id, verified.name, offset));
-      assert.ok(batch.candidates.length <= BOT_PAGE_SIZE, "Each fallback page stays bounded");
-      return batch.candidates;
-    });
+  const crowdedNetwork = await db.$transaction(async tx => {
+    let cursorOpen = false;
+    try {
+      return await summarizeBotNetworkPaged(crowded.networkIpCandidates, crowded.networkCountryCodes, async () => {
+        if (!cursorOpen) {
+          await tx.$executeRaw(declareBotNetworkIpCursor(environment, verified.id, verified.name));
+          cursorOpen = true;
+          await tx.$executeRaw`MOVE FORWARD 25 FROM bot_network_ip_cursor`;
+        }
+        fallbackPages++;
+        const batch = await tx.$queryRaw<BotNetworkIpCandidate[]>`FETCH FORWARD 25 FROM bot_network_ip_cursor`;
+        assert.ok(batch.length <= BOT_PAGE_SIZE, "Each cursor fetch stays bounded");
+        return batch;
+      });
+    } finally {
+      if (cursorOpen) await tx.$executeRaw`CLOSE bot_network_ip_cursor`;
+    }
+  });
   assert.equal(crowded.networkIpCandidates.length, BOT_PAGE_SIZE, "Initial SQL summary remains bounded");
   assert.ok(fallbackPages >= 1, "A newer invalid batch must not hide an older public IP");
   assert.equal(crowdedNetwork.latestIp?.ip, "66.249.67.74");

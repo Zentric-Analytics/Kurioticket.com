@@ -8,7 +8,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { activityNetworkEvidence, botReportVerification, reportEvidenceSelect } from "@/lib/adminBotNetworkEvidence";
 import { recordedSearchCrawler } from "./adminOperationalReadCore";
-import { botNetworkIpCandidatePage, detailHistoryQuery, recordedBotSearchRows, summarizeBotNetworkPaged, type BotNetworkIpCandidate, type RecordedBotSearch } from "./recordedBotSearchHistory";
+import { declareBotNetworkIpCursor, detailHistoryQuery, recordedBotSearchRows, summarizeBotNetworkPaged, type BotNetworkIpCandidate, type RecordedBotSearch } from "./recordedBotSearchHistory";
 import { botSearchNetwork, combinedBotHistory, type BotHistoryPointer, type HistoricalBotSearch } from "./adminBotHistory";
 import { BOT_DAILY_SEARCH_LIMIT, nextSearchTime, utcDayStart } from "./botActivityStore";
 
@@ -229,12 +229,21 @@ export async function readBotDetails(id: string, raw: BotQuery) {
         const event = pointer.source === "activity" ? liveById.get(pointer.id) : olderById.get(pointer.id);
         return event ? [event] : [];
       });
-      const networkSummary = await summarizeBotNetworkPaged(
-        reportRows.networkIpCandidates, reportRows.networkCountryCodes, async offset => {
-          const [batch] = await db.$queryRaw<{ candidates: BotNetworkIpCandidate[] }[]>(
-            botNetworkIpCandidatePage(environment, id, summaryName, offset));
-          return batch.candidates;
-        });
+      let cursorOpen = false;
+      let networkSummary;
+      try {
+        networkSummary = await summarizeBotNetworkPaged(
+          reportRows.networkIpCandidates, reportRows.networkCountryCodes, async () => {
+            if (!cursorOpen) {
+              await db.$executeRaw(declareBotNetworkIpCursor(environment, id, summaryName));
+              cursorOpen = true;
+              await db.$executeRaw`MOVE FORWARD 25 FROM bot_network_ip_cursor`;
+            }
+            return db.$queryRaw<BotNetworkIpCandidate[]>`FETCH FORWARD 25 FROM bot_network_ip_cursor`;
+          });
+      } finally {
+        if (cursorOpen) await db.$executeRaw`CLOSE bot_network_ip_cursor`;
+      }
       return {
         bot, actual, historicalActual,
         networkSummary,
