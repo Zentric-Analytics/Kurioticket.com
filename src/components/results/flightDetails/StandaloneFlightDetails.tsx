@@ -12,7 +12,7 @@ import { flightBaggageTerms, flightFareDetailCabins, flightOnboardFeatureLabel }
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import {
   ArrowLeft,
   Check,
@@ -47,7 +47,6 @@ import type {
 import { flightDetailsRouteLabel } from "@/lib/flights/flightDetailsContract";
 import { nativeFlightDealSelection } from "@/lib/flights/nativeFlightDealSelection";
 import type { FlightLeg, FlightProviderCondition, FlightSegment } from "@/lib/types";
-import { readSavedItemIds, toggleSavedItemId, writeSavedItemIds } from "@/lib/saved-items-local";
 import { invalidateSavedFlightsClientCache } from "@/lib/saved-flight-events";
 import flightDetailsHero from "../../../../apps/mobile/assets/heroes/flight-details-hero.webp";
 
@@ -77,7 +76,6 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const [reloadToken, setReloadToken] = useState(0);
   const [activeTab, setActiveTab] = useState<FareTab>("deals");
   const [selectedDealOfferId, setSelectedDealOfferId] = useState<string | null>(null);
-  const [localSavedFlightIds, setLocalSavedFlightIds] = useState<string[]>([]);
   const [savedFlightBackendId, setSavedFlightBackendId] = useState<string | null>(null);
   const [savedFlightPending, setSavedFlightPending] = useState(false);
   const [savedFlightError, setSavedFlightError] = useState<string | null>(null);
@@ -113,19 +111,6 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
       });
     return () => controller.abort();
   }, [detailsQuery, id, reloadToken]);
-
-  useEffect(() => {
-    if (sessionStatus === "authenticated" || typeof window === "undefined") return;
-    const syncSavedFlights = () => setLocalSavedFlightIds(readSavedItemIds());
-    const frame = window.requestAnimationFrame(syncSavedFlights);
-    window.addEventListener("storage", syncSavedFlights);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener("storage", syncSavedFlights);
-    };
-  }, [sessionStatus]);
-
-
 
   const available = response?.status === "available" ? response : null;
   const fareChoices = useMemo(() => available?.fareChoices ?? [], [available]);
@@ -265,11 +250,15 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   };
 
   async function toggleSavedFlight() {
-    if (!selectedOffer || savedFlightPending) return;
+    if (!selectedOffer || savedFlightPending || sessionStatus === "loading") return;
     setSavedFlightPending(true);
     setSavedFlightError(null);
 
     try {
+      if (sessionStatus === "unauthenticated") {
+        await signIn(undefined, { callbackUrl: window.location.href });
+        return;
+      }
       if (sessionStatus === "authenticated") {
         if (savedFlightBackendId) {
           const response = await fetch("/api/dashboard/saved", {
@@ -328,13 +317,6 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         return;
       }
 
-      const next = toggleSavedItemId(readSavedItemIds(), savedFlightKey);
-      if (!writeSavedItemIds(next)) {
-        setSavedFlightError("Unable to update saved flight on this device.");
-        return;
-      }
-      setLocalSavedFlightIds(next);
-      recordCustomerInteraction({ action: next.includes(savedFlightKey) ? "local_saved" : "local_unsaved", product: "FLIGHT", resultId: savedFlightKey, requestId: journeyEvents.interactionRequestId("flight", id) });
     } catch (error) {
       setSavedFlightError(error instanceof SavedFlightTimeError ? error.message : "Unable to save flight. Please try again.");
     } finally {
@@ -360,9 +342,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     window.setTimeout(() => setShareFeedback(""), 3000);
   }
 
-  const flightSaved = sessionStatus === "authenticated"
-    ? Boolean(savedFlightBackendId)
-    : localSavedFlightIds.includes(savedFlightKey);
+  const flightSaved = sessionStatus === "authenticated" && Boolean(savedFlightBackendId);
 
   return (
     <main className="flex-1 bg-white pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-slate-900 sm:bg-[#F7F9FC] sm:text-[#142033] sm:pb-16 sm:pt-4 lg:pt-3">
@@ -374,7 +354,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         )}
         actions={(
           <>
-            <button type="button" aria-label={flightSaved ? "Remove saved flight" : "Save flight"} aria-pressed={flightSaved} disabled={savedFlightPending} onClick={() => void toggleSavedFlight()} className="inline-flex h-11 w-11 items-center justify-center shrink-0 rounded-full text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60">
+            <button type="button" aria-label={flightSaved ? "Remove saved flight" : "Save flight"} aria-pressed={flightSaved} disabled={savedFlightPending || sessionStatus === "loading"} onClick={() => void toggleSavedFlight()} className="inline-flex h-11 w-11 items-center justify-center shrink-0 rounded-full text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60">
               <Heart className="h-5 w-5" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
             </button>
             <button type="button" aria-label="Share flight" onClick={() => void shareFlight()} className="inline-flex h-11 w-11 items-center justify-center shrink-0 rounded-full text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35">
@@ -406,7 +386,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                     type="button"
                     aria-label={flightSaved ? "Remove saved flight" : "Save flight"}
                     aria-pressed={flightSaved}
-                    disabled={savedFlightPending}
+                    disabled={savedFlightPending || sessionStatus === "loading"}
                     onClick={() => void toggleSavedFlight()}
                     className={`inline-flex size-11 items-center justify-center rounded-full border border-white/55 bg-white/90 shadow-[0_2px_8px_rgba(15,23,42,0.14)] backdrop-blur-md transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 disabled:cursor-wait disabled:opacity-60 ${flightSaved ? "text-[#075EE8]" : "text-[#07133B]"}`}
                   >
