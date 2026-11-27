@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
-import { normalizeUserActivityQuery, safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
+import { safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
+import { normalizeLiveUserActivityQuery, liveActivityQueryParams } from "@/lib/adminActivityLiveQuery";
 import { activityHref, parseActivityFilters, validActivityIdentity } from "@/lib/adminIdentityActivity";
 import { journeyHistoryHrefFromActivity } from "@/lib/adminActivityOverview";
 import { pageHistoryHrefFromActivity } from "@/lib/adminPageHistory";
+import { deviceHistoryHrefFromActivity } from "@/lib/adminDeviceHistory";
 import { loadAdminUnifiedActivity } from "@/services/adminUnifiedActivityService";
 import { AdminFullActivityWorkspace, FULL_ACTIVITY_CATEGORIES } from "@/components/admin/AdminFullActivityWorkspace";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
@@ -33,53 +35,52 @@ export default async function AdminAllActivityPage({params,searchParams}:Props) 
   const input = await searchParams;
   const cursor = typeof input.cursor === "string" ? input.cursor : undefined;
   // A continuation keeps the exact reporting cutoff, not a new rolling range.
-  const raw = normalizeUserActivityQuery(input,now,timeZone);
-  if (cursor) {
-    if (typeof input.from === "string") raw.from = input.from;
-    if (typeof input.to === "string") raw.to = input.to;
-  }
+  const raw = normalizeLiveUserActivityQuery(input,now,timeZone);
   if (!raw.to) raw.to = now.toISOString();
   const parsed = parseActivityFilters(raw,timeZone);
   const accessOrPages = parsed.ok && (parsed.filters.tab === "access" || parsed.filters.tab === "pages");
   const incompatible = accessOrPages && (parsed.filters.product !== "all" ||
     (parsed.filters.stage !== "all" && !(parsed.filters.tab === "pages" && parsed.filters.stage === "PAGE_VIEW")));
   const queryParams = safeActivityQueryParams(raw);
-  const back = activityHref(base + "/activity",queryParams,{tab:null,stage:null,q:null,product:null});
+  const newestParams = liveActivityQueryParams(raw);
+  const back = activityHref(base + "/activity",newestParams,{tab:null,stage:null,q:null,product:null});
   const breadcrumb = <Link href={back} className={linkClass}><ArrowLeft size={15} aria-hidden="true"/> Back to Activity</Link>;
   if (!parsed.ok || Array.isArray(input.cursor) || incompatible) return <div className="space-y-4">{breadcrumb}<AdminEmptyState title="Invalid activity filters" message={!parsed.ok ? parsed.error : incompatible ? "Product and travel activity types do not apply to this category." : "Invalid activity page."} action={<Link href={path} className={linkClass}>Reset filters</Link>}/></div>;
   const filters = parsed.filters;
   const result = await loadAdminUnifiedActivity(kind,id,filters,cursor,now);
   if (result.status === "not_found") notFound();
-  if (result.status !== "ok") return <div className="space-y-4">{breadcrumb}<AdminEmptyState title="Activity history unavailable" message={result.status === "invalid_cursor" ? "The page link no longer matches the selected filters." : "Recorded activity could not be loaded. This does not mean no activity exists."} action={<Link href={activityHref(path,queryParams,{cursor:null})} className={linkClass}>Return to newest activity</Link>}/></div>;
+  if (result.status !== "ok") return <div className="space-y-4">{breadcrumb}<AdminEmptyState title="Activity history unavailable" message={result.status === "invalid_cursor" ? "The page link no longer matches the selected filters." : "Recorded activity could not be loaded. This does not mean no activity exists."} action={<Link href={activityHref(path,newestParams,{cursor:null})} className={linkClass}>Return to newest activity</Link>}/></div>;
   const data = result.data;
   const operational = data.source === "operational";
   // This is the identity's dated all-time location summary, not a filter result.
   const locations = kind === "guest" ? await loadAdminGuestRecordedLocations([id], { range: "all", page: 1 }, data.environment, now, timeZone) : null;
   const recordedLocation = locations?.get(guestRecordedLocationKey(id, operational ? "operational" : "consented"));
-  const returnHref = activityHref(path,queryParams,{cursor:cursor ?? null});
-  const range = typeof raw.range === "string" ? raw.range : "today";
+  const returnHref = activityHref(path,cursor ? queryParams : newestParams,{cursor:cursor ?? null});
+  const range = typeof raw.range === "string" ? raw.range : "all";
   const pagesHref = pageHistoryHrefFromActivity(kind,id,{...filters,tab:"pages",stage:"all",product:"all",q:""},range,returnHref);
   const journeysHref = journeyHistoryHrefFromActivity(kind,id,filters,range,returnHref);
   const nextHref = data.nextCursor ? activityHref(path,queryParams,{cursor:data.nextCursor}) : null;
-  const accessHref = base + "/devices?range=all&activityReturn=" + encodeURIComponent(returnHref);
+  const newestHref = cursor ? activityHref(path,newestParams,{cursor:null}) : undefined;
+  const accessHref = deviceHistoryHrefFromActivity(kind,id,filters,range,returnHref,timeZone);
+  const unavailableCategory = operational && ["pages","selections","interactions"].includes(filters.tab);
+  const unavailableStage = operational && !["all","SEARCH_COMPLETED","PROVIDER_HANDOFF_STARTED"].includes(filters.stage);
+  const operationalUnavailable = "This activity is not collected for an essential guest session. Choose All activity to see its recorded searches and handoffs.";
   return <AdminFullActivityWorkspace backHref={back} title={data.title}
     identityType={operational ? "Essential operational activity" : data.source === "visitor" ? "Consented guest" : "Registered account"}
+    coverage={operational ? "operational" : kind === "guest" ? "consented" : "registered"}
     identityDetails={kind === "guest" ? <AdminRecordedGuestLocation location={recordedLocation} timeZone={timeZone}/> : null}
-    journeyAction={{label:"View journey history",href:journeysHref}}
-    filters={{timeZone,now:now.toISOString(),path,directory:queryParams.directory ?? "",
+    journeyAction={operational ? {label:"Journey history unavailable",unavailableReason:operationalUnavailable} : {label:"View journey history",href:journeysHref}}
+    filters={{timeZone,now:now.toISOString(),path,directory:queryParams.directory ?? "",usersReturn:queryParams.usersReturn,
+      availableStages:operational ? ["SEARCH_COMPLETED","PROVIDER_HANDOFF_STARTED"] : undefined,
       initial:{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order:"newest",from:filters.from,to:filters.to,range}}}
     activeCategory={filters.tab}
-    categories={FULL_ACTIVITY_CATEGORIES.map(tab=>({...tab,...(operational && tab.value === "pages"
-      ? {unavailableReason:"Pages visited are unavailable for an operational guest session."}
-      : {href:activityHref(path,queryParams,{tab:tab.value,cursor:null,stage:null,product:tab.value==="access"||tab.value==="pages"?null:queryParams.product ?? null,q:tab.value==="access"||tab.value==="pages"?null:queryParams.q ?? null})})}))}
-    historyActions={[
-      {label:"Device & Access history",href:accessHref},
-      operational ? {label:"Pages visited history",unavailableReason:"Pages visited are unavailable for an operational guest session."}
-        : {label:"Pages visited history",href:pagesHref},
-      ...(cursor ? [{label:"Newest activity",href:activityHref(path,queryParams,{cursor:null})}] : []),
-    ]}>
+    categories={FULL_ACTIVITY_CATEGORIES.map(tab=>({...tab,...(operational && ["pages","selections","interactions"].includes(tab.value)
+      ? {unavailableReason:"Not collected for this essential guest session."}
+      : {href:activityHref(path,newestParams,{tab:tab.value,cursor:null,stage:null,product:tab.value==="access"||tab.value==="pages"?null:queryParams.product ?? null,q:tab.value==="access"||tab.value==="pages"?null:queryParams.q ?? null})})}))}>
+    {cursor ? <p className="rounded-lg bg-[#F1F6FF] px-3 py-2.5 text-[13px] leading-5 text-[#475569]">You’re browsing older activity. This page keeps its position as new actions arrive. <Link href={newestHref!} className="font-medium text-[#004BB8] hover:underline">View newest activity</Link></p> : null}
     {kind==="guest"&&filters.tab==="access"?<p className="text-[12px] text-[#64748B]">Guest access observations describe recorded evidence, not authenticated device sessions.</p>:null}
     <AdminUnifiedActivityList events={data.events} timeZone={timeZone} environment={data.environment}
-      accessHref={accessHref} pagesHref={!operational?pagesHref:undefined} nextHref={nextHref}/>
+      accessHref={accessHref} pagesHref={!operational?pagesHref:undefined} nextHref={nextHref} newestHref={newestHref} returnHref={returnHref}
+      historyUnavailable={unavailableCategory || unavailableStage ? operationalUnavailable : undefined}/>
   </AdminFullActivityWorkspace>;
 }

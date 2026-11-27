@@ -138,14 +138,14 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     if (!journeysById.has(journey.id)) journeysById.set(journey.id, { ...journey, events: [] });
     journeysById.get(journey.id)!.events.push(event);
   }
-  const calls: Array<{ source: string; take: number; skip?: number }> = [];
+  const calls: Array<{ source: string; take: number; skip?: number; replacementValidation: boolean }> = [];
   let historyReads = 0;
-  let failAfterFirstBatch = false;
+  let failSourceAfterFirstBatch: string | null = null;
   const delegate = (source: string, rows: Row[]) => ({
     async findMany(args: Row) {
       historyReads++;
-      if (failAfterFirstBatch && source === "search" && calls.some(call => call.source === source)) throw new Error("Batch unavailable");
-      calls.push({ source, take: args.take, skip: args.skip });
+      if (failSourceAfterFirstBatch === source && calls.some(call => call.source === source)) throw new Error("Batch unavailable");
+      calls.push({ source, take: args.take, skip: args.skip, replacementValidation: Boolean(args.select?.journeyEvents) });
       const matching = rows.filter(row => matches(row, args.where));
       const order = Array.isArray(args.orderBy) ? args.orderBy : [args.orderBy];
       matching.sort((a, b) => {
@@ -156,7 +156,12 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
         }
         return 0;
       });
-      return matching.slice(args.skip ?? 0, (args.skip ?? 0) + args.take);
+      const selected = matching.slice(args.skip ?? 0, (args.skip ?? 0) + args.take);
+      // Replacement validation selects only canonical events eligible for the
+      // current view, just like Prisma's nested relation where clause.
+      return args.select?.journeyEvents ? selected.map(row => ({ ...row,
+        journeyEvents: row.journeyEvents.filter((event: Row) => matches(event, args.select.journeyEvents.where)),
+      })) : selected;
     },
     async count(args: Row) { historyReads++; return rows.filter(row => matches(row, args.where)).length; },
     async groupBy(args: Row) {
@@ -242,7 +247,8 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     setGuestVisitor: (state: Row | null) => { identityVisitor = state ? { ...visitor, ...state, id } : null; },
     historyReads: () => historyReads,
     transactionOptions, calls, candidateQueries,
-    failNextBatch: () => { failAfterFirstBatch = true; }, transactions: () => transactions,
+    failNextBatch: (source = "search") => { failSourceAfterFirstBatch = source; }, transactions: () => transactions,
+    records: { searches: searchRows, handoffs: handoffRows, analytics: analyticsRows, journeys: journeyRows },
     expected: count + handoffRows.length + analyticsRows.length,
   };
 }
@@ -467,21 +473,24 @@ test("registered account with 150 eligible links checks only 6 event-bearing vis
   });
   assert.deepEqual(scenario.candidateQueries[0].AND[1].journeys.some.events.some.type.in, [
     "SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED",
-    "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED",
+    "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED",
+    "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED",
   ]);
 });
 
-test("compact page visits retain exact totals and full travel history; separate history pages match authorized records", async () => {
+test("overview page visits retain exact totals while separate history pages match every authorized record", async () => {
   for (const kind of ["guest", "user"] as const) {
     const scenario = setup(kind, 40, ["FLIGHT", "HOTEL"], false, "HOTEL", 1, 1, 46);
     const summary = await scenario.load(allFilters, undefined, "summary");
     assert.equal(summary.status, "ok");
     assert.equal(summary.data.summary.searches, 40);
     assert.equal(summary.data.summary.pagesVisited, 46);
+    assert.equal(summary.data.summary.recordedActions, 190);
+    assert.equal(summary.data.events.length, 5);
     const recent = summary.data.events.filter((event: Row) => event.stage === "PAGE_VIEW");
     assert.equal(recent.length, 1);
     assert.deepEqual(recent.map((row: Row) => row.id), ["e-qa-page-000000"]);
-    assert.ok(scenario.calls.some(call => call.source === "analytics" && call.take === 1));
+    assert.ok(scenario.calls.some(call => call.source === "analytics" && call.take === 45));
     const pageFilters = { ...allFilters, tab: "pages" };
     const full = await scenario.load(pageFilters, undefined, "all");
     assert.equal(full.data.events.length, 46);
@@ -526,4 +535,279 @@ test("operational activity carries only verified search links and existing resul
   assert.equal(result.data.summary.journeysTracked, 0);
   assert.equal(result.data.summary.resultsViewed, 0);
   assert.equal(result.data.summary.offersSelected, 0);
+});
+
+test("45 linked analytics rows cannot hide the six older eligible account actions", async () => {
+  for (const kind of ["guest", "user"] as const) {
+    const scenario = setup(kind, 0);
+    scenario.records.handoffs.length = 0;
+    for (const row of scenario.records.analytics.slice(0, 45)) {
+      row.metadata = { ...row.metadata, linkedJourneyId: "qa-linked-journey", linkedSearchHistoryId: "qa-linked-search" };
+    }
+    const filters = { ...allFilters, tab: "interactions" };
+    const result = await scenario.load(filters, undefined, "page");
+    assert.equal(result.status, "ok");
+    assert.deepEqual(result.data.events.map((row: Row) => row.id), scenario.records.analytics.slice(45).map(row => "e-" + row.id));
+    assert.equal(result.data.summary.recordedActions, 6);
+    assert.equal(result.data.nextCursor, null);
+    const overview = await scenario.load(filters, undefined, "summary");
+    assert.equal(overview.data.events.length, 5);
+    assert.equal(overview.data.summary.recordedActions, 6);
+    assert.deepEqual(overview.data.events, result.data.events.slice(0, 5));
+  }
+});
+
+test("linked suppression keeps its exact JSON type rules for rows and counts", async () => {
+  const scenario = setup("guest", 0);
+  scenario.records.handoffs.length = 0;
+  scenario.records.analytics.splice(6);
+  const metadata = [
+    { linkedJourneyId: "journey", linkedSearchHistoryId: "search" },
+    { linkedJourneyId: "journey" },
+    { linkedSearchHistoryId: "search" },
+    { linkedJourneyId: 7, linkedSearchHistoryId: "search" },
+    { linkedJourneyId: "journey", linkedSearchHistoryId: null },
+    {},
+  ];
+  scenario.records.analytics.forEach((row, index) => { row.metadata = { environment: "staging", ...metadata[index] }; });
+  const result = await scenario.load(allFilters, undefined, "summary");
+  assert.equal(result.status, "ok");
+  assert.equal(result.data.summary.recordedActions, 5);
+  assert.deepEqual(result.data.events.map((row: Row) => row.id), scenario.records.analytics.slice(1).map(row => "e-" + row.id));
+});
+
+test("every eligible action remains reachable in 20-row mixed-source pages and stable tied order", async () => {
+  for (const order of ["newest", "oldest"]) {
+    const scenario = setup("user", 113, ["FLIGHT", "HOTEL"], true, "HOTEL", 1, 1, 46);
+    const filters = { ...allFilters, order, to: "2026-10-28T09:01:00.000Z" };
+    const complete = await scenario.load(filters);
+    assert.equal(complete.status, "ok");
+    const rows: Row[] = [];
+    const cursors = new Set<string>();
+    let cursor: string | undefined;
+    do {
+      const result = await scenario.load(filters, cursor, "page");
+      assert.equal(result.status, "ok");
+      assert.equal(result.data.summary.recordedActions, complete.data.events.length);
+      assert.ok(result.data.events.length <= 20);
+      if (result.data.nextCursor) assert.equal(result.data.events.length, 20);
+      rows.push(...result.data.events);
+      cursor = result.data.nextCursor ?? undefined;
+      if (cursor) {
+        assert.ok(!cursors.has(cursor), "every cursor must advance");
+        cursors.add(cursor);
+      }
+    } while (cursor);
+    assert.deepEqual(rows.map(row => row.id), complete.data.events.map((row: Row) => row.id));
+    assert.equal(new Set(rows.map(row => row.id)).size, rows.length);
+  }
+});
+
+test("overview is exactly the latest five global actions even when all five are page visits", async () => {
+  for (const kind of ["guest", "user"] as const) {
+    const scenario = setup(kind, 1105, ["FLIGHT", "HOTEL"], false, "HOTEL", 1, 1, 46);
+    scenario.records.analytics.filter(row => row.type === "PAGE_VIEW").forEach((row, index) => {
+      row.createdAt = new Date(+baseTime + 10_000 - index * 1000);
+    });
+    const overview = await scenario.load(allFilters, undefined, "summary");
+    assert.equal(overview.status, "ok");
+    assert.equal(overview.data.events.length, 5);
+    assert.ok(overview.data.events.every((row: Row) => row.stage === "PAGE_VIEW"));
+    assert.equal(overview.data.nextCursor, null);
+    assert.equal(overview.data.summary.recordedActions, 1255);
+    assert.equal(overview.data.summary.pagesVisited, 46);
+    assert.deepEqual(overview.data.summary.searchProducts, { flights: 553, hotels: 552, cars: 0, other: 0 });
+    for (const source of ["journey", "search", "handoff"]) {
+      const reads = scenario.calls.filter(call => call.source === source);
+      assert.equal(reads.length, 1, source + " history must not drain for a preview");
+      assert.ok(reads.every(call => call.take <= 45));
+    }
+    const complete = await scenario.load();
+    assert.deepEqual(overview.data.events, complete.data.events.slice(0, 5));
+    assert.equal(overview.data.summary.recordedActions, complete.data.events.length);
+  }
+});
+
+test("overview remains newest-first and its counts preserve exact search product fallbacks", async () => {
+  const scenario = setup("guest", 6, ["FLIGHT", "HOTEL", "CAR"]);
+  scenario.records.journeys[0].product = null;
+  const complete = await scenario.load();
+  const overview = await scenario.load({ ...allFilters, order: "oldest" }, undefined, "summary");
+  assert.deepEqual(overview.data.events, complete.data.events.slice(0, 5));
+  assert.deepEqual(overview.data.summary.searchProducts, { flights: 2, hotels: 2, cars: 2, other: 0 });
+});
+
+test("all retained edit, filter, sort, detail and provider-choice stages appear and count under their own category", async () => {
+  const scenario = setup("guest", 1);
+  const sample = scenario.records.journeys[0];
+  const stages = ["SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED",
+    "FLIGHT_DETAILS_VIEWED", "PROVIDER_DEAL_SELECTED"];
+  for (const [index, type] of stages.entries()) scenario.records.journeys.push({
+    ...sample, id: "qa-retained-" + index, type, createdAt: new Date(+baseTime + (index + 1) * 1000),
+  });
+  const full = await scenario.load();
+  assert.equal(full.status, "ok");
+  assert.equal(full.data.summary.recordedActions, full.data.events.length);
+  assert.equal(full.data.summary.searches, 1);
+  assert.equal(full.data.summary.journeysTracked, 1);
+  assert.equal(full.data.summary.offersSelected, 0);
+  for (const stage of stages) {
+    const category = stage === "PROVIDER_DEAL_SELECTED" ? "selections" : "searches";
+    const result = await scenario.load({ ...allFilters, tab: category, stage }, undefined, "page");
+    assert.equal(result.status, "ok", stage);
+    assert.equal(result.data.events.length, 1, stage);
+    assert.equal(result.data.events[0].stage, stage);
+    assert.equal(result.data.summary.recordedActions, 1, stage);
+    assert.equal(result.data.nextCursor, null, stage);
+  }
+});
+
+test("text search matches the displayed edit, filter and sort action labels", async () => {
+  const scenario = setup("guest", 1);
+  const sample = scenario.records.journeys[0];
+  for (const [index, [stage, label]] of [
+    ["SEARCH_EDIT_APPLIED", "Search edit submitted"],
+    ["SEARCH_FILTER_APPLIED", "Results filter applied"],
+    ["SEARCH_SORT_CHANGED", "Results sort changed"],
+  ].entries()) {
+    scenario.records.journeys.push({ ...sample, id: "qa-label-search-" + index, type: stage });
+    for (const q of [label, stage.replaceAll("_", " ")]) {
+      const result = await scenario.load({ ...allFilters, tab: "searches", stage, q }, undefined, "page");
+      assert.equal(result.status, "ok", q);
+      assert.deepEqual(result.data.events.map((row: Row) => row.label), [label], q);
+      assert.equal(result.data.summary.recordedActions, 1, q);
+    }
+  }
+});
+
+test("invalid canonical references preserve eligible guest and account legacy actions, counts and pages", async () => {
+  for (const kind of ["guest", "user"] as const) {
+    for (const source of ["search", "handoff"] as const) {
+      const scenario = setup(kind, 31);
+      const sample = scenario.records.journeys[0];
+      const legacyRows = source === "search" ? scenario.records.searches : scenario.records.handoffs;
+      const stage = source === "search" ? "SEARCH_COMPLETED" : "PROVIDER_HANDOFF_STARTED";
+      if (source === "handoff") {
+        for (const [index, handoff] of legacyRows.entries()) {
+          const event = { ...sample, id: "qa-canonical-handoff-" + index, type: stage, createdAt: handoff.createdAt,
+            searchHistoryId: null, searchHistory: null, redirectLogId: handoff.id, redirectLog: handoff };
+          scenario.records.journeys.push(event);
+          handoff.journeyEvents.push(event);
+        }
+      }
+      const first = legacyRows[0].journeyEvents[0];
+      const second = legacyRows[1].journeyEvents[0];
+      const invalidate = (event: Row) => {
+        if (source === "search") Object.assign(event, { redirectLogId: "qa-foreign-redirect",
+          redirectLog: { ...scenario.records.handoffs[0], visitorId: "another-visitor" } });
+        else Object.assign(event, { searchHistoryId: "qa-foreign-search",
+          searchHistory: { ...scenario.records.searches[0], visitorId: "another-visitor" } });
+      };
+      invalidate(first);
+      // An additional invalid event must not restore a duplicate when the same
+      // legacy row also has an eligible valid canonical replacement.
+      const invalidSecond = { ...second, id: "qa-extra-invalid-replacement" };
+      invalidate(invalidSecond);
+      scenario.records.journeys.push(invalidSecond);
+      legacyRows[1].journeyEvents.push(invalidSecond);
+      const filters = { ...allFilters, tab: source === "search" ? "searches" : "handoffs" };
+      const total = source === "search" ? 31 : 53;
+      const restoredId = (source === "search" ? "s-" : "r-") + legacyRows[0].id;
+      const duplicateId = (source === "search" ? "s-" : "r-") + legacyRows[1].id;
+      const overview = await scenario.load(filters, undefined, "summary");
+      assert.equal(overview.status, "ok", kind + ":" + source);
+      assert.equal(overview.data.events.length, 5);
+      assert.equal(overview.data.summary.recordedActions, total);
+      if (source === "search") assert.deepEqual(overview.data.summary.searchProducts, { flights: 16, hotels: 15, cars: 0, other: 0 });
+      const complete = await scenario.load(filters);
+      assert.equal(complete.status, "ok");
+      assert.equal(complete.data.events.length, total);
+      assert.equal(complete.data.summary.recordedActions, total);
+      assert.ok(complete.data.events.some((row: Row) => row.id === restoredId));
+      assert.ok(complete.data.events.every((row: Row) => row.id !== duplicateId && row.id !== "j-" + first.id && row.id !== "j-" + invalidSecond.id));
+      const seen: string[] = [];
+      let cursor: string | undefined;
+      do {
+        const page = await scenario.load(filters, cursor, "page");
+        assert.equal(page.status, "ok");
+        assert.equal(page.data.summary.recordedActions, total);
+        assert.equal(page.data.events.length, Math.min(20, total - seen.length));
+        seen.push(...page.data.events.map((row: Row) => row.id));
+        cursor = page.data.nextCursor ?? undefined;
+      } while (cursor);
+      assert.deepEqual(seen, complete.data.events.map((row: Row) => row.id));
+      assert.equal(new Set(seen).size, total);
+      assert.equal(scenario.calls.some(call => call.source === source && call.replacementValidation), kind === "user");
+      assert.ok(scenario.calls.every(call => call.take <= 500));
+    }
+  }
+});
+
+test("a different visitor linked to the same account cannot replace the source visitor's legacy search", async () => {
+  const scenario = setup("user", 1, ["FLIGHT"], false, "HOTEL", 2, 2);
+  const event = scenario.records.journeys[0];
+  const otherVisitorId = "qa-extra-visitor-000";
+  event.journey = { ...event.journey, visitorId: otherVisitorId,
+    visitor: { ...event.journey.visitor, id: otherVisitorId } };
+  const result = await scenario.load({ ...allFilters, tab: "searches" }, undefined, "summary");
+  assert.equal(result.status, "ok");
+  assert.deepEqual(result.data.events.map((row: Row) => row.id), ["s-" + scenario.records.searches[0].id]);
+  assert.equal(result.data.summary.recordedActions, 1);
+  assert.deepEqual(result.data.summary.searchProducts, { flights: 1, hotels: 0, cars: 0, other: 0 });
+});
+
+test("valid guest and account replacements keep overview reads bounded without fallback scans", async () => {
+  for (const kind of ["guest", "user"] as const) {
+    const scenario = setup(kind, 1105);
+    const result = await scenario.load({ ...allFilters, tab: "searches" }, undefined, "summary");
+    assert.equal(result.status, "ok");
+    assert.equal(result.data.events.length, 5);
+    assert.equal(result.data.summary.recordedActions, 1105);
+    assert.ok(scenario.calls.every(call => !call.replacementValidation));
+    assert.ok(scenario.calls.filter(call => call.source === "search" || call.source === "journey")
+      .every(call => call.take <= 45));
+  }
+});
+
+test("invalid canonical references cannot exhaust a raw page or enter exact counts", async () => {
+  const scenario = setup("guest", 1);
+  const sample = scenario.records.journeys[0];
+  for (let index = 0; index < 90; index++) scenario.records.journeys.push({
+    ...sample, id: "qa-invalid-" + String(index).padStart(3, "0"), createdAt: new Date(+baseTime + 1000),
+    searchHistory: { ...sample.searchHistory, visitorId: "another-visitor" },
+  });
+  const result = await scenario.load({ ...allFilters, tab: "searches" }, undefined, "page");
+  assert.equal(result.status, "ok");
+  assert.deepEqual(result.data.events.map((row: Row) => row.id), ["j-" + sample.id]);
+  assert.equal(result.data.summary.recordedActions, 1);
+  assert.equal(result.data.nextCursor, null);
+  assert.equal(scenario.calls.filter(call => call.source === "journey").length, 3);
+});
+
+test("a failed refill rejects the whole page instead of returning a partial history", async () => {
+  const scenario = setup("guest", 1);
+  const sample = scenario.records.journeys[0];
+  for (let index = 0; index < 45; index++) scenario.records.journeys.push({
+    ...sample, id: "qa-invalid-" + String(index).padStart(3, "0"), createdAt: new Date(+baseTime + 1000),
+    searchHistory: { ...sample.searchHistory, visitorId: "another-visitor" },
+  });
+  scenario.failNextBatch("journey");
+  assert.deepEqual(await scenario.load({ ...allFilters, tab: "searches" }, undefined, "page"), { status: "unavailable" });
+});
+
+test("eligible page and exact-count scans reject non-advancing sources", async () => {
+  const { readEligibleActivitySource, countEligibleActivitySource } = loadProduction("src/lib/adminIdentityActivityComplete.ts");
+  const rows = Array.from({ length: 500 }, (_, index) => ({ id: "qa-row-" + index, createdAt: baseTime }));
+  await assert.rejects(readEligibleActivitySource("e", async (_after: unknown, take: number) => rows.slice(0, take), () => false, 21), /did not advance/);
+  await assert.rejects(countEligibleActivitySource("e", async () => rows, () => false), /did not advance/);
+});
+
+test("All activity consistently excludes passive access observations for accounts and both guest sources", async () => {
+  for (const kind of ["user", "guest", "operational"] as const) {
+    const scenario = setup(kind, 3);
+    const result = await scenario.loadUnified();
+    assert.equal(result.status, "ok", kind);
+    assert.ok(result.data.events.every((row: Row) => !row.id.startsWith("d-")), kind);
+    assert.equal(result.data.summary.recordedActions, kind === "operational" ? 56 : 107);
+  }
 });

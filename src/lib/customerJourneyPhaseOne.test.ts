@@ -7,8 +7,10 @@ const read = (path: string) => readFileSync(path, "utf8");
 test("existing optional customer actions use the same consented, environment-scoped and owner-verified reader", () => {
   const reader = read("src/services/adminIdentityActivityService.ts");
   const visitor = read("src/lib/adminIdentityJourney.ts");
+  const filters = read("src/lib/adminIdentityActivity.ts");
   assert.match(reader, /metadata: true/);
-  assert.match(reader, /"RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED"/);
+  assert.match(filters, /"RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED"/);
+  assert.match(reader, /stages\.filter\(stage => stage !== "PROVIDER_HANDOFF_STARTED"\)/);
   assert.match(reader, /journey: \{ visitor: kind === "guest" \? eligibleGuestVisitorWhere\(id\) : eligibleJourneyLinkedVisitorWhere\(id\) \}/);
   assert.match(reader, /canonicalForVisitor/);
   assert.match(reader, /environmentScope\.journey/);
@@ -21,8 +23,9 @@ test("existing funnel metrics stay unchanged while exact per-search actions are 
   const reader = read("src/services/adminIdentityActivityService.ts");
   const overview = read("src/components/admin/AdminActivityOverview.tsx");
   const groups = read("src/lib/adminActivityOverview.ts");
+  const filters = read("src/lib/adminIdentityActivity.ts");
   for (const type of ["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED"]) {
-    assert.ok(reader.includes(type), type);
+    assert.ok(filters.includes(type), type);
     assert.ok(groups.includes(type), type);
   }
   assert.match(reader, /const funnelEvents/);
@@ -32,8 +35,9 @@ test("existing funnel metrics stay unchanged while exact per-search actions are 
   assert.match(activityPage, /<AdminCustomerActivityWorkspace/);
   assert.match(activityPage, /summary=\{data\.summary\}/);
   for (const [label, field] of [["Searches", "searches"], ["Results viewed", "resultsViewed"], ["Offers selected", "offersSelected"], ["Provider handoffs", "providerHandoffs"], ["Journeys tracked", "journeysTracked"]]) {
-    assert.ok(workspace.includes('label: "' + label + '", count: summary?.' + field), label);
+    assert.match(workspace, new RegExp('key:\\s*"' + field + '",\\s*label:\\s*"' + label + '"'), label);
   }
+  assert.match(workspace, /summary\[key\]/);
   assert.match(overview, /search\.saved/);
   assert.match(overview, /search\.unsaved/);
   assert.match(overview, /search\.shared/);
@@ -50,7 +54,8 @@ test("unlinked account actions are available in Journey History without invented
   assert.match(page, /<ActivityTimeline timeZone=\{timeZone\} events=\{otherActions\}/);
   assert.doesNotMatch(page, /otherActions\.map\([^)]*searchHistoryId/);
   const reader = read("src/services/adminIdentityActivityService.ts");
-  assert.match(reader, /if \(typeof meta\?\.linkedJourneyId === "string" && typeof meta\?\.linkedSearchHistoryId === "string"\) return \[\]/);
+  assert.match(reader, /if \(typeof meta\?\.linkedJourneyId === "string" && typeof meta\?\.linkedSearchHistoryId === "string"\) return null/);
+  assert.match(reader, /row => analyticsActivityRow\(row, environment\) !== null/);
 });
 
 test("the interactions tab excludes unrelated signup, support and provider-failure audits", () => {

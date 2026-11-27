@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
-import { searchActivityReturnHref } from "@/lib/adminSearchActivityNavigation";
+import { searchDetailReturn } from "@/lib/adminSearchActivityNavigation";
 import {
   searchActivityIdentityLabels,
   searchActivityPlatformLabel,
@@ -37,6 +37,7 @@ export default async function AdminSearchDetailPage({
   const { id } = await params;
   const timeZone = await getAdminViewerTimeZone();
   const raw = await searchParams;
+  const back = searchDetailReturn(raw);
   const query = new URLSearchParams();
   const environment = typeof raw.environment === "string" ? raw.environment : "";
   if (environment) query.set("environment", environment);
@@ -45,7 +46,7 @@ export default async function AdminSearchDetailPage({
 
   return (
     <>
-      <SearchWorkspaceBackLink href={searchActivityReturnHref(raw)} label="Search activity" />
+      <SearchWorkspaceBackLink href={back.href} label={back.label} />
       <AdminPageShell title="Search detail" hideHeader>
         {result.status === "ok" ? (
           <SearchDetailContent search={result.data} timeZone={timeZone} />

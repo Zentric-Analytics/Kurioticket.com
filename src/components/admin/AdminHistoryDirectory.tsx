@@ -51,7 +51,7 @@ export async function AdminHistoryDirectory({ section, raw, timeZone }: { sectio
       <ul className="divide-y divide-[#E2E8F0]">
         {result.rows.map(row => {
           const href = historyIdentityHref(section, row, query, now, timeZone);
-          return <li key={row.kind + ":" + row.id} data-testid="history-directory-row" className={"grid min-w-0 items-center gap-2 px-3 py-3 text-[13px] md:gap-3 " + columns}>
+          return <li key={row.kind + ":" + row.id} data-users-refresh-anchor={row.kind + ":" + row.id} data-testid="history-directory-row" className={"grid min-w-0 items-center gap-2 px-3 py-3 text-[13px] md:gap-3 " + columns}>
             <div className="flex min-w-0 items-start gap-2">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[#475569]"><UserRound size={15} aria-hidden="true"/></span>
               <div className="min-w-0">

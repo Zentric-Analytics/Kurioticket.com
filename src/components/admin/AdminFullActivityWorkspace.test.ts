@@ -4,6 +4,7 @@ import { createElement, type ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { JSDOM } from "jsdom";
 import { createJiti } from "jiti";
+import { parseActivityFilters } from "../../lib/adminIdentityActivity";
 
 const jiti = createJiti(import.meta.url, { jsx: { runtime: "automatic" }, fsCache: false });
 const { AdminFullActivityWorkspace, FULL_ACTIVITY_CATEGORIES } =
@@ -45,7 +46,7 @@ function liveProps(): Props {
     categories: common.categories.map(category => category.value === "all" || category.value === "access"
       ? category : { value: category.value, label: category.label, unavailableReason: unavailable }),
     journeyAction: { label: "View journey history", unavailableReason: unavailable },
-    historyActions: common.historyActions.map(action => ({ label: action.label, unavailableReason: unavailable })),
+    historyActions: (common.historyActions ?? []).map(action => ({ label: action.label, unavailableReason: unavailable })),
     children: createElement(AdminUnifiedActivityList, {
       events: [], environment: "staging", timeZone: "UTC",
       access: { at, label: "Latest verified access", detail: "Android app" },
@@ -71,6 +72,22 @@ test("recorded full activity retains usable filters, every category and its exac
   assert.equal(document.querySelector('[data-activity-id="s-qa-search"]')?.textContent?.includes("Lagos to London"), true);
   assert.ok(document.querySelector('a[href="/admin/searches/qa-search?environment=staging"]'));
   assert.ok(document.querySelector('a[href="' + base + '/activity/all?cursor=qa-cursor"]'));
+});
+
+test("a valid Page View bookmark shows its actual restriction in the type control and applied chip", () => {
+  const url = new URL(base + "/activity/all?range=all&tab=all&stage=PAGE_VIEW", "https://fixture.invalid");
+  const raw = Object.fromEntries(url.searchParams);
+  assert.ok(parseActivityFilters(raw).ok, "the backend accepts this retained activity filter");
+  const document = render({
+    ...common, title: "QA recorded guest", identityType: "Consented guest", children: "Recorded page history",
+    filters: { ...common.filters, initial: { ...common.filters.initial, range: raw.range, stage: raw.stage } },
+  });
+  const trigger = document.querySelector('button[aria-label="Activity type: Page viewed"]');
+  assert.ok(trigger);
+  assert.equal(trigger.textContent, "Page viewed");
+  assert.equal(document.querySelector('input[name="stage"]')?.getAttribute("value"), "PAGE_VIEW");
+  assert.match(document.querySelector('[aria-label="Applied activity filters"]')?.textContent ?? "", /Page viewed/);
+  assert.equal(document.querySelector('button[aria-label="Activity type: All activity types"]'), null);
 });
 
 test("temporary guests retain the recorded full-view framework without actionable history or fabricated events", () => {

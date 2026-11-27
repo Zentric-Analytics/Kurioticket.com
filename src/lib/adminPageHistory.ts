@@ -1,5 +1,6 @@
 import { parseActivityFilters, type ActivityFilters } from "./adminIdentityActivity";
 import { normalizeUserActivityQuery, type RawActivityQuery } from "./adminActivityDateQuery";
+import { normalizeLiveUserActivityQuery } from "./adminActivityLiveQuery";
 import { activityJourneyReturnHref } from "./adminActivityJourneyNavigation";
 import { isAdminReportingRange, type AdminReportingRange } from "./adminReportingRanges";
 import type { ActivityRow, IdentityKind } from "./adminIdentityJourney";
@@ -49,7 +50,7 @@ export function recentPageViews(events: ActivityRow[]) {
 export function parsePageHistoryQuery(raw: RawActivityQuery, now: Date, timeZone = "UTC"):
   { ok: true; query: PageHistoryQuery } | { ok: false; error: string } {
   if (Object.values(raw).some(Array.isArray)) return { ok: false, error: "Repeated filters are not supported." };
-  const range = typeof raw.range === "string" ? raw.range : "today";
+  const range = typeof raw.range === "string" ? raw.range : raw.from || raw.to ? "custom" : "today";
   const platform = raw.platform ?? "all";
   const page = Number(raw.page ?? "1");
   if (!isAdminReportingRange(range)) return { ok: false, error: "Unsupported date range." };
@@ -59,7 +60,15 @@ export function parsePageHistoryQuery(raw: RawActivityQuery, now: Date, timeZone
   if (range === "custom" && !raw.from && !raw.to) return { ok: false, error: "Choose a valid custom date range." };
   // Use the same date semantics as Activity. Freeze the upper bound on all-time
   // views too, so paging links don't drift as new events arrive.
-  const normalized = normalizeUserActivityQuery({ range, from: raw.from, to: raw.to, q: raw.q, product: raw.product }, now, timeZone);
+  const selection = { range, from: raw.from, to: raw.to, q: raw.q, product: raw.product };
+  const normalized = page === 1 ? normalizeLiveUserActivityQuery(selection, now, timeZone)
+    : normalizeUserActivityQuery(selection, now, timeZone);
+  // Offset continuations retain the exact snapshot of their first page, even
+  // after local midnight. New first-page links omit generated preset bounds.
+  if (page > 1) {
+    if (typeof raw.from === "string") normalized.from = raw.from;
+    if (typeof raw.to === "string") normalized.to = raw.to;
+  }
   if (!normalized.to && range === "all") normalized.to = now.toISOString();
   const parsed = parseActivityFilters({ ...normalized, tab: "pages", stage: "all", order: "newest" }, timeZone);
   if (!parsed.ok) return parsed;
@@ -76,12 +85,21 @@ export function pageHistoryBackHref(kind: IdentityKind, id: string, incoming: un
 export function pageHistoryHref(path: string, query: PageHistoryQuery, returnHref: string) {
   const { filters, range, platform, page } = query;
   const params = new URLSearchParams({ range, page: String(page), activityReturn: returnHref });
-  if (filters.from) params.set("from", filters.from);
-  if (filters.to) params.set("to", filters.to);
+  if (range === "custom" || page > 1) {
+    if (filters.from) params.set("from", filters.from);
+    if (filters.to) params.set("to", filters.to);
+  }
   if (filters.q) params.set("q", filters.q);
   if (filters.product !== "all") params.set("product", filters.product);
   if (platform !== "all") params.set("platform", platform);
   return path + "?" + params.toString();
+}
+
+/** Applied choices, not a refreshed observation cutoff, reset filter drafts. */
+export function pageHistoryFiltersKey(query: PageHistoryQuery, timeZone: string) {
+  return JSON.stringify([query.range, query.platform, query.filters.q, query.filters.product,
+    query.range === "custom" ? query.filters.from : "",
+    query.range === "custom" ? query.filters.to : "", timeZone]);
 }
 
 export function pageHistoryHrefFromActivity(kind: IdentityKind, id: string, filters: ActivityFilters, rawRange: string | undefined, returnHref: string) {

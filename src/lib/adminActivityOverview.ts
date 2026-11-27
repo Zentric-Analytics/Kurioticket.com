@@ -1,7 +1,7 @@
 import { JOURNEY_ALL_TIME_FROM } from "./adminJourneyDateRange";
 import { encodeActivityJourneyReturn } from "./adminActivityJourneyNavigation";
 import type { ActivityRow, IdentityKind } from "./adminIdentityJourney";
-import type { ActivityFilters } from "./adminIdentityActivity";
+import { activityJourneyStages, type ActivityFilters } from "./adminIdentityActivity";
 
 export type RecentSearchSummary = {
   /** The verified SearchHistory ID, not the broader visitor journey ID. */
@@ -33,15 +33,15 @@ export type RecentSearchSummary = {
  * from provider-only text or from other searches in the visitor journey.
  */
 function recordedSearchRoute(event: ActivityRow): string | null {
-  if (!["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"].includes(event.stage ?? "")) return null;
+  if (!["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED",
+    "SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"].includes(event.stage ?? "")) return null;
   const parts = event.detail.split(" · ");
   if (parts.length < 2) return null;
   if (event.stage === "OFFER_SELECTED" && parts.length < 3) return null;
   const route = parts[1].trim();
   return route && route.length <= 110 ? route : null;
 }
-const searchableStages = new Set(["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED",
-  "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED"]);
+const searchableStages = new Set<string>(activityJourneyStages);
 
 /** Read-only recent search presentation, never a redefinition of SearchJourney.
  * One card per explicitly linked SearchHistory ID, even when one consented
@@ -149,10 +149,15 @@ export function journeyHistoryHrefFromActivity(
   const dateOnly = /^\d{4}-\d{2}-\d{2}$/;
   // Both views interpret calendar dates in the active reporting time zone.
   const legacyDates = dateOnly.test(filters.from) || dateOnly.test(filters.to);
-  params.set("range", legacyDates ? "custom"
-    : rawRange && ranges.has(rawRange) ? rawRange : "today");
-  if (filters.from) params.set("from", filters.from);
-  if (filters.to) params.set("to", filters.to);
+  const range = legacyDates ? "custom"
+    : rawRange && ranges.has(rawRange) ? rawRange : filters.from || filters.to ? "custom" : "all";
+  params.set("range", range);
+  // A new preset view resolves its own current window. Generated cutoffs stay
+  // in the return context of the originating history page, not in this list.
+  if (range === "custom") {
+    if (filters.from) params.set("from", filters.from);
+    if (filters.to) params.set("to", filters.to);
+  }
   if (filters.product !== "all") params.set("product", filters.product);
   if (stages.has(filters.stage)) params.set("stage", filters.stage);
   const returnToken = encodeActivityJourneyReturn(returnHref);

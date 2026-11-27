@@ -5,6 +5,7 @@ import { getPrisma } from "./prisma";
 import { guestAccessHistorySql, guestLatestRecordedLocationsSql } from "./adminGuestAccessSql";
 import { recordedGuestAccessLocation, recordedGuestLocationSummary } from "./guestAccessObservation";
 import { operationalGuestDeviceObservation } from "./operationalGuestDeviceObservation";
+import { adminIdentityPageSql, type AdminIdentityDirectoryRow, type AdminIdentityPageRequest, type AdminIdentitySort } from "./adminIdentityDirectory";
 
 /** Disposable CI database only. Proves the actual SQL retains exact record
  * ownership and environment without importing a different search's country. */
@@ -117,6 +118,127 @@ test("operational device history and platform filters preserve exact observation
   } finally {
     await db.redirectLog.deleteMany({ where: { id: handoffId } });
     await db.searchHistory.deleteMany({ where: { id: { in: ids } } });
+    await db.$disconnect();
+    if (previous === undefined) delete process.env.DATABASE_URL; else process.env.DATABASE_URL = previous;
+  }
+});
+
+test("directory PostgreSQL pages retain mixed identity ordering and independent totals on empty pages", { skip: !process.env.GUEST_COUNTRY_TEST_DATABASE_URL }, async () => {
+  const previous = process.env.DATABASE_URL;
+  process.env.DATABASE_URL = process.env.GUEST_COUNTRY_TEST_DATABASE_URL!;
+  const db = getPrisma();
+  const prefix = randomUUID().slice(0, 8);
+  const identityId = (index: number) => `${prefix}-${index.toString(16).padStart(4, "0")}-4abc-8def-${index.toString(16).padStart(12, "0")}`;
+  const users = Array.from({ length: 7 }, (_, index) => identityId(index));
+  const visitors = Array.from({ length: 12 }, (_, index) => identityId(20 + index));
+  const operational = Array.from({ length: 9 }, (_, index) => identityId(50 + index));
+  const excludedOperational = Array.from({ length: 3 }, (_, index) => identityId(70 + index));
+  const searchIds: string[] = [], redirectIds: string[] = [];
+  const now = new Date("2040-06-15T12:00:00.000Z");
+  const joinedAt = new Date("2040-06-15T10:00:00.000Z");
+  const lastSeenAt = new Date("2040-06-15T11:00:00.000Z");
+  const oldJoinedAt = new Date("2040-06-14T10:00:00.000Z");
+  const names = ["Alpha account", "Zulu account", "Guest visitor", "Beta account", "Alpha account", "Zebra account", "No observation"];
+  type ExpectedIdentity = { id: string; kind: "user" | "guest"; joinedAt: Date; lastSeenAt: Date | null; displayName: string };
+  const expected: ExpectedIdentity[] = [
+    ...users.map((id, index) => ({ id, kind: "user" as const, joinedAt, lastSeenAt: index === 6 ? null : lastSeenAt, displayName: names[index] })),
+    ...visitors.slice(0, 8).map(id => ({ id, kind: "guest" as const, joinedAt, lastSeenAt, displayName: "Guest visitor" })),
+    ...operational.map((id, index) => ({ id, kind: "guest" as const, joinedAt: index < 2 ? oldJoinedAt : joinedAt, lastSeenAt, displayName: "Guest visitor" })),
+  ];
+  const request: AdminIdentityPageRequest = {
+    query: prefix, role: "ALL", status: "ALL", showUsers: true, showGuests: true, showOperationalGuests: true,
+    withOperationalSummary: true, environment: "staging", date: "today", now, timeZone: "UTC", limit: 20, offset: 0,
+  };
+  // Use ordinary string ordering for these ASCII fixture values, independently
+  // of PostgreSQL's UNION and page implementation.
+  const compareText = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
+  const compare = (sort: AdminIdentitySort) => (a: ExpectedIdentity, b: ExpectedIdentity): number => {
+    if (sort === "oldest") return +a.joinedAt - +b.joinedAt || compareText(a.kind, b.kind) || compareText(a.id, b.id);
+    const primary = sort === "newest"
+      ? a.lastSeenAt === null ? b.lastSeenAt === null ? 0 : 1 : b.lastSeenAt === null ? -1 : +b.lastSeenAt - +a.lastSeenAt
+      : compareText(a.displayName.toLowerCase(), b.displayName.toLowerCase()) * (sort === "name_desc" ? -1 : 1);
+    return primary || +b.joinedAt - +a.joinedAt || compareText(a.kind, b.kind) || compareText(b.id, a.id);
+  };
+  try {
+    // Other files use the same disposable CI database. One repeatable-read
+    // snapshot plus baseline deltas keeps their fixtures out of these totals.
+    await db.$transaction(async tx => {
+      const read = (overrides: Partial<AdminIdentityPageRequest> = {}) => {
+        const sql = adminIdentityPageSql({ ...request, ...overrides });
+        assert.ok(sql);
+        return tx.$queryRaw<AdminIdentityDirectoryRow[]>(sql);
+      };
+      const [baseline] = await read();
+      assert.equal(baseline.id, null);
+      assert.equal(baseline.operationalGuestCount, BigInt(0));
+      await tx.user.createMany({ data: users.map((id, index) => ({ id, name: names[index], createdAt: joinedAt })) });
+      await tx.visitor.createMany({ data: visitors.map((id, index) => ({
+        id, tokenHash: "directory-qa-" + id, firstSeenAt: joinedAt, lastSeenAt,
+        consentStatus: index === 8 ? "WITHDRAWN" as const : "GRANTED" as const,
+        trackingDisabledAt: index === 9 ? joinedAt : null,
+        currentUserId: index === 10 ? users[0] : null,
+      })) });
+      await tx.visitorIdentityLink.create({ data: { visitorId: visitors[11], userId: users[0], source: "SIGN_IN" } });
+      const searches = [
+        ...users.slice(0, 6).map(userId => ({ userId, visitorId: null, at: lastSeenAt, environment: "staging", session: undefined })),
+        ...operational.flatMap((session, index) => [
+          { userId: null, visitorId: null, at: index < 2 ? oldJoinedAt : joinedAt, environment: "staging", session },
+          ...(index === 0 ? [] : [{ userId: null, visitorId: null, at: lastSeenAt, environment: "staging", session }]),
+        ]),
+        { userId: null, visitorId: null, at: lastSeenAt, environment: "production", session: excludedOperational[0] },
+        { userId: users[0], visitorId: null, at: lastSeenAt, environment: "staging", session: excludedOperational[1] },
+        { userId: null, visitorId: visitors[0], at: lastSeenAt, environment: "staging", session: excludedOperational[2] },
+        { userId: null, visitorId: null, at: lastSeenAt, environment: "staging", session: "invalid-" + prefix },
+        // A newer observation from the other environment must not change a
+        // valid staging session's position or its first-recorded date.
+        { userId: null, visitorId: null, at: new Date(+now - 1_000), environment: "production", session: operational[0] },
+      ];
+      await tx.searchHistory.createMany({ data: searches.map(row => {
+        const id = randomUUID(); searchIds.push(id);
+        return { id, type: "CAR" as const, userId: row.userId, visitorId: row.visitorId, createdAt: row.at,
+          query: { environment: row.environment, ...(row.session ? { operationalSessionId: row.session, operationalSessionExpiresAtMs: +now + 60_000 } : {}) } };
+      }) });
+      const handoffId = randomUUID(); redirectIds.push(handoffId);
+      await tx.redirectLog.create({ data: { id: handoffId, type: "CAR", provider: "QA", destinationUrl: "https://example.invalid",
+        userType: "GUEST", sourcePage: "QA", createdAt: lastSeenAt,
+        metadata: { environment: "staging", operationalSessionId: operational[0], operationalSessionExpiresAtMs: +now + 60_000 } } });
+      const assertTotals = (rows: AdminIdentityDirectoryRow[], scoped = BigInt(9)) => {
+        assert.ok(rows.length > 0, "summary survives even when no identity matches");
+        for (const row of rows) {
+          assert.equal(row.operationalGuestCount, scoped);
+          assert.equal(row.operationalAllTimeCount, baseline.operationalAllTimeCount + BigInt(9));
+          assert.equal(row.operationalNewCount, baseline.operationalNewCount + BigInt(7));
+        }
+      };
+      for (const sort of ["newest", "oldest", "name_asc", "name_desc"] as const) {
+        const ordered = [...expected].sort(compare(sort));
+        const first = await read({ sort });
+        const second = await read({ sort, offset: 20 });
+        assert.equal(first.length, 20, sort);
+        assert.equal(second.length, 4, sort);
+        assert.deepEqual([...first, ...second].map(row => [row.kind, row.id]), ordered.map(row => [row.kind, row.id]), sort);
+        assert.equal(new Set([...first, ...second].map(row => row.id)).size, 24, sort);
+        assertTotals(first); assertTotals(second);
+        for (const row of [...first, ...second]) {
+          const identity = expected.find(candidate => candidate.id === row.id)!;
+          assert.equal(row.lastSeenAt?.toISOString() ?? null, identity.lastSeenAt?.toISOString() ?? null);
+        }
+      }
+      const beyond = await read({ offset: 40 });
+      assert.deepEqual(beyond.map(row => [row.kind, row.id, row.firstSeenAt, row.lastSeenAt, row.guestSource, row.guestStatus]), [[null, null, null, null, null, null]]);
+      assertTotals(beyond);
+      const empty = await read({ query: prefix + "-no-match" });
+      assert.deepEqual(empty.map(row => [row.kind, row.id]), [[null, null]]);
+      assertTotals(empty, BigInt(0));
+      const summaryOnly = await read({ showUsers: false, showGuests: false, showOperationalGuests: false, offset: 40 });
+      assert.deepEqual(summaryOnly.map(row => [row.kind, row.id]), [[null, null]]);
+      assertTotals(summaryOnly);
+    }, { isolationLevel: "RepeatableRead", timeout: 30_000 });
+  } finally {
+    await db.redirectLog.deleteMany({ where: { id: { in: redirectIds } } });
+    await db.searchHistory.deleteMany({ where: { id: { in: searchIds } } });
+    await db.visitor.deleteMany({ where: { id: { in: visitors } } });
+    await db.user.deleteMany({ where: { id: { in: users } } });
     await db.$disconnect();
     if (previous === undefined) delete process.env.DATABASE_URL; else process.env.DATABASE_URL = previous;
   }

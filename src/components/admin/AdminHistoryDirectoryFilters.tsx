@@ -24,7 +24,7 @@ export function AdminHistoryDirectoryFilters({ section, query, timeZone }: { sec
     if (!parsed.ok || pending) return;
     startTransition(() => router.push(historyDirectoryHref(section, parsed.query), { scroll: false }));
   };
-  return <section aria-label="History directory filters" className="min-w-0 space-y-3">
+  return <section aria-label="History directory filters" data-users-navigation-pending={pending ? "true" : undefined} className="min-w-0 space-y-3">
     <div data-testid="history-directory-filter-row" className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(108px,0.75fr)]">
       <label className="relative min-w-0">
         <Search size={16} aria-hidden="true" className="pointer-events-none absolute left-3 top-3 text-[#64748B]"/>

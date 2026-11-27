@@ -20,7 +20,7 @@ try {
       await page.goto(base+path);
 
       await expect(page.getByTestId("unified-activity-list")).toBeVisible();
-      await expect(page.locator('[data-activity-id]:not([data-activity-id="latest-access-summary"])')).toHaveCount(8);
+      await expect(page.locator('[data-activity-id]')).toHaveCount(5);
       await expect(page.getByRole("link",{name:/View journey history/i})).toHaveCount(0);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
       await page.screenshot({path:output+"/activity-summary-"+kind+"-"+width+".png",fullPage:true});
@@ -33,7 +33,7 @@ try {
       const timestamps=await page.locator("[data-activity-id] time").evaluateAll(nodes=>nodes.map(n=>Date.parse(n.dateTime)));
       assert.ok(timestamps.every((at,i)=>i===0||at<=timestamps[i-1]));
       if(kind==="user") {
-        await expect(page.locator('[data-activity-id="d-qa-fixture-access"]')).toHaveCount(1);
+        await expect(page.locator('[data-activity-id="d-qa-fixture-access"]')).toHaveCount(0);
         const accessTab=page.getByRole("navigation",{name:"Activity categories"}).getByRole("link",{name:"Device & Access",exact:true});
         await accessTab.click();
         await expect(accessTab).toHaveAttribute("aria-current","page");
@@ -52,7 +52,7 @@ try {
   for(const kind of ["guest","user"]) {
     await page.goto(base+"/admin/users/"+kind+"/qa-complete-history-0001/activity?range=all");
 
-    await expect(page.locator('[data-activity-id^="s-qa-complete-"]')).toHaveCount(8);
+    await expect(page.locator('[data-activity-id^="s-qa-complete-"]')).toHaveCount(5);
     await page.getByRole("link",{name:"View all activity"}).click();
     // Traverse every page, not merely a representative first page.
     const ids=[];
@@ -61,7 +61,7 @@ try {
       await expect(rows).toHaveCount(n===50?5:20);
       await expect(rows.first()).toHaveAttribute("data-activity-id","s-qa-complete-"+String(n*20).padStart(4,"0"));
       ids.push(...await rows.evaluateAll(nodes=>nodes.map(n=>n.dataset.activityId)));
-      const older=page.getByRole("link",{name:"Load older activity"});
+      const older=page.getByRole("link",{name:"Next page",exact:true});
       if(n===50){await expect(older).toHaveCount(0);break;}
       const next=await older.getAttribute("href");
       await older.click();

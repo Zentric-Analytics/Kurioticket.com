@@ -5,8 +5,18 @@ on:
     branches: [dev]
     paths:
       - src/app/admin/users/**
-      - src/components/admin/AdminIdentityTable.tsx
+      - src/components/admin/AdminIdentityTable*
+      - src/components/admin/AdminUsersToolbar*
+      - src/components/admin/AdminOnlineUsersDirectory*
+      - src/components/admin/AdminUsersLiveRefresh*
+      - src/components/admin/AdminDeviceHistoryAutoRefresh*
+      - src/components/admin/AdminPageHistoryFilters*
+      - src/components/admin/AdminHistoryDirectory*
+      - src/components/admin/AdminDeviceHistoryFilters*
+      - src/components/admin/PageViewRecords*
       - src/components/admin/AdminCustomerActivityWorkspace.tsx
+      - src/components/admin/AdminActivityAccessSummary*
+      - src/components/admin/AdminActivityDataDialog*
       - src/components/admin/AdminLiveGuestActivity.tsx
       - src/components/admin/AdminFullActivityWorkspace*
       - src/components/admin/ActivityFiltersBar.tsx
@@ -40,6 +50,20 @@ on:
       - src/components/admin/AdminDirectorySelect.tsx
       - src/components/admin/AdminHorizontalShell.tsx
       - src/lib/adminActivityJourneyNavigation*
+      - src/lib/adminActivityDateQuery*
+      - src/lib/adminActivityLiveQuery*
+      - src/lib/adminActivityOverview*
+      - src/lib/adminPageHistory*
+      - src/lib/adminDeviceHistory*
+      - src/lib/adminIdentityJourneyHistory*
+      - src/lib/adminOnlineUsersQuery*
+      - src/lib/adminUsersNavigation*
+      - src/lib/adminUsersLiveRefresh*
+      - src/lib/adminUsersDirectoryPagination*
+      - src/lib/adminIdentityDirectory*
+      - src/lib/adminSearchActivityNavigation*
+      - src/app/api/admin/users/live-refresh/**
+      - src/app/admin/searches/**
       - src/app/admin/journeys/**
       - src/lib/adminIdentityActivity*
       - src/lib/adminIdentityJourney.ts
@@ -108,6 +132,31 @@ jobs:
           JITI_JSX: "true"
         run: node --test --import jiti/register src/lib/adminActivityJourneyNavigation.test.ts src/lib/adminJourneyPageContract.test.ts src/services/adminJourneyContract.test.ts src/services/adminJourneyCore.test.ts src/components/admin/AdminIdentityTable.test.ts src/components/admin/ActivityTimeline.test.ts src/components/admin/JourneyEventHistory.test.ts src/components/admin/UserStatusActions.test.ts src/components/admin/GuestTrackingActions.test.ts src/services/adminGuestManagement.test.ts src/lib/adminActivityEnvironmentBoundary.test.ts src/lib/adminIdentityActivity.test.ts src/lib/adminIdentityActivityComplete.test.ts src/lib/adminIdentityJourney.test.ts src/lib/guestLiveCountry.test.ts src/lib/guestFirstAccessObservation.test.ts src/lib/onlinePresenceRoute.test.ts src/lib/adminOnlineUsersSnapshot.test.ts src/lib/adminLiveGuestReference.test.ts src/lib/adminNavigation.test.ts src/components/admin/AdminUnifiedActivityList.test.ts src/components/admin/AdminCustomerActivityWorkspace.test.ts src/components/admin/AdminFullActivityWorkspace.test.ts src/lib/adminLiveGuestActivityNavigation.test.ts src/lib/adminLiveGuestHistory.test.ts src/lib/guestPresenceActivityIdentity.test.ts src/lib/adminGuestAccess.test.ts
       - run: npx playwright install --with-deps chromium
+      - name: Verify Users automatic updates, filter drafts and return navigation in Chromium
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+          KURIOTICKET_COMPONENT_EVIDENCE: ${{ runner.temp }}/admin-customer-activity-screenshots/live-updates-navigation
+        run: >-
+          node --test --import jiti/register
+          src/lib/adminUsersLiveRefresh.test.ts
+          src/app/api/admin/users/live-refresh/route.test.ts
+          src/lib/adminOnlineUsersQuery.test.ts
+          src/lib/adminUsersNavigation.test.ts
+          src/lib/adminSearchActivityNavigation.test.ts
+          src/lib/adminUsersDirectoryPagination.test.ts
+          src/lib/adminIdentityDirectory.test.ts
+          src/app/admin/users/pagination.test.ts
+          src/app/admin/users/visibility.test.ts
+          src/lib/adminActivityOverview.test.ts
+          src/lib/adminPageHistory.test.ts
+          src/lib/adminIdentityJourneyHistory.test.ts
+          src/lib/adminActivityLiveQuery.test.ts
+          src/lib/adminDeviceHistory.test.ts
+          src/components/admin/AdminUsersLiveRefresh.browser.test.ts
+          src/components/admin/AdminOnlineUsersDirectory.browser.test.ts
+          src/components/admin/AdminPageHistoryFilters.browser.test.ts
+          src/components/admin/adminStateSynchronization.browser.test.ts
       - name: Render and test real Admin Activity component with labelled QA data
         run: node qa/admin-activity-details/run.mjs
         env:

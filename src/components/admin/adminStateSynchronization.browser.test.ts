@@ -13,6 +13,7 @@ const entries = {
   overview: "src/components/admin/AdminOverviewControls.tsx",
   activityInfo: "src/components/admin/ActivityDataInfo.tsx",
   onlineUsers: "src/components/admin/OnlineUsersValue.tsx",
+  activityData: "src/components/admin/AdminActivityDataDialog.tsx",
 };
 const router = 'const router={push:url=>{window.fixtureNavigation.push(url);window.fixtureCommitOnNavigation?.(url);},replace:url=>window.fixtureNavigation.push(url),refresh:()=>window.fixtureRefreshes++};exports.useRouter=()=>router;';
 const bundle = () => componentBundle(entries, { "next/navigation": router });
@@ -43,7 +44,7 @@ test("Activity server-scope resets drafts without background navigation or losin
     const navigations = await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation);
     const url = new URL(navigations.at(-1)!, "http://fixture.local");
     assert.equal(url.searchParams.get("q"), "new search");
-    assert.equal(url.searchParams.get("from"), "2030-01-01");
+    assert.equal(url.searchParams.get("from"), null, "All time does not carry a stale generated bound");
     assert.equal(url.searchParams.get("directory"), "users");
     const range = page.getByRole("button", { name: "Date range: All time · WAT (UTC+1)", exact: true });
     await range.focus();
@@ -58,6 +59,43 @@ test("Activity server-scope resets drafts without background navigation or losin
     assert.equal(period.searchParams.get("range"), "today");
     assert.equal(period.searchParams.has("from"), false, "the server resolves local midnight");
   });
+});
+
+test("rolling activity updates preserve unfinished filters and Applying retains the Users origin", async () => {
+  const initial = {tab:"searches",q:"Lagos",product:"FLIGHT",stage:"all",order:"newest",from:"2026-11-19T12:00:00.000Z",to:"2026-11-26T12:00:00.000Z",range:"7d"};
+  const props = {path:"/admin/users/user/qa-account-0001/activity/all",initial,directory:"",usersReturn:"/admin/users/online?platform=android&page=2",tabs:null,timeZone:"UTC",now:initial.to};
+  await withComponentBrowser(bundle(),mount("activity","ActivityFiltersBar",props),async page => {
+    const input=page.getByRole("textbox",{name:"Search activity"});
+    await input.fill("unfinished destination");
+    await page.evaluate(props => (window as unknown as {fixtureRender:(props:unknown)=>void}).fixtureRender(props),
+      {...props,now:"2026-11-26T12:00:15.000Z",initial:{...initial,from:"2026-11-19T12:00:15.000Z",to:"2026-11-26T12:00:15.000Z"}});
+    assert.equal(await input.inputValue(),"unfinished destination");
+    assert.equal(await input.evaluate(element=>element===document.activeElement),true);
+    assert.deepEqual(await page.evaluate(()=>(window as unknown as {fixtureNavigation:string[]}).fixtureNavigation),[]);
+    await page.getByRole("button",{name:"Apply filters",exact:true}).click();
+    const links=await page.evaluate(()=>(window as unknown as {fixtureNavigation:string[]}).fixtureNavigation);
+    const next=new URL(links.at(-1)!,"http://fixture.local");
+    assert.equal(next.searchParams.get("q"),"unfinished destination");
+    assert.equal(next.searchParams.get("usersReturn"),props.usersReturn);
+    assert.equal(next.searchParams.get("range"),"7d");
+    assert.equal(next.searchParams.has("from"),false);
+    assert.equal(next.searchParams.has("to"),false);
+    assert.equal(next.searchParams.has("cursor"),false);
+  });
+});
+
+test("About this data is a keyboard-accessible modal that restores focus",async()=>{
+  await withComponentBrowser(bundle(),mount("activityData","AdminActivityDataDialog",{coverage:"operational"}),async page=>{
+    const trigger=page.getByRole("button",{name:"About this data",exact:true});
+    await trigger.focus();
+    await trigger.press("Enter");
+    const dialog=page.getByRole("dialog",{name:"About this data",exact:true});
+    await dialog.waitFor();
+    assert.match(await dialog.innerText(),/essential search and provider handoff records/);
+    await page.keyboard.press("Escape");
+    await dialog.waitFor({state:"hidden"});
+    assert.equal(await trigger.evaluate(element=>element===document.activeElement),true);
+  },390);
 });
 
 test("Provider health drafts reset only on committed scope changes and never read incomplete dates", async () => {

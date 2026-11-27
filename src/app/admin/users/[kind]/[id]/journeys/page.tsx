@@ -10,8 +10,7 @@ import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { decodeActivityJourneyReturn, encodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
 import { journeyCalendarTimeZone, JOURNEY_ALL_TIME_FROM } from "@/lib/adminJourneyDateRange";
-import { resetStaleJourneyDateCursor } from "@/lib/adminJourneyDateCursor";
-import { identityJourneyHistoryHref, identityJourneyHistoryQuery } from "@/lib/adminIdentityJourneyHistory";
+import { identityJourneyHistoryHref, identityJourneyHistoryQuery, resetStaleIdentityJourneyDateCursor } from "@/lib/adminIdentityJourneyHistory";
 import { validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { requireAdminSession } from "@/lib/auth-guards";
@@ -81,7 +80,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
   const session = await requireAdminSession(route + "/journeys");
   const timeZone = await getAdminViewerTimeZone(session.user.id);
   const now = new Date();
-  const raw = resetStaleJourneyDateCursor(await searchParams, now, timeZone);
+  const raw = resetStaleIdentityJourneyDateCursor(await searchParams, now, timeZone);
   const calendarTimeZone = journeyCalendarTimeZone(raw, timeZone);
   const environment = getPublicEnvironment();
   const requested = identityJourneyHistoryQuery(kind, id, raw, now, environment, timeZone);
@@ -160,13 +159,10 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
   const returnPath = returnQuery.pathname + returnQuery.search;
 
   const nextOperationalHref = operational && identity.data.nextCursor
-    ? (() => {
-      const path = identityJourneyHistoryHref(kind, id, {
+    ? identityJourneyHistoryHref(kind, id, {
         ...filterContext, ...(calendarTimeZone ? {} : { from: scope.from, to: scope.to }),
-      });
-      return path + (path.includes("?") ? "&" : "?")
-        + "activityCursor=" + encodeURIComponent(identity.data.nextCursor!);
-    })()
+        activityCursor: identity.data.nextCursor,
+      })
     : null;
 
   return <div className="min-w-0 space-y-5 bg-white pb-5 text-[#020617]">
@@ -258,7 +254,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
             </thead>
             <tbody className="divide-y divide-[#E7ECF5]">
               {list.data.items.map(item => (
-                <tr key={item.id} className="align-top hover:bg-[#F8FAFC]">
+                <tr key={item.id} data-users-refresh-anchor={item.id} className="align-top hover:bg-[#F8FAFC]">
                   <td className="px-3 py-3">
                     <p className="font-medium">{formatViewerTimestamp(item.startedAt, timeZone)}</p>
                     <p className="mt-1 text-[11px] text-[#64748B]">Last {formatViewerTimestamp(item.lastEventAt, timeZone)}</p>

@@ -32,7 +32,7 @@ export function AdminDeviceHistoryFilters({ path, query, returnHref, timeZone }:
     };
     startTransition(() => router.push(deviceHistoryHref(path, next, {}, returnHref), { scroll: false }));
   };
-  return <section aria-label="Device history filters" className="min-w-0 space-y-3 border-y border-[#E2E8F0] py-3">
+  return <section aria-label="Device history filters" data-users-navigation-pending={pending ? "true" : undefined} className="min-w-0 space-y-3 border-y border-[#E2E8F0] py-3">
     <div data-testid="device-history-filter-row" className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-[repeat(2,minmax(0,1fr))_minmax(108px,0.75fr)]">
       <SearchMonitorSelect label="Device history range" name="range" timeZoneLabel={formatAdminTimeZoneLabel(timeZone)} value={range}
         options={choices} appearance="fare" truncateLabel onValueChange={next => setRange(next as DeviceHistoryRange)} />

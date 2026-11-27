@@ -14,6 +14,8 @@ on:
       - src/components/admin/UserStatusActions.tsx
       - src/lib/adminIdentityDirectory*
       - src/lib/adminIdentityPagination*
+      - src/lib/adminUsersDirectoryPagination*
+      - src/lib/adminUsersNavigation*
       - qa/admin-identity-directory-design/**
       - .github/workflows/admin-identity-directory-design.yml
 

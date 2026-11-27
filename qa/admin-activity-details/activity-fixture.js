@@ -1,6 +1,6 @@
 // QA ONLY: deterministic synthetic rows for rendering the actual Admin Activity route.
 // Never use this as production data or cite a generated screenshot as a staging result.
-import { activityWindow, encodeActivityCursor, decodeActivityCursor } from "@/lib/adminIdentityActivity";
+import { ACTIVITY_OVERVIEW_LIMIT, activityWindow, allowedActivityStages, encodeActivityCursor, decodeActivityCursor } from "@/lib/adminIdentityActivity";
 import { mergeUnifiedActivityPage } from "@/lib/adminUnifiedActivityPage";
 
 const time = minute => new Date("2026-10-22T17:" + String(minute).padStart(2, "0") + ":00.000Z");
@@ -77,15 +77,9 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
   if (!/^[a-z0-9_-]{6,80}$/i.test(id)) return { status: "not_found" };
   if (kind === "user" && id === "qa-registered-unavailable-0001") return { status: "unavailable" };
   if (readMode !== "all" && cursor && !["older-qa-page", "oldest-current-qa-page", "newer-qa-page"].includes(cursor)) return { status: "invalid_cursor" };
-  const tabMatch = stage => filters.tab === "all"
-    || (filters.tab === "pages" && stage === "PAGE_VIEW")
-    || (filters.tab === "journeys" && stage !== "ACCOUNT_ACTIVITY")
-    || (filters.tab === "searches" && ["SEARCH_COMPLETED", "RESULTS_VIEWED"].includes(stage))
-    || (filters.tab === "selections" && stage === "OFFER_SELECTED")
-    || (filters.tab === "handoffs" && stage === "PROVIDER_HANDOFF_STARTED")
-    || (filters.tab === "interactions" && ["RESULT_SAVED","RESULT_UNSAVED","RESULT_SHARED","PRICE_ALERT_CREATED","ACCOUNT_ACTIVITY"].includes(stage));
+  const allowed = allowedActivityStages(filters);
   const { gte: fromBound, lt: toBound } = activityWindow(filters);
-  const matches = row => tabMatch(row.stage)
+  const matches = row => allowed.has(row.stage)
     && (filters.stage === "all" || row.stage === filters.stage)
     && (filters.product === "all" || row.product === filters.product)
     && (!filters.q || (row.detail + row.label).toLowerCase().includes(filters.q.toLowerCase()))
@@ -99,6 +93,7 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     : [...recorded, ...olderRecorded, ...newerRecorded];
   const allMatched = id === "qa-no-events-0001" ? [] : sourceRows.filter(matches);
   const summary = {
+    recordedActions: allMatched.length,
     pagesVisited: allMatched.filter(row => row.stage === "PAGE_VIEW").length,
     searchProducts: {
       flights: allMatched.filter(row => row.stage === "SEARCH_COMPLETED" && row.product === "FLIGHT").length,
@@ -122,9 +117,9 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     { cursor: "newer-qa-page", rows: newerRows },
   ].filter(page => page.rows.length);
   const selected = cursor ? ascendingPages.findIndex(page => page.cursor === cursor) : 0;
-  const ordered = [...allMatched].sort((a,b) => (filters.order === "oldest" ? a.at - b.at : b.at - a.at) || a.id.localeCompare(b.id));
+  const ordered = [...allMatched].sort((a,b) => (readMode !== "summary" && filters.order === "oldest" ? a.at - b.at : b.at - a.at) || a.id.localeCompare(b.id));
   const rows = pageHistory ? ordered.slice((pageHistory.page - 1) * 20, pageHistory.page * 20)
-    : readMode === "summary" ? [...ordered.filter(row => row.stage !== "PAGE_VIEW"), ...ordered.filter(row => row.stage === "PAGE_VIEW").slice(0, 1)]
+    : readMode === "summary" ? ordered.slice(0, ACTIVITY_OVERVIEW_LIMIT)
     : readMode === "all" ? ordered
     : filters.order === "oldest"
       ? (selected < 0 ? [] : ascendingPages[selected]?.rows ?? [])
@@ -159,8 +154,8 @@ export async function loadAdminUnifiedActivity(kind,id,filters,cursorInput,now) 
   const accessTime=new Date("2026-10-22T17:50:00Z");
   const {gte,lt}=activityWindow(filters);
   const includeDevice=kind==="user" && id==="qa-registered-0001" &&
-    ["access","all"].includes(filters.tab) && filters.product==="all" && filters.stage==="all" &&
-    (!gte || accessTime>=gte) && (!lt || accessTime<lt) && (!filters.q || "desktop web recorded device access".includes(filters.q.toLowerCase()));
+    filters.tab==="access" && filters.product==="all" && filters.stage==="all" &&
+    accessTime<=now && (!gte || accessTime>=gte) && (!lt || accessTime<lt) && (!filters.q || "desktop web recorded device access".includes(filters.q.toLowerCase()));
   const access=includeDevice ? [{id:"d-qa-fixture-access",at:accessTime,label:"Recorded device access",detail:"Desktop web · Windows computer · Location unavailable"}].filter(after):[];
   const merged=mergeUnifiedActivityPage(matching.slice(0,20),access,matching.length>20,20);
   return {status:"ok",data:{...result.data,events:merged.rows,nextCursor:merged.hasMore?encodeActivityCursor(merged.rows.at(-1),kind,id,filters,"staging"):null}};

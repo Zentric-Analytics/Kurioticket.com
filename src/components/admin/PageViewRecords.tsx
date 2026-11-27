@@ -39,7 +39,7 @@ export function PageViewRecords({ events, count, full, href, operational, timeZo
           <span>Page</span><span>URL / screen</span><span>Platform</span><span>Time ({formatAdminTimeZoneLabel(timeZone)})</span>
         </div>
         <ol className="divide-y divide-[#E2E8F0]">
-          {visible.map(row => <li key={row.id} data-testid="page-view-row" className="grid min-w-0 gap-1.5 px-3 py-3 text-[12px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.8fr)_minmax(0,0.8fr)_minmax(0,1fr)] lg:gap-3">
+          {visible.map(row => <li key={row.id} data-users-refresh-anchor={row.id} data-testid="page-view-row" className="grid min-w-0 gap-1.5 px-3 py-3 text-[12px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.8fr)_minmax(0,0.8fr)_minmax(0,1fr)] lg:gap-3">
             <span className="min-w-0 break-words font-medium text-[#0F172A]">{row.label}</span>
             <PageViewDetails row={row}/>
             <span className="min-w-0 break-words text-[#475569]">{row.pageView?.platform}</span>

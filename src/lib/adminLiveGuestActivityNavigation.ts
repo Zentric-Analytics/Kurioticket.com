@@ -1,7 +1,7 @@
 import { validActivityIdentity } from "./adminIdentityActivity";
 import type { RawActivityQuery } from "./adminActivityDateQuery";
 
-const activityQueryKeys = ["tab", "range", "stage", "product", "from", "to", "q", "order", "directory"] as const;
+const activityQueryKeys = ["tab", "range", "stage", "product", "from", "to", "q", "order", "directory", "usersReturn"] as const;
 
 /** The ID must come from the server's verified recorded-history resolver.
  * Keep repeated filters intact so the canonical route rejects an invalid scope. */

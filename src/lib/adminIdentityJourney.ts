@@ -120,7 +120,7 @@ function relatedRecordAllowed(
     && (record.userId === null || (kind === "user" && record.userId === id)));
 }
 
-const eventLabels = {
+export const journeyActivityLabels = {
   SEARCH_COMPLETED: "Search completed",
   RESULTS_VIEWED: "Results viewed",
   FLIGHT_DETAILS_VIEWED: "Flight details viewed",
@@ -183,7 +183,7 @@ export function toAdminJourneyActivity(event: JourneyEventRecord, kind: Identity
   const label = fareIsExplicit ? "Fare selected"
     : event.type === "RESULT_SAVED" || event.type === "RESULT_UNSAVED"
       || event.type === "RESULT_SHARED" || event.type === "PRICE_ALERT_CREATED"
-      ? action ?? eventLabels[event.type] : eventLabels[event.type];
+      ? action ?? journeyActivityLabels[event.type] : journeyActivityLabels[event.type];
   const detail = [product, route, provider, status].filter(Boolean).join(" · ");
 
   return {

@@ -1,9 +1,62 @@
-import type { ActivityCursor } from "./adminIdentityActivity";
+import { ACTIVITY_FETCH_LIMIT, type ActivityCursor } from "./adminIdentityActivity";
 
 /** Batch size limits one database read, never the total visible history. */
 export const COMPLETE_ACTIVITY_BATCH_SIZE = 500;
 export type ActivitySourcePrefix = "j" | "s" | "r" | "e";
 export type ActivitySourceRow = { id: string; createdAt: Date };
+
+/**
+ * Fill one source page with eligible projected rows, not a fixed raw slice.
+ * Linked duplicate analytics or invalid source references may consume several
+ * batches. Seek after the raw boundary so they cannot hide older valid actions.
+ * The caller asks for one extra eligible row to establish whether a page exists.
+ */
+export async function readEligibleActivitySource<T extends ActivitySourceRow>(
+  prefix: ActivitySourcePrefix,
+  fetchBatch: (after: ActivityCursor | undefined, take: number) => Promise<T[]>,
+  eligible: (row: T) => boolean,
+  limit: number,
+  after?: ActivityCursor,
+): Promise<T[]> {
+  if (!Number.isSafeInteger(limit) || limit < 1) throw new Error("Invalid activity source limit");
+  const rows: T[] = [];
+  const boundaries = new Set<string>();
+  for (;;) {
+    const take = Math.max(ACTIVITY_FETCH_LIMIT, limit - rows.length);
+    const batch = await fetchBatch(after, take);
+    if (!batch.length) return rows;
+    const last = batch[batch.length - 1];
+    if (boundaries.has(last.id)) throw new Error("Activity source did not advance");
+    boundaries.add(last.id);
+    for (const row of batch) {
+      if (eligible(row)) rows.push(row);
+      if (rows.length === limit) return rows;
+    }
+    if (batch.length < take) return rows;
+    after = { id: prefix + "-" + last.id, at: last.createdAt.toISOString() };
+  }
+}
+
+/** Count projection-eligible rows without retaining their full history. */
+export async function countEligibleActivitySource<T extends ActivitySourceRow>(
+  prefix: ActivitySourcePrefix,
+  fetchBatch: (after: ActivityCursor | undefined, take: number) => Promise<T[]>,
+  eligible: (row: T) => boolean,
+): Promise<number> {
+  let count = 0;
+  let after: ActivityCursor | undefined;
+  const boundaries = new Set<string>();
+  for (;;) {
+    const batch = await fetchBatch(after, COMPLETE_ACTIVITY_BATCH_SIZE);
+    if (!batch.length) return count;
+    const last = batch[batch.length - 1];
+    if (boundaries.has(last.id)) throw new Error("Activity source did not advance");
+    boundaries.add(last.id);
+    for (const row of batch) if (eligible(row)) count++;
+    if (batch.length < COMPLETE_ACTIVITY_BATCH_SIZE) return count;
+    after = { id: prefix + "-" + last.id, at: last.createdAt.toISOString() };
+  }
+}
 
 /**
  * Read every authorized matching row before the Activity page is returned.

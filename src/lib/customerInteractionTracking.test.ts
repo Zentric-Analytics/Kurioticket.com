@@ -88,9 +88,9 @@ test("admin activity uses sanitized action labels rather than arbitrary analytic
   assert.match(source, /safeActivityMetadata/);
   assert.match(source, /SHARE: "Shared result"/);
   assert.match(source, /metadata: \{ path: \["product"\], equals: product \}/);
-  assert.match(source, /label: safeInteractionNames\[a\.name\] \?\? baseLabel/);
+  assert.match(source, /label: safeInteractionNames\[event\.name\] \?\? baseLabel/);
   assert.match(source, /resultId/);
-  assert.doesNotMatch(source, /detail: JSON\.stringify\(a\.metadata\)/);
+  assert.doesNotMatch(source, /detail: JSON\.stringify\([^)]*\.metadata\)/);
 });
 
 test("confirmed price alerts have exact journey attribution without doubling existing analytics events", () => {
