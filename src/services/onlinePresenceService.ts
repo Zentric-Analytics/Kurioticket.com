@@ -1,7 +1,6 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
-import type { Prisma } from "@/generated/prisma/client";
 import { getOptionalPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { onlinePresenceWindowSeconds, type OnlinePresenceSnapshot } from "@/lib/onlinePresence";
 import { hasConsistentWebsitePresenceOrigin, presenceSigningSecret } from "@/lib/onlinePresenceCredential";
@@ -9,6 +8,8 @@ import type { OnlinePresenceHeartbeat } from "@/lib/onlinePresenceRoute";
 import { guestFirstAccessPreviewEnabled } from "@/lib/guestFirstAccessObservation";
 import { guestLiveCountryEnabled } from "@/lib/guestLiveCountry";
 import { writeGuestPresenceDetails } from "@/lib/liveGuestPresenceWrite";
+import { writeOnlinePresence } from "@/lib/onlinePresenceWrite";
+import { recheckGuestPresenceActivityIdentity } from "@/services/guestPresenceActivityIdentity";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 
 const retainedForMs = 15 * 60_000;
@@ -90,41 +91,49 @@ async function pruneExpiredPresence(environment: PublicEnvironment, now: Date) {
     } catch {
       // Country is optional; canonical presence remains available.
     }
+    try {
+      const cutoff = new Date(+now - onlinePresenceWindowSeconds * 1000);
+      await db.$executeRaw`
+        UPDATE "OnlinePresenceSession"
+        SET "guestActivityKind" = NULL, "guestActivityId" = NULL,
+          "guestActivityObservedAt" = NULL, "guestActivityExpiresAt" = NULL
+        WHERE ("environment", "sourceId") IN (
+          SELECT "environment", "sourceId" FROM "OnlinePresenceSession"
+          WHERE "environment" = ${environment} AND "guestActivityObservedAt" IS NOT NULL
+            AND ("accountSessionId" IS NOT NULL
+              OR "guestActivityObservedAt" <> "lastSeenAt"
+              OR "lastSeenAt" <= ${cutoff}
+              OR "guestActivityExpiresAt" <= ${now})
+          ORDER BY "guestActivityObservedAt" LIMIT 10000 FOR UPDATE SKIP LOCKED
+        )
+      `;
+    } catch {
+      // Read-time freshness and consent checks never depend on this cleanup.
+    }
   }
-}
-
-async function writeOnlinePresence(db: Prisma.TransactionClient, { environment, sourceId, platform, accountSessionId, now }: OnlinePresenceHeartbeat) {
-  const writeBefore = new Date(now.getTime() - writeThrottleMs);
-
-  // The same credential has one mutable row. Preserve a newer account/guest
-  // state if responses arrive out of order, and suppress redundant writes.
-  return db.$executeRaw`
-    INSERT INTO "OnlinePresenceSession" AS current
-      ("environment", "sourceId", "platform", "accountSessionId", "lastSeenAt")
-    VALUES (${environment}, ${sourceId}, ${platform}, ${accountSessionId}, ${now})
-    ON CONFLICT ("environment", "sourceId") DO UPDATE SET
-      "platform" = EXCLUDED."platform",
-      "accountSessionId" = EXCLUDED."accountSessionId",
-      "lastSeenAt" = EXCLUDED."lastSeenAt"
-    WHERE current."lastSeenAt" <= EXCLUDED."lastSeenAt"
-      AND (current."lastSeenAt" <= ${writeBefore}
-        OR current."accountSessionId" IS DISTINCT FROM EXCLUDED."accountSessionId"
-        OR current."platform" IS DISTINCT FROM EXCLUDED."platform")
-  `;
 }
 
 export async function recordOnlinePresence(heartbeat: OnlinePresenceHeartbeat) {
   const db = getOptionalPrisma();
   if (!db) throw new Error("Online presence storage unavailable");
-  if (guestLiveCountryEnabled(heartbeat.environment) || guestFirstAccessPreviewEnabled(heartbeat.environment)) {
-    try { await writeGuestPresenceDetails(db, heartbeat); }
+  if (heartbeat.environment === "staging") {
+    try {
+      await db.$transaction(async tx => {
+        const guestActivity = heartbeat.accountSessionId === null
+          ? await recheckGuestPresenceActivityIdentity(tx, heartbeat.guestActivity ?? null, heartbeat.now) : null;
+        await writeGuestPresenceDetails(tx, { ...heartbeat, guestActivity });
+      });
+    }
     catch {
       console.warn("[online-presence] optional guest observation unavailable");
-      await writeOnlinePresence(db, heartbeat);
+      // Advance the canonical observation even inside the normal throttle so
+      // an older optional tuple no longer matches the accepted heartbeat.
+      await writeOnlinePresence(db, heartbeat, true);
     }
   } else await writeOnlinePresence(db, heartbeat);
   // Device context is an optional enhancement to an authenticated canonical
-  // session. Never associate anonymous presence credentials with a visitor.
+  // session. Guest ownership is separately verified above and never creates
+  // a visitor, historical activity event, or new persistent credential.
   if (heartbeat.accountSessionId && heartbeat.device) {
     const minuteAgo = new Date(heartbeat.now.getTime() - 60_000);
     try {

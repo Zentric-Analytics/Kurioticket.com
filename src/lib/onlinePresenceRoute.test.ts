@@ -5,6 +5,7 @@ import { createGuestCountryResolver, type resolveGuestLiveCountry } from "./gues
 import { isWebsiteOnlinePresenceRoute } from "./onlinePresence";
 import { createOnlinePresenceHandler, type OnlinePresenceHeartbeat } from "./onlinePresenceRoute";
 import { hasConsistentWebsitePresenceOrigin, renewPresenceCredential } from "./onlinePresenceCredential";
+import type { GuestPresenceActivityIdentity } from "./guestPresenceActivityIdentity";
 
 const now = new Date("2026-11-18T12:00:00Z");
 const secret = "qa-only-operational-presence-signing-material";
@@ -40,6 +41,59 @@ function web(headers: HeadersInit = {}, path = webPath) {
 function native(headers: HeadersInit = {}) {
   return new Request(origin + nativePath, { method: "POST", headers: { "x-mobile-platform": "android", ...headers } });
 }
+
+test("existing guest ownership is resolved only for accepted anonymous staging heartbeats", async () => {
+  const records: OnlinePresenceHeartbeat[] = [];
+  const calls: string[] = [];
+  let owner: GuestPresenceActivityIdentity | null = {
+    kind: "operational", id: "b9ab6aa4-e28f-4daf-9b10-b1bb5616f6ef", expiresAt: new Date(+now + 60_000),
+  };
+  let fail = false;
+  const handler = (transport: "web" | "native", environment: "staging" | "production" = "staging") => createOnlinePresenceHandler(transport, {
+    environment: () => environment, secret: () => secret, automationSecret: () => undefined,
+    now: () => now, admit: () => true,
+    authenticate: async () => ({ id: "account-session", platform: "android" }),
+    resolveGuestActivity: async (_request, platform, env, at) => {
+      calls.push(platform); assert.equal(env, "staging"); assert.equal(at, now);
+      if (fail) throw new Error("optional lookup unavailable");
+      return owner;
+    },
+    record: async value => { records.push(value); },
+  });
+  for (const platform of ["desktop_web", "mobile_web", "ios", "android"] as const) {
+    const isWeb = platform.endsWith("_web");
+    const post = handler(isWeb ? "web" : "native");
+    const request = (credential?: string) => isWeb
+      ? web({ "sec-ch-ua-mobile": platform === "mobile_web" ? "?1" : "?0", ...(credential ? { [tokenHeader]: credential } : {}) })
+      : native({ "x-mobile-platform": platform, ...(credential ? { [tokenHeader]: credential } : {}) });
+    const before = calls.length;
+    const bootstrap = await post(request());
+    assert.equal(bootstrap.status, 202);
+    assert.equal(calls.length, before, "bootstrap neither resolves nor creates an owner");
+    const credential = bootstrap.headers.get(tokenHeader)!;
+    assert.equal((await post(request(credential))).status, 204);
+    assert.equal(records.at(-1)?.guestActivity, owner);
+    assert.equal(calls.at(-1), platform);
+  }
+  const post = handler("web");
+  const credential = (await post(web())).headers.get(tokenHeader)!;
+  const before = calls.length;
+  assert.equal((await post(web({ [tokenHeader]: credential, cookie: "next-auth.session-token=valid" }))).status, 204);
+  assert.equal(calls.length, before, "account heartbeat cannot resolve anonymous history");
+  assert.equal(records.at(-1)?.guestActivity, null);
+  owner = null;
+  await post(web({ [tokenHeader]: credential }));
+  assert.equal(records.at(-1)?.guestActivity, null, "missing ownership clears rather than retaining prior history");
+  fail = true;
+  assert.equal((await post(web({ [tokenHeader]: credential }))).status, 204);
+  assert.equal(records.at(-1)?.guestActivity, null, "optional lookup failure preserves presence without an owner");
+  const production = handler("web", "production");
+  const prodCredential = (await production(web())).headers.get(tokenHeader)!;
+  const productionBefore = calls.length;
+  assert.equal((await production(web({ [tokenHeader]: prodCredential }))).status, 204);
+  assert.equal(calls.length, productionBefore);
+  assert.equal(records.at(-1)?.guestActivity, undefined);
+});
 
 test("a guest uses a memory-only signed web credential independently of optional analytics consent", async () => {
   const { handler, records } = fixture();

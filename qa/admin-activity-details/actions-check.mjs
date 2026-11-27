@@ -6,7 +6,7 @@ const base = process.env.ADMIN_ACTIVITY_QA_URL;
 const output = process.env.ADMIN_ACTIVITY_QA_OUTPUT;
 assert.ok(base && output, "Use the isolated labelled Activity QA fixture");
 await mkdir(output, { recursive: true });
-const browser = await chromium.launch({headless:true,args:["--no-sandbox"]});
+const browser = await chromium.launch({headless:true,args:["--no-sandbox"],executablePath:process.env.ADMIN_ACTIVITY_QA_CHROMIUM});
 const page = await browser.newPage({viewport:{width:1280,height:900}});
 page.setDefaultTimeout(25000);
 const errors = [];

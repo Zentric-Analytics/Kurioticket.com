@@ -3,6 +3,7 @@ import { createOnlinePresenceHandler } from "@/lib/onlinePresenceRoute";
 import { presenceSigningSecret } from "@/lib/onlinePresenceCredential";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { recordOnlinePresence, reportOnlinePresenceIngestionFailure } from "@/services/onlinePresenceService";
+import { resolveGuestPresenceActivityIdentity } from "@/services/guestPresenceActivityIdentity";
 
 export const runtime = "nodejs";
 
@@ -12,5 +13,6 @@ export const POST = createOnlinePresenceHandler("native", {
   automationSecret: () => process.env.ONLINE_PRESENCE_INGRESS_SECRET,
   authenticate: requireMobileSecurity,
   record: recordOnlinePresence,
+  resolveGuestActivity: resolveGuestPresenceActivityIdentity,
   onFailure: reportOnlinePresenceIngestionFailure,
 });

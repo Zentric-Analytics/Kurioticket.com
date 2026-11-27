@@ -6,7 +6,7 @@ import { mkdir } from "node:fs/promises";
 const base = process.env.ADMIN_ACTIVITY_QA_URL;
 const output = process.env.ADMIN_ACTIVITY_QA_OUTPUT;
 await mkdir(output, {recursive: true});
-const browser = await chromium.launch({headless:true,args:["--no-sandbox"]});
+const browser = await chromium.launch({headless:true,args:["--no-sandbox"],executablePath:process.env.ADMIN_ACTIVITY_QA_CHROMIUM});
 const context = await browser.newContext({viewport:{width:1280,height:900}, permissions:["clipboard-read","clipboard-write"]});
 const page = await context.newPage();
 page.setDefaultTimeout(25000);

@@ -88,8 +88,8 @@ async function fallbackManage(kind: string, id: string, actorId: string): Promis
 
 export default async function AdminIdentityActivityPage({ params, searchParams }: PageProps) {
   const { kind, id } = await params;
-  // The reserved live-reference route never reaches historical identity readers.
-  if (kind === "live-guest") return <AdminLiveGuestActivity reference={id}/>;
+  // Only a current, server-verified existing owner can leave the live fallback.
+  if (kind === "live-guest") return <AdminLiveGuestActivity reference={id} input={await searchParams}/>;
   if (!validActivityIdentity(kind, id)) notFound();
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
   const timeZone = await getAdminViewerTimeZone(session.user.id);

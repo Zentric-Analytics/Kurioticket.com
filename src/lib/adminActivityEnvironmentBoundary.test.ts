@@ -4,6 +4,7 @@ import test from "node:test";
 
 const page = readFileSync(new URL("../app/admin/users/[kind]/[id]/activity/page.tsx", import.meta.url), "utf8");
 const workspace = readFileSync(new URL("../components/admin/AdminCustomerActivityWorkspace.tsx", import.meta.url), "utf8");
+const fullWorkspace = readFileSync(new URL("../components/admin/AdminFullActivityWorkspace.tsx", import.meta.url), "utf8");
 const live = readFileSync(new URL("../components/admin/AdminLiveGuestActivity.tsx", import.meta.url), "utf8");
 const timeline = readFileSync(new URL("../components/admin/ActivityTimeline.tsx", import.meta.url), "utf8");
 const unified = readFileSync(new URL("../components/admin/AdminUnifiedActivityList.tsx", import.meta.url), "utf8");
@@ -109,19 +110,33 @@ test("User Activity keeps one shared identity, six metrics and compact activity 
   assert.match(metrics,/xl:border-l/);
   assert.doesNotMatch(metrics,/activity-divider-|<h2/);
   assert.match(unified,/View all activity/);
-  assert.match(allActivity,/<ActivityFiltersBar/);
+  assert.match(allActivity,/<AdminFullActivityWorkspace/);
+  assert.match(live,/<AdminFullActivityWorkspace/);
+  assert.match(fullWorkspace,/<ActivityFiltersBar/);
+  assert.match(fullWorkspace,/aria-label="Activity categories"/);
+  assert.doesNotMatch(live,/aria-label="Activity categories"/);
   assert.match(allActivity,/<AdminUnifiedActivityList/);
 });
 
-test("live reference takes the same route before any permanent identity read and retains admin and environment checks",()=>{
+test("live reference validates current presence before resolving recorded ownership and retains admin and environment checks",()=>{
   for(const route of [page,allActivity]){
     assert.ok(route.indexOf('if (kind === "live-guest")') < route.indexOf("if (!validActivityIdentity(kind"));
     assert.match(route,/<AdminLiveGuestActivity reference=\{id\}/);
+    assert.match(route,/input=\{await searchParams\}/);
     assert.match(route,/export const dynamic = "force-dynamic"/);
   }
   assert.match(live,/await requireAdminSession\("\/admin\/users"\)/);
   assert.match(live,/safeReference && environment === "staging"/);
-  assert.match(live,/resolveLiveGuestActivity\(snapshot, reference, new Date\(\)\)/);
+  assert.match(live,/const now = new Date\(\)/);
+  assert.match(live,/resolveLiveGuestActivity\(snapshot, reference, now\)/);
+  assert.match(live,/const history = row \? await resolveAdminLiveGuestHistory\(row, environment, now\) : null/);
+  const authentication = live.indexOf('await requireAdminSession("/admin/users")');
+  const currentPresence = live.indexOf("const row = resolveLiveGuestActivity");
+  const historyResolver = live.indexOf("const history = row ? await resolveAdminLiveGuestHistory");
+  const canonicalRedirect = live.indexOf("if (recordedHref) redirect(recordedHref)");
+  assert.ok(authentication < currentPresence && currentPresence < historyResolver && historyResolver < canonicalRedirect);
+  assert.match(live,/history \? recordedGuestActivityHref\(history\.id, full, input\) : null/);
+  assert.doesNotMatch(live,/recordedGuestActivityHref\(row\./);
   assert.match(live,/eventCount=\{null\} summary=\{null\}/);
   assert.match(live,/allHref=\{path \+ "\/all"\}/);
   assert.doesNotMatch(live,/loadAdminIdentityActivity|loadAdminUnifiedActivity|loadAdminGuestAccessHistory|CopyIdentityId|GuestTrackingActions/);

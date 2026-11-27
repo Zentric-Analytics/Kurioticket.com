@@ -1,19 +1,20 @@
 import assert from "node:assert/strict";
 import test, { type TestContext } from "node:test";
-import { createNativePresenceClient } from "./nativePresenceClient";
+import { createNativePresenceClient, type ExistingGuestPresenceCredentials } from "./nativePresenceClient";
 
 function fixture(
   context: TestContext,
   respond: (request: Request, attempt: number) => Promise<Response> | Response,
   platform: "ios" | "android" = "ios",
+  options: { baseUrl?: string; readGuestCredentials?: () => ExistingGuestPresenceCredentials } = {},
 ) {
   context.mock.timers.enable({ apis: ["Date", "setTimeout"], now: new Date("2026-11-18T01:00:00Z") });
   const requests: Request[] = [];
-  const client = createNativePresenceClient("https://staging.kurioticket.com", platform, async (input, options) => {
-    const request = new Request(input, options);
+  const client = createNativePresenceClient(options.baseUrl ?? "https://staging.kurioticket.com", platform, async (input, init) => {
+    const request = new Request(input, init);
     requests.push(request);
     return respond(request, requests.length);
-  });
+  }, options.readGuestCredentials);
   context.after(() => client.stop());
   return { client, requests };
 }
@@ -176,4 +177,159 @@ test("recovery-only sessions cannot send either kind of heartbeat", async contex
   client.setForeground(true);
   await flush();
   assert.equal(requests.length, 0);
+});
+
+function searchCredential(platform: "ios" | "android", expiresAt = Date.now() + 30 * 60_000) {
+  return `v2.00000000-0000-4000-8000-000000000001.${expiresAt}.staging.${platform}.${"A".repeat(43)}`;
+}
+
+test("staging guest heartbeat re-reads existing credentials for both bootstrap requests", async context => {
+  for (const platform of ["ios", "android"] as const) {
+    await context.test(platform, async subtest => {
+      let current: ExistingGuestPresenceCredentials = {};
+      let reads = 0;
+      const { client, requests } = fixture(subtest, (_, attempt) => {
+        if (attempt === 1) {
+          current = { visitorToken: "B".repeat(43), operationalSearchCredential: searchCredential(platform, Date.now() + 60_000) };
+          return issue("live-credential");
+        }
+        return ok();
+      }, platform, { readGuestCredentials: () => { reads++; return current; } });
+      const original = searchCredential(platform);
+      current = { visitorToken: "A".repeat(43), operationalSearchCredential: original };
+      client.setSession(null);
+      client.setForeground(true);
+      await flush();
+      assert.equal(requests.length, 2);
+      assert.equal(reads, 2);
+      assert.equal(requests[0].headers.get("x-kt-visitor"), "A".repeat(43));
+      assert.equal(requests[0].headers.get("x-kt-search-session"), original);
+      assert.equal(requests[1].headers.get("x-kt-visitor"), current.visitorToken);
+      assert.equal(requests[1].headers.get("x-kt-search-session"), current.operationalSearchCredential);
+      assert.equal(requests[1].headers.get("x-kt-presence-session"), "live-credential");
+
+      client.setSession(session);
+      await flush();
+      assert.equal(reads, 2, "account heartbeat never reads optional guest credentials");
+      assert.equal(requests[2].headers.get("x-kt-visitor"), null);
+      assert.equal(requests[2].headers.get("x-kt-search-session"), null);
+    });
+  }
+});
+
+test("production and unrelated origins do not read or forward guest history credentials", async context => {
+  for (const baseUrl of ["https://kurioticket.com", "https://staging.kurioticket.com.attacker.invalid", "http://staging.kurioticket.com"]) {
+    await context.test(baseUrl, async subtest => {
+      let reads = 0;
+      const { client, requests } = fixture(subtest, () => ok(), "ios", {
+        baseUrl, readGuestCredentials: () => { reads++; return { visitorToken: "A".repeat(43) }; },
+      });
+      client.setSession(null);
+      client.setForeground(true);
+      await flush();
+      client.refreshGuestCredentials();
+      await flush();
+      assert.equal(requests.length, 1);
+      assert.equal(reads, 0, "credentials are not read outside staging");
+      assert.equal(requests[0].headers.get("x-kt-visitor"), null);
+      assert.equal(requests[0].headers.get("x-kt-search-session"), null);
+    });
+  }
+});
+
+test("native presence rejects malformed, expired, cross-platform, and legacy search context", async context => {
+  const invalid = [
+    (valid: string) => valid.replace(/^v2\./, "v1.").replace(".ios.", "."),
+    (valid: string) => valid.replace(".staging.", ".production."),
+    (valid: string) => valid.replace(".ios.", ".android."),
+    () => searchCredential("ios", Date.now()),
+    () => searchCredential("ios", Date.now() + 30 * 60_000 + 1),
+    () => "not-a-credential",
+  ];
+  for (let index = 0; index < invalid.length; index++) {
+    await context.test(String(index), async subtest => {
+      const { client, requests } = fixture(subtest, () => ok(), "ios", {
+        readGuestCredentials: () => ({ visitorToken: "not-a-visitor", operationalSearchCredential: invalid[index](searchCredential("ios")) }),
+      });
+      client.setSession(null);
+      client.setForeground(true);
+      await flush();
+      assert.equal(requests[0].headers.get("x-kt-visitor"), null);
+      assert.equal(requests[0].headers.get("x-kt-search-session"), null);
+    });
+  }
+});
+
+test("consent and search-context changes promptly update or clear a guest heartbeat", async context => {
+  let current: ExistingGuestPresenceCredentials = {};
+  const { client, requests } = fixture(context, () => ok(), "ios", { readGuestCredentials: () => current });
+  client.setSession(null);
+  client.setForeground(true);
+  await flush();
+  current = { visitorToken: "A".repeat(43), operationalSearchCredential: searchCredential("ios") };
+  client.refreshGuestCredentials();
+  await flush();
+  assert.equal(requests.length, 2);
+  assert.equal(requests[1].headers.get("x-kt-visitor"), current.visitorToken);
+  current = { operationalSearchCredential: current.operationalSearchCredential };
+  client.refreshGuestCredentials();
+  await flush();
+  assert.equal(requests.length, 3);
+  assert.equal(requests[2].headers.get("x-kt-visitor"), null);
+  assert.equal(requests[2].headers.get("x-kt-search-session"), current.operationalSearchCredential, "essential search continuity survives analytics refusal");
+  current = {};
+  client.refreshGuestCredentials();
+  await flush();
+  assert.equal(requests.length, 4);
+  assert.equal(requests[3].headers.get("x-kt-search-session"), null);
+});
+
+test("an in-flight heartbeat cannot retain withdrawn context in the next request", async context => {
+  let finish!: (response: Response) => void;
+  let current: ExistingGuestPresenceCredentials = { visitorToken: "A".repeat(43) };
+  const { client, requests } = fixture(context, (_, attempt) => attempt === 1
+    ? new Promise<Response>(resolve => { finish = resolve; }) : ok(), "ios", { readGuestCredentials: () => current });
+  client.setSession(null);
+  client.setForeground(true);
+  current = {};
+  client.refreshGuestCredentials();
+  await flush();
+  assert.equal(requests.length, 1);
+  finish(ok());
+  await flush();
+  assert.equal(requests.length, 2);
+  assert.equal(requests[1].headers.get("x-kt-visitor"), null);
+});
+
+test("credential notifications coalesce with account transition before sending", async context => {
+  const { client, requests } = fixture(context, () => ok(), "ios", {
+    readGuestCredentials: () => ({ visitorToken: "A".repeat(43) }),
+  });
+  client.setSession(null);
+  client.setForeground(true);
+  await flush();
+  client.refreshGuestCredentials();
+  client.setSession(session);
+  await flush();
+  assert.equal(requests.length, 2);
+  assert.equal(requests[1].headers.get("authorization"), "Bearer account-bearer");
+  assert.equal(requests[1].headers.get("x-kt-visitor"), null);
+});
+
+test("expired stored accounts and unavailable optional readers never supply guest context", async context => {
+  for (const expired of [false, true]) {
+    await context.test(String(expired), async subtest => {
+      let reads = 0;
+      const { client, requests } = fixture(subtest, () => ok(), "ios", {
+        readGuestCredentials: () => { reads++; throw new Error("optional reader unavailable"); },
+      });
+      client.setSession(expired ? { ...session, expires: "2026-11-01T00:00:00Z" } : null);
+      client.setForeground(true);
+      await flush();
+      assert.equal(requests.length, 1);
+      assert.equal(reads, expired ? 0 : 1);
+      assert.equal(requests[0].headers.get("x-kt-visitor"), null);
+      assert.equal(requests[0].headers.get("x-kt-search-session"), null);
+    });
+  }
 });

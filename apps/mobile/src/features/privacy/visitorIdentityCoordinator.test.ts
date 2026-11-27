@@ -474,3 +474,60 @@ test("a failed review save cannot authorize page views or replace an existing to
   assert.equal(h.saved().visitorToken, original);
   assert.equal(upgraded.snapshot().tracking, true);
 });
+
+test("presence can only read an existing guest token without starting identity work", async () => {
+  const untouched = new VisitorIdentityCoordinator({
+    read: async () => { assert.fail("presence must not hydrate identity"); },
+    write: async () => { assert.fail("presence must not persist identity"); },
+    grant: async () => { assert.fail("presence must not grant consent"); },
+    merge: async () => { assert.fail("presence must not merge identity"); },
+    withdraw: async () => { assert.fail("presence must not change consent"); },
+  });
+  assert.equal(untouched.existingGuestToken(), null);
+  assert.equal(untouched.snapshot().loaded, false);
+
+  const h = harness();
+  await h.coordinator.transition(null);
+  assert.equal(h.coordinator.existingGuestToken(), null);
+  await h.coordinator.choose(true);
+  const before = structuredClone(h.calls);
+  assert.equal(h.coordinator.existingGuestToken(), visitorToken(1));
+  assert.equal(h.coordinator.existingGuestToken(), visitorToken(1));
+  assert.deepEqual(h.calls, before, "reading presence context does not refresh an existing identity");
+  assert.deepEqual(await h.coordinator.headers("/api/mobile/v1/presence", null), {}, "presence is not added to the analytics producer allowlist");
+});
+
+test("presence guest token disappears on withdrawal and account changes", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  await h.coordinator.choose(true);
+  const observed: Array<string | null> = [];
+  const unsubscribe = h.coordinator.subscribe(() => { observed.push(h.coordinator.existingGuestToken()); });
+  await h.coordinator.transition(user("a"));
+  assert.equal(h.coordinator.existingGuestToken(), null);
+  await h.coordinator.transition(null);
+  const replacement = h.coordinator.existingGuestToken();
+  assert.equal(replacement, visitorToken(2));
+  assert.notEqual(replacement, visitorToken(1), "account-bound identity never returns to guest presence");
+  h.controls.failWithdrawal = true;
+  await h.coordinator.choose(false);
+  assert.equal(h.coordinator.existingGuestToken(), null);
+  assert.equal(observed.at(-1), null);
+  assert.deepEqual(h.saved().pendingWithdrawals, [replacement]);
+  unsubscribe();
+});
+
+test("presence cannot use an identity awaiting review or a confirmed choice awaiting storage", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  await h.coordinator.choose(true);
+  const reviewed = h.restart("analytics-visitor-v2");
+  await reviewed.transition(null);
+  assert.equal(reviewed.existingGuestToken(), null);
+  h.controls.failWrite = true;
+  await assert.rejects(reviewed.choose(true));
+  assert.equal(reviewed.existingGuestToken(), null);
+  h.controls.failWrite = false;
+  await reviewed.choose(true);
+  assert.equal(reviewed.existingGuestToken(), visitorToken(1));
+});

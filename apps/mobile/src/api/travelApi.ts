@@ -105,6 +105,19 @@ function apiErrorMessage(data: Record<string, unknown>) {
 // Ephemeral operational search continuity; never persisted as analytics tracking.
 let operationalSearchCredential: string | null = null;
 let operationalSearchActor: string | null = null;
+const operationalCredentialListeners = new Set<() => void>();
+export function subscribeOperationalSearchCredential(listener: () => void) {
+  operationalCredentialListeners.add(listener);
+  return () => { operationalCredentialListeners.delete(listener); };
+}
+function setOperationalSearchCredential(credential: string | null) {
+  if (operationalSearchCredential === credential) return;
+  operationalSearchCredential = credential;
+  operationalSearchReferences.clear();
+  for (const listener of operationalCredentialListeners) {
+    try { listener(); } catch { /* Optional presence observers cannot interrupt a search. */ }
+  }
+}
 const operationalPaths = new Set(["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive", "/api/redirect"]);
 /** Identify the real Android application and transport, never a browser. */
 export function carSearchClientHeaders(platform: string, version?: string): Record<string, string> {
@@ -133,15 +146,33 @@ function rememberOperationalSearchResponse(value: unknown, epoch: number, creden
 
 let accountEpoch = 0;
 let observedSessionToken: string | null | undefined;
+/** Presence may reuse this exact search-owned memory state, never another
+ * credential cache or a credential created by opening the app. */
+export function readExistingGuestOperationalSearchCredential(): string | null {
+  const platform = Platform.OS;
+  if ((platform !== "ios" && platform !== "android") || observedSessionToken !== null
+      || operationalSearchActor !== null || !operationalSearchCredential) return null;
+  const base = getApiBaseUrl(platform, __DEV__);
+  if (!base.ok || base.baseUrl !== "https://staging.kurioticket.com") return null;
+  const credential = operationalSearchCredential;
+  if (!operationalCredentialPattern.test(credential)) return null;
+  const parts = credential.split(".");
+  const expiresAt = Number(parts[2]);
+  const now = Date.now();
+  return parts[0] === "v2" && parts[3] === "staging" && parts[4] === platform
+    && Number.isSafeInteger(expiresAt) && expiresAt > now && expiresAt <= now + 30 * 60_000
+    ? credential : null;
+}
 const accountPath = /^\/api\/mobile\/v1\/(?:profile|email-change|saved|recent-searches|price-alerts|trips|travel-preferences|customization-preferences|email-preferences|notifications|security)(?:[/?]|$)/;
 subscribeSession?.(session => {
   const token = session?.token ?? null;
-  if (token !== observedSessionToken) {
+  const changed = token !== observedSessionToken;
+  observedSessionToken = token;
+  if (changed) {
     accountEpoch++;
-    operationalSearchCredential = null;
+    setOperationalSearchCredential(null);
     operationalSearchReferences.clear();
   }
-  observedSessionToken = token;
 });
 
 async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string; sandboxDisplay?: boolean; visitorContext?: number; body?: () => unknown; expectedUserId?: string; session?: StoredSession } = {}) {
@@ -156,9 +187,9 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   const accountOwned = accountPath.test(path);
   if (options.expectedUserId && actor !== options.expectedUserId) throw new TravelApiError("Account changed. Refresh before trying again.", 0, "cancelled");
   if (operationalSearchActor !== actor) {
-    operationalSearchCredential = null;
-    operationalSearchReferences.clear();
     operationalSearchActor = actor;
+    setOperationalSearchCredential(null);
+    operationalSearchReferences.clear();
   }
   const visitorHeaders = await visitorIdentity.headers(path, ordinarySession).catch(() => ({}));
   const requestVisitorContext = "x-kt-visitor" in visitorHeaders ? visitorIdentity.trackingContext() : null;
@@ -197,8 +228,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
     if (operationalPaths.has(path) && epoch === accountEpoch && actor === operationalSearchActor) {
       const credential = response.headers.get("X-Kt-Search-Session");
       if (credential && operationalCredentialPattern.test(credential)) {
-        if (operationalSearchCredential !== credential) operationalSearchReferences.clear();
-        operationalSearchCredential = credential;
+        setOperationalSearchCredential(credential);
         responseOperationalCredential = credential;
       }
     }

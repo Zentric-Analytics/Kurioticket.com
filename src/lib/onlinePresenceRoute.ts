@@ -7,6 +7,7 @@ import type { OnlinePresencePlatform } from "./onlinePresence";
 import { sessionDeviceObservation, type SessionDeviceObservation } from "./sessionDeviceObservation";
 import { guestFirstAccessObservation, guestFirstAccessPreviewEnabled, type GuestAccessObservation } from "./guestFirstAccessObservation";
 import { guestLiveCountryEnabled, reportGuestCountryDiagnostic, resolveGuestLiveCountry, safeGuestLiveCountry } from "./guestLiveCountry";
+import type { GuestPresenceActivityIdentity } from "./guestPresenceActivityIdentity";
 import {
   equalPresenceSignatures,
   presenceTokenHeader,
@@ -25,6 +26,8 @@ export type OnlinePresenceHeartbeat = {
   guestAccess?: GuestAccessObservation;
   /** Country only, separate from the first-access/device preview. */
   guestLiveCountryCode?: string | null;
+  /** Existing verified history owner, retained only with this current guest row. */
+  guestActivity?: GuestPresenceActivityIdentity | null;
 };
 
 type Dependencies = {
@@ -36,6 +39,7 @@ type Dependencies = {
   authenticate: (request: Request) => Promise<{ id: string; platform: string | null } | null>;
   admit?: (request: Request, sourceId: string, newSource: boolean) => boolean;
   resolveGuestCountry?: typeof resolveGuestLiveCountry;
+  resolveGuestActivity?: (request: Request, platform: OnlinePresencePlatform, environment: PublicEnvironment, now: Date) => Promise<GuestPresenceActivityIdentity | null>;
   record: (heartbeat: OnlinePresenceHeartbeat) => Promise<void>;
   onFailure?: (environment: PublicEnvironment) => void;
 };
@@ -112,7 +116,8 @@ export function createOnlinePresenceHandler(transport: PresenceTransport, depend
     if (!secret) return response(503, "60");
 
     // The browser holds the signed credential only in page memory. Do not set a new
-    // tracking cookie or use analytics consent identifiers for operational presence.
+    // tracking cookie. An existing history credential may authorize Admin
+    // navigation, but never establishes the presence identity or online count.
     const cookies = transport === "web" ? requestCookies(request) : null;
     const supplied = request.headers.get(presenceTokenHeader);
     const credential = renewPresenceCredential(supplied, { environment, transport, now: now.getTime(), secret });
@@ -131,7 +136,13 @@ export function createOnlinePresenceHandler(transport: PresenceTransport, depend
         // Optional geolocation must never turn a valid heartbeat into a failed
         // request. Only the server's verified current request may supply a country.
         let country: string | null | undefined;
+        let guestActivity: GuestPresenceActivityIdentity | null = null;
         if (!account && environment === "staging") {
+          try {
+            guestActivity = await dependencies.resolveGuestActivity?.(request, verifiedPlatform, environment, now) ?? null;
+          } catch {
+            // Optional ownership lookup cannot suppress canonical presence.
+          }
           if (!guestLiveCountryEnabled(environment)) {
             reportGuestCountryDiagnostic(environment, "disabled", verifiedPlatform);
           } else {
@@ -154,6 +165,7 @@ export function createOnlinePresenceHandler(transport: PresenceTransport, depend
             guestAccess: guestFirstAccessObservation(request, verifiedPlatform, false),
           } : {}),
           ...(country !== undefined ? { guestLiveCountryCode: country } : {}),
+          ...(environment === "staging" ? { guestActivity } : {}),
           now,
         });
       }
