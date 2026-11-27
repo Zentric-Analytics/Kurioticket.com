@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { BotReportFilters } from "@/components/admin/BotReportFilters";
-import { BOT_DIRECTORY, BOT_GROUPS, botRecordedAccess, botRecordedVerification, botDirectoryHref, botHref, botDirectorySubtitle, botDirectoryTime, botName, botType, botVerification, type BotQuery } from "@/lib/adminBotReport";
+import { BOT_DIRECTORY, BOT_GROUPS, botRecordedAccess, botDirectoryHref, botHref, botDirectorySubtitle, botDirectoryTime, botName, botType, type BotQuery } from "@/lib/adminBotReport";
 import { ADMIN_REPORTING_RANGE_LABELS } from "@/lib/adminReportingRanges";
 import { readBotDirectory } from "@/services/adminBotReportService";
 import { Metrics, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel } from "./report-ui";
@@ -65,10 +65,8 @@ export default async function BotManagementPage({ searchParams }: { searchParams
                   </td>
                   <td>{botType(bot)}</td>
                   <td>
-                    {botRecordedVerification(bot)}
-                    {bot.verification !== "VERIFIED" && bot.activities[0]?.reportedNetworkMatch === "OFFICIAL_CRAWLER_RANGE_MATCH"
-                      && bot.activities[0].timestamp.getTime() === bot.lastSeen.getTime()
-                      && <p className="mt-0.5 text-xs text-slate-600">Official network match (reported IP)</p>}
+                    <span title={bot.reportVerification.detail ?? undefined}>{bot.reportVerification.label}</span>
+                    {bot.reportVerification.detail && <p className="mt-0.5 text-xs text-slate-600">Network evidence only</p>}
                   </td>
                   <td className="whitespace-nowrap"><span className={bot.access === "BLOCKED" ? "text-rose-700" : "text-slate-950"}>{botRecordedAccess(bot)}</span></td>
                   <td className="whitespace-nowrap tabular-nums">{botDirectoryTime(bot.lastSeen)}</td>
