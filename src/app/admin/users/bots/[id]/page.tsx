@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { BotReportFilters } from "@/components/admin/BotReportFilters";
-import { BOT_DECISIONS, BOT_DIRECTORY, BOT_KINDS, botRecordedAccess, botRecordedVerification, botDirectoryHref, botDirectoryTime, botFilters, botLabel, botName, botTime, botType, botVerification, type BotQuery } from "@/lib/adminBotReport";
+import { BOT_DECISIONS, BOT_DIRECTORY, BOT_KINDS, botRecordedAccess, botDirectoryHref, botDirectoryTime, botFilters, botLabel, botName, botTime, botType, botVerification, type BotQuery } from "@/lib/adminBotReport";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { searchDetailCrawlerName, searchDetailCrawlerEvidenceLabel } from "@/lib/adminSearchDetailPresentation";
 import { readBotDetails } from "@/services/adminBotReportService";
@@ -64,7 +64,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
         <BotIcon />
         <div>
           <h1 className="text-xl font-semibold text-slate-950">{botName(bot)}</h1>
-          <p className="text-[13px] text-slate-600">{botType(bot)} · {botRecordedVerification(bot)} · {botRecordedAccess(bot)}</p>
+          <p className="text-[13px] text-slate-600">{botType(bot)} · {report.reportVerification.label} · {botRecordedAccess(bot)}</p>
         </div>
       </div>
     </header>
@@ -72,7 +72,9 @@ export default async function BotDetailsPage({ params, searchParams }: {
       <Fields threeColumns entries={[
         ["Owner", bot.owner],
         ["Category", botType(bot)],
-        ["Verification status", botRecordedVerification(bot)],
+        ["Verification status", <div key="verification">{report.reportVerification.label}
+          {report.reportVerification.detail && <p className="mt-0.5 text-xs text-slate-600">{report.reportVerification.detail}</p>}
+        </div>],
         ["IP addresses", observed([
           ...observations.map(row => row.ip ?? (row.renderLogIp ? row.renderLogIp + " (Render log)" : row.reportedIp ? row.reportedIp + " (reported)" : null)),
           ...report.searchEvidence.map(row => row.ipAddress ? row.ipAddress + " (recorded search)" : null),
@@ -207,8 +209,9 @@ export default async function BotDetailsPage({ params, searchParams }: {
                           ] as [string, ReactNode][] : []),
                           ["Recorded User-Agent token", event.userAgent],
                           ["Verification evidence", event.evidence ? botLabel(event.evidence) : null],
-                          ...(event.reportedNetworkMatch === "OFFICIAL_CRAWLER_RANGE_MATCH" ? [
-                            ["Reported network check", "Matches an official crawler IP range; ingress authentication not established"],
+                          ...(event.networkEvidence ? [
+                            ["Network check", event.networkEvidence.label],
+                            ["Network check basis", event.networkEvidence.detail],
                           ] as [string, ReactNode][] : []),
                           ["Access decision", decision], ["Reason", botLabel(event.reason)], ["HTTP response status", event.responseStatus],
                           ["Search dispatch (UTC)", botTime(event.dispatchedAt)],
