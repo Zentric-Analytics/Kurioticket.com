@@ -82,6 +82,6 @@ test("recorded bot searches reconcile legacy and linked records exactly once, wi
   const unchanged = await db.botRegistry.findUniqueOrThrow({ where: { id: declared.id } });
   assert.equal(unchanged.verification, "DECLARED");
   assert.equal(unchanged.access, "CRAWL_ONLY");
-  assert.equal(unchanged.searches, 0n);
+  assert.equal(unchanged.searches, BigInt(0));
   assert.equal(await db.botActivity.count({ where: { environment } }), 1);
 });
