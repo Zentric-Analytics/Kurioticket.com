@@ -7,7 +7,7 @@ import { combinedBotHistory } from "./adminBotHistory";
 import { getPrisma } from "@/lib/prisma";
 import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { recordedSearchCrawler } from "./adminOperationalReadCore";
-import { detailHistoryQuery, recordedBotSearchRows, type RecordedBotSearch } from "./recordedBotSearchHistory";
+import { detailHistoryQuery, recordedBotSearchRows, summarizeBotNetwork, type BotNetworkIpCandidate, type RecordedBotSearch } from "./recordedBotSearchHistory";
 
 test("recorded bot searches reconcile legacy and linked records exactly once, without changing authorization", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
   const previousUrl = process.env.DATABASE_URL;
@@ -52,13 +52,13 @@ test("recorded bot searches reconcile legacy and linked records exactly once, wi
     create({ ...claim, ...network }),
     create({ verifiedCrawler: "GOOGLEBOT", ...network }, { createdAt: prior }),
     create({ identifiedCrawler: "GOOGLEBOT", verifiedCrawler: "BINGBOT", crawlerEvidence: "VERIFIED_DNS" }),
-    create({ identifiedCrawler: "GOOGLEOTHER", crawlerEvidence: "DECLARED_USER_AGENT" }),
+    create({ identifiedCrawler: "GOOGLEOTHER", crawlerEvidence: "DECLARED_USER_AGENT", searchNetwork: { ipAddress: "8.8.8.8", countryCode: "DE" } }),
     create({ identifiedCrawler: "GOOGLE_CRAWLER_UNRESOLVED", crawlerEvidence: "DECLARED_USER_AGENT" }),
     create(claim, { requestId: activity.id }),
     create({ identifiedCrawler: "PERPLEXITYBOT", crawlerEvidence: "DECLARED_USER_AGENT" }),
     create(claim, { countAsSearch: false }),
     create(claim, { source: "WEB" }),
-    create(claim, { environment: elsewhere }),
+    create({ ...claim, searchNetwork: { ipAddress: "8.8.4.4", countryCode: "GB" } }, { environment: elsewhere }),
   ]);
   const rows = await db.$queryRaw<RecordedBotSearch[]>(recordedBotSearchRows(environment));
   assert.equal(rows.length, 7);
@@ -111,9 +111,53 @@ test("recorded bot searches reconcile legacy and linked records exactly once, wi
     assert.equal(detail.relatedCohorts[0].id, declared.id);
   }
 
+  // The declared cohort has no own IP, but the verified cohort has saved
+  // searches. Reuse those original records without changing its counts.
+  const claimedHistory = combinedBotHistory(environment, declared.id, declared.identityKey, {
+    window: undefined,
+  }, Prisma.sql`SELECT id, "createdAt" AS timestamp FROM recorded WHERE "activityId" IS NULL`);
+  const [claimedDetail] = await db.$queryRaw<{
+    actual: number; historicalActual: number; total: number;
+    networkIpCandidates: BotNetworkIpCandidate[]; networkCountryCodes: string[];
+    relatedCohorts: { id: string; count: number }[];
+  }[]>(detailHistoryQuery(environment, declared.id, declared.name, claimedHistory, true, 1, 1));
+  const claimedNetwork = summarizeBotNetwork(claimedDetail.networkIpCandidates, claimedDetail.networkCountryCodes);
+  assert.equal(claimedDetail.actual, 2, "Related search evidence must not inflate this identity's counts");
+  assert.equal(claimedDetail.historicalActual, 1);
+  assert.equal(claimedNetwork.latestIp?.ip, network.searchNetwork.ipAddress);
+  assert.equal(claimedNetwork.latestIp?.id, a.id);
+  assert.equal(claimedNetwork.latestIp?.botId, verified.id);
+  assert.equal(claimedNetwork.latestIp?.source, "search");
+  assert.deepEqual(claimedNetwork.countries, ["US"], "Exclude other crawler names and other environments");
+  assert.equal(claimedDetail.relatedCohorts[0].id, verified.id);
+  // Newer retained requests take precedence, while earlier countries remain.
+  await db.botActivity.update({ where: { id: activity.id }, data: {
+    timestamp: new Date("2026-11-25T00:00:00Z"), reportedIp: "66.249.67.74", reportedCountry: "CA",
+  } });
+  const [updated] = await db.$queryRaw<typeof claimedDetail[]>(detailHistoryQuery(environment, verified.id, verified.name,
+    combinedBotHistory(environment, verified.id, verified.identityKey, { window: undefined },
+      Prisma.sql`SELECT id, "createdAt" AS timestamp FROM recorded WHERE "activityId" IS NULL`), true, 1, 1));
+  const updatedNetwork = summarizeBotNetwork(updated.networkIpCandidates, updated.networkCountryCodes);
+  assert.equal(updatedNetwork.latestIp?.id, activity.id);
+  assert.equal(updatedNetwork.latestIp?.botId, declared.id);
+  assert.equal(updatedNetwork.latestIp?.provenance, "Reported request IP");
+  assert.deepEqual(updatedNetwork.countries, ["CA", "US"]);
+  assert.equal(updated.actual, 2);
+
   const unchanged = await db.botRegistry.findUniqueOrThrow({ where: { id: declared.id } });
   assert.equal(unchanged.verification, "DECLARED");
   assert.equal(unchanged.access, "CRAWL_ONLY");
   assert.equal(unchanged.searches, BigInt(0));
   assert.equal(await db.botActivity.count({ where: { environment } }), 1);
+});
+
+test("network summary leaves missing and invalid network data unrecorded and deduplicates countries", () => {
+  assert.deepEqual(summarizeBotNetwork([], []), { latestIp: null, countries: [] });
+  const record = { id: "record", botId: "identity", timestamp: "2026-11-24T00:00:00",
+    source: "search" as const, ip: "127.0.0.1", provenance: "Recorded search" };
+  assert.deepEqual(summarizeBotNetwork([record], ["US", "us", "GB", "XX", "INVALID"]), {
+    latestIp: null, countries: ["GB", "US"],
+  });
+  const valid = { ...record, ip: "66.249.67.73" };
+  assert.equal(summarizeBotNetwork([record, valid], []).latestIp, valid);
 });
