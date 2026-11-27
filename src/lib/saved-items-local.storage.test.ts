@@ -23,7 +23,7 @@ function withStorage(options: { blocked?: boolean; readDenied?: boolean; quota?:
 test("saved items tolerate denial of the localStorage getter itself", () => {
   withStorage({ blocked: true }, () => {
     assert.deepEqual(readSavedItemIds(), []);
-    assert.doesNotThrow(() => writeSavedItemIds(["fixture-item"]));
+    assert.equal(writeSavedItemIds(["fixture-item"]), false);
   });
 });
 
@@ -37,7 +37,7 @@ test("a full local store does not discard readable legacy saved items or claim m
     assert.deepEqual(readSavedItemIds(), ["fixture-item"]);
     assert.equal(values.has("kurioticket_saved_items_v1"), false);
     assert.equal(values.has("kurioticket_saved_trips_v1"), true);
-    assert.doesNotThrow(() => writeSavedItemIds(["new-item"]));
+    assert.equal(writeSavedItemIds(["new-item"]), false);
     assert.equal(values.has("kurioticket_saved_items_v1"), false);
   });
 });
@@ -47,7 +47,7 @@ test("normal saved-item migration and deduplicated writes preserve existing keys
     assert.deepEqual(readSavedItemIds(), ["fixture-item"]);
     assert.equal(values.get("kurioticket_saved_items_v1"), '["fixture-item"]');
     assert.equal(values.has("kurioticket_saved_trips_v1"), false);
-    writeSavedItemIds(["a", "a", "b"]);
+    assert.equal(writeSavedItemIds(["a", "a", "b"]), true);
     assert.deepEqual(readSavedItemIds(), ["a", "b"]);
   });
 });

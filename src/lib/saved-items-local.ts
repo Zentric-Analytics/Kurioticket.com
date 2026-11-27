@@ -20,10 +20,12 @@ export function readSavedItemIds(): string[] {
     return ids;
   } catch { return []; }
 }
-export function writeSavedItemIds(ids: string[]) {
+export function writeSavedItemIds(ids: string[]): boolean {
   const storage = getStorage();
-  if (!storage) return;
-  try { storage.setItem(SAVED_ITEMS_STORAGE_KEY, JSON.stringify(Array.from(new Set(ids)))); }
-  catch { /* Storage can be unavailable in private browsing. */ }
+  if (!storage) return false;
+  try {
+    storage.setItem(SAVED_ITEMS_STORAGE_KEY, JSON.stringify(Array.from(new Set(ids))));
+    return true;
+  } catch { return false; }
 }
 export function toggleSavedItemId(ids: string[], id: string): string[] { return ids.includes(id) ? ids.filter(itemId => itemId !== id) : [...ids, id]; }

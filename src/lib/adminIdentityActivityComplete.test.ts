@@ -2,6 +2,7 @@
 // Exercise the real reader and filter helpers. Only the database boundary is replaced.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import test from "node:test";
 import ts from "typescript";
@@ -138,14 +139,19 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     if (!journeysById.has(journey.id)) journeysById.set(journey.id, { ...journey, events: [] });
     journeysById.get(journey.id)!.events.push(event);
   }
-  const calls: Array<{ source: string; take: number; skip?: number; replacementValidation: boolean }> = [];
+  const calls: Array<{ source: string; take: number; skip?: number; replacementValidation: boolean;
+    auditReplacement: boolean; where: Row; inSnapshot: boolean }> = [];
   let historyReads = 0;
   let failSourceAfterFirstBatch: string | null = null;
+  let failAuditReplacement = false;
+  let inSnapshot = false;
   const delegate = (source: string, rows: Row[]) => ({
     async findMany(args: Row) {
       historyReads++;
+      if (failAuditReplacement && args.select?.eventKey) throw new Error("Audit replacement unavailable");
       if (failSourceAfterFirstBatch === source && calls.some(call => call.source === source)) throw new Error("Batch unavailable");
-      calls.push({ source, take: args.take, skip: args.skip, replacementValidation: Boolean(args.select?.journeyEvents) });
+      calls.push({ source, take: args.take, skip: args.skip, replacementValidation: Boolean(args.select?.journeyEvents),
+        auditReplacement: Boolean(args.select?.eventKey), where: args.where, inSnapshot });
       const matching = rows.filter(row => matches(row, args.where));
       const order = Array.isArray(args.orderBy) ? args.orderBy : [args.orderBy];
       matching.sort((a, b) => {
@@ -219,7 +225,8 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
       transactions++;
       transactionOptions.push(options);
       assert.equal(options.isolationLevel, "RepeatableRead");
-      return action(db);
+      inSnapshot = true;
+      try { return await action(db); } finally { inSnapshot = false; }
     },
   };
   const productionOverrides = {
@@ -248,6 +255,7 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     historyReads: () => historyReads,
     transactionOptions, calls, candidateQueries,
     failNextBatch: (source = "search") => { failSourceAfterFirstBatch = source; }, transactions: () => transactions,
+    failAuditReplacement: () => { failAuditReplacement = true; },
     records: { searches: searchRows, handoffs: handoffRows, analytics: analyticsRows, journeys: journeyRows },
     expected: count + handoffRows.length + analyticsRows.length,
   };
@@ -810,4 +818,292 @@ test("All activity consistently excludes passive access observations for account
     assert.ok(result.data.events.every((row: Row) => !row.id.startsWith("d-")), kind);
     assert.equal(result.data.summary.recordedActions, kind === "operational" ? 56 : 107);
   }
+});
+
+const essentialActions = [
+  { type: "SAVE", name: "saved_item_confirmed", stage: "RESULT_SAVED", key: "saved-audit:" },
+  { type: "SAVE", name: "saved_item_removed", stage: "RESULT_UNSAVED", key: "saved-audit:" },
+  { type: "ALERT_CREATED", name: "price_alert_created", stage: "PRICE_ALERT_CREATED", key: "price-alert:" },
+];
+
+function essentialAuditScenario(count = 3) {
+  const scenario = setup("user", 1, ["FLIGHT"], false, "FLIGHT");
+  scenario.records.handoffs.length = 0;
+  scenario.records.analytics.length = 0;
+  const search = scenario.records.searches[0];
+  const searchEvent = scenario.records.journeys[0];
+  const visitor = search.visitor;
+  for (let index = 0; index < count; index++) {
+    const action = essentialActions[index % essentialActions.length];
+    const audit: Row = {
+      id: "qa-essential-audit-" + String(index).padStart(6, "0"), userId: "qa-complete-account", visitorId: null, visitor: null,
+      type: action.type, name: action.name, createdAt: new Date(+baseTime - Math.floor(index / 17) * 1000),
+      metadata: { environment: "staging", product: "FLIGHT", applicationSource: "WEB", outcome: "confirmed",
+        recordPurpose: "essential_account_audit", linkedJourneyId: searchEvent.journey.id, linkedSearchHistoryId: search.id },
+    };
+    const canonical: Row = { ...searchEvent, id: "qa-essential-canonical-" + String(index).padStart(6, "0"),
+      eventKey: action.key + audit.id, type: action.stage, createdAt: new Date(+audit.createdAt + 60_000),
+      metadata: { environment: "staging", action: action.name } };
+    scenario.records.analytics.push(audit);
+    scenario.records.journeys.push(canonical);
+  }
+  return { ...scenario, visitor, search, audits: scenario.records.analytics,
+    canonical: scenario.records.journeys.slice(1) };
+}
+
+/** Run the current mutation writers and optional linkers, rather than inventing
+ * a combination of Essential purpose and journey links that cannot occur. */
+async function essentialWriterLinkerScenario() {
+  const scenario = essentialAuditScenario(0);
+  const { search, visitor } = scenario;
+  const userId = "qa-complete-account";
+  const runtimeRequire = createRequire(resolve("package.json"));
+  const crypto = runtimeRequire("node:crypto");
+  const requestId = crypto.randomUUID();
+  const now = new Date();
+  const query = { environment: "staging", departureDate: "2026-12-12", returnDate: "", tripType: "one-way",
+    cabinClass: "economy", adults: 1, children: 0, infants: 0 };
+  Object.assign(search, { requestId, createdAt: new Date(+now - 2000), origin: "LOS", destination: "LHR", query,
+    checkIn: null, checkOut: null });
+  const searchEvent = scenario.records.journeys[0];
+  Object.assign(searchEvent, { journeyId: searchEvent.journey.id, createdAt: search.createdAt });
+  const saved: Row[] = [];
+  const alerts: Row[] = [];
+  const account = { id: userId, email: "synthetic@example.test", role: "USER", status: "ACTIVE", emailVerified: now };
+  const mutationDelegate = (rows: Row[], prefix: string) => ({
+    async findMany({ where }: Row) { return rows.filter(row => matches(row, where)); },
+    async findFirst({ where }: Row) { return rows.find(row => matches(row, where)) ?? null; },
+    async create({ data }: Row) {
+      const row = { id: prefix + rows.length, createdAt: new Date(), updatedAt: new Date(),
+        status: "ACTIVE", lastSeenPrice: null, lastCheckedAt: null, ...data };
+      rows.push(row); return row;
+    },
+    async deleteMany({ where }: Row) {
+      const index = rows.findIndex(row => matches(row, where));
+      if (index < 0) return { count: 0 };
+      rows.splice(index, 1); return { count: 1 };
+    },
+  });
+  const db: Row = {
+    async $transaction(work: (tx: Row) => unknown) { return work(db); },
+    async $executeRaw() { return 1; },
+    async $queryRaw(strings: TemplateStringsArray, ...values: unknown[]) {
+      const sql = strings.join("?");
+      if (sql.includes('FROM "User"')) return values[0] === userId ? [account] : [];
+      if (sql.includes('FROM "Visitor"')) return values[0] === visitor.id ? [{ id: visitor.id }] : [];
+      throw new Error("Unexpected writer/linker SQL");
+    },
+    visitor: { async findUnique({ where }: Row) { return matches(visitor, where) ? visitor : null; } },
+    analyticsEvent: {
+      async create({ data }: Row) {
+        assert.equal(Object.hasOwn(data, "visitorId"), false, "Essential writer does not add a visitor");
+        const row = { id: "qa-written-audit-" + scenario.audits.length, createdAt: new Date(), visitorId: null, visitor: null, ...data };
+        scenario.audits.push(row); return row;
+      },
+      async findFirst({ where }: Row) {
+        return scenario.audits.filter(row => matches(row, where))
+          .sort((a, b) => +b.createdAt - +a.createdAt || b.id.localeCompare(a.id))[0] ?? null;
+      },
+      async update({ where, data }: Row) {
+        assert.deepEqual(Object.keys(data), ["metadata"], "Linker only enriches audit metadata");
+        const row = scenario.audits.find(row => matches(row, where));
+        assert.ok(row); Object.assign(row, data); return row;
+      },
+    },
+    journeyEvent: {
+      async findUnique({ where }: Row) { return scenario.records.journeys.find(row => matches(row, where)) ?? null; },
+      async findMany({ where }: Row) {
+        return [...new Map(scenario.records.journeys.filter(row => matches(row, where))
+          .map(row => [row.journeyId, { journeyId: row.journeyId }])).values()];
+      },
+      async create({ data }: Row) {
+        const row = { ...searchEvent, id: "qa-written-canonical-" + scenario.records.journeys.length,
+          createdAt: new Date(), ...data };
+        scenario.records.journeys.push(row); return row;
+      },
+    },
+    searchHistory: { async findUnique({ where }: Row) { return matches(search, where) ? search : null; } },
+    savedFlight: mutationDelegate(saved, "qa-saved-flight-"), priceAlert: mutationDelegate(alerts, "qa-price-alert-"),
+  };
+  const overrides = {
+    "server-only": {}, "node:crypto": crypto, "node:async_hooks": runtimeRequire("node:async_hooks"),
+    "next/server": runtimeRequire("next/server"), zod: runtimeRequire("zod"),
+    "@/lib/prisma": { getOptionalPrisma: () => db, getPrisma: () => db },
+    "@/lib/stagingSafety": { getPublicEnvironment: () => "staging",
+      withEnvironmentMetadata: (metadata: Row) => ({ ...metadata, environment: "staging" }) },
+    "@/services/requestActivityIdentity": { resolveRequestActivityIdentity: async () => ({ userId, visitorId: visitor.id, applicationSource: "WEB" }) },
+    "@/lib/feature-controls/service": { isFeatureEnabled: async (key: string) => { assert.equal(key, "PRICE_ALERTS_ENABLED"); return true; } },
+  };
+  const savedService = loadProduction("src/services/savedRecentService.ts", overrides);
+  const interactions = loadProduction("src/app/api/activity/interactions/route.ts", overrides);
+  const input = savedService.createSavedItemInputSchema.parse({ type: "flight", provider: "synthetic-partner",
+    airlineName: "Synthetic Air", originAirport: "LOS", destinationAirport: "LHR",
+    departureTime: "2026-12-12T10:00:00Z", arrivalTime: "2026-12-12T17:00:00Z", price: 100, currency: "USD",
+    payload: { flightResultId: "synthetic-flight-offer" } });
+  const item = await savedService.createSavedItemWriter(() => db, true)(userId, input, { applicationSource: "WEB" });
+  for (const action of ["saved_item_confirmed", "saved_item_removed"]) {
+    if (action === "saved_item_removed") await savedService.createSavedItemRemover(() => db)(userId, { type: "flight", id: item.id }, { applicationSource: "WEB" });
+    const response = await interactions.POST(new Request("https://essential.fixture/api/activity/interactions", {
+      method: "POST", headers: { "sec-fetch-site": "same-origin", "content-type": "application/json" },
+      body: JSON.stringify({ action, product: "FLIGHT", resultId: "synthetic-flight-offer", requestId, eventId: crypto.randomUUID() }),
+    }));
+    assert.deepEqual(await response.json(), { accepted: true });
+  }
+  const alertService = loadProduction("src/services/priceTrackingService.ts", overrides);
+  const alert = await alertService.createPriceAlert({ userId, type: "FLIGHT", origin: "LOS", destination: "LHR",
+    targetPrice: 90, baselinePrice: 100, currency: "USD", mode: "TARGET", query });
+  await loadProduction("src/services/priceAlertJourneyLinkService.ts", overrides).linkCreatedPriceAlertToJourney({
+    alertId: alert.id, userId, visitorId: visitor.id, requestId,
+  });
+  assert.equal(scenario.audits.length, 3);
+  for (const [index, audit] of scenario.audits.entries()) {
+    assert.equal(audit.visitorId, null);
+    assert.equal(audit.metadata.recordPurpose, "essential_account_audit");
+    assert.equal(audit.metadata.outcome, "confirmed");
+    assert.equal(audit.metadata.linkedJourneyId, searchEvent.journey.id);
+    assert.equal(audit.metadata.linkedSearchHistoryId, search.id);
+    assert.ok(scenario.records.journeys.some(row => row.eventKey === essentialActions[index].key + audit.id));
+  }
+  return scenario;
+}
+
+test("essential audit from the real save/remove/alert writers and linkers survives withdrawal exactly once", async () => {
+  const scenario = await essentialWriterLinkerScenario();
+  for (const withdrawn of [false, true]) {
+    if (withdrawn) Object.assign(scenario.visitor, { consentStatus: "WITHDRAWN", trackingDisabledAt: new Date(), currentUserId: null, identityLinks: [] });
+    for (const mode of ["all", "page", "summary"] as const) {
+      const result = await scenario.load(allFilters, undefined, mode);
+      assert.equal(result.status, "ok");
+      assert.equal(result.data.summary.recordedActions, 4, mode + " withdrawn=" + withdrawn);
+      assert.equal(result.data.events.length, 4);
+      for (const audit of scenario.audits) assert.equal(result.data.events.some((row: Row) => row.id === "e-" + audit.id), withdrawn);
+      assert.equal(result.data.events.filter((row: Row) => essentialActions.some(action => action.stage === row.stage)).length, withdrawn ? 0 : 3);
+    }
+  }
+});
+
+test("essential audit fallback stays direct-owner and does not change optional or legacy link suppression", async () => {
+  const scenario = essentialAuditScenario(1);
+  scenario.records.journeys.splice(1);
+  const sample = scenario.audits[0];
+  const invalid: Row[] = [
+    { userId: "other-account" }, { userId: null, visitorId: scenario.visitor.id, visitor: scenario.visitor },
+    { visitorId: scenario.visitor.id, visitor: scenario.visitor },
+    { metadata: { ...sample.metadata, recordPurpose: "optional_analytics" } },
+    { metadata: { ...sample.metadata, recordPurpose: undefined } },
+    { metadata: { ...sample.metadata, outcome: "client_confirmed" } },
+    { name: "local_saved" }, { type: "SHARE", name: "share_link_copied" },
+    { type: "ALERT_CREATED", name: "price_alert_paused" },
+  ];
+  scenario.audits.push(...invalid.map((change, index) => ({ ...sample, id: "qa-excluded-audit-" + index, ...change })));
+  const result = await scenario.load({ ...allFilters, tab: "interactions" });
+  assert.equal(result.status, "ok");
+  assert.deepEqual(result.data.events.map((row: Row) => row.id), ["e-" + sample.id]);
+  assert.equal(result.data.summary.recordedActions, 1);
+});
+
+test("essential audit requires an exact eligible canonical replacement, not link strings alone", async () => {
+  const cases: Array<[string, (scenario: ReturnType<typeof essentialAuditScenario>) => void]> = [
+    ["absent", scenario => { scenario.records.journeys.splice(1); }],
+    ["wrong event key", scenario => { scenario.canonical[0].eventKey = "saved-audit:another-audit"; }],
+    ["wrong action", scenario => { scenario.canonical[0].type = "RESULT_UNSAVED"; }],
+    ["wrong journey", scenario => { scenario.audits[0].metadata.linkedJourneyId = "another-journey"; }],
+    ["wrong search", scenario => { scenario.audits[0].metadata.linkedSearchHistoryId = "another-search"; }],
+    ["missing source", scenario => { scenario.canonical[0].searchHistory = null; }],
+    ["foreign account", scenario => { scenario.canonical[0].searchHistory = { ...scenario.search, userId: "other-account" }; }],
+    ["another linked visitor", scenario => { scenario.canonical[0].searchHistory = { ...scenario.search, visitorId: "another-linked-visitor" }; }],
+    ["foreign event environment", scenario => { scenario.canonical[0].metadata.environment = "production"; }],
+    ["foreign source environment", scenario => { scenario.canonical[0].searchHistory = { ...scenario.search, query: { environment: "production" } }; }],
+  ];
+  for (const [name, mutate] of cases) {
+    const scenario = essentialAuditScenario(1);
+    mutate(scenario);
+    const result = await scenario.load({ ...allFilters, tab: "interactions" });
+    assert.equal(result.status, "ok", name);
+    assert.ok(result.data.events.some((row: Row) => row.id === "e-" + scenario.audits[0].id), name);
+    assert.equal(result.data.summary.recordedActions, result.data.events.length, name);
+  }
+});
+
+test("essential audit fallback survives disabled or reassigned visitors without revealing their optional actions", async () => {
+  const states = [
+    { consentStatus: "WITHDRAWN" }, { trackingDisabledAt: baseTime },
+    { currentUserId: "other-account" }, { identityLinks: [{ userId: "qa-complete-account" }, { userId: "other-account" }] },
+    { currentUser: { status: "SUSPENDED", emailVerified: baseTime } },
+  ];
+  for (const state of states) {
+    const scenario = essentialAuditScenario();
+    Object.assign(scenario.visitor, state);
+    const result = await scenario.load({ ...allFilters, tab: "interactions" });
+    assert.equal(result.status, "ok");
+    assert.equal(result.data.summary.recordedActions, 3);
+    assert.ok(result.data.events.every((row: Row) => row.stage === "ACCOUNT_ACTIVITY"));
+  }
+});
+
+test("essential audit replacement follows the active period, product, action and text filters", async () => {
+  const scenario = essentialAuditScenario();
+  const cases: Array<[Row, number, string[]]> = [
+    [{ stage: "ACCOUNT_ACTIVITY" }, 3, ["ACCOUNT_ACTIVITY"]],
+    [{ stage: "RESULT_SAVED" }, 1, ["RESULT_SAVED"]],
+    [{ q: "Save confirmed" }, 1, ["ACCOUNT_ACTIVITY"]],
+    [{ q: "Unsaved item" }, 1, ["ACCOUNT_ACTIVITY"]],
+    [{ product: "HOTEL" }, 0, []],
+    [{ product: "FLIGHT" }, 3, ["RESULT_SAVED", "RESULT_UNSAVED", "PRICE_ALERT_CREATED"]],
+    [{ from: new Date(+baseTime - 1000).toISOString(), to: new Date(+baseTime + 1000).toISOString() }, 3, ["ACCOUNT_ACTIVITY"]],
+  ];
+  for (const [filter, expected, stages] of cases) {
+    for (const mode of ["all", "page", "summary"] as const) {
+      const result = await scenario.load({ ...allFilters, tab: "interactions", ...filter }, undefined, mode);
+      assert.equal(result.status, "ok", JSON.stringify(filter));
+      assert.equal(result.data.summary.recordedActions, expected, JSON.stringify(filter));
+      assert.equal(result.data.events.length, expected);
+      assert.ok(result.data.events.every((row: Row) => stages.includes(row.stage)));
+    }
+  }
+});
+
+test("essential audit page boundaries and exact counts share bounded snapshot replacement evidence", async () => {
+  const scenario = essentialAuditScenario(521);
+  // Half have current canonical events; the rest retain only the real audit.
+  scenario.records.journeys.splice(1, 521, ...scenario.canonical.filter((_, index) => index % 2 === 0));
+  for (const order of ["newest", "oldest"]) {
+    const filters = { ...allFilters, tab: "interactions", order };
+    const complete = await scenario.load(filters);
+    assert.equal(complete.status, "ok");
+    assert.equal(complete.data.summary.recordedActions, 521);
+    assert.equal(complete.data.events.length, 521);
+    const expected = complete.data.events.map((row: Row) => row.id);
+    const seen: string[] = [];
+    let cursor: string | undefined;
+    do {
+      const page = await scenario.load(filters, cursor, "page");
+      assert.equal(page.status, "ok");
+      assert.equal(page.data.summary.recordedActions, 521);
+      assert.ok(page.data.events.length > 0 && page.data.events.length <= 20);
+      seen.push(...page.data.events.map((row: Row) => row.id));
+      cursor = page.data.nextCursor ?? undefined;
+    } while (cursor);
+    assert.deepEqual(seen, expected, order);
+    assert.equal(new Set(seen).size, 521);
+  }
+  const overview = await scenario.load({ ...allFilters, tab: "interactions" }, undefined, "summary");
+  assert.equal(overview.status, "ok");
+  assert.equal(overview.data.summary.recordedActions, 521);
+  assert.equal(overview.data.events.length, 5);
+  const replacements = scenario.calls.filter(call => call.auditReplacement);
+  const batches = scenario.calls.filter(call => call.source === "analytics");
+  assert.ok(replacements.length > 0 && replacements.length <= batches.length, "One indexed lookup per analytics batch, never per action");
+  for (const query of replacements) {
+    assert.ok(query.inSnapshot);
+    assert.ok(query.take <= 500);
+    assert.equal(query.skip, undefined);
+    assert.ok(!/"(?:lt|lte|gt|gte)":/.test(JSON.stringify(query.where)), "Unfiltered replacement query must not inherit a page cursor");
+  }
+});
+
+test("essential audit replacement read failure returns unavailable rather than guessed duplicate history", async () => {
+  const scenario = essentialAuditScenario(1);
+  scenario.failAuditReplacement();
+  assert.deepEqual(await scenario.load({ ...allFilters, tab: "interactions" }), { status: "unavailable" });
 });

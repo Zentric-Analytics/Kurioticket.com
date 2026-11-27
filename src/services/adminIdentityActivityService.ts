@@ -70,16 +70,39 @@ function safeActivityMetadata(value: unknown): { product: string | null; detail:
     source, ref ? "Reference: " + ref : null].filter(Boolean).join(" · ") || "Recorded account activity" };
 }
 type SafeAnalyticsType = keyof typeof safeAnalyticsLabels;
-type AnalyticsActivityRecord = ActivitySourceRow & { type: string; name: string; metadata: unknown };
+type AnalyticsActivityRecord = ActivitySourceRow & {
+  type: string; name: string; metadata: unknown; userId: string | null; visitorId: string | null;
+  /** Snapshot-only proof for current direct-owner Essential audits; never stored. */
+  essentialAuditReplacement?: boolean;
+};
+
+function essentialAuditLink(event: AnalyticsActivityRecord, kind: IdentityKind, id: string) {
+  // Purpose is not authorization. Only the current account mutation writer's
+  // direct-owner, visitor-free records can use this fallback. Retain the
+  // existing suppression policy for optional and unclassified historical rows.
+  if (kind !== "user" || event.userId !== id || event.visitorId !== null
+    || !event.metadata || typeof event.metadata !== "object" || Array.isArray(event.metadata)) return null;
+  const metadata = event.metadata as Record<string, unknown>;
+  if (metadata.recordPurpose !== "essential_account_audit" || metadata.outcome !== "confirmed"
+    || typeof metadata.linkedJourneyId !== "string" || typeof metadata.linkedSearchHistoryId !== "string") return null;
+  const type = event.type === "SAVE" && event.name === "saved_item_confirmed" ? "RESULT_SAVED"
+    : event.type === "SAVE" && event.name === "saved_item_removed" ? "RESULT_UNSAVED"
+      : event.type === "ALERT_CREATED" && event.name === "price_alert_created" ? "PRICE_ALERT_CREATED" : null;
+  if (!type) return null;
+  return { type, journeyId: metadata.linkedJourneyId, searchHistoryId: metadata.linkedSearchHistoryId,
+    eventKey: (type === "PRICE_ALERT_CREATED" ? "price-alert:" : "saved-audit:") + event.id } as const;
+}
 
 /** One projection is shared by page filling, exact counts and final output. */
 function analyticsActivityRow(event: AnalyticsActivityRecord, environment: PublicEnvironment): ActivityRow | null {
   if (event.type === "PAGE_VIEW") return toAdminPageView(event, environment);
-  // Once the same interaction has a verified canonical JourneyEvent, it is
-  // presented through that source rather than repeated as unlinked activity.
+  // A current Essential audit is replaced only by its exact eligible canonical
+  // event in this view. Withdrawal can hide optional journey evidence without
+  // erasing the account operation. Other historical suppression is unchanged.
   const meta = event.metadata && typeof event.metadata === "object" && !Array.isArray(event.metadata)
     ? event.metadata as Record<string, unknown> : null;
-  if (typeof meta?.linkedJourneyId === "string" && typeof meta?.linkedSearchHistoryId === "string") return null;
+  if (typeof meta?.linkedJourneyId === "string" && typeof meta?.linkedSearchHistoryId === "string"
+    && event.essentialAuditReplacement !== false) return null;
   const baseLabel = safeAnalyticsLabels[event.type as SafeAnalyticsType];
   if (!baseLabel) return null;
   const safe = safeActivityMetadata(event.metadata);
@@ -568,16 +591,47 @@ export async function loadAdminIdentityActivity(
           : readEligibleActivitySource(prefix, fetchBatch, eligible, sourceLimit, cursor);
         // Page and account events compete in one chronological source. The
         // overview has five latest actions globally, without category quotas.
-        const analyticsSelect = { id: true, type: true, name: true, metadata: true, createdAt: true } as const;
+        const analyticsSelect = { id: true, type: true, name: true, metadata: true, createdAt: true, userId: true, visitorId: true } as const;
+        const enrichEssentialAudits = async (rows: AnalyticsActivityRecord[]): Promise<AnalyticsActivityRecord[]> => {
+          const candidates = new Map(rows.flatMap(row => {
+            const link = essentialAuditLink(row, kind, id);
+            return link ? [[link.eventKey, link] as const] : [];
+          }));
+          if (!candidates.size) return rows;
+          const keys = [...candidates].filter(([, link]) => allowed.has(link.type)).map(([key]) => key);
+          // eventKey is unique and indexed. One lookup per existing <=500-row
+          // source batch shares the same snapshot and full canonical view.
+          // Never add a cursor: a replacement on an earlier/later page must
+          // still prevent a second presentation of the same account action.
+          const replacements = keys.length ? await tx.journeyEvent.findMany({
+            where: { AND: [journeyWhere, { eventKey: { in: keys } }] },
+            orderBy: { id: "asc" }, take: keys.length, select: { ...journeySelect, eventKey: true },
+          }) : [];
+          const eligible = new Set<string>();
+          for (const event of replacements) {
+            const link = candidates.get(event.eventKey);
+            if (link && event.type === link.type && event.journey.id === link.journeyId
+              && event.searchHistoryId === link.searchHistoryId && toAdminJourneyActivity(event, kind, id)) {
+              eligible.add(event.eventKey);
+            }
+          }
+          return rows.map(row => {
+            const link = essentialAuditLink(row, kind, id);
+            return link ? { ...row, essentialAuditReplacement: eligible.has(link.eventKey) } : row;
+          });
+        };
+        const readAnalyticsBatch = async (where: Prisma.AnalyticsEventWhereInput, after: ActivityCursor | undefined, take: number) =>
+          enrichEssentialAudits(await tx.analyticsEvent.findMany({
+            where: { AND: [where, sourceActivitySeek(after, "e", order)] },
+            orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take, select: analyticsSelect,
+          }));
         const readAnalytics = () => {
           if (pageHistory) return readPages ? tx.analyticsEvent.findMany({
             where: pageWhere, orderBy: [{ createdAt: "desc" }, { id: "asc" }],
             skip: (pageHistory.page - 1) * ACTIVITY_PAGE_SIZE, take: ACTIVITY_PAGE_SIZE, select: analyticsSelect,
           }) : Promise.resolve([]);
-          return canReadAnalytics ? readSource("e", (after, take) => tx.analyticsEvent.findMany({
-            where: { AND: [analyticsWhere, sourceActivitySeek(after, "e", order)] },
-            orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take, select: analyticsSelect,
-          }), row => analyticsActivityRow(row, environment) !== null) : Promise.resolve([]);
+          return canReadAnalytics ? readSource("e", (after, take) => readAnalyticsBatch(analyticsWhere, after, take),
+            row => analyticsActivityRow(row, environment) !== null) : Promise.resolve([]);
         };
         const [pageJourney, pageSearches, pageHandoffs, pageAnalytics, searchTotals, handoffTotal, pageTotal] = await Promise.all([
           stages.length && !isOperationalGuest ? readSource("j", (after, take) => tx.journeyEvent.findMany({
@@ -598,16 +652,13 @@ export async function loadAdminIdentityActivity(
           const key = row.type === "FLIGHT" ? "flights" : row.type === "HOTEL" ? "hotels" : row.type === "CAR" ? "cars" : "other";
           searchProducts[key] += row._count._all;
         }
-        // Preserve the exact existing linked-interaction suppression, including
-        // JSON type checks. Only account audit metadata is scanned for this
-        // count; travel and page history remain database aggregates. The scan
-        // retains at most one 500-row batch, never the complete event timeline.
+        // Counts use exactly the same enriched audit eligibility as page filling
+        // and final projection. Travel/page history remain database aggregates;
+        // this scan retains one 500-row batch and its replacement evidence.
         const accountTotal = !readAccountActivity ? 0 : complete
           ? pageAnalytics.filter(row => row.type !== "PAGE_VIEW" && analyticsActivityRow(row, environment) !== null).length
-          : await countEligibleActivitySource("e", (after, take) => tx.analyticsEvent.findMany({
-            where: { AND: [accountAnalyticsWhere, sourceActivitySeek(after, "e", order)] },
-            orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take, select: analyticsSelect,
-          }), row => analyticsActivityRow(row, environment) !== null);
+          : await countEligibleActivitySource("e", (after, take) => readAnalyticsBatch(accountAnalyticsWhere, after, take),
+            row => analyticsActivityRow(row, environment) !== null);
         // Resolve only rows already authorized by the identity/environment
         // scope. Bound the SQL parameter count without losing complete history.
         const operationalHandoffLinks = new Map<string, string>();

@@ -329,7 +329,10 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
       }
 
       const next = toggleSavedItemId(readSavedItemIds(), savedFlightKey);
-      writeSavedItemIds(next);
+      if (!writeSavedItemIds(next)) {
+        setSavedFlightError("Unable to update saved flight on this device.");
+        return;
+      }
       setLocalSavedFlightIds(next);
       recordCustomerInteraction({ action: next.includes(savedFlightKey) ? "local_saved" : "local_unsaved", product: "FLIGHT", resultId: savedFlightKey, requestId: journeyEvents.interactionRequestId("flight", id) });
     } catch (error) {
