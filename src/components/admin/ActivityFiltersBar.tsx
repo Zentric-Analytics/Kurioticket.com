@@ -113,8 +113,8 @@ export function ActivityFiltersBar({ path, initial, directory, usersReturn, tabs
         className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-lg border border-[#E2E8F0] px-3 text-[13px] font-medium text-[#334155] md:hidden"><SlidersHorizontal size={16} aria-hidden="true"/> Filters</button>
     </div> : null}
     <div id={panelId} className={compact || expanded ? "min-w-0 space-y-3" : "hidden min-w-0 space-y-3 md:block"}>
-      <div data-testid="activity-filters-row" className={"grid min-w-0 grid-cols-1 items-end gap-2 [&_button]:min-h-11 " + (compact ? "min-[420px]:grid-cols-[minmax(0,1fr)_auto]" : accessOrPages ? "sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto]" : "sm:grid-cols-2 xl:grid-cols-[minmax(180px,1.4fr)_repeat(3,minmax(0,1fr))_auto]")}>
-      {!compact ? <label className={"relative block min-w-0" + (!accessOrPages ? " sm:col-span-2 xl:col-span-1" : "")}>
+      <div data-testid="activity-filters-row" className={"grid min-w-0 grid-cols-1 items-end gap-2 [&_button]:min-h-11 " + (compact ? "min-[420px]:grid-cols-[minmax(0,1fr)_auto]" : accessOrPages ? "sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto]" : "sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto]")}>
+      {!compact ? <label className={"relative block min-w-0" + (!accessOrPages ? " sm:col-span-2 lg:col-span-4" : "")}>
         <span className="sr-only">Search activity</span>
         <Search aria-hidden="true" size={16} className="pointer-events-none absolute left-3 top-3.5 text-[#64748B]"/>
         <input aria-label="Search activity" value={values.q} maxLength={80} disabled={disabled}

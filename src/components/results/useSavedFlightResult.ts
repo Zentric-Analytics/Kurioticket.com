@@ -182,7 +182,10 @@ export function useSavedFlightResult(
       }
 
       const next = toggleSavedItemId(readSavedItemIds(), flight.id);
-      writeSavedItemIds(next);
+      if (!writeSavedItemIds(next)) {
+        setSavedFlightError("Unable to update saved flight on this device.");
+        return;
+      }
       setLocalSaved(next.includes(flight.id));
       recordCustomerInteraction({ action: next.includes(flight.id) ? "local_saved" : "local_unsaved", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId, observedResult });
       window.dispatchEvent(new Event(LOCAL_SAVED_FLIGHTS_CHANGED_EVENT));

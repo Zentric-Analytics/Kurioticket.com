@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import test, { after, before } from "node:test";
+import { createJiti } from "jiti";
+import ts from "typescript";
 import { Client } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, type Prisma } from "../src/generated/prisma/client";
@@ -12,6 +15,7 @@ import { createAdminOperationalReadService } from "../src/services/adminOperatio
 import { handoffEvidenceForActivitySql } from "../src/services/adminHandoffEvidence";
 import type { AdminJourneyResult, AdminJourneyStage } from "../src/services/adminJourneyContract";
 import { declaredSearchCrawler, searchCrawlerMetadata } from "../src/lib/searchCrawlerGate";
+import type { ActivityFilters } from "../src/lib/adminIdentityActivity";
 
 // Require a new, explicitly named localhost database. Never reuse or clear an existing database.
 const target = new URL(process.env.DATABASE_URL || "http://invalid");
@@ -93,6 +97,26 @@ async function searchEvent(visitorId: string, at: Date, data: Partial<Prisma.Sea
   const s = await search(visitorId, at, data);
   const e = await event(j.id, at, "SEARCH_COMPLETED", { searchHistoryId: s.id, product: s.type });
   return { j, s, e };
+}
+
+function identityActivityReader() {
+  // Keep the production API untouched. Only adapt Next's server-only marker,
+  // this disposable database and the reporting environment for the Node test.
+  // All query construction, projections and imported helpers remain real code.
+  const filename = path.resolve("src/services/adminIdentityActivityService.ts");
+  const output = ts.transpileModule(readFileSync(filename, "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+  }).outputText;
+  const requireProduction = createJiti(filename);
+  const loaded = { exports: {} };
+  const requireSource = (id: string): unknown => {
+    if (id === "server-only") return {};
+    if (id === "@/lib/prisma") return { getOptionalPrisma: () => db };
+    if (id === "@/lib/stagingSafety") return { getPublicEnvironment: () => "staging" };
+    return requireProduction(id.startsWith("@/") ? path.resolve("src", id.slice(2) + ".ts") : id);
+  };
+  new Function("require", "module", "exports", output)(requireSource, loaded, loaded.exports);
+  return loaded.exports as typeof import("../src/services/adminIdentityActivityService");
 }
 
 test("real admin readers deny access before storage and distinguish empty from inaccessible detail", async () => {
@@ -568,4 +592,65 @@ test("Admin operational activity evidence links exact guest/account searches and
     assert.deepEqual(links, [{ id: receipt.id, searchHistoryId: expected }]);
     assert.equal(await db.journeyEvent.count({ where: { redirectLogId: receipt.id } }), 0);
   }
+});
+
+test("PostgreSQL Essential account audits remain exactly once after canonical journey withdrawal", async () => {
+  const { loadAdminIdentityActivity } = identityActivityReader();
+  const owner = await account();
+  const other = await account();
+  const linked = await visitor(owner.id);
+  const foreignVisitor = await visitor(other.id);
+  const at = time(17);
+  const j = await journey(linked.id, at);
+  const ownSearch = await search(linked.id, at, { userId: owner.id });
+  const foreignSearch = await search(foreignVisitor.id, at, { userId: other.id });
+  const actions = [
+    { type: "SAVE", name: "saved_item_confirmed", stage: "RESULT_SAVED", prefix: "saved-audit:" },
+    { type: "SAVE", name: "saved_item_removed", stage: "RESULT_UNSAVED", prefix: "saved-audit:" },
+    { type: "ALERT_CREATED", name: "price_alert_created", stage: "PRICE_ALERT_CREATED", prefix: "price-alert:" },
+  ] as const;
+  const audits: string[] = [];
+  const canonical: string[] = [];
+  for (const cohort of [
+    { userId: owner.id, searchId: ownSearch.id, environment: "staging", eligible: true },
+    // Even a canonical row attached to the owner's journey cannot expose a
+    // foreign account's source or let its audit purpose act as authorization.
+    { userId: other.id, searchId: foreignSearch.id, environment: "staging", eligible: false },
+    { userId: owner.id, searchId: ownSearch.id, environment: "production", eligible: false },
+  ]) {
+    for (const action of actions) {
+      const metadata = { environment: cohort.environment, product: "HOTEL", applicationSource: "WEB",
+        recordPurpose: "essential_account_audit", outcome: "confirmed",
+        linkedJourneyId: j.id, linkedSearchHistoryId: cohort.searchId };
+      const audit = await db.analyticsEvent.create({ data: {
+        userId: cohort.userId, visitorId: null, type: action.type, name: action.name, metadata, createdAt: at,
+      } });
+      const linkedEvent = await db.journeyEvent.create({ data: {
+        journeyId: j.id, searchHistoryId: cohort.searchId, type: action.stage,
+        eventKey: action.prefix + audit.id, product: "HOTEL", createdAt: at,
+        metadata: { environment: cohort.environment, action: action.name },
+      } });
+      if (cohort.eligible) { audits.push(audit.id); canonical.push(linkedEvent.id); }
+    }
+  }
+  const filters: ActivityFilters = { tab: "all", stage: "all", product: "HOTEL", ...window(17), q: "", order: "newest" };
+  for (const withdrawn of [false, true]) {
+    if (withdrawn) await db.$transaction([
+      db.visitor.update({ where: { id: linked.id }, data: { consentStatus: "WITHDRAWN", trackingDisabledAt: at, currentUserId: null } }),
+      db.visitorIdentityLink.deleteMany({ where: { visitorId: linked.id } }),
+    ]);
+    const expected = ["s-" + ownSearch.id, ...(withdrawn ? audits.map(id => "e-" + id) : canonical.map(id => "j-" + id))].sort();
+    for (const mode of ["all", "page", "summary"] as const) {
+      const result = await loadAdminIdentityActivity("user", owner.id, filters, undefined, mode);
+      assert.equal(result.status, "ok", mode + " withdrawn=" + withdrawn);
+      if (result.status !== "ok") throw new Error("Essential activity integration read was unavailable");
+      assert.deepEqual(result.data.events.map(row => row.id), expected, "Stable equal-time ordering and exact ownership");
+      assert.equal(result.data.summary.recordedActions, 4);
+      assert.equal(result.data.summary.searches, 1);
+      assert.equal(result.data.nextCursor, null);
+      assert.equal(result.data.events.filter(row => row.stage === "ACCOUNT_ACTIVITY").length, withdrawn ? 3 : 0);
+    }
+  }
+  assert.equal(await db.analyticsEvent.count({ where: { id: { in: audits }, userId: owner.id, visitorId: null } }), 3,
+    "Withdrawal retains each original source-owned Essential account audit");
 });

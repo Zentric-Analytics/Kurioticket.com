@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { expectActivityFilterLayout } from "./activity-filter-layout.mjs";
 const base = process.env.ADMIN_ACTIVITY_QA_URL;
 const output = process.env.ADMIN_ACTIVITY_QA_OUTPUT;
 const extension = await mkdtemp(path.join(os.tmpdir(), "kt-zoom-extension-"));
@@ -69,6 +70,10 @@ try {
         assert.deepEqual(layout.values,[...Array(3).fill("14px"),...Array(6).fill("20px")]);
         await screenshot(`after-activity-${kind}-${width}-zoom-${Math.round(zoom*100)}`,zoom);
       }
+      await page.goto(base+"/admin/users/user/qa-realistic-identity-0001/activity/all?range=all");
+      await applyZoom(zoom);
+      await expectActivityFilterLayout(page, `All activity ${width}px at ${Math.round(zoom*100)}% zoom`);
+      await screenshot(`all-activity-filters-${width}-zoom-${Math.round(zoom*100)}`,zoom);
       await page.goto(base+"/before?kind=user");
       await applyZoom(zoom);
       await screenshot(`before-activity-user-${width}-zoom-${Math.round(zoom*100)}`,zoom);
@@ -86,5 +91,15 @@ try {
       }
       console.log("PASS actual browser zoom, both pages",width,zoom);
     }
+  }
+  // The new filter row also crosses the desktop and tablet boundaries at
+  // real 125% and 200% zoom; test that form without repeating unrelated pages.
+  await page.setViewportSize({width:1280,height:900});
+  for (const zoom of [1.25,2]) {
+    await page.goto(base+"/admin/users/user/qa-realistic-identity-0001/activity/all?range=all");
+    await applyZoom(zoom);
+    await expectActivityFilterLayout(page, `All activity 1280px at ${Math.round(zoom*100)}% zoom`);
+    await screenshot(`all-activity-filters-1280-zoom-${Math.round(zoom*100)}`,zoom);
+    console.log("PASS activity filters at actual browser zoom",zoom);
   }
 } finally { await context.close(); }

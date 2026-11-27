@@ -156,8 +156,12 @@ export function CountryCurrencySelector({
 
     const searchParams = new URLSearchParams(window.location.search);
     const enabledByQuery = searchParams.get("selectorDebug") === "1";
-    const enabledByStorage =
-      window.localStorage.getItem("kurioticket_selector_debug") === "1";
+    let enabledByStorage = false;
+    try {
+      enabledByStorage = window.localStorage.getItem("kurioticket_selector_debug") === "1";
+    } catch {
+      // An optional debug flag must not prevent country/currency selection.
+    }
 
     return enabledByQuery || enabledByStorage;
   });
