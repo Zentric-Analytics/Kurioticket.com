@@ -45,6 +45,7 @@ test("crawler labels distinguish verified DNS, declared agents and unavailable e
   assert.equal(searchDetailCrawlerName("SOMENEWBOT"), "SOMENEWBOT");
   assert.equal(searchDetailCrawlerName(null), "Unknown bot");
   assert.equal(searchDetailCrawlerEvidenceLabel("VERIFIED_DNS"), "DNS verified");
+  assert.equal(searchDetailCrawlerEvidenceLabel("VERIFIED_IP_RANGE"), "Official IP list verified");
   assert.equal(searchDetailCrawlerEvidenceLabel("DECLARED_USER_AGENT"), "User-Agent identified");
   assert.equal(searchDetailCrawlerEvidenceLabel(null), "Not recorded");
 });

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import test from "node:test";
+import { POST as importEdgeEvent } from "@/app/api/internal/bot-security/route";
 import { automationSignal, botTarget, observeBot } from "@/lib/botPolicy";
 import { withBotSearch } from "@/lib/botSecurity";
 import { getPrisma } from "@/lib/prisma";
@@ -133,4 +134,53 @@ test("detected unknown automation is registered, blocked and never invokes searc
   const repaired = await db.botRegistry.findUniqueOrThrow({ where: { id: bot.id } });
   assert.equal(repaired.name, name);
   assert.equal(repaired.requests, BigInt(2));
+});
+
+test("authenticated WAF imports preserve network evidence and the live registry classification", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
+  const previousUrl = process.env.DATABASE_URL;
+  const previousSecret = process.env.BOT_OPERATIONS_SECRET;
+  const secret = "fixture".repeat(5);
+  process.env.DATABASE_URL = process.env.BOT_TEST_DATABASE_URL;
+  process.env.BOT_OPERATIONS_SECRET = secret;
+  const db = getPrisma();
+  const request = new Request("https://kurioticket.com/robots.txt", { headers: { "User-Agent": "Slurp" } });
+  const observation = await observeBot(request, automationSignal(request)!);
+  const previous = await recordBotAttempt(request, { ...observation, verification: "SUSPICIOUS" }, botTarget(request), null);
+  t.after(async () => {
+    await db.botActivity.deleteMany({ where: { botId: previous.botId } });
+    await db.botRegistry.delete({ where: { id: previous.botId } });
+    await db.$disconnect();
+    if (previousUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = previousUrl;
+    if (previousSecret === undefined) delete process.env.BOT_OPERATIONS_SECRET;
+    else process.env.BOT_OPERATIONS_SECRET = previousSecret;
+  });
+  const ray = randomBytes(8).toString("hex");
+  const event = {
+    ray, timestamp: new Date(Date.now() - 1000).toISOString(), path: "/robots.txt", method: "GET",
+    status: 429, userAgent: "Slurp", ip: "192.0.2.42", country: "GB", networkAsn: 64512,
+    networkOrganization: "Example Network",
+  };
+  const send = (credential: string) => importEdgeEvent(new Request("https://kurioticket.com/api/internal/bot-security", {
+    method: "POST", headers: { Authorization: "Bearer " + credential }, body: JSON.stringify(event),
+  }));
+  assert.equal((await send("wrong")).status, 403);
+  assert.equal(await db.botActivity.count({ where: { edgeRay: ray } }), 0);
+  assert.equal((await send(secret)).status, 204);
+  assert.equal((await send(secret)).status, 204);
+  const activity = await db.botActivity.findMany({ where: { edgeRay: ray } });
+  assert.equal(activity.length, 1);
+  assert.equal(activity[0].verification, "DECLARED");
+  assert.equal(activity[0].evidence, "CLOUDFLARE_BLOCKED_EVENT");
+  assert.equal(activity[0].networkSource, "AUTHENTICATED_EDGE_EVENT");
+  assert.equal(activity[0].ip, event.ip);
+  assert.equal(activity[0].networkAsn, String(event.networkAsn));
+  assert.equal(activity[0].networkOrganization, event.networkOrganization);
+  assert.equal(activity[0].decision, "RATE_LIMITED");
+  assert.equal(activity[0].renderRequestId, null);
+  const registry = await db.botRegistry.findUniqueOrThrow({ where: { id: previous.botId } });
+  assert.equal(registry.verification, "SUSPICIOUS");
+  assert.equal(registry.searches, BigInt(0));
+  assert.equal(registry.requests, BigInt(2));
+  assert.equal(registry.rateLimited, BigInt(1));
 });

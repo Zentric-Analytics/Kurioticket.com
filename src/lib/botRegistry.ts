@@ -31,7 +31,7 @@ export type CrawlerName = keyof typeof crawlerCatalog;
 export type SearchEngine = { [Name in CrawlerName]: typeof crawlerCatalog[Name]["category"] extends "search" ? Name : never }[CrawlerName];
 
 export const crawlerSignatures = Object.entries(crawlerCatalog).map(([name, entry]) =>
-  [name, new RegExp("\\b" + entry.agent + "\\b", "i")] as const,
+  [name, new RegExp("(?<![a-z0-9_-])" + entry.agent + "(?![a-z0-9_-])", "i")] as const,
 );
 
 export function knownCrawler(name: string | null) {

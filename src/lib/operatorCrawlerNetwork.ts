@@ -1,15 +1,12 @@
 import { BlockList, isIP } from "node:net";
 
-const commonGoogle = "https://developers.google.com/static/crawling/ipranges/common-crawlers.json";
 const sources = new Map([
+  ["BINGBOT", "https://www.bing.com/toolbox/bingbot.json"],
   ["CHATGPT_USER", "https://openai.com/chatgpt-user.json"],
   ["GPTBOT", "https://openai.com/gptbot.json"],
   ["OAI-SEARCHBOT", "https://openai.com/searchbot.json"],
   ["PERPLEXITYBOT", "https://www.perplexity.ai/perplexitybot.json"],
   ["PERPLEXITY_USER", "https://www.perplexity.ai/perplexity-user.json"],
-  ["GOOGLEOTHER", commonGoogle],
-  ["GOOGLE_INSPECTION_TOOL", commonGoogle],
-  ["MEDIAPARTNERS_GOOGLE", "https://developers.google.com/static/crawling/ipranges/special-crawlers.json"],
 ]);
 
 const cache = new Map<string, { ranges: BlockList | null; expires: number }>();

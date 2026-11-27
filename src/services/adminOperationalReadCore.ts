@@ -108,7 +108,9 @@ function recordedSearchCrawler(value: Prisma.JsonValue | null): AdminSearchDetai
   const name = identified ?? verified;
   // An old DNS-verified row may contain only verifiedCrawler. Never promote
   // User-Agent-only or contradictory metadata to verified status.
-  const evidence = name && verified === name
+  const evidence = name && verified === name && query.crawlerEvidence === "VERIFIED_IP_RANGE"
+    ? "VERIFIED_IP_RANGE" as const
+    : name && verified === name
     && (query.crawlerEvidence === "VERIFIED_DNS"
       || (query.crawlerEvidence == null && verified))
     ? "VERIFIED_DNS" as const

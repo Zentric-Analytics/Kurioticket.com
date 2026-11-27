@@ -1,5 +1,5 @@
 import { applicationLabel } from "./platformHealthPresentation";
-import type { AdminSearchActivityRead, AdminSearchRead, AdminSearchDiagnostic, AdminSearchProviderDiagnostic } from "@/services/adminOperationalReadContract";
+import type { AdminSearchActivityRead, AdminSearchDetail, AdminSearchRead, AdminSearchDiagnostic, AdminSearchProviderDiagnostic } from "@/services/adminOperationalReadContract";
 
 type SearchLocation = Pick<AdminSearchRead, "product" | "origin" | "destination">;
 
@@ -61,8 +61,9 @@ export function searchDetailCrawlerName(name: string | null | undefined) {
   return name ? crawlerNames[name] ?? name : "Unknown bot";
 }
 
-export function searchDetailCrawlerEvidenceLabel(evidence: "VERIFIED_DNS" | "DECLARED_USER_AGENT" | null | undefined) {
+export function searchDetailCrawlerEvidenceLabel(evidence: NonNullable<AdminSearchDetail["crawler"]>["evidence"] | undefined) {
   return evidence === "VERIFIED_DNS" ? "DNS verified"
+    : evidence === "VERIFIED_IP_RANGE" ? "Official IP list verified"
     : evidence === "DECLARED_USER_AGENT" ? "User-Agent identified"
     : "Not recorded";
 }
