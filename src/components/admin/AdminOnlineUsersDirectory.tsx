@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Monitor, Smartphone, TabletSmartphone, UsersRound } from "lucide-react";
 
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { onlinePresenceHeartbeatMs } from "@/lib/onlinePresence";
-import { createAdminUsersRefreshController, type AdminUsersRefreshState } from "@/lib/adminUsersLiveRefresh";
+import { adminOnlineUsersLiveUntil, adminUsersRefreshQuietMs, createAdminUsersRefreshController, hasOpenAdminUsersInteraction, type AdminUsersRefreshState } from "@/lib/adminUsersLiveRefresh";
 import { adminOnlineUsersHref, defaultOnlineUsersQuery, matchesAdminOnlineUser, parseAdminOnlineUsersQuery, type OnlineUsersFilters as Filters } from "@/lib/adminOnlineUsersQuery";
 import { adminUsersActivityHref } from "@/lib/adminUsersNavigation";
 import type { AdminOnlineUsersSnapshot, OnlineIdentityRow } from "@/services/adminOnlineUsersService";
@@ -83,6 +83,19 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
   }
   const [refreshing, setRefreshing] = useState(false);
   const [refreshState, setRefreshState] = useState<AdminUsersRefreshState>("live");
+  const interactionAt = useRef(0);
+  const pointerDown = useRef(false);
+  const [expiredObservation, setExpiredObservation] = useState<string | null>(null);
+  const liveUntil = useMemo(() => adminOnlineUsersLiveUntil(snapshot), [snapshot]);
+  useEffect(() => {
+    // Deferring a roster update must never extend the claim that its sample is
+    // current. An identity already 89 seconds old at observation has only one
+    // second left, not a fresh 90 seconds. Preserve rows and sampled counts.
+    const observedAt = snapshot.observedAt;
+    const remaining = liveUntil - Date.now();
+    const timer = setTimeout(() => setExpiredObservation(observedAt), Math.max(0, remaining));
+    return () => clearTimeout(timer);
+  }, [snapshot.observedAt, liveUntil]);
   // A URL navigation can supply a newer server sample without remounting this
   // component. Never replace a newer poll with an older cached route payload.
   if (serverSnapshot !== initial) {
@@ -104,7 +117,13 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
     let received: AdminOnlineUsersSnapshot | null = null;
     const controller = createAdminUsersRefreshController({
       intervalMs: onlinePresenceHeartbeatMs,
-      availability: () => document.visibilityState !== "visible" ? "hidden" : navigator.onLine ? "ready" : "offline",
+      availability: () => {
+        if (document.visibilityState !== "visible") return "hidden";
+        if (!navigator.onLine) return "offline";
+        if (pointerDown.current || Date.now() - interactionAt.current < adminUsersRefreshQuietMs
+          || hasOpenAdminUsersInteraction()) return "interacting";
+        return "ready";
+      },
       probe: async signal => {
         received = null;
         setRefreshing(true);
@@ -138,9 +157,19 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
       }
       controller.resume();
     };
+    const interacted = () => { interactionAt.current = Date.now(); };
+    const pressed = () => { pointerDown.current = true; interacted(); };
+    const released = () => { pointerDown.current = false; interacted(); };
+    const blurred = () => { pointerDown.current = false; };
     document.addEventListener("visibilitychange", resume);
     window.addEventListener("online", resume);
     window.addEventListener("offline", resume);
+    document.addEventListener("input", interacted, true);
+    document.addEventListener("keydown", interacted, true);
+    document.addEventListener("pointerdown", pressed, true);
+    document.addEventListener("pointerup", released, true);
+    document.addEventListener("pointercancel", released, true);
+    window.addEventListener("blur", blurred);
     controller.start();
     return () => {
       active = false;
@@ -148,11 +177,17 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
       document.removeEventListener("visibilitychange", resume);
       window.removeEventListener("online", resume);
       window.removeEventListener("offline", resume);
+      document.removeEventListener("input", interacted, true);
+      document.removeEventListener("keydown", interacted, true);
+      document.removeEventListener("pointerdown", pressed, true);
+      document.removeEventListener("pointerup", released, true);
+      document.removeEventListener("pointercancel", released, true);
+      window.removeEventListener("blur", blurred);
     };
   }, [router]);
 
   const available = snapshot.status === "ok";
-  const verified = available && refreshState === "live";
+  const verified = available && refreshState === "live" && expiredObservation !== snapshot.observedAt;
   return <div className="min-w-0 space-y-5 bg-white pb-6">
     <section aria-label="Online Users" className="min-w-0 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -161,10 +196,11 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
           {refreshState === "authorization" ? "Checking your access…" : refreshing ? "Refreshing…"
             : refreshState === "offline" ? "Offline · updates resume when connected"
             : refreshState === "delayed" ? "Updates delayed · retrying automatically"
-            : available ? "Live · last 90 seconds" : "Live data unavailable"}
+            : available ? verified ? "Live · last 90 seconds" : "Last observed · waiting for an update" : "Live data unavailable"}
         </span>
       </div>
-      <div data-testid="users-online-metrics"
+      <div data-testid="users-online-metrics" role="group"
+        aria-label={available ? verified ? "Live online counts" : "Last observed online counts" : "Online counts unavailable"}
         className="grid min-w-0 grid-cols-2 gap-3 min-[1024px]:grid-cols-4">
         {cardItems.map(({ label, icon: Icon, key }) =>
           <div key={key} data-testid="online-platform-metric"
@@ -183,7 +219,7 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
         Accounts count once across platforms. Guests count by session. Website includes desktop and mobile web.
       </p>
       {available && !verified ? <p role="status" className="text-[12px] text-[#64748B]">
-        Showing the last verified snapshot. Current online status is unverified until updates resume.
+        Showing last observed counts and identities. Current online status is unverified until updates resume.
       </p> : null}
     </section>
 
@@ -226,12 +262,12 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
         <table className="w-full min-w-0 table-fixed text-left text-[13px]">
           <thead className="border-b border-[#E2E8F0] text-[11px] font-medium text-[#64748B]">
             <tr>
-              <th className="w-[24%] px-3 py-3 font-medium">IDENTITY</th>
-              <th className="w-[10%] px-3 py-3 font-medium">TYPE</th>
-              <th className="w-[17%] px-3 py-3 font-medium">PLATFORMS</th>
+              <th className="w-[23%] px-3 py-3 font-medium">IDENTITY</th>
+              <th className="w-[9%] px-3 py-3 font-medium">TYPE</th>
+              <th className="w-[16%] px-3 py-3 font-medium">PLATFORMS</th>
               <th className="w-[16%] px-3 py-3 font-medium">LOCATION</th>
               <th className="w-[15%] px-3 py-3 font-medium">LAST SEEN</th>
-              <th className="w-[9%] px-3 py-3 font-medium">STATUS</th>
+              <th className="w-[12%] px-3 py-3 font-medium">STATUS</th>
               <th className="w-[9%] px-3 py-3 font-medium">ACTIVITY</th>
             </tr>
           </thead>
@@ -264,7 +300,8 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
               </td>
               <td data-label="Status" className="px-3 py-3">
                 <span className={"inline-flex items-center gap-1.5 font-medium " + (verified ? "text-[#15803D]" : "text-[#64748B]")}>
-                  <span aria-hidden="true" className={"h-2 w-2 shrink-0 rounded-full " + (verified ? "bg-[#16A34A]" : "bg-[#94A3B8]" )} />{verified ? "Online" : "Last observed"}
+                  <span aria-hidden="true" className={"h-2 w-2 shrink-0 rounded-full " + (verified ? "bg-[#16A34A]" : "bg-[#94A3B8]" )} />
+                  <span className="[overflow-wrap:normal]">{verified ? "Online" : "Last observed"}</span>
                 </span>
               </td>
               <td data-label="Activity" className="px-3 py-3">

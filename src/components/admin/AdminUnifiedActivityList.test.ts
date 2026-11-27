@@ -3,7 +3,9 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createJiti } from "jiti";
+import { JSDOM } from "jsdom";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
+import { decodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
 
 const jiti = createJiti(import.meta.url, {
   jsx: { runtime: "automatic" },
@@ -47,7 +49,8 @@ test("overview shows the global newest five actions, including multiple pages, w
 
   assert.match(html, /e-page-1/);
   assert.match(html, /iOS app/);
-  assert.match(html, /Screen route/);
+  assert.match(html, /App screen/);
+  assert.doesNotMatch(html, /Screen route|Safe page path/);
   for (const id of ["e-page-1","e-page-2","e-page-3","s-new-search","j-new-filter"]) assert.ok(html.includes('data-activity-id="' + id + '"'));
   assert.doesNotMatch(html, /j-older-selection/);
   assert.equal((html.match(/data-activity-id=/g) || []).length,5);
@@ -102,8 +105,81 @@ test("full live Activity shows only the verified access, with no fabricated hist
     events:[],environment:"staging",timeZone:"UTC",
     access:{at,detail:"Desktop web",label:"Latest verified access"},
   }));
-  assert.match(html,/Activity history/);
+  assert.match(html,/aria-label="All activity"/);
+  assert.doesNotMatch(html, /<h2/);
   assert.equal((html.match(/data-activity-id="latest-access-summary"/g)??[]).length,1);
   assert.match(html,/Latest verified access/);
   assert.doesNotMatch(html,/View access history|View original search|View pages visited|No recorded activity matches/);
+});
+
+const renderDocument = (events: ActivityRow[], options: Partial<Parameters<typeof AdminUnifiedActivityList>[0]> = {}) =>
+  new JSDOM(renderToStaticMarkup(createElement(AdminUnifiedActivityList, {
+    events, environment: "staging", timeZone: "UTC", ...options,
+  }))).window.document;
+
+test("collapsed action titles contain no repeated navigation or raw page/reference details", () => {
+  const document = renderDocument([
+    { ...pages[0], label: "Support", pageView: { path: "/support", previousPath: "/cars/results", transport: "web", platform: "Desktop web", href: "https://staging.kurioticket.com/support" } },
+    { id: "e-saved", at, stage: "ACCOUNT_ACTIVITY", label: "Save confirmed", detail: "Flight · Web · Reference: item-exact-01", product: "FLIGHT", platform: "WEB", platformSource: "action" },
+  ], { overview: true, pagesHref: "/admin/users/user/account-1/pages" });
+  const collapsed = Array.from(document.querySelectorAll("summary"), row => row.textContent).join(" ");
+  assert.match(collapsed, /Visited Support/);
+  assert.match(collapsed, /Save confirmed/);
+  assert.match(collapsed, /Website/);
+  assert.doesNotMatch(collapsed, /https:|Reference:|item-exact-01|\/cars\/results|View pages visited|View original search/);
+  assert.equal(document.querySelectorAll("summary a").length, 0);
+  assert.equal(document.querySelectorAll("details[open]").length, 0);
+  assert.equal(document.querySelector('[data-activity-id="e-saved"] code')?.textContent, "item-exact-01");
+  assert.equal(document.querySelectorAll('a[href="/admin/users/user/account-1/pages"]').length, 0);
+  const ids = Array.from(document.querySelectorAll("summary"), node => node.getAttribute("aria-controls"));
+  assert.equal(new Set(ids).size, ids.length);
+  for (const id of ids) assert.ok(id && document.getElementById(id));
+});
+
+test("failed searches show their recorded outcome and exact guest search context inside the account view", () => {
+  const returnHref = "/admin/users/user/account-0001/activity/all?range=today&tab=searches";
+  const document = renderDocument([{
+    id: "s-failed", at, stage: "SEARCH_COMPLETED", label: "Search completed", detail: "CAR · CDG → CDG · FAILED", product: "CAR",
+    resultCount: 0, searchHistoryId: "search-original-0001", originalSearchIdentity: "guest", searchOutcome: "FAILED", platform: "WEB", platformSource: "search",
+  }], { returnHref });
+  assert.match(document.querySelector("summary")?.textContent ?? "", /Search failed/);
+  assert.doesNotMatch(document.querySelector("summary")?.textContent ?? "", /Search completed|View original search/);
+  assert.match(document.querySelector("summary")?.textContent ?? "", /Search originally recorded as guest/);
+  const link = document.querySelector('details a[href^="/admin/searches/"]')!;
+  assert.ok(link);
+  const url = new URL(link.getAttribute("href")!, "https://admin.invalid");
+  assert.equal(url.pathname, "/admin/searches/search-original-0001");
+  assert.equal(url.searchParams.get("environment"), "staging");
+  const returned = new URL(decodeActivityJourneyReturn(url.searchParams.get("activityReturn"))!, "https://admin.invalid");
+  assert.equal(returned.pathname, "/admin/users/user/account-0001/activity/all");
+  assert.deepEqual(Object.fromEntries(returned.searchParams), { tab: "searches", range: "today" });
+  assert.equal(document.querySelectorAll('a[href^="/admin/searches/"]').length, 1);
+  assert.match(document.querySelector('[data-testid="activity-event-details"]')?.textContent ?? "", /original search record retains that identity/);
+});
+
+test("unknown identity stays unlabelled and zero results never invent a failed search", () => {
+  const document = renderDocument([{
+    id: "s-unknown", at, stage: "SEARCH_COMPLETED", label: "Search completed", detail: "FLIGHT · Lagos", product: "FLIGHT", resultCount: 0,
+  }, {
+    id: "s-account", at: new Date(+at - 1000), stage: "SEARCH_COMPLETED", label: "Search completed", detail: "FLIGHT · Lagos · SUCCESS", product: "FLIGHT",
+    originalSearchIdentity: "registered", searchOutcome: "SUCCESS",
+  }]);
+  const unknown = document.querySelector('[data-activity-id="s-unknown"]')!;
+  assert.doesNotMatch(unknown.textContent ?? "", /Guest|guest|Search failed|Original search identity/);
+  assert.equal(unknown.querySelectorAll("a").length, 0);
+  assert.match(document.querySelector('[data-activity-id="s-account"]')?.textContent ?? "", /Registered account/);
+  assert.doesNotMatch(document.querySelector('[data-activity-id="s-account"] summary')?.textContent ?? "", /guest/);
+});
+
+test("later journey steps distinguish source search platform from action platform and retain separate saves/removals", () => {
+  const document = renderDocument([
+    { id: "j-saved", at, stage: "RESULT_SAVED", label: "Saved to account", detail: "Flight · LOS → LHR", product: "FLIGHT", platform: "IOS", platformSource: "search" },
+    { id: "e-unsaved", at: new Date(+at + 1000), stage: "ACCOUNT_ACTIVITY", label: "Unsaved item", detail: "Flight · Android · Reference: result-one", product: "FLIGHT", platform: "ANDROID", platformSource: "action" },
+  ]);
+  assert.equal(document.querySelectorAll("[data-activity-id]").length, 2);
+  assert.equal(document.querySelector("[data-activity-id]")?.getAttribute("data-activity-id"), "e-unsaved");
+  assert.match(document.querySelector('[data-activity-id="j-saved"] summary')?.textContent ?? "", /Search: iOS app/);
+  assert.match(document.querySelector('[data-activity-id="j-saved"] dl')?.textContent ?? "", /Search platform/);
+  assert.match(document.querySelector('[data-activity-id="e-unsaved"] summary')?.textContent ?? "", /Android app/);
+  assert.doesNotMatch(document.querySelector('[data-activity-id="e-unsaved"] summary')?.textContent ?? "", /Search:|result-one/);
 });

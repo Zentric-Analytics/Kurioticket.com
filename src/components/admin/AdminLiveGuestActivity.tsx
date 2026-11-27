@@ -47,8 +47,7 @@ export async function AdminLiveGuestActivity({ reference, full = false, input = 
   const platforms = row?.platforms.map(platform => platformNames[platform]).join(" · ");
   const access: AccessPreview | null = row ? {
     at: new Date(row.lastSeenAt), label: "Latest verified access",
-    detail: [platforms, row.liveAccess?.deviceLabel, row.liveAccess?.os, row.liveAccess?.browser,
-      row.locationLabel ?? "Location unavailable"].filter(Boolean).join(" · "),
+    detail: [platforms, row.liveAccess?.deviceLabel, row.liveAccess?.os, row.liveAccess?.browser].filter(Boolean).join(" · "),
   } : null;
 
   if (full) {
@@ -85,14 +84,8 @@ export async function AdminLiveGuestActivity({ reference, full = false, input = 
     firstSeenAt={row?.liveAccess ? new Date(row.liveAccess.firstSeenAt) : null}
     lastSeenAt={row ? new Date(row.lastSeenAt) : null} lastSeenAvailable={Boolean(row)}
     eventCount={null} summary={null} timeZone={timeZone} periodLabel="History unavailable"
-    accessContext={row ? <AdminActivityAccessSummary access={access} timeZone={timeZone}/> : null}
-    identityDetails={row ? <div className="mt-1 space-y-0.5 break-words text-[12px] text-[#475569]">
-      <p><span className="font-medium">Platform: </span><span>{platforms ?? "Unavailable"}</span></p>
-      <p data-testid="live-guest-location"><span className="font-medium">Current location: </span><span>{row.locationLabel ?? "Unavailable"}</span></p>
-    </div> : null}>
-    {row ? <>
-      <AdminUnifiedActivityList overview events={[]} timeZone={timeZone} environment={environment}
-        historyUnavailable={historyNote} allHref={fullHref} allHrefPrefetch={false}/>
-    </> : <p role="status" className="text-[13px] text-[#64748B]">{unavailable}</p>}
+    accessContext={row ? <AdminActivityAccessSummary access={access} timeZone={timeZone}
+      location={<p data-testid="live-guest-location" className="text-[12px] text-[#64748B]">Current location: {row.locationLabel ?? "Unavailable"}</p>}/> : null}>
+    {!row ? <p role="status" className="text-[13px] text-[#64748B]">{unavailable}</p> : null}
   </AdminCustomerActivityWorkspace>;
 }

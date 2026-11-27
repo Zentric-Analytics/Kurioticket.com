@@ -3,18 +3,12 @@
 import { useEffect, useLayoutEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
-  adminUsersRefreshQuietMs, createAdminUsersRefreshController, isAdminUsersRefreshPath,
+  adminUsersRefreshQuietMs, createAdminUsersRefreshController, hasOpenAdminUsersInteraction, isAdminUsersRefreshPath,
   probeAdminUsersRefresh, type AdminUsersRefreshState,
 } from "@/lib/adminUsersLiveRefresh";
 
 type Position = { x: number; y: number; scrollVersion: number; route: string; anchors: { key: string; top: number }[] };
 const routeNow = () => window.location.pathname + window.location.search;
-
-function hasOpenInteraction() {
-  return Array.from(document.querySelectorAll<HTMLElement>(
-    '[role="listbox"], [role="menu"], [role="dialog"], dialog[open], [aria-expanded="true"][aria-haspopup]',
-  )).some(node => !node.closest('[hidden], [aria-hidden="true"]') && node.getClientRects().length > 0);
-}
 
 function rememberPosition(root: HTMLElement | null, scrollVersion: number): Position {
   const anchors: Position["anchors"] = [];
@@ -54,6 +48,20 @@ export function AdminUsersLiveRefresh({ children }: { children: ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
   const [observation, setObservation] = useState<{ scope: string; state: AdminUsersRefreshState }>({ scope, state: "live" });
   const state = observation.scope === scope ? observation.state : "live";
+  const [review, setReview] = useState({ scope, open: false });
+  // The shared layout survives navigation. Discard the previous route's review
+  // so returning to it cannot revive a pause after its disclosure was removed.
+  if (review.scope !== scope) setReview({ scope, open: false });
+  const reviewingActivity = review.scope === scope && review.open;
+  const [committedContent, setCommittedContent] = useState({ scope, children });
+  // A server refresh may already be pending when an action is opened. Keep
+  // that same-route content available while it is being read; the newest
+  // payload remains in props and is released when the action closes. Explicit
+  // navigation and authorization failure always take precedence.
+  const holdContent = enabled && reviewingActivity && committedContent.scope === scope && state !== "authorization";
+  if (!holdContent && (committedContent.scope !== scope || committedContent.children !== children)) {
+    setCommittedContent({ scope, children });
+  }
   const [pending, startTransition] = useTransition();
   const pendingRef = useRef(pending);
   const interactionAt = useRef(0);
@@ -81,7 +89,7 @@ export function AdminUsersLiveRefresh({ children }: { children: ReactNode }) {
           || root.current?.querySelector('[data-users-navigation-pending="true"]')) return "pending";
         // Merely focusing a field must not prevent updates indefinitely.
         if (Date.now() - interactionAt.current < adminUsersRefreshQuietMs
-          || hasOpenInteraction()) return "interacting";
+          || hasOpenAdminUsersInteraction()) return "interacting";
         return "ready";
       },
       probe: signal => probeAdminUsersRefresh(signal),
@@ -97,6 +105,10 @@ export function AdminUsersLiveRefresh({ children }: { children: ReactNode }) {
     const interacted = () => { interactionAt.current = Date.now(); };
     const scrolled = () => { scrollVersion.current += 1; };
     const pageShown = (event: PageTransitionEvent) => { if (event.persisted) resume(); };
+    const reviewChanged = (event: Event) => {
+      if (!(event.target instanceof Element) || !event.target.matches('[data-activity-id] details')) return;
+      setReview({ scope, open: Boolean(root.current?.querySelector('[data-activity-id] details[open]')) });
+    };
     document.addEventListener("visibilitychange", resume);
     window.addEventListener("online", resume);
     window.addEventListener("offline", resume);
@@ -104,6 +116,7 @@ export function AdminUsersLiveRefresh({ children }: { children: ReactNode }) {
     document.addEventListener("input", interacted, true);
     document.addEventListener("keydown", interacted, true);
     document.addEventListener("pointerdown", interacted, true);
+    document.addEventListener("toggle", reviewChanged, true);
     window.addEventListener("scroll", scrolled, { passive: true, capture: true });
     controller.start();
     return () => {
@@ -118,6 +131,7 @@ export function AdminUsersLiveRefresh({ children }: { children: ReactNode }) {
       document.removeEventListener("input", interacted, true);
       document.removeEventListener("keydown", interacted, true);
       document.removeEventListener("pointerdown", interacted, true);
+      document.removeEventListener("toggle", reviewChanged, true);
       window.removeEventListener("scroll", scrolled, true);
     };
   }, [enabled, scope, router]);
@@ -125,13 +139,14 @@ export function AdminUsersLiveRefresh({ children }: { children: ReactNode }) {
   const message = state === "offline" ? "Offline · updates resume when connected"
     : state === "delayed" ? "Updates delayed · retrying automatically"
     : state === "authorization" ? "Checking your access…"
+    : reviewingActivity ? "Updates paused while reviewing details"
     : "Updates automatically";
   return <div ref={root} className={"min-w-0" + (usersControls ? " max-md:[&_input:not([type=hidden])]:text-base max-md:[&_textarea]:text-base" : "")}
-    data-users-live-refresh={enabled ? "enabled" : undefined}>
+    data-users-live-refresh={enabled ? "enabled" : undefined} data-users-refresh-state={enabled ? state : undefined}>
     {enabled ? <div className="mb-2 flex min-h-4 justify-end text-[11px] leading-4 text-[#64748B]">
-      <span role={state === "delayed" || state === "offline" || state === "authorization" ? "status" : undefined}
+      <span role={state === "delayed" || state === "offline" || state === "authorization" || reviewingActivity ? "status" : undefined}
         data-testid="users-live-refresh-status">{message}</span>
     </div> : null}
-    {state === "authorization" ? null : children}
+    {state === "authorization" ? null : holdContent ? committedContent.children : children}
   </div>;
 }

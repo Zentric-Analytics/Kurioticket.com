@@ -39,12 +39,19 @@ const choose = async (label, value) => {
 };
 const checkActivityReturn = async (link, origin) => {
   const activity = new URL(await link.getAttribute("href"), base);
+  const expected = new URL(origin, base);
+  const selected = expected.pathname === "/admin/users/online" ? "today"
+    : expected.searchParams.get("date") ?? expected.searchParams.get("range") ?? "today";
+  const range = selected === "last7" ? "7d" : selected === "last30" ? "30d" : selected;
   assert.match(activity.pathname, /^\/admin\/users\/(user|guest|live-guest)\/[^/]+\/activity$/);
-  assert.equal(activity.searchParams.get("range"), "all", "Activity starts with complete history");
+  assert.equal(activity.searchParams.get("range"), range, "Activity retains the selected reporting period");
+  if (range === "custom") {
+    assert.equal(activity.searchParams.get("from"), expected.searchParams.get("from"));
+    assert.equal(activity.searchParams.get("to"), expected.searchParams.get("to"));
+  }
   assert.equal(activity.searchParams.has("directory"), false, "New links use the complete Users return context");
   assert.ok(activity.searchParams.get("usersReturn"), "Activity keeps its Users origin");
   const returned = new URL(activity.searchParams.get("usersReturn"), base);
-  const expected = new URL(origin, base);
   assert.equal(returned.pathname, expected.pathname);
   for (const [key, value] of expected.searchParams) {
     assert.equal(returned.searchParams.get(key), value, "Activity return preserves " + key);
@@ -62,7 +69,7 @@ try {
     await expect(page.locator('button[role="combobox"][aria-label="Sort by"]')).toBeVisible();
     await capture({path: output + "/before-search-filter-" + width + ".png", fullPage:true});
   }
-  for (const width of [1440,1280,768,390,320]) {
+  for (const width of [1536,1440,1280,1024,768,390,320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(url);
     await expect(page.locator('button[role="combobox"][aria-label="Date range"]')).toBeVisible();
@@ -125,6 +132,7 @@ try {
     await expect(search()).toHaveAttribute("placeholder", "Search by name, email, user ID, or guest ID");
     await expect(combo("Sort by")).toHaveCount(0);
     await expect(combo("Date range")).toContainText("Today");
+    await checkActivityReturn(page.locator("tbody tr").first().getByRole("link",{name:/View Activity/}),page.url());
     await expect(combo("Date range")).toHaveAccessibleDescription("WAT (UTC+1)");
     await expect(combo("Account role")).toContainText("All roles");
     await expect(combo("Status")).toContainText("All statuses");
@@ -311,6 +319,7 @@ try {
   await expect(page).toHaveURL(/date=custom/);
   await expect(page).toHaveURL(/from=2026-10-01/);
   await expect(page).toHaveURL(/to=2026-10-23/);
+  await checkActivityReturn(page.locator("tbody tr").first().getByRole("link",{name:/View Activity/}),page.url());
   await choose("Date range","All time");
   await choose("Account role","Support");
   await choose("Status","Active");
@@ -333,6 +342,7 @@ try {
     await choose("Date range",label);
     await page.getByRole("button",{name:"Apply filters",exact:true}).click();
     await expect(page).toHaveURL(new RegExp("date="+date));
+    await checkActivityReturn(page.locator("tbody tr").first().getByRole("link",{name:/View Activity/}),page.url());
     await expect(page.locator('[data-testid="user-population-metric"]').nth(3)).toContainText("Recorded sessions · All time");
     await expect(page.locator('[data-testid="user-population-metric"]').nth(6)).toContainText(
       date === "all" ? "New recorded sessions · All time" : `New recorded sessions · ${label}`);

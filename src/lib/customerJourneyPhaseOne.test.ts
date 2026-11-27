@@ -44,16 +44,32 @@ test("existing funnel metrics stay unchanged while exact per-search actions are 
   assert.match(overview, /search\.priceAlertsCreated/);
 });
 
-test("unlinked account actions are available in Journey History without invented correlations", () => {
+test("Journey History links unlinked account actions to the same identity's complete history without invented correlations", () => {
   const page = read("src/app/admin/users/[kind]/[id]/journeys/page.tsx");
-  assert.match(page, /stage: "ACCOUNT_ACTIVITY"/);
-  assert.match(page, /undefined, "all"\)/);
-  assert.match(page, /!scope\.stage && !scope\.provider/);
-  assert.match(page, /event => event\.stage === "ACCOUNT_ACTIVITY"/);
-  assert.match(page, /Other recorded account actions/);
-  assert.match(page, /<ActivityTimeline timeZone=\{timeZone\} events=\{otherActions\}/);
+  const actionLink = page.match(/const accountActivityHref = activityHref\([\s\S]*?\n  \}\);/)?.[0];
+  assert.ok(actionLink, "Journey history keeps a scoped link to the separate action history");
+  assert.match(page, /const route = "\/admin\/users\/" \+ kind \+ "\/" \+ encodeURIComponent\(id\)/);
+  assert.match(actionLink, /activityHref\(route \+ "\/activity\/all", backContext/);
+  assert.match(page, /const accountActivityRange = requested\.range === "90d" \? "custom" : requested\.range/);
+  assert.match(actionLink, /range: accountActivityRange/);
+  assert.match(actionLink, /from: accountActivityRange === "custom" \? scope\.from : null/);
+  assert.match(actionLink, /to: accountActivityRange === "custom" \? scope\.to : null/);
+  assert.match(actionLink, /tab: "all", stage: "ACCOUNT_ACTIVITY", product: scope\.product \?\? null/);
+  assert.match(actionLink, /q: null, cursor: null, order: null/);
+  assert.match(page, /<Link href=\{accountActivityHref\}[^>]*>\{accountActivityLabel\}/);
+  assert.equal((page.match(/\bloadAdminIdentityActivity\(/g) ?? []).length, 1,
+    "Journey history does not load a second complete account-action feed");
+  const identityRead = page.match(/const identity = await loadAdminIdentityActivity\([\s\S]*?\n  \);/)?.[0];
+  assert.ok(identityRead, "The selected identity is still verified by the activity reader");
+  assert.match(identityRead, /kind, id, activityFilters, one\(raw\.activityCursor\) \|\| undefined, "page",/);
+  assert.doesNotMatch(page, /Other recorded account actions|events=\{otherActions\}/);
   assert.doesNotMatch(page, /otherActions\.map\([^)]*searchHistoryId/);
   const reader = read("src/services/adminIdentityActivityService.ts");
+  const accountProjection = reader.match(/function analyticsActivityRow\([\s\S]*?\n\}/)?.[0];
+  assert.ok(accountProjection, "The complete history retains the separate account-action classification");
+  assert.match(accountProjection, /id: "e-" \+ event\.id, stage: "ACCOUNT_ACTIVITY"/);
+  assert.doesNotMatch(accountProjection, /\b(?:journeyId|searchHistoryId)\s*:/,
+    "An unlinked account action cannot acquire an invented journey or search reference");
   assert.match(reader, /if \(typeof meta\?\.linkedJourneyId === "string" && typeof meta\?\.linkedSearchHistoryId === "string"\) return null/);
   assert.match(reader, /row => analyticsActivityRow\(row, environment\) !== null/);
 });

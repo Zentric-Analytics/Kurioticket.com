@@ -2,7 +2,7 @@ import { recordedHotelPropertyCount } from "@/lib/hotels/hotelResultAccounting";
 import "server-only";
 
 import { Prisma } from "@/generated/prisma/client";
-import { eligibleGuestVisitorWhere, eligibleJourneyLinkedVisitorWhere, eligibleJourneyEventCandidateWhere, eligibleLinkedVisitorWhere, journeyActivityLabels, mergeAdminActivity, toAdminJourneyActivity, type ActivityRow, type IdentityKind, type JourneyEventRecord } from "@/lib/adminIdentityJourney";
+import { eligibleGuestVisitorWhere, eligibleJourneyLinkedVisitorWhere, eligibleJourneyEventCandidateWhere, eligibleLinkedVisitorWhere, journeyActivityLabels, mergeAdminActivity, recordedSearchContext, toAdminJourneyActivity, type ActivityRow, type IdentityKind, type JourneyEventRecord } from "@/lib/adminIdentityJourney";
 import {
   ACTIVITY_OVERVIEW_LIMIT, ACTIVITY_PAGE_SIZE, activityEnvironmentScope, activityWindow, allowedActivityStages,
   decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, latestVisibleActivityAt, legacyStageLabelMatchesQuery, sourceActivitySeek,
@@ -87,6 +87,7 @@ function analyticsActivityRow(event: AnalyticsActivityRecord, environment: Publi
     id: "e-" + event.id, stage: "ACCOUNT_ACTIVITY",
     label: safeInteractionNames[event.name] ?? baseLabel,
     detail: safe.detail, product: safe.product, at: event.createdAt,
+    platform: safeSearchPlatform(event.metadata), platformSource: "action",
   };
 }
 
@@ -514,7 +515,7 @@ export async function loadAdminIdentityActivity(
           !validateSearchReplacements || hasNoValidReplacement(row);
         const handoffEligible = (row: { journeyEvents?: JourneyEventRecord[] }) =>
           !validateHandoffReplacements || hasNoValidReplacement(row);
-        const searchSelect = { id: true, type: true, origin: true, destination: true, status: true, resultCount: true, query: true, createdAt: true } as const;
+        const searchSelect = { id: true, userId: true, type: true, origin: true, destination: true, status: true, resultCount: true, query: true, createdAt: true } as const;
         const handoffSelect = { id: true, type: true, provider: true, route: true, createdAt: true } as const;
         type SearchSourceRow = Prisma.SearchHistoryGetPayload<{ select: typeof searchSelect }> & { journeyEvents?: JourneyEventRecord[] };
         type HandoffSourceRow = Prisma.RedirectLogGetPayload<{ select: typeof handoffSelect }> & { journeyEvents?: JourneyEventRecord[] };
@@ -642,6 +643,7 @@ export async function loadAdminIdentityActivity(
       return row ? [{
         ...row,
         platform: safeSearchPlatform(event.searchHistory?.query),
+        platformSource: "search" as const,
         resultCount: event.searchHistory?.resultCount ?? null,
         hotelPropertyCount: recordedHotelPropertyCount(event.searchHistory?.type, event.searchHistory?.query, event.searchHistory?.resultCount),
       }] : [];
@@ -651,6 +653,7 @@ export async function loadAdminIdentityActivity(
         id: "s-" + s.id, stage: "SEARCH_COMPLETED" as const, product: s.type,
         searchHistoryId: s.id, dedupeKey: "search:" + s.id,
         platform: safeSearchPlatform(s.query), resultCount: s.resultCount,
+        platformSource: "search" as const, ...recordedSearchContext(s),
         hotelPropertyCount: recordedHotelPropertyCount(s.type, s.query, s.resultCount),
         label: "Search completed", detail: [s.type, [s.origin, s.destination].filter(Boolean).join(" → "), s.status].filter(Boolean).join(" · "),
         at: s.createdAt,

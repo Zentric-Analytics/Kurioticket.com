@@ -36,7 +36,9 @@ try {
     await page.setViewportSize({width,height:900});
     for (const zoom of [1,0.9,0.8,0.75,1.1]) {
       for (const kind of ["guest","user"]) {
-        await page.goto(base+"/admin/users/"+kind+"/"+(kind === "guest" ? "qa-guest-activity-0001" : "qa-realistic-identity-0001")+"/activity");
+        // Compare the retained historical records at every zoom. Today and
+        // its empty fixed-date fixture are tested in the navigation suite.
+        await page.goto(base+"/admin/users/"+kind+"/"+(kind === "guest" ? "qa-guest-activity-0001" : "qa-realistic-identity-0001")+"/activity?range=all");
         await applyZoom(zoom);
 
         const layout=await page.evaluate(()=>{

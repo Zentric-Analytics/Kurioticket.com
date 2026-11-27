@@ -6,6 +6,29 @@ export type AdminUsersRefreshAvailability = "ready" | "hidden" | "offline" | "in
 export type AdminUsersRefreshState = "live" | "updating" | "offline" | "delayed" | "authorization";
 export type AdminUsersRefreshProbe = "ready" | "unauthorized";
 
+/** A retained roster cannot claim current presence after any included identity
+ * leaves its recorded live window. Keep the snapshot/counts intact and label
+ * the whole sample historical instead of estimating a new count on the client.
+ */
+export function adminOnlineUsersLiveUntil(snapshot: {
+  observedAt: string; windowSeconds: number; rows?: readonly { lastSeenAt: string }[];
+}) {
+  const observedAt = Date.parse(snapshot.observedAt);
+  const windowMs = snapshot.windowSeconds * 1_000;
+  if (!Number.isFinite(observedAt) || !Number.isFinite(windowMs) || windowMs <= 0) return 0;
+  return (snapshot.rows ?? []).reduce((until, row) => {
+    const lastSeenAt = Date.parse(row.lastSeenAt);
+    return Number.isFinite(lastSeenAt) ? Math.min(until, lastSeenAt + windowMs) : 0;
+  }, observedAt + windowMs);
+}
+
+/** Open controls retain their position until the administrator finishes. */
+export function hasOpenAdminUsersInteraction() {
+  return Array.from(document.querySelectorAll<HTMLElement>(
+    '[role="listbox"], [role="menu"], [role="dialog"], dialog[open], [aria-expanded="true"][aria-haspopup], [data-activity-id] details[open]',
+  )).some(node => !node.closest('[hidden], [aria-hidden="true"]') && node.getClientRects().length > 0);
+}
+
 /** Online Users owns its presence poll; Bots are outside the Users refresh scope. */
 export function isAdminUsersRefreshPath(pathname: string) {
   return (pathname === "/admin/users" || pathname.startsWith("/admin/users/"))

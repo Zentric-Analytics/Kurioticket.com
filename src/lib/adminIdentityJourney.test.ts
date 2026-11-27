@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { eligibleGuestVisitorWhere, eligibleLinkedVisitorWhere, eligibleJourneyEventCandidateWhere, mergeAdminActivity, toAdminJourneyActivity, type JourneyEventRecord } from "./adminIdentityJourney";
+import { eligibleGuestVisitorWhere, eligibleLinkedVisitorWhere, eligibleJourneyEventCandidateWhere, mergeAdminActivity, recordedSearchContext, toAdminJourneyActivity, type JourneyEventRecord } from "./adminIdentityJourney";
 
 const at = new Date("2026-10-22T11:00:00Z");
 const sample: JourneyEventRecord = {
@@ -27,6 +27,25 @@ test("journey events render only for the matching visitor and account", () => {
   assert.equal(toAdminJourneyActivity({ ...sample, searchHistory: { ...sample.searchHistory!, userId: "user-2" } }, "user", "user-1"), null);
   assert.equal(toAdminJourneyActivity({ ...sample, searchHistory: { ...sample.searchHistory!, userId: "user-2" } }, "guest", "visitor-1"), null);
   assert.equal(toAdminJourneyActivity({ ...sample, searchHistory: null }, "guest", "visitor-1"), null);
+});
+
+test("original search identity is projected from stored source evidence without relabelling linked guest searches", () => {
+  const guestUnderAccount = toAdminJourneyActivity(sample, "user", "account-1")!;
+  assert.equal(guestUnderAccount.originalSearchIdentity, "guest");
+  assert.equal(guestUnderAccount.searchOutcome, "SUCCESS");
+  const account = toAdminJourneyActivity({ ...sample,
+    searchHistory: { ...sample.searchHistory!, userId: "account-1", status: "FAILED" },
+  }, "user", "account-1")!;
+  assert.equal(account.originalSearchIdentity, "registered");
+  assert.equal(account.searchOutcome, "FAILED");
+  assert.deepEqual(recordedSearchContext(null), {});
+  assert.deepEqual(recordedSearchContext(undefined), {});
+  assert.deepEqual(recordedSearchContext({}), {});
+  assert.deepEqual(recordedSearchContext({ userId: "", status: "untrusted" }), {});
+  assert.deepEqual(recordedSearchContext({ userId: null, status: "PARTIAL" }), { originalSearchIdentity: "guest", searchOutcome: "PARTIAL" });
+  assert.equal(toAdminJourneyActivity({ ...sample,
+    searchHistory: { ...sample.searchHistory!, userId: "different-account" },
+  }, "user", "account-1"), null, "presentation context must not weaken ownership validation");
 });
 
 test("explicit native flight fare, provider-deal and detail stages have distinct labels", () => {

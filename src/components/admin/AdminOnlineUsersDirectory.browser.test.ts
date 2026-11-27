@@ -39,7 +39,7 @@ test("Online filters and page survive activity navigation context and browser Ba
     assert.equal(await page.getByTestId("online-user-row").count(), 5);
     const activity = new URL((await page.getByRole("link", { name: "View activity", exact: true }).first().getAttribute("href"))!, "http://fixture.local");
     assert.match(activity.pathname, /^\/admin\/users\/live-guest\/[A-Za-z0-9_-]{43}\/activity$/);
-    assert.equal(activity.searchParams.get("range"), "all");
+    assert.equal(activity.searchParams.get("range"), "today");
     assert.equal(activity.searchParams.get("usersReturn"), "/admin/users/online?q=Nigeria&type=guest&platform=android&page=2");
 
     await input.fill("unfinished draft");
@@ -111,6 +111,132 @@ test("a new server roster updates in place and an older pending poll cannot over
   });
 });
 
+test("Online polling waits while a filter is open or an administrator is typing, then resumes without applying the draft", async () => {
+  const setup = mount("type=registered", true) + `
+    window.fixtureRequests=0;
+    window.fetch=async()=>{window.fixtureRequests++;const observedAt=new Date().toISOString();return Response.json({
+      ...window.fixtureProps.initial,observedAt,rows:window.fixtureProps.initial.rows.map(row=>({...row,lastSeenAt:observedAt}))});};`;
+  await withComponentBrowser(bundle(), setup, async page => {
+    await page.clock.install();
+    await page.evaluate(() => (window as unknown as { fixtureMount: () => void }).fixtureMount());
+    const input = page.getByRole("searchbox", { name: "Search online users" });
+    await input.waitFor();
+    await page.getByRole("combobox", { name: "Identity type", exact: true }).click();
+    await page.getByRole("listbox").waitFor();
+    await page.clock.runFor(30_100);
+    assert.equal(await page.evaluate(() => (window as unknown as { fixtureRequests: number }).fixtureRequests), 0,
+      "a roster must not reorder underneath an open filter");
+    await page.getByRole("listbox").press("Escape");
+    await input.fill("unfinished country search");
+    await page.clock.runFor(1_000);
+    assert.equal(await page.evaluate(() => (window as unknown as { fixtureRequests: number }).fixtureRequests), 0,
+      "typing gives the administrator a short quiet period");
+    await page.clock.runFor(2_100);
+    await expect.poll(() => page.evaluate(() => (window as unknown as { fixtureRequests: number }).fixtureRequests)).toBe(1);
+    assert.equal(await input.inputValue(), "unfinished country search");
+    assert.equal(await page.getByTestId("online-user-row").count(), 25);
+    assert.equal(new URL(page.url()).searchParams.get("type"), "registered");
+    assert.equal(new URL(page.url()).searchParams.has("q"), false, "a refresh cannot apply an unfinished draft");
+  });
+});
+
+test("an open Online filter cannot extend the live claim past the snapshot's 90-second window", async () => {
+  const setup = mount("type=registered", true) + `
+    window.fixtureRequests=0;
+    window.fetch=async()=>{window.fixtureRequests++;const observedAt=new Date().toISOString();return Response.json({
+      ...window.fixtureProps.initial,observedAt,rows:window.fixtureProps.initial.rows.map(row=>({...row,lastSeenAt:observedAt}))});};`;
+  await withComponentBrowser(bundle(), setup, async page => {
+    await page.clock.install({ time: new Date(at) });
+    await page.evaluate(() => (window as unknown as { fixtureMount: () => void }).fixtureMount());
+    await expect(page.getByTestId("online-user-row").getByText("Online", { exact: true })).toHaveCount(25);
+    await page.getByRole("combobox", { name: "Identity type", exact: true }).click();
+    await page.getByRole("listbox").waitFor();
+    await page.clock.runFor(90_100);
+    assert.equal(await page.evaluate(() => (window as unknown as { fixtureRequests: number }).fixtureRequests), 0);
+    await expect(page.getByTestId("online-user-row").getByText("Last observed", { exact: true })).toHaveCount(25);
+    assert.match(await page.locator("body").innerText(), /Current online status is unverified/);
+    await page.getByRole("listbox").press("Escape");
+    await page.clock.runFor(2_100);
+    await expect.poll(() => page.evaluate(() => (window as unknown as { fixtureRequests: number }).fixtureRequests)).toBe(1);
+    await expect(page.getByTestId("online-user-row").getByText("Online", { exact: true })).toHaveCount(25);
+  });
+});
+
+test("an identity already 89 seconds old expires after one second while an open filter retains rows and sampled counts", async () => {
+  const setup = mount("type=registered", true) + `
+    window.fixtureRequests=0;
+    window.fixtureProps.initial={...window.fixtureProps.initial,
+      rows:window.fixtureProps.initial.rows.map((row,index)=>index===0?{...row,
+        lastSeenAt:new Date(Date.parse(window.fixtureProps.initial.observedAt)-89000).toISOString()}:row)};
+    window.fetch=async()=>{window.fixtureRequests++;return Response.json(window.fixtureProps.initial);};`;
+  await withComponentBrowser(bundle(), setup, async page => {
+    const observedTime = Date.parse(at);
+    // install() keeps ticking during browser actions. Pause before mounting so
+    // opening the filter cannot consume this sample's one remaining second.
+    await page.clock.install({ time: observedTime - 60_000 });
+    await page.clock.pauseAt(observedTime);
+    await page.evaluate(() => (window as unknown as { fixtureMount: () => void }).fixtureMount());
+    await expect(page.getByTestId("online-user-row").getByText("Online", { exact: true })).toHaveCount(25);
+    const before = await page.getByTestId("online-user-row").allTextContents();
+    const url = page.url();
+    await page.getByRole("combobox", { name: "Identity type", exact: true }).click();
+    await page.getByRole("listbox").waitFor();
+    assert.equal(await page.evaluate(() => Date.now()), observedTime);
+    await page.clock.runFor(900);
+    assert.equal(await page.evaluate(() => Date.now()), observedTime + 900);
+    await expect(page.getByTestId("online-user-row").getByText("Online", { exact: true })).toHaveCount(25);
+    await page.clock.runFor(200);
+    assert.equal(await page.evaluate(() => Date.now()), observedTime + 1_100);
+    await expect(page.getByTestId("online-user-row").getByText("Last observed", { exact: true })).toHaveCount(25);
+    assert.equal(await page.getByTestId("online-user-row").getByText("Online", { exact: true }).count(), 0);
+    await expect(page.getByRole("group", { name: "Last observed online counts", exact: true }).getByText("60", { exact: true })).toHaveCount(1);
+    assert.match(await page.locator("body").innerText(), /Showing last observed counts and identities/);
+    assert.equal(await page.evaluate(() => (window as unknown as { fixtureRequests: number }).fixtureRequests), 0);
+    assert.equal(await page.getByTestId("online-user-row").count(), 25);
+    assert.deepEqual((await page.getByTestId("online-user-row").allTextContents()).map(text => text.replace("Last observed", "Online")), before,
+      "expiry changes only the current-status claim, not the identities, order or sampled fields");
+    assert.equal(page.url(), url);
+  });
+});
+
+test("a roster response arriving during a pointer interaction cannot move the selected identity", async () => {
+  const setup = mount("type=registered", true) + `
+    window.fixtureRequests=0;window.fixtureDecoded=0;
+    window.fetch=async()=>{
+      window.fixtureRequests++;
+      if(window.fixtureRequests===1)return new Promise(resolve=>{window.fixtureResolve=body=>resolve({ok:true,status:200,
+        json:async()=>{window.fixtureDecoded++;return body;}});});
+      const observedAt=new Date().toISOString();return Response.json({...window.fixtureProps.initial,observedAt,
+        rows:[...window.fixtureProps.initial.rows].reverse().map(row=>({...row,lastSeenAt:observedAt}))});
+    };`;
+  await withComponentBrowser(bundle(), setup, async page => {
+    await page.clock.install();
+    await page.evaluate(() => (window as unknown as { fixtureMount: () => void }).fixtureMount());
+    const first = page.getByTestId("online-user-row").first();
+    await expect(first).toContainText("QA account 0");
+    await page.clock.runFor(30_100);
+    await expect.poll(() => page.evaluate(() => (window as unknown as { fixtureRequests: number }).fixtureRequests)).toBe(1);
+    const link = first.getByRole("link", { name: "View activity", exact: true });
+    const href = await link.getAttribute("href");
+    await link.dispatchEvent("pointerdown");
+    await page.evaluate(() => {
+      const fixture = window as unknown as { fixtureProps: { initial: AdminOnlineUsersSnapshot & { rows: OnlineIdentityRow[] } }; fixtureResolve: (value: unknown) => void };
+      const observedAt = new Date().toISOString();
+      fixture.fixtureResolve({ ...fixture.fixtureProps.initial, observedAt,
+        rows: [...fixture.fixtureProps.initial.rows].reverse().map(row => ({ ...row, lastSeenAt: observedAt })) });
+    });
+    await expect.poll(() => page.evaluate(() => (window as unknown as { fixtureDecoded: number }).fixtureDecoded)).toBe(1);
+    await page.clock.runFor(2_100);
+    assert.equal(await first.getByRole("link", { name: "View activity", exact: true }).getAttribute("href"), href,
+      "the identity under the held pointer remains unchanged after a late response");
+    assert.equal(await page.evaluate(() => (window as unknown as { fixtureRequests: number }).fixtureRequests), 1);
+    await link.dispatchEvent("pointerup");
+    await page.clock.runFor(3_100);
+    await expect.poll(() => page.evaluate(() => (window as unknown as { fixtureRequests: number }).fixtureRequests)).toBe(2);
+    await expect(first).toContainText("QA account 29");
+  });
+});
+
 test("Online failures retain labelled historical samples, hidden aborts cannot repaint, and revoked access stops polling", async () => {
   const setup = mount("type=guest&platform=android&page=2", true) + `
     window.fixtureMode='network';window.fixtureRequests=0;window.fixtureDecoded=0;window.fixtureVisibility='visible';
@@ -122,7 +248,9 @@ test("Online failures retain labelled historical samples, hidden aborts cannot r
       if(window.fixtureMode==='network')throw Error('Network unavailable');
       if(window.fixtureMode==='denied')return Response.json({},{status:403});
       if(window.fixtureMode==='pending')return new Promise(resolve=>{window.fixtureResolve=response=>resolve(observedResponse(response));});
-      return observedResponse(Response.json(window.fixtureProps.initial));
+      const observedAt=new Date().toISOString();
+      return observedResponse(Response.json({...window.fixtureProps.initial,observedAt,
+        rows:window.fixtureProps.initial.rows.map(row=>({...row,lastSeenAt:observedAt}))}));
     };`;
   await withComponentBrowser(bundle(), setup, async page => {
     await page.clock.install();

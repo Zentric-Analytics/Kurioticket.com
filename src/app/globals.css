@@ -2856,6 +2856,9 @@ textarea {
   .admin-responsive-records tbody > tr:not([hidden]) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .admin-identity-directory tbody > tr > td[data-label="Identity"] {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Keep these two operational tables legible as a table at standard desktop

@@ -5,7 +5,7 @@ const output = process.env.ADMIN_ACTIVITY_QA_OUTPUT;
 const browser = await chromium.launch({headless:true,args:["--no-sandbox"],executablePath:process.env.ADMIN_ACTIVITY_QA_CHROMIUM});
 try {
   const page = await browser.newPage({viewport:{width:1280,height:900}});
-  // The retained QA journey is older than the default rolling 24-hour window.
+  // The retained QA journey is older than the default Today window.
   // Scope this historical navigation fixture explicitly without changing the UI default.
   const path = "/admin/users/guest/qa-guest-activity-0001/activity?tab=searches&q=LOS&range=all&directory=tab%3Dguests";
   await page.goto(base + path);
@@ -51,8 +51,8 @@ try {
     const identity = document.querySelector('[aria-label="Selected visitor"]');
     return { summary: summary?.getBoundingClientRect().top, identity: identity?.getBoundingClientRect().top };
   });
-  assert.ok(typeof positions.summary === "number" && typeof positions.identity === "number" && positions.summary < positions.identity,
-    "Journey metrics must be before the Journey history identity card");
+  assert.ok(typeof positions.summary === "number" && typeof positions.identity === "number" && positions.identity < positions.summary,
+    "The selected identity must precede its journey metrics");
   await expect(page.getByRole("heading",{name:"Recorded journeys"})).toBeVisible();
   await page.getByRole("link",{name:"View journey",exact:true}).first().click();
   await expect(page).toHaveURL(/\/admin\/journeys\/qa-journey-flight\?/);
@@ -85,6 +85,76 @@ try {
   assert.equal(parentReturn.searchParams.get("product"),"FLIGHT");
   assert.equal(parentReturn.searchParams.get("q"),"LOS");
   assert.equal(parentReturn.searchParams.get("directory"),"tab=guests");
+
+  // Account actions remain discoverable in the complete identity history,
+  // without rendering a second unbounded event feed below Journey history.
+  await page.goto(base + "/admin/users/guest/qa-guest-activity-0001/journeys?range=all");
+  await expect(page.getByRole("heading",{name:"Other recorded account actions",exact:true})).toHaveCount(0);
+  await expect(page.locator("[data-activity-id]")).toHaveCount(0);
+  const accountActivity = page.getByRole("link",{name:"View other activity",exact:true});
+  await expect(accountActivity).toHaveCount(1);
+  const accountHref = new URL(await accountActivity.getAttribute("href"),base);
+  assert.equal(accountHref.pathname,"/admin/users/guest/qa-guest-activity-0001/activity/all");
+  assert.equal(accountHref.searchParams.get("range"),"all");
+  assert.equal(accountHref.searchParams.get("stage"),"ACCOUNT_ACTIVITY");
+  await accountActivity.click();
+  await expect(page.locator("[data-activity-id]")).toHaveCount(1);
+  await expect(page.locator('[data-activity-id="e-qa-account-event"]')).toContainText("Price alert created");
+  await page.goto(base + "/admin/users/guest/qa-guest-activity-0001/journeys?range=custom&from=2026-10-22&to=2026-10-22&product=FLIGHT");
+  const scopedAccount = new URL(await page.getByRole("link",{name:"View other activity",exact:true}).getAttribute("href"),base);
+  assert.equal(scopedAccount.pathname,accountHref.pathname);
+  assert.equal(scopedAccount.searchParams.get("range"),"custom");
+  assert.equal(scopedAccount.searchParams.get("from"),"2026-10-22T00:00:00.000Z");
+  assert.equal(scopedAccount.searchParams.get("to"),"2026-10-23T00:00:00.000Z");
+  assert.equal(scopedAccount.searchParams.get("product"),"FLIGHT");
+  assert.equal(scopedAccount.searchParams.get("stage"),"ACCOUNT_ACTIVITY");
+  await page.screenshot({caret:"initial",path:output+"/journey-history-1280.png",fullPage:true});
+  // The same real history route must retain its responsive record cells and
+  // usable actions on phones, including the narrowest supported viewport.
+  for(const width of [390,320]) {
+    await page.setViewportSize({width,height:900});
+    const historyTable=page.getByRole("region",{name:"Journey history table",exact:true});
+    await expect(historyTable.getByRole("link",{name:"View journey",exact:true}).first()).toBeVisible();
+    const layout=await historyTable.evaluate(region=>{
+      const table=region.querySelector("table");
+      const firstRow=region.querySelector("tbody tr");
+      return {viewport:innerWidth,documentWidth:document.documentElement.scrollWidth,
+        available:region.clientWidth,content:region.scrollWidth,tableWidth:table?.getBoundingClientRect().width,
+        rowDisplay:firstRow ? getComputedStyle(firstRow).display : null,
+        overflowingCells:[...region.querySelectorAll("tbody td")].filter(cell=>cell.scrollWidth>cell.clientWidth+1)
+          .map(cell=>({label:cell.getAttribute("data-label"),width:cell.clientWidth,content:cell.scrollWidth}))};
+    });
+    assert.equal(layout.rowDisplay,"grid","Journey records use their phone layout: "+JSON.stringify(layout));
+    assert.ok(layout.documentWidth<=layout.viewport+1 && layout.content<=layout.available+1
+      && layout.tableWidth<=layout.available+1,"Journey history fits the phone viewport: "+JSON.stringify(layout));
+    assert.deepEqual(layout.overflowingCells,[],"Journey history cells retain all content without horizontal overflow");
+    await expect(page.getByRole("link",{name:"View other activity",exact:true})).toBeVisible();
+    await page.evaluate(()=>window.scrollTo({top:0,left:0,behavior:"instant"}));
+    await page.screenshot({caret:"initial",path:output+"/journey-history-"+width+".png",fullPage:true});
+  }
+  await page.getByRole("link",{name:"View other activity",exact:true}).click();
+  await expect(page).toHaveURL(url=>url.pathname===scopedAccount.pathname
+    && ["range","from","to","product","stage"].every(key=>url.searchParams.get(key)===scopedAccount.searchParams.get(key)));
+  await expect(page.getByRole("heading",{name:"All activity",exact:true})).toBeVisible();
+  console.log("PASS Journey history at390/320 and scoped footer return to the same identity/date/product");
+  await page.setViewportSize({width:1280,height:900});
+  // The legacy 90-day journey preset has no Activity preset equivalent.
+  // Its link must retain the exact validated interval as a custom period.
+  const ninetyDayStarted = Date.now();
+  await page.goto(base + "/admin/users/user/qa-registered-0001/journeys?range=90d&product=FLIGHT");
+  const ninetyDay = new URL(await page.getByRole("link",{name:"View account activity",exact:true}).getAttribute("href"),base);
+  assert.equal(ninetyDay.pathname,"/admin/users/user/qa-registered-0001/activity/all");
+  assert.equal(ninetyDay.searchParams.get("range"),"custom");
+  assert.equal(ninetyDay.searchParams.get("product"),"FLIGHT");
+  assert.equal(ninetyDay.searchParams.get("stage"),"ACCOUNT_ACTIVITY");
+  const ninetyDayFrom = Date.parse(ninetyDay.searchParams.get("from"));
+  const ninetyDayTo = Date.parse(ninetyDay.searchParams.get("to"));
+  assert.equal(ninetyDayTo-ninetyDayFrom,90*86400000);
+  assert.ok(ninetyDayTo >= ninetyDayStarted && ninetyDayTo <= Date.now(),"90-day return retains the server's actual upper cutoff");
+  await page.getByRole("link",{name:"View account activity",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"All activity",exact:true})).toBeVisible();
+  await expect(page.getByText("Invalid activity filters",{exact:true})).toHaveCount(0);
+  console.log("PASS account actions remain reachable without a second Journey history feed");
 
   // Direct visits use Today, not a surprising All-time view.
   await page.goto(base + "/admin/users/guest/qa-guest-activity-0001/journeys");
