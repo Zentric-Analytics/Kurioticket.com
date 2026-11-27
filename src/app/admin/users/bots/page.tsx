@@ -22,7 +22,7 @@ export default async function BotManagementPage({ searchParams }: { searchParams
         <div className="space-y-2 px-4 py-3">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-[13px] font-semibold text-slate-950">Bot Registry</h2>
-            <span className="text-[11px] text-slate-600">All time</span>
+            <span className="text-[11px] text-slate-600">{report.firstDetected ? "All time · Since " + botDirectoryTime(report.firstDetected) + " UTC" : "All time"}</span>
           </div>
           <Metrics labels={["Total bots", "Search engines", "Other recognized", "Unknown bots"]} values={report.registry} />
         </div>

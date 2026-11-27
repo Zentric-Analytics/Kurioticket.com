@@ -64,7 +64,7 @@ export async function readBotDirectory(raw: BotQuery) {
       const [registry, matching, activity, actualSearches] = await Promise.all([
         db.botRegistry.groupBy({
           by: ["group"], where: { environment }, _count: true,
-          _sum: { requests: true, denied: true, rateLimited: true },
+          _sum: { requests: true, denied: true, rateLimited: true }, _min: { firstSeen: true },
         }),
         db.botRegistry.groupBy({ by: ["group"], where, _count: true }),
         timestamp ? db.botActivity.groupBy({ by: ["decision"], where: { environment, timestamp }, _count: true }) : [],
@@ -83,6 +83,10 @@ export async function readBotDirectory(raw: BotQuery) {
         registry.reduce((total, row) => total + (row._sum[key] ?? BigInt(0)), BigInt(0));
       return {
         counts, total, page, rows,
+        firstDetected: registry.reduce<Date | null>((first, row) => {
+          const seen = row._min.firstSeen;
+          return seen && (!first || seen < first) ? seen : first;
+        }, null),
         registry: [registry.reduce((total, row) => total + row._count, 0), countGroup("SEARCH_ENGINE"), countGroup("OTHER_RECOGNIZED"), countGroup("UNKNOWN")],
         activity: [
           timestamp ? activity.reduce((total, row) => total + row._count, 0) : lifetime("requests"),
