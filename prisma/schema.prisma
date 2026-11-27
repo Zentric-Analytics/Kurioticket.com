@@ -1377,6 +1377,8 @@ model BotActivity {
   // Report-only Render ingress observation, never an authentication input.
   reportedIp         String?
   reportedCountry    String?
+  // Report-only official network match; never used for authentication.
+  reportedNetworkMatch String?
   // Retrospective Render log evidence is not used in ingress authorization.
   renderLogIp        String?
   renderLogCountry   String?

@@ -22,7 +22,7 @@ function identification(verified: VerifiedSearchCrawler | null, edgeIp: string |
       if (key === "@/lib/botRegistry") return { crawlerSignatures };
       if (key === "@/lib/botEdge") return { trustedBotEdge: () => edgeIp ? { ip: edgeIp } : null };
       if (key === "@/lib/operatorCrawlerNetwork") return {
-        confirmedOperatorNetwork: async (name: string, ip: string | null) => name === "BINGBOT" && ip === "192.0.2.1",
+        confirmedOperatorNetwork: async (name: string, ip: string | null) => (name === "BINGBOT" || name === "GOOGLEBOT") && ip === "192.0.2.1",
       };
       assert.equal(key, "@/lib/verifiedSearchCrawler");
       return { verifySearchCrawler: async (request: Request) => {
@@ -113,4 +113,12 @@ test("Bingbot uses its published addresses as a fallback with authenticated ingr
   const lookalike = await identification(null, "192.0.2.1").identifySearchCrawler(botRequest("Custom-Bingbot/1.0"));
   assert.equal(lookalike?.name, "CUSTOM-BINGBOT");
   assert.equal(lookalike?.evidence, "DECLARED_USER_AGENT");
+});
+
+test("Googlebot official ranges never authenticate a merely reported or forged IP", async () => {
+  const request = botRequest("Googlebot/2.1", { "CF-Connecting-IP": "192.0.2.1", "X-Forwarded-For": "192.0.2.1" });
+  assert.equal((await identification(null).identifySearchCrawler(request))?.evidence, "DECLARED_USER_AGENT");
+  assert.equal((await identification(null, "192.0.2.1").identifySearchCrawler(request))?.evidence, "VERIFIED_IP_RANGE");
+  assert.equal((await identification(null, "192.0.2.2").identifySearchCrawler(request))?.evidence, "DECLARED_USER_AGENT");
+  assert.equal((await identification(null, "192.0.2.1").identifySearchCrawler(botRequest("GoogleOther")))?.evidence, "DECLARED_USER_AGENT");
 });

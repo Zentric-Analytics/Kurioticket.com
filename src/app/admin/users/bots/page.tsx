@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { BotReportFilters } from "@/components/admin/BotReportFilters";
-import { BOT_DIRECTORY, BOT_GROUPS, botAccessLabel, botDirectoryHref, botHref, botDirectorySubtitle, botDirectoryTime, botName, botType, botVerification, type BotQuery } from "@/lib/adminBotReport";
+import { BOT_DIRECTORY, BOT_GROUPS, botRecordedAccess, botRecordedVerification, botDirectoryHref, botHref, botDirectorySubtitle, botDirectoryTime, botName, botType, botVerification, type BotQuery } from "@/lib/adminBotReport";
 import { ADMIN_REPORTING_RANGE_LABELS } from "@/lib/adminReportingRanges";
 import { readBotDirectory } from "@/services/adminBotReportService";
 import { Metrics, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel } from "./report-ui";
@@ -32,6 +32,7 @@ export default async function BotManagementPage({ searchParams }: { searchParams
             <span className="text-right text-[11px] text-slate-600">{period} · UTC</span>
           </div>
           <Metrics labels={["Total requests", "Actual searches", "Denied requests", "Rate-limited requests"]} values={report.activity} />
+          <p className="text-[11px] text-slate-600">Actual searches include saved Search History records. Older searches do not imply additional request counts.</p>
           {report.unassignedSearches > BigInt(0) && <p className="text-xs text-slate-600">
             {report.unassignedSearches.toLocaleString()} recorded searches have no matching registry identity.{" "}
             <Link className={reportLink} href="/admin/searches/activity?identity=bot&range=all">View all bot searches</Link>
@@ -63,8 +64,13 @@ export default async function BotManagementPage({ searchParams }: { searchParams
                     <p className="text-xs text-slate-600">{botDirectorySubtitle(bot)}</p>
                   </td>
                   <td>{botType(bot)}</td>
-                  <td>{botVerification(bot.verification)}</td>
-                  <td className="whitespace-nowrap"><span className={bot.access === "BLOCKED" ? "text-rose-700" : "text-slate-950"}>{botAccessLabel(bot.access)}</span></td>
+                  <td>
+                    {botRecordedVerification(bot)}
+                    {bot.verification !== "VERIFIED" && bot.activities[0]?.reportedNetworkMatch === "OFFICIAL_CRAWLER_RANGE_MATCH"
+                      && bot.activities[0].timestamp.getTime() === bot.lastSeen.getTime()
+                      && <p className="mt-0.5 text-xs text-slate-600">Official network match (reported IP)</p>}
+                  </td>
+                  <td className="whitespace-nowrap"><span className={bot.access === "BLOCKED" ? "text-rose-700" : "text-slate-950"}>{botRecordedAccess(bot)}</span></td>
                   <td className="whitespace-nowrap tabular-nums">{botDirectoryTime(bot.lastSeen)}</td>
                   <td><Link prefetch={false} className={reportLink + " inline-flex items-center gap-1 whitespace-nowrap"}
                     href={botHref(BOT_DIRECTORY + "/" + bot.id, new URLSearchParams(), { directory: params.toString() })}>

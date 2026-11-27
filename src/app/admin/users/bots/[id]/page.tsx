@@ -3,10 +3,11 @@ import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { BotReportFilters } from "@/components/admin/BotReportFilters";
-import { BOT_DECISIONS, BOT_DIRECTORY, BOT_KINDS, botAccessLabel, botDirectoryHref, botDirectoryTime, botFilters, botLabel, botName, botTime, botType, botVerification, type BotQuery } from "@/lib/adminBotReport";
+import { BOT_DECISIONS, BOT_DIRECTORY, BOT_KINDS, botRecordedAccess, botRecordedVerification, botDirectoryHref, botDirectoryTime, botFilters, botLabel, botName, botTime, botType, botVerification, type BotQuery } from "@/lib/adminBotReport";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { searchDetailCrawlerName, searchDetailCrawlerEvidenceLabel } from "@/lib/adminSearchDetailPresentation";
 import { readBotDetails } from "@/services/adminBotReportService";
+import { historicalVerificationLabel } from "@/services/adminBotHistory";
 import { BOT_DAILY_SEARCH_LIMIT, BOT_SEARCH_COOLDOWN_MS } from "@/services/botActivityStore";
 import { BotIcon, Metrics, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel, reportRow } from "../report-ui";
 
@@ -63,7 +64,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
         <BotIcon />
         <div>
           <h1 className="text-xl font-semibold text-slate-950">{botName(bot)}</h1>
-          <p className="text-[13px] text-slate-600">{botType(bot)} · {botVerification(bot.verification)} · {botAccessLabel(bot.access)}</p>
+          <p className="text-[13px] text-slate-600">{botType(bot)} · {botRecordedVerification(bot)} · {botRecordedAccess(bot)}</p>
         </div>
       </div>
     </header>
@@ -71,7 +72,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
       <Fields threeColumns entries={[
         ["Owner", bot.owner],
         ["Category", botType(bot)],
-        ["Verification status", botVerification(bot.verification)],
+        ["Verification status", botRecordedVerification(bot)],
         ["IP addresses", observed([
           ...observations.map(row => row.ip ?? (row.renderLogIp ? row.renderLogIp + " (Render log)" : row.reportedIp ? row.reportedIp + " (reported)" : null)),
           ...report.searchEvidence.map(row => row.ipAddress ? row.ipAddress + " (recorded search)" : null),
@@ -99,7 +100,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
       <Metrics labels={["Total requests", "Allowed requests", "Denied requests", "Rate-limited requests", "Search attempts", "Searches dispatched", "Policy violations"]}
         values={[bot.requests, bot.allowed, bot.denied, bot.rateLimited, bot.searchAttempts, bot.searches, bot.violations]} />
       <div className="border-t border-[#D8E1EC] pt-3">
-        <Metrics labels={["Actual searches (all time)"]} values={[report.actual]} />
+        <Metrics labels={["Actual searches (all time)", "Historical searches without a retained request"]} values={[report.actual, report.historicalActual]} />
       </div>
     </Section>
     {quota && <Section title="Search Allowance">
@@ -140,7 +141,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
       </div>
     </Section>
     <Section title="Activity History">
-      <p className="text-xs text-slate-600">Retained requests, newest first. Allowed public requests record access decisions at ingress. Page delivery and indexing are outside these observations.</p>
+      <p className="text-xs text-slate-600">Retained requests and historical searches, newest first. Older searches without a retained request do not establish access decisions, HTTP status or provider dispatch. Page delivery and indexing are outside these observations.</p>
       <BotReportFilters filters={filters} now={new Date().toISOString()} history />
       {report.total !== null && <div className={reportPanel}>
         <div className="overflow-x-auto">
@@ -148,8 +149,29 @@ export default async function BotDetailsPage({ params, searchParams }: {
             <thead className={reportHead}><tr>{activityColumns.map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead>
             <tbody>
               {report.events.map(event => {
+                if (event.source === "search") return <tr key={"search:" + event.id} className={reportRow + " align-top"}>
+                  <td className="whitespace-nowrap tabular-nums">{botTime(event.timestamp)}</td>
+                  <td><p className="font-medium text-slate-950">Historical search</p><p>{botLabel(event.product)}</p></td>
+                  <td>Not recorded</td>
+                  <td className="w-2/5">
+                    <p>{botLabel(event.status)} · {event.resultCount.toLocaleString()} results</p>
+                    <details className="mt-1">
+                      <summary className={reportLink + " cursor-pointer"}>View evidence</summary>
+                      <div className="mt-3">
+                        <Fields entries={[
+                          ["Bot reference ID", bot.id], ["Recorded search request", event.requestId],
+                          ["IP address (saved search)", event.ipAddress],
+                          ["Country (saved search)", event.countryCode],
+                          ["Verification at search", historicalVerificationLabel(event.evidence)],
+                          ["Access decision", "Not recorded"],
+                          ["Related recorded search", <Link key={event.id} className={reportLink} prefetch={false} href={searchHref(event.id)}>View search record</Link>],
+                        ]} />
+                      </div>
+                    </details>
+                  </td>
+                </tr>;
                 const decision = BOT_DECISIONS.find(item => item.value === event.decision)?.label ?? botLabel(event.decision);
-                return <tr key={event.id} className={reportRow + " align-top"}>
+                return <tr key={"activity:" + event.id} className={reportRow + " align-top"}>
                   <td className="whitespace-nowrap tabular-nums">{botTime(event.timestamp)}</td>
                   <td>
                     <p className="font-medium text-slate-950">{BOT_KINDS.find(item => item.value === event.kind)?.label ?? botLabel(event.kind)}</p>
@@ -165,6 +187,10 @@ export default async function BotDetailsPage({ params, searchParams }: {
                         <Fields entries={[
                           ["Bot reference ID", bot.id], ["Request reference", event.id], ["HTTP method", event.method], ["Recorded endpoint", event.endpoint],
                           ["IP address", event.ip], ["Country", event.country], ["Declared bot identity", event.declaredName],
+                          ...(event.search ? [
+                            ["IP address (linked search)", event.search.network.ipAddress],
+                            ["Country (linked search)", event.search.network.countryCode],
+                          ] as [string, ReactNode][] : []),
                           ["Network ASN", event.networkAsn ? "AS" + event.networkAsn : null], ["Network organization", event.networkOrganization],
                           ["Network evidence source", event.networkSource ? botLabel(event.networkSource) : null], ["Cloudflare Ray ID", event.edgeRay],
                           ["Render request ID", event.renderRequestId],
@@ -181,6 +207,9 @@ export default async function BotDetailsPage({ params, searchParams }: {
                           ] as [string, ReactNode][] : []),
                           ["Recorded User-Agent token", event.userAgent],
                           ["Verification evidence", event.evidence ? botLabel(event.evidence) : null],
+                          ...(event.reportedNetworkMatch === "OFFICIAL_CRAWLER_RANGE_MATCH" ? [
+                            ["Reported network check", "Matches an official crawler IP range; ingress authentication not established"],
+                          ] as [string, ReactNode][] : []),
                           ["Access decision", decision], ["Reason", botLabel(event.reason)], ["HTTP response status", event.responseStatus],
                           ["Search dispatch (UTC)", botTime(event.dispatchedAt)],
                           ["Search outcome", event.search ? botLabel(event.search.status) + " · " + event.search.resultCount + " results"
@@ -197,7 +226,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
                   </td>
                 </tr>;
               })}
-              {report.total === 0 && <tr><td colSpan={4} className="px-3 py-5">No retained activity matches your filters</td></tr>}
+              {report.total === 0 && <tr><td colSpan={4} className="px-3 py-5">No recorded activity matches your filters</td></tr>}
             </tbody>
           </table>
         </div>

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { botReportNetwork } from "./botReportNetwork";
+import { botReportNetwork, reportedCrawlerNetworkMatch } from "./botReportNetwork";
 import { automationSignal, observeBot, botAccess, botTarget } from "./botPolicy";
 
 test("staging Render observation is reporting-only, requires reviewed ingress and never approves a spoofed crawler", async t => {
@@ -44,4 +44,31 @@ test("staging Render observation is reporting-only, requires reviewed ingress an
     assert.deepEqual(botReportNetwork(other, "staging"), {});
   }
   assert.deepEqual(botReportNetwork(new Request("https://other.example/", { headers }), "staging"), {});
+});
+
+
+test("reported network corroboration never changes bot authenticity or grants search access", async t => {
+  const previous = process.env.BOT_EDGE_SECRET;
+  process.env.BOT_EDGE_SECRET = "fixture".repeat(5);
+  t.after(() => {
+    if (previous === undefined) delete process.env.BOT_EDGE_SECRET;
+    else process.env.BOT_EDGE_SECRET = previous;
+  });
+  const fetch = t.mock.method(globalThis, "fetch", async (url: string) => {
+    assert.equal(url, "https://developers.google.com/crawling/ipranges/common-crawlers.json");
+    return Response.json({ prefixes: [{ ipv4Prefix: "66.249.66.0/24" }] });
+  });
+  assert.equal(await reportedCrawlerNetworkMatch("GOOGLEBOT", "66.249.66.9"), "OFFICIAL_CRAWLER_RANGE_MATCH");
+  assert.equal(await reportedCrawlerNetworkMatch("GOOGLEBOT", "8.8.8.8"), null);
+  assert.equal(await reportedCrawlerNetworkMatch("FACEBOOKEXTERNALHIT", "57.141.24.114"), null);
+  assert.equal(await reportedCrawlerNetworkMatch("NEWBOT", "66.249.66.9"), null);
+  assert.equal(await reportedCrawlerNetworkMatch("GOOGLEOTHER", "66.249.66.9"), null);
+  assert.equal(fetch.mock.callCount(), 1);
+  const req = new Request("https://staging.kurioticket.com/api/flights/search", {
+    method: "POST", headers: { "User-Agent": "Googlebot", "CF-Connecting-IP": "66.249.66.9", "X-Kurioticket-Edge-Auth": "forged" },
+  });
+  const bot = await observeBot(req, automationSignal(req)!);
+  assert.equal(bot.verification, "DECLARED");
+  assert.equal(bot.ip, null);
+  assert.equal(botAccess(bot, botTarget(req)), "SEARCH_NOT_ALLOWED");
 });
