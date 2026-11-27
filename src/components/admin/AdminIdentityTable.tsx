@@ -79,7 +79,7 @@ export function AdminIdentityTable({
     <section className="mt-3 min-w-0 bg-white">
       <h2 id="identity-directory-title" className="sr-only">Users directory</h2>
       <div
-        className="admin-responsive-records focus-ring overflow-x-auto"
+        className="admin-responsive-records admin-identity-directory focus-ring overflow-x-auto"
         role="region"
         aria-labelledby="identity-directory-title"
         tabIndex={0}

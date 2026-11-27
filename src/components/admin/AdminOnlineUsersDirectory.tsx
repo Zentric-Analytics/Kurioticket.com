@@ -262,12 +262,12 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
         <table className="w-full min-w-0 table-fixed text-left text-[13px]">
           <thead className="border-b border-[#E2E8F0] text-[11px] font-medium text-[#64748B]">
             <tr>
-              <th className="w-[24%] px-3 py-3 font-medium">IDENTITY</th>
-              <th className="w-[10%] px-3 py-3 font-medium">TYPE</th>
-              <th className="w-[17%] px-3 py-3 font-medium">PLATFORMS</th>
+              <th className="w-[23%] px-3 py-3 font-medium">IDENTITY</th>
+              <th className="w-[9%] px-3 py-3 font-medium">TYPE</th>
+              <th className="w-[16%] px-3 py-3 font-medium">PLATFORMS</th>
               <th className="w-[16%] px-3 py-3 font-medium">LOCATION</th>
               <th className="w-[15%] px-3 py-3 font-medium">LAST SEEN</th>
-              <th className="w-[9%] px-3 py-3 font-medium">STATUS</th>
+              <th className="w-[12%] px-3 py-3 font-medium">STATUS</th>
               <th className="w-[9%] px-3 py-3 font-medium">ACTIVITY</th>
             </tr>
           </thead>
@@ -300,7 +300,8 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
               </td>
               <td data-label="Status" className="px-3 py-3">
                 <span className={"inline-flex items-center gap-1.5 font-medium " + (verified ? "text-[#15803D]" : "text-[#64748B]")}>
-                  <span aria-hidden="true" className={"h-2 w-2 shrink-0 rounded-full " + (verified ? "bg-[#16A34A]" : "bg-[#94A3B8]" )} />{verified ? "Online" : "Last observed"}
+                  <span aria-hidden="true" className={"h-2 w-2 shrink-0 rounded-full " + (verified ? "bg-[#16A34A]" : "bg-[#94A3B8]" )} />
+                  <span className="[overflow-wrap:normal]">{verified ? "Online" : "Last observed"}</span>
                 </span>
               </td>
               <td data-label="Activity" className="px-3 py-3">
