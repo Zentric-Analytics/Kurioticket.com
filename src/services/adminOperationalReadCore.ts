@@ -92,7 +92,7 @@ function jsonRecord(value: Prisma.JsonValue | null | undefined): Record<string, 
 }
 
 /** Use only stored crawler attribution, never infer a bot from IP or missing identity. */
-function recordedSearchCrawler(value: Prisma.JsonValue | null): AdminSearchDetail["crawler"] {
+export function recordedSearchCrawler(value: Prisma.JsonValue | null): AdminSearchDetail["crawler"] {
   const query = jsonRecord(value);
   if (applicationMetadata(query).applicationSource !== "BOT") return null;
 
@@ -578,12 +578,15 @@ function searchDto(row: SearchRow, environment: PublicEnvironment, exactLogs: re
   };
 }
 
-function searchActivityDto(search: AdminSearchRead): AdminSearchActivityRead {
+function searchActivityDto(search: AdminSearchRead, row: SearchRow): AdminSearchActivityRead {
   const { userId, visitorId } = search.identity;
   const identity: AdminSearchActivityRead["identity"] = search.applicationSource === "BOT"
     ? { kind: "bot", userId: null, visitorId: null }
     : { kind: userId === null ? "guest" : "registered", userId, visitorId };
-  return { ...search, identity };
+  return {
+    ...search, identity,
+    ...(identity.kind === "bot" ? { crawlerName: recordedSearchCrawler(row.query)?.name ?? null } : {}),
+  };
 }
 
 function searchActivityDetailDto(search: AdminSearchActivityRead & SearchDetailFields, row: SearchRow, inCurrentEnvironment: boolean): AdminSearchActivityDetail {
@@ -706,7 +709,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
     parseQuery: (params: URLSearchParams, environment: PublicEnvironment) => AdminOperationalResult<{
       scope: Scope; cursor: { at: string; id: string } | null; limit: number;
     }>,
-    toRead: (search: AdminSearchRead) => Read,
+    toRead: (search: AdminSearchRead, row: SearchRow) => Read,
     toDetail: (search: Read & SearchDetailFields, row: SearchRow, inCurrentEnvironment: boolean) => Detail,
   ) {
     return {
@@ -745,7 +748,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           const byRequest = logs.length <= 2000
             ? correlatedProviderLogs(page.page, logs, scope.environment)
             : new Map<string, ProviderExecutionLog[]>();
-          const items = page.page.map(row => toRead(searchDto(row, scope.environment, row.requestId ? byRequest.get(row.requestId) ?? [] : [])));
+          const items = page.page.map(row => toRead(searchDto(row, scope.environment, row.requestId ? byRequest.get(row.requestId) ?? [] : []), row));
           return { status: "ok", data: { scope, items, nextCursor: page.next } };
         });
       },
@@ -817,7 +820,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
             });
             providers = logs.map(providerDiagnostic);
           }
-          const search = toRead(searchDto(row, env.data, providers));
+          const search = toRead(searchDto(row, env.data, providers), row);
           const { userId, visitorId } = search.identity;
           // These IDs come from the exact search and are omitted for bots.
           // Never attach a guest search to a later-linked account by inference.
