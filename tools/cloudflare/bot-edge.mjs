@@ -19,6 +19,13 @@ export function edgeRequest(request, env) {
   const organization = cf.asOrganization;
   headers.set("x-kurioticket-edge-auth", secret);
   headers.set("x-kurioticket-edge-version", "1");
+  // Cloudflare score 1 is its high-confidence automation classification.
+  // Do not treat a likely-bot score, absent metadata or a verified crawler
+  // as suspicious. A verified edge flag alone never authorizes bot access.
+  const botManagement = cf.botManagement;
+  if (botManagement?.score === 1 && botManagement.verifiedBot === false) {
+    headers.set("x-kurioticket-edge-bot", "automated");
+  }
   if (ip && ip.length <= 45 && ip !== "2a06:98c0:3600::103") headers.set("x-kurioticket-edge-ip", ip);
   if (ray && /^[a-f0-9]{16,32}(?:-[A-Z]{3})?$/.test(ray)) headers.set("x-kurioticket-edge-ray", ray);
   if (typeof country === "string" && /^[A-Z]{2}$/.test(country) && country !== "XX") headers.set("x-kurioticket-edge-country", country);
