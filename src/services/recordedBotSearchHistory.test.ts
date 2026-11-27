@@ -189,6 +189,33 @@ test("recorded bot searches reconcile legacy and linked records exactly once, wi
   assert.equal(crowdedNetwork.latestIp?.botId, declared.id);
   assert.deepEqual(crowdedNetwork.countries, ["CA", "US"]);
   assert.equal(crowded.actual, 2, "Network observations must not inflate actual searches");
+
+  // Invalid higher-priority request fields must not hide valid Render/reported
+  // fallback evidence, including the independently recorded country codes.
+  await db.botActivity.update({ where: { id: activity.id }, data: {
+    timestamp: new Date("2026-11-27T12:00:00Z"),
+    ip: "10.0.0.1", country: "ZZ",
+    renderLogIp: "66.249.67.75", renderLogCountry: "MX",
+  } });
+  // A search linked to the same bot reference but identifying a different
+  // crawler must not enter either GOOGLEBOT cohort's shared summary.
+  await create({ identifiedCrawler: "BINGBOT", verifiedCrawler: "BINGBOT",
+    crawlerEvidence: "VERIFIED_DNS",
+    searchNetwork: { ipAddress: "8.8.8.8", countryCode: "GB" } },
+    { requestId: activity.id, createdAt: new Date("2026-11-27T13:00:00Z") });
+
+  for (const cohort of [verified, declared]) {
+    const [cohortDetail] = await db.$queryRaw<typeof claimedDetail[]>(detailHistoryQuery(
+      environment, cohort.id, cohort.name,
+      combinedBotHistory(environment, cohort.id, cohort.identityKey, { window: undefined },
+        Prisma.sql`SELECT id, "createdAt" AS timestamp FROM recorded WHERE "activityId" IS NULL`),
+      true, 1, 1));
+    const shared = summarizeBotNetwork(cohortDetail.networkIpCandidates, cohortDetail.networkCountryCodes);
+    assert.equal(shared.latestIp?.ip, "66.249.67.75", "Public Render log IP survives private authenticated candidate");
+    assert.equal(shared.latestIp?.provenance, "Render log");
+    assert.equal(shared.latestIp?.botId, declared.id, "Preserve original request owner");
+    assert.deepEqual(shared.countries, ["CA", "MX", "US"], "Valid lower-priority countries survive invalid values, unrelated names excluded");
+  }
 });
 
 test("network summary leaves missing and invalid network data unrecorded and deduplicates countries", () => {
