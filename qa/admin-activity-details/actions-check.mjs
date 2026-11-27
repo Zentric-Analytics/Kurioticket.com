@@ -11,6 +11,9 @@ const page = await browser.newPage({viewport:{width:1280,height:900}});
 page.setDefaultTimeout(25000);
 const errors = [];
 page.on("pageerror",e=>errors.push(e.message));
+page.on("console",message=>{
+  if(message.type()==="error" && /hydration failed|a tree hydrated but some attributes/i.test(message.text())) errors.push(message.text());
+});
 try {
   for (const width of [1280,320]) {
     await page.setViewportSize({width,height:900});
@@ -20,10 +23,11 @@ try {
       await page.goto(base+path);
 
       await expect(page.getByTestId("unified-activity-list")).toBeVisible();
-      await expect(page.locator('[data-activity-id]:not([data-activity-id="latest-access-summary"])')).toHaveCount(8);
+      await expect(page.locator('[data-activity-id]')).toHaveCount(5);
       await expect(page.getByRole("link",{name:/View journey history/i})).toHaveCount(0);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
-      await page.screenshot({path:output+"/activity-summary-"+kind+"-"+width+".png",fullPage:true});
+      // Preserve server-rendered input attributes while hydration may settle.
+      await page.screenshot({caret:"initial",path:output+"/activity-summary-"+kind+"-"+width+".png",fullPage:true});
       await page.getByRole("link",{name:"View all activity"}).click();
       await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all"));
       await expect(page.getByText("Price alert created")).toBeVisible();
@@ -33,7 +37,7 @@ try {
       const timestamps=await page.locator("[data-activity-id] time").evaluateAll(nodes=>nodes.map(n=>Date.parse(n.dateTime)));
       assert.ok(timestamps.every((at,i)=>i===0||at<=timestamps[i-1]));
       if(kind==="user") {
-        await expect(page.locator('[data-activity-id="d-qa-fixture-access"]')).toHaveCount(1);
+        await expect(page.locator('[data-activity-id="d-qa-fixture-access"]')).toHaveCount(0);
         const accessTab=page.getByRole("navigation",{name:"Activity categories"}).getByRole("link",{name:"Device & Access",exact:true});
         await accessTab.click();
         await expect(accessTab).toHaveAttribute("aria-current","page");
@@ -52,7 +56,7 @@ try {
   for(const kind of ["guest","user"]) {
     await page.goto(base+"/admin/users/"+kind+"/qa-complete-history-0001/activity?range=all");
 
-    await expect(page.locator('[data-activity-id^="s-qa-complete-"]')).toHaveCount(8);
+    await expect(page.locator('[data-activity-id^="s-qa-complete-"]')).toHaveCount(5);
     await page.getByRole("link",{name:"View all activity"}).click();
     // Traverse every page, not merely a representative first page.
     const ids=[];
@@ -61,7 +65,7 @@ try {
       await expect(rows).toHaveCount(n===50?5:20);
       await expect(rows.first()).toHaveAttribute("data-activity-id","s-qa-complete-"+String(n*20).padStart(4,"0"));
       ids.push(...await rows.evaluateAll(nodes=>nodes.map(n=>n.dataset.activityId)));
-      const older=page.getByRole("link",{name:"Load older activity"});
+      const older=page.getByRole("link",{name:"Next page",exact:true});
       if(n===50){await expect(older).toHaveCount(0);break;}
       const next=await older.getAttribute("href");
       await older.click();

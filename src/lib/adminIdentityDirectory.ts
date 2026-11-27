@@ -112,7 +112,7 @@ export type AdminIdentityPageRequest = {
   showGuests: boolean;
   showOperationalGuests?: boolean;
   environment?: "staging" | "production";
-  /** Used only by the existing full-directory view, to avoid repeating JSON-log aggregation per batch. */
+  /** Legacy unpaged callers only. The Users directory always requests a bounded page. */
   allIdentities?: boolean;
   /** Read unfiltered all-time/new session totals alongside date-scoped directory rows. */
   withOperationalSummary?: boolean;
@@ -301,6 +301,8 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
   // Sort all eligible identities together in PostgreSQL before pagination.
   // Latest observed activity, not registration, sets the default order.
   // Null timestamps are last; Joined, kind and ID provide stable ties.
+  // Join summaries after slicing so an empty/out-of-range page still carries
+  // its counts. This avoids a second aggregation just to clamp an old page URL.
   return Prisma.sql`
     ${operationalCte}
     SELECT identities."kind", identities."id", identities."firstSeenAt",
@@ -309,7 +311,11 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
         ? Prisma.sql`totals."operationalGuestCount", totals."operationalAllTimeCount", totals."operationalNewCount"`
         : Prisma.sql`0::bigint AS "operationalGuestCount",
             0::bigint AS "operationalAllTimeCount", 0::bigint AS "operationalNewCount"`}
-    FROM (${Prisma.join(sources, " UNION ALL ")}) AS identities
+    FROM (
+      SELECT * FROM (${Prisma.join(sources, " UNION ALL ")}) AS combined_identities
+      ORDER BY ${order}
+      ${input.allIdentities ? Prisma.empty : Prisma.sql`LIMIT ${limit} OFFSET ${offset}`}
+    ) AS identities
     ${input.withOperationalSummary ? Prisma.sql`
       RIGHT JOIN (
         SELECT scoped."operationalGuestCount",
@@ -320,6 +326,5 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
       ) totals ON TRUE
     ` : Prisma.empty}
     ORDER BY ${order}
-    ${input.allIdentities ? Prisma.empty : Prisma.sql`LIMIT ${limit} OFFSET ${offset}`}
   `;
 }

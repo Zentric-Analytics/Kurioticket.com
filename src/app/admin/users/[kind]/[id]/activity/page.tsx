@@ -9,6 +9,8 @@ import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { AdminUnifiedActivityList, type AccessPreview } from "@/components/admin/AdminUnifiedActivityList";
+import { AdminActivityAccessSummary } from "@/components/admin/AdminActivityAccessSummary";
+import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
 import { platformLabel } from "@/components/admin/AdminIdentityDeviceAccess";
 import { loadAdminGuestAccessHistory } from "@/services/adminGuestAccessService";
 import { AdminRecordedGuestLocation } from "@/components/admin/AdminRecordedGuestLocation";
@@ -16,12 +18,15 @@ import { loadAdminGuestRecordedLocations, guestRecordedLocationKey } from "@/ser
 import { loadAdminDeviceSessions } from "@/services/adminDeviceSessionsService";
 import { pageHistoryHrefFromActivity } from "@/lib/adminPageHistory";
 import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
-import { normalizeUserActivityQuery, safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
+import { safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
+import { normalizeLiveUserActivityQuery, liveActivityQueryParams } from "@/lib/adminActivityLiveQuery";
+import { adminUsersActivityReturn } from "@/lib/adminUsersNavigation";
+import { ADMIN_REPORTING_RANGE_LABELS, isAdminReportingRange } from "@/lib/adminReportingRanges";
+import { journeyHistoryHrefFromActivity } from "@/lib/adminActivityOverview";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
 import { withOptionalDb } from "@/lib/prisma";
 import { activityHref, parseActivityFilters, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
-import { ADMIN_IDENTITY_SORTS, ADMIN_IDENTITY_DATES, validAdminIdentityCustomDates } from "@/lib/adminIdentityDirectory";
 import { loadAdminIdentityActivity } from "@/services/adminIdentityActivityService";
 
 export const metadata = { title: "Admin Customer Activity" };
@@ -32,27 +37,6 @@ type RawQuery = Record<string, string | string[] | undefined>;
 type PageProps = { params: Promise<Params>; searchParams: Promise<RawQuery> };
 
 const buttonClass = "focus-ring inline-flex items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
-
-function safeDirectoryHref(raw: RawQuery) {
-  const saved = typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : "";
-  const candidates = new URLSearchParams(saved);
-  const safe = new URLSearchParams();
-  const allowed = {
-    q: 120, role: 30, status: 30, tab: 30, identity: 30, sort: 20, date: 20, from: 10, to: 10, page: 8,
-  } as const;
-  for (const [key, max] of Object.entries(allowed)) {
-    const value = candidates.get(key);
-    if (value && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value)
-      && (key !== "sort" || ADMIN_IDENTITY_SORTS.includes(value as (typeof ADMIN_IDENTITY_SORTS)[number]))
-      && (key !== "date" || ADMIN_IDENTITY_DATES.includes(value as (typeof ADMIN_IDENTITY_DATES)[number]))) safe.set(key, value);
-  }
-  if (safe.get("date") !== "custom" || !validAdminIdentityCustomDates(safe.get("from") || undefined, safe.get("to") || undefined)) {
-    safe.delete("from");
-    safe.delete("to");
-    if (safe.get("date") === "custom") safe.set("date", "all");
-  }
-  return "/admin/users" + (safe.size ? "?" + safe.toString() : "");
-}
 
 function RegisteredManage({ id, email, role, status, actorId }: {
   id: string; email: string | null; role: string; status: string; actorId: string;
@@ -94,7 +78,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
   const timeZone = await getAdminViewerTimeZone(session.user.id);
   const now = new Date();
-  const raw = normalizeUserActivityQuery(await searchParams, now, timeZone);
+  const raw = normalizeLiveUserActivityQuery({ ...(await searchParams), cursor: undefined }, now, timeZone);
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
   // Preserve existing filtered Activity bookmarks at the new full-history route.
   // Never silently broaden an invalid query, or reintroduce old cursor semantics.
@@ -104,8 +88,9 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
     redirect(activityHref(basePath + "/all", safeActivityQueryParams(raw), { cursor: null, order: null }));
   }
   const filtersResult = parseActivityFilters(raw, timeZone);
-  const backHref = safeDirectoryHref(raw);
-  const queryParams = safeActivityQueryParams(raw);
+  const origin = adminUsersActivityReturn(raw, timeZone);
+  const backHref = origin.href;
+  const queryParams = liveActivityQueryParams(raw);
   if (!filtersResult.ok) return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <Link href={backHref} className={buttonClass}><ArrowLeft size={16} /> Back to Users</Link>
@@ -127,56 +112,65 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       action={<Link className={buttonClass} href={activityHref(basePath, queryParams, { cursor: null, order: null })}>Return to newest activity</Link>} />
   </div>;
   const data = result.data;
-  const deviceSessions = kind === "user" ? await loadAdminDeviceSessions(id, timeZone, now, "all") : null;
-  const guestAccess = kind === "guest" ? await loadAdminGuestAccessHistory(id, { range: "all", page: 1 }, timeZone, now) : null;
   const environment = data.environment;
   const operational = data.source === "operational";
-  const locations = kind === "guest" ? await loadAdminGuestRecordedLocations([id], { range: "all", page: 1 }, environment, now, timeZone) : null;
+  const [deviceSessions, guestAccess, locations] = await Promise.all([
+    kind === "user" ? loadAdminDeviceSessions(id, timeZone, now, "all") : null,
+    kind === "guest" ? loadAdminGuestAccessHistory(id, { range: "all", page: 1 }, timeZone, now) : null,
+    kind === "guest" ? loadAdminGuestRecordedLocations([id], { range: "all", page: 1 }, environment, now, timeZone) : null,
+  ]);
   const recordedLocation = locations?.get(guestRecordedLocationKey(id, operational ? "operational" : "consented"));
   const activityReturn = activityHref(basePath, queryParams, {});
   // Keep the reporting window while letting page visits ignore travel-specific filters.
   const pageFilters: ActivityFilters = { ...filters, tab: "pages", stage: "all", product: "all", q: "", order: "newest" };
   const pagesHref = pageHistoryHrefFromActivity(kind, id, pageFilters, typeof raw.range === "string" ? raw.range : undefined, activityReturn);
-  // The unfiltered overview already includes the newest page record and total.
-  // Only issue a separate compact, owner-scoped read when travel filters exclude them.
-  const pageSummaryResult = operational ? null
-    : filters.tab === "all" && filters.stage === "all" && filters.product === "all" && !filters.q
-      ? result
-      : await loadAdminIdentityActivity(kind, id, pageFilters, undefined, "summary");
-  const pageSummary = pageSummaryResult?.status === "ok" ? pageSummaryResult.data : null;
   const accessHref = basePath.replace(/\/activity$/, "/devices") + "?range=all&activityReturn=" + encodeURIComponent(activityReturn);
   const latestDevice = deviceSessions?.status === "ok" ? deviceSessions.sessions[0] : undefined;
   const latestGuest = guestAccess?.status === "ok" ? guestAccess.records[0] : undefined;
   const access: AccessPreview | null = latestDevice
     ? { at: latestDevice.lastSeenAt, href: accessHref, detail: [platformLabel(latestDevice), latestDevice.deviceLabel, latestDevice.os, latestDevice.browser, latestDevice.locationLabel ?? "Location unavailable"].filter(Boolean).join(" · ") }
-    : latestGuest ? { at: latestGuest.at, href: accessHref, detail: [latestGuest.platform, latestGuest.deviceLabel, latestGuest.os, latestGuest.browser, latestGuest.locationLabel ?? "Location unavailable", latestGuest.evidence === "search" ? "Search access observation" : latestGuest.evidence === "handoff" ? "Handoff access observation" : "Page access observation"].filter(Boolean).join(" · ") }
+    : latestGuest ? { at: latestGuest.at, href: accessHref, detail: [latestGuest.platform, latestGuest.deviceLabel, latestGuest.os, latestGuest.browser].filter(Boolean).join(" · ") }
     : null;
-  const recentEvents = [...data.events.filter(event => event.stage !== "PAGE_VIEW"), ...(pageSummary?.events.filter(event => event.stage === "PAGE_VIEW") ?? [])];
+  const recentEvents = data.events;
   const allHref = activityHref(basePath + "/all", queryParams, { cursor: null });
+  const range = typeof raw.range === "string" ? raw.range : "all";
+  const activityMetricHref = (tab: string, stage?: string) => activityHref(basePath + "/all", queryParams, { tab, stage: stage ?? null, cursor: null });
+  const unsupported = "Not collected for this essential guest session.";
 
   return <AdminCustomerActivityWorkspace
-    backHref={backHref}
+    backHref={backHref} backLabel={origin.label}
     title={kind === "guest" ? operational ? "Guest session" : "Visitor" : data.title}
-    badge={kind === "guest" ? operational ? "Essential operational activity" : "Consented guest" : data.status === "ACTIVE" ? "Active" : data.status}
+    badge={kind === "guest" ? operational ? "Essential guest session" : "Consented guest" : "Registered account"}
+    accountStatus={kind === "user" ? data.status === "ACTIVE" ? "Account enabled" : "Account " + data.status.toLowerCase().replaceAll("_", " ") : undefined}
+    coverage={operational ? "operational" : kind === "guest" ? "consented" : "registered"}
     avatar={(kind === "guest" ? "G" : (data.title || "U").slice(0,1)).toUpperCase()}
-    firstLabel={kind === "guest" ? "First seen" : "Joined"}
+    firstLabel={kind === "user" ? "Joined" : operational ? "First recorded activity" : "Identity created"}
     firstSeenAt={data.firstSeenAt} lastSeenAt={data.lastSeenAt} lastSeenAvailable={data.lastSeenAvailable}
-    eventCount={data.events.length - data.events.filter(event => event.stage === "PAGE_VIEW").length + (data.summary.pagesVisited ?? 0)}
+    eventCount={data.summary.recordedActions ?? null}
     summary={data.summary} timeZone={timeZone}
+    periodLabel={isAdminReportingRange(range) ? ADMIN_REPORTING_RANGE_LABELS[range] : range}
+    periodControl={<ActivityFiltersBar compact path={basePath} directory={queryParams.directory ?? ""} usersReturn={queryParams.usersReturn}
+      timeZone={timeZone} now={now.toISOString()} tabs={null}
+      initial={{tab:"all",q:"",product:"all",stage:"all",order:"newest",from:filters.from,to:filters.to,range}}/>}
+    metricLinks={{searches:activityMetricHref("searches","SEARCH_COMPLETED"),resultsViewed:activityMetricHref("searches","RESULTS_VIEWED"),
+      offersSelected:activityMetricHref("selections","OFFER_SELECTED"),providerHandoffs:activityMetricHref("handoffs"),
+      journeysTracked:journeyHistoryHrefFromActivity(kind,id,filters,range,activityReturn),pagesVisited:pagesHref}}
+    unavailableMetrics={operational ? {resultsViewed:unsupported,offersSelected:unsupported,journeysTracked:unsupported,pagesVisited:unsupported} : undefined}
+    accessContext={<AdminActivityAccessSummary access={access} href={accessHref} timeZone={timeZone}
+      unavailable={kind === "user" ? deviceSessions?.status !== "ok" : guestAccess?.status !== "ok"}
+      location={kind === "guest" ? <AdminRecordedGuestLocation location={recordedLocation} timeZone={timeZone}/> : null}/>}
     identityDetails={<>
       {data.email ? <p className="mt-1 break-words text-sm text-[#475569] [overflow-wrap:anywhere]">{data.email}</p> : null}
       <div className="mt-1 flex min-w-0 items-center gap-2">
         <code className="max-w-[240px] truncate text-xs" title={id}>{id}</code>
         <CopyIdentityId id={id} kind={kind}/>
       </div>
-      {kind === "guest" ? <AdminRecordedGuestLocation location={recordedLocation} timeZone={timeZone}/> : null}
     </>}
     management={kind === "user"
       ? <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
       : data.source === "visitor" ? <GuestTrackingActions visitorId={id} backHref={backHref} /> : null}>
       <AdminUnifiedActivityList events={recentEvents} timeZone={timeZone} environment={environment}
-        overview access={access} accessHref={accessHref} accessUnavailable={kind === "user" ? deviceSessions?.status !== "ok" : guestAccess?.status !== "ok"}
-        pagesHref={!operational ? pagesHref : undefined} pagesUnavailable={!operational && !pageSummary}
-        allHref={allHref}/>
+        overview pagesHref={!operational ? pagesHref : undefined}
+        allHref={allHref} returnHref={activityReturn}/>
   </AdminCustomerActivityWorkspace>;
 }

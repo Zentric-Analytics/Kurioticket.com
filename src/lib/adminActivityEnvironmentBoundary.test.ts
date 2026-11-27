@@ -17,7 +17,7 @@ const shell = readFileSync(new URL("../components/admin/AdminHorizontalShell.tsx
 test("Activity Explorer distinguishes consented visitors and operational guests without inventing identity", () => {
   assert.match(page, /operational \? "Guest session" : "Visitor"/);
   assert.match(page, /data\.source === "operational"/);
-  assert.match(page, /Essential operational activity/);
+  assert.match(page, /Essential guest session/);
   assert.match(page, /Consented guest/);
   // Privacy and environment scoping are enforced in the reader, not by a tooltip.
   assert.doesNotMatch(page, /ActivityDataInfo|Only recorded, necessary|Only recorded, consented/);
@@ -49,11 +49,11 @@ test("Activity summary counts filter-wide records instead of paginated timeline 
   assert.match(reader, /canonicalForVisitor\(visitorId\)/);
   assert.match(reader, /visitorIds\.map\(visitorId => canonicalForVisitor\(visitorId\)\)/);
   assert.match(reader, /const summary: IdentityActivitySummary/);
-  assert.match(workspace, /summary\?\.searches/);
-  assert.match(workspace, /summary\?\.resultsViewed/);
-  assert.match(workspace, /summary\?\.offersSelected/);
-  assert.match(workspace, /summary\?\.providerHandoffs/);
-  assert.match(workspace, /summary\?\.journeysTracked/);
+  assert.ok(workspace.includes('key:"searches"'));
+  assert.ok(workspace.includes('key:"resultsViewed"'));
+  assert.ok(workspace.includes('key:"offersSelected"'));
+  assert.ok(workspace.includes('key:"providerHandoffs"'));
+  assert.ok(workspace.includes('key:"journeysTracked"'));
   assert.match(page, /summary=\{data\.summary\}/);
   assert.doesNotMatch(page, /Counts reflect loaded events only\./);
 });
@@ -72,15 +72,13 @@ test("Activity and Support use white non-Overview workspaces while preserving au
   assert.match(shell, /const whiteWorkspace = .*usersDirectory \|\| visitorJourneysWorkspace \|\| searchesWorkspace \|\| supportWorkspace\s+\|\| providersWorkspace \|\| providerReportingWorkspace \|\| hotelCarsWorkspace \|\| accountDeletionWorkspace \|\| accountDeletionDetail \|\| contentWorkspace \|\| notificationsWorkspace \|\| homepageFaresWorkspace \|\| !isOverview;/);
   assert.match(shell, /const hotelCarsWorkspace = pathname === "\/admin\/hotels" \|\| pathname === "\/admin\/hotels\/" \|\| pathname === "\/admin\/cars" \|\| pathname === "\/admin\/cars\/";/);
   assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
-  assert.match(workspace, /space-y-6 bg-white/);
-  assert.match(workspace, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
-  assert.match(workspace, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
-  assert.match(workspace, /text-\[12px\] font-normal text-\[#64748B\]/);
+  assert.match(workspace, /space-y-5 bg-white/);
+  assert.match(workspace, /Recorded actions in period/);
   assert.match(page, /<AdminUnifiedActivityList/);
   assert.match(unified, /data-testid="unified-activity-list"/);
   assert.match(allActivity, /await requireAdminSession\(path\)/);
   assert.match(allActivity, /loadAdminUnifiedActivity\(kind,id,filters,cursor,now\)/);
-  assert.match(page, /normalizeUserActivityQuery\(await searchParams, now, timeZone\)/);
+  assert.match(page, /normalizeLiveUserActivityQuery\(\{ \.\.\.\(await searchParams\), cursor: undefined \}, now, timeZone\)/);
   assert.match(dateQuery, /if \(raw\.tab === "journeys"\) delete raw\.tab/);
   assert.doesNotMatch(page, /Related records|const related =|label="Journeys"|value: "journeys"/);
   assert.doesNotMatch(timeline, /Show all|Hide all|Not linked to a journey/);
@@ -98,17 +96,18 @@ test("User Activity keeps one shared identity, six metrics and compact activity 
   assert.equal((page.match(/<AdminUnifiedActivityList/g) ?? []).length,1);
   assert.match(page, /<AdminCustomerActivityWorkspace/);
   assert.match(live, /<AdminCustomerActivityWorkspace/);
-  assert.doesNotMatch(page, /<ActivityTimeline|<AdminIdentityDeviceAccess|<PageViewRecords|<ActivityFiltersBar/);
-  assert.match(workspace.slice(mainCard,identity), /rounded-2xl border border-\[#E2E8F0\] bg-white/);
-  assert.match(workspace.slice(identity,summary), /data-testid="activity-identity-dividers"/);
+  assert.doesNotMatch(page, /<ActivityTimeline|<AdminIdentityDeviceAccess|<PageViewRecords/);
+  assert.match(workspace.slice(mainCard,identity), /rounded-xl border border-\[#E2E8F0\] bg-white/);
+  assert.match(workspace.slice(identity,summary), /data-testid="activity-identity-facts"/);
+  assert.match(page, /<ActivityFiltersBar compact/);
+  assert.match(page, /<AdminActivityAccessSummary/);
   const metrics = workspace.slice(summary,workspace.indexOf("</section>",summary));
-  assert.doesNotMatch(metrics, /bg-(?:blue|sky|emerald|amber|\[#)/);
   for (const metric of ["searches","resultsViewed","offersSelected","providerHandoffs","journeysTracked","pagesVisited"]) {
-    assert.ok(metrics.includes("summary?."+metric) || metrics.includes("summary."+metric),metric);
+    assert.ok(workspace.includes('key:"'+metric+'"'),metric);
   }
   assert.match(metrics,/xl:grid-cols-6/);
-  assert.match(metrics,/xl:border-l/);
-  assert.doesNotMatch(metrics,/activity-divider-|<h2/);
+  assert.doesNotMatch(metrics,/activity-divider-/);
+  assert.match(metrics,/metricLinks\[key\]/);
   assert.match(unified,/View all activity/);
   assert.match(allActivity,/<AdminFullActivityWorkspace/);
   assert.match(live,/<AdminFullActivityWorkspace/);
@@ -138,7 +137,7 @@ test("live reference validates current presence before resolving recorded owners
   assert.match(live,/history \? recordedGuestActivityHref\(history\.id, full, input\) : null/);
   assert.doesNotMatch(live,/recordedGuestActivityHref\(row\./);
   assert.match(live,/eventCount=\{null\} summary=\{null\}/);
-  assert.match(live,/allHref=\{path \+ "\/all"\}/);
+  assert.match(live,/allHref=\{fullHref\}/);
   assert.doesNotMatch(live,/loadAdminIdentityActivity|loadAdminUnifiedActivity|loadAdminGuestAccessHistory|CopyIdentityId|GuestTrackingActions/);
   assert.match(workspace,/aria-label="Unavailable"/);
 });

@@ -36,7 +36,9 @@ export async function loadAdminUnifiedActivity(kind: IdentityKind, id: string, f
   if (cursor === null || filters.order === "oldest") return { status: "invalid_cursor" };
   const result = await loadAdminIdentityActivity(kind, id, filters, cursorInput);
   if (result.status !== "ok") return result;
-  if ((filters.tab !== "all" && filters.tab !== "access") || filters.stage !== "all" || filters.product !== "all")
+  // Device sessions and derived guest access evidence are observations, not
+  // additional customer actions. Both identity types show them only in Access.
+  if (filters.tab !== "access" || filters.stage !== "all" || filters.product !== "all")
     return result;
   try {
     const db = getOptionalPrisma();

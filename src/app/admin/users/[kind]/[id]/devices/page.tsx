@@ -111,7 +111,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
         <div className="space-y-2 md:hidden" aria-label="Device history mobile records">
           {result.sessions.map(session => {
             const Icon = sourceIcon(session);
-            return <article key={session.id} data-testid="device-history-row"
+            return <article key={session.id} data-users-refresh-anchor={session.id} data-testid="device-history-row"
               className="space-y-1 rounded-lg border border-[#E2E8F0] p-3 text-[12px]">
               <p className="flex items-center gap-2 font-semibold"><Icon size={15} aria-hidden="true"/>{platformLabel(session)}</p>
               <p className="break-words text-[#475569]">{deviceValue(session.deviceLabel)} · {deviceValue(session.os)}</p>
@@ -141,7 +141,7 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
             <tbody className="divide-y divide-[#E2E8F0]">
               {result.sessions.map(session => {
                 const Icon = sourceIcon(session);
-                return <tr key={session.id} data-testid="device-history-row">
+                return <tr key={session.id} data-users-refresh-anchor={session.id} data-testid="device-history-row">
                   <td className="px-3 py-3"><span className="inline-flex items-center gap-1.5 font-medium"><Icon size={15} aria-hidden="true"/>{platformLabel(session)}</span></td>
                   <td className="break-words px-3 py-3">{deviceValue(session.deviceLabel)}</td>
                   <td className="px-3 py-3">{deviceValue(session.os)}</td>

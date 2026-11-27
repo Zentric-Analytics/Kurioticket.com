@@ -2,7 +2,7 @@
  * Accept only a selected identity's Activity or Journey History route.
  */
 function returnValueLimit(key: string) {
-  return key === "directory" ? 1000 : key === "activityReturn" ? 7000 : key === "cursor" ? 2048
+  return key === "directory" ? 1000 : key === "activityReturn" ? 7000 : key === "activityCursor" ? 1100 : key === "cursor" || key === "usersReturn" ? 2048
     : key === "provider" || key === "q" ? 120 : 40;
 }
 
@@ -14,8 +14,8 @@ export function activityJourneyReturnHref(input: unknown): string | null {
   const candidates = new URLSearchParams(query);
   const safe = new URLSearchParams();
   const keys = target[1].toLowerCase().startsWith("activity")
-    ? ["tab", "range", "stage", "product", "from", "to", "q", "directory", ...(target[1].toLowerCase() === "activity/all" ? ["cursor"] : [])]
-    : ["range", "stage", "product", "provider", "from", "to", "cursor", "activityReturn"];
+    ? ["tab", "range", "stage", "product", "from", "to", "q", "directory", "usersReturn", ...(target[1].toLowerCase() === "activity/all" ? ["cursor"] : [])]
+    : ["range", "stage", "product", "provider", "from", "to", "cursor", "activityCursor", "activityReturn"];
   for (const key of keys) {
     const value = candidates.get(key);
     const max = returnValueLimit(key);
@@ -46,7 +46,7 @@ export function decodeActivityJourneyReturn(input: unknown): string | null {
     const data = JSON.parse(new TextDecoder("utf-8", {fatal:true}).decode(bytes));
     if (!data || typeof data.path !== "string" || !data.filters || typeof data.filters !== "object" || Array.isArray(data.filters)) return null;
     const entries = Object.entries(data.filters);
-    if (entries.length > 9 || entries.some(([key,value]) => typeof value !== "string" || value.length > returnValueLimit(key))) return null;
+    if (entries.length > 10 || entries.some(([key,value]) => typeof value !== "string" || value.length > returnValueLimit(key))) return null;
     const query = new URLSearchParams(entries as [string,string][]);
     return activityJourneyReturnHref(data.path + (query.size ? "?" + query : ""));
   } catch {

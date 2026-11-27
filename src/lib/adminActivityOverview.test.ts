@@ -6,6 +6,8 @@ import { decodeActivityJourneyReturn } from "./adminActivityJourneyNavigation";
 import type { ActivityRow } from "./adminIdentityJourney";
 import { journeyWindow } from "./adminJourneyDateRange";
 import type { ActivityFilters } from "./adminIdentityActivity";
+import { identityJourneyHistoryQuery } from "./adminIdentityJourneyHistory";
+import { parseAdminJourneyQuery } from "@/services/adminJourneyContract";
 
 const now = new Date("2026-11-20T12:50:00.000Z");
 const activityPath = "/admin/users/user/qa-account-0001/activity?range=today&product=CAR&tab=searches&q=CDG";
@@ -85,6 +87,22 @@ test("new flight interaction stages belong to verified search cards without infl
   assert.equal(match.eventCount, 2);
   assert.equal(match.offersSelected, 0, "new interaction stages are not historical offer selections");
   assert.deepEqual(match.providers.sort(), ["KAYAK sandbox", "Trip.com"]);
+});
+
+test("retained edits, filters, sorting and details stay with their exact recorded search", () => {
+  const stages = ["SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"] as const;
+  const rows = stages.map((stage, index) => ({
+    ...row("recorded-action-" + index, "journey-1", stage, new Date(+now + index * 1000)),
+    searchHistoryId: "verified-search",
+  }));
+  const result = activityOverviewRows([...rows, row("unlinked-detail", "journey-1", "RESULT_DETAILS_OPENED", now)]);
+  assert.equal(result.matchingSearchCount, 1);
+  assert.equal(result.searches[0].eventCount, 5);
+  assert.equal(result.searches[0].route, "CDG → Paris");
+  assert.equal(result.searches[0].searches, 0);
+  assert.equal(result.searches[0].offersSelected, 0);
+  assert.equal(result.unlinkedStageCount, 1);
+  assert.equal(result.otherCount, 0);
 });
 
 test("saved, unsaved, shared and alert creation are counted only against their exact search", () => {
@@ -198,11 +216,48 @@ test("journey navigation carries only applicable product/date/stage filters and 
   assert.equal(url.searchParams.get("range"),"today");
   assert.equal(url.searchParams.get("product"),"CAR");
   assert.equal(url.searchParams.get("stage"),"SEARCH_COMPLETED");
-  assert.equal(url.searchParams.get("from"),filters.from);
-  assert.equal(url.searchParams.get("to"),filters.to);
+  assert.equal(url.searchParams.get("from"),null);
+  assert.equal(url.searchParams.get("to"),null);
   assert.equal(url.searchParams.get("q"),null);
   assert.equal(url.searchParams.get("tab"),null);
   assertSameActivityReturn(decodeActivityJourneyReturn(url.searchParams.get("activityReturn")));
+});
+
+test("new preset Journey History opens the current selected period, including all retained history", () => {
+  const refreshedAt = new Date(+now + 120_000);
+  for (const kind of ["user", "guest"] as const) {
+    for (const range of ["all", "today", "24h", "7d", "30d", "90d"]) {
+      const href = journeyHistoryHrefFromActivity(kind, "qa-identity-0001",
+        { ...filters, from: range === "all" ? "" : filters.from }, range, activityPath);
+      const raw = Object.fromEntries(new URL(href, "https://kurioticket.test").searchParams);
+      assert.equal(raw.from, undefined);
+      assert.equal(raw.to, undefined);
+      const request = identityJourneyHistoryQuery(kind, "qa-identity-0001", raw, refreshedAt, "staging");
+      assert.ok(request.ok);
+      const result = parseAdminJourneyQuery(request.input, "list", refreshedAt, "staging");
+      assert.ok(result.status === "ok");
+      assert.equal(result.data.scope.to, refreshedAt.toISOString());
+      if (range === "all") assert.equal(result.data.scope.from, "1970-01-01T00:00:00.000Z");
+      assert.equal(result.data.scope.product, "CAR");
+      assert.equal(result.data.scope.stage, "SEARCH_COMPLETED");
+    }
+  }
+});
+
+test("custom and legacy absolute Journey entry windows keep their exact instants", () => {
+  const from = "2026-11-19T13:04:05.123Z";
+  const to = "2026-11-20T10:14:15.456Z";
+  for (const range of ["custom", undefined]) {
+    const href = journeyHistoryHrefFromActivity("user", "qa-account-0001", { ...filters, from, to }, range, activityPath);
+    const raw = Object.fromEntries(new URL(href, "https://kurioticket.test").searchParams);
+    assert.equal(raw.range, "custom");
+    assert.equal(raw.from, from);
+    assert.equal(raw.to, to);
+    const request = identityJourneyHistoryQuery("user", "qa-account-0001", raw, now, "staging");
+    assert.ok(request.ok);
+    assert.equal(request.input.from, from);
+    assert.equal(request.input.to, to);
+  }
 });
 
 test("Journey History links preserve newly supported native flight stage filters", () => {
@@ -256,20 +311,19 @@ test("operational guest events appear directly in Activity without a second-page
   assert.doesNotMatch(unified, /View recorded session activity/);
   assert.match(full, /operational \? "Essential operational activity"/);
   assert.match(full, /<AdminFullActivityWorkspace/);
-  // Keep the common category/action positions, but never provide operational
-  // guests a pages-history URL when that source has no consented page evidence.
-  const pagesCategory = /operational && tab\.value === "pages"\s*\? \{([^}]+)\}/.exec(full)?.[1];
-  const pagesHistory = /operational \? \{label:"Pages visited history",([^}]+)\}/.exec(full)?.[1];
-  assert.ok(pagesCategory);
-  assert.ok(pagesHistory);
-  for (const unavailable of [pagesCategory, pagesHistory]) {
-    assert.match(unavailable, /unavailableReason:/);
-    assert.doesNotMatch(unavailable, /href:/);
-  }
+  // Unsupported guest categories remain in the shared navigation without a
+  // fabricated destination; the duplicate fixed history links are removed.
+  const categories = /operational && \["pages","selections","interactions"\]\.includes\(tab\.value\)\s*\? \{([^}]+)\}/.exec(full)?.[1];
+  assert.ok(categories);
+  assert.match(categories, /unavailableReason:/);
+  assert.doesNotMatch(categories, /href:/);
+  assert.doesNotMatch(full, /label:"Pages visited history"|label:"Device & Access history"/);
   assert.match(full, /pagesHref=\{!operational\?pagesHref:undefined\}/);
   assert.match(page, /redirect\(activityHref\(basePath \+ "\/all"/);
   assert.doesNotMatch(overview, /View recorded session activity|href=\{otherHref\}/);
   assert.match(legacy, /loadAdminIdentityActivity\(kind, id, parsed\.filters, undefined, "all"\)/);
+  assert.match(legacy, /normalizeLiveUserActivityQuery\(await searchParams/);
+  assert.match(legacy, /liveActivityQueryParams\(raw\)/);
 });
 
 test("operational search and handoff share a search card without creating a behavioural journey", () => {

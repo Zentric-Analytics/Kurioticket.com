@@ -52,7 +52,7 @@ test("Activity, journeys, handoffs, devices and Users include observations short
   const observed = new Date("2026-11-24T23:05:00.000Z");
   const timeZone = "Africa/Lagos";
   const expected = "2026-11-24T23:00:00.000Z";
-  const activity = normalizeUserActivityQuery({}, now, timeZone);
+  const activity = normalizeUserActivityQuery({ range: "today" }, now, timeZone);
   const pages = parsePageHistoryQuery({}, now, timeZone);
   assert.ok(pages.ok);
   const expectedStarts = [

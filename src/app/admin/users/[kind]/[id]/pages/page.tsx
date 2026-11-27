@@ -6,7 +6,7 @@ import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { historyDirectoryReturnHref } from "@/lib/adminHistoryDirectory";
 import { ACTIVITY_PAGE_SIZE, validActivityIdentity } from "@/lib/adminIdentityActivity";
-import { PAGE_HISTORY_MAX_PAGE, pageHistoryBackHref, pageHistoryHref, parsePageHistoryQuery } from "@/lib/adminPageHistory";
+import { PAGE_HISTORY_MAX_PAGE, pageHistoryBackHref, pageHistoryFiltersKey, pageHistoryHref, parsePageHistoryQuery } from "@/lib/adminPageHistory";
 import { loadAdminIdentityActivity } from "@/services/adminIdentityActivityService";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { AdminPageHistoryFilters } from "@/components/admin/AdminPageHistoryFilters";
@@ -51,7 +51,7 @@ export default async function AdminPagesHistoryPage({ params, searchParams }: Pr
         <h1 className="text-[19px] font-semibold">Pages Visited History</h1>
         <p className="mt-1 break-words text-[12px] text-[#64748B]">{data.title} · {data.email ? data.email + " · " : ""}{id} · Recorded page and screen visits · {formatAdminTimeZoneLabel(timeZone)}</p>
       </header>
-      <AdminPageHistoryFilters timeZone={timeZone} key={JSON.stringify([query.range, query.platform, query.filters])} path={path} query={query} returnHref={backHref}/>
+      <AdminPageHistoryFilters timeZone={timeZone} key={pageHistoryFiltersKey(query, timeZone)} path={path} query={query} returnHref={backHref}/>
       {query.page > totalPages ? <AdminEmptyState title="No records on this page" message="Go to the first page to review the available history." action={<Link className={linkClass} href={url(1)}>First page</Link>}/> :
         <PageViewRecords timeZone={timeZone} events={data.events} count={count} full operational={operational}/>}
       {!operational && totalPages > 1 && query.page <= totalPages ? <nav aria-label="Page history pagination" className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E2E8F0] pt-3">

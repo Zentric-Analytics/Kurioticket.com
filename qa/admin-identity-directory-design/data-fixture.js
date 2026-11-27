@@ -10,8 +10,6 @@ const guests = Array.from({ length: 28 }, (_, index) => ({
   firstSeenAt: new Date(pivot - index * 3_600_000),
   lastSeenAt: new Date(pivot - index * 3_600_000 + 900_000),
 }));
-let filteredUsers = users;
-let filteredGuests = guests;
 
 function matchSearch(where, record) {
   // The live Users query groups creation/session/search activity eligibility
@@ -29,102 +27,119 @@ function matchSearch(where, record) {
   return !term || [record.name, record.email, record.id].some(value =>
     (value || "").toLowerCase().includes(String(term).toLowerCase()));
 }
-const db = {
-  user: {
-    async count({ where }) {
-      filteredUsers = users.filter(user => (!where.role || user.role === where.role)
-        && (!where.status || user.status === where.status)
-        && matchSearch(where, user));
-      return filteredUsers.length;
+function createDb() {
+  let filteredUsers = users;
+  let filteredGuests = guests;
+  const db = {
+    // A route request owns one synthetic snapshot, including the production
+    // route's interactive transaction. Concurrent fixture requests cannot leak
+    // their filtered cohorts into another request's ordered page.
+    async $transaction(callback) {
+      return callback(db);
     },
-    async findMany({ where }) {
-      return users.filter(user => where.id.in.includes(user.id) && matchSearch(where, user));
+    user: {
+      async count({ where }) {
+        filteredUsers = users.filter(user => (!where.role || user.role === where.role)
+          && (!where.status || user.status === where.status)
+          && matchSearch(where, user));
+        return filteredUsers.length;
+      },
+      async findMany({ where }) {
+        return users.filter(user => where.id.in.includes(user.id) && matchSearch(where, user));
+      },
     },
-  },
-  // Synthetic observations cover newer account sessions and a distinct
-  // account search. No guest identity is merged into these records.
-  accountSession: {
-    async groupBy({ where }) {
-      return where.userId.in.includes("qa-admin-001")
-        ? [{ userId: "qa-admin-001", _max: { lastSeenAt: new Date(pivot + 1000) } }]
-        : [];
+    // Synthetic observations cover newer account sessions and a distinct
+    // account search. No guest identity is merged into these records.
+    accountSession: {
+      async groupBy({ where }) {
+        return where.userId.in.includes("qa-admin-001")
+          ? [{ userId: "qa-admin-001", _max: { lastSeenAt: new Date(pivot + 1000) } }]
+          : [];
+      },
     },
-  },
-  searchHistory: {
-    async groupBy({ where }) {
-      return where.userId.in.includes("qa-support-001")
-        ? [{ userId: "qa-support-001", _max: { createdAt: new Date(pivot + 2000) } }]
-        : [];
+    searchHistory: {
+      async groupBy({ where }) {
+        return where.userId.in.includes("qa-support-001")
+          ? [{ userId: "qa-support-001", _max: { createdAt: new Date(pivot + 2000) } }]
+          : [];
+      },
     },
-  },
-  redirectLog: { async groupBy() { return []; } },
-  analyticsEvent: { async groupBy() { return []; } },
-  visitor: {
-    async count({ where }) {
-      filteredGuests = guests.filter(guest => matchSearch(where, guest));
-      return filteredGuests.length;
+    redirectLog: { async groupBy() { return []; } },
+    analyticsEvent: { async groupBy() { return []; } },
+    visitor: {
+      async count({ where }) {
+        filteredGuests = guests.filter(guest => matchSearch(where, guest));
+        return filteredGuests.length;
+      },
+      async findMany({ where }) {
+        return guests.filter(guest => where.id.in.includes(guest.id) && matchSearch(where, guest));
+      },
     },
-    async findMany({ where }) {
-      return guests.filter(guest => where.id.in.includes(guest.id) && matchSearch(where, guest));
-    },
-  },
-  async $queryRaw(sql) {
-    const statement = sql.strings.join("?");
-    // The new population read is one statement snapshot over durable records.
-    // Keep fixture counts independent of prior directory-filtered queries.
-    if (statement.includes('SELECT accounts."registered"')) {
-      const dates = sql.values.filter(value => value instanceof Date);
-      const from = dates[0] ?? null;
-      const to = dates.length > 1 ? dates[1] : null;
-      const inWindow = recordDate => !from || (recordDate >= from && (!to || recordDate < to));
-      return [{
-        registered: BigInt(users.length),
-        newRegistrations: BigInt(users.filter(user => inWindow(user.createdAt)).length),
-        guests: BigInt(guests.length),
-        newGuests: BigInt(guests.filter(guest => inWindow(guest.firstSeenAt)).length),
-      }];
-    }
-    // The isolated fixture has no essential-only operational sessions.
-    // The production directory returns counts and timestamps in one read.
-    if (statement.includes('COUNT(*)::bigint AS "count"')) return [{ count: 0n }];
-    if (statement.includes('AS "firstSeenAt", MAX(a."createdAt") AS "lastSeenAt"')) return [];
-    const all = [
-      ...(statement.includes('FROM "User"') ? filteredUsers.map(record => ({ kind: "user", record })) : []),
-      ...(statement.includes('FROM "Visitor"') ? filteredGuests.map(record => ({ kind: "guest", record })) : []),
-    ];
-    const name = row => row.kind === "guest" ? "Guest visitor" : row.record.name || "Unnamed user";
-    const created = row => +(row.kind === "guest" ? row.record.firstSeenAt : row.record.createdAt);
-    all.sort((a, b) => {
-      if (statement.includes('ORDER BY lower("displayName") ASC')) {
-        return name(a).localeCompare(name(b)) || created(b) - created(a) || a.record.id.localeCompare(b.record.id);
+    async $queryRaw(sql) {
+      const statement = sql.strings.join("?");
+      // This fixture has no location-bearing guest observations. Do not return
+      // directory identities for the separate, bounded location enrichment read.
+      if (statement.includes('SELECT DISTINCT ON ("guestId", "guestSource")')) return [];
+      // The new population read is one statement snapshot over durable records.
+      // Keep fixture counts independent of prior directory-filtered queries.
+      if (statement.includes('SELECT accounts."registered"')) {
+        const dates = sql.values.filter(value => value instanceof Date);
+        const from = dates[0] ?? null;
+        const to = dates.length > 1 ? dates[1] : null;
+        const inWindow = recordDate => !from || (recordDate >= from && (!to || recordDate < to));
+        return [{
+          registered: BigInt(users.length),
+          newRegistrations: BigInt(users.filter(user => inWindow(user.createdAt)).length),
+          guests: BigInt(guests.length),
+          newGuests: BigInt(guests.filter(guest => inWindow(guest.firstSeenAt)).length),
+        }];
       }
-      if (statement.includes('ORDER BY lower("displayName") DESC')) {
-        return name(b).localeCompare(name(a)) || created(b) - created(a) || a.record.id.localeCompare(b.record.id);
+      // The isolated fixture has no essential-only operational sessions.
+      // The production directory returns counts and timestamps in one read.
+      if (statement.includes('COUNT(*)::bigint AS "count"')) return [{ count: 0n }];
+      if (statement.includes('AS "firstSeenAt", MAX(a."createdAt") AS "lastSeenAt"')) return [];
+      const all = [
+        ...(statement.includes('FROM "User"') ? filteredUsers.map(record => ({ kind: "user", record })) : []),
+        ...(statement.includes('FROM "Visitor"') ? filteredGuests.map(record => ({ kind: "guest", record })) : []),
+      ];
+      const name = row => row.kind === "guest" ? "Guest visitor" : row.record.name || "Unnamed user";
+      const created = row => +(row.kind === "guest" ? row.record.firstSeenAt : row.record.createdAt);
+      all.sort((a, b) => {
+        if (statement.includes('ORDER BY lower("displayName") ASC')) {
+          return name(a).localeCompare(name(b)) || created(b) - created(a) || a.record.id.localeCompare(b.record.id);
+        }
+        if (statement.includes('ORDER BY lower("displayName") DESC')) {
+          return name(b).localeCompare(name(a)) || created(b) - created(a) || a.record.id.localeCompare(b.record.id);
+        }
+        if (statement.includes('ORDER BY "joinedAt" ASC')) return created(a) - created(b) || a.record.id.localeCompare(b.record.id);
+        if (statement.includes('ORDER BY "lastSeenAt" DESC NULLS LAST')) {
+          const latest = item => item.record.lastSeenAt ? +item.record.lastSeenAt : Number.NEGATIVE_INFINITY;
+          return latest(b) - latest(a) || created(b) - created(a) ||
+            a.kind.localeCompare(b.kind) || b.record.id.localeCompare(a.record.id);
+        }
+        return created(b) - created(a) || a.record.id.localeCompare(b.record.id);
+      });
+      const hasPage = statement.includes("LIMIT");
+      const limit = hasPage ? sql.values.at(-2) : all.length;
+      const offset = hasPage ? sql.values.at(-1) : 0;
+      const page = all.slice(offset, offset + limit);
+      // Production joins the independent totals after slicing. An empty or
+      // out-of-range page still returns the counts needed to clamp its URL.
+      if (!page.length && statement.includes("operational_summary AS")) {
+        return [{ id: null, kind: null, firstSeenAt: null, lastSeenAt: null,
+          operationalGuestCount: 0n, operationalAllTimeCount: 0n, operationalNewCount: 0n }];
       }
-      if (statement.includes('ORDER BY "joinedAt" ASC')) return created(a) - created(b) || a.record.id.localeCompare(b.record.id);
-      if (statement.includes('ORDER BY "lastSeenAt" DESC NULLS LAST')) {
-        const latest = item => item.record.lastSeenAt ? +item.record.lastSeenAt : Number.NEGATIVE_INFINITY;
-        return latest(b) - latest(a) || created(b) - created(a) ||
-          a.kind.localeCompare(b.kind) || b.record.id.localeCompare(a.record.id);
-      }
-      return created(b) - created(a) || a.record.id.localeCompare(b.record.id);
-    });
-    if (!all.length && statement.includes("operational_summary AS")) {
-      return [{ id: null, kind: null, firstSeenAt: null, lastSeenAt: null,
-        operationalGuestCount: 0n, operationalAllTimeCount: 0n, operationalNewCount: 0n }];
-    }
-    const hasPage = statement.includes("LIMIT");
-    const limit = hasPage ? sql.values.at(-2) : all.length;
-    const offset = hasPage ? sql.values.at(-1) : 0;
-    return all.slice(offset, offset + limit).map(item => ({
-      id: item.record.id, kind: item.kind,
-      firstSeenAt: item.kind === "guest" ? item.record.firstSeenAt : null,
-      lastSeenAt: item.record.lastSeenAt ?? null, guestSource: item.kind === "guest" ? "visitor" : null,
-      guestStatus: item.kind === "guest" ? "ACTIVE" : null, operationalGuestCount: 0n,
-      operationalAllTimeCount: 0n, operationalNewCount: 0n,
-    }));
-  },
-};
+      return page.map(item => ({
+        id: item.record.id, kind: item.kind,
+        firstSeenAt: item.kind === "guest" ? item.record.firstSeenAt : null,
+        lastSeenAt: item.record.lastSeenAt ?? null, guestSource: item.kind === "guest" ? "visitor" : null,
+        guestStatus: item.kind === "guest" ? "ACTIVE" : null, operationalGuestCount: 0n,
+        operationalAllTimeCount: 0n, operationalNewCount: 0n,
+      }));
+    },
+  };
+  return db;
+}
 export async function withOptionalDb(callback) {
-  return callback(db);
+  return callback(createDb());
 }

@@ -43,7 +43,10 @@ export function displayActivityCalendarDate(value: string, timeZone: string, end
 export function normalizeUserActivityQuery(input: RawActivityQuery, now: Date, timeZone = "UTC"): RawActivityQuery {
   const raw = { ...input };
   const selected = typeof raw.range === "string" ? raw.range : "";
-  const range = selected || "today";
+  // An individual history starts with all retained eligible activity. Directory
+  // reports keep their own Today defaults; explicit windows remain untouched.
+  if (!Array.isArray(raw.range) && !selected) raw.range = raw.from || raw.to ? "custom" : "all";
+  const range = selected || "all";
   const materializedToday = selected === "today" && [raw.from, raw.to].every(
     value => typeof value === "string" && validActivityUtcInstant(value),
   ) && String(raw.from) < String(raw.to);
@@ -64,9 +67,9 @@ export function normalizeUserActivityQuery(input: RawActivityQuery, now: Date, t
 
 export function safeActivityQueryParams(raw: RawActivityQuery): Record<string, string> {
   const result: Record<string, string> = {};
-  for (const key of ["tab", "range", "stage", "product", "from", "to", "q", "order", "directory"]) {
+  for (const key of ["tab", "range", "stage", "product", "from", "to", "q", "order", "directory", "usersReturn"]) {
     const value = raw[key];
-    if (typeof value === "string" && value.length <= 1100 && !/[\u0000-\u001f\u007f]/.test(value)) result[key] = value;
+    if (typeof value === "string" && value.length <= (key === "usersReturn" ? 2048 : 1100) && !/[\u0000-\u001f\u007f]/.test(value)) result[key] = value;
   }
   return result;
 }

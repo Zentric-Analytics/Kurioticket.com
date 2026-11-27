@@ -1,5 +1,8 @@
-import { adminCalendarRange, viewerTodayStart } from "./adminLocalTime";
-import { isPageHistoryPlatform, type PageHistoryPlatform } from "./adminPageHistory";
+import { adminCalendarRange, adminLocalDate, viewerTodayStart } from "./adminLocalTime";
+import { isPageHistoryPlatform, pageHistoryBackHref, type PageHistoryPlatform } from "./adminPageHistory";
+import { activityCustomDateBound, validActivityUtcInstant } from "./adminActivityDateQuery";
+import { parseActivityFilters, validActivityIdentity, type ActivityFilters } from "./adminIdentityActivity";
+import type { IdentityKind } from "./adminIdentityJourney";
 
 export const DEVICE_HISTORY_PAGE_SIZE = 20;
 export const deviceHistoryRanges = ["all", "today", "7d", "30d", "custom"] as const;
@@ -82,4 +85,32 @@ export function deviceHistoryHref(
   if (next.platform && next.platform !== "all") params.set("platform", next.platform);
   if (activityReturn) params.set("activityReturn", activityReturn);
   return basePath + "?" + params.toString();
+}
+
+/** Move only date scopes that the device reader can represent exactly.
+ * A legacy sub-day or rolling-24-hour investigation must not become whole
+ * calendar days or All time. Its recorded access details remain in Activity.
+ */
+export function deviceHistoryHrefFromActivity(
+  kind: IdentityKind, id: string, filters: ActivityFilters, rawRange: string | undefined,
+  returnHref: string, timeZone = "UTC",
+): string | undefined {
+  if (!validActivityIdentity(kind, id) || !parseActivityFilters({ ...filters }, timeZone).ok) return undefined;
+  const range = rawRange || (filters.from || filters.to ? "custom" : "all");
+  if (!deviceHistoryRanges.includes(range as DeviceHistoryRange)) return undefined;
+  const query: DeviceHistoryQuery = { range: range as DeviceHistoryRange, page: 1 };
+  if (range === "custom") {
+    if (!filters.from || !filters.to) return undefined;
+    const from = activityCustomDateBound(filters.from, "from", timeZone);
+    const to = activityCustomDateBound(filters.to, "to", timeZone);
+    if (!validActivityUtcInstant(from) || !validActivityUtcInstant(to)) return undefined;
+    const fromDay = adminLocalDate(new Date(from), timeZone);
+    const toDay = adminLocalDate(new Date(Date.parse(to) - 1), timeZone);
+    const bounds = adminCalendarRange(fromDay, toDay, timeZone);
+    if (!bounds || bounds.from.toISOString() !== from || bounds.to.toISOString() !== to) return undefined;
+    query.from = fromDay;
+    query.to = toDay;
+  }
+  return deviceHistoryHref("/admin/users/" + kind + "/" + encodeURIComponent(id) + "/devices",
+    query, {}, pageHistoryBackHref(kind, id, returnHref));
 }

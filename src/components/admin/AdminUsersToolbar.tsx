@@ -181,6 +181,7 @@ export function AdminUsersToolbar({
     <form action="/admin/users" method="get" onSubmit={onSearchSubmit} role="search"
       aria-label="Filter users"
       data-testid="users-directory-filter-row"
+      data-users-navigation-pending={isPending ? "true" : undefined}
       className="grid w-full min-w-0 grid-cols-1 items-center gap-2 border-b border-[#D8E1EC] pb-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_128px]">
       <input type="hidden" name="sort" value={sort} readOnly />
       <input type="hidden" name="tab" value={tab} readOnly />

@@ -10,14 +10,46 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 page.setDefaultTimeout(25000);
 const errors = [];
 page.on("pageerror", error => errors.push(error.message));
+// React reports attribute hydration mismatches through console.error, not
+// pageerror. Gate current Users routes; the pinned baseline is comparison-only.
+page.on("console", message => {
+  if (message.type() === "error" && new URL(page.url()).pathname.startsWith("/admin/users")) {
+    errors.push("Console error at " + page.url() + ": " + message.text());
+  }
+});
+const capture = async options => {
+  // Dropdown interactions scroll their trigger into view on small screens.
+  // Capture the complete page from its top so sticky headers stay at the top.
+  await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  // Playwright's default caret hiding mutates inline input styles and can race
+  // React hydration. Preserve the page's actual styles during the screenshot.
+  await page.screenshot({ ...options, caret: "initial" });
+};
 const url = base + "/admin/users";
 const tabs = () => page.getByRole("navigation", { name: "User types" });
 const search = () => page.getByRole("searchbox", { name: "Search users" });
+const pagination = () => page.getByRole("navigation", { name: "Users directory pagination" });
 const combo = name => page.getByRole("combobox", { name });
 const choose = async (label, value) => {
   await combo(label).click();
   await expect(page.getByRole("listbox",{name:label})).toBeVisible();
   await page.getByRole("listbox",{name:label}).getByRole("option",{name:value,exact:true}).click();
+};
+const checkActivityReturn = async (link, origin) => {
+  const activity = new URL(await link.getAttribute("href"), base);
+  assert.match(activity.pathname, /^\/admin\/users\/(user|guest|live-guest)\/[^/]+\/activity$/);
+  assert.equal(activity.searchParams.get("range"), "all", "Activity starts with complete history");
+  assert.equal(activity.searchParams.has("directory"), false, "New links use the complete Users return context");
+  assert.ok(activity.searchParams.get("usersReturn"), "Activity keeps its Users origin");
+  const returned = new URL(activity.searchParams.get("usersReturn"), base);
+  const expected = new URL(origin, base);
+  assert.equal(returned.pathname, expected.pathname);
+  for (const [key, value] of expected.searchParams) {
+    assert.equal(returned.searchParams.get(key), value, "Activity return preserves " + key);
+  }
+  return returned;
 };
 
 try {
@@ -25,11 +57,15 @@ try {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(base + "/before");
     await expect(page.getByRole("button", { name: "Apply Filter" })).toBeVisible();
-    await page.screenshot({path: output + "/before-search-filter-" + width + ".png", fullPage:true});
+    // AdminDirectorySelect upgrades from a server-rendered native select to
+    // this button only after hydration; SSR-visible text alone is insufficient.
+    await expect(page.locator('button[role="combobox"][aria-label="Sort by"]')).toBeVisible();
+    await capture({path: output + "/before-search-filter-" + width + ".png", fullPage:true});
   }
   for (const width of [1440,1280,768,390,320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(url);
+    await expect(page.locator('button[role="combobox"][aria-label="Date range"]')).toBeVisible();
     await expect(page.locator('section[aria-label="Online Users"]')).toHaveCount(0);
     await expect(page.getByRole("navigation",{name:"Users & Bots subsections"})
       .getByRole("link",{name:"Online Users",exact:true})).toBeVisible();
@@ -111,15 +147,18 @@ try {
       "Desktop filter controls belong to the same horizontal row");
     await expect(page.getByRole("button",{name:"Apply filters",exact:true})).toBeVisible();
     await expect(page.getByRole("link",{name:"Clear filters"})).toHaveCount(0);
-    await expect(page.getByRole("navigation",{name:"Identity pagination"})).toHaveCount(0);
+    await expect(pagination()).toContainText("Showing 1–20 of 30 matching identities");
+    await expect(pagination()).toContainText("Page 1 of 2");
+    await expect(page.locator("tbody tr")).toHaveCount(20);
     await combo("Date range").click();
     await expect(page.getByRole("listbox",{name:"Date range"})).toBeVisible();
     await page.keyboard.press("Escape");
-    await page.screenshot({path: output + "/after-search-filter-" + width + ".png", fullPage:true});
+    await capture({path: output + "/after-search-filter-" + width + ".png", fullPage:true});
     console.log("PASS responsive premium users toolbar",width);
   }
   await page.setViewportSize({width:1280,height:900});
   await page.goto(base + "/admin/users/online");
+  await expect(page.locator('button[role="combobox"][aria-label="Identity type"]')).toBeVisible();
   const live = page.locator('section[aria-label="Online Users"]');
   await expect(live).toBeVisible();
   await expect(live.locator('[data-testid="online-platform-metric"]')).toHaveCount(4);
@@ -149,7 +188,7 @@ try {
     "All filters must remain inside content width");
   assert.ok(filterRects.items[0].width > filterRects.items[1].width,
     "Online user search should be wider than dropdowns");
-  await page.screenshot({path:output+"/online-users-desktop-1280.png",fullPage:true});
+  await capture({path:output+"/online-users-desktop-1280.png",fullPage:true});
   await expect(page.getByText("Guest session")).toHaveCount(1);
   await expect(page.getByTestId("online-user-row").filter({hasText:"Guest session"})
     .getByRole("link",{name:"View Activity"})).toHaveCount(0);
@@ -161,15 +200,18 @@ try {
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page.getByTestId("online-user-row")).toHaveCount(1);
   await expect(page.getByTestId("online-user-row").first()).toContainText("Alana Example");
+  await checkActivityReturn(page.getByTestId("online-user-row").first()
+    .getByRole("link", { name: "View Activity" }), page.url());
   await page.setViewportSize({width:320,height:800});
   await page.goto(base + "/admin/users/online");
   await expect(page.getByRole("heading",{name:"Online Users",exact:true})).toBeVisible();
+  await expect(page.locator('button[role="combobox"][aria-label="Identity type"]')).toBeVisible();
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),true);
-  await page.screenshot({path:output+"/online-users-mobile-320.png",fullPage:true});
+  await capture({path:output+"/online-users-mobile-320.png",fullPage:true});
   await page.setViewportSize({width:1280,height:900});
   await page.goto(url);
-  await expect(page.getByRole("navigation",{name:"Identity pagination"})).toHaveCount(0);
-  await expect(page.locator("tbody tr")).toHaveCount(30);
+  await expect(pagination()).toContainText("Page 1 of 2");
+  await expect(page.locator("tbody tr")).toHaveCount(20);
   // A returning registered account must outrank a more recently created guest
   // when its recorded last observation is newer. Sorting is never based on
   // account type alone; the mock SQL returns mixed identities in one order.
@@ -184,12 +226,47 @@ try {
   // Registered accounts can be older than their latest recorded session.
   // Confirm the new column preserves actual evidence for both registered
   // and consented guest rows without becoming an online-status indicator.
-  await expect(page.locator('td[data-label="Last Seen"]')).toHaveCount(30);
-  await expect(page.locator('td[data-label="Last Seen"] time')).toHaveCount(30);
+  await expect(page.locator('td[data-label="Last Seen"]')).toHaveCount(20);
+  await expect(page.locator('td[data-label="Last Seen"] time')).toHaveCount(20);
   await expect(page.locator('td[data-label="Last Seen"] time').first()).toHaveAttribute("dateTime", /2026-/);
+  const firstPageIds = await page.locator("tbody tr").evaluateAll(nodes =>
+    nodes.map(node => node.getAttribute("data-users-refresh-anchor")));
+  const firstReturn = await checkActivityReturn(page.locator("tbody tr").first()
+    .getByRole("link", { name: "View Activity" }), url);
+  assert.equal(firstReturn.searchParams.get("date"), "today", "Directory date remains in return context");
+  await pagination().getByRole("link", { name: "Next", exact: true }).click();
+  await expect(page).toHaveURL(/page=2/);
+  await expect(page.locator("tbody tr")).toHaveCount(10);
+  await expect(pagination()).toContainText("Showing 21–30 of 30 matching identities");
+  await expect(pagination()).toContainText("Page 2 of 2");
+  await expect(pagination().getByRole("link", { name: "Next", exact: true })).toHaveCount(0);
+  const secondPageIds = await page.locator("tbody tr").evaluateAll(nodes =>
+    nodes.map(node => node.getAttribute("data-users-refresh-anchor")));
+  assert.ok([...firstPageIds, ...secondPageIds].every(Boolean), "Every identity has a stable row anchor");
+  assert.equal(new Set([...firstPageIds, ...secondPageIds]).size, 30,
+    "Both bounded pages expose all 30 identities without a duplicate or missing row");
+  const secondTimes = await page.locator('td[data-label="Last Seen"] time').evaluateAll(
+    nodes => nodes.map(node => Date.parse(node.getAttribute("dateTime"))),
+  );
+  const allTimes = [...observedTimes, ...secondTimes];
+  assert.ok(allTimes.every((at, index) => index === 0 || allTimes[index - 1] >= at),
+    "Mixed identity ordering remains stable across the page boundary");
+  await checkActivityReturn(page.locator("tbody tr").first()
+    .getByRole("link", { name: "View Activity" }), page.url());
+  await pagination().getByRole("link", { name: "Previous", exact: true }).click();
+  await expect(page).not.toHaveURL(/page=2/);
+  await expect(page.locator("tbody tr")).toHaveCount(20);
+  await page.goto(url + "?date=all&sort=newest&page=999");
+  await expect(page).toHaveURL(/page=2/);
+  await expect(page).toHaveURL(/date=all/);
+  await expect(page.locator("tbody tr")).toHaveCount(10);
+  await expect(pagination()).toContainText("Page 2 of 2");
+  await page.goto(url);
+  await expect(page.locator("tbody tr")).toHaveCount(20);
+  console.log("PASS bounded complete directory pagination and Users activity return context");
   await search().fill("Zara");
   await expect(page).not.toHaveURL(/q=Zara/);
-  await expect(page.locator("tbody tr")).toHaveCount(30);
+  await expect(page.locator("tbody tr")).toHaveCount(20);
   await search().press("Enter");
   await expect(page).not.toHaveURL(/q=Zara/);
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
@@ -201,7 +278,7 @@ try {
   await expect(page).toHaveURL(/q=qa-guest-001/);
   await search().fill("");
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
-  await expect(page.locator("tbody tr")).toHaveCount(30);
+  await expect(page.locator("tbody tr")).toHaveCount(20);
   console.log("PASS apply-only directory search and Enter suppression");
   await choose("Date range","Custom range");
   const pickCalendarDate = async (label, isoDate) => {

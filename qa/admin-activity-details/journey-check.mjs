@@ -14,7 +14,7 @@ try {
   await expect(page.locator('[data-activity-id]')).toHaveCount(2);
   await expect(page.getByTestId("unified-activity-list")).toContainText("LOS → IST");
   await expect(page.getByRole('link',{name:/View journey history/i})).toBeVisible();
-  const longDirectory = "客".repeat(1000);
+  const longDirectory = new URLSearchParams({q:"客".repeat(100),tab:"GUEST",date:"all"}).toString();
   await page.goto(base + "/admin/users/guest/qa-guest-activity-0001/activity?" + new URLSearchParams({q:"LOS",range:"all",directory:longDirectory}));
 
   await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all"));

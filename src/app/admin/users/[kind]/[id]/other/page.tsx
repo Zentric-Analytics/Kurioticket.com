@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
-import { normalizeUserActivityQuery, safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
+import { normalizeLiveUserActivityQuery, liveActivityQueryParams } from "@/lib/adminActivityLiveQuery";
 import { activityHref, parseActivityFilters, validActivityIdentity } from "@/lib/adminIdentityActivity";
 import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { requireAdminSession } from "@/lib/auth-guards";
@@ -25,8 +25,8 @@ export default async function AdminIdentityOtherActivityPage({
   const path = "/admin/users/" + kind + "/" + encodeURIComponent(id);
   const session = await requireAdminSession(path + "/other");
   const timeZone = await getAdminViewerTimeZone(session.user.id);
-  const raw = normalizeUserActivityQuery(await searchParams, new Date(), timeZone);
-  const paramsForActivity = safeActivityQueryParams(raw);
+  const raw = normalizeLiveUserActivityQuery(await searchParams, new Date(), timeZone);
+  const paramsForActivity = liveActivityQueryParams(raw);
   const activityPath = path + "/activity";
   const backHref = activityHref(activityPath, paramsForActivity, {});
   const parsed = parseActivityFilters(raw, timeZone);

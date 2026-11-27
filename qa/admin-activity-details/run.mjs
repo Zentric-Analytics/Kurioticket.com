@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 const qa = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.resolve(qa, "../..");
 const source = path.join(repo, "src");
+execFileSync(process.execPath, [path.join(qa, "guest-recorded-location-fixture-check.mjs")], { cwd: repo, stdio: "inherit" });
 const temp = await mkdtemp(path.join(process.env.ADMIN_ACTIVITY_QA_WORK || os.tmpdir(), "kt-activity-"));
 const output = path.resolve(process.env.ADMIN_ACTIVITY_QA_OUTPUT || path.join(temp, "screenshots"));
 const port = process.env.ADMIN_ACTIVITY_QA_PORT || "3199";
@@ -45,8 +46,9 @@ await put("next.config.mjs",
   // Baseline modules use their own source tree and the same QA service mocks.
   'config.plugins.push(new webpack.NormalModuleReplacementPlugin(/^[@][/]/, resource => {\n' +
   '  const baseline = path.resolve("baseline/src");\n' +
-  '  if ((resource.context === baseline || resource.context.startsWith(baseline + path.sep)) && !Object.hasOwn(config.resolve.alias, resource.request)) {\n' +
-  '    resource.request = path.join(baseline, resource.request.slice(2));\n' +
+  '  if (resource.context === baseline || resource.context.startsWith(baseline + path.sep)) {\n' +
+  '    if (resource.request === "@/services/adminIdentityActivityService") resource.request = path.resolve("mocks/baseline-activity.js");\n' +
+  '    else if (!Object.hasOwn(config.resolve.alias, resource.request)) resource.request = path.join(baseline, resource.request.slice(2));\n' +
   '  }\n' +
   '}));\n' +
   'config.resolve.alias["@"]=' + JSON.stringify(source) + ';return config;}};');
@@ -66,6 +68,11 @@ await put("app/page.jsx", 'export default function Home(){return <p>Isolated Adm
 // during Activity screenshots. No live alert data or service is used.
 await put("app/api/admin/notifications/route.js",
   'export async function GET(){return Response.json({generatedAt:"2026-11-16T00:00:00.000Z",activeCount:0,unreadCount:0,criticalCount:0,warningCount:0,alerts:[]});}');
+// Exercise the real responsive Users refresh wrapper. Authorization/probe
+// failures are covered by its component tests; this fixture is deterministic.
+await put("app/admin/users/layout.tsx", await readFile(path.join(source, "app/admin/users/layout.tsx"), "utf8"));
+await put("app/api/admin/users/live-refresh/route.js",
+  'export async function GET(){return Response.json({ok:true},{headers:{"Cache-Control":"private, no-store"}});}');
 
 await put("app/admin/users/devices/page.tsx", await readFile(path.join(source, "app/admin/users/devices/page.tsx"), "utf8"));
 await put("app/admin/users/pages/page.tsx", await readFile(path.join(source, "app/admin/users/pages/page.tsx"), "utf8"));
@@ -92,6 +99,17 @@ await put("mocks/auth-guards.js", [
 ].join("\n"));
 await put("mocks/stagingSafety.js", 'export function getPublicEnvironment(){return "staging";}');
 await put("mocks/activity.js", await readFile(path.join(qa, "activity-fixture.js"), "utf8"));
+// Preserve the previous reader's summary contract in before screenshots; the
+// current route receives only five global actions from the current mock.
+await put("mocks/baseline-activity.js", [
+  'import {loadAdminIdentityActivity as readCurrent} from "./activity.js";',
+  'export {loadAdminUnifiedActivity} from "./activity.js";',
+  'export async function loadAdminIdentityActivity(kind,id,filters,cursor,mode="page",pageHistory){',
+  ' const result=await readCurrent(kind,id,filters,cursor,mode==="summary"?"all":mode,pageHistory);',
+  ' if(mode!=="summary"||result.status!=="ok")return result;',
+  ' return {...result,data:{...result.data,events:[...result.data.events.filter(row=>row.stage!=="PAGE_VIEW"),...result.data.events.filter(row=>row.stage==="PAGE_VIEW").slice(0,1)]}};',
+  '}',
+].join("\n"));
 await put("mocks/presence.js", 'export async function getOnlinePresenceSnapshot(){return {status:"ok",windowSeconds:90,observedAt:new Date().toISOString(),total:1,registeredAccounts:1,guestSessions:0};}');
 await put("mocks/prisma.js", await readFile(path.join(qa, "old-drawer-fixture.js"), "utf8"));
 await put("app/admin/journeys/[id]/page.tsx", await readFile(path.join(source, "app/admin/journeys/[id]/page.tsx"), "utf8"));
@@ -130,7 +148,8 @@ try {
   }
   if (!running) throw new Error("QA Next app did not start");
   // Warm compiled fixture routes before Playwright inspects the real components.
-  for (const route of ["/before", "/admin/users/guest/qa-guest-activity-0001/activity"]) {
+  for (const route of ["/before", "/admin/users/guest/qa-guest-activity-0001/activity",
+    "/admin/users/guest/qa-guest-activity-0001/activity/all?range=all", "/admin/users/online"]) {
     let ready = false;
     for (let attempt = 0; attempt < 12; attempt++) {
       try {

@@ -4,6 +4,7 @@ import { CopyIdentityId } from "./CopyIdentityId";
 import { AdminRecordedGuestLocation } from "./AdminRecordedGuestLocation";
 import type { RecordedGuestLocation } from "@/lib/guestAccessObservation";
 import type { AdminIdentitySort as IdentitySort, GuestDirectoryStatus } from "@/lib/adminIdentityDirectory";
+import { adminUsersActivityHref } from "@/lib/adminUsersNavigation";
 
 export type IdentityRow =
   | {
@@ -72,8 +73,8 @@ export function AdminIdentityTable({
   const hasSearch = Boolean(active.get("q"));
   const currentTab = active.get("tab") || active.get("identity") || "ALL";
   const activityHref = (kind: "guest" | "user", id: string) =>
-    "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity" +
-    (directory ? "?directory=" + encodeURIComponent(directory) : "");
+    adminUsersActivityHref(kind, id, pageHref)
+    ?? "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity?range=all";
   return (
     <section className="mt-3 min-w-0 bg-white">
       <h2 id="identity-directory-title" className="sr-only">Users directory</h2>
@@ -127,6 +128,7 @@ export function AdminIdentityTable({
               return (
                 <tr
                   key={`${row.kind}:${record.id}`}
+                  data-users-refresh-anchor={`${row.kind}:${record.id}`}
                   className="group h-[64px] align-middle transition-colors hover:bg-[#F8FAFC]"
                 >
                   <td data-label="Identity" className="px-3 py-1.5">

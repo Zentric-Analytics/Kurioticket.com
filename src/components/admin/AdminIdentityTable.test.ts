@@ -3,6 +3,7 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createJiti } from "jiti";
+import { adminUsersActivityReturn } from "../../lib/adminUsersNavigation";
 
 const jiti = createJiti(import.meta.url, { jsx: { runtime: "automatic" }, fsCache: false });
 const { AdminIdentityTable } = jiti("./AdminIdentityTable") as typeof import("./AdminIdentityTable");
@@ -37,10 +38,31 @@ test("six data columns and user/guest activity links retain all recorded identit
   assert.match(html, /<time dateTime=/);
   for (const kind of ["user", "guest"]) {
     const id = kind === "user" ? "qa-user-internal-id" : "qa-guest-long-id";
-    assert.match(html, new RegExp(`/admin/users/${kind}/${id}/activity\\?directory=q%3Dqa%26role%3DALL%26status%3DALL%26tab%3DALL%26sort%3Dname_asc%26page%3D2`));
+    const links = [...html.matchAll(/href="([^"]*\/activity[^\"]*)"/g)]
+      .map(match => new URL(match[1].replaceAll("&amp;", "&"), "https://admin.example.invalid"));
+    const activity = links.find(url => url.pathname === `/admin/users/${kind}/${id}/activity`);
+    assert.ok(activity);
+    assert.equal(activity.searchParams.get("range"), "all", "an identity opens complete history independently of the directory range");
+    assert.equal(activity.searchParams.get("usersReturn"), props.pageHref);
   }
   assert.doesNotMatch(html, /Not an account|Manage account|Protected admin|Current admin/);
   assert.doesNotMatch(html, /aria-label="User types"|aria-label="Sort by"|Apply Filter/);
+});
+
+test("the full permitted Unicode directory search survives identity navigation and Back", () => {
+  const pageHref = "/admin/users?" + new URLSearchParams({
+    q: "旅".repeat(120), role: "ALL", status: "ALL", tab: "GUEST", sort: "newest", date: "today", page: "1234567",
+  });
+  assert.ok(pageHref.length > 1000 && pageHref.length < 2048);
+  const html = render({ pageHref, rows: [
+    { kind: "guest", guestStatus: "ACTIVE", guestSource: "visitor", record: { id: "qa-guest-long-id", firstSeenAt: at, lastSeenAt: at } },
+  ] });
+  const match = [...html.matchAll(/href="([^"]*\/activity[^\"]*)"/g)][0];
+  assert.ok(match);
+  const url = new URL(match[1].replaceAll("&amp;", "&"), "https://admin.example.invalid");
+  assert.equal(url.searchParams.get("range"), "all");
+  assert.equal(url.searchParams.get("usersReturn"), pageHref);
+  assert.equal(adminUsersActivityReturn(Object.fromEntries(url.searchParams)).href, pageHref);
 });
 
 test("table remains a scrollable, accessible region with six columns and no pagination", () => {

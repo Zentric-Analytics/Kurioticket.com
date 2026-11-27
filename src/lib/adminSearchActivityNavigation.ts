@@ -1,3 +1,5 @@
+import { decodeActivityJourneyReturn } from "./adminActivityJourneyNavigation";
+
 /**
  * Preserve the selected Search activity scope when opening an individual
  * search. Only known search filters are forwarded; never accept a destination
@@ -63,4 +65,14 @@ export function searchActivityReturnHref(raw: SearchActivityRawParams, defaultRa
 /** Extract the search filters, without its fixed destination, for the Open link. */
 export function searchActivityDetailQuery(raw: SearchActivityRawParams, defaultRange?: string): string {
   return searchActivityReturnHref(raw, defaultRange).split("?")[1] ?? "";
+}
+
+/** A Users drill-down carries only navigation context. The detail reader still
+ * authorizes the requested search and environment independently. */
+export function searchDetailReturn(raw: SearchActivityRawParams): { href: string; label: string } {
+  const href = decodeActivityJourneyReturn(raw.activityReturn);
+  if (!href) return { href: searchActivityReturnHref(raw), label: "Search activity" };
+  const path = href.split("?")[0];
+  return { href, label: path.endsWith("/activity/all") ? "All activity"
+    : path.endsWith("/journeys") ? "Journey history" : "User activity" };
 }

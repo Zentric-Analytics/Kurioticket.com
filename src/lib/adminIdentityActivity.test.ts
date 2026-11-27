@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
+import { JourneyEventType } from "@/generated/prisma/enums";
 
 import {
-  ACTIVITY_PAGE_SIZE, activityEnvironmentScope, allowedActivityStages, activityHref, activityWindow,
+  ACTIVITY_PAGE_SIZE, activityEnvironmentScope, activityJourneyStages, allowedActivityStages, activityHref, activityWindow,
   compactActivityDisplayRows, decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, groupActivityRows, groupContiguousActivityRows, latestVisibleActivityAt, relatedJourneysWindow,
   parseActivityFilters, sourceActivitySeek, validActivityIdentity,
   type ActivityFilters,
@@ -14,6 +15,11 @@ const filters: ActivityFilters = {
   tab: "all", stage: "all", product: "all", from: "", to: "", q: "",
 };
 const id = "cmvju17ci00062ajiy60e0yhf";
+
+test("All activity exposes every retained canonical journey action type", () => {
+  assert.deepEqual(new Set(activityJourneyStages), new Set(Object.values(JourneyEventType)));
+  assert.deepEqual(new Set([...allowedActivityStages(filters)].filter(stage => stage !== "ACCOUNT_ACTIVITY" && stage !== "PAGE_VIEW")), new Set(Object.values(JourneyEventType)));
+});
 
 test("identity routes accept only explicit user or guest IDs", () => {
   assert.equal(validActivityIdentity("guest", id), true);
@@ -56,19 +62,39 @@ test("rolling activity windows accept strict UTC instants while legacy calendar 
   ]) assert.equal(parseActivityFilters(values).ok, false);
 });
 
+test("unsupported reporting ranges fail closed while legacy 24h and absolute bookmarks remain valid", () => {
+  const bounds = { from: "2026-11-17T18:42:12.000Z", to: "2026-11-18T18:42:12.000Z" };
+  for (const range of ["today", "24h", "7d", "30d", "all", "custom"]) {
+    assert.equal(parseActivityFilters({ range, ...bounds }).ok, true, range);
+  }
+  assert.equal(parseActivityFilters(bounds).ok, true, "absolute bookmarks need no preset name");
+  assert.equal(parseActivityFilters({}).ok, true);
+  for (const range of ["unsupported", "ALL", "7days", "javascript:alert(1)"]) {
+    assert.equal(parseActivityFilters({ range }).ok, false, range);
+    assert.equal(parseActivityFilters({ range, ...bounds }).ok, false, range);
+  }
+  assert.equal(parseActivityFilters({ range: ["today", "all"] }).ok, false);
+});
+
 test("every tab exposes only its own recorded stages", () => {
   const stages = (tab: ActivityFilters["tab"], stage: ActivityFilters["stage"] = "all") =>
     [...allowedActivityStages({ ...filters, tab, stage })];
-  assert.deepEqual(stages("searches"), ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED"]);
+  assert.deepEqual(stages("searches"), ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED",
+    "SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"]);
   assert.deepEqual(stages("selections"), ["OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"]);
   assert.deepEqual(stages("journeys"), ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED",
-    "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED"]);
+    "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED",
+    "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"]);
   assert.deepEqual(stages("handoffs"), ["PROVIDER_HANDOFF_STARTED"]);
   assert.deepEqual(stages("interactions"), ["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "ACCOUNT_ACTIVITY"]);
   assert.deepEqual(stages("interactions", "RESULT_SHARED"), ["RESULT_SHARED"]);
   assert.deepEqual(stages("interactions", "PROVIDER_HANDOFF_STARTED"), []);
   assert.deepEqual(stages("journeys", "ACCOUNT_ACTIVITY"), []);
   assert.equal(parseActivityFilters({ tab: "interactions", stage: "RESULT_SAVED", product: "HOTEL" }).ok, true);
+  for (const stage of ["SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"]) {
+    assert.equal(parseActivityFilters({ tab: "searches", stage }).ok, true, stage);
+    assert.ok(stages("all").includes(stage as ActivityFilters["stage"]), stage);
+  }
   assert.deepEqual(stages("searches", "OFFER_SELECTED"), []);
   assert.ok(stages("all").includes("ACCOUNT_ACTIVITY"));
   assert.ok(!stages("selections").includes("ACCOUNT_ACTIVITY"));
@@ -328,13 +354,14 @@ test("User Activity removes redundant journey navigation and related records but
   const fullWorkspace = readFileSync("src/components/admin/AdminFullActivityWorkspace.tsx","utf8");
   assert.match(fullWorkspace, /value:\s*"handoffs",\s*label:\s*"Provider handoffs"/);
   assert.match(full, /categories=\{FULL_ACTIVITY_CATEGORIES\.map/);
-  assert.match(source, /normalizeUserActivityQuery/);
+  assert.match(source, /normalizeLiveUserActivityQuery/);
   const helper = readFileSync("src/lib/adminActivityDateQuery.ts","utf8");
   assert.match(helper, /if \(raw\.tab === "journeys"\) delete raw\.tab/);
   assert.match(source, /<AdminUnifiedActivityList/);
   assert.match(full, /<AdminFullActivityWorkspace/);
   assert.match(fullWorkspace, /<ActivityFiltersBar/);
   assert.match(full, /<AdminUnifiedActivityList/);
-  assert.doesNotMatch(source, /<ActivityTimeline|<ActivityFiltersBar/);
+  assert.doesNotMatch(source, /<ActivityTimeline/);
+  assert.match(source, /<ActivityFiltersBar compact/);
   assert.doesNotMatch(source, /value: "journeys", label: "Journeys"|Related records|const related =|searchesHref|journeysHref/);
 });

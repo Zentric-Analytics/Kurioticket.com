@@ -44,7 +44,7 @@ test("Activity embeds the latest recorded access with a separate full history", 
   const preview = readFileSync("src/components/admin/AdminIdentityDeviceAccess.tsx", "utf8");
   const dedicated = readFileSync("src/app/admin/platforms/devices/page.tsx", "utf8");
   const history = readFileSync("src/app/admin/users/[kind]/[id]/devices/page.tsx", "utf8");
-  assert.match(activity, /kind === "user" \? await loadAdminDeviceSessions\(id, timeZone, now, "all"\) : null/);
+  assert.match(activity, /kind === "user" \? loadAdminDeviceSessions\(id, timeZone, now, "all"\) : null/);
   assert.match(activity, /<AdminUnifiedActivityList/);
   assert.match(activity, /loadAdminGuestAccessHistory/);
   assert.match(activity, /deviceSessions.sessions\[0\]/);

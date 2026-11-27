@@ -1,13 +1,17 @@
 import { activityCustomDateBound, validActivityUtcInstant } from "./adminActivityDateQuery";
+import { isAdminReportingRange } from "./adminReportingRanges";
 import type { Prisma } from "@/generated/prisma/client";
 import type { ActivityRow, IdentityKind } from "./adminIdentityJourney";
 import type { PublicEnvironment } from "./stagingSafety";
 
 export const ACTIVITY_PAGE_SIZE = 20;
 export const ACTIVITY_FETCH_LIMIT = ACTIVITY_PAGE_SIZE + 25;
+export const ACTIVITY_OVERVIEW_LIMIT = 5;
 export const activityTabs = ["all", "searches", "journeys", "selections", "handoffs", "interactions", "pages", "access"] as const;
-export const activityStages = ["all", "SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED",
-  "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "ACCOUNT_ACTIVITY", "PAGE_VIEW"] as const;
+export const activityJourneyStages = ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED",
+  "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED",
+  "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"] as const;
+export const activityStages = ["all", ...activityJourneyStages, "ACCOUNT_ACTIVITY", "PAGE_VIEW"] as const;
 export const activityProducts = ["all", "FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const;
 
 export type ActivityTab = (typeof activityTabs)[number];
@@ -74,6 +78,8 @@ function activityBoundary(value: string, edge: "from" | "to", timeZone = "UTC") 
 
 export function parseActivityFilters(raw: Query, timeZone = "UTC"): ParseResult {
   if (Object.values(raw).some(Array.isArray)) return { ok: false, error: "Repeated filters are not supported." };
+  const range = one(raw.range);
+  if (range && !isAdminReportingRange(range)) return { ok: false, error: "Unsupported activity date range." };
   const tab = one(raw.tab) || "all";
   const stage = one(raw.stage) || "all";
   const product = one(raw.product) || "all";
@@ -103,15 +109,14 @@ export function activityWindow(filters: ActivityFilters) {
   };
 }
 export type JourneyStage = Exclude<ActivityStage, "all" | "ACCOUNT_ACTIVITY" | "PAGE_VIEW">;
-const allJourneyStages: JourneyStage[] = ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED",
-  "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED"];
 export function allowedActivityStages(filters: ActivityFilters): Set<ActivityStage> {
   const available: ActivityStage[] = filters.tab === "all"
-    ? [...allJourneyStages, "ACCOUNT_ACTIVITY", "PAGE_VIEW"]
+    ? [...activityJourneyStages, "ACCOUNT_ACTIVITY", "PAGE_VIEW"]
     : filters.tab === "access" ? []
     : filters.tab === "pages" ? ["PAGE_VIEW"]
-    : filters.tab === "journeys" ? allJourneyStages
-    : filters.tab === "searches" ? ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED"]
+    : filters.tab === "journeys" ? [...activityJourneyStages]
+    : filters.tab === "searches" ? ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED",
+      "SEARCH_SORT_CHANGED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"]
     : filters.tab === "selections" ? ["OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"]
     : filters.tab === "interactions" ? ["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "ACCOUNT_ACTIVITY"]
     : ["PROVIDER_HANDOFF_STARTED"];
@@ -180,10 +185,11 @@ export function excludeCanonicalLegacyRows(
   createdAt: Prisma.DateTimeFilter,
   product: Prisma.JourneyEventWhereInput,
   query: Prisma.JourneyEventWhereInput,
+  validReferences?: Prisma.JourneyEventWhereInput,
 ): { journeyEvents: { none: Prisma.JourneyEventWhereInput } } {
   return {
     journeyEvents: {
-      none: { AND: [owner, { type: stage }, { createdAt }, product, query] },
+      none: { AND: [owner, { type: stage }, { createdAt }, product, query, ...(validReferences ? [validReferences] : [])] },
     },
   };
 }

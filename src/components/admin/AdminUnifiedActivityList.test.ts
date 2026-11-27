@@ -24,10 +24,15 @@ const pages: ActivityRow[] = [1, 2, 3].map(i => ({
   pageView: { path: "/support", previousPath: null, transport: "native", platform: "iOS app", href: null },
 }));
 
-test("overview shows one latest page and one access record", () => {
+test("overview shows the global newest five actions, including multiple pages, with access separate", () => {
+  const mixed: ActivityRow[] = [...pages,
+    {id:"s-new-search",at:new Date(+at + 1000),stage:"SEARCH_COMPLETED",label:"Search completed",detail:"Lagos"},
+    {id:"j-new-filter",at:new Date(+at - 1500),stage:"SEARCH_FILTER_APPLIED",label:"Results filter applied",detail:"Stops"},
+    {id:"j-older-selection",at:new Date(+at - 600000),stage:"OFFER_SELECTED",label:"Offer selected",detail:"Older offer"},
+  ];
   const html = renderToStaticMarkup(createElement(
     AdminUnifiedActivityList, {
-      events: pages,
+      events: mixed,
       environment: "staging",
       timeZone: "UTC",
       overview: true,
@@ -43,10 +48,12 @@ test("overview shows one latest page and one access record", () => {
   assert.match(html, /e-page-1/);
   assert.match(html, /iOS app/);
   assert.match(html, /Screen route/);
-  assert.doesNotMatch(html, /e-page-2|e-page-3/);
+  for (const id of ["e-page-1","e-page-2","e-page-3","s-new-search","j-new-filter"]) assert.ok(html.includes('data-activity-id="' + id + '"'));
+  assert.doesNotMatch(html, /j-older-selection/);
+  assert.equal((html.match(/data-activity-id=/g) || []).length,5);
   assert.equal(
     (html.match(/data-activity-id="latest-access-summary"/g) || []).length,
-    1
+    0
   );
   assert.match(html, /View all activity/);
 });

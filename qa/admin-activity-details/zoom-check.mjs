@@ -26,6 +26,7 @@ try {
     await expect.poll(async () => Math.abs(await page.evaluate(() => innerWidth) - expectedWidth)).toBeLessThanOrEqual(1);
   };
   const screenshot = async (name,zoom) => {
+    await page.evaluate(()=>window.scrollTo({top:0,left:0,behavior:"instant"}));
     const bounds = await capture.send("Page.getLayoutMetrics");
     const shot = await capture.send("Page.captureScreenshot", {format:"png",captureBeyondViewport:true,
       clip:{x:0,y:0,width:bounds.contentSize.width,height:bounds.contentSize.height,scale:1/zoom}});
@@ -40,31 +41,30 @@ try {
 
         const layout=await page.evaluate(()=>{
           const identity=document.querySelector('section[aria-label="Customer identity"]');
-          const grid=identity.querySelector("div.grid");
+          const grid=identity.querySelector('[data-testid="activity-identity-facts"]');
           const summary=document.querySelector('section[aria-label="Activity summary"]');
           const metrics=[...summary.querySelectorAll('[data-testid="activity-metric"]')];
-          const facts=[...grid.querySelectorAll("dl > div")];
-          const r=grid.getBoundingClientRect();
-          const lines=[40,60,80].map(n=>identity.querySelector('[data-testid="activity-divider-'+n+'"]').getBoundingClientRect());
+          const facts=[...grid.children];
+          const factRects=facts.map(element=>element.getBoundingClientRect());
           const metricRects=metrics.map(el=>el.getBoundingClientRect());
           const cols=innerWidth>=1280?6:3;
           const dates=facts.slice(0,2).map(f=>f.querySelector("time")).filter(Boolean);
           return {
             overflow:document.documentElement.scrollWidth>innerWidth+1,
             metricsCount:metrics.length,
-            noHeading:!summary.querySelector("h2"),
+            summaryHeading:summary.querySelector("h2")?.textContent==="Activity overview",
             evenlySpaced:metricRects.every((m,i)=>Math.abs(m.width-metricRects[0].width)<2&&Math.abs(m.top-metricRects[Math.floor(i/cols)*cols].top)<2),
-            identityDividers:lines.every((l,i)=>Math.abs(l.left-(r.left+r.width*(i+2)/5))<2&&Math.abs(l.bottom-r.bottom)<2),
-            alignedFacts:facts.every((f,i)=>Math.abs(f.getBoundingClientRect().left-lines[i].left)<2),
+            alignedFacts:factRects.every(rect=>Math.abs(rect.top-factRects[0].top)<2&&Math.abs(rect.width-factRects[0].width)<2),
+            separatedSections:identity.getBoundingClientRect().bottom<=summary.getBoundingClientRect().top+2,
             datesUnwrapped:dates.every(t=>t.getBoundingClientRect().height<parseFloat(getComputedStyle(t).lineHeight||"24")*1.5),
             values:[...document.querySelectorAll('section[aria-label="Customer identity"] dd,[data-testid="activity-metric-value"]')].map(el=>getComputedStyle(el).fontSize)
           };
         });
         assert.equal(layout.overflow,false,JSON.stringify({width,zoom,kind,...layout}));
         assert.equal(layout.metricsCount,6,JSON.stringify(layout));
-        for(const key of ["noHeading","evenlySpaced","identityDividers","alignedFacts","datesUnwrapped"])
+        for(const key of ["summaryHeading","evenlySpaced","alignedFacts","separatedSections","datesUnwrapped"])
           assert.equal(layout[key],true,JSON.stringify({width,zoom,kind,...layout}));
-        assert.deepEqual(layout.values,Array(9).fill("16px"));
+        assert.deepEqual(layout.values,[...Array(3).fill("14px"),...Array(6).fill("20px")]);
         await screenshot(`after-activity-${kind}-${width}-zoom-${Math.round(zoom*100)}`,zoom);
       }
       await page.goto(base+"/before?kind=user");

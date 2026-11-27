@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Monitor, Smartphone, TabletSmartphone, UsersRound } from "lucide-react";
 
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { onlinePresenceHeartbeatMs } from "@/lib/onlinePresence";
+import { createAdminUsersRefreshController, type AdminUsersRefreshState } from "@/lib/adminUsersLiveRefresh";
+import { adminOnlineUsersHref, defaultOnlineUsersQuery, matchesAdminOnlineUser, parseAdminOnlineUsersQuery, type OnlineUsersFilters as Filters } from "@/lib/adminOnlineUsersQuery";
+import { adminUsersActivityHref } from "@/lib/adminUsersNavigation";
 import type { AdminOnlineUsersSnapshot, OnlineIdentityRow } from "@/services/adminOnlineUsersService";
 
-type Filters = { q: string; type: string; role: string; platform: string };
-const empty: Filters = { q: "", type: "ALL", role: "ALL", platform: "ALL" };
 const types = [
   { value: "ALL", label: "All identities" },
   { value: "registered", label: "Registered" },
@@ -47,20 +49,10 @@ const clock = (timeZone: string) => new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit", minute: "2-digit", hour12: false, timeZone,
 });
 
-function matches(row: OnlineIdentityRow, filters: Filters) {
-  if (filters.type !== "ALL" && row.kind !== filters.type) return false;
-  if (filters.role !== "ALL" && row.role !== filters.role) return false;
-  if (filters.platform !== "ALL" && !(filters.platform === "website"
-    ? row.platforms.some(p => p === "desktop_web" || p === "mobile_web")
-    : row.platforms.includes(filters.platform as OnlineIdentityRow["platforms"][number]))) return false;
-  const term = filters.q.trim().toLowerCase();
-  if (!term) return true;
-  if (row.kind === "guest") return "guest session".includes(term);
-  return [row.name, row.email, row.id].some(value => value?.toLowerCase().includes(term));
-}
 function isSnapshot(value: unknown): value is AdminOnlineUsersSnapshot {
   if (!value || typeof value !== "object") return false;
   const result = value as Partial<AdminOnlineUsersSnapshot>;
+  if (!Number.isFinite(Date.parse(result.observedAt ?? "")) || result.windowSeconds !== 90) return false;
   if (result.status === "not_configured" || result.status === "unavailable") return true;
   if (result.status !== "ok" || !Array.isArray(result.rows)
     || !result.platforms || !Number.isSafeInteger(result.total)
@@ -73,71 +65,103 @@ function isSnapshot(value: unknown): value is AdminOnlineUsersSnapshot {
 }
 
 export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initial: AdminOnlineUsersSnapshot; timeZone?: string }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const search = searchParams.toString();
+  const parsed = useMemo(() => parseAdminOnlineUsersQuery(new URLSearchParams(search)), [search]);
+  const applied = parsed.ok ? parsed.query : defaultOnlineUsersQuery;
   const [snapshot, setSnapshot] = useState(initial);
-  const [draft, setDraft] = useState<Filters>(empty);
-  const [applied, setApplied] = useState<Filters>(empty);
-  const [page, setPage] = useState(1);
+  const [serverSnapshot, setServerSnapshot] = useState(initial);
+  const [draft, setDraft] = useState<Filters>(applied);
+  const scope = JSON.stringify([applied.q, applied.type, applied.role, applied.platform]);
+  const [draftScope, setDraftScope] = useState(scope);
+  // Browser navigation restores applied controls. A roster refresh or page
+  // change with the same filters must not erase an unfinished filter draft.
+  if (draftScope !== scope) {
+    setDraftScope(scope);
+    setDraft(applied);
+  }
   const [refreshing, setRefreshing] = useState(false);
-  const rows = useMemo(() => snapshot.status === "ok"
-    ? snapshot.rows.filter(row => matches(row, applied)) : [], [snapshot, applied]);
+  const [refreshState, setRefreshState] = useState<AdminUsersRefreshState>("live");
+  // A URL navigation can supply a newer server sample without remounting this
+  // component. Never replace a newer poll with an older cached route payload.
+  if (serverSnapshot !== initial) {
+    setServerSnapshot(initial);
+    if (refreshState !== "authorization" && Date.parse(initial.observedAt) >= Date.parse(snapshot.observedAt)) {
+      setSnapshot(initial);
+      if (refreshState !== "offline") setRefreshState("live");
+    }
+  }
+  const rows = useMemo(() => parsed.ok && snapshot.status === "ok"
+    ? snapshot.rows.filter(row => matchesAdminOnlineUser(row, applied)) : [], [snapshot, applied, parsed.ok]);
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
-  const currentPage = Math.min(page, pageCount);
+  const currentPage = Math.min(applied.page, pageCount);
   const visible = rows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const originHref = adminOnlineUsersHref({ ...applied, page: currentPage });
 
   useEffect(() => {
     let active = true;
-    let inFlight: AbortController | null = null;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const schedule = () => {
-      if (timer) clearTimeout(timer);
-      if (active && document.visibilityState === "visible") timer = setTimeout(refresh, onlinePresenceHeartbeatMs);
-    };
-    async function refresh() {
-      if (!active || document.visibilityState !== "visible" || inFlight) return;
-      const controller = new AbortController();
-      inFlight = controller;
-      setRefreshing(true);
-      const deadline = setTimeout(() => controller.abort(), 8000);
-      try {
+    let received: AdminOnlineUsersSnapshot | null = null;
+    const controller = createAdminUsersRefreshController({
+      intervalMs: onlinePresenceHeartbeatMs,
+      availability: () => document.visibilityState !== "visible" ? "hidden" : navigator.onLine ? "ready" : "offline",
+      probe: async signal => {
+        received = null;
+        setRefreshing(true);
         const response = await fetch("/api/admin/users/online", {
-          cache: "no-store", signal: controller.signal, referrerPolicy: "origin",
+          credentials: "same-origin", cache: "no-store", signal, referrerPolicy: "origin",
         });
+        if (response.status === 401 || response.status === 403) return "unauthorized";
         if (!response.ok) throw new Error("Live presence unavailable");
-        const received: unknown = await response.json();
-        if (!isSnapshot(received)) throw new Error("Invalid online presence response");
-        if (active && inFlight === controller) setSnapshot(received);
-      } catch {
-        if (active && inFlight === controller) setSnapshot({
-          status: "unavailable", observedAt: new Date().toISOString(), windowSeconds: 90,
-        });
-      } finally {
-        clearTimeout(deadline);
-        if (inFlight === controller) inFlight = null;
-        if (active) { setRefreshing(false); schedule(); }
+        const body: unknown = await response.json();
+        if (!isSnapshot(body)) throw new Error("Invalid online presence response");
+        if (active && !signal.aborted) received = body;
+        return "ready";
+      },
+      refresh: async () => {
+        if (!active || !received) return;
+        const next = received;
+        setSnapshot(current => Date.parse(next.observedAt) >= Date.parse(current.observedAt) ? next : current);
+      },
+      state: value => {
+        if (!active) return;
+        setRefreshState(value);
+        setRefreshing(value === "updating");
+        if (value === "authorization") setSnapshot({ status: "unavailable", observedAt: new Date().toISOString(), windowSeconds: 90 });
+      },
+      unauthorized: () => { if (active) router.refresh(); },
+    });
+    const resume = () => {
+      setRefreshState(current => current === "authorization" ? current : navigator.onLine ? "delayed" : "offline");
+      if (document.visibilityState !== "visible" || !navigator.onLine) {
+        setRefreshing(false);
       }
-    }
-    const onVisibility = () => {
-      if (timer) clearTimeout(timer);
-      if (document.visibilityState === "visible") void refresh();
-      else inFlight?.abort();
+      controller.resume();
     };
-    document.addEventListener("visibilitychange", onVisibility);
-    schedule();
+    document.addEventListener("visibilitychange", resume);
+    window.addEventListener("online", resume);
+    window.addEventListener("offline", resume);
+    controller.start();
     return () => {
       active = false;
-      if (timer) clearTimeout(timer);
-      inFlight?.abort();
-      document.removeEventListener("visibilitychange", onVisibility);
+      controller.dispose();
+      document.removeEventListener("visibilitychange", resume);
+      window.removeEventListener("online", resume);
+      window.removeEventListener("offline", resume);
     };
-  }, []);
+  }, [router]);
 
   const available = snapshot.status === "ok";
+  const verified = available && refreshState === "live";
   return <div className="min-w-0 space-y-5 bg-white pb-6">
     <section aria-label="Online Users" className="min-w-0 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[17px] font-semibold text-[#0F172A]">Online Users</h1>
         <span className="text-[12px] text-[#64748B]" role="status">
-          {refreshing ? "Refreshing…" : available ? "Live · last 90 seconds" : "Live data unavailable"}
+          {refreshState === "authorization" ? "Checking your access…" : refreshing ? "Refreshing…"
+            : refreshState === "offline" ? "Offline · updates resume when connected"
+            : refreshState === "delayed" ? "Updates delayed · retrying automatically"
+            : available ? "Live · last 90 seconds" : "Live data unavailable"}
         </span>
       </div>
       <div data-testid="users-online-metrics"
@@ -158,26 +182,29 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
       <p className="text-[11px] leading-4 text-[#64748B]">
         Accounts count once across platforms. Guests count by session. Website includes desktop and mobile web.
       </p>
+      {available && !verified ? <p role="status" className="text-[12px] text-[#64748B]">
+        Showing the last verified snapshot. Current online status is unverified until updates resume.
+      </p> : null}
     </section>
 
     <section aria-label="Online user records" className="min-w-0 space-y-4">
       <form aria-label="Filter online users" onSubmit={event => {
-        event.preventDefault(); setApplied(draft); setPage(1);
+        event.preventDefault(); router.push(adminOnlineUsersHref({ ...draft, page: 1 }), { scroll: false });
       }} data-testid="online-users-filter-row"
         className="grid min-w-0 grid-cols-1 items-center gap-2 border-b border-[#E2E8F0] pb-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_112px]">
         <label className="min-w-0">
           <span className="sr-only">Search online users</span>
           <input type="search" aria-label="Search online users" value={draft.q}
             onChange={event => setDraft(value => ({ ...value, q: event.target.value.slice(0,120) }))}
-            placeholder="Search name, email, or user ID"
+            placeholder="Search name, email, user ID, or country"
             className="focus-ring h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#0F172A] placeholder:text-[#64748B]" />
         </label>
         <AdminDirectorySelect name="type" label="Identity type" compact value={draft.type} options={types}
-          onValueChange={type => setDraft(value => ({ ...value, type }))} />
+          onValueChange={type => setDraft(value => ({ ...value, type: type as Filters["type"] }))} />
         <AdminDirectorySelect name="platform" label="Platform" compact value={draft.platform} options={platforms}
-          onValueChange={platform => setDraft(value => ({ ...value, platform }))} />
+          onValueChange={platform => setDraft(value => ({ ...value, platform: platform as Filters["platform"] }))} />
         <AdminDirectorySelect name="role" label="Account role" compact value={draft.role} options={roles}
-          onValueChange={role => setDraft(value => ({ ...value, role }))} />
+          onValueChange={role => setDraft(value => ({ ...value, role: role as Filters["role"] }))} />
         <button type="submit" className="focus-ring inline-flex h-10 w-full min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white hover:bg-[#003D97]">
           Apply filters
         </button>
@@ -185,10 +212,12 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-[15px] font-semibold text-[#0F172A]">Online records</h2>
         <span className="text-[12px] tabular-nums text-[#64748B]">
-          {available ? rows.length.toLocaleString("en-US") + " matching online users" : "Records unavailable"}
+          {!parsed.ok ? "Invalid filters" : available ? rows.length.toLocaleString("en-US") + (verified ? " matching online records" : " matching recorded identities") : "Records unavailable"}
         </span>
       </div>
-      {!available ? <div role="status" className="rounded-lg border border-[#E2E8F0] p-5 text-[13px] text-[#475569]">
+      {!parsed.ok ? <div role="status" className="rounded-lg border border-[#E2E8F0] p-5 text-[13px] text-[#475569]">
+        <p>{parsed.error}</p><Link href="/admin/users/online" className="focus-ring mt-2 inline-block font-medium text-[#004BB8] hover:underline">Reset online filters</Link>
+      </div> : !available ? <div role="status" className="rounded-lg border border-[#E2E8F0] p-5 text-[13px] text-[#475569]">
         Online presence could not be verified. This does not mean nobody is online.
       </div> : !rows.length ? <div className="rounded-lg border border-[#E2E8F0] p-5 text-[13px] text-[#475569]">
         No online users match the selected filters.
@@ -207,7 +236,11 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
             </tr>
           </thead>
           <tbody className="divide-y divide-[#E2E8F0]">
-            {visible.map(row => <tr key={row.kind + ":" + row.id}
+            {visible.map(row => {
+              const activityHref = row.kind === "registered"
+                ? adminUsersActivityHref("user", row.id, originHref)
+                : row.liveReference ? adminUsersActivityHref("live-guest", row.liveReference, originHref) : null;
+              return <tr key={row.kind + ":" + row.id} data-users-refresh-anchor={row.kind + ":" + (row.liveReference ?? row.id)}
               data-testid="online-user-row" className="align-middle hover:bg-[#F8FAFC]">
               <td data-label="Identity" className="break-words px-3 py-3">
                 <p className="font-medium text-[#0F172A]">{row.name}</p>
@@ -230,29 +263,27 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
                 <time dateTime={row.lastSeenAt}>{clock(timeZone).format(new Date(row.lastSeenAt))}</time>
               </td>
               <td data-label="Status" className="px-3 py-3">
-                <span className="inline-flex items-center gap-1.5 font-medium text-[#15803D]">
-                  <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-[#16A34A]" />Online
+                <span className={"inline-flex items-center gap-1.5 font-medium " + (verified ? "text-[#15803D]" : "text-[#64748B]")}>
+                  <span aria-hidden="true" className={"h-2 w-2 shrink-0 rounded-full " + (verified ? "bg-[#16A34A]" : "bg-[#94A3B8]" )} />{verified ? "Online" : "Last observed"}
                 </span>
               </td>
               <td data-label="Activity" className="px-3 py-3">
-                {row.kind === "registered" ? <Link href={"/admin/users/user/" + encodeURIComponent(row.id) + "/activity"}
-                  className="focus-ring font-medium text-[#004BB8] hover:underline">View Activity</Link>
-                  : row.liveReference && /^[A-Za-z0-9_-]{43}$/.test(row.liveReference) ? <Link prefetch={false} href={"/admin/users/live-guest/" + encodeURIComponent(row.liveReference) + "/activity"}
-                    className="focus-ring font-medium text-[#004BB8] hover:underline" title="View guest activity">View Activity</Link>
+                {activityHref ? <Link prefetch={row.kind === "guest" ? false : undefined} href={activityHref}
+                  className="focus-ring font-medium text-[#004BB8] hover:underline">View activity</Link>
                   : <span className="text-[11px] text-[#64748B]">Not linked</span>}
               </td>
-            </tr>)}
+            </tr>; })}
           </tbody>
         </table>
       </div>}
       {available && rows.length > pageSize ? <nav aria-label="Online users pagination"
         className="flex items-center justify-end gap-4 border-t border-[#E2E8F0] py-3 text-[12px]">
         <button type="button" disabled={currentPage <= 1}
-          onClick={() => setPage(Math.max(1,currentPage - 1))}
+          onClick={() => router.push(adminOnlineUsersHref({ ...applied, page: Math.max(1, currentPage - 1) }), { scroll: false })}
           className="focus-ring font-medium text-[#004BB8] disabled:text-[#94A3B8]">Previous</button>
         <span className="tabular-nums text-[#475569]">Page {currentPage} of {pageCount}</span>
         <button type="button" disabled={currentPage >= pageCount}
-          onClick={() => setPage(Math.min(pageCount,currentPage + 1))}
+          onClick={() => router.push(adminOnlineUsersHref({ ...applied, page: Math.min(pageCount, currentPage + 1) }), { scroll: false })}
           className="focus-ring font-medium text-[#004BB8] disabled:text-[#94A3B8]">Next</button>
       </nav> : null}
     </section>

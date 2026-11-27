@@ -39,7 +39,7 @@ export function AdminPageHistoryFilters({ path, query, returnHref, timeZone }: {
     const href = pageHistoryHref(path, { filters: parsed.filters, range, platform, page: 1 }, returnHref);
     startTransition(() => router.push(href, { scroll: false }));
   };
-  return <section aria-label="Page history filters" className="min-w-0 space-y-3 border-y border-[#E2E8F0] py-3">
+  return <section aria-label="Page history filters" data-users-navigation-pending={pending ? "true" : undefined} className="min-w-0 space-y-3 border-y border-[#E2E8F0] py-3">
     <div data-testid="page-history-filter-row" className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))_minmax(104px,0.8fr)]">
       <label className="relative min-w-0">
         <Search aria-hidden="true" size={16} className="pointer-events-none absolute left-3 top-3 text-[#64748B]"/>
