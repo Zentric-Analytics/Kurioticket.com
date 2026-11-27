@@ -89,17 +89,11 @@ export default async function BotDetailsPage({ params, searchParams }: {
       <p className="text-xs text-slate-600">Flights, Hotels, Cars and Packages share the allowance. It resets at midnight UTC and the cooldown continues across midnight.</p>
     </Section>}
     <Section title="Network Information">
-      <p className="text-xs text-slate-600">Up to 20 most recent retained observations</p>
+      <p className="text-xs text-slate-600">Based on up to 20 most recent recorded requests</p>
       <Fields entries={[
-        ["Observed IP addresses", observed(observations.map(row => row.ip))],
-        ["Observed countries", observed(observations.map(row => row.country))],
-        ["Observed ASNs", observed(observations.map(row => row.networkAsn ? "AS" + row.networkAsn : null))],
-        ["Observed network organizations", observed(observations.map(row => row.networkOrganization))],
-        ["Network evidence sources", observed(observations.map(row => row.networkSource && botLabel(row.networkSource)))],
-        ["Cloudflare Ray IDs", observed(observations.map(row => row.edgeRay))],
-        ["Recorded User-Agent tokens", observed(observations.map(row => row.userAgent))],
-        ["Declared identities", observed(observations.map(row => row.declaredName))],
-        ["Verification evidence", observed(observations.map(row => row.evidence && botLabel(row.evidence)))],
+        ["IP addresses", observed(observations.map(row => row.ip))],
+        ["Countries", observed(observations.map(row => row.country))],
+        ["Network organizations", observed(observations.map(row => row.networkOrganization))],
       ]} />
     </Section>
     <Section title="Security Policy">
