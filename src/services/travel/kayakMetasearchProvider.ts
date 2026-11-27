@@ -28,14 +28,16 @@ export function scopeKayakOfferIds<T extends { id: string; hotelPropertyKey?: st
 
 /** Supplier-facing identity only; the incoming native identity remains in context
  * and diagnostics. Owner-confirmed supplier authorization covers Android flight/
- * car sandbox searches on staging, not production. No response-driven fallback.
+ * car sandbox searches on staging, not production. Only cars are retained after
+ * Android acceptance; flights restore their incoming identity after a visible
+ * search failure. No response-driven fallback.
  * Hotels retain their historical bare OkHttp/Dalvik compatibility behavior. */
 export function kayakProviderUserAgent(vertical: KayakVertical, incoming?: string, env: Record<string, string | undefined> = process.env): string | undefined {
   const agent = incoming?.trim();
   if (!agent) return undefined;
   if (vertical === "hotels") return /^(?:okhttp|dalvik)\//i.test(agent) ? undefined : agent;
   const kind = kayakAgentKind(agent);
-  if ((kind === "android_transport" || kind === "android_application") &&
+  if (vertical === "cars" && (kind === "android_transport" || kind === "android_application") &&
       env.TRAVEL_PROVIDER_MODE?.trim().toLowerCase() === "staging" && isKayakSandboxEnabled(env)) {
     try {
       const url = new URL(env.NEXT_PUBLIC_APP_URL || "");

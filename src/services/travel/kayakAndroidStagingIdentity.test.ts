@@ -7,12 +7,12 @@ import type { KayakPhaseDiagnostic } from "./kayakRequestDiagnostics";
 const staging = { NEXT_PUBLIC_APP_URL: "https://staging.kurioticket.com", TRAVEL_PROVIDER_MODE: "staging", KAYAK_SANDBOX_ENABLED: "true", KAYAK_SANDBOX_API_KEY: "synthetic-test-key" };
 const android = ["okhttp/4.12.0", "Dalvik/2.1.0 (Linux; Android)", "KurioticketMobile/0.3.0 (Android; Native) OkHttp"];
 
-for (const vertical of ["flights", "cars"] as const) test(`${vertical}: authorized identity and tracking remain stable through polling and pages`, async () => {
+for (const vertical of ["flights", "cars"] as const) test(`${vertical}: retained car or restored flight identity stays stable through polling and pages`, async () => {
   let calls = 0;
   const client = new KayakSandboxClient("synthetic-test-key", async (input, init) => {
     const url = new URL(String(input));
     assert.equal(url.searchParams.get("userTrackId"), "synthetic-track");
-    assert.equal(new Headers(init?.headers).get("user-agent"), "kayakaffiliateapp");
+    assert.equal(new Headers(init?.headers).get("user-agent"), vertical === "cars" ? "kayakaffiliateapp" : android[0]);
     assert.equal(new Headers(init?.headers).get("x-original-client-ip"), "192.0.2.10");
     if (++calls === 1) return Response.json({ status: "first-phase", searchId: "synthetic-search", cluster: "4" });
     return Response.json({ status: "complete", searchId: "synthetic-search", cluster: "4", totalCount: 2, pageSize: 1, currency: "USD", priceMode: "total",
@@ -23,9 +23,9 @@ for (const vertical of ["flights", "cars"] as const) test(`${vertical}: authoriz
   assert.equal(calls, 3);
 });
 
-test("authorized Android flight/car identity requires exact staging sandbox configuration", () => {
+test("only Android cars select the authorized staging identity; flights remain restored in every environment", () => {
   for (const product of ["flights", "cars"] as KayakVertical[]) for (const agent of android) {
-    assert.equal(kayakProviderUserAgent(product, agent, staging), undefined);
+    assert.equal(kayakProviderUserAgent(product, agent, staging), product === "cars" ? undefined : agent);
     for (const env of [{}, { ...staging, TRAVEL_PROVIDER_MODE: "production" }, { ...staging, TRAVEL_PROVIDER_MODE: undefined },
       { ...staging, KAYAK_SANDBOX_ENABLED: "false" }, { ...staging, KAYAK_SANDBOX_API_KEY: "" },
       ...["https://kurioticket.com", "https://www.kurioticket.com", "http://staging.kurioticket.com", "https://staging.kurioticket.com:8443", "https://staging.kurioticket.com.evil.example", "https://user:pass@staging.kurioticket.com", "http://localhost:3000", "invalid"].map(NEXT_PUBLIC_APP_URL => ({ ...staging, NEXT_PUBLIC_APP_URL }))]) {
@@ -56,7 +56,7 @@ for (const vertical of ["flights", "cars"] as const) test(`${vertical}: configur
     const url = new URL(String(input));
     assert.equal(url.origin, "https://sandbox-en-us.kayakaffiliates.com");
     const headers = new Headers(init?.headers);
-    assert.equal(headers.get("user-agent"), "kayakaffiliateapp");
+    assert.equal(headers.get("user-agent"), vertical === "cars" ? "kayakaffiliateapp" : incoming);
     assert.equal(headers.get("x-original-client-ip"), "192.0.2.10");
     return new Response("synthetic rejection", { status: 403 });
   }, async () => {}, kayakProviderUserAgent(vertical, incoming, staging), "192.0.2.10", undefined, undefined, undefined,
