@@ -25,7 +25,6 @@ test("directory links keep the validated directory filters and exclude investiga
   const filters = botFilters({ q: "bot & crawler", group: "SEARCH_ENGINE", range: "7d", page: "2", decision: "DENIED" }, "today", now);
   assert.equal(botDirectoryHref(filters), BOT_DIRECTORY + "?range=7d&q=bot+%26+crawler&group=SEARCH_ENGINE&page=2");
   assert.equal(botFilters({ page: "Infinity", group: "fabricated", kind: "invalid" }).page, 1);
-  assert.equal(botName({ group: "UNKNOWN", name: "GOOGLEBOT" }), "Unknown bot");
 });
 
 test("bot details highlight the Bot Management workspace entry", () => {
@@ -52,6 +51,7 @@ test("directory displays UTC minutes without changing details timestamp precisio
 test("unknown bot names use recorded declaration tokens without approving or reclassifying the bot", () => {
   for (const [token, label] of [["BINGBOT", "Bingbot"], ["GOOGLEBOT", "Googlebot"], ["MJ12BOT", "MJ12BOT"], ["OAI-SEARCHBOT", "OAI-SEARCHBOT"], ["AASA-BOT", "AASA-BOT"], ["GOOGLE_INSPECTION_TOOL", "Google-InspectionTool"]]) {
     assert.equal(botName({ group: "UNKNOWN", name: null, identityKey: "UNKNOWN:" + token }), label);
+    assert.equal(botName({ group: "UNKNOWN", name: token }), label);
   }
   assert.equal(botType("search", "UNKNOWN"), "Unknown");
   assert.equal(botType("seo", "UNKNOWN"), "Unknown");

@@ -64,7 +64,7 @@ export function botHref(path: string, current: URLSearchParams, changes: Record<
  * They are attribution evidence only: never use this display name to approve a bot. */
 export function botName(bot: { group: string; name: string | null; identityKey?: string }) {
   if (bot.group !== "UNKNOWN") return knownCrawler(bot.name)?.agent ?? bot.name ?? "Unnamed bot";
-  const token = bot.identityKey?.startsWith("UNKNOWN:") ? bot.identityKey.slice("UNKNOWN:".length) : null;
+  const token = bot.name ?? (bot.identityKey?.startsWith("UNKNOWN:") ? bot.identityKey.slice("UNKNOWN:".length) : null);
   if (!token || token === "UNATTRIBUTED") return "Unknown bot";
   return knownCrawler(token)?.agent ?? (/^[A-Z0-9_-]{2,48}(?:BOT|CRAWLER|SPIDER)$/.test(token) ? token : "Unknown bot");
 }

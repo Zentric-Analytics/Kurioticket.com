@@ -110,6 +110,8 @@ test("detected unknown automation is registered, blocked and never invokes searc
   });
   assert.equal((await withBotSearch(req, async () => assert.fail("Provider reached"))).status, 403);
   const bot = await db.botRegistry.findFirstOrThrow({ where: { identityKey }, include: { activities: true } });
+  assert.equal(bot.name, name);
+  assert.equal(bot.group, "UNKNOWN");
   assert.equal(bot.access, "BLOCKED");
   assert.equal(bot.searches, BigInt(0));
   assert.equal(bot.searchAttempts, BigInt(1));
@@ -124,4 +126,10 @@ test("detected unknown automation is registered, blocked and never invokes searc
   assert.equal(bot.activities[0].networkSource, "AUTHENTICATED_EDGE");
   assert.equal(bot.activities[0].userAgent, name);
   assert.equal(bot.activities[0].decision, "DENIED");
+
+  await db.botRegistry.update({ where: { id: bot.id }, data: { name: null } });
+  await withBotSearch(req, async () => assert.fail("Provider reached"));
+  const repaired = await db.botRegistry.findUniqueOrThrow({ where: { id: bot.id } });
+  assert.equal(repaired.name, name);
+  assert.equal(repaired.requests, BigInt(2));
 });
