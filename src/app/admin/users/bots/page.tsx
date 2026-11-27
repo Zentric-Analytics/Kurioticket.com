@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { BotReportFilters } from "@/components/admin/BotReportFilters";
-import { BOT_DIRECTORY, BOT_GROUPS, botAccessLabel, botDirectoryHref, botHref, botDirectorySubtitle, botDirectoryTime, botName, botType, botVerification, type BotQuery } from "@/lib/adminBotReport";
+import { BOT_DIRECTORY, BOT_GROUPS, botRecordedAccess, botDirectoryHref, botHref, botDirectorySubtitle, botDirectoryTime, botName, botType, botRecordedVerification, type BotQuery } from "@/lib/adminBotReport";
 import { ADMIN_REPORTING_RANGE_LABELS } from "@/lib/adminReportingRanges";
 import { readBotDirectory } from "@/services/adminBotReportService";
 import { Metrics, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel } from "./report-ui";
@@ -32,6 +32,7 @@ export default async function BotManagementPage({ searchParams }: { searchParams
             <span className="text-right text-[11px] text-slate-600">{period} · UTC</span>
           </div>
           <Metrics labels={["Total requests", "Actual searches", "Denied requests", "Rate-limited requests"]} values={report.activity} />
+          <p className="text-[11px] text-slate-600">Actual searches include all matching Search History records. Request totals reflect recorded ingress activity; older searches do not imply additional request counts.</p>
         </div>
       </section>}
       <BotReportFilters filters={filters} now={now.toISOString()} />
@@ -59,8 +60,8 @@ export default async function BotManagementPage({ searchParams }: { searchParams
                     <p className="text-xs text-slate-600">{botDirectorySubtitle(bot)}</p>
                   </td>
                   <td>{botType(bot)}</td>
-                  <td>{botVerification(bot.verification)}</td>
-                  <td className="whitespace-nowrap"><span className={bot.access === "BLOCKED" ? "text-rose-700" : "text-slate-950"}>{botAccessLabel(bot.access)}</span></td>
+                  <td>{botRecordedVerification(bot)}</td>
+                  <td className="whitespace-nowrap"><span className={bot.access === "BLOCKED" ? "text-rose-700" : "text-slate-950"}>{botRecordedAccess(bot)}</span></td>
                   <td className="whitespace-nowrap tabular-nums">{botDirectoryTime(bot.lastSeen)}</td>
                   <td><Link prefetch={false} className={reportLink + " inline-flex items-center gap-1 whitespace-nowrap"}
                     href={botHref(BOT_DIRECTORY + "/" + bot.id, new URLSearchParams(), { directory: params.toString() })}>
