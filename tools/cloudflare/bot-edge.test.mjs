@@ -39,3 +39,29 @@ test("Missing observations do not use inbound internal headers; only configured 
   assert.equal(edgeRequest(new Request("http://staging.kurioticket.com/"), env), null);
   assert.equal(edgeRequest(request, { ...env, BOT_EDGE_SECRET: "" }), null);
 });
+
+test("Worker restores only definite unverified automation from trusted Cloudflare metadata", () => {
+  const cases = [
+    { metadata: { score: 1, verifiedBot: false }, expected: "automated" },
+    { metadata: { score: 1, verifiedBot: true }, expected: null },
+    { metadata: { score: 2, verifiedBot: false }, expected: null },
+    { metadata: { score: 29, verifiedBot: false }, expected: null },
+    { metadata: { score: 99, verifiedBot: false }, expected: null },
+    { metadata: { score: 1 }, expected: null },
+    { metadata: { score: 0, verifiedBot: false }, expected: null },
+    { metadata: { score: "1", verifiedBot: false }, expected: null },
+    { metadata: undefined, expected: null },
+  ];
+  for (const { metadata, expected } of cases) {
+    for (const agent of ["Mozilla/5.0 Chrome/133.0", "Googlebot", "GPTBot", "okhttp/4.12"]) {
+      const req = new Request("https://staging.kurioticket.com/", { headers: {
+        "User-Agent": agent, "X-Kurioticket-Edge-Bot": "automated",
+        "CF-Bot-Score": "1", "CF-Verified-Bot": "false",
+      } });
+      Object.defineProperty(req, "cf", { value: { botManagement: metadata } });
+      const forwarded = edgeRequest(req, env);
+      assert.equal(forwarded.headers.get("x-kurioticket-edge-bot"), expected);
+      assert.equal(forwarded.headers.get("x-kurioticket-edge-auth"), env.BOT_EDGE_SECRET);
+    }
+  }
+});
