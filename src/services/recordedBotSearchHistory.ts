@@ -1,4 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
+import { BOT_PAGE_SIZE } from "@/lib/adminBotReport";
 import { crawlerCatalog } from "@/lib/botRegistry";
 
 const engines = Object.entries(crawlerCatalog).filter(([, item]) => item.category === "search").map(([name]) => name);
@@ -13,7 +14,9 @@ const historicalAdditional = ["MJ12BOT", "OAI-SEARCHBOT", "AASA-BOT"];
 export function recordedBotSearchRows(environment: string, window?: { from: Date; to: Date }) {
   return Prisma.sql`
     SELECT s.id, s."createdAt", s.type::text AS product, s.status::text AS status,
-           s."resultCount", a.id AS "activityId", coalesce(linked.id, historic.id) AS "botId",
+           s."resultCount", s."requestId", a.id AS "activityId", coalesce(linked.id, historic.id) AS "botId",
+           CASE WHEN s.verified THEN coalesce(s.query->>'crawlerEvidence', 'VERIFIED_DNS')
+                WHEN s.query->>'crawlerEvidence' = 'DECLARED_USER_AGENT' THEN 'DECLARED_USER_AGENT' END AS "historicalEvidence",
            jsonb_build_object(
              'applicationSource', 'BOT', 'identifiedCrawler', s.query->'identifiedCrawler',
              'verifiedCrawler', s.query->'verifiedCrawler', 'crawlerEvidence', s.query->'crawlerEvidence',
@@ -56,3 +59,64 @@ export type RecordedBotSearch = {
   botId: string | null;
   evidence: Prisma.JsonValue;
 };
+
+/** Evaluate search attribution once on the same snapshot as the live events.
+ * Materialize narrow projections; only serialize the paginated rows and summary evidence. */
+export function detailHistoryQuery(environment: string, id: string, name: string | null, history: Prisma.Sql,
+  validWindow: boolean, requestedPage: number, requestedSearchPage: number) {
+  return Prisma.sql`
+    WITH attributed AS MATERIALIZED (
+      SELECT searches.* FROM (${recordedBotSearchRows(environment)}) searches
+      WHERE "botId" = ${id}
+      ${name ? Prisma.sql`OR "botId" IN (
+        SELECT id FROM "BotRegistry" WHERE environment = ${environment} AND name = ${name}
+      )` : Prisma.empty}
+    ), recorded AS MATERIALIZED (
+      SELECT * FROM attributed WHERE "botId" = ${id}
+    ), timeline AS MATERIALIZED (
+      ${validWindow ? history : Prisma.sql`SELECT NULL::text AS id, NULL::timestamp AS timestamp, NULL::text AS source WHERE FALSE`}
+    ), counts AS (
+      SELECT (SELECT count(*)::int FROM timeline) AS total,
+             count(*)::int AS actual, count(*) FILTER (WHERE "activityId" IS NULL)::int AS historical
+      FROM recorded
+    ), pages AS (
+      SELECT *, least(${requestedPage}, greatest(1, ceil(total::numeric / ${BOT_PAGE_SIZE})::int)) AS page,
+        least(${requestedSearchPage}, greatest(1, ceil(actual::numeric / ${BOT_PAGE_SIZE})::int)) AS "searchPage"
+      FROM counts
+    ), timeline_page AS MATERIALIZED (
+      SELECT * FROM timeline ORDER BY timestamp DESC, source DESC, id DESC
+      OFFSET (SELECT (page - 1) * ${BOT_PAGE_SIZE} FROM pages) LIMIT ${BOT_PAGE_SIZE}
+    )
+    SELECT ${validWindow ? Prisma.sql`total` : Prisma.sql`NULL::int`} AS total,
+      actual, historical AS "historicalActual", page, "searchPage",
+      coalesce((SELECT jsonb_agg(p ORDER BY p.timestamp DESC, p.source DESC, p.id DESC) FROM timeline_page p), '[]') AS pointers,
+      coalesce((SELECT jsonb_agg(item) FROM (
+        SELECT r.id, r."createdAt" AS timestamp, r."requestId", r.product, r.status, r."resultCount",
+               r.evidence->'searchNetwork' AS network, r."historicalEvidence" AS evidence
+        FROM timeline_page p JOIN recorded r ON r.id = p.id WHERE p.source = 'search'
+      ) item), '[]') AS historical,
+      coalesce((SELECT jsonb_agg(item ORDER BY item."createdAt" DESC, item.id DESC) FROM (
+        SELECT id, "createdAt", product, status, "resultCount", "activityId", "botId", evidence FROM recorded
+        ORDER BY "createdAt" DESC, id DESC
+        OFFSET (SELECT ("searchPage" - 1) * ${BOT_PAGE_SIZE} FROM pages) LIMIT ${BOT_PAGE_SIZE}
+      ) item), '[]') AS "recordedSearches",
+      coalesce((SELECT jsonb_agg(item ORDER BY item."createdAt" DESC, item.id DESC) FROM (
+        SELECT id, "createdAt", evidence FROM recorded
+        WHERE evidence->'searchNetwork'->>'countryCode' IS NOT NULL
+        ORDER BY "createdAt" DESC, id DESC LIMIT 20
+      ) item), '[]') AS "searchEvidence",
+      (SELECT to_jsonb(item) FROM (
+        SELECT "createdAt", evidence FROM recorded
+        WHERE jsonb_typeof(evidence->'searchNetwork'->'ipAddress') = 'string'
+          AND evidence->'searchNetwork'->>'ipAddress' <> ''
+        ORDER BY "createdAt" DESC, id DESC LIMIT 1
+      ) item) AS "latestSearchIp",
+      ${name ? Prisma.sql`coalesce((SELECT jsonb_agg(item ORDER BY item.count DESC, item.id) FROM (
+        SELECT b.id, b.verification, count(*)::int AS count
+        FROM attributed a JOIN "BotRegistry" b ON b.id = a."botId"
+        WHERE b.environment = ${environment} AND b.name = ${name} AND b.id <> ${id}
+        GROUP BY b.id, b.verification ORDER BY count DESC, b.id LIMIT 10
+      ) item), '[]')` : Prisma.sql`'[]'::jsonb`} AS "relatedCohorts"
+    FROM pages
+  `;
+}

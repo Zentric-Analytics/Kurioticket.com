@@ -67,7 +67,7 @@ export function combinedBotHistory(environment: string, botId: string, identityK
   window: BotReportWindow;
   kind?: string;
   decision?: string;
-}) {
+}, historicalSource = Prisma.sql`SELECT id, timestamp FROM (${historicalBotSearches(environment)}) history WHERE "identityKey" = ${identityKey}`) {
   const live = filters.kind === "HISTORICAL_SEARCH" ? Prisma.empty : Prisma.sql`
     SELECT id, timestamp, 'activity'::text AS source FROM "BotActivity"
     WHERE environment = ${environment} AND "botId" = ${botId}
@@ -77,8 +77,8 @@ export function combinedBotHistory(environment: string, botId: string, identityK
   `;
   const includeHistorical = !filters.decision && (!filters.kind || filters.kind === "HISTORICAL_SEARCH");
   const historical = includeHistorical ? Prisma.sql`
-    SELECT id, timestamp, 'search'::text AS source FROM (${historicalBotSearches(environment)}) history
-    WHERE "identityKey" = ${identityKey} ${botHistoryWindow(filters.window)}
+    SELECT id, timestamp, 'search'::text AS source FROM (${historicalSource}) history
+    WHERE TRUE ${botHistoryWindow(filters.window)}
   ` : Prisma.empty;
   if (filters.kind === "HISTORICAL_SEARCH") {
     return includeHistorical ? historical : Prisma.sql`SELECT NULL::text AS id, NULL::timestamp AS timestamp, NULL::text AS source WHERE FALSE`;

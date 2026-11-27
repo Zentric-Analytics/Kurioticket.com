@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { BotReportFilters } from "@/components/admin/BotReportFilters";
 import { BOT_DIRECTORY, BOT_GROUPS, botRecordedAccess, botDirectoryHref, botHref, botDirectorySubtitle, botDirectoryTime, botName, botType, type BotQuery } from "@/lib/adminBotReport";
-import { ADMIN_REPORTING_RANGE_LABELS } from "@/lib/adminReportingRanges";
 import { readBotDirectory } from "@/services/adminBotReportService";
 import { Metrics, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel } from "./report-ui";
 
@@ -14,23 +13,16 @@ export default async function BotManagementPage({ searchParams }: { searchParams
   const { filters, now } = report;
   const directory = botDirectoryHref(filters);
   const params = new URLSearchParams(directory.split("?")[1]);
-  const period = filters.range === "custom" ? filters.from + " – " + filters.to : ADMIN_REPORTING_RANGE_LABELS[filters.range];
   return (
     <div className="min-w-0 space-y-3">
       <h1 className="sr-only">Bot Management</h1>
       {report.state === "ready" && <section aria-label="Bot monitoring summary" className={reportPanel}>
         <div className="space-y-2 px-4 py-3">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-[13px] font-semibold text-slate-950">Bot Registry</h2>
-            <span className="text-[11px] text-slate-600">{report.firstDetected ? "All time · Since " + botDirectoryTime(report.firstDetected) + " UTC" : "All time"}</span>
-          </div>
+          <h2 className="text-[13px] font-semibold text-slate-950">Bot Registry</h2>
           <Metrics labels={["Total bots", "Search engines", "Other recognized", "Unknown bots"]} values={report.registry} />
         </div>
         <div className="space-y-2 border-t border-[#D8E1EC] px-4 py-3">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-[13px] font-semibold text-slate-950">Bot Activity</h2>
-            <span className="text-right text-[11px] text-slate-600">{period} · UTC</span>
-          </div>
+          <h2 className="text-[13px] font-semibold text-slate-950">Bot Activity</h2>
           <Metrics labels={["Total requests", "Actual searches", "Denied requests", "Rate-limited requests"]} values={report.activity} />
           <p className="text-[11px] text-slate-600">Actual searches include saved Search History records. Older searches do not imply additional request counts.</p>
           {report.unassignedSearches > BigInt(0) && <p className="text-xs text-slate-600">

@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
+import { Prisma } from "@/generated/prisma/client";
+import { botFilters } from "@/lib/adminBotReport";
+import { combinedBotHistory } from "./adminBotHistory";
 import { getPrisma } from "@/lib/prisma";
 import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { recordedSearchCrawler } from "./adminOperationalReadCore";
-import { recordedBotSearchRows, type RecordedBotSearch } from "./recordedBotSearchHistory";
+import { detailHistoryQuery, recordedBotSearchRows, type RecordedBotSearch } from "./recordedBotSearchHistory";
 
 test("recorded bot searches reconcile legacy and linked records exactly once, without changing authorization", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
   const previousUrl = process.env.DATABASE_URL;
@@ -79,6 +82,35 @@ test("recorded bot searches reconcile legacy and linked records exactly once, wi
   const isolated = await db.$queryRaw<RecordedBotSearch[]>(recordedBotSearchRows(elsewhere));
   assert.equal(isolated.length, 1);
   assert.equal(isolated[0].botId, foreign.id);
+  const now = new Date("2026-11-24T12:00:00Z");
+  for (const [query, expected] of [
+    [{ range: "all" }, 2],
+    [{ range: "today" }, 1],
+    [{ range: "7d" }, 1],
+    [{ range: "30d" }, 2],
+    [{ range: "custom", from: "2026-11-16", to: "2026-11-16" }, 1],
+    [{ range: "all", kind: "HISTORICAL_SEARCH" }, 2],
+    [{ range: "all", kind: "PAGE" }, 0],
+    [{ range: "all", decision: "DENIED" }, 0],
+  ] as const) {
+    const { window, kind, decision } = botFilters(query, "all", now);
+    const history = combinedBotHistory(environment, verified.id, verified.identityKey, {
+      window: window ?? undefined, kind, decision,
+    }, Prisma.sql`SELECT id, "createdAt" AS timestamp FROM recorded WHERE "activityId" IS NULL`);
+    const [detail] = await db.$queryRaw<{
+      actual: number; historicalActual: number; total: number; page: number; searchPage: number;
+      pointers: { id: string }[]; historical: { id: string; network: unknown }[]; relatedCohorts: { id: string }[];
+    }[]>(detailHistoryQuery(environment, verified.id, verified.name, history, true, 99, 99));
+    assert.equal(detail.total, expected);
+    assert.equal(detail.actual, 2);
+    assert.equal(detail.historicalActual, 2);
+    assert.equal(detail.page, 1);
+    assert.equal(detail.searchPage, 1);
+    assert.deepEqual(new Set(detail.historical.map(event => event.id)), new Set(detail.pointers.map(event => event.id)));
+    for (const event of detail.historical) assert.deepEqual(recordedSearchNetwork({ searchNetwork: event.network }), network.searchNetwork);
+    assert.equal(detail.relatedCohorts[0].id, declared.id);
+  }
+
   const unchanged = await db.botRegistry.findUniqueOrThrow({ where: { id: declared.id } });
   assert.equal(unchanged.verification, "DECLARED");
   assert.equal(unchanged.access, "CRAWL_ONLY");

@@ -72,30 +72,15 @@ export default async function BotDetailsPage({ params, searchParams }: {
       <Fields threeColumns entries={[
         ["Owner", bot.owner],
         ["Category", botType(bot)],
-        ["Verification status", <div key="verification">{report.reportVerification.label}
-          {report.reportVerification.detail && <p className="mt-0.5 text-xs text-slate-600">{report.reportVerification.detail}</p>}
-        </div>],
-        ["IP addresses", observed([
-          ...observations.map(row => row.ip ?? (row.renderLogIp ? row.renderLogIp + " (Render log)" : row.reportedIp ? row.reportedIp + " (reported)" : null)),
-          ...report.searchEvidence.map(row => row.ipAddress ? row.ipAddress + " (recorded search)" : null),
-        ])],
+        ["Verification status", report.reportVerification.label],
+        ["Latest IP address", report.latestIp],
         ["Countries", observed([
-          ...observations.map(row => row.country ?? (row.renderLogCountry ? row.renderLogCountry + " (IP estimate)" : row.reportedCountry ? row.reportedCountry + " (reported)" : null)),
-          ...report.searchEvidence.map(row => row.countryCode ? row.countryCode + " (recorded search)" : null),
+          ...observations.map(row => row.country ?? row.renderLogCountry ?? row.reportedCountry),
+          ...report.searchEvidence.map(row => row.countryCode),
         ])],
         ["First seen (UTC)", <span key="first-seen" title={botTime(bot.firstSeen)}>{botDirectoryTime(bot.firstSeen)}</span>],
         ["Last seen (UTC)", <span key="last-seen" title={botTime(bot.lastSeen)}>{botDirectoryTime(bot.lastSeen)}</span>],
       ]} />
-      <p className="text-xs text-slate-600">Network information includes up to 20 recent requests and 20 recorded searches with saved evidence for this identity. Reported and historical evidence does not establish current authenticity.</p>
-      {bot.requests === BigInt(0) && report.actual > 0 && <p className="text-xs text-slate-600">Historical search identity. No retained live requests have established its current verification.</p>}
-      {report.relatedCohorts.length > 0 && <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
-        <span>Other recorded identities with the same declared name:</span>
-        {report.relatedCohorts.map(cohort => <Link key={cohort.id} prefetch={false} className={reportLink}
-          href={BOT_DIRECTORY + "/" + cohort.id + (directory ? "?directory=" + encodeURIComponent(directory) : "")}>
-          {botVerification(cohort.verification)} · {cohort.count.toLocaleString()} searches
-        </Link>)}
-      </div>}
-      {bot.group === "UNKNOWN" && <p className="text-xs text-slate-600">This reference groups observations that may come from multiple clients.</p>}
     </Section>
     <Section title="Activity Summary">
       <p className="text-xs text-slate-600">Lifetime registry totals</p>
@@ -119,6 +104,13 @@ export default async function BotDetailsPage({ params, searchParams }: {
         <span>All time · Actual searches only · One row per counted Search History record</span>
         <Link prefetch={false} className={reportLink} href="/admin/searches/activity?identity=bot&range=all">View all bot searches</Link>
       </div>
+      {report.relatedCohorts.length > 0 && <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
+        <span>Other recorded identities with the same declared name</span>
+        {report.relatedCohorts.map(cohort => <Link key={cohort.id} prefetch={false} className={reportLink}
+          href={BOT_DIRECTORY + "/" + cohort.id + (directory ? "?directory=" + encodeURIComponent(directory) : "")}>
+          {botVerification(cohort.verification)} · {cohort.count.toLocaleString()} searches
+        </Link>)}
+      </div>}
       <div className={reportPanel}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[850px] text-left text-[13px] text-slate-700">
@@ -196,11 +188,11 @@ export default async function BotDetailsPage({ params, searchParams }: {
                           ["Network ASN", event.networkAsn ? "AS" + event.networkAsn : null], ["Network organization", event.networkOrganization],
                           ["Network evidence source", event.networkSource ? botLabel(event.networkSource) : null], ["Cloudflare Ray ID", event.edgeRay],
                           ["Render request ID", event.renderRequestId],
-                          ...(event.reportedIp ? [
+                          ...(event.reportedIp || event.reportedCountry ? [
                             ["Reported IP (not authenticated)", event.reportedIp],
                             ["Reported country (not authenticated)", event.reportedCountry],
                           ] as [string, ReactNode][] : []),
-                          ...(event.renderLogIp ? [
+                          ...(event.renderLogIp || event.renderLogCountry ? [
                             ["IP address from Render log", event.renderLogIp],
                             ["Country estimate from logged IP", event.renderLogCountry],
                             ["Render log time (UTC)", botTime(event.renderLogTimestamp)],
