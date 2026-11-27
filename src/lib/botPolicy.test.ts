@@ -2,12 +2,21 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { automationSignal, botAccess, botTarget, observeBot } from "./botPolicy";
 import { trustedBotEdge, trustedBotIngress, trustedRenderWorkspaceIngress } from "./botEdge";
-import { crawlerCatalog } from "./botRegistry";
+import { crawlerCatalog, currentBotAccess } from "./botRegistry";
 
 const request = (path: string, agent: string, method = "GET", headers = {}) =>
   new Request("https://kurioticket.com" + path, { method, headers: { "User-Agent": agent, ...headers } });
 
-test("all seven search engines have one policy and declared claims cannot reach search", async () => {
+test("all seven search engines have one policy: staging declarations can search, production requires verification", async t => {
+  const config = { TRAVEL_PROVIDER_MODE: "production", NEXT_PUBLIC_APP_URL: "https://kurioticket.com", NEXTAUTH_URL: "https://kurioticket.com" };
+  const prior = Object.fromEntries(Object.keys(config).map(key => [key, process.env[key]]));
+  Object.assign(process.env, config);
+  t.after(() => {
+    for (const [key, value] of Object.entries(prior)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
   const search = Object.entries(crawlerCatalog).filter(([, entry]) => entry.category === "search");
   assert.equal(search.length, 7);
   for (const [name, entry] of search) {
@@ -21,11 +30,22 @@ test("all seven search engines have one policy and declared claims cannot reach 
     assert.equal(bot.access, "CRAWL_ONLY");
     assert.equal(botAccess(bot, botTarget(request("/", entry.agent))), null);
     assert.equal(botAccess(bot, botTarget(req)), "SEARCH_NOT_ALLOWED");
-    const verified = { ...bot, access: "CRAWL_AND_LIMITED_SEARCH", name };
+    assert.equal(currentBotAccess(bot, "production"), "CRAWL_ONLY");
+    assert.equal(currentBotAccess(bot, "staging"), "CRAWL_AND_LIMITED_SEARCH");
+    process.env.TRAVEL_PROVIDER_MODE = "staging";
+    const declared = await observeBot(req, automationSignal(req)!);
+    assert.equal(declared.verification, "DECLARED");
+    assert.equal(declared.identityKey, "UNKNOWN:" + name);
+    assert.equal(declared.crawler?.name, name);
+    assert.equal(declared.crawler?.evidence, "DECLARED_USER_AGENT");
+    assert.equal(declared.access, "CRAWL_AND_LIMITED_SEARCH");
     for (const product of ["flights", "hotels", "cars", "packages"]) {
-      assert.equal(botAccess(verified, botTarget(request("/api/" + product + "/search", entry.agent, "POST"))), null);
+      assert.equal(botAccess(declared, botTarget(request("/api/" + product + "/search", entry.agent, "POST"))), null);
     }
-    assert.equal(botAccess(verified, botTarget(request("/guides/city-guide", entry.agent))), null);
+    assert.equal(botAccess(declared, botTarget(request("/guides/city-guide", entry.agent))), null);
+    assert.equal(botAccess(declared, botTarget(request("/api/flights/nearby-fare", entry.agent, "POST"))), "SEARCH_NOT_ALLOWED");
+    assert.equal(botAccess(declared, botTarget(request("/admin", entry.agent))), "PATH_NOT_ALLOWED");
+    process.env.TRAVEL_PROVIDER_MODE = "production";
   }
 });
 
@@ -206,9 +226,11 @@ test("explicit staging workspace trust enables genuine crawler search eligibilit
       headers: { "User-Agent": agent, "CF-Connecting-IP": "52.167.144.161", "CF-IPCountry": "US", "Rndr-Id": "render-request-fixture", ...extra },
     });
   const bing = req("Bingbot");
-  assert.equal(trustedBotIngress(bing), null, "Reporting approval cannot enable search");
+  assert.equal(trustedBotIngress(bing), null, "Reporting approval cannot authenticate ingress");
   let observed = await observeBot(bing, automationSignal(bing)!);
-  assert.equal(botAccess(observed, botTarget(bing)), "SEARCH_NOT_ALLOWED");
+  assert.equal(observed.verification, "DECLARED");
+  assert.equal(observed.crawler?.evidence, "DECLARED_USER_AGENT");
+  assert.equal(botAccess(observed, botTarget(bing)), null, "Staging category policy does not require ingress authentication");
   // Test the explicitly accepted workspace boundary. These headers are not
   // an independent proof of public ingress; private workloads must be trusted.
   process.env.BOT_TRUST_RENDER_WORKSPACE_INGRESS = "true";
