@@ -4,6 +4,7 @@ import test from "node:test";
 import { POST as importEdgeEvent } from "@/app/api/internal/bot-security/route";
 import { automationSignal, botTarget, observeBot } from "@/lib/botPolicy";
 import { withBotSearch } from "@/lib/botSecurity";
+import { searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { getPrisma } from "@/lib/prisma";
 import { nextSearchTime, recordBotAttempt, reserveBotSearch, utcDayStart } from "./botActivityStore";
 
@@ -223,4 +224,52 @@ test("verified and declared cohorts share one quota and deduplication across pro
   assert.equal((await reserve(await attempt(1, "hotels"), null)).status, 429);
   assert.equal(await db.botActivity.count({ where: { environment, dispatchedAt: { not: null } } }), 5);
   assert.equal((await db.botRegistry.findUniqueOrThrow({ where: { id: registry[1].id } })).verification, "DECLARED");
+});
+
+
+test("staging declaration reaches the normal search dispatch boundary without claiming verification", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
+  const config = {
+    DATABASE_URL: process.env.BOT_TEST_DATABASE_URL!,
+    TRAVEL_PROVIDER_MODE: "staging",
+    NEXT_PUBLIC_APP_URL: "https://staging.kurioticket.com",
+    NEXTAUTH_URL: "https://staging.kurioticket.com",
+    BOT_TRUST_RENDER_WORKSPACE_INGRESS: "false",
+    GUEST_LIVE_RENDER_INGRESS_VERIFIED: "false",
+  };
+  const prior = Object.fromEntries(Object.keys(config).map(key => [key, process.env[key]]));
+  Object.assign(process.env, config);
+  const db = getPrisma();
+  const identityKey = "UNKNOWN:APPLEBOT";
+  t.after(async () => {
+    await db.botActivity.deleteMany({ where: { environment: "staging", bot: { identityKey } } });
+    await db.botRegistry.deleteMany({ where: { environment: "staging", identityKey } });
+    await db.$disconnect();
+    for (const [key, value] of Object.entries(prior)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+  let providerCalls = 0;
+  const search = (product: string) => withBotSearch(
+    new Request("https://staging.kurioticket.com/api/" + product + "/search", {
+      method: "POST", headers: { "User-Agent": "Applebot" },
+    }), async bot => {
+      assert.ok(bot);
+      assert.deepEqual(searchCrawlerMetadata(bot.crawler), {
+        identifiedCrawler: "APPLEBOT", crawlerEvidence: "DECLARED_USER_AGENT",
+      });
+      const blocked = await bot.reserve();
+      if (blocked) return blocked;
+      providerCalls++;
+      bot.outcome("EMPTY");
+      return new Response(null, { status: 200 });
+    });
+  assert.equal((await search("flights")).status, 200);
+  assert.equal((await search("hotels")).status, 429);
+  assert.equal(providerCalls, 1);
+  const row = await db.botRegistry.findFirstOrThrow({ where: { environment: "staging", identityKey } });
+  assert.equal(row.verification, "DECLARED");
+  assert.equal(row.access, "CRAWL_AND_LIMITED_SEARCH");
+  assert.equal(row.searches, BigInt(1));
+  assert.equal(row.searchAttempts, BigInt(2));
 });
