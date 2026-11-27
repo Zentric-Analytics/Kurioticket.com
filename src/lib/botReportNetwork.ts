@@ -6,7 +6,7 @@ import type { PublicEnvironment } from "./stagingSafety";
 /** Reuse the reviewed staging ingress gate for reporting only. Its opt-in is
  * not proof of bot identity; private callers can bypass the public proxy.
  * No XFF fallback, new credentials, provider call or authorization change. */
-export function botReportNetwork(request: Request, environment: PublicEnvironment) {
+export function botReportNetwork(request: Request, environment: PublicEnvironment): { reportedIp?: string; reportedCountry?: string | null } {
   if (environment !== "staging") return {};
   const ip = renderGuestCountryIp(request);
   if (!ip) return {};
