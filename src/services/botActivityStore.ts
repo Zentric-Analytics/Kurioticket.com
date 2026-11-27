@@ -26,6 +26,10 @@ export function nextSearchTime(now: Date, latest: Date | undefined, used: number
 
 export async function recordBotAttempt(request: Request, bot: Bot, target: Target, reason: string | null, edgeBlock?: { id: string; status: number; timestamp: Date }) {
   const environment = getPublicEnvironment();
+  // Render emits the same Rndr-Id as requestID in the public HTTP request log.
+  // Imported edge denials never reached this service as an original request.
+  const trace = edgeBlock ? null : request.headers.get("rndr-id");
+  const renderRequestId = trace && /^[a-zA-Z0-9_-]{1,128}$/.test(trace) ? trace : null;
   const method = /^(GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS)$/.test(request.method) ? request.method : "OTHER";
   return getPrisma().$transaction(async tx => {
     if (edgeBlock) {
@@ -56,7 +60,7 @@ export async function recordBotAttempt(request: Request, bot: Bot, target: Targe
         id: edgeBlock?.id ?? randomUUID(), botId: registry.id, environment, timestamp,
         endpoint: target.endpoint, kind: target.kind, product: target.product, method,
         declaredName: bot.declaredName, verification: bot.verification, evidence: bot.evidence,
-        ip: bot.ip, country: bot.country, userAgent: bot.userAgent, edgeRay: bot.edgeRay,
+        renderRequestId, ip: bot.ip, country: bot.country, userAgent: bot.userAgent, edgeRay: bot.edgeRay,
         networkAsn: bot.networkAsn, networkOrganization: bot.networkOrganization, networkSource: bot.networkSource,
         decision: throttled ? "RATE_LIMITED" : reason ? "DENIED" : searchPending ? "PENDING" : "ALLOWED",
         reason: reason ?? (throttled ? "CRAWL_LIMIT" : searchPending ? "VALIDATION_PENDING" : "PUBLIC_CRAWL"),
