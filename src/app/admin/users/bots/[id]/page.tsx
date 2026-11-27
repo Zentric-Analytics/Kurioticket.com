@@ -6,7 +6,7 @@ import { BotReportFilters } from "@/components/admin/BotReportFilters";
 import { BOT_DECISIONS, BOT_DIRECTORY, BOT_KINDS, botAccessLabel, botDirectoryHref, botFilters, botLabel, botName, botTime, botType, botVerification, type BotQuery } from "@/lib/adminBotReport";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { readBotDetails } from "@/services/adminBotReportService";
-import { BOT_ACTIVITY_RETENTION_DAYS, BOT_DAILY_SEARCH_LIMIT, BOT_SEARCH_COOLDOWN_MS, botCrawlRequestsPerMinute } from "@/services/botActivityStore";
+import { BOT_DAILY_SEARCH_LIMIT, BOT_SEARCH_COOLDOWN_MS } from "@/services/botActivityStore";
 import { BotIcon, Metrics, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel, reportRow } from "../report-ui";
 
 function Fields({ entries }: { entries: [string, ReactNode][] }) {
@@ -46,8 +46,6 @@ export default async function BotDetailsPage({ params, searchParams }: {
   if (report.state === "unavailable") return <div className="space-y-3">{backLink}<ReportUnavailable /></div>;
 
   const { bot, observations, quota, filters } = report;
-  const blocked = bot.access === "BLOCKED";
-  const allowedSearch = bot.access === "CRAWL_AND_LIMITED_SEARCH" && bot.verification === "VERIFIED" && bot.group === "SEARCH_ENGINE";
   const cooldownMinutes = BOT_SEARCH_COOLDOWN_MS / 60_000;
   const activityParams = new URLSearchParams(Object.entries({
     directory, range: filters.range, from: filters.from, to: filters.to,
@@ -94,15 +92,6 @@ export default async function BotDetailsPage({ params, searchParams }: {
         ["IP addresses", observed(observations.map(row => row.ip))],
         ["Countries", observed(observations.map(row => row.country))],
         ["Network organizations", observed(observations.map(row => row.networkOrganization))],
-      ]} />
-    </Section>
-    <Section title="Security Policy">
-      <Fields entries={[
-        ["Public page access", blocked ? "Blocked" : "GET and HEAD access to approved public pages and resources"],
-        ["Travel search permissions", allowedSearch ? "Limited searches on the approved Flights, Hotels, Cars and Packages endpoints" : "Blocked"],
-        ["Private and Admin resources", "Blocked"],
-        ["Public crawl rate limit", blocked ? "Public crawl blocked" : botCrawlRequestsPerMinute(bot.group) + " requests per minute for this identity"],
-        ["Registration and monitoring", "Observed requests are registered and monitored. Detailed activity is retained for " + BOT_ACTIVITY_RETENTION_DAYS + " days."],
       ]} />
     </Section>
     <Section title="Activity History">
