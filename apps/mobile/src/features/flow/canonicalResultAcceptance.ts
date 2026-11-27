@@ -18,8 +18,8 @@ export function acceptCanonicalResults<T extends { id?: unknown }>(
   const rejectedIds: string[] = [];
 
   for (const result of results) {
-    if (isSafeForPresentation(result)) accepted.push(result);
-    else rejectedIds.push(typeof result.id === "string" && result.id ? result.id : "missing-id");
+    if (result && typeof result === "object" && !Array.isArray(result) && isSafeForPresentation(result)) accepted.push(result);
+    else rejectedIds.push(result && typeof result.id === "string" && result.id ? result.id : "missing-id");
   }
 
   return { canonicalCount: results.length, accepted, rejectedIds };

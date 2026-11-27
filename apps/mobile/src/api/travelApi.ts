@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from "../config/apiUrl";
+import { abortTravelRequest, travelAbortReason, describeTransportFailure, type TravelFailureCode } from "./travelTransportFailure";
 import { applySessionRevocation, readSession, readStoredSession, subscribeSession, type StoredSession } from "../storage/sessionStorage";
 import { Platform } from "react-native";
 import type { CanonicalLocation } from "@/lib/locations/types";
@@ -20,7 +21,7 @@ import { reconcileOrdinarySession } from "../features/auth/authApi";
 import { createProviderHandoffMetadata, type ProviderHandoffMetadataReader } from "../../../../src/lib/providerHandoffClient";
 
 export class TravelApiError extends Error {
-  constructor(message: string, public status = 0, public code: "cancelled" | "timeout" | "configuration" | "validation" | "rate-limit" | "unavailable" | "server" | "network" | "invalid-response" = "network", public details?: Record<string, unknown>) { super(message); }
+  constructor(message: string, public status = 0, public code: TravelFailureCode = "network", public details?: Record<string, unknown>) { super(message); }
 }
 
 export type FlightResult = ContractResult<PublicFlightResult>;
@@ -207,12 +208,12 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   }
   if (accountOwned && epoch !== accountEpoch) throw new TravelApiError("Account changed. Discarding the previous request.", 0, "cancelled");
   const controller = new AbortController();
-  const onAbort = () => { trace("cancelled", { category: typeof options.signal?.reason === "string" ? options.signal.reason : "cancelled" }); controller.abort("cancelled"); };
+  const onAbort = () => { trace("cancelled", { category: typeof travelAbortReason(options.signal) === "string" ? String(travelAbortReason(options.signal)) : "cancelled" }); abortTravelRequest(controller, String(travelAbortReason(options.signal) ?? "cancelled")); };
   options.signal?.addEventListener("abort", onAbort, { once: true });
   const deadlineMs = options.timeoutMs ?? 20000;
   const timerStartedAt = performance.now();
   trace("timer-start", { deadlineMs });
-  const timeout = setTimeout(() => { trace("timer-expired", { deadlineMs, category: "timeout" }); controller.abort("timeout"); }, deadlineMs);
+  const timeout = setTimeout(() => { trace("timer-expired", { deadlineMs, category: "timeout" }); abortTravelRequest(controller, "timeout"); }, deadlineMs);
   try {
     const sentOperationalCredential = operationalPaths.has(path) && epoch === accountEpoch && actor === operationalSearchActor ? operationalSearchCredential : null;
     const response = await fetch(`${base.baseUrl}${path}`, {
@@ -256,14 +257,12 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
     let parsed: unknown;
     try {
       parsed = await response.json();
-      // Fetch/RN combines body consumption and parsing here; do not call this
-      // an independently measured first-header or JSON.parse-only interval.
-
-    } catch {
-      throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-response");
+    } catch (error) {
+      const failure = describeTransportFailure(error, controller.signal, options.signal, "body");
+      throw new TravelApiError(failure.message, failure.code === "invalid-json" ? response.status : 0, failure.code);
     }
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-response");
+      throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-schema");
     }
     const data = parsed as Record<string, unknown>;
     // Progressive responses may establish a canonical server search ID distinct
@@ -271,6 +270,9 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
     if (diagnosticId && typeof data.requestId === "string" && data.requestId !== diagnosticId && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(data.requestId)) {
       trace = createSearchDiagnostics(product, data.requestId, "native", { platform: Platform.OS, span: "transport", startedAt: diagnosticStartedAt });
       trace("correlation", { relatedRequestId: diagnosticId });
+    }
+    if (response.ok && operationalSearchPaths.has(path) && !Array.isArray(data.results)) {
+      throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-schema");
     }
     if ((accountOwned || options.expectedUserId) && epoch !== accountEpoch) throw new TravelApiError("Account changed. Discarding the previous response.", 0, "cancelled");
     const responseJsonMs = performance.now() - jsonStartedAt;
@@ -288,7 +290,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
         await reconcileOrdinarySession(ordinarySession).catch(() => undefined);
         if (epoch !== accountEpoch) throw new TravelApiError("Account changed. Discarding the previous response.", 0, "cancelled");
       }
-      const code = response.status === 400 ? "validation" : response.status === 429 ? "rate-limit" : response.status === 503 ? "unavailable" : response.status >= 500 ? "server" : "network";
+      const code = response.status === 400 ? "validation" : response.status === 429 ? "rate-limit" : response.status === 503 ? "unavailable" : response.status >= 500 ? "server" : "http";
       throw new TravelApiError(apiErrorMessage(data), response.status, code, data);
     }
     if (path === "/api/flights/search") {
@@ -302,13 +304,10 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
     trace("terminal", { category: "success", count: Array.isArray(data.results) ? data.results.length : undefined, completed: data.completed !== false && !data.nextCursor });
     return data as T;
   } catch (error) {
-    trace("terminal", { category: error instanceof TravelApiError ? error.code : controller.signal.aborted ? options.signal?.aborted ? "cancelled" : "timeout" : "network" });
-    if (error instanceof TravelApiError) throw error;
-    if (controller.signal.aborted) {
-      const cancelled = options.signal?.aborted;
-      throw new TravelApiError(cancelled ? "Search cancelled." : "The search took too long. Please try again.", 0, cancelled ? "cancelled" : "timeout");
-    }
-    throw new TravelApiError("The search service could not be reached. Check your connection and try again.", 0, "network");
+    if (error instanceof TravelApiError) { trace("terminal", { category: error.code }); throw error; }
+    const failure = describeTransportFailure(error, controller.signal, options.signal, "fetch");
+    trace("terminal", { category: failure.code });
+    throw new TravelApiError(failure.message, 0, failure.code);
   } finally { clearTimeout(timeout); options.signal?.removeEventListener("abort", onAbort); trace("timer-stop", { durationMs: performance.now() - timerStartedAt }); }
 }
 

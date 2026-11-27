@@ -1,3 +1,4 @@
+import { abortTravelRequest, travelAbortReason, describeTransportFailure } from "./travelTransportFailure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
@@ -24,6 +25,7 @@ function fixture() {
   coordinator.rememberSearch(searchId, coordinator.captureContext());
   const dependencies: Record<string, unknown> = {
     "../../../../src/shared/search/diagnostics": { createSearchDiagnostics },
+    "./travelTransportFailure": { abortTravelRequest, travelAbortReason, describeTransportFailure },
     "../config/apiUrl": { getApiBaseUrl: () => ({ ok: true, baseUrl: "https://staging.kurioticket.com" }) },
     "../storage/sessionStorage": { readSession: async () => ({ token: "test-session" }), subscribeSession: (listener: typeof sessionListener) => { sessionListener = listener; } },
     "react-native": { Platform: { OS: "ios" } },

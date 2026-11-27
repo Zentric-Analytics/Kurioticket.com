@@ -9,7 +9,7 @@ const route = readFileSync("../../src/app/api/flights/search/handler.ts", "utf8"
 
 test("flight results bound LOS to JFK and every other request with abort and stale guards", () => {
   assert.match(screen, /new AbortController\(\)/);
-  assert.match(screen, /activeSearch\.current\?\.abort\("superseded"\)/);
+  assert.match(screen, /abortTravelRequest\(activeSearch\.current, "superseded"\)/);
   assert.match(screen, /sequence === searchSequence\.current/);
   assert.match(screen, /if \(!isCurrent\(\)\) return/);
   assert.match(screen, /code === "cancelled"/);
@@ -34,7 +34,7 @@ test("request identity and the shared metasearch timeout reach the backend", () 
   assert.match(api, /searchHotels:[\s\S]*timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS/);
   assert.match(api, /searchCars:[\s\S]*timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS/);
   assert.match(screen, /searchFlights\(plan\.plan\.payload, \{ signal: controller\.signal, requestId, sandboxDisplay: true \}\)/);
-  assert.match(screen, /controller\.abort\("ui-deadline"\)/);
+  assert.match(screen, /abortTravelRequest\(controller, "ui-deadline"\)/);
   assert.match(screen, /deadlineExpired \|\|/);
   assert.match(route, /headers\.get\("x-search-request-id"\)/);
   assert.match(route, /requestId,/);
@@ -44,7 +44,7 @@ test("deadline, supersession, cleanup, and retry preserve latest-request ownersh
   assert.match(screen, /const sequence = \+\+searchSequence\.current/);
   assert.match(screen, /if \(!isLatest\(\) \|\| \(product === "flight" && currentFlightSearchKey\.current !== requestedSearchKey\)\) return/);
   assert.match(screen, /searchSequence\.current \+= 1/);
-  assert.match(screen, /activeSearch\.current\?\.abort\("screen-cleanup"\)/);
+  assert.match(screen, /abortTravelRequest\(activeSearch\.current, "screen-cleanup"\)/);
   assert.match(screen, /activeExecutionKey\.current !== executionKey/);
   assert.match(screen, /searchAbortTimer\.current = setTimeout/);
   assert.match(screen, /setRetry\(\(x\) => x \+ 1\)/);
@@ -66,7 +66,8 @@ test("production parsing uses one native JSON path and safe response metadata", 
   assert.doesNotMatch(api, /response\.text\(\)/);
   assert.doesNotMatch(api, /JSON\.parse\(raw\)/);
   assert.match(api, /response\.headers\.get\("content-length"\)/);
-  assert.match(api, /TravelApiError\("The search provider returned an invalid response\.", response\.status, "invalid-response"\)/);
+  assert.match(api, /TravelApiError\("The search provider returned an invalid response\.", response\.status, "invalid-schema"\)/);
+  assert.match(api, /describeTransportFailure\(error, controller\.signal, options\.signal, "body"\)/);
   assert.doesNotMatch(api, /error\.message.*JSON|JSON.*error\.message/);
 });
 
