@@ -157,6 +157,7 @@ jobs:
           src/lib/adminActivityLiveQuery.test.ts
           src/lib/adminDeviceHistory.test.ts
           src/components/admin/AdminUsersLiveRefresh.browser.test.ts
+          src/components/admin/AdminUnifiedActivityList.browser.test.ts
           src/components/admin/AdminOnlineUsersDirectory.browser.test.ts
           src/components/admin/AdminPageHistoryFilters.browser.test.ts
           src/components/admin/adminStateSynchronization.browser.test.ts

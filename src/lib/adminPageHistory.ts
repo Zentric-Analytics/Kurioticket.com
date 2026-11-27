@@ -104,6 +104,6 @@ export function pageHistoryFiltersKey(query: PageHistoryQuery, timeZone: string)
 
 export function pageHistoryHrefFromActivity(kind: IdentityKind, id: string, filters: ActivityFilters, rawRange: string | undefined, returnHref: string) {
   const path = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/pages";
-  const range = rawRange && isAdminReportingRange(rawRange) ? rawRange : filters.from || filters.to ? "custom" : "all";
+  const range = rawRange && isAdminReportingRange(rawRange) ? rawRange : filters.from || filters.to ? "custom" : "today";
   return pageHistoryHref(path, { filters: { ...filters, tab: "pages", stage: "all", order: "newest" }, range, platform: "all", page: 1 }, pageHistoryBackHref(kind, id, returnHref));
 }

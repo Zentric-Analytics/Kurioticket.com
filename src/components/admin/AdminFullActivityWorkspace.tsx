@@ -55,7 +55,7 @@ export function AdminFullActivityWorkspace({
   backHref, title, identityType, identityDetails, journeyAction, filters,
   categories, activeCategory, historyActions = [], coverage, prefetch, children,
 }: Props) {
-  const tabs = <nav aria-label="Activity categories" className="flex flex-wrap gap-x-5 gap-y-1">
+  const tabs = <nav aria-label="Activity categories" className="flex min-w-0 flex-wrap gap-x-4 gap-y-0">
     {categories.map(category => category.href
       ? <Link key={category.value} href={category.href} prefetch={prefetch}
         aria-current={activeCategory === category.value ? "page" : undefined}
@@ -70,7 +70,7 @@ export function AdminFullActivityWorkspace({
       </span>)}
   </nav>;
 
-  return <div className="min-w-0 space-y-5 bg-white pb-5 text-[#0F172A]">
+  return <div className="min-w-0 space-y-3 bg-white pb-5 text-[#0F172A]">
     <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
       <nav aria-label="Breadcrumb"><Link href={backHref} prefetch={prefetch} className={linkClass}>
         <ArrowLeft size={15} aria-hidden="true"/> Back to Activity

@@ -142,13 +142,13 @@ export default async function AdminDeviceHistoryPage({ params, searchParams }: P
               {result.sessions.map(session => {
                 const Icon = sourceIcon(session);
                 return <tr key={session.id} data-users-refresh-anchor={session.id} data-testid="device-history-row">
-                  <td className="px-3 py-3"><span className="inline-flex items-center gap-1.5 font-medium"><Icon size={15} aria-hidden="true"/>{platformLabel(session)}</span></td>
-                  <td className="break-words px-3 py-3">{deviceValue(session.deviceLabel)}</td>
-                  <td className="px-3 py-3">{deviceValue(session.os)}</td>
-                  <td className="px-3 py-3">{session.client === "MOBILE" ? "In-app" : deviceValue(session.browser)}</td>
-                  <td className="break-words px-3 py-3">{deviceValue(session.locationLabel)}</td>
-                  <td className="px-3 py-3 tabular-nums"><time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt, timeZone)}</time></td>
-                  <td className="px-3 py-3">
+                  <td data-label="Platform" className="px-3 py-3"><span className="inline-flex items-center gap-1.5 font-medium"><Icon size={15} aria-hidden="true"/>{platformLabel(session)}</span></td>
+                  <td data-label="Device" className="break-words px-3 py-3">{deviceValue(session.deviceLabel)}</td>
+                  <td data-label="OS" className="px-3 py-3">{deviceValue(session.os)}</td>
+                  <td data-label="Browser" className="px-3 py-3">{session.client === "MOBILE" ? "In-app" : deviceValue(session.browser)}</td>
+                  <td data-label="Location" className="break-words px-3 py-3">{deviceValue(session.locationLabel)}</td>
+                  <td data-label="Last seen" className="px-3 py-3 tabular-nums"><time dateTime={session.lastSeenAt.toISOString()}>{format(session.lastSeenAt, timeZone)}</time></td>
+                  <td data-label="Status" className="px-3 py-3">
                     <VerifiedDeviceStatus session={session} observedAt={observedAt} onlineSessionIds={onlineSessionIds} validSessionIds={validSessionIds} />
                     {session.revokedAt && recordedDeviceSignOutReason(session.revokeReason) ? <span className="mt-1 block break-words text-[11px] leading-4 text-[#64748B]">
                       {recordedDeviceSignOutReason(session.revokeReason)}

@@ -26,7 +26,7 @@ const database = process.env.USER_ACCESS_TEST_DATABASE_URL;
  * This deliberately ordered replay does not claim to reproduce a past browser
  * incident or test the HTTP authentication boundary.
  */
-test("PostgreSQL characterizes a heartbeat advancing beyond the profile's captured access cutoff", { skip: !database }, async () => {
+test("PostgreSQL keeps the latest account device when a heartbeat commits after the profile request starts", { skip: !database }, async () => {
   const target = new URL(database!);
   assert.equal(target.protocol, "postgresql:");
   assert.ok(["localhost", "127.0.0.1"].includes(target.hostname), "only a disposable local PostgreSQL server is allowed");
@@ -109,12 +109,11 @@ test("PostgreSQL characterizes a heartbeat advancing beyond the profile's captur
     const observed = await db.onlinePresenceSession.findUniqueOrThrow({ where: { environment_sourceId: { environment: "staging", sourceId } } });
     assert.equal(observed.accountSessionId, currentId);
 
-    // Temporary characterization gate: after CI proves this before-result,
-    // replace this assertion with currentId in the correction commit. This is
-    // evidence of the timing mechanism, not an accepted product contract.
-    assert.equal((await latest(requestedAt)).id, signedOutId, "captured cutoff currently falls back to an older signed-out browser");
+    // The profile shows current mutable access state. Its earlier request
+    // timestamp must not hide the heartbeat or expose the older browser.
+    assert.equal((await latest(requestedAt)).id, currentId, "latest access must retain the current device after the heartbeat commits");
     assert.equal((await latest(new Date(+heartbeatAt + 1_000))).id, currentId, "a subsequent request sees the still-present current session");
-    console.log("Verified PostgreSQL replay: current device before heartbeat; older signed-out device with stale cutoff; current device on next request.");
+    console.log("Verified PostgreSQL regression: current device before and after the concurrent heartbeat, with exact account isolation.");
   } finally {
     await db.$disconnect();
     if (created) await control.query('DROP DATABASE "' + name + '"');

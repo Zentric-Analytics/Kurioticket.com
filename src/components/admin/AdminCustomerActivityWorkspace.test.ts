@@ -23,7 +23,7 @@ test("recorded identities show exact six metrics and meaningful zero with usable
   assert.equal(document.querySelectorAll('[aria-label="Unavailable"]').length,0);
   assert.equal(document.querySelector('[data-testid="activity-events-fact"] dd')?.textContent,"11");
   assert.match(document.querySelector('[aria-label="Customer identity"]')?.textContent ?? "",/Identity created.*Last seen.*Recorded actions in period/);
-  assert.match(document.body.textContent ?? "",/Reporting period: All time/);
+  assert.match(document.body.textContent ?? "",/Reporting period: Today/);
   assert.equal(document.querySelector('[aria-label="Activity summary"]')?.compareDocumentPosition(document.querySelector('[data-testid="activity-page-card"] > p')!),4);
 });
 
@@ -37,11 +37,13 @@ test("essential guests retain measurable actions and clearly mark unsupported me
   assert.equal(document.querySelectorAll('[data-testid="activity-metric-value"]').length,6);
 });
 
-test("unlinked live sessions use the shared workspace without fabricated zero or first access",()=>{
+test("temporary live sessions show available context without empty metrics or invented history",()=>{
   const document=render({...common,title:"Guest session",badge:"Live session",coverage:"live",firstLabel:"First observed",firstSeenAt:null,eventCount:null,summary:null});
-  assert.equal(document.querySelectorAll('[data-testid="activity-metric-value"]').length,6);
-  assert.equal(document.querySelectorAll('[aria-label="Unavailable"]').length,8);
+  assert.equal(document.querySelectorAll('[data-testid="activity-metric-value"]').length,0);
+  assert.equal(document.querySelectorAll('[aria-label="Unavailable"]').length,1);
   assert.equal(document.querySelectorAll('[data-testid="activity-metric"][href]').length,0);
   assert.ok(document.querySelector('[data-testid="activity-info-grid"]'));
+  assert.equal(document.querySelector('[data-testid="activity-events-fact"]'),null);
+  assert.match(document.querySelector('[role="status"]')?.textContent ?? "",/Recorded activity history is unavailable for this temporary guest session/);
   assert.doesNotMatch(document.body.textContent ?? "",/Copy guest ID|Manage account|Manage guest/);
 });

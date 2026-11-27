@@ -63,6 +63,18 @@ await put("app/layout.jsx", 'import "./globals.css";\n' +
   '<AdminHorizontalShell adminRole="ADMIN" adminEmail="qa.admin@example.invalid" adminName="QA admin">{children}</AdminHorizontalShell>\n' +
   '</body></html>;}');
 await put("app/page.jsx", 'export default function Home(){return <p>Isolated Admin Activity visual QA.</p>;}');
+// Exercise the real table-generated navigation before entering the real
+// Activity routes. The directory's database reader has its own isolated suite.
+await put("app/admin/users/page.jsx", [
+  'import {AdminIdentityTable} from "@/components/admin/AdminIdentityTable";',
+  'export default async function Directory({searchParams}){',
+  'const raw=await searchParams;const query=new URLSearchParams({date:typeof raw.date==="string"?raw.date:"today"});',
+  'for(const key of ["from","to"])if(typeof raw[key]==="string")query.set(key,raw[key]);',
+  'const at=new Date("2026-10-20T12:00:00.000Z");',
+  'const rows=[{kind:"user",lastSeenAt:at,record:{id:"qa-registered-0001",name:"QA registered customer",email:"qa.customer@example.invalid",role:"USER",status:"ACTIVE",createdAt:at}}];',
+  'return <section><h1>Users directory</h1><p>Navigation fixture — synthetic account</p><AdminIdentityTable rows={rows} sort="newest" timeZone="UTC" pageHref={"/admin/users?"+query}/></section>;',
+  '}',
+].join("\n"));
 // The shared admin shell polls its notification summary. Supply a deterministic
 // synthetic response in this isolated fixture instead of compiling a 404 page
 // during Activity screenshots. No live alert data or service is used.

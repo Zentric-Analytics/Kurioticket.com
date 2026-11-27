@@ -19,12 +19,42 @@ try {
     await page.setViewportSize({width,height:900});
     for (const kind of ["guest","user"]) {
       const id = kind === "guest" ? "qa-guest-activity-0001" : "qa-registered-0001";
-      const path = "/admin/users/"+kind+"/"+id+"/activity?range=all";
+      const origin = "/admin/users?tab="+(kind === "guest" ? "GUEST" : "REGISTERED")+"&date=all";
+      const activityPath = "/admin/users/"+kind+"/"+id+"/activity";
+      const path = activityPath+"?"+new URLSearchParams({range:"all",usersReturn:origin});
       await page.goto(base+path);
 
       await expect(page.getByTestId("unified-activity-list")).toBeVisible();
       await expect(page.locator('[data-activity-id]')).toHaveCount(5);
       await expect(page.getByRole("link",{name:/View journey history/i})).toHaveCount(0);
+      await expect(page.getByRole("link",{name:"View pages visited",exact:true})).toHaveCount(0);
+      // Row details expose the exact source record without navigating away
+      // from the selected identity or inventing original-owner evidence.
+      const newest = page.locator('[data-activity-id="j-qa-newer-search"]');
+      const disclosure = newest.locator("details");
+      const trigger = newest.locator("summary");
+      const panel = newest.getByTestId("activity-event-details");
+      await expect(panel).not.toBeVisible();
+      await expect(newest.getByText("Search originally recorded as guest",{exact:true})).toHaveCount(0);
+      await trigger.focus();
+      await page.keyboard.press("Enter");
+      await expect(panel).toBeVisible();
+      await expect(page).toHaveURL(base+path);
+      const originalSearch = panel.getByRole("link",{name:"View original search",exact:true});
+      await expect(originalSearch).toHaveCount(1);
+      const target = new URL(await originalSearch.getAttribute("href"),base);
+      assert.equal(target.pathname,"/admin/searches/qa-newer-search");
+      assert.equal(target.searchParams.get("environment"),"staging");
+      const returnToken = target.searchParams.get("activityReturn");
+      assert.match(returnToken,/^v1\.[A-Za-z0-9_-]+$/);
+      const context = JSON.parse(Buffer.from(returnToken.slice(3),"base64url").toString("utf8"));
+      assert.equal(context.path,activityPath);
+      assert.equal(context.filters.range,"all");
+      assert.equal(context.filters.usersReturn,origin);
+      await trigger.focus();
+      await page.keyboard.press("Space");
+      await expect(disclosure).not.toHaveAttribute("open","");
+      await expect(panel).not.toBeVisible();
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
       // Preserve server-rendered input attributes while hydration may settle.
       await page.screenshot({caret:"initial",path:output+"/activity-summary-"+kind+"-"+width+".png",fullPage:true});

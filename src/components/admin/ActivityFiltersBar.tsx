@@ -82,6 +82,7 @@ export function ActivityFiltersBar({ path, initial, directory, usersReturn, tabs
   const customDates = initial.range === "custom" && draftDates.from === initialDates.from && draftDates.to === initialDates.to
     ? { from: initial.from, to: initial.to } : draftDates;
   const apply = () => {
+    if (disabled || pending) return;
     if ((editingCustom || values.range === "custom") && !validCustom) return;
     navigate((editingCustom || values.range === "custom") ? { ...values, range: "custom", ...customDates } : values);
   };
@@ -92,15 +93,15 @@ export function ActivityFiltersBar({ path, initial, directory, usersReturn, tabs
   };
   const rangeLabel = initial.range === "custom"
     ? initialDates.from + " to " + initialDates.to
-    : [...ADMIN_REPORTING_RANGE_OPTIONS, {value:"24h",label:"Last 24 hrs"}].find(option => option.value === initial.range)?.label ?? "All time";
+    : [...ADMIN_REPORTING_RANGE_OPTIONS, {value:"24h",label:"Last 24 hrs"}].find(option => option.value === initial.range)?.label ?? "Today";
   const chips: {label: string; clear?: Partial<ActivityFilterValues>}[] = [
-    {label:rangeLabel, ...(initial.range !== "all" ? {clear:{range:"all",from:"",to:""}} : {})},
+    ...(initial.range !== "today" ? [{label:rangeLabel,clear:{range:"today",from:"",to:""}}] : []),
     ...(initial.q ? [{label:'Search: ' + initial.q,clear:{q:""}}] : []),
     ...(initial.product !== "all" ? [{label:labelFor(options.product, initial.product),clear:{product:"all"}}] : []),
     ...(initial.stage !== "all" ? [{label:labelFor(options.stage, initial.stage),clear:{stage:"all"}}] : []),
   ];
   return <div className="min-w-0 space-y-3" data-users-navigation-pending={pending ? "true" : undefined}>
-    {!compact ? <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+    {!compact ? <div className={"flex min-w-0 flex-wrap items-center justify-between gap-2" + (!chips.length || disabled ? " md:hidden" : "")}>
       <div aria-label="Applied activity filters" className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         {!disabled ? chips.map(chip => <span key={chip.label} className="inline-flex min-h-9 max-w-full items-center gap-1 rounded-full bg-[#F1F5F9] py-1 pl-3 pr-2 text-[12px] text-[#475569]">
           <span className="break-words [overflow-wrap:anywhere]">{chip.label}</span>
@@ -112,23 +113,23 @@ export function ActivityFiltersBar({ path, initial, directory, usersReturn, tabs
         className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-lg border border-[#E2E8F0] px-3 text-[13px] font-medium text-[#334155] md:hidden"><SlidersHorizontal size={16} aria-hidden="true"/> Filters</button>
     </div> : null}
     <div id={panelId} className={compact || expanded ? "min-w-0 space-y-3" : "hidden min-w-0 space-y-3 md:block"}>
-      {!compact ? <label className="relative block min-w-0">
+      <div data-testid="activity-filters-row" className={"grid min-w-0 grid-cols-1 items-end gap-2 [&_button]:min-h-11 " + (compact ? "min-[420px]:grid-cols-[minmax(0,1fr)_auto]" : accessOrPages ? "sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto]" : "sm:grid-cols-2 min-[1280px]:grid-cols-[minmax(180px,1.4fr)_repeat(3,minmax(0,1fr))_auto]")}>
+      {!compact ? <label className={"relative block min-w-0" + (!accessOrPages ? " sm:col-span-2 min-[1280px]:col-span-1" : "")}>
         <span className="sr-only">Search activity</span>
         <Search aria-hidden="true" size={16} className="pointer-events-none absolute left-3 top-3.5 text-[#64748B]"/>
         <input aria-label="Search activity" value={values.q} maxLength={80} disabled={disabled}
           aria-describedby={disabled ? unavailableId : undefined}
           placeholder={values.tab === "access" ? "Platform or access type" : values.tab === "pages" ? "Page or screen" : "Route, destination, provider or action"}
           onChange={event => update({q:event.target.value})}
-          onKeyDown={event => { if (event.key === "Enter") event.preventDefault(); }}
+          onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); apply(); } }}
           className="h-11 w-full min-w-0 rounded-lg border border-[#E2E8F0] bg-white pl-9 pr-3 text-base text-[#0F172A] outline-none placeholder:text-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B] disabled:cursor-not-allowed disabled:opacity-75 md:text-[13px]"/>
       </label> : null}
-      <div data-testid="activity-filters-row" className={"grid min-w-0 grid-cols-1 items-end gap-2 [&_button]:min-h-11 " + (compact ? "min-[420px]:grid-cols-[minmax(0,1fr)_auto]" : accessOrPages ? "sm:grid-cols-[minmax(0,1fr)_120px]" : "sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_minmax(120px,0.7fr)]")}>
         <SearchMonitorSelect label="Date range" name="range" disabled={disabled} value={disabled ? "unavailable" : editingCustom ? "custom" : values.range} options={rangeOptions}
           appearance="fare" timeZoneLabel={formatAdminTimeZoneLabel(timeZone, new Date(now))} onValueChange={setRange}/>
         {!compact && !accessOrPages ? <><SearchMonitorSelect label="Activity product" name="product" disabled={disabled} value={values.product}
-          options={options.product.map(([value,label])=>({value,label}))} appearance="fare" onValueChange={product=>update({product})}/>
+          options={options.product.map(([value,label])=>({value,label}))} appearance="fare" truncateLabel onValueChange={product=>update({product})}/>
           <SearchMonitorSelect label="Activity type" name="stage" disabled={disabled} value={values.stage}
-            options={options.stage.map(([value,label])=>({value,label,disabled:availableStages && value !== "all" && !availableStages.includes(value)}))} appearance="fare" onValueChange={stage=>update({stage})}/></> : null}
+            options={options.stage.map(([value,label])=>({value,label,disabled:availableStages && value !== "all" && !availableStages.includes(value)}))} appearance="fare" truncateLabel onValueChange={stage=>update({stage})}/></> : null}
         <button type="button" onClick={apply} disabled={disabled || pending || ((editingCustom || values.range === "custom") && !validCustom)}
           className="focus-ring inline-flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60">{compact ? "Apply period" : "Apply filters"}</button>
       </div>

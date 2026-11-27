@@ -32,9 +32,9 @@ try {
   const layout=()=>card.evaluate(element=>{
     const identity=element.querySelector('[data-testid="activity-identity-facts"]');
     const summary=element.querySelector('[data-testid="activity-metrics-grid"]');
-    return {wrapper:element.className,identity:identity.className,summary:summary.className,
+    return {wrapper:element.className,identity:identity.className,summary:summary?.className ?? null,
       identityCols:getComputedStyle(identity).gridTemplateColumns.split(" ").length,
-      metricCols:getComputedStyle(summary).gridTemplateColumns.split(" ").length,
+      metricCols:summary ? getComputedStyle(summary).gridTemplateColumns.split(" ").length : 0,
       labels:[...element.querySelectorAll('[data-testid="activity-metric-label"]')].map(value=>value.textContent),
       metricFonts:[...element.querySelectorAll('[data-testid="activity-metric-value"]')].map(value=>getComputedStyle(value).fontSize),
       facts:[...identity.querySelectorAll("dt")].map(value=>value.textContent)};
@@ -74,7 +74,7 @@ try {
     assert.match(guestPath,/^\/admin\/users\/live-guest\/[A-Za-z0-9_-]{43}\/activity$/);
     for(const href of [registeredHref,guestHref,otherHref,visitorHref,operationalHref]){
       const target=new URL(href,base);
-      assert.equal(target.searchParams.get("range"),"all");
+      assert.equal(target.searchParams.get("range"),"today");
       assert.equal(target.searchParams.get("usersReturn"),"/admin/users/online");
     }
     await noOverflow();
@@ -83,22 +83,27 @@ try {
     await expect(page).toHaveURL(url=>url.pathname===guestPath);
     await directorySelected();
     await expect(card.getByRole("heading",{name:"Guest session",exact:true})).toBeVisible();
-    await expect(card.getByText("Nigeria",{exact:true})).toBeVisible();
+    await expect(card.getByTestId("live-guest-location")).toHaveCount(1);
+    await expect(card.getByTestId("live-guest-location")).toHaveText("Current location: Nigeria");
     await expect(page.getByRole("navigation",{name:"Breadcrumb"}).getByRole("link",{name:"Online Users",exact:true})).toHaveAttribute("href","/admin/users/online");
-    await expect(card.getByRole("heading",{name:"Recent activity"})).toBeVisible();
+    await expect(card.getByRole("heading",{name:"Activity availability",exact:true})).toBeVisible();
+    await expect(card.getByRole("heading",{name:"Recent activity",exact:true})).toHaveCount(0);
     await expect(card.locator("[data-activity-id]")).toHaveCount(0);
     await expect(card.getByRole("region",{name:"Latest device and access"}).getByText("Latest verified access",{exact:true})).toBeVisible();
     await expect(card.getByRole("link",{name:"Device & Access history",exact:true})).toHaveCount(0);
     const metrics=card.getByTestId("activity-metric-value");
-    await expect(metrics).toHaveCount(6);
-    await expect(metrics).toHaveText(Array(6).fill("—"));
-    await expect(metrics.locator('[aria-label="Unavailable"]')).toHaveCount(6);
-    await expect(card.getByTestId("activity-events-fact")).toContainText("—");
-    await expect(card.getByText("Historical activity cannot be attributed to this temporary session. Unavailable values are not zero.",{exact:true})).toBeVisible();
+    await expect(metrics).toHaveCount(0);
+    await expect(card.getByTestId("activity-events-fact")).toHaveCount(0);
+    await expect(card.getByRole("status")).toHaveText("Recorded activity history is unavailable for this temporary guest session. Current access information is shown when it can be verified.");
+    await expect(card.getByRole("link",{name:"View all activity",exact:true})).toHaveCount(0);
     const liveLayout=await layout();
+    assert.deepEqual(liveLayout.facts,["First observed","Last seen"]);
+    assert.equal(liveLayout.metricCols,0);
     await noOverflow();
     await capture("live-guest-activity-"+width);
-    await card.getByRole("link",{name:"View all activity"}).click();
+    // Retain existing full-view bookmarks, while the temporary overview no
+    // longer sends admins into a history view with no attributable history.
+    await page.goto(view(guestHref,true,{range:"all"}));
     await expect(page).toHaveURL(url=>url.pathname===guestPath+"/all"&&url.searchParams.get("usersReturn")==="/admin/users/online");
     await directorySelected();
     await expect(page.getByRole("heading",{name:"All activity",exact:true})).toBeVisible();
@@ -115,7 +120,7 @@ try {
     await categories.getByRole("link",{name:"Device & Access",exact:true}).click();
     await expect(page).toHaveURL(url=>url.searchParams.get("tab")==="access");
     await expect(page.locator("[data-activity-id]")).toHaveCount(1);
-    await page.goto(view(guestHref,true,{tab:"searches"}));
+    await page.goto(view(guestHref,true,{range:"all",tab:"searches"}));
     await expect(page.getByText("This filter is unavailable for a temporary guest session.")).toBeVisible();
     await expect(page.locator("[data-activity-id]")).toHaveCount(0);
     await page.getByRole("link",{name:"Reset filters"}).click();
@@ -125,11 +130,17 @@ try {
 
     await page.goto(base+registeredHref);
     await directorySelected();
+    await expect(page).toHaveURL(url=>url.searchParams.get("range")==="today");
+    await expect(card.locator("[data-activity-id]")).toHaveCount(0);
+    // Fixed October fixtures remain historical. Exercise their complete
+    // display through an explicit All time request instead of moving dates.
+    await page.goto(view(registeredHref,false,{range:"all"}));
     await expect(card.getByTestId("activity-metric-value")).toHaveCount(6);
     await expect(card.locator('[data-testid="activity-metric"][href]')).toHaveCount(6);
     const accountLayout=await layout();
-    assert.equal(liveLayout.facts[0],"First observed");
-    assert.deepEqual({...liveLayout,facts:["Joined","Last seen","Recorded actions in period"]},accountLayout,"shared registered/live overview at "+width);
+    assert.equal(liveLayout.wrapper,accountLayout.wrapper,"temporary guests retain the same workspace frame");
+    assert.deepEqual(accountLayout.facts,["Joined","Last seen","Recorded actions in period"]);
+    assert.equal(accountLayout.labels.length,6,"recorded accounts retain measured activity metrics");
     await capture("registered-comparison-"+width);
     await card.getByRole("link",{name:"View all activity"}).click();
     await expect(page).toHaveURL(url=>url.pathname===new URL(registeredHref,base).pathname+"/all");
@@ -149,6 +160,9 @@ try {
       const operational=source==="Essential guest session";
       const recordedPath="/admin/users/guest/"+id+"/activity";
       await page.goto(base+liveHref);
+      await expect(page).toHaveURL(url=>url.pathname===recordedPath&&url.searchParams.get("range")==="today"&&url.searchParams.get("usersReturn")==="/admin/users/online");
+      await expect(card.locator("[data-activity-id]")).toHaveCount(0);
+      await page.goto(view(liveHref,false,{range:"all"}));
       await expect(page).toHaveURL(url=>url.pathname===recordedPath&&url.searchParams.get("range")==="all"&&url.searchParams.get("usersReturn")==="/admin/users/online");
       await directorySelected();
       await expect(card.getByText(source,{exact:true})).toBeVisible();
@@ -168,13 +182,13 @@ try {
       await expect(fullCard.getByRole("navigation",{name:"Activity categories"}).locator('[aria-disabled="true"]')).toHaveCount(operational?3:0);
       await noOverflow();
     }
-    await page.goto(view(operationalHref,true,{tab:"searches",product:"FLIGHT",stage:"SEARCH_COMPLETED"}));
+    await page.goto(view(operationalHref,true,{range:"all",tab:"searches",product:"FLIGHT",stage:"SEARCH_COMPLETED"}));
     await expect(page).toHaveURL(url=>url.pathname==="/admin/users/guest/12345678-1234-4123-8123-123456789abc/activity/all"&&url.searchParams.get("tab")==="searches"&&url.searchParams.get("product")==="FLIGHT"&&url.searchParams.get("stage")==="SEARCH_COMPLETED");
     await expect(page.locator("[data-activity-id]")).toHaveCount(1);
     await page.goto(base+otherHref);
     await directorySelected();
-    await expect(card.locator('section[aria-label="Customer identity"]').getByText("Unavailable",{exact:true})).toBeVisible();
-    await expect(card.locator('section[aria-label="Customer identity"]').getByText("iOS app",{exact:true})).toBeVisible();
+    await expect(card.getByTestId("live-guest-location")).toHaveText("Current location: Unavailable");
+    await expect(card.getByRole("region",{name:"Latest device and access"})).toContainText("iOS app");
     await expect(card.getByText("Nigeria",{exact:true})).toHaveCount(0);
     const invalid="Z".repeat(43);
     await page.goto(base+"/admin/users/live-guest/"+invalid+"/activity");

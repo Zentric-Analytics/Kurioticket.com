@@ -258,7 +258,15 @@ try {
   await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all")&&u.searchParams.get("tab")==="pages"&&!u.searchParams.has("q")&&!u.searchParams.has("product"));
   const pageCategoryHref=page.url();
   await expect(activityRows).toHaveCount(20);
-  await activityRows.first().getByRole("link",{name:"View pages visited",exact:true}).click();
+  await expect(activityRows.getByRole("link",{name:"View pages visited",exact:true})).toHaveCount(0);
+  await expect(page.getByRole("link",{name:"View page history",exact:true})).toHaveCount(1);
+  const pageEvent = activityRows.first();
+  await expect(pageEvent.getByTestId("activity-event-details")).not.toBeVisible();
+  await pageEvent.locator("summary").click();
+  await expect(pageEvent.getByTestId("activity-event-details")).toBeVisible();
+  await expect(pageEvent.getByTestId("activity-event-details")).toContainText("App screen");
+  assert.equal(page.url(),pageCategoryHref,"Opening a page action retains the selected identity and history position");
+  await page.getByRole("link",{name:"View page history",exact:true}).click();
   await expect(page).toHaveURL(u=>u.pathname.endsWith("/pages")&&!u.searchParams.has("q")&&!u.searchParams.has("product"));
   await expect(page.getByTestId("pages-visited-total")).toHaveText("45");
   await expect(page.getByRole("complementary",{name:"Users & Bots navigation"}).getByRole("link",{name:"Users Directory",exact:true})).toHaveAttribute("aria-current","page");
@@ -456,7 +464,7 @@ try {
   await expect(activityRows).toHaveCount(3);
   assert.deepEqual(await activityRows.evaluateAll(nodes=>nodes.map(n=>n.dataset.activityId)),["s-qa-operational-flight","s-qa-operational-hotel","r-qa-operational-handoff"]);
   await expect(activityRows.first()).toContainText("ATL → MCO");
-  await expect(activityRows.first()).toContainText("Partial");
+  await expect(activityRows.first().locator("summary")).toContainText("Search completed with partial coverage");
   await page.getByRole("link",{name:"View all activity"}).click();
   await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all"));
   await expect(activityRows).toHaveCount(3);
@@ -562,18 +570,58 @@ try {
   await capture({caret:"initial",path:output+"/after-all-selections-visible-1280.png",fullPage:true});
   const back=await page.getByRole("navigation",{name:"Breadcrumb"}).getByRole("link",{name:"Users directory",exact:true}).getAttribute("href");
   assert.ok(back.includes("sort=name_asc")&&back.includes("identity=GUEST")&&back.includes("page=2"));
+  await page.locator('summary').filter({hasText:/^Guest reference$/}).click();
   await page.getByRole("button",{name:/Copy guest ID:/}).click();
   assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),"qa-guest-activity-0001");
   console.log("PASS compact totals, unified history paging, legacy links and identity controls");
 
+  // Use the real Directory table-generated link, then visit each dated view.
+  // Historical fixture rows deliberately stay outside the Today window.
+  await page.goto(base+"/admin/users");
+  await page.getByRole("link",{name:/^View Activity for QA registered customer/}).click();
+  const todayPath="/admin/users/user/qa-registered-0001";
+  const todayOrigin="/admin/users?date=today";
+  await expect(page).toHaveURL(u=>u.pathname===todayPath+"/activity"&&u.searchParams.get("range")==="today"&&u.searchParams.get("usersReturn")===todayOrigin);
+  const todayProfile=page.url();
+  await expect(activityRows).toHaveCount(0);
+  await expect(page.getByRole("button",{name:"Date range: Today · UTC",exact:true})).toBeVisible();
+  await page.getByRole("link",{name:"View all activity",exact:true}).click();
+  await expect(page).toHaveURL(u=>u.pathname===todayPath+"/activity/all"&&u.searchParams.get("range")==="today"&&u.searchParams.get("usersReturn")===todayOrigin);
+  await expect(activityRows).toHaveCount(0);
+  await expect(page.getByRole("button",{name:/Remove filter: Today/})).toHaveCount(0);
+  await assertHorizontalFilters("activity-filters-row",5);
+  await page.getByRole("link",{name:"Back to Activity",exact:true}).click();
+  await expect(page).toHaveURL(todayProfile);
+  for(const [name,suffix,dateLabel] of [
+    [/^View pages visited: /,"pages","Page history range: Today · UTC"],
+    ["Device & Access history","devices","Device history range: Today · UTC"],
+    [/^View journeys tracked: /,"journeys","Date range: Today"],
+  ]) {
+    await page.getByRole("link",{name,exact:typeof name==="string"}).click();
+    await expect(page).toHaveURL(u=>u.pathname===todayPath+"/"+suffix&&u.searchParams.get("range")==="today");
+    await expect(page.getByRole("button",{name:dateLabel,exact:true})).toBeVisible();
+    const crumb=page.getByRole("navigation",{name:"Breadcrumb"});
+    await crumb.getByRole("link",{name:suffix==="journeys"?"Activity":"Back to Activity",exact:true}).click();
+    await expect(page).toHaveURL(todayProfile);
+  }
+  await page.getByRole("navigation",{name:"Breadcrumb"}).getByRole("link",{name:"Users directory",exact:true}).click();
+  await expect(page).toHaveURL(base+todayOrigin);
+  console.log("PASS Today propagates Directory → Activity → all/pages/devices/journeys and exact return context");
 
-  // Person history starts explicitly at All time. The overview has its period
-  // control, while category/action filters remain in full history.
+
+  // Fresh person history starts Today. The retained October fixture is empty
+  // in that period; All time is an explicit choice and still reveals it all.
   await page.goto(url.split("?")[0]);
-  await expect(activityRows).toHaveCount(5);
-  await expect(page.getByRole("button",{name:"Date range: All time · UTC",exact:true})).toBeVisible();
+  await expect(activityRows).toHaveCount(0);
+  await expect(page.getByRole("button",{name:"Date range: Today · UTC",exact:true})).toBeVisible();
   await page.getByRole("link",{name:"View all activity"}).click();
-  await expect(page.getByRole("button",{name:"Date range: All time · UTC",exact:true})).toBeVisible();
+  await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all")&&u.searchParams.get("range")==="today");
+  await expect(page.getByRole("button",{name:"Date range: Today · UTC",exact:true})).toBeVisible();
+  await expect(activityRows).toHaveCount(0);
+  await page.getByRole("button",{name:"Date range: Today · UTC",exact:true}).click();
+  await page.getByRole("option",{name:"All time",exact:true}).click();
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
+  await expect(page).toHaveURL(u=>u.searchParams.get("range")==="all");
   await expect(activityRows).toHaveCount(14);
   await page.setViewportSize({width:390,height:900});
   await page.goto(fullUrl);
@@ -601,6 +649,7 @@ try {
   console.log("PASS mobile filter disclosure, preserved draft, applied chips and filter removal");
   await page.setViewportSize({width:1280,height:900});
   await page.goto(fullUrl);
+  await assertHorizontalFilters("activity-filters-row",5);
   await page.getByRole("navigation",{name:"Activity categories"}).getByRole("link",{name:"Searches",exact:true}).click();
   await expect(page).toHaveURL(/tab=searches/);
   const search=page.getByRole("textbox",{name:"Search activity"});
@@ -612,7 +661,7 @@ try {
   await page.getByRole("button",{name:/Activity type:/}).click();
   await page.getByRole("listbox",{name:"Activity type"}).getByRole("option",{name:"Search completed"}).click();
   await expect(page).not.toHaveURL(/stage=SEARCH_COMPLETED/);
-  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
+  await search.press("Enter");
   await expect(page).toHaveURL(/q=LOS/);
   await expect(page).toHaveURL(/product=FLIGHT/);
   await expect(page).toHaveURL(/stage=SEARCH_COMPLETED/);
