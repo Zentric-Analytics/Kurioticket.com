@@ -8,7 +8,7 @@ import { kayakCarCardModel, kayakFlightCardModel, kayakHotelCardModel } from "@/
 import { groupKayakCarResults } from "@/lib/cars/carResults";
 import { isKayakSandboxEnabled, KayakError, KayakPartialSearchError, KayakSandboxClient, type KayakVertical } from "./kayakSandbox";
 import { resolveRegularKayakSearch } from "./kayakRegularSearch";
-import { kayakCorrelation } from "./kayakRequestDiagnostics";
+import { kayakAgentKind, kayakCorrelation } from "./kayakRequestDiagnostics";
 
 function reportProviderRows(requestId: string | undefined, vertical: KayakVertical, status: "success" | "failed", rawRows: number, normalizedRows: number) {
   try { console.info("[kayak-search:provider-outcome]", JSON.stringify({ ...kayakCorrelation(requestId), vertical, status, rawRows, normalizedRows })); }
@@ -26,14 +26,23 @@ export function scopeKayakOfferIds<T extends { id: string; hotelPropertyKey?: st
   }));
 }
 
-/** Historical staging Hotel compatibility for bare OkHttp/Dalvik agents.
- * An absent override selects the client's existing affiliate-app default.
- * This is not evidence of KAYAK's rejection rule or approved native permissions.
- * Production always retains the authentic incoming identity instead. */
-export function kayakProviderUserAgent(vertical: KayakVertical, incoming?: string): string | undefined {
+/** Supplier-facing identity only; the incoming native identity remains in context
+ * and diagnostics. Owner-confirmed supplier authorization covers Android flight/
+ * car sandbox searches on staging, not production. No response-driven fallback.
+ * Hotels retain their historical bare OkHttp/Dalvik compatibility behavior. */
+export function kayakProviderUserAgent(vertical: KayakVertical, incoming?: string, env: Record<string, string | undefined> = process.env): string | undefined {
   const agent = incoming?.trim();
   if (!agent) return undefined;
-  return vertical === "hotels" && /^(?:okhttp|dalvik)\//i.test(agent) ? undefined : agent;
+  if (vertical === "hotels") return /^(?:okhttp|dalvik)\//i.test(agent) ? undefined : agent;
+  const kind = kayakAgentKind(agent);
+  if ((kind === "android_transport" || kind === "android_application") &&
+      env.TRAVEL_PROVIDER_MODE?.trim().toLowerCase() === "staging" && isKayakSandboxEnabled(env)) {
+    try {
+      const url = new URL(env.NEXT_PUBLIC_APP_URL || "");
+      if (url.origin === "https://staging.kurioticket.com" && !url.username && !url.password) return undefined;
+    } catch { /* Unknown environments retain their existing identity. */ }
+  }
+  return agent;
 }
 
 async function search<T>(vertical: KayakVertical, criteria: Record<string, string>, context?: KayakRequestContext, map?: (offer: Parameters<typeof kayakFlightCardModel>[0]) => T | null): Promise<ProviderResult<T>> {
@@ -77,8 +86,8 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
     return { provider: "KAYAK sandbox", results, status: "success", latencyMs: Date.now() - startedAt };
   } catch (error) {
     const reason = error instanceof KayakError ? error.code : "unavailable";
-    // A 403 can reject the client agent, not just the key. Keep the real agent
-    // and safe status evidence; never log credential-bearing URLs or bodies.
+    // Keep the configured identity on rejection, including the original native
+    // classification in phase diagnostics; never retry with another identity.
     console.warn("[kayak-search:rejection]", { ...correlation, vertical, category: reason,
       httpStatus: error instanceof KayakError ? error.httpStatus : undefined });
     const errorCategory = reason === "timeout" ? "timeout" : reason === "unauthorized" ? "auth" : reason === "invalid_response" ? "invalid_response" : reason === "unavailable" ? "network" : "server";
