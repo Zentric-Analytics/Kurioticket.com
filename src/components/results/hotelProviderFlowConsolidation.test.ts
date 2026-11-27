@@ -86,7 +86,7 @@ test("provider-only Hotel search still uses the canonical server search and deta
   assert.match(searchRoute, /source: providerMode \|\| classified\.source/);
   assert.match(aggregator, /export async function searchHotelsByProvider/);
   assert.match(aggregator, /individualResults: NormalizedHotelResult\[\] = results/);
-  assert.match(aggregator, /rememberProviderResults\("hotel", individualResults, search\)/);
+  assert.match(aggregator, /rememberProviderResults\("hotel", individualResults, search, Date\.now\(\), \{ requireComplete \}\)/);
   assert.match(aggregator, /rememberHotelSearchCohort\(results, search\)/);
   assert.match(aggregator, /rememberHotels\(results, search\)/);
 });

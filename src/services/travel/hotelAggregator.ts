@@ -6,7 +6,7 @@ import { rememberHotels } from "@/lib/searchCache";
 import { providerSearchWarnings } from "./providerSearchOutcome";
 import { compareHotelsByAvailablePrice } from "@/lib/hotels/hotelResultAvailability";
 import { searchKayakHotels, type KayakRequestContext } from "./kayakMetasearchProvider";
-import { getHotelSearchCohort, rememberHotelSearchCohort, rememberProviderResults } from "./providerResultCache";
+import { getHotelSearchSnapshotCohort, rememberHotelSearchCohort, rememberProviderResults } from "./providerResultCache";
 import { persistHotelInventory } from "./persistHotelInventory";
 type HotelSearchOptions = { signal?: AbortSignal; deadlineMs?: number; requestId?: string; providers?: readonly ProviderRegistration<"hotels">[]; kayak?: KayakRequestContext; defer?: (task: () => Promise<void>) => void;
   dependencies?: { searchKayak: typeof searchKayakHotels; persist: typeof persistHotelProviderResults } };
@@ -29,7 +29,7 @@ async function persistHotelProviderResults(
   if (results.length) rememberHotels(results, search);
   await persistHotelInventory(
     () => rememberHotelSearchCohort(results, search),
-    () => rememberProviderResults("hotel", individualResults, search),
+    requireComplete => rememberProviderResults("hotel", individualResults, search, Date.now(), { requireComplete }),
     defer,
   );
 }
@@ -101,15 +101,15 @@ export function dedupeHotels(results: NormalizedHotelResult[]) {
 }
 
 /** Authoritative hotel business service used by the signed legacy transport. */
-export async function searchHotelBatch(search:HotelSearchParams, context:KayakRequestContext, snapshot:string, checkpoint?:import("./kayakSandbox").KayakHotelBatchCheckpoint, options: {providers?:readonly ProviderRegistration<"hotels">[];getCohort?:typeof getHotelSearchCohort;persist?:typeof persistHotelProviderResults} = {}) {
+export async function searchHotelBatch(search:HotelSearchParams, context:KayakRequestContext, snapshot:string, checkpoint?:import("./kayakSandbox").KayakHotelBatchCheckpoint, options: {providers?:readonly ProviderRegistration<"hotels">[];getCohort?:typeof getHotelSearchSnapshotCohort;persist?:typeof persistHotelProviderResults;defer?:HotelSearchOptions["defer"]} = {}) {
   const registration=providersFor("hotels",options.providers).find(provider=>provider.id==="kayak");
   if(!registration?.hotelBatch || !registeredProviderReady(registration) || !registration.supports(search)) return {supported:false as const};
   const outcome=await settleWithDeadline(signal=>registration.hotelBatch!(search,{...context,signal},snapshot,checkpoint),registration.timeoutMs,context.signal,()=>null);
   if(!outcome) throw new Error("Hotel batch unavailable");
   if(!outcome.supported) return outcome;
-  const previous=checkpoint ? (await (options.getCohort??getHotelSearchCohort)(search)).filter(row=>row.id.startsWith("kayak-sandbox:"+snapshot+":")) : [];
+  const previous=checkpoint ? (await (options.getCohort??getHotelSearchSnapshotCohort)(search,snapshot)).filter(row=>row.id.startsWith("kayak-sandbox:"+snapshot+":")) : [];
   if(checkpoint && !previous.length) throw new Error("Hotel snapshot expired");
   const cumulative=dedupeHotels([...previous,...outcome.results]);
-  await (options.persist??persistHotelProviderResults)(cumulative,search,undefined,outcome.results);
+  await (options.persist??persistHotelProviderResults)(cumulative,search,options.defer,outcome.results);
   return {...outcome,cumulative};
 }

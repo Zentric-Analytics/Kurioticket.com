@@ -134,7 +134,8 @@ test("compatibility batches use shared hotel cohort rules and fail closed on los
   provider.hotelBatch=async()=>({supported:true,batch:{offers:[],providerRows:2,checkpoint:null},results:[second,second]});
   const checkpoint={nextPage:1,total:2,pageHashes:["hash"]};
   let published:string[]=[];
-  const options={providers:[provider],getCohort:async()=>[first,foreign],persist:async(rows:typeof first[])=>{published=rows.map(row=>row.id);}};
+  const defer=(_task:()=>Promise<void>)=>{};
+  const options={providers:[provider],getCohort:async()=>[first,foreign],defer,persist:async(rows:typeof first[],_search:unknown,receivedDefer?:typeof defer)=>{assert.equal(receivedDefer,defer);published=rows.map(row=>row.id);}};
   const outcome=await searchHotelBatch(query,{clientIp:"192.0.2.1"},"snapshot",checkpoint,options);
   assert.equal(outcome.supported,true);
   assert.deepEqual(published,[first.id,second.id]);

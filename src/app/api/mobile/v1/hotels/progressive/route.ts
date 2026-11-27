@@ -111,7 +111,7 @@ export async function POST(request: Request) {
   }
   const recordedSearch = () => ({ ...search, ...searchNetworkObservation(request), ...(operationalSession ? operationalSessionMetadata(operationalSession.reference) : {}), ...(operationalHotelSnapshotId ? { operationalHotelSnapshotId } : {}) });
   try {
-    const outcome = await withSearchDiagnosticContext("hotel", trackId, () => searchHotelBatch(search,{clientIp:getKayakClientIp(request),userAgent:request.headers.get("user-agent")??undefined,trackId,requestId:trackId,signal:request.signal},snapshot,state?.checkpoint),request.headers.get("x-search-request-id")??undefined);
+    const outcome = await withSearchDiagnosticContext("hotel", trackId, () => searchHotelBatch(search,{clientIp:getKayakClientIp(request),userAgent:request.headers.get("user-agent")??undefined,trackId,requestId:trackId,signal:request.signal},snapshot,state?.checkpoint,{defer:process.env.HOTEL_DEFER_INDIVIDUAL_WRITES === "true" ? after : undefined}),request.headers.get("x-search-request-id")??undefined);
     if (!outcome.supported) {
       after(async () => {
         const { userId, visitorId, ...application } = await resolveSearchIdentity();

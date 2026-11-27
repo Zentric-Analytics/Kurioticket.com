@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import test from "node:test";
 import { getPrisma } from "../src/lib/prisma";
 import { rememberProviderResults, getProviderResultWithContext, rememberHotelSearchCohort, getHotelSearchCohort } from "../src/services/travel/providerResultCache";
@@ -13,7 +13,7 @@ const target = new URL(process.env.DATABASE_URL || "http://invalid");
 assert.ok(["localhost", "127.0.0.1"].includes(target.hostname));
 assert.equal(target.pathname, "/kurioticket_cache_test");
 
-test("PostgreSQL persists every batched offer, duplicate update and complete cohort", async () => {
+test("PostgreSQL persists every batched offer, duplicate update and complete cohort", async t => {
   const db = getPrisma();
   try {
     await db.$executeRawUnsafe(`CREATE TABLE "ProviderResultCache" (
@@ -82,6 +82,42 @@ test("PostgreSQL persists every batched offer, duplicate update and complete coh
     assert.equal(details.propertyOffers[1].hotel.totalPrice, 280);
     assert.equal(details.propertyOffers[1].hotel.roomType, "Suite");
     assert.deepEqual(await getHotelSearchCohort(search, Date.now() + 31 * 60_000, original.id), []);
+    await t.test("snapshot-only PostgreSQL readers preserve details/context and atomic lookup publication", async () => {
+      const snapshot = randomUUID();
+      const deferredSearch = { ...search, destinationId: "place:fixture", guests: 2, adults: 1, children: 1 };
+      const deferred = { ...original, id: `kayak-sandbox:${snapshot}:deferred`, propertyGroupId: `${snapshot}:hotel` };
+      assert.equal(await rememberHotelSearchCohort([deferred], deferredSearch), true);
+      assert.equal(await db.providerResultCache.findUnique({ where: { cacheKey: "hotel:" + deferred.id } }), null);
+      assert.deepEqual(await getProviderResultWithContext("hotel", deferred.id), { result: deferred, searchContext: deferredSearch });
+      const query = new URLSearchParams({ id: deferred.id, ...search, guests: "2", rooms: "1" });
+      const response = await hotelDetails(new Request(`https://kurioticket.test/api/hotels/details?${query}`));
+      assert.equal(response.status, 200);
+      assert.equal((await response.json()).hotel.id, deferred.id);
+      assert.equal(await getProviderResultWithContext("hotel", deferred.id.replace(snapshot, randomUUID())), null);
+
+      const lookupKey = `hotel:__hotel-snapshot-lookup-v1__:${snapshot}`;
+      const lookup = await db.providerResultCache.findUniqueOrThrow({ where: { cacheKey: lookupKey } });
+      await db.providerResultCache.update({ where: { cacheKey: lookupKey }, data: { expiresAt: new Date(0) } });
+      assert.equal(await getProviderResultWithContext("hotel", deferred.id), null);
+      await db.providerResultCache.update({ where: { cacheKey: lookupKey }, data: { expiresAt: lookup.expiresAt } });
+      assert.deepEqual((await getProviderResultWithContext("hotel", deferred.id))?.result, deferred);
+
+      await db.$executeRawUnsafe(`CREATE FUNCTION reject_snapshot_lookup() RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN IF NEW."normalizedResult"->>'format' = 'hotel-snapshot-lookup-v1' THEN RAISE EXCEPTION 'synthetic lookup failure'; END IF; RETURN NEW; END $$`);
+      await db.$executeRawUnsafe(`CREATE TRIGGER reject_snapshot_lookup BEFORE INSERT OR UPDATE ON "ProviderResultCache" FOR EACH ROW EXECUTE FUNCTION reject_snapshot_lookup()`);
+      const failedSnapshot = randomUUID();
+      const failed = { ...deferred, id: `kayak-sandbox:${failedSnapshot}:failed`, propertyGroupId: `${failedSnapshot}:hotel` };
+      try {
+        assert.equal(await rememberHotelSearchCohort([failed], deferredSearch), false);
+        assert.equal(await db.providerResultCache.count({ where: { resultId: { endsWith: ":snapshot:" + failedSnapshot } } }), 0,
+          "a rejected lookup must roll back its same-statement complete manifest");
+        assert.equal(await db.providerResultCache.findUnique({ where: { cacheKey: `hotel:__hotel-snapshot-lookup-v1__:${failedSnapshot}` } }), null);
+        assert.equal(await getProviderResultWithContext("hotel", failed.id), null);
+      } finally { await db.$executeRawUnsafe('DROP TRIGGER reject_snapshot_lookup ON "ProviderResultCache"'); }
+      // Let the intentional publication failure's circuit cooldown expire so
+      // the following lock test still exercises a genuine database timeout.
+      await new Promise(resolve => setTimeout(resolve, 5100));
+    });
     // A blocked database must not hold the response indefinitely or proceed
     // with thousands of queued writes. Use only this disposable table.
     let releaseLock!: () => void;

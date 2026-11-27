@@ -33,3 +33,18 @@ test("independent cohort and individual cache failures do not discard the succes
   assert.equal(fallback,true);
   await assert.rejects(persistHotelInventory(async()=>false,async()=>{throw new Error("write failed");}),/publication unavailable/);
 });
+
+test("slow or failed optional writes never block a completely published batch", async () => {
+  let deferred: (() => Promise<void>) | undefined;
+  let fail!: (error: Error) => void;
+  const pending = new Promise<void>((_resolve, reject) => { fail = reject; });
+  let invoked = false;
+  await persistHotelInventory(async () => true, async required => { assert.equal(required, false); invoked = true; await pending; }, task => { deferred = task; });
+  assert.equal(invoked, false);
+  const completion = deferred!(); fail(new Error("synthetic optional failure"));
+  await assert.doesNotReject(completion);
+});
+test("scheduler outage preserves the complete fallback and missing cohort requires certified individual writes", async () => {
+  await assert.doesNotReject(persistHotelInventory(async () => true, async () => { assert.fail("optional work must not run inline"); }, () => { throw Error("scheduler unavailable"); }));
+  await persistHotelInventory(async () => false, async required => { assert.equal(required, true); });
+});
