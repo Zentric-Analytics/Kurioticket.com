@@ -1,3 +1,6 @@
+import { createSearchDiagnostics } from "@/shared/search/diagnostics";
+import { withSearchDiagnosticContext } from "@/lib/search/diagnosticContext";
+import { diagnosticSearchResponse } from "@/lib/search/diagnosticResponse";
 import { withOperationalGuestDevice } from "@/lib/operationalGuestDeviceObservation";
 import { withProductionSandboxRequest, captureFinalSearchHistory, productionSandboxInventory } from "@/lib/productionSandboxPolicy";
 import assert from "node:assert/strict";
@@ -43,6 +46,9 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
   };
   const schema = { safeParse: (data: unknown) => ({ success: true, data }) };
   const dependencies: Record<string, unknown> = {
+    "@/shared/search/diagnostics": { createSearchDiagnostics },
+    "@/lib/search/diagnosticContext": { withSearchDiagnosticContext },
+    "@/lib/search/diagnosticResponse": { diagnosticSearchResponse },
     "@/lib/productionSandboxPolicy": {withProductionSandboxRequest,captureFinalSearchHistory,productionSandboxInventory,productionSandboxHost: () => false},
     "next/server": { NextResponse: { json: Response.json }, after: (callback: () => Promise<unknown>) => { deferred.push(callback); } },
     "node:crypto": { createHash },

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { currentSearchDiagnostics } from "./diagnosticContext";
 import { gzip, gunzip } from "node:zlib";
 import { promisify } from "node:util";
 
@@ -15,6 +16,7 @@ export type CohortManifest = {
 };
 
 export async function encodeCohort(results: unknown[], generation: string) {
+  const startedAt = performance.now();
   const raw = Buffer.from(JSON.stringify(results));
   if (raw.length > MAX_RAW_BYTES) throw new Error("Cohort exceeds safe cache size");
   const compressed = await compress(raw);
@@ -24,6 +26,7 @@ export async function encodeCohort(results: unknown[], generation: string) {
   }
   const manifest: CohortManifest = { format: "gzip-chunks-v1", generation, chunks: chunks.length,
     rawBytes: raw.length, sha256: createHash("sha256").update(raw).digest("hex") };
+  currentSearchDiagnostics()?.("cache-encode", { count: results.length, bytes: raw.length, durationMs: performance.now() - startedAt });
   return { manifest, chunks };
 }
 

@@ -1,0 +1,23 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { createSearchPresentationDiagnostics } from "./presentationDiagnostics";
+test("viewability ignores headers, correlates canonical ID, and resets for a newer search", () => {
+  const events: Record<string, unknown>[] = []; let now = 0;
+  const model = createSearchPresentationDiagnostics("hotel", "android", { now: () => now, sink: e => events.push(e) });
+  const id = "e920ef92-db0f-4959-9262-1657fd404d23";
+  const canonical = "e4cd32c7-fa37-4e07-85e4-ca4f2ac83e5e";
+  model.begin(id); now = 100;
+  const row = { id: "private-offer" };
+  model.accepted(canonical, 10, 10, 1, [row]); model.published(10, false);
+  model.onViewableItemsChanged({ viewableItems: [{ isViewable: true, item: "header" }] });
+  assert.equal(events.some(e => e.phase === "viewport-reported"), false);
+  model.onViewableItemsChanged({ viewableItems: [{ isViewable: true, item: { id: "stale-row" } }] });
+  assert.equal(events.some(e => e.phase === "viewport-reported"), false);
+  model.onViewableItemsChanged({ viewableItems: [{ isViewable: true, item: row }] });
+  model.onViewableItemsChanged({ viewableItems: [{ isViewable: true, item: row }] });
+  assert.equal(events.filter(e => e.phase === "viewport-reported").length, 1);
+  assert.ok(events.every(e => e.requestId === canonical)); assert.equal(events[0].elapsedMs, 100);
+  assert.doesNotMatch(JSON.stringify(events), /private-offer/);
+  model.begin(id); model.onViewableItemsChanged({ viewableItems: [{ isViewable: true, item: { id: "stale" } }] });
+  assert.equal(events.filter(e => e.phase === "viewport-reported").length, 1);
+});

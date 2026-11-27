@@ -4,6 +4,7 @@ import { runInNewContext } from "node:vm";
 import { URL as NodeURL } from "node:url";
 import test from "node:test";
 import ts from "typescript";
+import { createSearchDiagnostics } from "../../../../src/shared/search/diagnostics";
 import { createProviderHandoffMetadata, type ProviderHandoffMetadataReader } from "../../../../src/lib/providerHandoffClient";
 import { JourneyEventCoordinator } from "../features/privacy/journeyEventCoordinator";
 
@@ -22,6 +23,7 @@ function fixture() {
   const coordinator = new JourneyEventCoordinator({ context: () => context, createId: () => receipt, send: async () => ({ accepted: true }) });
   coordinator.rememberSearch(searchId, coordinator.captureContext());
   const dependencies: Record<string, unknown> = {
+    "../../../../src/shared/search/diagnostics": { createSearchDiagnostics },
     "../config/apiUrl": { getApiBaseUrl: () => ({ ok: true, baseUrl: "https://staging.kurioticket.com" }) },
     "../storage/sessionStorage": { readSession: async () => ({ token: "test-session" }), subscribeSession: (listener: typeof sessionListener) => { sessionListener = listener; } },
     "react-native": { Platform: { OS: "ios" } },

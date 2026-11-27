@@ -1,4 +1,5 @@
 import {isKayakSandboxEnabled} from "./kayakSandbox";
+import { createSearchDiagnostics } from "@/shared/search/diagnostics";
 import {currentSandboxGrant,productionSandboxHost} from "@/lib/productionSandboxPolicy";
 import {displayOnlyInventory} from "@/shared/presentation/sandboxInventory";
 import {getDuffelProviderBlockReason} from "./providers/duffelProvider";
@@ -145,7 +146,13 @@ export function registeredProviderReady<P extends SearchProduct>(provider:Provid
 export async function runRegisteredProviders<P extends SearchProduct>(providers: readonly ProviderRegistration<P>[], query: ProductContracts[P]["query"], context: ProviderExecutionContext & {deadlineMs?:number}): Promise<ProviderResult<ProductContracts[P]["offer"]>[]> {
   return Promise.all(providers.map(provider => {
     const started=Date.now();
+    const monotonicStarted = performance.now();
+    const trace = createSearchDiagnostics(provider.product === "flights" ? "flight" : provider.product === "hotels" ? "hotel" : "car", context.requestId, "server", { span: "supplier" });
+    trace("supplier-start", { provider: provider.id, deadlineMs: Math.min(provider.timeoutMs, context.deadlineMs ?? 30_000) });
     return settleWithDeadline<ProviderResult<ProductContracts[P]["offer"]>>(signal=>executeRegisteredProvider(provider,query,{...context,signal}),Math.min(provider.timeoutMs,context.deadlineMs??30_000),context.signal??context.kayak?.signal,
-      reason=>({provider:provider.label,results:[],status:"failed",latencyMs:Date.now()-started,errorCategory:reason==="failed"?"failed":"timeout",errorReason:reason==="failed"?"provider_failed":"provider_timeout"}));
+      reason=>({provider:provider.label,results:[],status:"failed",latencyMs:Date.now()-started,errorCategory:reason==="failed"?"failed":"timeout",errorReason:reason==="failed"?"provider_failed":"provider_timeout"})).then(result => {
+        trace("supplier-complete", { provider: provider.id, durationMs: performance.now() - monotonicStarted, count: result.results.length, category: result.results.length ? result.status === "failed" ? "partial" : "success" : result.status === "skipped" ? "skipped" : result.status === "failed" ? result.errorCategory === "timeout" ? "timeout" : "failed" : "empty" });
+        return result;
+      });
   }));
 }

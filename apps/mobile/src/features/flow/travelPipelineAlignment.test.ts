@@ -20,7 +20,7 @@ test("Android and website use the shared travel search pipeline", () => {
   assert.match(desktopCars, /<CarInventoryLoader/);
   assert.match(carInventoryLoader, /fetch\("\/api\/cars\/search"/);
   assert.match(carInventoryLoader, /body: JSON\.stringify\(values\)/);
-  assert.match(carSearchRoute, /await searchCars\(search, \{ requestId, kayak:/);
+  assert.match(carSearchRoute, /withSearchDiagnosticContext\("car", requestId, \(\) => searchCars\(search, \{ requestId, kayak:/);
 });
 
 test("Android renders server-owned policy without restoring mobile inventory policy", () => {

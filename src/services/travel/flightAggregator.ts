@@ -1,4 +1,5 @@
 import { inventoryAccounting } from "@/shared/search/inventory";
+import { createSearchDiagnostics } from "@/shared/search/diagnostics";
 import { settleWithDeadline } from "./metasearch";
 import { providersFor, runRegisteredProviders, type ProviderRegistration } from "./providerRegistry";
 import { productionSandboxInventory } from "@/lib/productionSandboxPolicy";
@@ -51,6 +52,7 @@ export async function searchFlights(
   );
   const deduplicatedResults = deduplicateFlightOffers(usableResults);
   const deduplicationMs = performance.now() - deduplicationStartedAt;
+  createSearchDiagnostics("flight", options.requestId, "server", { span: "aggregation" })("deduplication", { count: deduplicatedResults.length, durationMs: deduplicationMs });
   const results = assignBadges(
     sortFlights(
       deduplicatedResults,

@@ -1,3 +1,4 @@
+import { createSearchDiagnostics } from "../../../../../src/shared/search/diagnostics";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -70,6 +71,7 @@ function native(
     "expo-crypto": {},
     "./exploreCatalogueContract": {},
     "../features/search/flightSearchDiagnostics": {},
+    "../../../../src/shared/search/diagnostics": { createSearchDiagnostics },
     "../features/privacy/visitorIdentity": {
       visitorIdentity: { headers: async () => ({}), trackingContext: () => null },
     },

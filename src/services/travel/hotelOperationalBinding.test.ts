@@ -1,3 +1,6 @@
+import { createSearchDiagnostics } from "@/shared/search/diagnostics";
+import { withSearchDiagnosticContext } from "@/lib/search/diagnosticContext";
+import { diagnosticSearchResponse } from "@/lib/search/diagnosticResponse";
 import { withOperationalGuestDevice } from "@/lib/operationalGuestDeviceObservation";
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -108,6 +111,9 @@ test("actual redirect route takes the snapshot from the selected cached offer, n
   const records: Array<Record<string, unknown>> = [];
   const offer = { ...result(), bookingUrl: "https://provider.example/sandbox", location: "Test address", price: 100, currency: "USD" };
   const stubs: Record<string, unknown> = {
+    "@/shared/search/diagnostics": { createSearchDiagnostics },
+    "@/lib/search/diagnosticContext": { withSearchDiagnosticContext },
+    "@/lib/search/diagnosticResponse": { diagnosticSearchResponse },
     "@/lib/productionSandboxPolicy": { productionSandboxHost: () => false },
     "@/services/travel/hotelInventorySource": { isProviderHotelResult: () => true },
     "next/server": { after: (task: () => Promise<unknown>) => tasks.push(task), NextResponse: { json: Response.json } },
@@ -149,6 +155,9 @@ test("actual Android progressive route refuses an ownership-changing replay befo
   const histories: Array<{ requestId: string; query: Record<string, unknown> }> = [];
   let providerCalls = 0;
   const stubs: Record<string, unknown> = {
+    "@/shared/search/diagnostics": { createSearchDiagnostics },
+    "@/lib/search/diagnosticContext": { withSearchDiagnosticContext },
+    "@/lib/search/diagnosticResponse": { diagnosticSearchResponse },
     "node:crypto": { createHmac, randomUUID, timingSafeEqual },
     "@/services/travel/hotelAggregator": {
       hotelSearchRequiresCanonicalResponse: () => false,
