@@ -60,13 +60,13 @@ export default async function BotDetailsPage({ params, searchParams }: {
         <BotIcon />
         <div>
           <h1 className="text-xl font-semibold text-slate-950">{botName(bot)}</h1>
-          <p className="text-[13px] text-slate-600">{botType(bot.category)} · {botLabel(bot.verification)} · {botAccessLabel(bot.access)}</p>
+          <p className="text-[13px] text-slate-600">{botType(bot.category, bot.group)} · {botLabel(bot.verification)} · {botAccessLabel(bot.access)}</p>
         </div>
       </div>
     </header>
     <Section title="Bot Information">
       <Fields entries={[
-        ["Bot reference ID", bot.id], ["Owner", bot.owner], ["Category", botType(bot.category)],
+        ["Bot reference ID", bot.id], ["Owner", bot.owner], ["Category", botType(bot.category, bot.group)],
         ["Verification status", botLabel(bot.verification)], ["First seen (UTC)", botTime(bot.firstSeen)], ["Last seen (UTC)", botTime(bot.lastSeen)],
       ]} />
       {bot.group === "UNKNOWN" && <p className="text-xs text-slate-600">This reference groups observations that may come from multiple clients.</p>}
