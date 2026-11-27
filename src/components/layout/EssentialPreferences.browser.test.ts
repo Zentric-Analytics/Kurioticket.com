@@ -4,15 +4,16 @@ import { expect } from "@playwright/test";
 import { componentBundle, withComponentBrowser } from "../../test-support/componentBrowser";
 
 const bundle = (selector = false) => componentBundle({
-  locale: "src/components/layout/LocaleProvider.tsx",
-  region: "src/components/region/RegionProvider.tsx",
+  // Share the selector's production import IDs so each context is instantiated once.
+  "@/components/layout/LocaleProvider": "src/components/layout/LocaleProvider.tsx",
+  "@/components/region/RegionProvider": "src/components/region/RegionProvider.tsx",
   ...(selector ? { selector: "src/components/region/CountryCurrencySelector.tsx" } : {}),
 });
 
 const mount = (before = "", props = "{}", selector = false) => `
   ${before}
   const React=require('react'), {createRoot}=require('react-dom/client');
-  const {LocaleProvider,useLocale}=require('locale'), {RegionProvider,useRegion}=require('region');
+  const {LocaleProvider,useLocale}=require('@/components/layout/LocaleProvider'), {RegionProvider,useRegion}=require('@/components/region/RegionProvider');
   const props=${props};
   function Selection() {
     const locale=useLocale(), region=useRegion();
