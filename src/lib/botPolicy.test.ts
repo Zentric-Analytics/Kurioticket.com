@@ -127,3 +127,41 @@ test("authenticated original network evidence is collected for every catalog cat
   assert.equal(incomplete?.networkOrganization, null);
   assert.equal(automationSignal(request("/", "Mozilla/5.0 Chrome/133.0", "GET", headers)), null);
 });
+
+test("trusted edge detects browser-equivalent automation without relying on User-Agent", async (t) => {
+  const previous = process.env.BOT_EDGE_SECRET;
+  const secret = "fixture".repeat(5);
+  process.env.BOT_EDGE_SECRET = secret;
+  t.after(() => {
+    if (previous === undefined) delete process.env.BOT_EDGE_SECRET;
+    else process.env.BOT_EDGE_SECRET = previous;
+  });
+  const agent = "Mozilla/5.0 Chrome/133.0";
+  const headers = {
+    "X-Kurioticket-Edge-Auth": secret,
+    "X-Kurioticket-Edge-Version": "1",
+    "X-Kurioticket-Edge-IP": "192.0.2.42",
+    "X-Kurioticket-Edge-Country": "GB",
+    "X-Kurioticket-Edge-Ray": "1234567890abcdef",
+    "X-Kurioticket-Edge-Bot": "automated",
+  };
+  for (const [path, method] of [["/", "GET"], ["/api/flights/search", "POST"]]) {
+    const req = request(path, agent, method, headers);
+    const signal = automationSignal(req);
+    assert.ok(signal);
+    assert.equal(signal.declared, null);
+    const bot = await observeBot(req, signal);
+    assert.equal(bot.group, "UNKNOWN");
+    assert.equal(bot.access, "BLOCKED");
+    assert.equal(bot.identityKey, "UNKNOWN:UNATTRIBUTED");
+    assert.equal(bot.evidence, "TRUSTED_EDGE_AUTOMATION");
+    assert.equal(bot.ip, "192.0.2.42");
+    assert.equal(bot.country, "GB");
+    assert.equal(botAccess(bot, botTarget(req)), "UNAPPROVED_BOT");
+  }
+  assert.equal(automationSignal(request("/", agent, "GET", { ...headers, "X-Kurioticket-Edge-Auth": "forged" })), null);
+  for (const userAgent of [agent, "okhttp/4.12", "KurioticketPreview/33 CFNetwork"]) {
+    const ordinary = request("/", userAgent, "GET", { ...headers, "X-Kurioticket-Edge-Bot": "" });
+    assert.equal(automationSignal(ordinary), null);
+  }
+});
