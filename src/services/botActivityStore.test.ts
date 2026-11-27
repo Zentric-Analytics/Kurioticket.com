@@ -184,3 +184,43 @@ test("authenticated WAF imports preserve network evidence and the live registry 
   assert.equal(registry.requests, BigInt(2));
   assert.equal(registry.rateLimited, BigInt(1));
 });
+
+
+test("verified and declared cohorts share one quota and deduplication across products", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
+  const previousUrl = process.env.DATABASE_URL;
+  process.env.DATABASE_URL = process.env.BOT_TEST_DATABASE_URL;
+  const db = getPrisma();
+  const environment = "bot-shared-quota-" + randomUUID();
+  t.after(async () => {
+    await db.botActivity.deleteMany({ where: { environment } });
+    await db.botRegistry.deleteMany({ where: { environment } });
+    await db.$disconnect();
+    if (previousUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = previousUrl;
+  });
+  const registry = await Promise.all(["SEARCH_ENGINE:BINGBOT", "UNKNOWN:BINGBOT"].map((identityKey, i) =>
+    db.botRegistry.create({ data: { id: randomUUID(), environment, identityKey, group: "SEARCH_ENGINE", name: "BINGBOT",
+      access: "CRAWL_AND_LIMITED_SEARCH", verification: i ? "DECLARED" : "VERIFIED" } })));
+  const attempt = async (index: number, product: string) => {
+    const bot = registry[index];
+    const activity = await db.botActivity.create({ data: { id: randomUUID(), botId: bot.id, environment,
+      endpoint: "/api/" + product + "/search", method: "POST", kind: "SEARCH_ATTEMPT", declaredName: "BINGBOT",
+      verification: bot.verification, decision: "PENDING", reason: "VALIDATION_PENDING" } });
+    return { id: activity.id, botId: bot.id, status: null, retryAfter: null };
+  };
+  const reserve = (a: Awaited<ReturnType<typeof attempt>>, id: string | null) => reserveBotSearch(a, id, new AbortController().signal);
+  const results = await Promise.all([attempt(0, "flights").then(a => reserve(a, "shared")),
+    attempt(1, "hotels").then(a => reserve(a, "shared"))]);
+  assert.deepEqual(results.map(r => r.status).sort((a, b) => a - b), [0, 409]);
+  assert.equal((await reserve(await attempt(1, "cars"), "new-id")).status, 429);
+  assert.equal((await reserve(await attempt(0, "packages"), "another-id")).status, 429);
+  const [{ now }] = await db.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
+  for (let i = 0; i < 4; i++) {
+    const a = await attempt(i % 2, "flights");
+    await db.botActivity.update({ where: { id: a.id }, data: { decision: "ALLOWED", dispatchedAt: utcDayStart(now) } });
+  }
+  assert.equal((await reserve(await attempt(0, "cars"), null)).status, 429);
+  assert.equal((await reserve(await attempt(1, "hotels"), null)).status, 429);
+  assert.equal(await db.botActivity.count({ where: { environment, dispatchedAt: { not: null } } }), 5);
+  assert.equal((await db.botRegistry.findUniqueOrThrow({ where: { id: registry[1].id } })).verification, "DECLARED");
+});
