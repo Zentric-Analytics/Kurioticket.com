@@ -4,7 +4,12 @@ import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { botReportNetwork, reportedCrawlerNetworkMatch } from "@/lib/botReportNetwork";
 import type { botTarget, observeBot } from "@/lib/botPolicy";
 
-type Bot = Awaited<ReturnType<typeof observeBot>>;
+type LiveBot = Awaited<ReturnType<typeof observeBot>>;
+/** Imported, authenticated WAF block events have their own provenance, separate
+ * from either live ingress source. This affects recording only, never access. */
+type Bot = Omit<LiveBot, "networkSource"> & {
+  networkSource: LiveBot["networkSource"] | "AUTHENTICATED_EDGE_EVENT";
+};
 type Target = ReturnType<typeof botTarget>;
 
 export const BOT_SEARCH_COOLDOWN_MS = 30 * 60_000;
