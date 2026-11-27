@@ -69,8 +69,8 @@ export default async function BotDetailsPage({ params, searchParams }: {
         ["Verification status", botVerification(bot.verification)],
         ["IP addresses", observed(observations.map(row => row.ip))],
         ["Countries", observed(observations.map(row => row.country))],
-        ["First seen (UTC)", <span title={botTime(bot.firstSeen)}>{botDirectoryTime(bot.firstSeen)}</span>],
-        ["Last seen (UTC)", <span title={botTime(bot.lastSeen)}>{botDirectoryTime(bot.lastSeen)}</span>],
+        ["First seen (UTC)", <span key="first-seen" title={botTime(bot.firstSeen)}>{botDirectoryTime(bot.firstSeen)}</span>],
+        ["Last seen (UTC)", <span key="last-seen" title={botTime(bot.lastSeen)}>{botDirectoryTime(bot.lastSeen)}</span>],
       ]} />
       <p className="text-xs text-slate-600">IP addresses and countries are based on up to 20 most recent recorded requests.</p>
       {bot.group === "UNKNOWN" && <p className="text-xs text-slate-600">This reference groups observations that may come from multiple clients.</p>}
