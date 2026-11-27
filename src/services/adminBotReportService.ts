@@ -85,7 +85,13 @@ export async function readBotDirectory(raw: BotQuery) {
       const total = counts[filters.group || "all"] ?? 0;
       const page = Math.min(filters.page, Math.max(1, Math.ceil(total / BOT_PAGE_SIZE)));
       const rows = await db.botRegistry.findMany({
-        where: { ...where, group: filters.group || undefined }, select: registrySelect,
+        where: { ...where, group: filters.group || undefined }, select: {
+          ...registrySelect,
+          activities: {
+            where: { environment }, orderBy: [{ timestamp: "desc" }, { id: "desc" }], take: 1,
+            select: { reportedNetworkMatch: true, timestamp: true },
+          },
+        },
         orderBy: [{ lastSeen: "desc" }, { id: "desc" }], skip: (page - 1) * BOT_PAGE_SIZE, take: BOT_PAGE_SIZE,
       });
       const countGroup = (group: string) => registry.find(row => row.group === group)?._count ?? 0;
