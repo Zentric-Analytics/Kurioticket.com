@@ -181,6 +181,9 @@ export default async function BotDetailsPage({ params, searchParams }: {
                           ] as [string, ReactNode][] : []),
                           ["Recorded User-Agent token", event.userAgent],
                           ["Verification evidence", event.evidence ? botLabel(event.evidence) : null],
+                          ...(event.reportedNetworkMatch === "OFFICIAL_CRAWLER_RANGE_MATCH" ? [
+                            ["Reported network check", "Matches an official crawler IP range; ingress authentication not established"],
+                          ] as [string, ReactNode][] : []),
                           ["Access decision", decision], ["Reason", botLabel(event.reason)], ["HTTP response status", event.responseStatus],
                           ["Search dispatch (UTC)", botTime(event.dispatchedAt)],
                           ["Search outcome", event.search ? botLabel(event.search.status) + " · " + event.search.resultCount + " results"
