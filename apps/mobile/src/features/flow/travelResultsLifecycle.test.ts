@@ -45,7 +45,7 @@ test("initial loaders conceal result chrome while preserving the car modal host 
 });
 
 test("car search uses canonical identity generations, abort, and stale-response guards", () => {
-  assert.match(cars, /\[plan\.plan\?\.key,retry\]/);
+  assert.match(cars, /\[plan\.plan\?\.key,retry,presentationDiagnostics\]/);
   assert.match(cars, /activeSearch\.current\?\.abort\("superseded"\)/);
   assert.match(cars, /searchCars\(plan\.plan\.payload,\{signal:controller\.signal,requestId,sandboxDisplay:true\}\)/);
   assert.match(cars, /controller\.signal\.aborted\|\|sequence!==searchSequence\.current/);

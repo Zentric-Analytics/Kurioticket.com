@@ -72,6 +72,8 @@ export const mobileSharedRuntime = new Set([
   "src/shared/presentation/sandboxInventory.ts",
   "src/shared/presentation/searchLoadingPresentation.ts",
   "src/shared/presentation/travelEntryPresentation.ts",
+  "src/shared/search/diagnostics.ts",
+  "src/shared/search/presentationDiagnostics.ts",
   "src/shared/search/freshness.ts",
   "src/shared/search/inventory.ts",
   "src/shared/search/lifecycle.ts"

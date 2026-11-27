@@ -1,4 +1,6 @@
 import { withOperationalGuestDevice } from "@/lib/operationalGuestDeviceObservation";
+import { diagnosticSearchResponse } from "@/lib/search/diagnosticResponse";
+import { withSearchDiagnosticContext } from "@/lib/search/diagnosticContext";
 import { withBotSearch } from "@/lib/botSecurity";
 import { carUnsupportedCategory, carUnsupportedSearchMessage } from "@/shared/cars/carSearchFeedback";
 import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
@@ -89,7 +91,7 @@ export async function POST(request: Request) {
   const botDenial = await bot?.reserve();
   if (botDenial) return botDenial;
   try {
-    const { results, status, warnings, providerStatuses, unsupported } = await searchCars(search, { requestId, kayak: { trackId: operationalSession?.reference.id, requestId, clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
+    const { results, status, warnings, providerStatuses, unsupported } = await withSearchDiagnosticContext("car", requestId, () => searchCars(search, { requestId, kayak: { trackId: operationalSession?.reference.id, requestId, clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } }));
     const response = classifyCars(results, search, requestId, warnings);
     if (unsupported) {
       bot?.outcome("FAILED");
@@ -157,7 +159,7 @@ export async function POST(request: Request) {
         // Provider diagnostics are optional and must not affect the search response.
       }
     });
-    return attachOperationalSearchSession(Response.json(response, { headers: noStore }), operationalSession);
+    return attachOperationalSearchSession(diagnosticSearchResponse("car", requestId, response, { headers: noStore }), operationalSession);
   } catch {
     bot?.outcome("FAILED");
     recordSearch(0, "FAILED");

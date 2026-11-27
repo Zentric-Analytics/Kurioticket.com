@@ -17,7 +17,7 @@ test("Android progressive Hotel starts with one verified provider page and conti
   assert.match(route, /request\.headers\.get\("x-mobile-platform"\) !== "android"/);
   assert.match(route, /hotelSearchSchema\.safeParse/);
   const service = read("src/services/travel/hotelAggregator.ts");
-  assert.match(route, /await searchHotelBatch\(search/);
+  assert.match(route, /withSearchDiagnosticContext\("hotel", trackId, \(\) => searchHotelBatch\(search/);
   assert.doesNotMatch(route, /new KayakSandboxClient|kayakHotelCardModel/);
   assert.match(service, /persistHotelProviderResults\)\(cumulative,search,undefined,outcome\.results\)/);
   assert.match(route, /logSearchHistory\(/);
