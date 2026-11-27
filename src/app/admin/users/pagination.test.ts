@@ -214,7 +214,9 @@ test("legacy drawer bookmarks preserve long Unicode filters and the requested pa
     assert.ok(error instanceof Redirect);
     const url = new URL(error.href, "https://fixture.invalid");
     assert.equal(url.pathname, "/admin/users/user/fixture-012/activity");
-    assert.equal(url.searchParams.get("range"), "all");
+    assert.equal(url.searchParams.get("range"), "custom");
+    assert.equal(url.searchParams.get("from"), "2026-11-20");
+    assert.equal(url.searchParams.get("to"), "2026-11-26");
     assert.equal(url.searchParams.has("directory"), false);
     const back = new URL(url.searchParams.get("usersReturn")!, "https://fixture.invalid");
     assert.equal(back.searchParams.get("q"), q);

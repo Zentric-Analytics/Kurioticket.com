@@ -1,4 +1,4 @@
-import { adminCalendarRange } from "./adminLocalTime";
+import { adminCalendarRange, adminLocalDate, adminStartOfLocalDay } from "./adminLocalTime";
 import { adminOnlineUsersHref, parseAdminOnlineUsersQuery } from "./adminOnlineUsersQuery";
 import { historyDirectoryReturnHref } from "./adminHistoryDirectory";
 import { validActivityIdentity } from "./adminIdentityActivity";
@@ -63,13 +63,38 @@ export function adminUsersActivityReturn(raw: RawActivityQuery, timeZone = "UTC"
   return { href, label: labels[href.split("?")[0] as keyof typeof labels] };
 }
 
-/** A new identity view starts with explicit All time. Its origin's date filter
- * remains in the return context and never silently becomes an activity filter. */
-export function adminUsersActivityHref(kind: "user" | "guest" | "live-guest", id: string, origin: string): string | null {
+/** Keep the selected reporting period while changing from the directory's
+ * identity filter to one identity's activity. Live presence has no historical
+ * period, so its activity entry starts Today. Other origin filters stay only
+ * in the validated return context. */
+export function adminUsersActivityHref(
+  kind: "user" | "guest" | "live-guest", id: string, origin: string,
+  timeZone = "UTC", now = new Date(),
+): string | null {
   if (kind === "live-guest" ? !/^[A-Za-z0-9_-]{43}$/.test(id) : !validActivityIdentity(kind, id)) return null;
-  const usersReturn = safeAdminUsersReturnHref(origin);
+  const usersReturn = safeAdminUsersReturnHref(origin, timeZone);
   if (!usersReturn) return null;
-  const params = new URLSearchParams({ range: "all", usersReturn });
+  const [path, search = ""] = usersReturn.split("?");
+  const incoming = new URLSearchParams(search);
+  const selected = path === "/admin/users" ? incoming.get("date") ?? "today"
+    : path === "/admin/users/online" ? "today" : incoming.get("range") ?? "today";
+  const range = selected === "last7" ? "7d" : selected === "last30" ? "30d" : selected;
+  const params = new URLSearchParams({ range, usersReturn });
+  if (range === "custom") {
+    params.set("from", incoming.get("from")!);
+    params.set("to", incoming.get("to")!);
+  } else if (["thisMonth", "lastMonth", "last3"].includes(range)) {
+    // Older directory bookmarks include month presets. Preserve their exact
+    // local month boundaries as a custom period, never widen to All time.
+    const month = new Date(adminLocalDate(now, timeZone).slice(0, 7) + "-01T00:00:00Z");
+    const boundary = (offset: number) => {
+      const day = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + offset, 1));
+      return adminStartOfLocalDay(day.toISOString().slice(0, 10), timeZone) ?? day;
+    };
+    params.set("range", "custom");
+    params.set("from", boundary(range === "lastMonth" ? -1 : range === "last3" ? -2 : 0).toISOString());
+    params.set("to", boundary(range === "lastMonth" ? 0 : 1).toISOString());
+  }
   return "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity?" + params;
 }
 

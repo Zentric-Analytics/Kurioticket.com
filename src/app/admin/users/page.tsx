@@ -52,7 +52,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   // Existing bookmarked drawer URLs remain functional; only the presentation changes.
   const legacy = /^(user|guest):([a-z0-9_-]{6,80})$/i.exec(params?.activity || "");
   if (legacy) {
-    const activity = adminUsersActivityHref(legacy[1].toLowerCase() as "user" | "guest", legacy[2], link);
+    const activity = adminUsersActivityHref(legacy[1].toLowerCase() as "user" | "guest", legacy[2], link, timeZone, now);
     if (activity) redirect(activity);
   }
   if (params?.page !== undefined && params.page !== String(requestedPage)) redirect(link);

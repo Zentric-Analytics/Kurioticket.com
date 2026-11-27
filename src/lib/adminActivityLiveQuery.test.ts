@@ -6,6 +6,16 @@ import { parseActivityFilters, encodeActivityCursor, decodeActivityCursor } from
 const first = new Date("2026-11-26T23:59:50.000Z");
 const later = new Date("2026-11-27T00:00:10.000Z");
 
+test("fresh activity starts Today in the administrator's zone and rolls at local midnight", () => {
+  const before = normalizeLiveUserActivityQuery({}, new Date("2026-11-27T07:59:50.000Z"), "America/Los_Angeles");
+  assert.equal(before.range, "today");
+  assert.equal(before.from, "2026-11-26T08:00:00.000Z");
+  const after = normalizeLiveUserActivityQuery(before, new Date("2026-11-27T08:00:10.000Z"), "America/Los_Angeles");
+  assert.equal(after.range, "today");
+  assert.equal(after.from, "2026-11-27T08:00:00.000Z");
+  assert.equal(after.to, "2026-11-27T08:00:10.000Z");
+});
+
 test("newest all-time and preset activity advance their cutoff on an automatic refresh", () => {
   const all = normalizeLiveUserActivityQuery({range:"all",to:first.toISOString()},later,"UTC");
   assert.equal(all.from,undefined);

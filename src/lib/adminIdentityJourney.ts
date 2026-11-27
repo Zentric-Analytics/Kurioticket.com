@@ -19,8 +19,12 @@ export type ActivityRow = {
   provider?: string | null;
   searchHistoryId?: string | null;
   redirectLogId?: string | null;
-  /** Sanitized, server-attributed search platform only. */
+  /** Sanitized, server-recorded platform; the source distinguishes action from search evidence. */
   platform?: "WEB" | "IOS" | "ANDROID" | null;
+  platformSource?: "search" | "action";
+  /** Original stored search identity, never rewritten from a later visitor/account link. */
+  originalSearchIdentity?: "registered" | "guest";
+  searchOutcome?: "SUCCESS" | "PARTIAL" | "FAILED";
   resultCount?: number | null;
   hotelPropertyCount?: number | null;
 };
@@ -138,6 +142,18 @@ export const journeyActivityLabels = {
   RATE_DETAILS_OPENED: "Rate details opened",
 } satisfies Record<JourneyEventRecord["type"], string>;
 
+/** A display-only projection of the exact referenced search. Missing source
+ * data is unknown; it must never become a fabricated Guest label. */
+export function recordedSearchContext(search: { userId?: string | null; status?: string } | null | undefined): Pick<ActivityRow, "originalSearchIdentity" | "searchOutcome"> {
+  if (!search) return {};
+  return {
+    ...(search.userId === null ? { originalSearchIdentity: "guest" as const }
+      : typeof search.userId === "string" && search.userId.length ? { originalSearchIdentity: "registered" as const } : {}),
+    ...(search.status === "SUCCESS" || search.status === "PARTIAL" || search.status === "FAILED"
+      ? { searchOutcome: search.status } : {}),
+  };
+}
+
 function displayProduct(product: string | null) {
   if (product === "FLIGHT") return "Flight";
   if (product === "HOTEL") return "Hotel";
@@ -198,6 +214,7 @@ export function toAdminJourneyActivity(event: JourneyEventRecord, kind: Identity
     provider,
     searchHistoryId: event.searchHistoryId,
     redirectLogId: event.redirectLogId,
+    ...recordedSearchContext(event.searchHistory),
     ...(event.type === "SEARCH_COMPLETED" && event.searchHistoryId
       ? { dedupeKey: "search:" + event.searchHistoryId }
       : {}),

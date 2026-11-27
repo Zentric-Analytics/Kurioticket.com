@@ -15,7 +15,7 @@ const origin = "https://admin.example.invalid";
 const online = "/admin/users/online?q=Nigeria&type=guest&platform=android&page=3";
 const now = new Date("2026-11-27T01:40:00.000Z");
 
-test("Directory stays Today while new user and guest activity opens explicit All time", () => {
+test("fresh Users views and identity entry share the Today period", () => {
   assert.equal(parseAdminIdentityDate(undefined), "today");
   assert.ok(adminIdentityDateBounds("today", now));
   for (const section of ["devices", "pages"] as const) {
@@ -23,12 +23,14 @@ test("Directory stays Today while new user and guest activity opens explicit All
     assert.ok(parsed.ok);
     assert.equal(parsed.query.range, "today");
   }
-  assert.deepEqual(normalizeUserActivityQuery({}, now), { range: "all" });
+  assert.deepEqual(normalizeUserActivityQuery({}, now), {
+    range: "today", from: "2026-11-27T00:00:00.000Z", to: now.toISOString(),
+  });
   for (const kind of ["user", "guest"] as const) {
     const href = adminUsersActivityHref(kind, "qa-identity-0001", "/admin/users?date=today&tab=GUEST&q=Guest&page=2");
     assert.ok(href);
     const url = new URL(href, origin);
-    assert.equal(url.searchParams.get("range"), "all");
+    assert.equal(url.searchParams.get("range"), "today");
     assert.equal(adminUsersActivityReturn(Object.fromEntries(url.searchParams)).href,
       "/admin/users?q=Guest&tab=GUEST&date=today&page=2");
   }
@@ -36,6 +38,56 @@ test("Directory stays Today while new user and guest activity opens explicit All
   assert.deepEqual(normalizeUserActivityQuery(explicit, now), { ...explicit, range: "custom" });
   assert.equal(normalizeUserActivityQuery({ range: "today" }, now).from, "2026-11-27T00:00:00.000Z");
   assert.deepEqual(normalizeUserActivityQuery({ range: ["all", "today"] }, now).range, ["all", "today"]);
+});
+
+test("directory reporting periods carry into both identity types without copying identity filters", () => {
+  for (const kind of ["user", "guest"] as const) {
+    for (const [date, range] of [["today", "today"], ["last7", "7d"], ["last30", "30d"], ["24h", "24h"], ["all", "all"], ["custom", "custom"]]) {
+      const params = new URLSearchParams({ date, q: "Guest", role: "ADMIN", status: "ACTIVE", tab: "GUEST", page: "3" });
+      if (date === "custom") { params.set("from", "2026-11-01"); params.set("to", "2026-11-20"); }
+      const href = adminUsersActivityHref(kind, "qa-identity-0001", "/admin/users?" + params, "America/Los_Angeles", now);
+      assert.ok(href);
+      const url = new URL(href, origin);
+      assert.equal(url.searchParams.get("range"), range);
+      assert.equal(url.searchParams.get("from"), date === "custom" ? "2026-11-01" : null);
+      assert.equal(url.searchParams.get("to"), date === "custom" ? "2026-11-20" : null);
+      for (const key of ["q", "role", "status", "tab", "page"]) assert.equal(url.searchParams.has(key), false, key);
+      const back = new URL(url.searchParams.get("usersReturn")!, origin);
+      assert.equal(back.searchParams.get("date"), date);
+      assert.equal(back.searchParams.get("page"), "3");
+      assert.equal(back.searchParams.get("q"), "Guest");
+    }
+  }
+});
+
+test("legacy month directory bookmarks retain their exact local boundaries", () => {
+  const at = new Date("2026-11-01T01:40:00.000Z");
+  const timeZone = "America/Los_Angeles";
+  for (const date of ["thisMonth", "lastMonth", "last3"] as const) {
+    const href = adminUsersActivityHref("user", "qa-identity-0001", "/admin/users?date=" + date, timeZone, at);
+    assert.ok(href);
+    const url = new URL(href, origin);
+    const bounds = adminIdentityDateBounds(date, at, undefined, undefined, timeZone);
+    assert.ok(bounds);
+    assert.equal(url.searchParams.get("range"), "custom");
+    assert.equal(url.searchParams.get("from"), bounds.from.toISOString());
+    assert.equal(url.searchParams.get("to"), bounds.to.toISOString());
+  }
+});
+
+test("Device and Pages origins carry selected dates while Online activity starts Today", () => {
+  for (const section of ["devices", "pages"]) {
+    const href = adminUsersActivityHref("user", "qa-identity-0001", "/admin/users/" + section + "?range=custom&from=2026-11-01&to=2026-11-20&platform=android&page=2");
+    assert.ok(href);
+    const params = new URL(href, origin).searchParams;
+    assert.equal(params.get("range"), "custom");
+    assert.equal(params.get("from"), "2026-11-01");
+    assert.equal(params.get("to"), "2026-11-20");
+    assert.equal(params.has("platform"), false);
+  }
+  const href = adminUsersActivityHref("user", "qa-identity-0001", online);
+  assert.ok(href);
+  assert.equal(new URL(href, origin).searchParams.get("range"), "today");
 });
 
 test("Online origin survives live guest resolution and nested history/search/page returns", () => {

@@ -42,7 +42,7 @@ test("six data columns and user/guest activity links retain all recorded identit
       .map(match => new URL(match[1].replaceAll("&amp;", "&"), "https://admin.example.invalid"));
     const activity = links.find(url => url.pathname === `/admin/users/${kind}/${id}/activity`);
     assert.ok(activity);
-    assert.equal(activity.searchParams.get("range"), "all", "an identity opens complete history independently of the directory range");
+    assert.equal(activity.searchParams.get("range"), "today", "an identity retains the directory reporting period");
     assert.equal(activity.searchParams.get("usersReturn"), props.pageHref);
   }
   assert.doesNotMatch(html, /Not an account|Manage account|Protected admin|Current admin/);
@@ -60,7 +60,7 @@ test("the full permitted Unicode directory search survives identity navigation a
   const match = [...html.matchAll(/href="([^"]*\/activity[^\"]*)"/g)][0];
   assert.ok(match);
   const url = new URL(match[1].replaceAll("&amp;", "&"), "https://admin.example.invalid");
-  assert.equal(url.searchParams.get("range"), "all");
+  assert.equal(url.searchParams.get("range"), "today");
   assert.equal(url.searchParams.get("usersReturn"), pageHref);
   assert.equal(adminUsersActivityReturn(Object.fromEntries(url.searchParams)).href, pageHref);
 });

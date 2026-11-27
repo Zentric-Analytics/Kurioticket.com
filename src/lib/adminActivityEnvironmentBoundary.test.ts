@@ -72,7 +72,9 @@ test("Activity and Support use white non-Overview workspaces while preserving au
   assert.match(shell, /const whiteWorkspace = .*usersDirectory \|\| visitorJourneysWorkspace \|\| searchesWorkspace \|\| supportWorkspace\s+\|\| providersWorkspace \|\| providerReportingWorkspace \|\| hotelCarsWorkspace \|\| accountDeletionWorkspace \|\| accountDeletionDetail \|\| contentWorkspace \|\| notificationsWorkspace \|\| homepageFaresWorkspace \|\| !isOverview;/);
   assert.match(shell, /const hotelCarsWorkspace = pathname === "\/admin\/hotels" \|\| pathname === "\/admin\/hotels\/" \|\| pathname === "\/admin\/cars" \|\| pathname === "\/admin\/cars\/";/);
   assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
-  assert.match(workspace, /space-y-5 bg-white/);
+  // White is the workspace contract; the spacing scale is presentation only.
+  const workspaceClasses = workspace.match(/return <div className="([^"]+)"/)?.[1].split(/\s+/);
+  assert.ok(workspaceClasses?.includes("bg-white"), "the outer activity workspace keeps a white background");
   assert.match(workspace, /Recorded actions in period/);
   assert.match(page, /<AdminUnifiedActivityList/);
   assert.match(unified, /data-testid="unified-activity-list"/);
@@ -137,7 +139,13 @@ test("live reference validates current presence before resolving recorded owners
   assert.match(live,/history \? recordedGuestActivityHref\(history\.id, full, input\) : null/);
   assert.doesNotMatch(live,/recordedGuestActivityHref\(row\./);
   assert.match(live,/eventCount=\{null\} summary=\{null\}/);
-  assert.match(live,/allHref=\{fullHref\}/);
+  const overviewStart = live.indexOf("return <AdminCustomerActivityWorkspace");
+  assert.ok(overviewStart > canonicalRedirect, "only an unresolved live reference reaches the unavailable-history overview");
+  const liveOverview = live.slice(overviewStart);
+  assert.match(liveOverview,/eventCount=\{null\} summary=\{null\}/);
+  assert.match(liveOverview,/accessContext=\{row \? <AdminActivityAccessSummary/);
+  assert.doesNotMatch(liveOverview,/allHref=|fullHref|<AdminUnifiedActivityList/, "temporary sessions must not advertise a full history they cannot provide");
+  assert.match(workspace,/summary === null \? <p role="status"[^>]*>Recorded activity history is unavailable for this temporary guest session/);
   assert.doesNotMatch(live,/loadAdminIdentityActivity|loadAdminUnifiedActivity|loadAdminGuestAccessHistory|CopyIdentityId|GuestTrackingActions/);
   assert.match(workspace,/aria-label="Unavailable"/);
 });

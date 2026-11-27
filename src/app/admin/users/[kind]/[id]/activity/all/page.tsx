@@ -56,7 +56,7 @@ export default async function AdminAllActivityPage({params,searchParams}:Props) 
   const locations = kind === "guest" ? await loadAdminGuestRecordedLocations([id], { range: "all", page: 1 }, data.environment, now, timeZone) : null;
   const recordedLocation = locations?.get(guestRecordedLocationKey(id, operational ? "operational" : "consented"));
   const returnHref = activityHref(path,cursor ? queryParams : newestParams,{cursor:cursor ?? null});
-  const range = typeof raw.range === "string" ? raw.range : "all";
+  const range = typeof raw.range === "string" ? raw.range : "today";
   const pagesHref = pageHistoryHrefFromActivity(kind,id,{...filters,tab:"pages",stage:"all",product:"all",q:""},range,returnHref);
   const journeysHref = journeyHistoryHrefFromActivity(kind,id,filters,range,returnHref);
   const nextHref = data.nextCursor ? activityHref(path,queryParams,{cursor:data.nextCursor}) : null;
@@ -69,7 +69,9 @@ export default async function AdminAllActivityPage({params,searchParams}:Props) 
     identityType={operational ? "Essential operational activity" : data.source === "visitor" ? "Consented guest" : "Registered account"}
     coverage={operational ? "operational" : kind === "guest" ? "consented" : "registered"}
     identityDetails={kind === "guest" ? <AdminRecordedGuestLocation location={recordedLocation} timeZone={timeZone}/> : null}
-    journeyAction={operational ? {label:"Journey history unavailable",unavailableReason:operationalUnavailable} : {label:"View journey history",href:journeysHref}}
+    journeyAction={filters.tab === "access" ? {label:"View access history",href:accessHref}
+      : filters.tab === "pages" && !operational ? {label:"View page history",href:pagesHref}
+      : !operational ? {label:"View journey history",href:journeysHref} : undefined}
     filters={{timeZone,now:now.toISOString(),path,directory:queryParams.directory ?? "",usersReturn:queryParams.usersReturn,
       availableStages:operational ? ["SEARCH_COMPLETED","PROVIDER_HANDOFF_STARTED"] : undefined,
       initial:{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order:"newest",from:filters.from,to:filters.to,range}}}

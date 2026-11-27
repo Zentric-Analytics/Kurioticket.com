@@ -111,7 +111,10 @@ test("confirmed price alerts have exact journey attribution without doubling exi
   assert.match(api, /linkCreatedPriceAlertToJourney/);
   assert.match(native, /linkCreatedPriceAlertToJourney/);
   assert.match(history, /'PRICE_ALERT_CREATED'/);
-  assert.match(dashboard, /Selected visitor journey summary/);
-  assert.ok(dashboard.indexOf('aria-label="Selected visitor journey summary"') < dashboard.indexOf('aria-label="Selected visitor"'));
+  const identitySection = dashboard.indexOf('aria-label="Selected visitor"');
+  const journeySummary = dashboard.indexOf('aria-label="Selected visitor journey summary"');
+  assert.ok(identitySection >= 0, "Journey history identifies the selected visitor");
+  assert.ok(journeySummary >= 0, "Journey history retains its selected-visitor metrics");
+  assert.ok(identitySection < journeySummary, "The selected identity precedes its journey metrics");
   assert.doesNotMatch(dashboard.slice(dashboard.indexOf('aria-label="Selected visitor"'), dashboard.indexOf('<form action=')), /\{returnLink\}|Other recorded activity/);
 });

@@ -39,8 +39,7 @@ test("Activity server-scope resets drafts without background navigation or losin
     assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: unknown[] }).fixtureNavigation), [], "old scope cannot submit a pending local search");
     await input.fill("new search");
     await input.press("Enter");
-    assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), [], "draft search does not navigate");
-    await page.getByRole("button", { name: "Apply filters", exact: true }).click();
+    await page.waitForFunction(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation.length === 1);
     const navigations = await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation);
     const url = new URL(navigations.at(-1)!, "http://fixture.local");
     assert.equal(url.searchParams.get("q"), "new search");
@@ -81,6 +80,30 @@ test("rolling activity updates preserve unfinished filters and Applying retains 
     assert.equal(next.searchParams.has("from"),false);
     assert.equal(next.searchParams.has("to"),false);
     assert.equal(next.searchParams.has("cursor"),false);
+  });
+});
+
+test("Activity period removal returns to Today and Enter does not submit an incomplete custom period", async () => {
+  const initial = {tab:"all",q:"Lagos",product:"FLIGHT",stage:"all",order:"newest",from:"",to:"",range:"today"};
+  const props = {path:"/admin/users/user/qa-account-0001/activity/all",initial,directory:"",usersReturn:"/admin/users?date=last7&page=2",tabs:null,timeZone:"UTC",now:"2026-11-27T12:00:00.000Z"};
+  await withComponentBrowser(bundle(),mount("activity","ActivityFiltersBar",props),async page => {
+    await page.getByRole("textbox",{name:"Search activity"}).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Remove filter: Today",exact:true}).count(),0);
+    await page.evaluate(props => (window as unknown as {fixtureRender:(props:unknown)=>void}).fixtureRender(props),
+      {...props,initial:{...initial,range:"7d"}});
+    await page.getByRole("button",{name:"Remove filter: Last 7 days",exact:true}).click();
+    const next = new URL(await page.evaluate(()=>(window as unknown as {fixtureNavigation:string[]}).fixtureNavigation.at(-1)!),"http://fixture.local");
+    assert.equal(next.searchParams.get("range"),"today");
+    assert.equal(next.searchParams.get("q"),"Lagos");
+    assert.equal(next.searchParams.get("product"),"FLIGHT");
+    assert.equal(next.searchParams.get("usersReturn"),props.usersReturn);
+    assert.equal(next.searchParams.has("from"),false);
+    assert.equal(next.searchParams.has("to"),false);
+    await page.getByRole("button",{name:/^Date range:/}).click();
+    await page.getByRole("option",{name:"Custom range",exact:true}).click();
+    assert.equal(await page.getByRole("button",{name:"Apply filters",exact:true}).isDisabled(),true);
+    await page.getByRole("textbox",{name:"Search activity"}).press("Enter");
+    assert.equal(await page.evaluate(()=>(window as unknown as {fixtureNavigation:string[]}).fixtureNavigation.length),1);
   });
 });
 
