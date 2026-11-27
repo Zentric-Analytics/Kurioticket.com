@@ -2,6 +2,7 @@ import { chromium, expect } from "@playwright/test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { mkdir } from "node:fs/promises";
+import { expectActivityFilterLayout } from "./activity-filter-layout.mjs";
 
 const base = process.env.ADMIN_ACTIVITY_QA_URL;
 const output = process.env.ADMIN_ACTIVITY_QA_OUTPUT;
@@ -589,7 +590,7 @@ try {
   await expect(page).toHaveURL(u=>u.pathname===todayPath+"/activity/all"&&u.searchParams.get("range")==="today"&&u.searchParams.get("usersReturn")===todayOrigin);
   await expect(activityRows).toHaveCount(0);
   await expect(page.getByRole("button",{name:/Remove filter: Today/})).toHaveCount(0);
-  await assertHorizontalFilters("activity-filters-row",5);
+  await expectActivityFilterLayout(page, "Today full activity");
   await page.getByRole("link",{name:"Back to Activity",exact:true}).click();
   await expect(page).toHaveURL(todayProfile);
   for(const [name,suffix,dateLabel] of [
@@ -647,9 +648,18 @@ try {
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
   await capture({caret:"initial",path:output+"/activity-mobile-filter-controls-390.png",fullPage:true});
   console.log("PASS mobile filter disclosure, preserved draft, applied chips and filter removal");
+  // Keep search above the four controls across the sidebar breakpoint and the
+  // former 1280px breakpoint; no screenshot pixel width is assumed to be zoom.
+  for (const width of [320,390,640,768,1023,1024,1152,1279,1280,1440,1731]) {
+    await page.setViewportSize({width,height:900});
+    await page.goto(fullUrl);
+    await expectActivityFilterLayout(page, "Full activity filter layout " + width + "px");
+    await page.getByTestId("activity-filters-row").screenshot({path:output+"/all-activity-filter-rows-"+width+".png"});
+  }
+  console.log("PASS full-width activity search and four controls across 11 responsive widths");
   await page.setViewportSize({width:1280,height:900});
   await page.goto(fullUrl);
-  await assertHorizontalFilters("activity-filters-row",5);
+  await expectActivityFilterLayout(page, "Historical full activity");
   await page.getByRole("navigation",{name:"Activity categories"}).getByRole("link",{name:"Searches",exact:true}).click();
   await expect(page).toHaveURL(/tab=searches/);
   const search=page.getByRole("textbox",{name:"Search activity"});

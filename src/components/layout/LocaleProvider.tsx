@@ -108,8 +108,14 @@ export function LocaleProvider({
 
     // The server cannot inspect browser storage. Resolve it once after hydration,
     // before persisting a default or allowing account preferences to hydrate.
-    const current = window.localStorage.getItem("kurioticket_locale");
-    const legacy = window.localStorage.getItem("ct_language");
+    let current: string | null = null;
+    let legacy: string | null = null;
+    try {
+      current = window.localStorage.getItem("kurioticket_locale");
+      legacy = window.localStorage.getItem("ct_language");
+    } catch {
+      // Continue with the server/default locale when browser storage is blocked.
+    }
     const stored = isPublicLocale(current)
       ? normalizeLanguage(current)
       : isPublicLocale(legacy)

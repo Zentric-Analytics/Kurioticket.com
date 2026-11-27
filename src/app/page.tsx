@@ -1075,12 +1075,13 @@ export default function Home() {
     event.stopPropagation();
 
     if (sessionStatus !== "authenticated") {
+      const next = toggleSavedItemId(savedItemIds, itemId);
+      if (!writeSavedItemIds(next)) {
+        setSavedItemError("Unable to update saved items on this device.");
+        return;
+      }
       setSavedItemError("");
-      setSavedItemIds((current) => {
-        const next = toggleSavedItemId(current, itemId);
-        writeSavedItemIds(next);
-        return next;
-      });
+      setSavedItemIds(next);
       return;
     }
 
