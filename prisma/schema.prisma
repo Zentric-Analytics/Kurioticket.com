@@ -1374,6 +1374,9 @@ model BotActivity {
   country            String?
   userAgent          String?
   renderRequestId    String?
+  // Report-only Render ingress observation, never an authentication input.
+  reportedIp         String?
+  reportedCountry    String?
   // Retrospective Render log evidence is not used in ingress authorization.
   renderLogIp        String?
   renderLogCountry   String?
