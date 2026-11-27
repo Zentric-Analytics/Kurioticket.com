@@ -90,7 +90,7 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams, r
     } : undefined;
 
   async function toggleSavedCar() {
-    if (pending) return;
+    if (pending || status === "loading") return;
     if (status !== "authenticated") { await signIn(undefined, { callbackUrl: window.location.href }); return; }
     const previous = savedItem;
     setPending(true);
@@ -135,5 +135,5 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams, r
     } finally { setPending(false); }
   }
 
-  return { isSaved: Boolean(savedItem), pending, toggleSavedCar };
+  return { isSaved: status === "authenticated" && Boolean(savedItem), pending: pending || status === "loading", toggleSavedCar };
 }

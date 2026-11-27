@@ -8,6 +8,7 @@ import { CarInventoryLoader } from "@/components/results/CarInventoryLoader";
 import { CarsResultsMobileSafeArea } from "@/components/results/CarsResultsMobileSafeArea";
 import type { LocationBoundCarSearchParams } from "@/lib/cars/types";
 import { parseCarLocationTarget } from "@/lib/cars/carSearchLocationTarget";
+import { parseSharedCarId } from "@/lib/cars/carResults";
 import { hasExplicitDifferentReturnLocation } from "@/lib/cars/carsSearchUtils";
 import { CARS_RESULTS_RELOAD_SCROLL_SCRIPT } from "@/lib/cars/carsResultsReloadScroll";
 import { getTranslations } from "@/lib/i18n";
@@ -68,6 +69,7 @@ export default async function CarsResultsPage({
       ? <KayakSandboxResults key={JSON.stringify(adapted.search)} search={adapted.search} />
       : <main className="page-shell py-6"><h1>KAYAK sandbox search unavailable</h1><p>{adapted.reason}</p><a href="/sandbox/kayak">Edit sandbox search</a></main>}</div>;
   }
+  const sharedCarId = parseSharedCarId(params.sharedCar);
   const pickupLocation = getParamValue(params, "pickupLocation");
   const dropoffLocation = getParamValue(params, "dropoffLocation");
   const returnToDifferentLocation = hasExplicitDifferentReturnLocation({
@@ -145,7 +147,7 @@ export default async function CarsResultsPage({
           />
         }
       >
-        <CarsResultsContent values={values} searchIdentity={searchIdentity}
+        <CarsResultsContent values={values} searchIdentity={searchIdentity} sharedCarId={sharedCarId}
           fallback={<CarsResultsFallback
             summary={[values.pickupLocation, values.pickupDate + " — " + values.dropoffDate, values.pickupTime + " — " + values.dropoffTime, "Driver age " + values.driverAge]}
             title={t["carsResults.loading.title"] ?? enTranslations["carsResults.loading.title"]}
@@ -159,18 +161,21 @@ export default async function CarsResultsPage({
 function CarsResultsContent({
   values,
   searchIdentity,
+  sharedCarId,
   fallback,
 }: {
   values: LocationBoundCarSearchParams & {
     returnToDifferentLocation: boolean;
   };
   searchIdentity: string;
+  sharedCarId: string | null;
   fallback: ReactNode;
 }) {
   return (
     <CarInventoryLoader
       key={searchIdentity}
       values={values}
+      sharedCarId={sharedCarId}
       fallback={fallback}
     />
   );

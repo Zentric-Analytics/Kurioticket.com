@@ -4,9 +4,8 @@ import { savedFlightTimeFields, SavedFlightTimeError } from "@/shared/flights/sa
 import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import type { PublicFlightResult } from "@/lib/types";
-import { readSavedItemIds, toggleSavedItemId, writeSavedItemIds } from "@/lib/saved-items-local";
 import { getSavedFlightsInvalidationRevision, SAVED_FLIGHTS_INVALIDATED_EVENT } from "@/lib/saved-flight-events";
 
 type SavedFlightItem = {
@@ -15,7 +14,6 @@ type SavedFlightItem = {
 };
 
 const SAVED_FLIGHTS_CHANGED_EVENT = "kurioticket:saved-flights-changed";
-const LOCAL_SAVED_FLIGHTS_CHANGED_EVENT = "kurioticket:local-saved-flights-changed";
 
 let savedFlightsOwner = "";
 let savedFlightsCache: SavedFlightItem[] | null = null;
@@ -87,7 +85,6 @@ export function useSavedFlightResult(
   const { data: session, status } = useSession();
   const owner = session?.user?.email ?? "authenticated-user";
   const [savedItem, setSavedItem] = useState<SavedFlightItem | null>(null);
-  const [localSaved, setLocalSaved] = useState(false);
   const [pending, setPending] = useState(false);
   const [savedFlightError, setSavedFlightError] = useState<string | null>(null);
 
@@ -96,10 +93,9 @@ export function useSavedFlightResult(
 
     if (status === "unauthenticated") {
       clearSavedFlightsCache();
-      const syncLocal = () => setLocalSaved(readSavedItemIds().includes(flight.id));
-      syncLocal();
-      window.addEventListener(LOCAL_SAVED_FLIGHTS_CHANGED_EVENT, syncLocal);
-      return () => window.removeEventListener(LOCAL_SAVED_FLIGHTS_CHANGED_EVENT, syncLocal);
+      let active = true;
+      queueMicrotask(() => { if (active) setSavedItem(null); });
+      return () => { active = false; };
     }
 
     const update = () => setSavedItem(matchingSavedFlight(savedFlightsCache, flight.id));
@@ -126,6 +122,10 @@ export function useSavedFlightResult(
     setPending(true);
     setSavedFlightError(null);
     try {
+      if (status === "unauthenticated") {
+        await signIn(undefined, { callbackUrl: window.location.href });
+        return;
+      }
       if (status === "authenticated") {
         const previous = savedItem;
         if (previous) {
@@ -181,14 +181,6 @@ export function useSavedFlightResult(
         return;
       }
 
-      const next = toggleSavedItemId(readSavedItemIds(), flight.id);
-      if (!writeSavedItemIds(next)) {
-        setSavedFlightError("Unable to update saved flight on this device.");
-        return;
-      }
-      setLocalSaved(next.includes(flight.id));
-      recordCustomerInteraction({ action: next.includes(flight.id) ? "local_saved" : "local_unsaved", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId, observedResult });
-      window.dispatchEvent(new Event(LOCAL_SAVED_FLIGHTS_CHANGED_EVENT));
     } catch (error) {
       setSavedFlightError(error instanceof SavedFlightTimeError ? error.message : "Unable to save flight. Please try again.");
     } finally {
@@ -197,7 +189,7 @@ export function useSavedFlightResult(
   }
 
   return {
-    isSaved: status === "authenticated" ? Boolean(savedItem) : status === "unauthenticated" ? localSaved : false,
+    isSaved: status === "authenticated" && Boolean(savedItem),
     pending: pending || status === "loading",
     toggleSavedFlight,
     savedFlightError,
