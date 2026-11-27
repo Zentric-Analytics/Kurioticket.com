@@ -122,24 +122,17 @@ export function detailHistoryQuery(environment: string, id: string, name: string
         ORDER BY "createdAt" DESC, id DESC
         OFFSET (SELECT ("searchPage" - 1) * ${BOT_PAGE_SIZE} FROM pages) LIMIT ${BOT_PAGE_SIZE}
       ) item), '[]') AS "recordedSearches",
+      -- IP validity is checked by publicVisitorIp in the reporting layer.
+      -- Never limit unvalidated candidates: 25+ newer malformed/private IPs
+      -- could hide the latest saved public IP from an older request or search.
       coalesce((SELECT jsonb_agg(item ORDER BY item.timestamp DESC, item.source, item.id DESC) FROM (
         SELECT id, "botId", timestamp, source, ip, provenance FROM network_records
         WHERE ip IS NOT NULL
-        ORDER BY timestamp DESC, source, id DESC LIMIT 25
+        ORDER BY timestamp DESC, source, id DESC
       ) item), '[]') AS "networkIpCandidates",
       coalesce((SELECT jsonb_agg(code ORDER BY code) FROM (
         SELECT DISTINCT upper(country) AS code FROM network_records
-        WHERE country ~ '^[A-Za-z]{2}
-      ${name ? Prisma.sql`coalesce((SELECT jsonb_agg(item ORDER BY item.count DESC, item.id) FROM (
-        SELECT b.id, b.verification, count(*)::int AS count
-        FROM attributed a JOIN "BotRegistry" b ON b.id = a."botId"
-        WHERE b.environment = ${environment} AND b.name = ${name} AND b.id <> ${id}
-        GROUP BY b.id, b.verification ORDER BY count DESC, b.id LIMIT 10
-      ) item), '[]')` : Prisma.sql`'[]'::jsonb`} AS "relatedCohorts"
-    FROM pages
-  `;
-}
-
+        WHERE country ~ '^[A-Za-z]{2}$'
       ) countries), '[]') AS "networkCountryCodes",
       ${name ? Prisma.sql`coalesce((SELECT jsonb_agg(item ORDER BY item.count DESC, item.id) FROM (
         SELECT b.id, b.verification, count(*)::int AS count
