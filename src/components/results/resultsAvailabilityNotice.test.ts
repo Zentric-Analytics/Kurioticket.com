@@ -9,6 +9,7 @@ import ts from "typescript";
 import { ResultsAvailabilityNotice } from "./ResultsAvailabilityNotice";
 import { RESULTS_AVAILABILITY_NOTICE } from "../../shared/presentation/resultsAvailabilityNotice";
 import { CAR_SANDBOX_AGE_NOTICE } from "../../shared/cars/carSearchFeedback";
+import { parseSharedCarId } from "../../lib/cars/carResults";
 
 const requireFromRoot = createRequire(path.resolve("package.json"));
 const { renderToString } = requireFromRoot("react-dom/server") as { renderToString(node: ReactNode): string };
@@ -21,9 +22,9 @@ type Page = (props: { searchParams: Promise<Record<string, string>> }) => Promis
 // fixtures: this tests presentation across states without contacting providers.
 function load<T>(file: string, state: string, supported = true): T {
   const exports: Record<string, unknown> = {};
-  const content = () => {
+  const content = (props: { sharedCarId?: string | null }) => {
     if (state === "loading") throw new Promise(() => {});
-    return createElement("main", { "data-search-state": state },
+    return createElement("main", { "data-search-state": state, "data-shared-car-id": props.sharedCarId ?? undefined },
       state === "populated" ? createElement("article", { "data-result-card": true },
         createElement("a", { href: "https://provider.example/in?offer=selected", "data-offer-id": "selected" }, "View deal")) : state);
   };
@@ -40,6 +41,7 @@ function load<T>(file: string, state: string, supported = true): T {
     "@/lib/hotels/hotelResultsRoute": { resolveHotelResultsRoute: () => ({ resultsReady: true }) },
     "@/lib/flights/flightSearchJourney": { parseFlightLegParams: () => [] },
     "@/lib/cars/carSearchLocationTarget": { parseCarLocationTarget: () => undefined },
+    "@/lib/cars/carResults": { parseSharedCarId },
     "@/lib/cars/carsSearchUtils": { hasExplicitDifferentReturnLocation: () => false },
     "@/lib/cars/carsResultsReloadScroll": { CARS_RESULTS_RELOAD_SCROLL_SCRIPT: "" },
     "@/lib/validation": { flightSearchSchema: { safeParse: () => ({ success: true, data: {} }) } },
@@ -110,6 +112,21 @@ for (const product of products) {
     assert.equal(html.split(CAR_SANDBOX_AGE_NOTICE).length - 1, product === "cars" ? 1 : 0);
   });
 }
+
+test("shared Cars Results preserves one notice and forwards only a valid public car reference", async () => {
+  const page = load<{ default: Page }>("src/app/cars/results/page.tsx", "populated").default;
+  for (const sharedCar of ["shared-car-42", "", "x".repeat(513), "invalid\ncar"]) {
+    const html = renderToString(await page({ searchParams: Promise.resolve({ ...query, sharedCar }) }));
+    assertOneNotice(html);
+    assert.equal(html.split(CAR_SANDBOX_AGE_NOTICE).length - 1, 1);
+    if (sharedCar === "shared-car-42") {
+      assert.match(html, /data-shared-car-id="shared-car-42"/);
+    } else {
+      assert.doesNotMatch(html, /data-shared-car-id=/);
+    }
+    assert.match(html, /data-offer-id="selected"/);
+  }
+});
 
 test("notice consumers are limited to product result shells, excluding cards, details and Deals", () => {
   const allowed = new Set(products.flatMap(product => ["page.tsx", "loading.tsx"].map(file => `src/app/${product}/results/${file}`)));

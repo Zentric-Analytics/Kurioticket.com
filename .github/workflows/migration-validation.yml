@@ -93,6 +93,8 @@ jobs:
             while IFS= read -r -d '' changed_file; do
               changed_file="${changed_file//\\//}"
               case "$changed_file" in
+                src/services/recordedBotSearchHistory.ts|\
+                src/services/recordedBotSearchHistory.test.ts|\
                 tools/cloudflare/bot-edge.mjs|\
                 tools/cloudflare/bot-edge.test.mjs|\
                 prisma/*|\

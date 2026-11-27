@@ -61,12 +61,7 @@ import {
 import { translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
 import { applyHomepageRecommendationOrder } from "@/lib/recommendations/homepagePersonalization";
 import { translations as enTranslations } from "@/lib/i18n/en";
-import { useSession } from "next-auth/react";
-import {
-  readSavedItemIds,
-  toggleSavedItemId,
-  writeSavedItemIds,
-} from "@/lib/saved-items-local";
+import { signIn, useSession } from "next-auth/react";
 import {
   deleteBackendDiscovery,
   fetchBackendSavedDiscoveries,
@@ -921,7 +916,7 @@ export default function Home() {
 
     const timeoutId = window.setTimeout(() => {
       setBackendSavedItemIds({});
-      setSavedItemIds(readSavedItemIds());
+      setSavedItemIds([]);
     }, 0);
     return () => window.clearTimeout(timeoutId);
   }, [refreshBackendSavedItems, sessionStatus]);
@@ -1074,14 +1069,13 @@ export default function Home() {
     event.preventDefault();
     event.stopPropagation();
 
+    if (sessionStatus === "loading") return;
     if (sessionStatus !== "authenticated") {
-      const next = toggleSavedItemId(savedItemIds, itemId);
-      if (!writeSavedItemIds(next)) {
-        setSavedItemError("Unable to update saved items on this device.");
-        return;
+      try {
+        await signIn(undefined, { callbackUrl: window.location.href });
+      } catch {
+        setSavedItemError("Unable to open sign-in. Please try again.");
       }
-      setSavedItemError("");
-      setSavedItemIds(next);
       return;
     }
 
