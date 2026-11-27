@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { allowedActivityStages, parseActivityFilters } from "../../../../../src/lib/adminIdentityActivity";
 
 const read = (file: string) => readFileSync(file, "utf8");
 const share = read("src/features/privacy/nativeShareTracking.ts");
@@ -51,5 +52,16 @@ test("existing server checks consent, exact search ownership and event UUID idem
   assert.match(server, /type: stage/);
   const admin = read(repoRoot + "src/services/adminIdentityActivityService.ts");
   assert.match(admin, /share_sheet_completed: "Share sheet completed"/);
-  assert.match(admin, /RESULT_SHARED/);
+  assert.match(admin, /const allowed = allowedActivityStages\(filters\)/);
+  assert.match(admin, /const stages = \[\.\.\.allowed\]/);
+  assert.match(admin, /type: \{ in: stages \}/);
+  for (const tab of ["all", "journeys", "interactions"]) {
+    for (const stage of ["all", "RESULT_SHARED"]) {
+      const parsed = parseActivityFilters({ tab, stage });
+      assert.equal(parsed.ok, true);
+      const allowed = allowedActivityStages(parsed.filters);
+      assert.equal(allowed.has("RESULT_SHARED"), true, `${tab}/${stage} retains recorded shares`);
+      if (stage === "RESULT_SHARED") assert.deepEqual([...allowed], ["RESULT_SHARED"]);
+    }
+  }
 });

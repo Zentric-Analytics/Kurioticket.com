@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { expect } from "@playwright/test";
 import { componentBundle, withComponentBrowser } from "../../test-support/componentBrowser";
 import type { AdminOnlineUsersSnapshot, OnlineIdentityRow } from "../../lib/adminOnlineUsersSnapshot";
 
@@ -112,15 +113,16 @@ test("a new server roster updates in place and an older pending poll cannot over
 
 test("Online failures retain labelled historical samples, hidden aborts cannot repaint, and revoked access stops polling", async () => {
   const setup = mount("type=guest&platform=android&page=2", true) + `
-    window.fixtureMode='network';window.fixtureRequests=0;window.fixtureVisibility='visible';
+    window.fixtureMode='network';window.fixtureRequests=0;window.fixtureDecoded=0;window.fixtureVisibility='visible';
     Object.defineProperty(document,'visibilityState',{get:()=>window.fixtureVisibility});
     window.fixtureVisible=value=>{window.fixtureVisibility=value;document.dispatchEvent(new Event('visibilitychange'));};
+    const observedResponse=response=>{const json=response.json.bind(response);response.json=async()=>{const body=await json();window.fixtureDecoded++;return body;};return response;};
     window.fetch=async()=>{
       window.fixtureRequests++;
       if(window.fixtureMode==='network')throw Error('Network unavailable');
       if(window.fixtureMode==='denied')return Response.json({},{status:403});
-      if(window.fixtureMode==='pending')return new Promise(resolve=>{window.fixtureResolve=resolve;});
-      return Response.json(window.fixtureProps.initial);
+      if(window.fixtureMode==='pending')return new Promise(resolve=>{window.fixtureResolve=response=>resolve(observedResponse(response));});
+      return observedResponse(Response.json(window.fixtureProps.initial));
     };`;
   await withComponentBrowser(bundle(), setup, async page => {
     await page.clock.install();
@@ -128,17 +130,24 @@ test("Online failures retain labelled historical samples, hidden aborts cannot r
     await page.getByText("Page 2 of 2", { exact: true }).waitFor();
     const url = page.url();
     await page.clock.runFor(30_100);
+    await expect.poll(() => page.evaluate(() => (window as unknown as { fixtureRequests: number }).fixtureRequests)).toBe(1);
     assert.equal(await page.getByTestId("online-user-row").count(), 5, "network failure does not drop the current page");
-    assert.equal(await page.getByTestId("online-user-row").getByText("Last observed", { exact: true }).count(), 5);
+    await expect(page.getByTestId("online-user-row").getByText("Last observed", { exact: true })).toHaveCount(5);
     assert.equal(await page.getByTestId("online-user-row").getByText("Online", { exact: true }).count(), 0, "old evidence must not claim current presence");
     assert.match(await page.locator("body").innerText(), /Current online status is unverified/);
     await page.evaluate(() => { (window as unknown as { fixtureMode: string }).fixtureMode = "ready"; });
     await page.clock.runFor(60_000);
-    assert.equal(await page.getByTestId("online-user-row").getByText("Online", { exact: true }).count(), 5);
+    await expect.poll(() => page.evaluate(() => (window as unknown as { fixtureRequests: number }).fixtureRequests)).toBe(2);
+    // Advancing the browser clock starts the retry; response-body decoding and
+    // the React commit settle separately. Wait for the actual recovered UI.
+    await expect(page.getByTestId("online-user-row").getByText("Online", { exact: true })).toHaveCount(5);
+    assert.equal(await page.evaluate(() => (window as unknown as { fixtureDecoded: number }).fixtureDecoded), 1);
     await page.evaluate(() => { (window as unknown as { fixtureMode: string }).fixtureMode = "pending"; });
     await page.clock.runFor(30_000);
+    await expect.poll(() => page.evaluate(() => (window as unknown as { fixtureRequests: number }).fixtureRequests)).toBe(3);
     await page.evaluate(() => (window as unknown as { fixtureVisible: (value: string) => void }).fixtureVisible("hidden"));
     await page.evaluate(() => (window as unknown as { fixtureResolve: (response: Response) => void }).fixtureResolve(Response.json({ status: "unavailable", observedAt: new Date().toISOString(), windowSeconds: 90 })));
+    await expect.poll(() => page.evaluate(() => (window as unknown as { fixtureDecoded: number }).fixtureDecoded)).toBe(2);
     await page.clock.runFor(100);
     assert.equal(await page.getByTestId("online-user-row").count(), 5, "an aborted late response cannot replace retained rows");
     await page.evaluate(() => {
@@ -146,10 +155,13 @@ test("Online failures retain labelled historical samples, hidden aborts cannot r
       (window as unknown as { fixtureVisible: (value: string) => void }).fixtureVisible("visible");
     });
     await page.clock.runFor(100);
+    await expect.poll(() => page.evaluate(() => (window as unknown as { fixtureRequests: number }).fixtureRequests)).toBe(4);
+    await expect(page.getByTestId("online-user-row").getByText("Online", { exact: true })).toHaveCount(5);
     assert.equal(page.url(), url);
     await page.evaluate(() => { (window as unknown as { fixtureMode: string }).fixtureMode = "denied"; });
     await page.clock.runFor(30_100);
-    assert.equal(await page.getByTestId("online-user-row").count(), 0, "access revocation clears the roster and rechecks the canonical page guard");
+    await expect.poll(() => page.evaluate(() => (window as unknown as { fixtureRequests: number }).fixtureRequests)).toBe(5);
+    await expect(page.getByTestId("online-user-row"), "access revocation clears the roster and rechecks the canonical page guard").toHaveCount(0);
     const stopped = await page.evaluate(() => ({ requests: (window as unknown as { fixtureRequests: number }).fixtureRequests,
       refreshes: (window as unknown as { fixtureRefreshes: number }).fixtureRefreshes }));
     assert.equal(stopped.refreshes, 1);
@@ -157,9 +169,11 @@ test("Online failures retain labelled historical samples, hidden aborts cannot r
       const fixture = window as unknown as { fixtureProps: { initial: { observedAt: string } }; fixtureRender: (props: object) => void };
       fixture.fixtureRender({ ...fixture.fixtureProps, initial: { ...fixture.fixtureProps.initial, observedAt: new Date(Date.now() + 1_000).toISOString() } });
     });
+    await page.clock.runFor(100);
     assert.equal(await page.getByTestId("online-user-row").count(), 0, "late route props cannot restore a roster after access was revoked");
     await page.clock.runFor(90_000);
     assert.deepEqual(await page.evaluate(() => ({ requests: (window as unknown as { fixtureRequests: number }).fixtureRequests,
       refreshes: (window as unknown as { fixtureRefreshes: number }).fixtureRefreshes })), stopped);
+    assert.equal(await page.getByTestId("online-user-row").count(), 0, "revoked access stays empty after all later timers settle");
   });
 });

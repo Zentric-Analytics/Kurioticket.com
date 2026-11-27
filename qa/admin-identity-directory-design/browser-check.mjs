@@ -10,6 +10,23 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 page.setDefaultTimeout(25000);
 const errors = [];
 page.on("pageerror", error => errors.push(error.message));
+// React reports attribute hydration mismatches through console.error, not
+// pageerror. Gate current Users routes; the pinned baseline is comparison-only.
+page.on("console", message => {
+  if (message.type() === "error" && new URL(page.url()).pathname.startsWith("/admin/users")) {
+    errors.push("Console error at " + page.url() + ": " + message.text());
+  }
+});
+const capture = async options => {
+  // Dropdown interactions scroll their trigger into view on small screens.
+  // Capture the complete page from its top so sticky headers stay at the top.
+  await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  // Playwright's default caret hiding mutates inline input styles and can race
+  // React hydration. Preserve the page's actual styles during the screenshot.
+  await page.screenshot({ ...options, caret: "initial" });
+};
 const url = base + "/admin/users";
 const tabs = () => page.getByRole("navigation", { name: "User types" });
 const search = () => page.getByRole("searchbox", { name: "Search users" });
@@ -40,11 +57,15 @@ try {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(base + "/before");
     await expect(page.getByRole("button", { name: "Apply Filter" })).toBeVisible();
-    await page.screenshot({path: output + "/before-search-filter-" + width + ".png", fullPage:true});
+    // AdminDirectorySelect upgrades from a server-rendered native select to
+    // this button only after hydration; SSR-visible text alone is insufficient.
+    await expect(page.locator('button[role="combobox"][aria-label="Sort by"]')).toBeVisible();
+    await capture({path: output + "/before-search-filter-" + width + ".png", fullPage:true});
   }
   for (const width of [1440,1280,768,390,320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(url);
+    await expect(page.locator('button[role="combobox"][aria-label="Date range"]')).toBeVisible();
     await expect(page.locator('section[aria-label="Online Users"]')).toHaveCount(0);
     await expect(page.getByRole("navigation",{name:"Users & Bots subsections"})
       .getByRole("link",{name:"Online Users",exact:true})).toBeVisible();
@@ -132,11 +153,12 @@ try {
     await combo("Date range").click();
     await expect(page.getByRole("listbox",{name:"Date range"})).toBeVisible();
     await page.keyboard.press("Escape");
-    await page.screenshot({path: output + "/after-search-filter-" + width + ".png", fullPage:true});
+    await capture({path: output + "/after-search-filter-" + width + ".png", fullPage:true});
     console.log("PASS responsive premium users toolbar",width);
   }
   await page.setViewportSize({width:1280,height:900});
   await page.goto(base + "/admin/users/online");
+  await expect(page.locator('button[role="combobox"][aria-label="Identity type"]')).toBeVisible();
   const live = page.locator('section[aria-label="Online Users"]');
   await expect(live).toBeVisible();
   await expect(live.locator('[data-testid="online-platform-metric"]')).toHaveCount(4);
@@ -166,7 +188,7 @@ try {
     "All filters must remain inside content width");
   assert.ok(filterRects.items[0].width > filterRects.items[1].width,
     "Online user search should be wider than dropdowns");
-  await page.screenshot({path:output+"/online-users-desktop-1280.png",fullPage:true});
+  await capture({path:output+"/online-users-desktop-1280.png",fullPage:true});
   await expect(page.getByText("Guest session")).toHaveCount(1);
   await expect(page.getByTestId("online-user-row").filter({hasText:"Guest session"})
     .getByRole("link",{name:"View Activity"})).toHaveCount(0);
@@ -183,8 +205,9 @@ try {
   await page.setViewportSize({width:320,height:800});
   await page.goto(base + "/admin/users/online");
   await expect(page.getByRole("heading",{name:"Online Users",exact:true})).toBeVisible();
+  await expect(page.locator('button[role="combobox"][aria-label="Identity type"]')).toBeVisible();
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),true);
-  await page.screenshot({path:output+"/online-users-mobile-320.png",fullPage:true});
+  await capture({path:output+"/online-users-mobile-320.png",fullPage:true});
   await page.setViewportSize({width:1280,height:900});
   await page.goto(url);
   await expect(pagination()).toContainText("Page 1 of 2");
