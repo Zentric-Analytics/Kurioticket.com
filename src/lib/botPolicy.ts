@@ -2,7 +2,6 @@ import { confirmedOperatorNetwork } from "@/lib/operatorCrawlerNetwork";
 import { declaredSearchCrawler, identifySearchCrawler } from "@/lib/searchCrawlerGate";
 import { knownCrawler, recognizedCrawler, crawlerPolicy } from "@/lib/botRegistry";
 import { trustedBotEdge, trustedBotIngress } from "@/lib/botEdge";
-import { getPublicEnvironment } from "@/lib/stagingSafety";
 
 type BotSearchProduct = "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE";
 
@@ -81,10 +80,9 @@ export async function observeBot(request: Request, signal: NonNullable<ReturnTyp
   const crawler = catalog?.category === "search" ? await identifySearchCrawler(request) : null;
   const verified = Boolean(crawler && crawler.evidence !== "DECLARED_USER_AGENT");
   const operatorConfirmed = catalog?.category !== "search" && !signal.edge?.automated && await confirmedOperatorNetwork(signal.declared, ingress?.ip ?? null);
-  // Temporary staging policy: a recognized search-engine declaration is
-  // eligible for limited searches without authenticated ingress. It remains
-  // declared/unverified in every record unless existing verification succeeds.
-  const policy = crawlerPolicy(signal.declared, verified, getPublicEnvironment() === "staging" && Boolean(crawler));
+  // Search eligibility requires independent verification in every environment.
+  // Reporting observations and a declared User-Agent cannot supply that proof.
+  const policy = crawlerPolicy(signal.declared, verified);
   // Keep evidence cohorts separate; the quota store shares the allowance by crawler name.
   const keyGroup = verified ? "SEARCH_ENGINE" : knownCrawler(signal.declared) && catalog?.category !== "search" && !signal.edge?.automated
     ? "OTHER_RECOGNIZED" : "UNKNOWN";

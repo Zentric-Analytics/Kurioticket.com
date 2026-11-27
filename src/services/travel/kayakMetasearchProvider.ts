@@ -1,5 +1,6 @@
 import { currentSandboxGrant, productionSandboxHost } from "@/lib/productionSandboxPolicy";
 import { displayOnlyInventory } from "@/shared/presentation/sandboxInventory";
+import { createSearchDiagnostics } from "@/shared/search/diagnostics";
 
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import type { FlightSearchParams, HotelSearchParams, NormalizedFlightResult, PublicHotelResult, ProviderResult } from "@/lib/types";
@@ -83,7 +84,10 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
       await client.search(resolved.search, trackId, context.signal),
       crypto.randomUUID(),
     );
-    const results = await protect(offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; }));
+    const normalizationStarted = performance.now();
+    const normalized = offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; });
+    createSearchDiagnostics(vertical === "flights" ? "flight" : vertical === "hotels" ? "hotel" : "car", context.requestId, "server", { span: "normalization" })("normalization", { provider: "kayak", count: normalized.length, durationMs: performance.now() - normalizationStarted });
+    const results = await protect(normalized);
     reportProviderRows(context.requestId, vertical, "success", offers.length, results.length);
     return { provider: "KAYAK sandbox", results, status: "success", latencyMs: Date.now() - startedAt };
   } catch (error) {
@@ -137,10 +141,12 @@ export async function searchKayakHotelBatch(criteria: HotelSearchParams, context
   if (!resolved.supported || resolved.search.vertical !== "hotels") return { supported: false as const };
   const batch = await client.searchHotelBatch(resolved.search, trackId, checkpoint, context.signal);
   const nights = Math.max(1, Math.round((Date.parse(criteria.checkOut)-Date.parse(criteria.checkIn))/86_400_000));
+  const normalizationStarted = performance.now();
   const results = scopeKayakOfferIds(batch.offers, snapshot).flatMap(offer => {
     const model = kayakHotelCardModel(offer, nights);
     return model ? [model] : [];
   });
+  createSearchDiagnostics("hotel", context.requestId, "server", { span: "normalization" })("normalization", { provider: "kayak", count: results.length, durationMs: performance.now() - normalizationStarted });
   return { supported: true as const, batch, results };
 }
 /** Only KAYAK's search-scoped result identity groups cars, never a model name. */

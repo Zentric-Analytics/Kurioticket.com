@@ -1,3 +1,4 @@
+import { createSearchDiagnostics } from "../../../../src/shared/search/diagnostics";
 import { abortTravelRequest, travelAbortReason, describeTransportFailure } from "../api/travelTransportFailure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -37,6 +38,7 @@ test("saved transport refuses wrong-owner work and discards a response after sig
     "../storage/sessionStorage": { readSession: async () => actor, subscribeSession: (fn: typeof onSession) => { onSession = fn; } },
     "react-native": { Platform: { OS: "ios" } }, "expo-constants": { default: { expoConfig: { version: "0.3.0" } } }, "expo-crypto": { randomUUID: () => "request" },
     "./exploreCatalogueContract": {}, "../features/search/flightSearchDiagnostics": {},
+    "../../../../src/shared/search/diagnostics": { createSearchDiagnostics },
     "../features/privacy/visitorIdentity": { visitorIdentity: { headers: async () => ({}), trackingContext: () => null } },
     "../features/privacy/journeyResponseContext": {}, "../features/auth/authApi": {}, "../../../../src/lib/providerHandoffClient": {},
   };

@@ -27,7 +27,17 @@ type SafeCheckpointDetails = {
 };
 
 export function logFlightSearchCheckpoint(phase: FlightSearchCheckpoint, details: SafeCheckpointDetails) {
-  console.info(`[${phase}]`, details);
+  try {
+    const safe: Record<string, unknown> = {};
+    if (details.requestId && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(details.requestId)) safe.requestId = details.requestId;
+    if (details.platform === "android" || details.platform === "ios") safe.platform = details.platform;
+    for (const key of ["resultCount", "serverResultCount", "acceptedResultCount", "elapsedMs"] as const) {
+      const value = details[key]; if (typeof value === "number" && Number.isFinite(value) && value >= 0) safe[key] = value;
+    }
+    if (details.rejectedResultIds) safe.rejectedCount = details.rejectedResultIds.length;
+    if (details.responseBytes && /^\d+$/.test(details.responseBytes)) safe.responseBytes = Number(details.responseBytes);
+    console.info(`[${phase}]`, safe);
+  } catch { /* Logging must never interrupt search execution. */ }
 }
 
 /**

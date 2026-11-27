@@ -4,6 +4,7 @@ import {readFileSync} from "node:fs";
 import {runInNewContext} from "node:vm";
 import {URL as NodeURL} from "node:url";
 import ts from "typescript";
+import { createSearchDiagnostics } from "../../../../../src/shared/search/diagnostics";
 export function nativeTravelApiHarness(platform = "android", version = "0.3.0", baseUrl = "https://staging.kurioticket.com", respond?: (url:string,init:RequestInit)=>Promise<Response>,options:{registered?:boolean;signedSearchCredential?:string;abortController?:typeof AbortController}={}) {
   const calls: Array<{ url: string; init: RequestInit }> = [];
   const journeyResponses:unknown[]=[];
@@ -11,6 +12,7 @@ export function nativeTravelApiHarness(platform = "android", version = "0.3.0", 
   let session: HarnessSession = options.registered === false ? null : { user: { id: "test-user" }, token: "test-session" };
   const sessionListeners = new Set<(next: HarnessSession) => void>();
   const dependencies: Record<string, unknown> = {
+    "../../../../src/shared/search/diagnostics": { createSearchDiagnostics },
     "./travelTransportFailure": { abortTravelRequest, travelAbortReason, describeTransportFailure },
     "../config/apiUrl": { getApiBaseUrl: () => ({ ok: true, baseUrl }) },
     "../storage/sessionStorage": { readSession: async () => session, subscribeSession: (listener: (next: HarnessSession) => void) => {
