@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { activityNetworkEvidence, botReportVerification } from "./adminBotNetworkEvidence";
 import { confirmedOperatorNetwork } from "./operatorCrawlerNetwork";
+import { matchReportedSearchCrawlerAddress } from "./verifiedSearchCrawler";
 import { automationSignal, observeBot, botAccess, botTarget } from "./botPolicy";
 
 const timestamp = new Date("2026-11-27T13:18:06Z");
@@ -33,7 +34,7 @@ test("stored evidence is not carried across conflicting IPs or historical and li
   t.mock.method(globalThis, "fetch", async () => Response.json({ prefixes: [{ ipv4Prefix: "52.167.144.0/24" }] }));
   const matched = { ...request, reportedNetworkMatch: "OFFICIAL_CRAWLER_RANGE_MATCH" };
   assert.equal((await activityNetworkEvidence(matched))?.label, "Crawler network matched");
-  assert.equal(await activityNetworkEvidence({ ...matched, renderLogIp: "8.8.8.8" }), null);
+  assert.equal(await activityNetworkEvidence({ ...matched, renderLogIp: "8.8.8.8" }, async () => null), null);
   assert.match((await activityNetworkEvidence({ ...matched, renderLogIp: "52.167.144.161", renderLogCorroboration: "FORWARD_CONFIRMED_DNS" }))?.detail ?? "", /Render log IP/);
   assert.equal(await activityNetworkEvidence({ ...matched, verification: "SUSPICIOUS" }), null);
   assert.equal((await botReportVerification({ ...identity, verification: "VERIFIED", requests: BigInt(0) })).label, "Verified (historical searches)");
@@ -63,4 +64,16 @@ test("an unsupported identity and a failed official feed stay unverified", async
   assert.equal(await activityNetworkEvidence({ ...request, declaredName: "NEWBOT" }), null);
   assert.equal((await botReportVerification({ ...identity, name: "GPTBOT" }, { ...request, declaredName: "GPTBOT" })).label, "Unverified (self-declared)");
   assert.equal(fetch.mock.callCount(), 1);
+});
+
+test("report reuses existing DNS matcher for a saved Applebot address; mismatches remain unverified", async () => {
+  const row = { ...request, declaredName: "APPLEBOT", reportedIp: "17.58.96.1" };
+  const match = async (name: string | null, ip: string | null) => matchReportedSearchCrawlerAddress(name, ip, {
+    reverseIp: async () => ["17-58-96-1.applebot.apple.com"],
+    forwardHost: async () => [{ address: "17.58.96.1" }],
+  });
+  const evidence = await activityNetworkEvidence(row, match);
+  assert.equal(evidence?.label, "Crawler network matched");
+  assert.match(evidence?.detail ?? "", /Forward-confirmed reverse DNS/);
+  assert.equal(await activityNetworkEvidence({ ...row, reportedIp: "17.58.96.2" }, match), null);
 });
