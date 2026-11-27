@@ -4,6 +4,7 @@ import test from "node:test";
 import { POST as importEdgeEvent } from "@/app/api/internal/bot-security/route";
 import { automationSignal, botTarget, observeBot } from "@/lib/botPolicy";
 import { withBotSearch } from "@/lib/botSecurity";
+import { searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { getPrisma } from "@/lib/prisma";
 import { nextSearchTime, recordBotAttempt, reserveBotSearch, utcDayStart } from "./botActivityStore";
 
@@ -183,4 +184,92 @@ test("authenticated WAF imports preserve network evidence and the live registry 
   assert.equal(registry.searches, BigInt(0));
   assert.equal(registry.requests, BigInt(2));
   assert.equal(registry.rateLimited, BigInt(1));
+});
+
+
+test("verified and declared cohorts share one quota and deduplication across products", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
+  const previousUrl = process.env.DATABASE_URL;
+  process.env.DATABASE_URL = process.env.BOT_TEST_DATABASE_URL;
+  const db = getPrisma();
+  const environment = "bot-shared-quota-" + randomUUID();
+  t.after(async () => {
+    await db.botActivity.deleteMany({ where: { environment } });
+    await db.botRegistry.deleteMany({ where: { environment } });
+    await db.$disconnect();
+    if (previousUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = previousUrl;
+  });
+  const registry = await Promise.all(["SEARCH_ENGINE:BINGBOT", "UNKNOWN:BINGBOT"].map((identityKey, i) =>
+    db.botRegistry.create({ data: { id: randomUUID(), environment, identityKey, group: "SEARCH_ENGINE", name: "BINGBOT",
+      access: "CRAWL_AND_LIMITED_SEARCH", verification: i ? "DECLARED" : "VERIFIED" } })));
+  const attempt = async (index: number, product: string) => {
+    const bot = registry[index];
+    const activity = await db.botActivity.create({ data: { id: randomUUID(), botId: bot.id, environment,
+      endpoint: "/api/" + product + "/search", method: "POST", kind: "SEARCH_ATTEMPT", declaredName: "BINGBOT",
+      verification: bot.verification, decision: "PENDING", reason: "VALIDATION_PENDING" } });
+    return { id: activity.id, botId: bot.id, status: null, retryAfter: null };
+  };
+  const reserve = (a: Awaited<ReturnType<typeof attempt>>, id: string | null) => reserveBotSearch(a, id, new AbortController().signal);
+  const results = await Promise.all([attempt(0, "flights").then(a => reserve(a, "shared")),
+    attempt(1, "hotels").then(a => reserve(a, "shared"))]);
+  assert.deepEqual(results.map(r => r.status).sort((a, b) => a - b), [0, 409]);
+  assert.equal((await reserve(await attempt(1, "cars"), "new-id")).status, 429);
+  assert.equal((await reserve(await attempt(0, "packages"), "another-id")).status, 429);
+  const [{ now }] = await db.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
+  for (let i = 0; i < 4; i++) {
+    const a = await attempt(i % 2, "flights");
+    await db.botActivity.update({ where: { id: a.id }, data: { decision: "ALLOWED", dispatchedAt: utcDayStart(now) } });
+  }
+  assert.equal((await reserve(await attempt(0, "cars"), null)).status, 429);
+  assert.equal((await reserve(await attempt(1, "hotels"), null)).status, 429);
+  assert.equal(await db.botActivity.count({ where: { environment, dispatchedAt: { not: null } } }), 5);
+  assert.equal((await db.botRegistry.findUniqueOrThrow({ where: { id: registry[1].id } })).verification, "DECLARED");
+});
+
+
+test("staging declaration reaches the normal search dispatch boundary without claiming verification", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
+  const config = {
+    DATABASE_URL: process.env.BOT_TEST_DATABASE_URL!,
+    TRAVEL_PROVIDER_MODE: "staging",
+    NEXT_PUBLIC_APP_URL: "https://staging.kurioticket.com",
+    NEXTAUTH_URL: "https://staging.kurioticket.com",
+    BOT_TRUST_RENDER_WORKSPACE_INGRESS: "false",
+    GUEST_LIVE_RENDER_INGRESS_VERIFIED: "false",
+  };
+  const prior = Object.fromEntries(Object.keys(config).map(key => [key, process.env[key]]));
+  Object.assign(process.env, config);
+  const db = getPrisma();
+  const identityKey = "UNKNOWN:APPLEBOT";
+  t.after(async () => {
+    await db.botActivity.deleteMany({ where: { environment: "staging", bot: { identityKey } } });
+    await db.botRegistry.deleteMany({ where: { environment: "staging", identityKey } });
+    await db.$disconnect();
+    for (const [key, value] of Object.entries(prior)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+  let providerCalls = 0;
+  const search = (product: string) => withBotSearch(
+    new Request("https://staging.kurioticket.com/api/" + product + "/search", {
+      method: "POST", headers: { "User-Agent": "Applebot" },
+    }), async bot => {
+      assert.ok(bot);
+      assert.deepEqual(searchCrawlerMetadata(bot.crawler), {
+        identifiedCrawler: "APPLEBOT", crawlerEvidence: "DECLARED_USER_AGENT",
+      });
+      const blocked = await bot.reserve();
+      if (blocked) return blocked;
+      providerCalls++;
+      bot.outcome("EMPTY");
+      return new Response(null, { status: 200 });
+    });
+  assert.equal((await search("flights")).status, 200);
+  assert.equal((await search("hotels")).status, 429);
+  assert.equal(providerCalls, 1);
+  const row = await db.botRegistry.findFirstOrThrow({ where: { environment: "staging", identityKey } });
+  assert.equal(row.verification, "DECLARED");
+  assert.equal(row.access, "CRAWL_AND_LIMITED_SEARCH");
+  assert.equal(row.searches, BigInt(1));
+  assert.equal(row.searchAttempts, BigInt(2));
 });

@@ -15,8 +15,16 @@ test("saved flight state is invalidated when the active offer or authentication 
   );
   assert.deepEqual(changes, ["authenticated:new-offer", null]);
   assert.match(source, /savedLookupKey = `\$\{sessionStatus\}:\$\{savedFlightKey\}`/);
-  assert.match(source, /requestAnimationFrame\(syncSavedFlights\)/);
-  assert.match(source, /removeEventListener\("storage", syncSavedFlights\)/);
+  // Guest favorites now require authentication; local saved IDs must not restore
+  // a filled heart or create a save. Preserve the authenticated lookup/reset contract.
+  assert.doesNotMatch(source, /syncSavedFlights|localSavedFlightIds|readSavedItemIds|writeSavedItemIds|toggleSavedItemId/);
+  assert.match(source, /if \(sessionStatus !== "authenticated" \|\| !selectedOffer\) \{/);
+  assert.match(source, /fetch\("\/api\/dashboard\/saved\?type=flight"/);
+  assert.match(source, /if \(controller.signal.aborted\) return;/);
+  assert.match(source, /return \(\) => controller.abort\(\);\s*\}, \[selectedOffer, sessionStatus\]\);/);
+  assert.match(source, /if \(!selectedOffer \|\| savedFlightPending \|\| sessionStatus === "loading"\) return;/);
+  assert.match(source, /if \(sessionStatus === "unauthenticated"\) \{\s*await signIn\(undefined, \{ callbackUrl: window.location.href \}\);\s*return;/);
+  assert.match(source, /const flightSaved = sessionStatus === "authenticated" && Boolean\(savedFlightBackendId\);/);
   assert.match(source, /function selectFare[\s\S]*setSelectedDealOfferId\(null\);[\s\S]*setSelectedFareKey/);
 });
 

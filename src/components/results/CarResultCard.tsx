@@ -38,7 +38,7 @@ import {
   getMobileProviderCarSpecSlots,
 } from "@/components/results/carResultCardSpecs";
 import type { CarResultBadge } from "@/lib/cars/carResults";
-import { getPrimaryCarOffer } from "@/lib/cars/carResults";
+import { buildCarShareHref, getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type { CarOffer, NormalizedCarResult } from "@/lib/cars/types";
 import type { CarSearchParams } from "@/lib/cars/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
@@ -260,8 +260,7 @@ export function CarResultCard({
       : undefined;
 
   async function shareCar() {
-    const relativeUrl = detailsHref ?? window.location.href;
-    const url = new URL(relativeUrl, window.location.origin).toString();
+    const url = new URL(buildCarShareHref(car.id, search), window.location.origin).toString();
     try {
       if (navigator.share) {
         await navigator.share({ title: car.modelName, url });

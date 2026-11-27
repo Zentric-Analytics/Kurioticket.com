@@ -39,7 +39,7 @@ import {
   buildGoogleCarMapEmbedUrl,
   buildGoogleCarStreetViewEmbedUrl,
 } from "@/lib/cars/carMap";
-import { calculateRentalDays, getComparisonCarOffers, getPrimaryCarOffer, sortCarOffers } from "@/lib/cars/carResults";
+import { buildCarShareHref, calculateRentalDays, getComparisonCarOffers, getPrimaryCarOffer, sortCarOffers } from "@/lib/cars/carResults";
 import type {
   CarOffer,
   CarSearchParams,
@@ -299,7 +299,7 @@ export function CarDetailsExperience({
       isFallbackRate: rates.isFallback,
     });
   async function shareCar() {
-    const outcome = await shareProductLink({ title: car.modelName, url: window.location.href });
+    const outcome = await shareProductLink({ title: car.modelName, url: new URL(buildCarShareHref(car.id, search), window.location.origin).toString() });
     if (outcome === "shared" || outcome === "copied") {
       recordCustomerInteraction({
         action: outcome === "shared" ? "share_sheet_completed" : "share_link_copied",

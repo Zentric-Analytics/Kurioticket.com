@@ -58,6 +58,7 @@ import {
   assignCarBadges,
   assignVisibleCarSortBadges,
   buildCarDetailsHref,
+  prioritizeSharedCar,
   doesCarMatchFilterOption,
   ensureCarProviderCoverage,
   filterCarResults,
@@ -526,11 +527,13 @@ export function CarsResultsClient({
   initialResults,
   inventoryStatus,
   requestId,
+  sharedCarId = null,
 }: {
   values: CarsResultsValues;
   initialResults: NormalizedCarResult[];
   inventoryStatus: CarInventoryStatus;
   requestId?: string | null;
+  sharedCarId?: string | null;
 }) {
   const { locale, t: dictionary } = useLocale();
   const router = useRouter();
@@ -1854,6 +1857,7 @@ export function CarsResultsClient({
           mobileSearchInteractionActive={mobileSearchOpen || mobileSearchClosing}
           resultHeadingId="cars-results-heading"
           requestId={requestId}
+          sharedCarId={sharedCarId}
           detailsHrefForCar={(car) => {
             const href = buildCarDetailsHref(car.id, values);
             return resultActionHref(car, requestId ? `${href}${href.includes("?") ? "&" : "?"}requestId=${encodeURIComponent(requestId)}` : href);
@@ -1877,6 +1881,7 @@ export function CarsResultsExperience({
   embedded = false,
   detailsHrefForCar,
   requestId,
+  sharedCarId = null,
   actionLabel,
   actionAriaLabelForCar,
   onSelectCar,
@@ -1897,6 +1902,7 @@ export function CarsResultsExperience({
   mobileSearchInteractionActive?: boolean;
   detailsHrefForCar: (car: NormalizedCarResult) => string | null;
   requestId?: string | null;
+  sharedCarId?: string | null;
   actionLabel?: string;
   actionAriaLabelForCar?: (car: NormalizedCarResult) => string;
   onSelectCar?: (car: NormalizedCarResult) => void;
@@ -2078,8 +2084,11 @@ export function CarsResultsExperience({
   );
   const visibleResults = useMemo(() => {
     const ranked = sortCarResults(filterCarResults(results, selectedCarFilters, displayPricePerDay), sort);
-    return sort === "recommended" ? ensureCarProviderCoverage(ranked) : ranked;
-  }, [displayPricePerDay, results, selectedCarFilters, sort]);
+    const ordered = sort === "recommended" ? ensureCarProviderCoverage(ranked) : ranked;
+    return sort === "recommended" && !Object.values(selectedCarFilters).some(options => options.length)
+      ? prioritizeSharedCar(ordered, sharedCarId) : ordered;
+  }, [displayPricePerDay, results, selectedCarFilters, sharedCarId, sort]);
+  const sharedCar = sharedCarId ? results.find(car => car.id === sharedCarId) : undefined;
   const desktopBadges = useMemo(
     () => (guidedPlanning ? badges : assignVisibleCarSortBadges(visibleResults, sort, badges)),
     [guidedPlanning, badges, visibleResults, sort],
@@ -2589,6 +2598,13 @@ export function CarsResultsExperience({
       aria-labelledby={resultHeadingId}
       data-cars-results-experience
     >
+      {sharedCarId && !guidedPlanning && !providersLoading ? (
+        <p role="status" data-shared-car-status className="mb-4 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
+          {sharedCar
+            ? `Shared car: ${sharedCar.modelName}. Prices and availability may have changed since it was shared.`
+            : "The shared car is no longer available for this search. Current results are shown below; you can also change your rental details."}
+        </p>
+      ) : null}
       <div
         ref={carsResultsBodyRef}
         className="grid gap-5 lg:grid-cols-[232px_minmax(0,1fr)] xl:grid-cols-[236px_minmax(0,1fr)]"
