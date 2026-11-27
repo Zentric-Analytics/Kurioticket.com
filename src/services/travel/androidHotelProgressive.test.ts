@@ -20,7 +20,7 @@ test("Android progressive Hotel starts with one verified provider page and conti
   assert.match(route, /await searchHotelBatch\(search/);
   assert.doesNotMatch(route, /new KayakSandboxClient|kayakHotelCardModel/);
   assert.match(service, /persistHotelProviderResults\)\(cumulative,search,options\.defer,outcome\.results\)/);
-  assert.match(route, /state\?\.checkpoint,\{defer:after\}/);
+  assert.match(route, /state\?\.checkpoint,\{defer:process\.env\.HOTEL_DEFER_INDIVIDUAL_WRITES === "true" \? after : undefined\}/);
   assert.match(route, /logSearchHistory\(/);
   assert.match(route, /trackAnalyticsEvent\(/);
   assert.match(route, /logProviderCall\(/);

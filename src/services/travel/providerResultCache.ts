@@ -13,6 +13,7 @@ import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/ca
 export type ProviderDetailsVertical = "hotel" | "car";
 const TTL_MS = 30 * 60 * 1000;
 const HOTEL_SEARCH_COHORT_PREFIX = "__hotel-search-cohort__:";
+const HOTEL_SNAPSHOT_LOOKUP_PREFIX = "__hotel-snapshot-lookup-v1__:";
 const CAR_SEARCH_COHORT_PREFIX = "__car-search-cohort__:";
 const MEMORY_CAR_RESULT_LIMIT = 500;
 const memoryCarResults = new Map<
@@ -58,7 +59,13 @@ async function writeSearchCohort(vertical: ProviderDetailsVertical, resultId: st
     (batch, offset) => write(batch.map((value, index) => ({
       id: `${resultId}:chunk:${manifest.generation}:${offset + index}`, value, contextValue: null,
     }))),
-    () => write([{ id: resultId, value: manifest, contextValue: search }]),
+    () => {
+      const snapshot = vertical === "hotel" ? /:snapshot:([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i.exec(resultId)?.[1] : undefined;
+      // Publish the lookup and complete manifest atomically. Every downstream
+      // reader can recover the original search without optional individual rows.
+      return write([{ id: resultId, value: manifest, contextValue: search },
+        ...(snapshot ? [{ id: HOTEL_SNAPSHOT_LOOKUP_PREFIX + snapshot, value: { format: "hotel-snapshot-lookup-v1", cohortId: resultId }, contextValue: search }] : [])]);
+    },
   );
   console.info("[provider-result-cache]", { event: "cohort_published", vertical,
     rawBytes: manifest.rawBytes, chunks: manifest.chunks, resultCount: results.length,
@@ -212,6 +219,23 @@ export async function rememberProviderResults<T extends { id: string }>(
   }
 }
 
+/** Durable exact-snapshot lookup shared by Details, location and redirect readers. */
+async function readHotelSnapshotResultWithContext<T>(resultId: string, now: number): Promise<{ result: T; searchContext: unknown } | null> {
+  const snapshot = /^kayak-sandbox:([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):.+$/i.exec(resultId)?.[1];
+  if (!snapshot) return null;
+  const row = await getPrisma().providerResultCache.findUnique({ where: { cacheKey: cacheKey("hotel", HOTEL_SNAPSHOT_LOOKUP_PREFIX + snapshot) } });
+  if (!row || row.expiresAt.getTime() <= now) return null;
+  const search = row.searchContext as HotelSearchParams | null;
+  const lookup = row.normalizedResult as { format?: unknown; cohortId?: unknown } | null;
+  if (!search || typeof search.destination !== "string" || typeof search.checkIn !== "string" || typeof search.checkOut !== "string"
+    || !Number.isFinite(search.guests) || !Number.isFinite(search.rooms) || lookup?.format !== "hotel-snapshot-lookup-v1"
+    || lookup.cohortId !== hotelSnapshotCohortId(search, resultId)) return null;
+  const cohort = await readSearchCohort("hotel", lookup.cohortId as string, now);
+  const result = cohort.find(candidate => candidate && typeof candidate === "object" && "id" in candidate && candidate.id === resultId);
+  if (!result || productionSandboxInventory(result)) return null;
+  return { result: structuredClone(result) as T, searchContext: structuredClone(search) };
+}
+
 export async function getProviderResult<T>(
   vertical: ProviderDetailsVertical,
   resultId: string,
@@ -225,7 +249,7 @@ export async function getProviderResult<T>(
     const row = await getPrisma().providerResultCache.findUnique({
       where: { cacheKey: cacheKey(vertical, resultId) },
     });
-    if (!row || row.expiresAt.getTime() <= now) return null;
+    if (!row || row.expiresAt.getTime() <= now) return vertical === "hotel" ? (await readHotelSnapshotResultWithContext<T>(resultId, now))?.result ?? null : null;
     return productionSandboxInventory(row.normalizedResult) ? null : structuredClone(row.normalizedResult) as T;
   } catch {
     console.error("[provider-result-cache]", { event: "read_error", vertical });
@@ -242,7 +266,7 @@ export async function getProviderResultWithContext<T>(
     const row = await getPrisma().providerResultCache.findUnique({
       where: { cacheKey: cacheKey(vertical, resultId) },
     });
-    if (!row || row.expiresAt.getTime() <= now) return null;
+    if (!row || row.expiresAt.getTime() <= now) return vertical === "hotel" ? readHotelSnapshotResultWithContext<T>(resultId, now) : null;
     if (productionSandboxInventory(row.normalizedResult)) return null;
     return {
       result: structuredClone(row.normalizedResult) as T,
