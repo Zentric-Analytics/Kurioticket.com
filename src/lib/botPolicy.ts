@@ -95,9 +95,12 @@ export async function observeBot(request: Request, signal: NonNullable<ReturnTyp
     ip: signal.edge?.ip ?? null,
     country: signal.edge?.country ?? null,
     edgeRay: signal.edge?.ray ?? null,
+    networkAsn: signal.edge?.networkAsn ?? null,
+    networkOrganization: signal.edge?.networkOrganization ?? null,
+    networkSource: signal.edge ? "AUTHENTICATED_EDGE" : null,
     declaredName: signal.declared,
     // Keep crawler product tokens only. An arbitrary UA can contain secrets or personal data.
-    userAgent: catalog?.agent ?? null,
+    userAgent: catalog?.agent ?? signal.declared,
   };
 }
 
