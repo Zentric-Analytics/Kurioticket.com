@@ -1,6 +1,7 @@
 import { botRecordedVerification } from "./adminBotReport";
 import { publicVisitorIp } from "./geo/ipinfo";
 import { confirmedOperatorNetwork, matchesReportedMetaNetwork } from "./operatorCrawlerNetwork";
+import { matchReportedSearchCrawlerAddress } from "./verifiedSearchCrawler";
 
 export const reportEvidenceSelect = {
   timestamp: true, declaredName: true, verification: true, ip: true,
@@ -20,7 +21,10 @@ const recoveredMatches = new Set(["FORWARD_CONFIRMED_DNS", "OFFICIAL_IP_LIST", "
  * authenticate ingress, modify registry identity, or grant search privileges.
  * Prefer independent log IP evidence over a reported header. Never transfer
  * evidence between different requests or declaration cohorts. */
-export async function activityNetworkEvidence(row: Observation): Promise<Evidence | null> {
+export async function activityNetworkEvidence(
+  row: Observation,
+  matchSearchCrawler: typeof matchReportedSearchCrawlerAddress = matchReportedSearchCrawlerAddress,
+): Promise<Evidence | null> {
   if (!row.declaredName || row.verification === "VERIFIED" || row.verification === "SUSPICIOUS") return null;
   const logged = publicVisitorIp(row.renderLogIp);
   const reported = publicVisitorIp(row.reportedIp);
@@ -36,6 +40,13 @@ export async function activityNetworkEvidence(row: Observation): Promise<Evidenc
   try {
     if (await confirmedOperatorNetwork(row.declaredName, ip)) {
       return { label: "Crawler network matched", detail };
+    }
+    // The same bounded DNS/official-address rules used for all seven search
+    // engines are now available to the report, without granting authentication.
+    const match = await matchSearchCrawler(row.declaredName, ip);
+    if (match) {
+      return { label: "Crawler network matched", detail: detail + (match === "FORWARD_CONFIRMED_DNS"
+        ? " · Forward-confirmed reverse DNS" : " · Official crawler IP list") };
     }
     if (await matchesReportedMetaNetwork(row.declaredName, ip)) {
       return { label: "Meta network matched", detail: source + " · recent AS32934 routing evidence; specific crawler not authenticated" };
