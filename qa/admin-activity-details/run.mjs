@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 const qa = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.resolve(qa, "../..");
 const source = path.join(repo, "src");
+execFileSync(process.execPath, [path.join(qa, "guest-recorded-location-fixture-check.mjs")], { cwd: repo, stdio: "inherit" });
 const temp = await mkdtemp(path.join(process.env.ADMIN_ACTIVITY_QA_WORK || os.tmpdir(), "kt-activity-"));
 const output = path.resolve(process.env.ADMIN_ACTIVITY_QA_OUTPUT || path.join(temp, "screenshots"));
 const port = process.env.ADMIN_ACTIVITY_QA_PORT || "3199";

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { expect } from "@playwright/test";
 import { componentBundle, withComponentBrowser } from "../../test-support/componentBrowser";
 
 const entries = {
@@ -68,16 +69,27 @@ type FixtureWindow = Window & {
 test("new server records and counts appear automatically while draft, focus, scroll anchor and page-two URL survive", async () => {
   await withComponentBrowser(bundle(), setup, async page => {
     await page.clock.install();
+    // The broad suite loads built CSS, whose html scroll behavior is smooth.
+    // Exercise that same style in the focused suite without animating setup.
+    await page.addStyleTag({ content: "html { scroll-behavior: smooth; }" });
     await page.evaluate(() => (window as unknown as FixtureWindow).fixtureMount());
     const search = page.getByRole("textbox", { name: "Search activity" });
     await search.fill("unfinished filter draft");
     const url = page.url();
-    const before = await page.evaluate(() => {
+    await page.evaluate(() => {
       const row = document.querySelector<HTMLElement>('[data-users-refresh-anchor="record-8"]')!;
-      window.scrollTo(0, window.scrollY + row.getBoundingClientRect().top - 120);
+      window.scrollTo({ left: 0, top: window.scrollY + row.getBoundingClientRect().top - 120, behavior: "instant" });
       (window as unknown as FixtureWindow).fixtureNext = { count: 25, rows: ["newly-recorded-page", ...Array.from({ length: 24 }, (_, index) => "record-" + index)] };
-      return { rowTop: row.getBoundingClientRect().top, scrollY: window.scrollY };
     });
+    await expect.poll(() => page.locator('[data-users-refresh-anchor="record-8"]')
+      .evaluate(row => Math.abs(row.getBoundingClientRect().top - 120))).toBeLessThanOrEqual(1);
+    const before = await page.evaluate(() => ({
+      rowTop: document.querySelector<HTMLElement>('[data-users-refresh-anchor="record-8"]')!.getBoundingClientRect().top,
+      scrollY: window.scrollY,
+      scrollBehavior: getComputedStyle(document.documentElement).scrollBehavior,
+    }));
+    assert.equal(before.scrollBehavior, "smooth");
+    assert.ok(Math.abs(before.rowTop - 120) <= 1, "the fixture reaches its requested baseline before refresh: " + JSON.stringify(before));
     await page.clock.runFor(15_100);
     assert.equal(await page.getByTestId("recorded-count").innerText(), "Recorded actions: 25");
     assert.equal(await page.locator('[data-users-refresh-anchor="newly-recorded-page"]').count(), 1);
@@ -90,8 +102,10 @@ test("new server records and counts appear automatically while draft, focus, scr
       navigations: (window as unknown as FixtureWindow).fixtureNavigation,
       requests: (window as unknown as FixtureWindow).fixtureRequests,
     }));
-    assert.ok(Math.abs(after.rowTop - before.rowTop) <= 1, "the same visible record keeps its viewport position after a new row is inserted");
-    assert.ok(after.scrollY >= before.scrollY, "refresh never scrolls the admin back to the top");
+    assert.ok(Math.abs(after.rowTop - before.rowTop) <= 1,
+      "the same visible record keeps its viewport position after a new row is inserted: " + JSON.stringify({ before, after }));
+    assert.ok(after.scrollY >= before.scrollY,
+      "refresh never scrolls the admin back to the top: " + JSON.stringify({ before, after }));
     assert.deepEqual(after.navigations, []);
     assert.deepEqual(after.requests, [{ url: "/api/admin/users/live-refresh", cache: "no-store" }]);
   });

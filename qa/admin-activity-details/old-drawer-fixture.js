@@ -49,13 +49,70 @@ function selectSyntheticSessions(where = {}) {
     && (!dates.lte || item.lastSeenAt <= dates.lte)
     && (!dates.lt || item.lastSeenAt < dates.lt));
 }
+// Raw-query fixtures retain the same result shapes as their production readers.
+// A device-presence response cannot stand in for a recorded guest location.
+const syntheticGuestLocations = [
+  { guestId: "12345678-1234-4123-8123-123456789abc", platform: "android" },
+  ...["desktop", "mobile", "ios", "android", "web"].map(platform => ({
+    guestId: "22345678-1234-4123-8123-123456789abc", platform,
+  })),
+].map(row => ({ ...row, guestSource: "operational", evidence: "search",
+  locationLabel: null, recordedCountryCode: "NG", at: new Date(dayStart), environment: "staging" }));
+
+function syntheticQueryRows(statement) {
+  const text = statement?.text;
+  const values = statement?.values;
+  if (typeof text !== "string" || !Array.isArray(values)) throw new Error("Unsupported synthetic database query");
+  const binding = (scope, pattern) => {
+    const match = scope.match(pattern);
+    return match ? values[Number(match[1]) - 1] : undefined;
+  };
+  const bindings = (scope, pattern) => {
+    const match = scope.match(pattern);
+    return match ? [...match[1].matchAll(/\$(\d+)/g)].map(item => values[Number(item[1]) - 1]) : [];
+  };
+  if (/SELECT\s+DISTINCT\s+ON\s*\("guestId",\s*"guestSource"\)/.test(text) && text.includes(") location_records")) {
+    const start = text.indexOf('FROM "SearchHistory" x');
+    const end = text.indexOf("UNION ALL", start);
+    const search = start >= 0 ? text.slice(start, end >= 0 ? end : undefined) : "";
+    if (!search.includes('x."userId" IS NULL AND x."visitorId" IS NULL')
+      || !search.includes('NOT EXISTS (SELECT 1 FROM "Visitor" existing')) {
+      throw new Error("Unscoped synthetic guest location query");
+    }
+    const environment = binding(search, /x\."query"->>'environment'\s*=\s*\$(\d+)/);
+    const requested = new Set(bindings(search, /x\."query"->>'operationalSessionId'\s+IN\s*\(([^)]+)\)/));
+    const platform = binding(search, /END\s*=\s*\$(\d+)/);
+    const bounds = [...search.matchAll(/x\."createdAt"\s*(>=|<=|<)\s*\$(\d+)/g)]
+      .map(match => ({ operator: match[1], at: values[Number(match[2]) - 1] }));
+    if (!bounds.length || bounds.some(bound => !(bound.at instanceof Date))) throw new Error("Missing synthetic guest date scope");
+    const selected = syntheticGuestLocations.filter(row => row.environment === environment && requested.has(row.guestId)
+      && (!platform || row.platform === platform)
+      && bounds.every(bound => bound.operator === ">=" ? row.at >= bound.at : bound.operator === "<=" ? row.at <= bound.at : row.at < bound.at));
+    const latest = new Map();
+    for (const row of selected) {
+      const key = row.guestSource + ":" + row.guestId;
+      if (!latest.has(key) || latest.get(key).at < row.at) latest.set(key, row);
+    }
+    return [...latest.values()].map(({ guestId, guestSource, evidence, locationLabel, recordedCountryCode, at }) =>
+      ({ guestId, guestSource, evidence, locationLabel, recordedCountryCode, at }));
+  }
+  if (text.includes('COALESCE(BOOL_OR(p."accountSessionId" IS NOT NULL), FALSE) AS "online"')
+    && text.includes('FROM "AccountSession" s')) {
+    const environment = binding(text, /p\."environment"\s*=\s*\$(\d+)/);
+    const userId = binding(text, /s\."userId"\s*=\s*\$(\d+)/);
+    const requested = new Set(bindings(text, /s\."id"\s+IN\s*\(([^)]+)\)/));
+    if (environment !== "staging" || !["qa-registered-0001", "qa-registered-unavailable-0001", "qa-admin"].includes(userId)) return [];
+    return [{ id: "qa-device-0", online: true }, { id: "qa-device-2", online: false }].filter(row => requested.has(row.id));
+  }
+  throw new Error("Unsupported synthetic database query");
+}
 const db = {
   visitor: { findFirst: async () => ({ id, firstSeenAt: since, lastSeenAt: new Date("2026-10-22T17:48:00.000Z") }) },
   user: { findUnique: async ({ where }) =>
     ["qa-registered-0001", "qa-registered-unavailable-0001", "qa-admin"].includes(where.id)
       ? { id: where.id, email: "customer.qa@example.invalid", role: "USER", status: "ACTIVE" }
       : null },
-  $queryRaw: async () => [{ id: "qa-device-0", online: true }, { id: "qa-device-2", online: false }],
+  $queryRaw: async statement => syntheticQueryRows(statement),
   accountSession: {
     findMany: async ({ where, take = 20, skip = 0 }) =>
       selectSyntheticSessions(where).sort((a, b) => b.lastSeenAt.getTime() - a.lastSeenAt.getTime()).slice(skip, skip + take),

@@ -5,6 +5,9 @@ const browser=await chromium.launch({headless:true,args:["--no-sandbox"],executa
 try {
   const page=await browser.newPage({viewport:{width:1280,height:900}});
   const errors=[];page.on("pageerror",error=>errors.push(error.message));
+  page.on("console",message=>{
+    if(message.type()==="error" && /hydration failed|a tree hydrated but some attributes/i.test(message.text())) errors.push(message.text());
+  });
   const view=(href,full=false,updates={})=>{
     const url=new URL(href,base);
     if(full)url.pathname+="/all";
@@ -13,7 +16,7 @@ try {
   };
   const capture=async name=>{
     await page.evaluate(()=>window.scrollTo({top:0,left:0,behavior:"instant"}));
-    await page.screenshot({path:output+"/"+name+".png",fullPage:true});
+    await page.screenshot({caret:"initial",path:output+"/"+name+".png",fullPage:true});
   };
   const directorySelected=async()=>{
     const sidebar=page.locator('[aria-label="Users & Bots subsections"]');
@@ -195,7 +198,7 @@ try {
   const origin="/admin/users/online?type=guest&platform=android&q=Nigeria";
   await page.goto(base+origin);
   await expect(page.getByTestId("online-user-row")).toHaveCount(1);
-  await page.getByRole("link",{name:"View Activity",exact:true}).click();
+  await page.getByTestId("online-user-row").getByRole("link",{name:"View activity",exact:true}).click();
   await expect(page).toHaveURL(url=>url.pathname.endsWith("/12345678-1234-4123-8123-123456789abc/activity"));
   await card.getByRole("link",{name:"View all activity"}).click();
   await page.getByRole("link",{name:"Back to Activity",exact:true}).click();

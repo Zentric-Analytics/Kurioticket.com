@@ -11,6 +11,9 @@ const page = await browser.newPage({viewport:{width:1280,height:900}});
 page.setDefaultTimeout(25000);
 const errors = [];
 page.on("pageerror",e=>errors.push(e.message));
+page.on("console",message=>{
+  if(message.type()==="error" && /hydration failed|a tree hydrated but some attributes/i.test(message.text())) errors.push(message.text());
+});
 try {
   for (const width of [1280,320]) {
     await page.setViewportSize({width,height:900});
@@ -23,7 +26,8 @@ try {
       await expect(page.locator('[data-activity-id]')).toHaveCount(5);
       await expect(page.getByRole("link",{name:/View journey history/i})).toHaveCount(0);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
-      await page.screenshot({path:output+"/activity-summary-"+kind+"-"+width+".png",fullPage:true});
+      // Preserve server-rendered input attributes while hydration may settle.
+      await page.screenshot({caret:"initial",path:output+"/activity-summary-"+kind+"-"+width+".png",fullPage:true});
       await page.getByRole("link",{name:"View all activity"}).click();
       await expect(page).toHaveURL(u=>u.pathname.endsWith("/activity/all"));
       await expect(page.getByText("Price alert created")).toBeVisible();
