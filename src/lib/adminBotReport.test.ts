@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { BOT_DIRECTORY, botDirectoryHref, botDirectorySubtitle, botDirectoryTime, botFilters, botName, botTime } from "./adminBotReport";
+import { BOT_DIRECTORY, botDirectoryHref, botDirectorySubtitle, botDirectoryTime, botFilters, botName, botTime, botType, botAccessLabel } from "./adminBotReport";
 import { isAdminWorkspaceSectionActive } from "./adminNavigation";
 
 const now = new Date("2026-11-26T15:30:00.000Z");
@@ -47,4 +47,21 @@ test("directory displays UTC minutes without changing details timestamp precisio
   assert.equal(botTime(instant), "27 Nov 2026, 07:02:08");
   assert.equal(botDirectoryTime(null), "Not recorded");
   assert.equal(botDirectoryTime(undefined), "Not recorded");
+});
+
+test("unknown bot names use recorded declaration tokens without approving or reclassifying the bot", () => {
+  for (const [token, label] of [["BINGBOT", "Bingbot"], ["GOOGLEBOT", "Googlebot"], ["MJ12BOT", "MJ12BOT"], ["OAI-SEARCHBOT", "OAI-SEARCHBOT"], ["AASA-BOT", "AASA-BOT"], ["GOOGLE_INSPECTION_TOOL", "Google-InspectionTool"]]) {
+    assert.equal(botName({ group: "UNKNOWN", name: null, identityKey: "UNKNOWN:" + token }), label);
+  }
+  assert.equal(botType("search", "UNKNOWN"), "Unknown");
+  assert.equal(botType("seo", "UNKNOWN"), "Unknown");
+  assert.equal(botAccessLabel("BLOCKED"), "Blocked");
+  assert.equal(botName({ group: "SEARCH_ENGINE", name: "GOOGLEBOT", identityKey: "SEARCH_ENGINE:GOOGLEBOT" }), "Googlebot");
+  assert.equal(botType("search", "SEARCH_ENGINE"), "Search engine");
+});
+
+test("unknown registry entries without a safe recorded declaration keep the fallback", () => {
+  for (const identityKey of [undefined, "UNKNOWN:UNATTRIBUTED", "UNKNOWN:", "UNKNOWN:arbitrary user agent", "UNKNOWN:<script>bot", "SEARCH_ENGINE:GOOGLEBOT"]) {
+    assert.equal(botName({ group: "UNKNOWN", name: null, identityKey }), "Unknown bot");
+  }
 });
