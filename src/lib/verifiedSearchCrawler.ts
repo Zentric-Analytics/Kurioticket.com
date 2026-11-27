@@ -5,11 +5,11 @@ import { crawlerSignatures, knownCrawler, type SearchEngine } from "@/lib/botReg
 
 export type VerifiedSearchCrawler = SearchEngine;
 type DnsResult = { address: string };
-type CrawlerLookup = {
-  clientIp: (request: Request) => string;
+type NetworkLookup = {
   reverseIp: (ip: string) => Promise<string[]>;
   forwardHost: (hostname: string) => Promise<DnsResult[]>;
 };
+type CrawlerLookup = NetworkLookup & { clientIp: (request: Request) => string };
 const dns: CrawlerLookup = {
   clientIp: (request) => trustedBotEdge(request)?.ip ?? "",
   reverseIp: reverse,
@@ -47,7 +47,7 @@ function canonicalIp(value: string): string | null {
     return new URL("http://[" + value + "]/").hostname;
   } catch { return null; }
 }
-async function confirmReverseAndForward(ip: string, crawler: VerifiedSearchCrawler, resolver: CrawlerLookup) {
+async function confirmReverseAndForward(ip: string, crawler: VerifiedSearchCrawler, resolver: NetworkLookup) {
   try {
     const names = await resolver.reverseIp(ip);
     for (const hostname of names.slice(0, 5)) {
@@ -100,13 +100,29 @@ export async function verifySearchCrawler(
 ): Promise<VerifiedSearchCrawler | null> {
   const claimed = claimedCrawler(request.headers.get("user-agent"));
   if (!claimed) return null;
-  const ip = resolver.clientIp(request);
+  // The production request entry point still requires the authenticated edge.
+  return matchCrawlerAddress(claimed, resolver.clientIp(request), resolver);
+}
+
+/** Network evidence only: a matching recorded address is not proof that
+ * the current caller owns it. Never use this reporting entry point to
+ * authorize searches or populate authenticated request metadata. */
+export async function matchReportedSearchCrawlerAddress(
+  declaredName: string | null, ip: string | null, resolver: NetworkLookup = dns,
+): Promise<"FORWARD_CONFIRMED_DNS" | "OFFICIAL_IP_LIST" | null> {
+  if (!ip || knownCrawler(declaredName)?.category !== "search") return null;
+  const crawler = declaredName as SearchEngine;
+  const match = await matchCrawlerAddress(crawler, ip, resolver);
+  return match === crawler ? crawler === "DUCKDUCKBOT" ? "OFFICIAL_IP_LIST" : "FORWARD_CONFIRMED_DNS" : null;
+}
+
+async function matchCrawlerAddress(claimed: SearchEngine, ip: string, resolver: NetworkLookup) {
   if (!isIP(ip)) return null;
   if (claimed === "DUCKDUCKBOT") {
     return (await duckDuckBotAddresses()).has(canonicalIp(ip)!) ? claimed : null;
   }
   const key = claimed + ":" + ip;
-  // Test-only resolvers must not reuse production DNS cache observations.
+  // Alternate resolvers must not reuse production DNS cache observations.
   if (resolver !== dns) return boundedVerification(confirmReverseAndForward(ip, claimed, resolver));
   const cached = cache.get(key);
   if (cached && cached.expiresAt > Date.now()) return cached.result;
