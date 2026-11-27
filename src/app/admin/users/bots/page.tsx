@@ -55,10 +55,10 @@ export default async function BotManagementPage({ searchParams }: { searchParams
               <tbody>
                 {report.rows.map(bot => <tr key={bot.id} className={directoryRow}>
                   <td>
-                    <p className="font-semibold text-slate-950">{botName(bot)}</p>
+                    <p className="break-words font-semibold text-slate-950" title={bot.group === "UNKNOWN" ? "Declared identity, not independently verified" : undefined}>{botName(bot)}</p>
                     <p className="text-xs text-slate-600">{botDirectorySubtitle(bot)}</p>
                   </td>
-                  <td>{botType(bot.category)}</td>
+                  <td>{botType(bot.category, bot.group)}</td>
                   <td className="whitespace-nowrap"><span className={bot.access === "BLOCKED" ? "text-rose-700" : "text-slate-950"}>{botAccessLabel(bot.access)}</span></td>
                   <td className="whitespace-nowrap tabular-nums">{botDirectoryTime(bot.lastSeen)}</td>
                   <td><Link prefetch={false} className={reportLink + " inline-flex items-center gap-1 whitespace-nowrap"}
