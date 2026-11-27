@@ -4,7 +4,10 @@ import { BOT_DIRECTORY, BOT_PAGE_SIZE, botFilters, type BotQuery } from "@/lib/a
 import { crawlerCatalog } from "@/lib/botRegistry";
 import { getPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
-import type { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
+import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
+import { recordedSearchCrawler } from "./adminOperationalReadCore";
+import { recordedBotSearchRows, type RecordedBotSearch } from "./recordedBotSearchHistory";
 import { BOT_DAILY_SEARCH_LIMIT, nextSearchTime, utcDayStart } from "./botActivityStore";
 
 type Filters = ReturnType<typeof botFilters>;
@@ -57,18 +60,26 @@ export async function readBotDirectory(raw: BotQuery) {
 
   try {
     const data = await getPrisma().$transaction(async db => {
+      const recordedCounts = await db.$queryRaw<{ botId: string | null; count: bigint }[]>`
+        SELECT "botId", count(*) AS count FROM (${recordedBotSearchRows(environment, filters.window ?? undefined)}) searches
+        GROUP BY "botId"
+      `;
+      const actualSearches = recordedCounts.reduce((total, row) => total + row.count, 0n);
+      const unassignedSearches = recordedCounts.find(row => row.botId === null)?.count ?? 0n;
       const where: Prisma.BotRegistryWhereInput = {
         environment, AND: searchIdentity(filters.query),
-        activities: timestamp ? { some: { environment, timestamp } } : undefined,
+        OR: timestamp ? [
+          { activities: { some: { environment, timestamp } } },
+          { id: { in: recordedCounts.flatMap(row => row.botId ? [row.botId] : []) } },
+        ] : undefined,
       };
-      const [registry, matching, activity, actualSearches] = await Promise.all([
+      const [registry, matching, activity] = await Promise.all([
         db.botRegistry.groupBy({
           by: ["group"], where: { environment }, _count: true,
           _sum: { requests: true, denied: true, rateLimited: true }, _min: { firstSeen: true },
         }),
         db.botRegistry.groupBy({ by: ["group"], where, _count: true }),
         timestamp ? db.botActivity.groupBy({ by: ["decision"], where: { environment, timestamp }, _count: true }) : [],
-        db.searchHistory.count({ where: { ...botSearchWhere(environment), createdAt: timestamp } }),
       ]);
       const counts = { ...Object.fromEntries(matching.map(row => [row.group, row._count])), all: matching.reduce((total, row) => total + row._count, 0) } as Record<string, number>;
       const total = counts[filters.group || "all"] ?? 0;
@@ -82,7 +93,7 @@ export async function readBotDirectory(raw: BotQuery) {
       const lifetime = (key: "requests" | "denied" | "rateLimited") =>
         registry.reduce((total, row) => total + (row._sum[key] ?? BigInt(0)), BigInt(0));
       return {
-        counts, total, page, rows,
+        counts, total, page, rows, unassignedSearches,
         firstDetected: registry.reduce<Date | null>((first, row) => {
           const seen = row._min.firstSeen;
           return seen && (!first || seen < first) ? seen : first;
@@ -125,7 +136,8 @@ export async function readBotDetails(id: string, raw: BotQuery) {
         ...where, timestamp: within(filters.window), kind: filters.kind, decision: filters.decision,
       };
       const searchWhere = botSearchWhere(environment);
-      const [observations, actualRows, total, quota] = await Promise.all([
+      const recorded = recordedBotSearchRows(environment);
+      const [observations, actualRows, total, quota, searchEvidence, relatedCohorts] = await Promise.all([
         db.botActivity.findMany({
           where, orderBy: [{ timestamp: "desc" }, { id: "desc" }], take: 20,
           select: { ip: true, country: true, userAgent: true, declaredName: true, evidence: true,
@@ -133,11 +145,7 @@ export async function readBotDetails(id: string, raw: BotQuery) {
             renderLogIp: true, renderLogCountry: true },
         }),
         db.$queryRaw<{ count: bigint }[]>`
-          SELECT count(*) FROM "BotActivity" a
-          JOIN "SearchHistory" s ON s."requestId" = a.id
-          WHERE a."botId" = ${id} AND a.environment = ${environment}
-            AND a."dispatchedAt" IS NOT NULL AND s."countAsSearch" = TRUE
-            AND s.query->>'environment' = ${environment} AND s.query->>'applicationSource' = 'BOT'
+          SELECT count(*) FROM (${recorded}) searches WHERE "botId" = ${id}
         `,
         filters.window === null ? null : db.botActivity.count({ where: historyWhere }),
         bot.group === "SEARCH_ENGINE" && bot.verification === "VERIFIED" ? (async () => {
@@ -154,7 +162,25 @@ export async function readBotDetails(id: string, raw: BotQuery) {
             next: nextSearchTime(now, last?.dispatchedAt ?? undefined, used),
           };
         })() : null,
+        db.$queryRaw<Pick<RecordedBotSearch, "evidence">[]>`
+          SELECT evidence FROM (${recorded}) searches WHERE "botId" = ${id}
+          ORDER BY "createdAt" DESC, id DESC LIMIT 20
+        `,
+        bot.name ? db.$queryRaw<{ id: string; verification: string; count: bigint }[]>`
+          SELECT b.id, b.verification, count(*) AS count
+          FROM (${recorded}) searches JOIN "BotRegistry" b ON b.id = searches."botId"
+          WHERE b.environment = ${environment} AND b.name = ${bot.name} AND b.id <> ${id}
+          GROUP BY b.id, b.verification ORDER BY count(*) DESC, b.id LIMIT 10
+        ` : Promise.resolve([]),
       ]);
+      const actual = Number(actualRows[0].count);
+      const requestedSearchPage = typeof raw.searchPage === "string" && /^[1-9]\d{0,8}$/.test(raw.searchPage)
+        ? Number(raw.searchPage) : 1;
+      const searchPage = Math.min(requestedSearchPage, Math.max(1, Math.ceil(actual / BOT_PAGE_SIZE)));
+      const recordedSearches = actual ? await db.$queryRaw<RecordedBotSearch[]>`
+        SELECT * FROM (${recorded}) searches WHERE "botId" = ${id}
+        ORDER BY "createdAt" DESC, id DESC OFFSET ${(searchPage - 1) * BOT_PAGE_SIZE} LIMIT ${BOT_PAGE_SIZE}
+      ` : [];
       const page = Math.min(filters.page, Math.max(1, Math.ceil((total ?? 0) / BOT_PAGE_SIZE)));
       const events = total ? await db.botActivity.findMany({
         where: historyWhere, orderBy: [{ timestamp: "desc" }, { id: "desc" }],
@@ -178,7 +204,11 @@ export async function readBotDetails(id: string, raw: BotQuery) {
         }),
       ]) : [[], []];
       return {
-        bot, observations, actual: actualRows[0].count, total, page, quota,
+        bot, observations, actual, total, page, quota, searchPage, relatedCohorts,
+        searchEvidence: searchEvidence.map(row => recordedSearchNetwork(row.evidence)),
+        recordedSearches: recordedSearches.map(({ evidence, ...row }) => ({
+          ...row, network: recordedSearchNetwork(evidence), crawler: recordedSearchCrawler(evidence),
+        })),
         events: events.map(event => ({
           ...event,
           search: searches.find(search => search.requestId === event.id),
