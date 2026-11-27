@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { automationSignal, botAccess, botTarget, observeBot } from "./botPolicy";
-import { trustedBotEdge } from "./botEdge";
+import { trustedBotEdge, trustedBotIngress, trustedRenderWorkspaceIngress } from "./botEdge";
 import { crawlerCatalog } from "./botRegistry";
 
 const request = (path: string, agent: string, method = "GET", headers = {}) =>
@@ -178,4 +178,84 @@ test("trusted edge detects browser-equivalent automation without relying on User
     const ordinary = request("/", userAgent, "GET", { ...headers, "X-Kurioticket-Edge-Bot": "" });
     assert.equal(automationSignal(ordinary), null);
   }
+});
+
+test("explicit staging workspace trust enables genuine crawler search eligibility without changing quotas or unknown/other-bot policy", async t => {
+  const config = {
+    RENDER: "true",
+    RENDER_SERVICE_ID: "srv-dabmo50jo6nc73881d60",
+    TRAVEL_PROVIDER_MODE: "staging",
+    NEXT_PUBLIC_APP_URL: "https://staging.kurioticket.com",
+    NEXTAUTH_URL: "https://staging.kurioticket.com",
+    BOT_TRUST_RENDER_WORKSPACE_INGRESS: "false",
+    GUEST_LIVE_RENDER_INGRESS_VERIFIED: "true",
+    BOT_REQUIRE_EDGE: "false",
+    BOT_EDGE_SECRET: "fixture".repeat(5),
+  };
+  const prior = Object.fromEntries(Object.keys(config).map(key => [key, process.env[key]]));
+  Object.assign(process.env, config);
+  t.after(() => {
+    for (const [key, value] of Object.entries(prior)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+  const req = (agent: string, extra: Record<string, string> = {}, path = "/api/flights/search", url = "https://staging.kurioticket.com") =>
+    new Request(url + path, {
+      method: "POST",
+      headers: { "User-Agent": agent, "CF-Connecting-IP": "52.167.144.161", "CF-IPCountry": "US", "Rndr-Id": "render-request-fixture", ...extra },
+    });
+  const bing = req("Bingbot");
+  assert.equal(trustedBotIngress(bing), null, "Reporting approval cannot enable search");
+  let observed = await observeBot(bing, automationSignal(bing)!);
+  assert.equal(botAccess(observed, botTarget(bing)), "SEARCH_NOT_ALLOWED");
+  // Test the explicitly accepted workspace boundary. These headers are not
+  // an independent proof of public ingress; private workloads must be trusted.
+  process.env.BOT_TRUST_RENDER_WORKSPACE_INGRESS = "true";
+  assert.equal(trustedRenderWorkspaceIngress(bing)?.source, "RENDER_TRUSTED_WORKSPACE");
+  assert.equal(trustedBotEdge(bing), null);
+  t.mock.method(globalThis, "fetch", async () => Response.json({ prefixes: [{ ipv4Prefix: "52.167.144.0/24" }] }));
+  observed = await observeBot(bing, automationSignal(bing)!);
+  assert.equal(observed.verification, "VERIFIED");
+  assert.equal(observed.identityKey, "SEARCH_ENGINE:BINGBOT");
+  assert.equal(observed.networkSource, "RENDER_TRUSTED_WORKSPACE");
+  assert.equal(observed.ip, "52.167.144.161");
+  for (const product of ["flights", "hotels", "cars", "packages"]) {
+    assert.equal(botAccess(observed, botTarget(req("Bingbot", {}, "/api/" + product + "/search"))), null);
+  }
+  assert.equal(botAccess(observed, botTarget(req("Bingbot", {}, "/api/flights/nearby-fare"))), "SEARCH_NOT_ALLOWED");
+  const other = req("GPTBot");
+  assert.equal(botAccess(await observeBot(other, automationSignal(other)!), botTarget(other)), "SEARCH_NOT_ALLOWED");
+  const unknown = req("NovelSpider");
+  assert.equal(botAccess(await observeBot(unknown, automationSignal(unknown)!), botTarget(unknown)), "UNAPPROVED_BOT");
+  assert.equal(automationSignal(req("Mozilla/5.0 Chrome/130")), null);
+  for (const headers of [
+    { "CF-Connecting-IP": "10.0.0.1" },
+    { "CF-Connecting-IP": "2a06:98c0:3600:0:0:0:0:103" },
+    { "CF-Connecting-IP": "52.167.144.161, 8.8.8.8" },
+    { "CF-Connecting-IP": "52.167.144.161:443" },
+    { "CF-Connecting-IP": "", "X-Forwarded-For": "52.167.144.161" },
+    { "CF-Worker": "example.com" },
+    { "Rndr-Id": "" },
+    { "X-Kurioticket-Edge-Auth": "forged" },
+  ]) assert.equal(trustedBotIngress(req("Bingbot", headers)), null);
+  assert.equal(trustedBotIngress(req("Bingbot", {}, "/", "http://internal-service")), null);
+  assert.equal(trustedBotIngress(req("Bingbot", {}, "/", "https://kurioticket.com")), null);
+  for (const [key, value] of [
+    ["RENDER", "false"], ["RENDER_SERVICE_ID", "another-service"],
+    ["TRAVEL_PROVIDER_MODE", "production"], ["NEXTAUTH_URL", "https://kurioticket.com"],
+    ["BOT_REQUIRE_EDGE", "true"], ["BOT_TRUST_RENDER_WORKSPACE_INGRESS", "false"],
+  ]) {
+    const original = process.env[key];
+    process.env[key] = value;
+    assert.equal(trustedRenderWorkspaceIngress(bing), null, key);
+    process.env[key] = original;
+  }
+  const signed = req("Bingbot", {
+    "X-Kurioticket-Edge-Auth": config.BOT_EDGE_SECRET,
+    "X-Kurioticket-Edge-Version": "1",
+    "X-Kurioticket-Edge-IP": "66.249.66.9",
+  });
+  assert.equal(trustedBotIngress(signed)?.source, "AUTHENTICATED_EDGE");
+  assert.equal(trustedBotIngress(signed)?.ip, "66.249.66.9");
 });
