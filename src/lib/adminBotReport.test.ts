@@ -1,6 +1,7 @@
+import { crawlerCatalog } from "./botRegistry";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { BOT_DIRECTORY, botDirectoryHref, botDirectorySubtitle, botDirectoryTime, botFilters, botName, botTime, botType, botAccessLabel } from "./adminBotReport";
+import { BOT_DIRECTORY, botDirectoryHref, botDirectorySubtitle, botDirectoryTime, botFilters, botName, botTime, botType, botVerification, botAccessLabel } from "./adminBotReport";
 import { isAdminWorkspaceSectionActive } from "./adminNavigation";
 
 const now = new Date("2026-11-26T15:30:00.000Z");
@@ -53,15 +54,32 @@ test("unknown bot names use recorded declaration tokens without approving or rec
     assert.equal(botName({ group: "UNKNOWN", name: null, identityKey: "UNKNOWN:" + token }), label);
     assert.equal(botName({ group: "UNKNOWN", name: token }), label);
   }
-  assert.equal(botType("search", "UNKNOWN"), "Unknown");
-  assert.equal(botType("seo", "UNKNOWN"), "Unknown");
   assert.equal(botAccessLabel("BLOCKED"), "Blocked");
   assert.equal(botName({ group: "SEARCH_ENGINE", name: "GOOGLEBOT", identityKey: "SEARCH_ENGINE:GOOGLEBOT" }), "Googlebot");
-  assert.equal(botType("search", "SEARCH_ENGINE"), "Search engine");
 });
 
 test("unknown registry entries without a safe recorded declaration keep the fallback", () => {
   for (const identityKey of [undefined, "UNKNOWN:UNATTRIBUTED", "UNKNOWN:", "UNKNOWN:arbitrary user agent", "UNKNOWN:<script>bot", "SEARCH_ENGINE:GOOGLEBOT"]) {
     assert.equal(botName({ group: "UNKNOWN", name: null, identityKey }), "Unknown bot");
+  }
+});
+
+test("each catalogued declaration displays its type independently of verification", () => {
+  const labels = { search: "Search engine", ai: "AI crawler & retrieval", social: "Social media & Meta",
+    google: "Google additional services", seo: "SEO tools", archive: "Archiving" };
+  for (const [token, entry] of Object.entries(crawlerCatalog)) {
+    const bot = { group: "UNKNOWN", name: token, category: null };
+    assert.equal(botType(bot), labels[entry.category], token);
+    assert.equal(botType({ ...bot, name: null, identityKey: "UNKNOWN:" + token }), labels[entry.category], token);
+  }
+  assert.equal(botVerification("DECLARED"), "Unverified (self-declared)");
+  assert.equal(botVerification("VERIFIED"), "Verified");
+  assert.equal(botVerification("SUSPICIOUS"), "Suspicious");
+});
+
+test("documented additional declarations have reporting types, ambiguous identities stay unknown", () => {
+  for (const [name, expected] of [["MJ12BOT", "SEO tools"], ["OAI-SEARCHBOT", "AI crawler & retrieval"],
+    ["AASA-BOT", "App site association"], ["NEWBOT", "Unknown"], ["UNATTRIBUTED", "Unknown"]]) {
+    assert.equal(botType({ group: "UNKNOWN", name, category: null }), expected);
   }
 });
