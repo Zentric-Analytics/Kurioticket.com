@@ -152,7 +152,7 @@ import { flightCardJourneys, flightCardJourneyAccessibility, type FlightCardLeg 
 import { flightOperatingCarrierPresentation } from "./flightOperatingCarrier";
 import { deriveFlightResultHighlights, type FlightResultHighlight } from "./flightResultHighlights";
 import { FlightResultsState } from "./FlightResultsState";
-import { flightResultsOwnedBy, resolveFlightResultsState, resolveFlightSearchFailure } from "./flightResultsStateModel";
+import { flightResultsOwnedBy, resolveFlightResultsState, resolveFlightSearchFailure, resolveFlightFailureKind, type FlightFailureKind } from "./flightResultsStateModel";
 import { flightInventoryCounts } from "./flightInventoryDiagnostics";
 import { HotelFilterSheet, type HotelFilterSectionName } from "./HotelFilterSheet";
 import { activeHotelFilterCount, buildHotelFilterOptions, emptyHotelFilters, filterHotels, type HotelFilters } from "./hotelFilters";
@@ -269,6 +269,7 @@ function ResultsScreen({ product }: { product: Product }) {
   const {results,pending:displayPending,unavailable:displayUnavailable} = useSandboxResultState(rawSandboxResults);
   const [resultsRequestId, setResultsRequestId] = useState<string>();
   const [transportStatus, setStatus] = useState<Status>("loading");
+  const [flightFailure, setFlightFailure] = useState<FlightFailureKind>("unavailable");
   const status:Status=transportStatus === "ready" ? displayPending ? "loading" : displayUnavailable ? "error" : transportStatus : transportStatus;
   const [message, setMessage] = useState("");
   const [retry, setRetry] = useState(0);
@@ -393,6 +394,7 @@ function ResultsScreen({ product }: { product: Product }) {
     const sequence = ++searchSequence.current;
     const requestId = randomUUID();
     const clientStartedAt = performance.now();
+    if (product === "flight") setFlightFailure("unavailable");
     let deadlineExpired = false;
     const isLatest = () => sequence === searchSequence.current;
     const requestedSearchKey = plan.plan?.key;
@@ -501,6 +503,7 @@ function ResultsScreen({ product }: { product: Product }) {
         return;
       }
       if (flightAcceptance && canonicalResultsWereSilentlyLost(flightAcceptance)) {
+        setFlightFailure("response");
         setResults([]);
         resultsRef.current = [];
         flightResultsOwnerKey.current = undefined;
@@ -577,6 +580,7 @@ function ResultsScreen({ product }: { product: Product }) {
     } catch (e) {
       if (!isLatest() || (product === "flight" && currentFlightSearchKey.current !== requestedSearchKey)) return;
       if (!deadlineExpired && (controller.signal.aborted || (e instanceof TravelApiError && e.code === "cancelled"))) return;
+      if (product === "flight") setFlightFailure(resolveFlightFailureKind(e instanceof TravelApiError ? e.code : undefined, deadlineExpired));
       const failureMessage =
         product === "flight" && (deadlineExpired ||
         (e instanceof TravelApiError && e.code === "timeout") ||
@@ -1299,6 +1303,7 @@ function ResultsScreen({ product }: { product: Product }) {
               <View style={[s0.body, s0.flightResultsBody]}>
                 <FlightResultsState
                   state={terminalFlightState}
+                  failure={flightFailure}
                   onRetry={retrySearch}
                   onEditSearch={edit}
                   onClearFilters={clearFlightFilters}

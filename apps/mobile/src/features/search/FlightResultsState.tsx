@@ -2,18 +2,21 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AlertCircle, Search, SlidersHorizontal } from "lucide-react-native";
 import { useFlightResultsTheme as useAppTheme, useFlightResultsUi } from "./FlightResultsPresentationContext";
 import { ui as sharedUi } from "./SearchUi";
-import type { FlightResultsStateKind } from "./flightResultsStateModel";
+import type { FlightResultsStateKind, FlightFailureKind } from "./flightResultsStateModel";
+import { flightFailureBody } from "./flightFailureCopy";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { flightResultsUiCopy } from "./flightResultsSummary";
 
 export function FlightResultsState({
   state,
+  failure,
   onRetry,
   onEditSearch,
   onClearFilters,
   onAdjustFilters,
 }: {
   state: Exclude<FlightResultsStateKind, "loading">;
+  failure?: FlightFailureKind;
   onRetry: () => void;
   onEditSearch: () => void;
   onClearFilters: () => void;
@@ -31,7 +34,7 @@ export function FlightResultsState({
   const body = filtered
     ? copy.noFilterBody
     : error
-      ? copy.loadErrorBody
+      ? flightFailureBody(failure, locale, copy.loadErrorBody)
       : copy.noResultsBody;
 
   return (

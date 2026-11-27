@@ -66,7 +66,8 @@ test("production parsing uses one native JSON path and safe response metadata", 
   assert.doesNotMatch(api, /response\.text\(\)/);
   assert.doesNotMatch(api, /JSON\.parse\(raw\)/);
   assert.match(api, /response\.headers\.get\("content-length"\)/);
-  assert.match(api, /TravelApiError\("The search provider returned an invalid response\.", response\.status, "invalid-response"\)/);
+  assert.match(api, /TravelApiError\("The search provider returned an invalid response\.", response\.status, "invalid-schema"\)/);
+  assert.match(api, /describeTransportFailure\(error, controller\.signal, options\.signal, "body"\)/);
   assert.doesNotMatch(api, /error\.message.*JSON|JSON.*error\.message/);
 });
 

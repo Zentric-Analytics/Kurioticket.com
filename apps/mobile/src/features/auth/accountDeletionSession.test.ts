@@ -1,3 +1,4 @@
+import { describeTransportFailure } from "../../api/travelTransportFailure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -63,6 +64,7 @@ function native(
     "./previewPasskeySignIn": {},
   });
   const { travelApi } = load<{ travelApi: typeof TravelApi }>("api/travelApi.ts", {
+    "./travelTransportFailure": { describeTransportFailure },
     "../config/apiUrl": config,
     "../storage/sessionStorage": storage,
     "react-native": reactNative,

@@ -1,4 +1,11 @@
 export type FlightResultsRequestStatus = "loading" | "ready" | "empty" | "error";
+export type FlightFailureKind = "timeout" | "network" | "response" | "unavailable";
+export function resolveFlightFailureKind(code?: string, uiDeadline = false): FlightFailureKind {
+  if (uiDeadline || code === "timeout" || code === "ui-deadline") return "timeout";
+  if (code === "network") return "network";
+  if (code === "invalid-json" || code === "invalid-schema" || code === "invalid-response") return "response";
+  return "unavailable";
+}
 export type FlightResultsStateKind = "loading" | "error" | "no-results" | "filtered-empty";
 
 export type FlightResultSnapshot<T> = {

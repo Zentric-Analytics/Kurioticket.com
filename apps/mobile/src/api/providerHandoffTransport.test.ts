@@ -1,3 +1,4 @@
+import { describeTransportFailure } from "./travelTransportFailure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
@@ -22,6 +23,7 @@ function fixture() {
   const coordinator = new JourneyEventCoordinator({ context: () => context, createId: () => receipt, send: async () => ({ accepted: true }) });
   coordinator.rememberSearch(searchId, coordinator.captureContext());
   const dependencies: Record<string, unknown> = {
+    "./travelTransportFailure": { describeTransportFailure },
     "../config/apiUrl": { getApiBaseUrl: () => ({ ok: true, baseUrl: "https://staging.kurioticket.com" }) },
     "../storage/sessionStorage": { readSession: async () => ({ token: "test-session" }), subscribeSession: (listener: typeof sessionListener) => { sessionListener = listener; } },
     "react-native": { Platform: { OS: "ios" } },
