@@ -20,7 +20,7 @@ function identification(verified: VerifiedSearchCrawler | null, edgeIp: string |
   runInNewContext(compiled, {
     exports: exported, require: (key: string) => {
       if (key === "@/lib/botRegistry") return { crawlerSignatures };
-      if (key === "@/lib/botEdge") return { trustedBotEdge: () => edgeIp ? { ip: edgeIp } : null };
+      if (key === "@/lib/botEdge") return { trustedBotIngress: () => edgeIp ? { ip: edgeIp } : null };
       if (key === "@/lib/operatorCrawlerNetwork") return {
         confirmedOperatorNetwork: async (name: string, ip: string | null) => (name === "BINGBOT" || name === "GOOGLEBOT") && ip === "192.0.2.1",
       };
