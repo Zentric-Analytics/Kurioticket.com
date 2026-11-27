@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { BOT_DIRECTORY, BOT_PAGE_SIZE, botFilters, type BotQuery } from "@/lib/adminBotReport";
-import { crawlerCatalog, recognizedCrawler } from "@/lib/botRegistry";
+import { crawlerCatalog, recognizedCrawler, currentBotAccess } from "@/lib/botRegistry";
 import { getPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { Prisma } from "@/generated/prisma/client";
@@ -10,7 +10,7 @@ import { activityNetworkEvidence, botReportVerification, reportEvidenceSelect } 
 import { recordedSearchCrawler } from "./adminOperationalReadCore";
 import { declareBotNetworkIpCursor, detailHistoryQuery, recordedBotSearchRows, summarizeBotNetworkPaged, type BotNetworkIpCandidate, type RecordedBotSearch } from "./recordedBotSearchHistory";
 import { botSearchNetwork, combinedBotHistory, type BotHistoryPointer, type HistoricalBotSearch } from "./adminBotHistory";
-import { BOT_DAILY_SEARCH_LIMIT, nextSearchTime, utcDayStart } from "./botActivityStore";
+import { BOT_DAILY_SEARCH_LIMIT, botSearchQuotaWhere, nextSearchTime, utcDayStart } from "./botActivityStore";
 
 type Filters = ReturnType<typeof botFilters>;
 type Environment = ReturnType<typeof getPublicEnvironment>;
@@ -112,7 +112,7 @@ export async function readBotDirectory(raw: BotQuery) {
     }, { isolationLevel: "RepeatableRead" });
     // Network checks run outside the read-only database transaction.
     const rows = await Promise.all(data.rows.map(async ({ activities, ...bot }) => ({
-      ...bot, reportVerification: await botReportVerification(bot, activities[0]),
+      ...bot, access: currentBotAccess(bot, environment), reportVerification: await botReportVerification(bot, activities[0]),
     })));
     return { state: "ready", filters: { ...filters, page: data.page }, now, ...data, rows } as const;
   } catch {
@@ -173,14 +173,15 @@ export async function readBotDetails(id: string, raw: BotQuery) {
       const [[reportRows], quota] = await Promise.all([
         db.$queryRaw<DetailHistoryRows[]>(detailHistoryQuery(environment, id, summaryName, history,
           filters.window !== null, filters.page, requestedSearchPage)),
-        bot.requests > BigInt(0) && bot.group === "SEARCH_ENGINE" && bot.verification === "VERIFIED" ? (async () => {
+        bot.requests > BigInt(0) && bot.group === "SEARCH_ENGINE" && currentBotAccess(bot, environment) === "CRAWL_AND_LIMITED_SEARCH" ? (async () => {
           const [{ now }] = await db.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
+          const scope = botSearchQuotaWhere({ ...bot, environment });
           const [last, used] = await Promise.all([
             db.botActivity.findFirst({
-              where: { ...where, dispatchedAt: { not: null } },
+              where: { ...scope, dispatchedAt: { not: null } },
               orderBy: { dispatchedAt: "desc" }, select: { dispatchedAt: true },
             }),
-            db.botActivity.count({ where: { ...where, dispatchedAt: { gte: utcDayStart(now) } } }),
+            db.botActivity.count({ where: { ...scope, dispatchedAt: { gte: utcDayStart(now) } } }),
           ]);
           return {
             used, remaining: Math.max(0, BOT_DAILY_SEARCH_LIMIT - used), last: last?.dispatchedAt,
@@ -262,7 +263,7 @@ export async function readBotDetails(id: string, raw: BotQuery) {
         ? { ...event, networkEvidence: await activityNetworkEvidence(event) }
         : event)),
     ]);
-    return { state: "ready", filters: { ...filters, page: data.page }, ...data, bot, reportVerification, events } as const;
+    return { state: "ready", filters: { ...filters, page: data.page }, ...data, bot: { ...bot, access: currentBotAccess(bot, environment) }, reportVerification, events } as const;
   } catch {
     console.error("[admin:bot-management] Bot details unavailable");
     return { state: "unavailable" } as const;
