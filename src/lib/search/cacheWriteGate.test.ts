@@ -71,3 +71,18 @@ test("multiple expired waiters cannot reopen a running writer's slot", async t =
   release(); await Promise.all([writer, successor]);
   assert.equal(successorStarted, true);
 });
+
+test("the existing default ten-second admission budget is enforced without a database-failure cooldown", async t => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let now = 0;
+  const run = createCacheWriteGate(() => now);
+  let release!: () => void;
+  const writer = run(() => new Promise<void>(resolve => { release = resolve; }));
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+  const rejected = assert.rejects(run(async () => assert.fail("expired work must not start")), /deadline exceeded/);
+  now = 10_000; t.mock.timers.tick(10_000); await rejected;
+  release(); await writer;
+  let recovered = false;
+  await run(async () => { recovered = true; });
+  assert.equal(recovered, true);
+});
