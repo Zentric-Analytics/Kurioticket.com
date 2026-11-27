@@ -32,8 +32,20 @@ WITH catalog(token, category, owner, original_catalog) AS (
     ('AASA-BOT', 'association', 'Apple', false)
 ), history AS (
   SELECT s.query->>'environment' AS environment, s."createdAt" AS seen,
-         coalesce(nullif(s.query->>'verifiedCrawler', ''), nullif(s.query->>'identifiedCrawler', '')) AS token,
-         nullif(s.query->>'verifiedCrawler', '') IS NOT NULL AS verified
+         -- Prefer the declared identity; contradictory verification metadata is not proof.
+         coalesce(nullif(s.query->>'identifiedCrawler', ''), nullif(s.query->>'verifiedCrawler', '')) AS token,
+         (
+           nullif(s.query->>'verifiedCrawler', '') IS NOT NULL
+           AND (
+             nullif(s.query->>'identifiedCrawler', '') IS NULL
+             OR s.query->>'identifiedCrawler' = s.query->>'verifiedCrawler'
+           )
+           -- Legacy verified-only rows have no evidence field; explicit declarations cannot grant access.
+           AND (
+             s.query->>'crawlerEvidence' IS NULL
+             OR s.query->>'crawlerEvidence' IN ('VERIFIED_DNS', 'VERIFIED_IP_RANGE')
+           )
+         ) AS verified
   FROM "SearchHistory" s
   WHERE s.query->>'applicationSource' = 'BOT'
     AND nullif(s.query->>'environment', '') IS NOT NULL
