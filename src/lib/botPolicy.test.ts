@@ -229,7 +229,7 @@ test("explicit staging workspace trust enables genuine crawler search eligibilit
   const unknown = req("NovelSpider");
   assert.equal(botAccess(await observeBot(unknown, automationSignal(unknown)!), botTarget(unknown)), "UNAPPROVED_BOT");
   assert.equal(automationSignal(req("Mozilla/5.0 Chrome/130")), null);
-  for (const headers of [
+  const invalidHeaders: Record<string, string>[] = [
     { "CF-Connecting-IP": "10.0.0.1" },
     { "CF-Connecting-IP": "2a06:98c0:3600:0:0:0:0:103" },
     { "CF-Connecting-IP": "52.167.144.161, 8.8.8.8" },
@@ -238,7 +238,8 @@ test("explicit staging workspace trust enables genuine crawler search eligibilit
     { "CF-Worker": "example.com" },
     { "Rndr-Id": "" },
     { "X-Kurioticket-Edge-Auth": "forged" },
-  ]) assert.equal(trustedBotIngress(req("Bingbot", headers)), null);
+  ];
+  for (const headers of invalidHeaders) assert.equal(trustedBotIngress(req("Bingbot", headers)), null);
   assert.equal(trustedBotIngress(req("Bingbot", {}, "/", "http://internal-service")), null);
   assert.equal(trustedBotIngress(req("Bingbot", {}, "/", "https://kurioticket.com")), null);
   for (const [key, value] of [
