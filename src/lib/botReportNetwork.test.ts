@@ -4,7 +4,7 @@ import { botReportNetwork, reportedCrawlerNetworkMatch } from "./botReportNetwor
 import { automationSignal, observeBot, botAccess, botTarget } from "./botPolicy";
 
 test("staging Render observation is reporting-only, requires reviewed ingress and never approves a spoofed crawler", async t => {
-  const keys = ["RENDER", "GUEST_LIVE_RENDER_INGRESS_VERIFIED", "NEXT_PUBLIC_APP_URL", "BOT_EDGE_SECRET"] as const;
+  const keys = ["RENDER", "GUEST_LIVE_RENDER_INGRESS_VERIFIED", "NEXT_PUBLIC_APP_URL", "NEXTAUTH_URL", "TRAVEL_PROVIDER_MODE", "BOT_TRUST_RENDER_WORKSPACE_INGRESS", "BOT_EDGE_SECRET"] as const;
   const prior = Object.fromEntries(keys.map(key => [key, process.env[key]]));
   t.after(() => {
     for (const key of keys) {
@@ -13,6 +13,9 @@ test("staging Render observation is reporting-only, requires reviewed ingress an
       else process.env[key] = value;
     }
   });
+  process.env.TRAVEL_PROVIDER_MODE = "staging";
+  process.env.NEXTAUTH_URL = "https://staging.kurioticket.com";
+  process.env.BOT_TRUST_RENDER_WORKSPACE_INGRESS = "false";
   process.env.RENDER = "true";
   process.env.NEXT_PUBLIC_APP_URL = "https://staging.kurioticket.com";
   process.env.BOT_EDGE_SECRET = "fixture".repeat(5);

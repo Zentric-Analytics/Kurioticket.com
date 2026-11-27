@@ -37,6 +37,15 @@ test("SQL-backed bot history changes run PostgreSQL regression validation", () =
   }
 });
 
+test("crawler authorization and reservation changes require isolated PostgreSQL tests", () => {
+  for (const prefix of ["src/lib/bot", "src/lib/verifiedSearchCrawler", "src/lib/searchCrawlerGate", "src/services/botActivityStore"]) {
+    assert.equal(isMigrationValidationPath(prefix + ".ts"), true);
+    assert.equal(isMigrationValidationPath(prefix + ".test.ts"), true);
+    assert.ok(workflow.includes(prefix + "*|"), prefix);
+  }
+  assert.match(workflow, /BOT_TEST_DATABASE_URL="\$DATABASE_URL"/u);
+});
+
 test("mobile workflow and documentation-only changes are not applicable", () => {
   assert.deepEqual(
     classifyMigrationValidationPaths([

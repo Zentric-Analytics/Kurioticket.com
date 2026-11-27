@@ -48,18 +48,16 @@ export function recognizedCrawler(token: string | null) {
   return knownCrawler(token) ?? additionalCrawlers.get(token ?? "") ?? null;
 }
 
-/** Verification evidence and category-based eligibility are separate.
- * The staging exception is passed explicitly by the live policy caller. */
-export function crawlerPolicy(token: string | null, verified: boolean, allowDeclaredSearch = false) {
+/** Only independently verified recognized search engines may submit searches. */
+export function crawlerPolicy(token: string | null, verified: boolean) {
   const catalog = recognizedCrawler(token);
   const group = catalog?.category === "search" ? "SEARCH_ENGINE" : catalog ? "OTHER_RECOGNIZED" : "UNKNOWN";
-  const access = !catalog ? "BLOCKED" : (verified || allowDeclaredSearch) && group === "SEARCH_ENGINE" ? "CRAWL_AND_LIMITED_SEARCH" : "CRAWL_ONLY";
+  const access = !catalog ? "BLOCKED" : verified && group === "SEARCH_ENGINE" ? "CRAWL_AND_LIMITED_SEARCH" : "CRAWL_ONLY";
   return { group, access, category: catalog?.category ?? null, owner: catalog?.owner ?? null };
 }
 
-// Display the policy currently in force, not a stale access snapshot from
-// before the staging policy changed. Never change recorded verification.
-export function currentBotAccess(bot: { name: string | null; group: string; access: string }, environment: string) {
-  return environment === "staging" && bot.group === "SEARCH_ENGINE" && knownCrawler(bot.name)?.category === "search"
-    ? "CRAWL_AND_LIMITED_SEARCH" : bot.access;
+// Project current policy without rewriting historical access or verification.
+export function currentBotAccess(bot: { name: string | null; group: string; access: string; verification?: string }, environment: string) {
+  if (environment !== "staging" && environment !== "production") return "BLOCKED";
+  return crawlerPolicy(bot.name, bot.group === "SEARCH_ENGINE" && bot.verification === "VERIFIED").access;
 }

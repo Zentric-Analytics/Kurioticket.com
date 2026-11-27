@@ -8,6 +8,13 @@ import { searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { getPrisma } from "@/lib/prisma";
 import { nextSearchTime, recordBotAttempt, reserveBotSearch, utcDayStart } from "./botActivityStore";
 
+// These fixtures create/delete records and must never point at shared services.
+if (process.env.BOT_TEST_DATABASE_URL) {
+  const database = new URL(process.env.BOT_TEST_DATABASE_URL);
+  assert.ok(["localhost", "127.0.0.1", "postgres"].includes(database.hostname), "Bot fixtures require isolated local/CI PostgreSQL");
+  assert.match(database.pathname, /(?:_test|_ci)(?:$|_)/, "Bot fixtures require a disposable test database");
+}
+
 test("UTC daily and rolling limits carry independently across midnight", () => {
   const now = new Date("2026-11-26T23:58:00Z");
   const day = utcDayStart(now);
@@ -187,7 +194,7 @@ test("authenticated WAF imports preserve network evidence and the live registry 
 });
 
 
-test("verified and declared cohorts share one quota and deduplication across products", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
+test("verified dispatch retains historical shared quota while declared requests cannot reserve", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
   const previousUrl = process.env.DATABASE_URL;
   process.env.DATABASE_URL = process.env.BOT_TEST_DATABASE_URL;
   const db = getPrisma();
@@ -212,8 +219,9 @@ test("verified and declared cohorts share one quota and deduplication across pro
   const reserve = (a: Awaited<ReturnType<typeof attempt>>, id: string | null) => reserveBotSearch(a, id, new AbortController().signal);
   const results = await Promise.all([attempt(0, "flights").then(a => reserve(a, "shared")),
     attempt(1, "hotels").then(a => reserve(a, "shared"))]);
-  assert.deepEqual(results.map(r => r.status).sort((a, b) => a - b), [0, 409]);
-  assert.equal((await reserve(await attempt(1, "cars"), "new-id")).status, 429);
+  assert.deepEqual(results.map(r => r.status).sort((a, b) => a - b), [0, 403]);
+  assert.equal((await reserve(await attempt(0, "hotels"), "shared")).status, 409);
+  assert.equal((await reserve(await attempt(1, "cars"), "new-id")).status, 403);
   assert.equal((await reserve(await attempt(0, "packages"), "another-id")).status, 429);
   const [{ now }] = await db.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
   for (let i = 0; i < 4; i++) {
@@ -221,13 +229,13 @@ test("verified and declared cohorts share one quota and deduplication across pro
     await db.botActivity.update({ where: { id: a.id }, data: { decision: "ALLOWED", dispatchedAt: utcDayStart(now) } });
   }
   assert.equal((await reserve(await attempt(0, "cars"), null)).status, 429);
-  assert.equal((await reserve(await attempt(1, "hotels"), null)).status, 429);
+  assert.equal((await reserve(await attempt(1, "hotels"), null)).status, 403);
   assert.equal(await db.botActivity.count({ where: { environment, dispatchedAt: { not: null } } }), 5);
   assert.equal((await db.botRegistry.findUniqueOrThrow({ where: { id: registry[1].id } })).verification, "DECLARED");
 });
 
 
-test("staging declaration reaches the normal search dispatch boundary without claiming verification", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
+test("staging declaration is denied before supplier dispatch or search quota consumption", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
   const config = {
     DATABASE_URL: process.env.BOT_TEST_DATABASE_URL!,
     TRAVEL_PROVIDER_MODE: "staging",
@@ -264,12 +272,58 @@ test("staging declaration reaches the normal search dispatch boundary without cl
       bot.outcome("EMPTY");
       return new Response(null, { status: 200 });
     });
-  assert.equal((await search("flights")).status, 200);
-  assert.equal((await search("hotels")).status, 429);
-  assert.equal(providerCalls, 1);
+  assert.equal((await search("flights")).status, 403);
+  assert.equal((await search("hotels")).status, 403);
+  assert.equal(providerCalls, 0);
   const row = await db.botRegistry.findFirstOrThrow({ where: { environment: "staging", identityKey } });
   assert.equal(row.verification, "DECLARED");
-  assert.equal(row.access, "CRAWL_AND_LIMITED_SEARCH");
-  assert.equal(row.searches, BigInt(1));
+  assert.equal(row.access, "CRAWL_ONLY");
+  assert.equal(row.searches, BigInt(0));
+  assert.equal(await db.botActivity.count({ where: { botId: row.id, dispatchedAt: { not: null } } }), 0);
   assert.equal(row.searchAttempts, BigInt(2));
+});
+
+
+test("all denied crawler categories leave verified allowances and supplier dispatch untouched", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
+  const engines = ["Googlebot", "Bingbot", "Applebot", "DuckDuckBot", "YandexBot", "Baiduspider", "Slurp"];
+  const other = ["GoogleOther", "Google-InspectionTool", "Mediapartners-Google", "PerplexityBot", "Perplexity-User", "Meta-WebIndexer", "Meta-ExternalAgent", "Meta-ExternalFetcher", "FacebookExternalHit", "GPTBot", "ChatGPT-User", "ClaudeBot", "Claude-User", "Twitterbot", "LinkedInBot", "Bytespider", "AhrefsBot", "SemrushBot", "ia_archiver", "MJ12bot", "OAI-SearchBot", "AASA-Bot", "NovelSpider", "python-requests"];
+  const config = { DATABASE_URL: process.env.BOT_TEST_DATABASE_URL!, TRAVEL_PROVIDER_MODE: "production", NEXT_PUBLIC_APP_URL: "https://kurioticket.com", NEXTAUTH_URL: "https://kurioticket.com", BOT_TRUST_RENDER_WORKSPACE_INGRESS: "false", GUEST_LIVE_RENDER_INGRESS_VERIFIED: "false", BOT_EDGE_SECRET: "fixture".repeat(8) };
+  const prior = Object.fromEntries(Object.keys(config).map(key => [key, process.env[key]])); Object.assign(process.env, config);
+  const db = getPrisma(); const owned = new Set<string>(); let supplierCalls = 0;
+  t.after(async () => { await db.botActivity.deleteMany({ where: { botId: { in: [...owned] } } }); await db.botRegistry.deleteMany({ where: { id: { in: [...owned] } } }); await db.$disconnect(); for (const [key, value] of Object.entries(prior)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; } });
+  for (const environment of ["staging", "production"]) {
+    const origin = environment === "staging" ? "https://staging.kurioticket.com" : "https://kurioticket.com";
+    Object.assign(process.env, { TRAVEL_PROVIDER_MODE: environment, NEXT_PUBLIC_APP_URL: origin, NEXTAUTH_URL: origin });
+    const verified = await Promise.all(engines.map(async agent => {
+      const request = new Request(origin, { headers: { "User-Agent": agent } }); const name = automationSignal(request)!.declared!;
+      const row = await db.botRegistry.create({ data: { id: randomUUID(), environment, identityKey: "SEARCH_ENGINE:" + name, name, group: "SEARCH_ENGINE", access: "CRAWL_AND_LIMITED_SEARCH", verification: "VERIFIED" } }); owned.add(row.id); return row;
+    }));
+    for (const agent of [...engines, ...other]) for (const product of ["flights", "hotels", "cars", "packages"]) {
+      const request = new Request(origin + "/api/" + product + "/search", { method: "POST", headers: { "User-Agent": agent, "X-Forwarded-For": "66.249.66.1", "CF-Connecting-IP": "66.249.66.1", "X-Kurioticket-Edge-Auth": "forged" } });
+      const response = await withBotSearch(request, async () => { supplierCalls++; return new Response(null, { status: 204 }); });
+      assert.equal(response.status, 403, environment + " " + agent + " " + product);
+      const identity = await observeBot(request, automationSignal(request)!);
+      const registry = await db.botRegistry.findUniqueOrThrow({ where: { environment_identityKey: { environment, identityKey: identity.identityKey } } }); owned.add(registry.id);
+      assert.equal(registry.searches, BigInt(0)); assert.equal(await db.botActivity.count({ where: { botId: registry.id, dispatchedAt: { not: null } } }), 0);
+    }
+    for (const registry of verified) {
+      assert.equal((await db.botRegistry.findUniqueOrThrow({ where: { id: registry.id } })).searches, BigInt(0));
+      const activity = await db.botActivity.create({ data: { id: randomUUID(), botId: registry.id, environment, endpoint: "/api/flights/search", method: "POST", kind: "SEARCH_ATTEMPT", verification: "VERIFIED", declaredName: registry.name, decision: "PENDING", reason: "VALIDATION_PENDING" } });
+      const result = await reserveBotSearch({ id: activity.id, botId: registry.id, status: null, retryAfter: null }, null, new AbortController().signal);
+      assert.equal(result.status, 0, "denied callers did not consume this verified allowance");
+    }
+  }
+  assert.equal(supplierCalls, 0);
+});
+
+test("reservation rejects stale grants and request verification downgrade without consuming quota", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
+  const previous = process.env.DATABASE_URL; process.env.DATABASE_URL = process.env.BOT_TEST_DATABASE_URL;
+  const db = getPrisma(); const environment = "bot-locked-verification-" + randomUUID();
+  t.after(async () => { await db.botActivity.deleteMany({ where: { environment } }); await db.botRegistry.deleteMany({ where: { environment } }); await db.$disconnect(); if (previous === undefined) delete process.env.DATABASE_URL; else process.env.DATABASE_URL = previous; });
+  for (const [registryVerification, requestVerification] of [["DECLARED", "VERIFIED"], ["VERIFIED", "DECLARED"]] as const) {
+    const row = await db.botRegistry.create({ data: { id: randomUUID(), environment, identityKey: randomUUID(), name: "GOOGLEBOT", group: "SEARCH_ENGINE", access: "CRAWL_AND_LIMITED_SEARCH", verification: registryVerification } });
+    const activity = await db.botActivity.create({ data: { id: randomUUID(), botId: row.id, environment, endpoint: "/api/flights/search", method: "POST", kind: "SEARCH_ATTEMPT", verification: requestVerification, declaredName: row.name, decision: "PENDING", reason: "VALIDATION_PENDING" } });
+    assert.equal((await reserveBotSearch({ id: activity.id, botId: row.id, status: null, retryAfter: null }, null, new AbortController().signal)).status, 403);
+    assert.equal(await db.botActivity.count({ where: { botId: row.id, dispatchedAt: { not: null } } }), 0); assert.equal((await db.botRegistry.findUniqueOrThrow({ where: { id: row.id } })).searches, BigInt(0));
+  }
 });
