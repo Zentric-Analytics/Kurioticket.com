@@ -2,6 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { isIP } from "node:net";
 import { z } from "zod";
 import { botTarget } from "@/lib/botPolicy";
+import { botNetworkAsn, botNetworkOrganization } from "@/lib/botEdge";
 import { declaredSearchCrawler } from "@/lib/searchCrawlerGate";
 import { knownCrawler } from "@/lib/botRegistry";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
@@ -17,6 +18,8 @@ const event = z.object({
   userAgent: z.string().max(512).optional(),
   ip: z.string().max(45).optional(),
   country: z.string().regex(/^[A-Z]{2}$/).optional(),
+  networkAsn: z.union([z.string().max(10), z.number().int()]).optional(),
+  networkOrganization: z.string().max(160).optional(),
 }).strict();
 
 function authorized(request: Request) {
@@ -66,8 +69,11 @@ export async function POST(request: Request) {
       name: null, group: "UNKNOWN", category: null, owner: null, access: "BLOCKED",
       verification: catalog ? "SUSPICIOUS" : "UNVERIFIED",
       evidence: "CLOUDFLARE_BLOCKED_EVENT",
-      declaredName, userAgent: catalog?.agent ?? null,
-      ip: row.ip && isIP(row.ip) ? row.ip : null, country: row.country ?? null, edgeRay: row.ray,
+      declaredName, userAgent: catalog?.agent ?? declaredName,
+      ip: row.ip && isIP(row.ip) && row.ip.toLowerCase() !== "2a06:98c0:3600::103" ? row.ip : null,
+      country: row.country === "XX" ? null : row.country ?? null, edgeRay: row.ray,
+      networkAsn: botNetworkAsn(row.networkAsn), networkOrganization: botNetworkOrganization(row.networkOrganization),
+      networkSource: "AUTHENTICATED_EDGE_EVENT",
     }, target, row.status === 429 ? "EDGE_RATE_LIMIT" : "EDGE_BLOCK", { id, status: row.status, timestamp });
     return new Response(null, { status: 204, headers: noStore });
   } catch {

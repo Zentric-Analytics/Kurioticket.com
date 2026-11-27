@@ -93,15 +93,43 @@ test("detected unknown automation is registered, blocked and never invokes searc
     if (previousUrl === undefined) delete process.env.DATABASE_URL;
     else process.env.DATABASE_URL = previousUrl;
   });
+  const previousSecret = process.env.BOT_EDGE_SECRET;
+  const secret = "fixture".repeat(5);
+  process.env.BOT_EDGE_SECRET = secret;
+  t.after(() => {
+    if (previousSecret === undefined) delete process.env.BOT_EDGE_SECRET;
+    else process.env.BOT_EDGE_SECRET = previousSecret;
+  });
   const req = new Request("https://kurioticket.com/api/flights/search?secret=hidden", {
-    method: "POST", headers: { "User-Agent": name, "X-Mobile-Platform": "ios" },
+    method: "POST", headers: { "User-Agent": name, "X-Mobile-Platform": "ios",
+      "X-Kurioticket-Edge-Auth": secret, "X-Kurioticket-Edge-Version": "1",
+      "X-Kurioticket-Edge-IP": "192.0.2.42", "X-Kurioticket-Edge-Country": "GB",
+      "X-Kurioticket-Edge-Ray": "1234567890abcdef", "X-Kurioticket-Edge-ASN": "64512",
+      "X-Kurioticket-Edge-Organization": encodeURIComponent("Example Network"),
+    },
   });
   assert.equal((await withBotSearch(req, async () => assert.fail("Provider reached"))).status, 403);
   const bot = await db.botRegistry.findFirstOrThrow({ where: { identityKey }, include: { activities: true } });
+  assert.equal(bot.name, name);
+  assert.equal(bot.group, "UNKNOWN");
   assert.equal(bot.access, "BLOCKED");
   assert.equal(bot.searches, BigInt(0));
   assert.equal(bot.searchAttempts, BigInt(1));
   assert.equal(bot.activities.length, 1);
   assert.equal(bot.activities[0].endpoint, "/api/flights/search");
   assert.equal(bot.activities[0].responseStatus, 403);
+  assert.equal(bot.activities[0].ip, "192.0.2.42");
+  assert.equal(bot.activities[0].country, "GB");
+  assert.equal(bot.activities[0].edgeRay, "1234567890abcdef");
+  assert.equal(bot.activities[0].networkAsn, "64512");
+  assert.equal(bot.activities[0].networkOrganization, "Example Network");
+  assert.equal(bot.activities[0].networkSource, "AUTHENTICATED_EDGE");
+  assert.equal(bot.activities[0].userAgent, name);
+  assert.equal(bot.activities[0].decision, "DENIED");
+
+  await db.botRegistry.update({ where: { id: bot.id }, data: { name: null } });
+  await withBotSearch(req, async () => assert.fail("Provider reached"));
+  const repaired = await db.botRegistry.findUniqueOrThrow({ where: { id: bot.id } });
+  assert.equal(repaired.name, name);
+  assert.equal(repaired.requests, BigInt(2));
 });

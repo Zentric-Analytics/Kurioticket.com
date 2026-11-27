@@ -93,6 +93,8 @@ jobs:
             while IFS= read -r -d '' changed_file; do
               changed_file="${changed_file//\\//}"
               case "$changed_file" in
+                tools/cloudflare/bot-edge.mjs|\
+                tools/cloudflare/bot-edge.test.mjs|\
                 prisma/*|\
                 prisma.config.ts|\
                 package.json|\
@@ -164,6 +166,8 @@ jobs:
       - name: Deploy migrations to clean PostgreSQL database
         run: npx prisma migrate deploy
 
+      - name: Verify Cloudflare bot evidence forwarding
+        run: node --test tools/cloudflare/bot-edge.test.mjs
       - name: Verify bot policy and PostgreSQL quota enforcement
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json

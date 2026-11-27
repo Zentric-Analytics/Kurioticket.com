@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { BotReportFilters } from "@/components/admin/BotReportFilters";
-import { BOT_DIRECTORY, BOT_GROUPS, botAccessLabel, botDirectoryHref, botHref, botLabel, botName, botTime, botType, type BotQuery } from "@/lib/adminBotReport";
+import { BOT_DIRECTORY, BOT_GROUPS, botAccessLabel, botDirectoryHref, botHref, botDirectorySubtitle, botDirectoryTime, botName, botType, type BotQuery } from "@/lib/adminBotReport";
 import { ADMIN_REPORTING_RANGE_LABELS } from "@/lib/adminReportingRanges";
 import { readBotDirectory } from "@/services/adminBotReportService";
-import { BotIcon, Metrics, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel, reportRow } from "./report-ui";
+import { Metrics, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel } from "./report-ui";
 
-const columns = ["Identity", "Type", "Status", "First Seen (UTC)", "Last Seen (UTC)", "Activity"];
+const columns = ["Identity", "Type", "Status", "Last Seen (UTC)", "Activity"];
+const directoryRow = "border-b border-[#E7ECF5] last:border-0 [&>td]:px-3 [&>td]:py-2";
 
 export default async function BotManagementPage({ searchParams }: { searchParams: Promise<BotQuery> }) {
   const report = await readBotDirectory(await searchParams);
@@ -49,26 +50,23 @@ export default async function BotManagementPage({ searchParams }: { searchParams
         </nav>
         <div className={reportPanel + " mt-2"}>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-[13px] text-slate-700">
+            <table className="w-full min-w-[680px] text-left text-[13px] text-slate-700">
               <thead className={reportHead}><tr>{columns.map(column => <th key={column} scope="col">{column}</th>)}</tr></thead>
               <tbody>
-                {report.rows.map(bot => <tr key={bot.id} className={reportRow}>
-                  <td><div className="flex items-center gap-2">
-                    <BotIcon />
-                    <div><p className="font-semibold text-slate-950">{botName(bot)}</p>
-                      <p className="break-all text-xs text-slate-600">{bot.owner ?? bot.id}</p></div>
-                  </div></td>
-                  <td>{botType(bot.category)}</td>
-                  <td><p className={bot.access === "BLOCKED" ? "text-rose-700" : "text-slate-950"}>{botAccessLabel(bot.access)}</p>
-                    <p className="text-xs text-slate-600">{botLabel(bot.verification)}</p></td>
-                  <td className="whitespace-nowrap tabular-nums">{botTime(bot.firstSeen)}</td>
-                  <td className="whitespace-nowrap tabular-nums">{botTime(bot.lastSeen)}</td>
+                {report.rows.map(bot => <tr key={bot.id} className={directoryRow}>
+                  <td>
+                    <p className="break-words font-semibold text-slate-950" title={bot.group === "UNKNOWN" ? "Declared identity, not independently verified" : undefined}>{botName(bot)}</p>
+                    <p className="text-xs text-slate-600">{botDirectorySubtitle(bot)}</p>
+                  </td>
+                  <td>{botType(bot.category, bot.group)}</td>
+                  <td className="whitespace-nowrap"><span className={bot.access === "BLOCKED" ? "text-rose-700" : "text-slate-950"}>{botAccessLabel(bot.access)}</span></td>
+                  <td className="whitespace-nowrap tabular-nums">{botDirectoryTime(bot.lastSeen)}</td>
                   <td><Link prefetch={false} className={reportLink + " inline-flex items-center gap-1 whitespace-nowrap"}
                     href={botHref(BOT_DIRECTORY + "/" + bot.id, new URLSearchParams(), { directory: params.toString() })}>
                     View Activity <ChevronRight size={15} aria-hidden="true" />
                   </Link></td>
                 </tr>)}
-                {!report.total && <tr><td colSpan={6} className="px-3 py-5">
+                {!report.total && <tr><td colSpan={columns.length} className="px-3 py-5">
                   <p className="font-medium text-slate-950">No bots match your filters</p>
                   <Link className={reportLink} href={BOT_DIRECTORY + "?range=all"}>View all recorded bots</Link>
                 </td></tr>}

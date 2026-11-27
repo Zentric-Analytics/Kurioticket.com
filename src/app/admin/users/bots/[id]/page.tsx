@@ -60,13 +60,13 @@ export default async function BotDetailsPage({ params, searchParams }: {
         <BotIcon />
         <div>
           <h1 className="text-xl font-semibold text-slate-950">{botName(bot)}</h1>
-          <p className="text-[13px] text-slate-600">{botType(bot.category)} · {botLabel(bot.verification)} · {botAccessLabel(bot.access)}</p>
+          <p className="text-[13px] text-slate-600">{botType(bot.category, bot.group)} · {botLabel(bot.verification)} · {botAccessLabel(bot.access)}</p>
         </div>
       </div>
     </header>
     <Section title="Bot Information">
       <Fields entries={[
-        ["Bot reference ID", bot.id], ["Owner", bot.owner], ["Category", botType(bot.category)],
+        ["Bot reference ID", bot.id], ["Owner", bot.owner], ["Category", botType(bot.category, bot.group)],
         ["Verification status", botLabel(bot.verification)], ["First seen (UTC)", botTime(bot.firstSeen)], ["Last seen (UTC)", botTime(bot.lastSeen)],
       ]} />
       {bot.group === "UNKNOWN" && <p className="text-xs text-slate-600">This reference groups observations that may come from multiple clients.</p>}
@@ -93,6 +93,10 @@ export default async function BotDetailsPage({ params, searchParams }: {
       <Fields entries={[
         ["Observed IP addresses", observed(observations.map(row => row.ip))],
         ["Observed countries", observed(observations.map(row => row.country))],
+        ["Observed ASNs", observed(observations.map(row => row.networkAsn ? "AS" + row.networkAsn : null))],
+        ["Observed network organizations", observed(observations.map(row => row.networkOrganization))],
+        ["Network evidence sources", observed(observations.map(row => row.networkSource && botLabel(row.networkSource)))],
+        ["Cloudflare Ray IDs", observed(observations.map(row => row.edgeRay))],
         ["Recorded User-Agent tokens", observed(observations.map(row => row.userAgent))],
         ["Declared identities", observed(observations.map(row => row.declaredName))],
         ["Verification evidence", observed(observations.map(row => row.evidence && botLabel(row.evidence)))],
@@ -133,6 +137,9 @@ export default async function BotDetailsPage({ params, searchParams }: {
                         <Fields entries={[
                           ["Request reference", event.id], ["HTTP method", event.method], ["Recorded endpoint", event.endpoint],
                           ["IP address", event.ip], ["Country", event.country], ["Declared bot identity", event.declaredName],
+                          ["Network ASN", event.networkAsn ? "AS" + event.networkAsn : null], ["Network organization", event.networkOrganization],
+                          ["Network evidence source", event.networkSource ? botLabel(event.networkSource) : null], ["Cloudflare Ray ID", event.edgeRay],
+                          ["Recorded User-Agent token", event.userAgent],
                           ["Verification evidence", event.evidence ? botLabel(event.evidence) : null],
                           ["Access decision", decision], ["Reason", botLabel(event.reason)], ["HTTP response status", event.responseStatus],
                           ["Search dispatch (UTC)", botTime(event.dispatchedAt)],

@@ -20,6 +20,13 @@ test("migration workflow and shared dependency changes run full validation", () 
   assert.equal(isMigrationValidationPath("scripts/verify-production-schema.mjs"), true);
 });
 
+test("each Cloudflare Worker path independently triggers validation", () => {
+  for (const path of ["tools/cloudflare/bot-edge.mjs", "tools/cloudflare/bot-edge.test.mjs"]) {
+    assert.equal(isMigrationValidationPath(path), true);
+    assert.ok(workflow.includes(path + "|"), path);
+  }
+});
+
 test("mobile workflow and documentation-only changes are not applicable", () => {
   assert.deepEqual(
     classifyMigrationValidationPaths([

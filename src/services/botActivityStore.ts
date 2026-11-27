@@ -33,11 +33,12 @@ export async function recordBotAttempt(request: Request, bot: Bot, target: Targe
       const existing = await tx.botActivity.findUnique({ where: { id: edgeBlock.id }, select: { botId: true } });
       if (existing) return { id: edgeBlock.id, botId: existing.botId, status: edgeBlock.status, retryAfter: null };
     }
+    const observedName = bot.name ?? bot.declaredName;
     // Updating this row serializes decisions for the same environment and identity.
     const registry = await tx.botRegistry.upsert({
       where: { environment_identityKey: { environment, identityKey: bot.identityKey } },
       create: {
-        id: randomUUID(), environment, identityKey: bot.identityKey, name: bot.name,
+        id: randomUUID(), environment, identityKey: bot.identityKey, name: observedName,
         group: bot.group, category: bot.category, owner: bot.owner, verification: bot.verification, access: bot.access,
       },
       update: { verification: bot.verification },
@@ -56,6 +57,7 @@ export async function recordBotAttempt(request: Request, bot: Bot, target: Targe
         endpoint: target.endpoint, kind: target.kind, product: target.product, method,
         declaredName: bot.declaredName, verification: bot.verification, evidence: bot.evidence,
         ip: bot.ip, country: bot.country, userAgent: bot.userAgent, edgeRay: bot.edgeRay,
+        networkAsn: bot.networkAsn, networkOrganization: bot.networkOrganization, networkSource: bot.networkSource,
         decision: throttled ? "RATE_LIMITED" : reason ? "DENIED" : searchPending ? "PENDING" : "ALLOWED",
         reason: reason ?? (throttled ? "CRAWL_LIMIT" : searchPending ? "VALIDATION_PENDING" : "PUBLIC_CRAWL"),
         responseStatus: status,
@@ -64,6 +66,7 @@ export async function recordBotAttempt(request: Request, bot: Bot, target: Targe
     await tx.botRegistry.update({
       where: { id: registry.id },
       data: {
+        ...(!registry.name && observedName ? { name: observedName } : {}),
         firstSeen: timestamp < registry.firstSeen ? timestamp : registry.firstSeen,
         lastSeen: timestamp > registry.lastSeen ? timestamp : registry.lastSeen, requests: { increment: 1 }, searchAttempts: { increment: target.product ? 1 : 0 },
         allowed: { increment: status || searchPending ? 0 : 1 }, denied: { increment: reason && !throttled ? 1 : 0 },
