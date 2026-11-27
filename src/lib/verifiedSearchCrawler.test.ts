@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { verifySearchCrawler } from "./verifiedSearchCrawler";
+import { verifySearchCrawler, matchReportedSearchCrawlerAddress } from "./verifiedSearchCrawler";
 
 const flight = (userAgent: string) => new Request("https://staging.kurioticket.com/api/flights/search", {
   method: "POST", headers: { "user-agent": userAgent },
@@ -100,4 +100,25 @@ test("DuckDuckBot uses the official published addresses", async (t) => {
   assert.equal(await verifySearchCrawler(flight("DuckDuckBot"), reverseForward("192.0.2.1", "")), "DUCKDUCKBOT");
   assert.equal(await verifySearchCrawler(flight("DuckDuckBot"), reverseForward("2001:db8::1", "")), "DUCKDUCKBOT");
   assert.equal(await verifySearchCrawler(flight("DuckDuckBot"), reverseForward("192.0.2.2", "")), null);
+  assert.equal(await matchReportedSearchCrawlerAddress("DUCKDUCKBOT", "192.0.2.1"), "OFFICIAL_IP_LIST");
+  assert.equal(await matchReportedSearchCrawlerAddress("DUCKDUCKBOT", "192.0.2.2"), null);
+});
+
+test("recorded-address DNS evidence is reusable for every DNS-based search crawler, but cannot authenticate a request", async () => {
+  for (const [name, host] of [
+    ["GOOGLEBOT", "crawl-66-249-66-1.googlebot.com"],
+    ["BINGBOT", "msnbot-157-55-39-1.search.msn.com"],
+    ["APPLEBOT", "17-58-96-1.applebot.apple.com"],
+    ["YANDEXBOT", "spider.yandex.com"],
+    ["BAIDUSPIDER", "spider.crawl.baidu.com"],
+    ["SLURP", "b100.crawl.yahoo.net"],
+  ]) {
+    assert.equal(await matchReportedSearchCrawlerAddress(name, "192.0.2.1", reverseForward("192.0.2.1", host)), "FORWARD_CONFIRMED_DNS");
+    assert.equal(await matchReportedSearchCrawlerAddress(name, "192.0.2.1", reverseForward("192.0.2.1", host, "192.0.2.2")), null);
+    assert.equal(await matchReportedSearchCrawlerAddress(name, "192.0.2.1", reverseForward("192.0.2.1", host + ".example.org")), null);
+  }
+  assert.equal(await matchReportedSearchCrawlerAddress("FACEBOOKEXTERNALHIT", "192.0.2.1", reverseForward("192.0.2.1", "crawl-66-249-66-1.googlebot.com")), null);
+  assert.equal(await verifySearchCrawler(new Request("https://staging.kurioticket.com/api/flights/search", {
+    headers: { "user-agent": googleAgent, "cf-connecting-ip": "66.249.66.1" },
+  })), null);
 });
