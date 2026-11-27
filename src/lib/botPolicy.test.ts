@@ -84,6 +84,7 @@ test("authenticated original network evidence is collected for every catalog cat
     if (previous === undefined) delete process.env.BOT_EDGE_SECRET;
     else process.env.BOT_EDGE_SECRET = previous;
   });
+  t.mock.method(globalThis, "fetch", async () => Response.json({ prefixes: [{ ipv4Prefix: "192.0.2.0/24" }] }));
   const headers = {
     "X-Kurioticket-Edge-Auth": secret, "X-Kurioticket-Edge-Version": "1",
     "X-Kurioticket-Edge-IP": "192.0.2.1", "X-Kurioticket-Edge-Country": "GB",
@@ -97,6 +98,11 @@ test("authenticated original network evidence is collected for every catalog cat
     const req = request("/", entry.agent, "GET", headers);
     const bot = await observeBot(req, automationSignal(req)!);
     assert.equal(bot.group, "OTHER_RECOGNIZED");
+    if (entry.agent === "GPTBot") {
+      assert.equal(bot.verification, "VERIFIED");
+      assert.equal(bot.evidence, "OFFICIAL_CRAWLER_NETWORK");
+      assert.equal(bot.access, "CRAWL_ONLY");
+    }
     assert.equal(bot.ip, "192.0.2.1");
     assert.equal(bot.country, "GB");
     assert.equal(bot.edgeRay, "1234567890abcdef");
