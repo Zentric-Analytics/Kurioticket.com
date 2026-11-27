@@ -27,10 +27,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   </section>;
 }
 
-function observed(values: (string | null)[]) {
-  return [...new Set(values.filter(Boolean))].join(", ") || "Not recorded";
-}
-
 const activityColumns = ["Time (UTC)", "Activity / Endpoint", "Decision", "Outcome / Evidence"];
 
 export default async function BotDetailsPage({ params, searchParams }: {
@@ -47,7 +43,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
   </Link>;
   if (report.state === "unavailable") return <div className="space-y-3">{backLink}<ReportUnavailable /></div>;
 
-  const { bot, observations, quota, filters } = report;
+  const { bot, networkSummary, quota, filters } = report;
   const cooldownMinutes = BOT_SEARCH_COOLDOWN_MS / 60_000;
   const activityParams = new URLSearchParams(Object.entries({
     directory, range: filters.range, from: filters.from, to: filters.to,
@@ -57,6 +53,17 @@ export default async function BotDetailsPage({ params, searchParams }: {
   const searchParamsForPagination = new URLSearchParams(activityParams);
   if (report.page > 1) searchParamsForPagination.set("page", String(report.page));
   const searchHref = (searchId: string) => "/admin/searches/" + encodeURIComponent(searchId) + "?environment=" + getPublicEnvironment();
+  const latest = networkSummary.latestIp;
+  const sourceTitle = latest ? latest.provenance + " · " + botTime(new Date(latest.timestamp + "Z")) + " UTC"
+    + (latest.botId !== bot.id ? " · Related identity with same bot name" : "") : undefined;
+  const latestIp = !latest ? null : latest.source === "search"
+    ? <Link prefetch={false} className={reportLink} href={searchHref(latest.id)} title={sourceTitle}
+        aria-label={latest.ip + " — view original recorded search"}>{latest.ip}</Link>
+    : latest.botId !== bot.id
+      ? <Link prefetch={false} className={reportLink}
+          href={BOT_DIRECTORY + "/" + latest.botId + (directory ? "?directory=" + encodeURIComponent(directory) : "")}
+          title={sourceTitle} aria-label={latest.ip + " — view related recorded identity"}>{latest.ip}</Link>
+      : <span title={sourceTitle}>{latest.ip}</span>;
   return <div className="min-w-0 space-y-3">
     <header className="space-y-3">
       {backLink}
@@ -73,11 +80,10 @@ export default async function BotDetailsPage({ params, searchParams }: {
         ["Owner", bot.owner],
         ["Category", botType(bot)],
         ["Verification status", report.reportVerification.label],
-        ["Latest IP address", report.latestIp],
-        ["Countries", observed([
-          ...observations.map(row => row.country ?? row.renderLogCountry ?? row.reportedCountry),
-          ...report.searchEvidence.map(row => row.countryCode),
-        ])],
+        ["Latest IP address", latestIp],
+        ["Countries", networkSummary.countries.length
+          ? <span title="Countries observed in recorded searches and requests for this bot name; not proof of current identity">{networkSummary.countries.join(", ")}</span>
+          : null],
         ["First seen (UTC)", <span key="first-seen" title={botTime(bot.firstSeen)}>{botDirectoryTime(bot.firstSeen)}</span>],
         ["Last seen (UTC)", <span key="last-seen" title={botTime(bot.lastSeen)}>{botDirectoryTime(bot.lastSeen)}</span>],
       ]} />

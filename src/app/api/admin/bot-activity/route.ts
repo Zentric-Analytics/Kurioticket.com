@@ -2,7 +2,8 @@ import { z } from "zod";
 import { requireAdminApiSession } from "@/lib/admin";
 import { getPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
-import { BOT_DAILY_SEARCH_LIMIT, nextSearchTime, utcDayStart } from "@/services/botActivityStore";
+import { BOT_DAILY_SEARCH_LIMIT, botSearchQuotaKey, botSearchQuotaRegistryWhere, nextSearchTime, utcDayStart } from "@/services/botActivityStore";
+import { currentBotAccess } from "@/lib/botRegistry";
 
 const noStore = { "Cache-Control": "private, no-store" };
 const filters = z.object({
@@ -65,7 +66,13 @@ export async function GET(request: Request) {
     orderBy: [{ lastSeen: "desc" }, { id: "desc" }], ...page,
   });
   const [{ now }] = await db.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
-  const identities = rows.slice(0, limit).filter(row => row.access === "CRAWL_AND_LIMITED_SEARCH").map(row => row.id);
+  const eligible = rows.slice(0, limit).filter(row => currentBotAccess(row, environment) === "CRAWL_AND_LIMITED_SEARCH");
+  const quotaRegistry = eligible.length ? await db.botRegistry.findMany({
+    where: { OR: eligible.map(botSearchQuotaRegistryWhere) },
+    select: { id: true, environment: true, identityKey: true },
+  }) : [];
+  const identities = quotaRegistry.map(row => row.id);
+  const quotaKeys = new Map(quotaRegistry.map(row => [row.id, botSearchQuotaKey(row)]));
   const usage = identities.length ? await db.botActivity.groupBy({
     by: ["botId"], where: { botId: { in: identities }, dispatchedAt: { gte: new Date(Math.min(utcDayStart(now).getTime(), now.getTime() - 1_800_000)) } },
     _max: { dispatchedAt: true },
@@ -76,14 +83,20 @@ export async function GET(request: Request) {
   const items = rows.slice(0, limit).map(row => {
     const { identityKey: _identityKey, crawlWindow: _crawlWindow, crawlCount: _crawlCount,
       requests, allowed, denied, rateLimited, searchAttempts, searches, violations, ...bot } = row;
-    const dailyLimit = row.access === "CRAWL_AND_LIMITED_SEARCH" ? BOT_DAILY_SEARCH_LIMIT : 0;
-    const used = counts.find(count => count.botId === row.id)?._count ?? 0;
+    const access = currentBotAccess(row, environment);
+    const dailyLimit = access === "CRAWL_AND_LIMITED_SEARCH" ? BOT_DAILY_SEARCH_LIMIT : 0;
+    const key = botSearchQuotaKey(row);
+    const used = dailyLimit ? counts.filter(item => quotaKeys.get(item.botId) === key).reduce((sum, item) => sum + item._count, 0) : 0;
+    const latest = usage.filter(item => quotaKeys.get(item.botId) === key).reduce<Date | undefined>((last, item) => {
+      const value = item._max.dispatchedAt;
+      return value && (!last || value > last) ? value : last;
+    }, undefined);
     return {
-      ...bot,
+      ...bot, access,
       totals: Object.fromEntries(Object.entries({ requests, allowed, denied, rateLimited, searchAttempts, searches, violations })
         .map(([name, value]) => [name, value.toString()])),
       dailyLimit, used, remaining: Math.max(0, dailyLimit - used),
-      nextSearchAt: dailyLimit ? nextSearchTime(now, usage.find(item => item.botId === row.id)?._max.dispatchedAt ?? undefined, used) : null,
+      nextSearchAt: dailyLimit ? nextSearchTime(now, latest, used) : null,
     };
   });
   return Response.json({ items, nextCursor: rows.length > limit ? items.at(-1)?.id : null }, { headers: noStore });

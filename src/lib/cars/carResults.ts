@@ -339,3 +339,25 @@ export function buildCarDetailsHref(
   const query = carSearchUrlParams(search).toString();
   return `/cars/details/${encodeURIComponent(id)}${query ? `?${query}` : ""}`;
 }
+
+/** Share fresh public Cars Results, not a legacy detail route or the sender's request ID. */
+export function buildCarShareHref(
+  id: string,
+  search: LocationBoundCarSearchParams & { returnToDifferentLocation?: boolean },
+) {
+  const params = carSearchUrlParams(search);
+  if (search.returnToDifferentLocation) params.set("returnToDifferentLocation", "1");
+  params.set("sharedCar", id);
+  return `/cars/results?${params.toString()}`;
+}
+
+export function parseSharedCarId(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 && value.length <= 512 &&
+    !Array.from(value).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127) ? value : null;
+}
+
+/** Move only an exact, currently available match to the front; never substitute a car. */
+export function prioritizeSharedCar<T extends { id: string }>(results: T[], sharedCarId: string | null) {
+  const index = sharedCarId ? results.findIndex((car) => car.id === sharedCarId) : -1;
+  return index > 0 ? [results[index], ...results.slice(0, index), ...results.slice(index + 1)] : results;
+}

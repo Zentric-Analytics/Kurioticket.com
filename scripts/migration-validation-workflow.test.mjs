@@ -27,6 +27,16 @@ test("each Cloudflare Worker path independently triggers validation", () => {
   }
 });
 
+test("SQL-backed bot history changes run PostgreSQL regression validation", () => {
+  for (const path of [
+    "src/services/recordedBotSearchHistory.ts",
+    "src/services/recordedBotSearchHistory.test.ts",
+  ]) {
+    assert.equal(isMigrationValidationPath(path), true);
+    assert.ok(workflow.includes(path + "|"), path);
+  }
+});
+
 test("mobile workflow and documentation-only changes are not applicable", () => {
   assert.deepEqual(
     classifyMigrationValidationPaths([
