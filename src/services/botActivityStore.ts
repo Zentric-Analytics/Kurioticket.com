@@ -45,7 +45,10 @@ export async function recordBotAttempt(request: Request, bot: Bot, target: Targe
         id: randomUUID(), environment, identityKey: bot.identityKey, name: observedName,
         group: bot.group, category: bot.category, owner: bot.owner, verification: bot.verification, access: bot.access,
       },
-      update: { verification: bot.verification, group: bot.group, access: bot.access, category: bot.category, owner: bot.owner },
+      // Imports retain the live classification while still taking the registry row lock.
+      update: edgeBlock ? { environment } : {
+        verification: bot.verification, group: bot.group, access: bot.access, category: bot.category, owner: bot.owner,
+      },
     });
     const [{ now }] = await tx.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
     const timestamp = edgeBlock?.timestamp ?? now;

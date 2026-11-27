@@ -1,5 +1,5 @@
 // Deploy as a Worker Route on the existing proxied origin hostname.
- // Never set secret values in this file. See docs/bot-security.md.
+// Never set secret values in this file. See docs/bot-security.md.
 export function edgeRequest(request, env) {
   const url = new URL(request.url);
   const host = env.BOT_EDGE_HOST;
@@ -8,21 +8,23 @@ export function edgeRequest(request, env) {
       typeof secret !== "string" || secret.length < 32) return null;
 
   const headers = new Headers(request.headers);
+  headers.delete("rndr-id"); // Render provides its own request log correlation ID.
   for (const name of [...headers.keys()]) {
     if (name.startsWith("x-kurioticket-edge-")) headers.delete(name);
   }
-  const cf = request.cf || {};
-  const ip = request.headers.get("cf-connecting-ip");
-  const ray = request.headers.get("cf-ray");
-  const country = cf.country;
-  const asn = cf.asn;
-  const organization = cf.asOrganization;
+  // Only a Cloudflare ingress request can contribute edge observations.
+  const cf = request.cf;
+  const ip = cf ? request.headers.get("cf-connecting-ip") : null;
+  const ray = cf ? request.headers.get("cf-ray") : null;
+  const country = cf?.country;
+  const asn = cf?.asn;
+  const organization = cf?.asOrganization;
   headers.set("x-kurioticket-edge-auth", secret);
   headers.set("x-kurioticket-edge-version", "1");
   // Cloudflare score 1 is its high-confidence automation classification.
   // Do not treat a likely-bot score, absent metadata or a verified crawler
   // as suspicious. A verified edge flag alone never authorizes bot access.
-  const botManagement = cf.botManagement;
+  const botManagement = cf?.botManagement;
   if (botManagement?.score === 1 && botManagement.verifiedBot === false) {
     headers.set("x-kurioticket-edge-bot", "automated");
   }
@@ -39,10 +41,12 @@ export function edgeRequest(request, env) {
   return new Request(request, { headers, redirect: "manual" });
 }
 
-export default {
+const worker = {
   async fetch(request, env) {
     const forwarded = edgeRequest(request, env);
     if (!forwarded) return new Response("Edge configuration unavailable", { status: 503, headers: { "Cache-Control": "no-store" } });
     return fetch(forwarded);
   },
 };
+
+export default worker;

@@ -1,3 +1,5 @@
+import { trustedBotEdge } from "@/lib/botEdge";
+import { confirmedOperatorNetwork } from "@/lib/operatorCrawlerNetwork";
 import { crawlerSignatures } from "@/lib/botRegistry";
 import { verifySearchCrawler } from "@/lib/verifiedSearchCrawler";
 
@@ -14,7 +16,7 @@ export function declaredSearchCrawler(agent: string | null): string | null {
 
   // Cover less familiar bots too, while keeping plain browsers and native
   // transport strings (CFNetwork, okhttp, KurioticketPreview) out of Bots.
-  const namedToken = agent.match(/\b([a-z0-9_-]{2,48}(?:bot|crawler|spider))(?=\/|\W|$)/i);
+  const namedToken = agent.match(/(?<![a-z0-9_-])([a-z0-9_-]{2,48}(?:bot|crawler|spider))(?![a-z0-9_-])/i);
   return namedToken ? namedToken[1].toUpperCase() : null;
 }
 
@@ -23,7 +25,11 @@ export async function identifySearchCrawler(request: Request): Promise<SearchCra
   const declared = declaredSearchCrawler(request.headers.get("user-agent"));
   if (!declared) return null;
   const verified = await verifySearchCrawler(request);
-  return { name: verified ?? declared, evidence: verified === "DUCKDUCKBOT" ? "VERIFIED_IP_RANGE" : verified ? "VERIFIED_DNS" : "DECLARED_USER_AGENT" };
+  if (verified) return { name: verified, evidence: verified === "DUCKDUCKBOT" ? "VERIFIED_IP_RANGE" : "VERIFIED_DNS" };
+  if (declared === "BINGBOT" && await confirmedOperatorNetwork(declared, trustedBotEdge(request)?.ip ?? null)) {
+    return { name: declared, evidence: "VERIFIED_IP_RANGE" };
+  }
+  return { name: declared, evidence: "DECLARED_USER_AGENT" };
 }
 
 export function searchCrawlerMetadata(crawler: SearchCrawlerIdentity | null) {

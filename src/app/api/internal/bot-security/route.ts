@@ -67,7 +67,8 @@ export async function POST(request: Request) {
       crawler: null,
       identityKey: "UNKNOWN:" + (declaredName ?? "UNATTRIBUTED"),
       name: declaredName, ...crawlerPolicy(declaredName, false),
-      verification: catalog ? "SUSPICIOUS" : "UNVERIFIED",
+      // A WAF outcome records the decision. The declared crawler identity is unverified.
+      verification: declaredName ? "DECLARED" : "UNVERIFIED",
       evidence: "CLOUDFLARE_BLOCKED_EVENT",
       declaredName, userAgent: catalog?.agent ?? declaredName,
       ip: row.ip && isIP(row.ip) && row.ip.toLowerCase() !== "2a06:98c0:3600::103" ? row.ip : null,

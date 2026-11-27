@@ -144,7 +144,7 @@ export type AdminSearchDetail = AdminSearchRead & {
   /** Trusted ingress observation recorded with this exact search, when available. */
   network?: { ipAddress: string | null; countryCode: string | null };
   /** Bot identity belongs to the recorded search, never to a fabricated guest/user. */
-  crawler: { name: string | null; evidence: "VERIFIED_DNS" | "DECLARED_USER_AGENT" | null } | null;
+  crawler: { name: string | null; evidence: "VERIFIED_DNS" | "VERIFIED_IP_RANGE" | "DECLARED_USER_AGENT" | null } | null;
   diagnostic: AdminSearchDiagnostic;
   /** Resolved only for an authorized detail read. Never infer a person from a visitor ID. */
   searcher: {
