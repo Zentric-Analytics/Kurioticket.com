@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { expect } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { componentBundle, withComponentBrowser } from "../../test-support/componentBrowser";
 
 const entries = {
@@ -62,9 +62,19 @@ type FixtureWindow = Window & {
   fixtureNext?: { count: number; rows: string[]; wait?: Promise<void> };
   fixtureResolve?: () => void;
   fixtureMode: string;
+  fixtureInitialScrollObserved: boolean;
   fixtureVisible: (state: string) => void;
   fixtureNetwork: (online: boolean) => void;
 };
+
+async function expectRefreshProgress(page: Page, requests: number, refreshes: number) {
+  // Timer advancement starts the async probe; body decoding and React commits
+  // complete separately. Keep these stages observable without advancing time.
+  await expect.poll(() => page.evaluate(() => (window as unknown as FixtureWindow).fixtureRequests.length))
+    .toBe(requests);
+  await expect.poll(() => page.evaluate(() => (window as unknown as FixtureWindow).fixtureRefreshes))
+    .toBe(refreshes);
+}
 
 test("new server records and counts appear automatically while draft, focus, scroll anchor and page-two URL survive", async () => {
   await withComponentBrowser(bundle(), setup, async page => {
@@ -77,10 +87,16 @@ test("new server records and counts appear automatically while draft, focus, scr
     await search.fill("unfinished filter draft");
     const url = page.url();
     await page.evaluate(() => {
+      const fixture = window as unknown as FixtureWindow;
       const row = document.querySelector<HTMLElement>('[data-users-refresh-anchor="record-8"]')!;
+      fixture.fixtureInitialScrollObserved = false;
+      // Match the component's native capture listener so its scroll-version
+      // guard sees setup scrolling before the refresh remembers a position.
+      window.addEventListener("scroll", () => { fixture.fixtureInitialScrollObserved = true; }, { once: true, capture: true });
       window.scrollTo({ left: 0, top: window.scrollY + row.getBoundingClientRect().top - 120, behavior: "instant" });
-      (window as unknown as FixtureWindow).fixtureNext = { count: 25, rows: ["newly-recorded-page", ...Array.from({ length: 24 }, (_, index) => "record-" + index)] };
+      fixture.fixtureNext = { count: 25, rows: ["newly-recorded-page", ...Array.from({ length: 24 }, (_, index) => "record-" + index)] };
     });
+    await expect.poll(() => page.evaluate(() => (window as unknown as FixtureWindow).fixtureInitialScrollObserved)).toBe(true);
     await expect.poll(() => page.locator('[data-users-refresh-anchor="record-8"]')
       .evaluate(row => Math.abs(row.getBoundingClientRect().top - 120))).toBeLessThanOrEqual(1);
     const before = await page.evaluate(() => ({
@@ -91,7 +107,8 @@ test("new server records and counts appear automatically while draft, focus, scr
     assert.equal(before.scrollBehavior, "smooth");
     assert.ok(Math.abs(before.rowTop - 120) <= 1, "the fixture reaches its requested baseline before refresh: " + JSON.stringify(before));
     await page.clock.runFor(15_100);
-    assert.equal(await page.getByTestId("recorded-count").innerText(), "Recorded actions: 25");
+    await expectRefreshProgress(page, 1, 1);
+    await expect(page.getByTestId("recorded-count")).toHaveText("Recorded actions: 25");
     assert.equal(await page.locator('[data-users-refresh-anchor="newly-recorded-page"]').count(), 1);
     assert.equal(await search.inputValue(), "unfinished filter draft");
     assert.equal(await search.evaluate(element => element === document.activeElement), true, "quiet focus must not prevent refresh or be replaced");
@@ -121,23 +138,27 @@ test("hidden/offline pages pause, failures preserve displayed records, recovery 
     assert.equal(await page.evaluate(() => (window as unknown as FixtureWindow).fixtureRequests.length), 0);
     await page.evaluate(() => (window as unknown as FixtureWindow).fixtureVisible("visible"));
     await page.clock.runFor(100);
-    assert.equal(await page.getByTestId("recorded-count").innerText(), "Recorded actions: 25");
+    await expectRefreshProgress(page, 1, 1);
+    await expect(page.getByTestId("recorded-count")).toHaveText("Recorded actions: 25");
     await page.evaluate(() => (window as unknown as FixtureWindow).fixtureNetwork(false));
     await page.clock.runFor(30_000);
+    await expect(page.getByTestId("users-live-refresh-status")).toContainText("Offline");
     assert.equal(await page.evaluate(() => (window as unknown as FixtureWindow).fixtureRequests.length), 1);
-    assert.match(await page.getByTestId("users-live-refresh-status").innerText(), /Offline/);
     await page.evaluate(() => { (window as unknown as FixtureWindow).fixtureMode = "network"; (window as unknown as FixtureWindow).fixtureNetwork(true); });
     await page.clock.runFor(100);
-    assert.match(await page.getByTestId("users-live-refresh-status").innerText(), /Updates delayed/);
+    await expectRefreshProgress(page, 2, 1);
+    await expect(page.getByTestId("users-live-refresh-status")).toContainText("Updates delayed");
     assert.equal(await page.getByTestId("recorded-count").innerText(), "Recorded actions: 25");
     await page.evaluate(() => { (window as unknown as FixtureWindow).fixtureMode = "ready"; });
     await page.clock.runFor(30_000);
-    assert.equal(await page.getByTestId("recorded-count").innerText(), "Recorded actions: 26");
+    await expectRefreshProgress(page, 3, 2);
+    await expect(page.getByTestId("recorded-count")).toHaveText("Recorded actions: 26");
     await page.evaluate(() => { (window as unknown as FixtureWindow).fixtureMode = "denied"; });
     await page.clock.runFor(15_100);
+    await expectRefreshProgress(page, 4, 3);
+    await expect(page.getByTestId("users-live-refresh-status")).toContainText("Checking your access");
+    await expect(page.getByTestId("recorded-count"), "revoked access removes retained private content while the canonical guard redirects").toHaveCount(0);
     const before = await page.evaluate(() => ({ requests: (window as unknown as FixtureWindow).fixtureRequests.length, refreshes: (window as unknown as FixtureWindow).fixtureRefreshes }));
-    assert.match(await page.getByTestId("users-live-refresh-status").innerText(), /Checking your access/);
-    assert.equal(await page.getByTestId("recorded-count").count(), 0, "revoked access removes retained private content while the canonical guard redirects");
     await page.clock.runFor(120_000);
     assert.deepEqual(await page.evaluate(() => ({ requests: (window as unknown as FixtureWindow).fixtureRequests.length, refreshes: (window as unknown as FixtureWindow).fixtureRefreshes })), before);
     assert.equal(before.refreshes, 3, "two successful updates and one canonical auth guard refresh");
@@ -158,15 +179,15 @@ test("an open filter menu defers refresh and a pending React server payload seri
       value.fixtureNext = { count: 25, rows: Array.from({ length: 24 }, (_, index) => "record-" + index), wait: new Promise<void>(resolve => { value.fixtureResolve = resolve; }) };
     });
     await page.clock.runFor(2_100);
-    assert.equal(await page.evaluate(() => (window as unknown as FixtureWindow).fixtureRefreshes), 1);
+    await expectRefreshProgress(page, 1, 1);
     assert.equal(await page.getByTestId("recorded-count").innerText(), "Recorded actions: 24", "a transition retains current content while server data is pending");
     await page.clock.runFor(60_000);
     assert.equal(await page.evaluate(() => (window as unknown as FixtureWindow).fixtureRequests.length), 1, "no overlapping refresh while React is waiting for server content");
     await page.evaluate(() => (window as unknown as FixtureWindow).fixtureResolve!());
     await page.clock.runFor(100);
-    assert.equal(await page.getByTestId("recorded-count").innerText(), "Recorded actions: 25");
+    await expect(page.getByTestId("recorded-count")).toHaveText("Recorded actions: 25");
     await page.clock.runFor(15_000);
-    assert.equal(await page.evaluate(() => (window as unknown as FixtureWindow).fixtureRequests.length), 2);
+    await expectRefreshProgress(page, 2, 2);
   });
 });
 
@@ -182,12 +203,14 @@ test("open native dialogs defer automatic updates while closed dialogs do not", 
     });
     await page.getByTestId("recorded-count").waitFor();
     await page.clock.runFor(15_100);
-    assert.equal(await page.evaluate(() => (window as unknown as FixtureWindow).fixtureRequests.length), 1, "a closed native dialog must not pause the page");
+    await expectRefreshProgress(page, 1, 1);
+    await expect(page.getByTestId("recorded-count"), "a closed native dialog must not pause the page").toHaveText("Recorded actions: 25");
     await page.evaluate(() => (document.getElementById("fixture-management-dialog") as HTMLDialogElement).showModal());
     await page.clock.runFor(60_000);
     assert.equal(await page.evaluate(() => (window as unknown as FixtureWindow).fixtureRequests.length), 1);
     await page.evaluate(() => (document.getElementById("fixture-management-dialog") as HTMLDialogElement).close());
     await page.clock.runFor(1_100);
-    assert.equal(await page.evaluate(() => (window as unknown as FixtureWindow).fixtureRequests.length), 2);
+    await expectRefreshProgress(page, 2, 2);
+    await expect(page.getByTestId("recorded-count")).toHaveText("Recorded actions: 26");
   });
 });
