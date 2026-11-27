@@ -26,7 +26,8 @@ export async function identifySearchCrawler(request: Request): Promise<SearchCra
   if (!declared) return null;
   const verified = await verifySearchCrawler(request);
   if (verified) return { name: verified, evidence: verified === "DUCKDUCKBOT" ? "VERIFIED_IP_RANGE" : "VERIFIED_DNS" };
-  if (declared === "BINGBOT" && await confirmedOperatorNetwork(declared, trustedBotEdge(request)?.ip ?? null)) {
+  if ((declared === "GOOGLEBOT" || declared === "BINGBOT") &&
+      await confirmedOperatorNetwork(declared, trustedBotEdge(request)?.ip ?? null)) {
     return { name: declared, evidence: "VERIFIED_IP_RANGE" };
   }
   return { name: declared, evidence: "DECLARED_USER_AGENT" };
