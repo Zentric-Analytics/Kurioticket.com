@@ -129,7 +129,8 @@ export async function readBotDetails(id: string, raw: BotQuery) {
         db.botActivity.findMany({
           where, orderBy: [{ timestamp: "desc" }, { id: "desc" }], take: 20,
           select: { ip: true, country: true, userAgent: true, declaredName: true, evidence: true,
-            networkAsn: true, networkOrganization: true, networkSource: true, edgeRay: true },
+            networkAsn: true, networkOrganization: true, networkSource: true, edgeRay: true,
+            renderLogIp: true, renderLogCountry: true },
         }),
         db.$queryRaw<{ count: bigint }[]>`
           SELECT count(*) FROM "BotActivity" a
