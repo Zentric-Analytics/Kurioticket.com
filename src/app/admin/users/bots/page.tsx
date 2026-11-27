@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { BotReportFilters } from "@/components/admin/BotReportFilters";
-import { BOT_DIRECTORY, BOT_GROUPS, botAccessLabel, botDirectoryHref, botHref, botDirectorySubtitle, botDirectoryTime, botName, botType, type BotQuery } from "@/lib/adminBotReport";
+import { BOT_DIRECTORY, BOT_GROUPS, botAccessLabel, botDirectoryHref, botHref, botDirectorySubtitle, botDirectoryTime, botName, botType, botVerification, type BotQuery } from "@/lib/adminBotReport";
 import { ADMIN_REPORTING_RANGE_LABELS } from "@/lib/adminReportingRanges";
 import { readBotDirectory } from "@/services/adminBotReportService";
 import { Metrics, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel } from "./report-ui";
 
-const columns = ["Identity", "Type", "Status", "Last Seen (UTC)", "Activity"];
+const columns = ["Identity", "Type", "Verification", "Status", "Last Seen (UTC)", "Activity"];
 const directoryRow = "border-b border-[#E7ECF5] last:border-0 [&>td]:px-3 [&>td]:py-2";
 
 export default async function BotManagementPage({ searchParams }: { searchParams: Promise<BotQuery> }) {
@@ -37,7 +37,7 @@ export default async function BotManagementPage({ searchParams }: { searchParams
       <BotReportFilters filters={filters} now={now.toISOString()} />
       {report.state === "unavailable" && <ReportUnavailable />}
       {report.state === "ready" && <section aria-label="Bot directory">
-        <nav aria-label="Bot categories" className="flex items-end gap-x-1 overflow-x-auto border-b border-[#D8E1EC] sm:gap-x-6">
+        <nav aria-label="Bot registry groups" className="flex items-end gap-x-1 overflow-x-auto border-b border-[#D8E1EC] sm:gap-x-6">
           {BOT_GROUPS.map(({ value, label }) => {
             const active = filters.group === value;
             return <Link key={value} scroll={false} prefetch={false} aria-current={active ? "page" : undefined}
@@ -58,7 +58,8 @@ export default async function BotManagementPage({ searchParams }: { searchParams
                     <p className="break-words font-semibold text-slate-950" title={bot.group === "UNKNOWN" ? "Declared identity, not independently verified" : undefined}>{botName(bot)}</p>
                     <p className="text-xs text-slate-600">{botDirectorySubtitle(bot)}</p>
                   </td>
-                  <td>{botType(bot.category, bot.group)}</td>
+                  <td>{botType(bot)}</td>
+                  <td>{botVerification(bot.verification)}</td>
                   <td className="whitespace-nowrap"><span className={bot.access === "BLOCKED" ? "text-rose-700" : "text-slate-950"}>{botAccessLabel(bot.access)}</span></td>
                   <td className="whitespace-nowrap tabular-nums">{botDirectoryTime(bot.lastSeen)}</td>
                   <td><Link prefetch={false} className={reportLink + " inline-flex items-center gap-1 whitespace-nowrap"}

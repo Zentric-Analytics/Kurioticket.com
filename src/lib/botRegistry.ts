@@ -37,3 +37,20 @@ export const crawlerSignatures = Object.entries(crawlerCatalog).map(([name, entr
 export function knownCrawler(name: string | null) {
   return name && Object.hasOwn(crawlerCatalog, name) ? crawlerCatalog[name as CrawlerName] : null;
 }
+
+const additionalCrawlers = new Map([
+  ["MJ12BOT", { agent: "MJ12BOT", category: "seo", owner: "Majestic" }],
+  ["OAI-SEARCHBOT", { agent: "OAI-SEARCHBOT", category: "ai", owner: "OpenAI" }],
+  ["AASA-BOT", { agent: "AASA-BOT", category: "association", owner: "Apple" }],
+]);
+
+export function recognizedCrawler(token: string | null) {
+  return knownCrawler(token) ?? additionalCrawlers.get(token ?? "") ?? null;
+}
+
+export function crawlerPolicy(token: string | null, verified: boolean) {
+  const catalog = recognizedCrawler(token);
+  const group = catalog?.category === "search" ? "SEARCH_ENGINE" : catalog ? "OTHER_RECOGNIZED" : "UNKNOWN";
+  const access = !catalog ? "BLOCKED" : verified && group === "SEARCH_ENGINE" ? "CRAWL_AND_LIMITED_SEARCH" : "CRAWL_ONLY";
+  return { group, access, category: catalog?.category ?? null, owner: catalog?.owner ?? null };
+}

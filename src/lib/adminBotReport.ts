@@ -1,11 +1,11 @@
 import { adminCustomDateRange, ADMIN_REPORTING_RANGE_OPTIONS, adminRollingRange } from "./adminReportingRanges";
-import { knownCrawler } from "./botRegistry";
+import { knownCrawler, recognizedCrawler } from "./botRegistry";
 
 export const BOT_DIRECTORY = "/admin/users/bots";
 export const BOT_PAGE_SIZE = 25;
 export const BOT_GROUPS = [
   { value: "", label: "All" },
-  { value: "SEARCH_ENGINE", label: "Search Engines" },
+  { value: "SEARCH_ENGINE", label: "Search engines" },
   { value: "OTHER_RECOGNIZED", label: "Other Recognized" },
   { value: "UNKNOWN", label: "Unknown" },
 ] as const;
@@ -60,11 +60,15 @@ export function botHref(path: string, current: URLSearchParams, changes: Record<
   return params.size ? path + "?" + params.toString() : path;
 }
 
-/** Unknown registry keys retain the declared token even after activity retention expires.
- * They are attribution evidence only: never use this display name to approve a bot. */
-export function botName(bot: { group: string; name: string | null; identityKey?: string }) {
+type BotIdentity = { group: string; name: string | null; identityKey?: string };
+
+function declaredToken(bot: BotIdentity) {
+  return bot.name ?? (bot.identityKey?.startsWith("UNKNOWN:") ? bot.identityKey.slice("UNKNOWN:".length) : null);
+}
+
+export function botName(bot: BotIdentity) {
   if (bot.group !== "UNKNOWN") return knownCrawler(bot.name)?.agent ?? bot.name ?? "Unnamed bot";
-  const token = bot.name ?? (bot.identityKey?.startsWith("UNKNOWN:") ? bot.identityKey.slice("UNKNOWN:".length) : null);
+  const token = declaredToken(bot);
   if (!token || token === "UNATTRIBUTED") return "Unknown bot";
   return knownCrawler(token)?.agent ?? (/^[A-Z0-9_-]{2,48}(?:BOT|CRAWLER|SPIDER)$/.test(token) ? token : "Unknown bot");
 }
@@ -74,11 +78,17 @@ export function botDirectorySubtitle(bot: { id: string; group: string; owner: st
   return bot.group !== "UNKNOWN" && bot.owner ? bot.owner : "Ref: " + bot.id.slice(0, 8);
 }
 
-export function botType(category: string | null, group?: string) {
-  if (group === "UNKNOWN") return "Unknown";
+export function botVerification(value: string) {
+  return value === "DECLARED" ? "Unverified (self-declared)" : botLabel(value);
+}
+
+export function botType(bot: BotIdentity & { category: string | null }) {
+  const token = declaredToken(bot);
+  const category = recognizedCrawler(token)?.category
+    ?? (bot.group === "UNKNOWN" ? null : bot.category);
   const labels: Record<string, string> = {
     search: "Search engine", ai: "AI crawler & retrieval", social: "Social media & Meta",
-    google: "Google additional services", seo: "SEO tools", archive: "Archiving",
+    google: "Google additional services", seo: "SEO tools", archive: "Archiving", association: "App site association",
   };
   return category ? labels[category] ?? "Unknown" : "Unknown";
 }

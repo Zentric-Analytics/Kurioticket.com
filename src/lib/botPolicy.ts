@@ -1,5 +1,5 @@
 import { declaredSearchCrawler, identifySearchCrawler } from "@/lib/searchCrawlerGate";
-import { knownCrawler } from "@/lib/botRegistry";
+import { knownCrawler, crawlerPolicy } from "@/lib/botRegistry";
 import { trustedBotEdge } from "@/lib/botEdge";
 
 type BotSearchProduct = "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE";
@@ -77,21 +77,20 @@ export async function observeBot(request: Request, signal: NonNullable<ReturnTyp
   const catalog = knownCrawler(signal.declared);
   const crawler = catalog?.category === "search" ? await identifySearchCrawler(request) : null;
   const verified = Boolean(crawler && crawler.evidence !== "DECLARED_USER_AGENT");
-  const group = verified ? "SEARCH_ENGINE" : catalog && catalog.category !== "search" && !signal.edge?.automated
+  const policy = crawlerPolicy(signal.declared, verified);
+  // Keep existing evidence cohorts and verified quotas on their original registry IDs.
+  const keyGroup = verified ? "SEARCH_ENGINE" : catalog && catalog.category !== "search" && !signal.edge?.automated
     ? "OTHER_RECOGNIZED" : "UNKNOWN";
   return {
     crawler: verified ? crawler : null,
-    identityKey: group !== "UNKNOWN" ? group + ":" + signal.declared : "UNKNOWN:" + (signal.declared ?? "UNATTRIBUTED"),
-    name: group === "UNKNOWN" ? null : signal.declared,
-    group,
-    category: group === "UNKNOWN" ? null : catalog?.category ?? null,
-    owner: group === "UNKNOWN" ? null : catalog?.owner ?? null,
+    identityKey: keyGroup !== "UNKNOWN" ? keyGroup + ":" + signal.declared : "UNKNOWN:" + (signal.declared ?? "UNATTRIBUTED"),
+    name: signal.declared,
+    ...policy,
     verification: verified ? "VERIFIED" : signal.edge?.automated && catalog ? "SUSPICIOUS"
       : catalog?.category === "search" && signal.edge?.ip ? "UNVERIFIED"
       : signal.declared ? "DECLARED" : "UNVERIFIED",
     evidence: verified ? (signal.declared === "DUCKDUCKBOT" ? "OFFICIAL_IP_LIST" : "FORWARD_CONFIRMED_DNS")
       : signal.edge?.automated ? "TRUSTED_EDGE_AUTOMATION" : signal.declared ? "USER_AGENT" : "AUTOMATION_SIGNATURE",
-    access: group === "UNKNOWN" ? "BLOCKED" : group === "SEARCH_ENGINE" ? "CRAWL_AND_LIMITED_SEARCH" : "CRAWL_ONLY",
     ip: signal.edge?.ip ?? null,
     country: signal.edge?.country ?? null,
     edgeRay: signal.edge?.ray ?? null,
@@ -106,7 +105,7 @@ export async function observeBot(request: Request, signal: NonNullable<ReturnTyp
 
 export function botAccess(bot: Awaited<ReturnType<typeof observeBot>>, target: ReturnType<typeof botTarget>) {
   if (bot.group === "UNKNOWN") return "UNAPPROVED_BOT";
-  if (target.mainSearch && bot.group === "SEARCH_ENGINE") return null;
+  if (target.mainSearch && bot.access === "CRAWL_AND_LIMITED_SEARCH") return null;
   if (target.crawl) return null;
   return target.product ? "SEARCH_NOT_ALLOWED" : "PATH_NOT_ALLOWED";
 }

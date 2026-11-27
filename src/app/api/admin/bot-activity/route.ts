@@ -65,7 +65,7 @@ export async function GET(request: Request) {
     orderBy: [{ lastSeen: "desc" }, { id: "desc" }], ...page,
   });
   const [{ now }] = await db.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
-  const identities = rows.slice(0, limit).filter(row => row.group === "SEARCH_ENGINE").map(row => row.id);
+  const identities = rows.slice(0, limit).filter(row => row.access === "CRAWL_AND_LIMITED_SEARCH").map(row => row.id);
   const usage = identities.length ? await db.botActivity.groupBy({
     by: ["botId"], where: { botId: { in: identities }, dispatchedAt: { gte: new Date(Math.min(utcDayStart(now).getTime(), now.getTime() - 1_800_000)) } },
     _max: { dispatchedAt: true },
@@ -76,7 +76,7 @@ export async function GET(request: Request) {
   const items = rows.slice(0, limit).map(row => {
     const { identityKey: _identityKey, crawlWindow: _crawlWindow, crawlCount: _crawlCount,
       requests, allowed, denied, rateLimited, searchAttempts, searches, violations, ...bot } = row;
-    const dailyLimit = row.group === "SEARCH_ENGINE" ? BOT_DAILY_SEARCH_LIMIT : 0;
+    const dailyLimit = row.access === "CRAWL_AND_LIMITED_SEARCH" ? BOT_DAILY_SEARCH_LIMIT : 0;
     const used = counts.find(count => count.botId === row.id)?._count ?? 0;
     return {
       ...bot,

@@ -17,9 +17,11 @@ test("all seven search engines have one policy and declared claims cannot reach 
       "Cookie": "__Secure-next-auth.session-token=forged",
     });
     const bot = await observeBot(req, automationSignal(req)!);
-    assert.equal(bot.group, "UNKNOWN");
-    assert.equal(botAccess(bot, botTarget(req)), "UNAPPROVED_BOT");
-    const verified = { ...bot, group: "SEARCH_ENGINE", name };
+    assert.equal(bot.group, "SEARCH_ENGINE");
+    assert.equal(bot.access, "CRAWL_ONLY");
+    assert.equal(botAccess(bot, botTarget(request("/", entry.agent))), null);
+    assert.equal(botAccess(bot, botTarget(req)), "SEARCH_NOT_ALLOWED");
+    const verified = { ...bot, access: "CRAWL_AND_LIMITED_SEARCH", name };
     for (const product of ["flights", "hotels", "cars", "packages"]) {
       assert.equal(botAccess(verified, botTarget(request("/api/" + product + "/search", entry.agent, "POST"))), null);
     }
@@ -28,7 +30,7 @@ test("all seven search engines have one policy and declared claims cannot reach 
 });
 
 test("other recognized bots can read approved pages only", async () => {
-  for (const agent of ["PerplexityBot", "GPTBot", "Meta-ExternalAgent", "GoogleOther", "AhrefsBot", "ia_archiver"]) {
+  for (const agent of ["MJ12bot", "OAI-SearchBot", "AASA-Bot", "PerplexityBot", "GPTBot", "Meta-ExternalAgent", "GoogleOther", "AhrefsBot", "ia_archiver"]) {
     const req = request("/flights/results", agent);
     const bot = await observeBot(req, automationSignal(req)!);
     assert.equal(bot.group, "OTHER_RECOGNIZED");
@@ -104,7 +106,7 @@ test("authenticated original network evidence is collected for every catalog cat
     assert.equal(botAccess(bot, botTarget(req)), null);
     assert.equal(botAccess(bot, botTarget(request("/api/flights/search", entry.agent, "POST"))), "SEARCH_NOT_ALLOWED");
   }
-  for (const agent of ["MJ12bot", "python-requests/2.0"]) {
+  for (const agent of ["NovelSpider", "python-requests/2.0"]) {
     const req = request("/robots.txt", agent, "GET", headers);
     const bot = await observeBot(req, automationSignal(req)!);
     assert.equal(bot.group, "UNKNOWN");
@@ -113,7 +115,7 @@ test("authenticated original network evidence is collected for every catalog cat
     assert.equal(bot.ip, "192.0.2.1");
     assert.equal(bot.networkAsn, "64512");
     assert.equal(bot.networkOrganization, "Example Network");
-    assert.equal(bot.userAgent, agent === "MJ12bot" ? "MJ12BOT" : null);
+    assert.equal(bot.userAgent, agent === "NovelSpider" ? "NOVELSPIDER" : null);
   }
   assert.equal(trustedBotEdge(request("/", "MJ12bot", "GET", { ...headers, "X-Kurioticket-Edge-Auth": "forged" })), null);
   assert.equal(trustedBotEdge(request("/", "MJ12bot", "GET", { ...headers, "X-Kurioticket-Edge-Version": "2" })), null);
