@@ -1,6 +1,6 @@
 import { lookup, reverse } from "node:dns/promises";
 import { isIP } from "node:net";
-import { trustedBotEdge } from "@/lib/botEdge";
+import { trustedBotIngress } from "@/lib/botEdge";
 import { crawlerSignatures, knownCrawler, type SearchEngine } from "@/lib/botRegistry";
 
 export type VerifiedSearchCrawler = SearchEngine;
@@ -11,7 +11,7 @@ type NetworkLookup = {
 };
 type CrawlerLookup = NetworkLookup & { clientIp: (request: Request) => string };
 const dns: CrawlerLookup = {
-  clientIp: (request) => trustedBotEdge(request)?.ip ?? "",
+  clientIp: (request) => trustedBotIngress(request)?.ip ?? "",
   reverseIp: reverse,
   forwardHost: (hostname) => lookup(hostname, { all: true }),
 };
@@ -100,7 +100,7 @@ export async function verifySearchCrawler(
 ): Promise<VerifiedSearchCrawler | null> {
   const claimed = claimedCrawler(request.headers.get("user-agent"));
   if (!claimed) return null;
-  // The production request entry point still requires the authenticated edge.
+  // Request authentication requires a signed edge or explicitly approved staging workspace trust.
   return matchCrawlerAddress(claimed, resolver.clientIp(request), resolver);
 }
 
