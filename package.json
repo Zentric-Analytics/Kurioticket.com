@@ -26,6 +26,7 @@
     "db:seed:explore": "cross-env JITI_TSCONFIG_PATHS=true node --import jiti/register scripts/seed-explore-catalogue.ts",
     "catalog:airports:review": "node scripts/location-catalog-ingest.mjs",
     "db:studio": "prisma studio",
+    "bots:reconcile-render-logs": "cross-env JITI_TSCONFIG_PATHS=./tsconfig.json node --import jiti/register scripts/reconcile-render-bot-evidence.ts",
     "security:secrets": "node scripts/verify-no-secrets.mjs",
     "postinstall": "prisma generate",
     "db:deploy:render": "node scripts/run-render-migrations.mjs && node scripts/verify-production-schema.mjs",

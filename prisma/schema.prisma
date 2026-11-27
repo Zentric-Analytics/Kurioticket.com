@@ -1374,6 +1374,12 @@ model BotActivity {
   country            String?
   userAgent          String?
   renderRequestId    String?
+  // Retrospective Render log evidence is not used in ingress authorization.
+  renderLogIp        String?
+  renderLogCountry   String?
+  renderLogTimestamp DateTime?
+  renderLogRecoveredAt DateTime?
+  renderLogCorroboration String?
   edgeRay            String?
   networkAsn         String?
   networkOrganization String?
@@ -1392,4 +1398,5 @@ model BotActivity {
   @@index([environment, timestamp, id])
   @@index([timestamp])
   @@index([environment, edgeRay])
+  @@index([environment, renderRequestId])
 }
