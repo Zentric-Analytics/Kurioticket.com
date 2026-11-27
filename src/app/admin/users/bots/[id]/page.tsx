@@ -89,10 +89,10 @@ export default async function BotDetailsPage({ params, searchParams }: {
       <p className="text-xs text-slate-600">Flights, Hotels, Cars and Packages share the allowance. It resets at midnight UTC and the cooldown continues across midnight.</p>
     </Section>}
     <Section title="Network Information">
-      <p className="text-xs text-slate-600">Based on up to 20 most recent recorded requests</p>
+      <p className="text-xs text-slate-600">Based on up to 20 most recent recorded requests. Render log evidence is retrospective; estimated countries are based on logged IPs, not request-time verification.</p>
       <Fields entries={[
-        ["IP addresses", observed(observations.map(row => row.ip))],
-        ["Countries", observed(observations.map(row => row.country))],
+        ["IP addresses", observed(observations.map(row => row.ip ?? (row.renderLogIp ? row.renderLogIp + " (Render log)" : null)))],
+        ["Countries", observed(observations.map(row => row.country ?? (row.renderLogCountry ? row.renderLogCountry + " (IP estimate)" : null)))],
         ["Network organizations", observed(observations.map(row => row.networkOrganization))],
       ]} />
     </Section>
@@ -134,6 +134,13 @@ export default async function BotDetailsPage({ params, searchParams }: {
                           ["Network ASN", event.networkAsn ? "AS" + event.networkAsn : null], ["Network organization", event.networkOrganization],
                           ["Network evidence source", event.networkSource ? botLabel(event.networkSource) : null], ["Cloudflare Ray ID", event.edgeRay],
                           ["Render request ID", event.renderRequestId],
+                          ...(event.renderLogIp ? [
+                            ["IP address from Render log", event.renderLogIp],
+                            ["Country estimate from logged IP", event.renderLogCountry],
+                            ["Render log time (UTC)", botTime(event.renderLogTimestamp)],
+                            ["Evidence recovered (UTC)", botTime(event.renderLogRecoveredAt)],
+                            ["Retrospective identity evidence", event.renderLogCorroboration ? botLabel(event.renderLogCorroboration) : "Not confirmed"],
+                          ] as [string, ReactNode][] : []),
                           ["Recorded User-Agent token", event.userAgent],
                           ["Verification evidence", event.evidence ? botLabel(event.evidence) : null],
                           ["Access decision", decision], ["Reason", botLabel(event.reason)], ["HTTP response status", event.responseStatus],
