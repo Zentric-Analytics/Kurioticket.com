@@ -36,7 +36,11 @@ test("staging Render observation is reporting-only, requires reviewed ingress an
     { "cf-worker": "untrusted.example" },
     { "cf-connecting-ip": "", "x-forwarded-for": "8.8.8.8" },
   ]) {
-    const other = new Request(req.url, { headers: { ...headers, ...bad } });
+    const otherHeaders = new Headers(headers);
+    for (const [name, value] of Object.entries(bad)) {
+      if (typeof value === "string") otherHeaders.set(name, value);
+    }
+    const other = new Request(req.url, { headers: otherHeaders });
     assert.deepEqual(botReportNetwork(other, "staging"), {});
   }
   assert.deepEqual(botReportNetwork(new Request("https://other.example/", { headers }), "staging"), {});
