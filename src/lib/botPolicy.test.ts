@@ -7,45 +7,32 @@ import { crawlerCatalog, currentBotAccess } from "./botRegistry";
 const request = (path: string, agent: string, method = "GET", headers = {}) =>
   new Request("https://kurioticket.com" + path, { method, headers: { "User-Agent": agent, ...headers } });
 
-test("all seven search engines have one policy: staging declarations can search, production requires verification", async t => {
-  const config = { TRAVEL_PROVIDER_MODE: "production", NEXT_PUBLIC_APP_URL: "https://kurioticket.com", NEXTAUTH_URL: "https://kurioticket.com" };
+test("all seven search engines require independent verification in staging and production", async t => {
+  const config = { TRAVEL_PROVIDER_MODE: "production", NEXT_PUBLIC_APP_URL: "https://kurioticket.com", NEXTAUTH_URL: "https://kurioticket.com", BOT_TRUST_RENDER_WORKSPACE_INGRESS: "false" };
   const prior = Object.fromEntries(Object.keys(config).map(key => [key, process.env[key]]));
-  Object.assign(process.env, config);
-  t.after(() => {
-    for (const [key, value] of Object.entries(prior)) {
-      if (value === undefined) delete process.env[key];
-      else process.env[key] = value;
-    }
-  });
+  t.after(() => { for (const [key, value] of Object.entries(prior)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; } });
   const search = Object.entries(crawlerCatalog).filter(([, entry]) => entry.category === "search");
   assert.equal(search.length, 7);
-  for (const [name, entry] of search) {
-    const req = request("/api/flights/search", entry.agent, "POST", {
-      "X-Forwarded-For": "66.249.66.1", "CF-Connecting-IP": "66.249.66.1",
-      "Authorization": "Bearer invalid", "X-Mobile-Platform": "ios",
-      "Cookie": "__Secure-next-auth.session-token=forged",
-    });
-    const bot = await observeBot(req, automationSignal(req)!);
-    assert.equal(bot.group, "SEARCH_ENGINE");
-    assert.equal(bot.access, "CRAWL_ONLY");
-    assert.equal(botAccess(bot, botTarget(request("/", entry.agent))), null);
-    assert.equal(botAccess(bot, botTarget(req)), "SEARCH_NOT_ALLOWED");
-    assert.equal(currentBotAccess(bot, "production"), "CRAWL_ONLY");
-    assert.equal(currentBotAccess(bot, "staging"), "CRAWL_AND_LIMITED_SEARCH");
-    process.env.TRAVEL_PROVIDER_MODE = "staging";
-    const declared = await observeBot(req, automationSignal(req)!);
-    assert.equal(declared.verification, "DECLARED");
-    assert.equal(declared.identityKey, "UNKNOWN:" + name);
-    assert.equal(declared.crawler?.name, name);
-    assert.equal(declared.crawler?.evidence, "DECLARED_USER_AGENT");
-    assert.equal(declared.access, "CRAWL_AND_LIMITED_SEARCH");
-    for (const product of ["flights", "hotels", "cars", "packages"]) {
-      assert.equal(botAccess(declared, botTarget(request("/api/" + product + "/search", entry.agent, "POST"))), null);
+  for (const environment of ["staging", "production"]) {
+    const origin = environment === "staging" ? "https://staging.kurioticket.com" : "https://kurioticket.com";
+    Object.assign(process.env, config, { TRAVEL_PROVIDER_MODE: environment, NEXT_PUBLIC_APP_URL: origin, NEXTAUTH_URL: origin });
+    for (const [name, entry] of search) {
+      const req = request("/api/flights/search", entry.agent, "POST", { "X-Forwarded-For": "66.249.66.1", "CF-Connecting-IP": "66.249.66.1", "Authorization": "Bearer invalid", "X-Mobile-Platform": "ios", "Cookie": "__Secure-next-auth.session-token=forged" });
+      const bot = await observeBot(req, automationSignal(req)!);
+      assert.equal(bot.group, "SEARCH_ENGINE"); assert.equal(bot.verification, "DECLARED"); assert.equal(bot.crawler, null);
+      assert.equal(bot.access, "CRAWL_ONLY"); assert.equal(botAccess(bot, botTarget(request("/", entry.agent))), null);
+      assert.equal(botAccess(bot, botTarget(req)), "SEARCH_NOT_ALLOWED");
+      // Historical staging access must not authorize an unverified directory row.
+      assert.equal(currentBotAccess({ ...bot, access: "CRAWL_AND_LIMITED_SEARCH" }, environment), "CRAWL_ONLY");
+      const verified = { ...bot, access: "CRAWL_AND_LIMITED_SEARCH", verification: "VERIFIED", name };
+      assert.equal(currentBotAccess(verified, environment), "CRAWL_AND_LIMITED_SEARCH");
+      for (const product of ["flights", "hotels", "cars", "packages"]) {
+        const target = botTarget(request("/api/" + product + "/search", entry.agent, "POST"));
+        assert.equal(botAccess(bot, target), "SEARCH_NOT_ALLOWED"); assert.equal(botAccess(verified, target), null);
+      }
+      assert.equal(botAccess(verified, botTarget(request("/api/flights/nearby-fare", entry.agent, "POST"))), "SEARCH_NOT_ALLOWED");
+      assert.equal(botAccess(verified, botTarget(request("/admin", entry.agent))), "PATH_NOT_ALLOWED");
     }
-    assert.equal(botAccess(declared, botTarget(request("/guides/city-guide", entry.agent))), null);
-    assert.equal(botAccess(declared, botTarget(request("/api/flights/nearby-fare", entry.agent, "POST"))), "SEARCH_NOT_ALLOWED");
-    assert.equal(botAccess(declared, botTarget(request("/admin", entry.agent))), "PATH_NOT_ALLOWED");
-    process.env.TRAVEL_PROVIDER_MODE = "production";
   }
 });
 
@@ -229,8 +216,8 @@ test("explicit staging workspace trust enables genuine crawler search eligibilit
   assert.equal(trustedBotIngress(bing), null, "Reporting approval cannot authenticate ingress");
   let observed = await observeBot(bing, automationSignal(bing)!);
   assert.equal(observed.verification, "DECLARED");
-  assert.equal(observed.crawler?.evidence, "DECLARED_USER_AGENT");
-  assert.equal(botAccess(observed, botTarget(bing)), null, "Staging category policy does not require ingress authentication");
+  assert.equal(observed.crawler, null);
+  assert.equal(botAccess(observed, botTarget(bing)), "SEARCH_NOT_ALLOWED", "Reporting approval and a declaration cannot authorize search");
   // Test the explicitly accepted workspace boundary. These headers are not
   // an independent proof of public ingress; private workloads must be trusted.
   process.env.BOT_TRUST_RENDER_WORKSPACE_INGRESS = "true";

@@ -25,7 +25,8 @@ export function isMigrationValidationPath(filePath) {
   }
 
   const normalizedPath = filePath.replaceAll("\\", "/");
-  return normalizedPath.startsWith("prisma/") || EXACT_MIGRATION_PATHS.has(normalizedPath);
+  return normalizedPath.startsWith("prisma/") || EXACT_MIGRATION_PATHS.has(normalizedPath)
+    || ["src/lib/bot", "src/lib/verifiedSearchCrawler", "src/lib/searchCrawlerGate", "src/services/botActivityStore", "src/lib/searchCache", "src/lib/search/cacheWriteGate"].some(prefix => normalizedPath.startsWith(prefix));
 }
 
 export function classifyMigrationValidationPaths(filePaths) {

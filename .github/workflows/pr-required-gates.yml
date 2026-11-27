@@ -50,24 +50,26 @@ jobs:
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json
           JITI_JSX: "true"
+        # Isolate environment-mutating fixtures and asynchronous module loading.
+        # Keep every existing file and assertion; each gets its own process.
         run: >-
-          node --input-type=module --import jiti/register -e
-          'await import("./src/services/visitorIdentityCore.test.ts");
-          await import("./src/services/analyticsService.test.ts");
-          await import("./src/app/api/packages/search/route.test.ts");
-          await import("./src/app/api/cars/search/route.test.ts");
-          await import("./src/services/supportService.test.ts");
-          await import("./src/lib/customerInteractionTracking.test.ts");
-          await import("./src/services/savedActivityAudit.test.ts");
-          await import("./src/services/searchJourneyService.test.ts");
-          await import("./src/services/providerHandoffStore.test.ts");
-          await import("./src/services/providerHandoffActivity.test.ts");
-          await import("./src/services/travel/hotelOperationalBinding.test.ts");
-          await import("./src/lib/hotels/hotelResultAccounting.test.ts");
-          await import("./src/lib/providerHandoffClient.test.ts");
-          await import("./src/lib/operationalHandoffContext.test.ts");
-          await import("./src/components/results/journeyEventWiring.test.ts");
-          await import("./src/app/api/flights/search/terminalHistory.test.ts");'
+          node --test --import jiti/register
+          src/services/visitorIdentityCore.test.ts
+          src/services/analyticsService.test.ts
+          src/app/api/packages/search/route.test.ts
+          src/app/api/cars/search/route.test.ts
+          src/services/supportService.test.ts
+          src/lib/customerInteractionTracking.test.ts
+          src/services/savedActivityAudit.test.ts
+          src/services/searchJourneyService.test.ts
+          src/services/providerHandoffStore.test.ts
+          src/services/providerHandoffActivity.test.ts
+          src/services/travel/hotelOperationalBinding.test.ts
+          src/lib/hotels/hotelResultAccounting.test.ts
+          src/lib/providerHandoffClient.test.ts
+          src/lib/operationalHandoffContext.test.ts
+          src/components/results/journeyEventWiring.test.ts
+          src/app/api/flights/search/terminalHistory.test.ts
       # This suite temporarily changes process.env and global fetch via root
       # hooks. Run it in its own process so production restrictions cannot leak
       # into staging, consent, Support, or handoff fixtures.

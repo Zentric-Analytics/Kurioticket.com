@@ -1,4 +1,6 @@
 import { countHotelInventory } from "@/lib/hotels/hotelResultAccounting";
+import { diagnosticSearchResponse } from "@/lib/search/diagnosticResponse";
+import { withSearchDiagnosticContext } from "@/lib/search/diagnosticContext";
 import { withOperationalGuestDevice } from "@/lib/operationalGuestDeviceObservation";
 import { isProviderHotelResult } from "@/services/travel/hotelInventorySource";
 import { searchHotelBatch, hotelSearchRequiresCanonicalResponse } from "@/services/travel/hotelAggregator";
@@ -109,7 +111,7 @@ export async function POST(request: Request) {
   }
   const recordedSearch = () => ({ ...search, ...searchNetworkObservation(request), ...(operationalSession ? operationalSessionMetadata(operationalSession.reference) : {}), ...(operationalHotelSnapshotId ? { operationalHotelSnapshotId } : {}) });
   try {
-    const outcome = await searchHotelBatch(search,{clientIp:getKayakClientIp(request),userAgent:request.headers.get("user-agent")??undefined,trackId,requestId:trackId,signal:request.signal},snapshot,state?.checkpoint,{defer:process.env.HOTEL_DEFER_INDIVIDUAL_WRITES === "true" ? after : undefined});
+    const outcome = await withSearchDiagnosticContext("hotel", trackId, () => searchHotelBatch(search,{clientIp:getKayakClientIp(request),userAgent:request.headers.get("user-agent")??undefined,trackId,requestId:trackId,signal:request.signal},snapshot,state?.checkpoint,{defer:process.env.HOTEL_DEFER_INDIVIDUAL_WRITES === "true" ? after : undefined}),request.headers.get("x-search-request-id")??undefined);
     if (!outcome.supported) {
       after(async () => {
         const { userId, visitorId, ...application } = await resolveSearchIdentity();
@@ -162,7 +164,7 @@ export async function POST(request: Request) {
         ]);
       }
     });
-    return attachOperationalSearchSession(NextResponse.json({ ...classified, nextCursor, progressive: true,
+    return attachOperationalSearchSession(diagnosticSearchResponse("hotel", trackId, { ...classified, nextCursor, progressive: true,
       completed: nextCursor === null, receivedCount: results.length,
       providerRowsSeen: batch.providerRows, estimatedTotal: batch.checkpoint?.total ?? batch.providerRows }), operationalSession);
   } catch (error) {
