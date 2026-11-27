@@ -6,7 +6,7 @@ import { getPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { Prisma } from "@/generated/prisma/client";
 import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
-import { activityNetworkEvidence, botReportVerification, reportEvidenceSelect } from "@/lib/adminBotNetworkEvidence";
+import { activityNetworkEvidence, botReportVerification } from "@/lib/adminBotNetworkEvidence";
 import { recordedSearchCrawler } from "./adminOperationalReadCore";
 import { detailHistoryQuery, recordedBotSearchRows, type RecordedBotSearch } from "./recordedBotSearchHistory";
 import { botSearchNetwork, combinedBotHistory, type BotHistoryPointer, type HistoricalBotSearch } from "./adminBotHistory";
@@ -91,7 +91,7 @@ export async function readBotDirectory(raw: BotQuery) {
           ...registrySelect,
           activities: {
             where: { environment }, orderBy: [{ timestamp: "desc" }, { id: "desc" }], take: 1,
-            select: reportEvidenceSelect,
+            select: { timestamp: true, declaredName: true, verification: true },
           },
         },
         orderBy: [{ lastSeen: "desc" }, { id: "desc" }], skip: (page - 1) * BOT_PAGE_SIZE, take: BOT_PAGE_SIZE,
@@ -110,10 +110,9 @@ export async function readBotDirectory(raw: BotQuery) {
         ],
       };
     }, { isolationLevel: "RepeatableRead" });
-    // Network checks run outside the read-only database transaction.
-    const rows = await Promise.all(data.rows.map(async ({ activities, ...bot }) => ({
-      ...bot, reportVerification: await botReportVerification(bot, activities[0]),
-    })));
+    const rows = data.rows.map(({ activities, ...bot }) => ({
+      ...bot, reportVerification: botReportVerification(bot, activities[0]),
+    }));
     return { state: "ready", filters: { ...filters, page: data.page }, now, ...data, rows } as const;
   } catch {
     console.error("[admin:bot-management] Directory report unavailable");
@@ -166,7 +165,7 @@ export async function readBotDetails(id: string, raw: BotQuery) {
           searchAttempts: true, searches: true, violations: true,
           activities: {
             where: { environment }, orderBy: [{ timestamp: "desc" }, { id: "desc" }], take: 1,
-            select: reportEvidenceSelect,
+            select: { timestamp: true, declaredName: true, verification: true },
           },
         },
       });
@@ -262,12 +261,10 @@ export async function readBotDetails(id: string, raw: BotQuery) {
     }, { isolationLevel: "RepeatableRead" });
     if (!data) return { state: "missing" } as const;
     const { activities, ...bot } = data.bot;
-    const [reportVerification, events] = await Promise.all([
-      botReportVerification(bot, activities[0]),
-      Promise.all(data.events.map(async event => event.source === "activity"
+    const reportVerification = botReportVerification(bot, activities[0]);
+    const events = await Promise.all(data.events.map(async event => event.source === "activity"
         ? { ...event, networkEvidence: await activityNetworkEvidence(event) }
-        : event)),
-    ]);
+        : event));
     return { state: "ready", filters: { ...filters, page: data.page }, ...data, bot, reportVerification, events } as const;
   } catch {
     console.error("[admin:bot-management] Bot details unavailable");

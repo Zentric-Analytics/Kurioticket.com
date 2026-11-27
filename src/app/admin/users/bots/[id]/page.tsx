@@ -64,7 +64,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
         <BotIcon />
         <div>
           <h1 className="text-xl font-semibold text-slate-950">{botName(bot)}</h1>
-          <p className="text-[13px] text-slate-600">{botType(bot)} · {report.reportVerification.label} · {botRecordedAccess(bot)}</p>
+          <p className="text-[13px] text-slate-600">{botType(bot)} · {report.reportVerification} · {botRecordedAccess(bot)}</p>
         </div>
       </div>
     </header>
@@ -72,7 +72,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
       <Fields threeColumns entries={[
         ["Owner", bot.owner],
         ["Category", botType(bot)],
-        ["Verification status", report.reportVerification.label],
+        ["Verification status", report.reportVerification],
         ["Latest IP address", report.latestIp],
         ["Countries", observed([
           ...observations.map(row => row.country ?? row.renderLogCountry ?? row.reportedCountry),
