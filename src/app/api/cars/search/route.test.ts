@@ -1,4 +1,6 @@
 import { withOperationalGuestDevice } from "@/lib/operationalGuestDeviceObservation";
+import { withSearchDiagnosticContext } from "@/lib/search/diagnosticContext";
+import { diagnosticSearchResponse } from "@/lib/search/diagnosticResponse";
 import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
 import { applicationMetadata } from "@/lib/application-source";
 import { carUnsupportedCategory, carUnsupportedSearchMessage } from "@/shared/cars/carSearchFeedback";
@@ -48,6 +50,8 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
     status: options.unsupported ? "unavailable" : options.status ?? "available", warnings: [], providerStatuses: [provider], unsupported: Boolean(options.unsupported),
   };
   const dependencies: Record<string, unknown> = {
+    "@/lib/search/diagnosticContext": { withSearchDiagnosticContext },
+    "@/lib/search/diagnosticResponse": { diagnosticSearchResponse },
     "@/shared/cars/carSearchFeedback": { carUnsupportedCategory, carUnsupportedSearchMessage },
     "@/lib/productionSandboxPolicy": {withProductionSandboxRequest,captureFinalSearchHistory},
     "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },

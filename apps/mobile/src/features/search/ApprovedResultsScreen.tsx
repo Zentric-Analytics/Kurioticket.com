@@ -1,3 +1,5 @@
+import { abortTravelRequest } from "../../api/travelTransportFailure";
+import { createSearchPresentationDiagnostics } from "../../../../../src/shared/search/presentationDiagnostics";
 import { randomUUID } from "expo-crypto";
 import { hasDisplayOnlyInventory } from "../../../../../src/shared/presentation/sandboxInventory";
 import { useSandboxResultState } from "./useSandboxResults";
@@ -152,7 +154,7 @@ import { flightCardJourneys, flightCardJourneyAccessibility, type FlightCardLeg 
 import { flightOperatingCarrierPresentation } from "./flightOperatingCarrier";
 import { deriveFlightResultHighlights, type FlightResultHighlight } from "./flightResultHighlights";
 import { FlightResultsState } from "./FlightResultsState";
-import { flightResultsOwnedBy, resolveFlightResultsState, resolveFlightSearchFailure } from "./flightResultsStateModel";
+import { flightResultsOwnedBy, resolveFlightResultsState, resolveFlightSearchFailure, resolveFlightFailureKind, type FlightFailureKind } from "./flightResultsStateModel";
 import { flightInventoryCounts } from "./flightInventoryDiagnostics";
 import { HotelFilterSheet, type HotelFilterSectionName } from "./HotelFilterSheet";
 import { activeHotelFilterCount, buildHotelFilterOptions, emptyHotelFilters, filterHotels, type HotelFilters } from "./hotelFilters";
@@ -268,7 +270,9 @@ function ResultsScreen({ product }: { product: Product }) {
   const [rawSandboxResults, setResults] = useState<(FlightResult | HotelResult)[]>([]);
   const {results,pending:displayPending,unavailable:displayUnavailable} = useSandboxResultState(rawSandboxResults);
   const [resultsRequestId, setResultsRequestId] = useState<string>();
+  const presentationDiagnostics = useMemo(() => createSearchPresentationDiagnostics(product, Platform.OS), [product]);
   const [transportStatus, setStatus] = useState<Status>("loading");
+  const [flightFailure, setFlightFailure] = useState<FlightFailureKind>("unavailable");
   const status:Status=transportStatus === "ready" ? displayPending ? "loading" : displayUnavailable ? "error" : transportStatus : transportStatus;
   const [message, setMessage] = useState("");
   const [retry, setRetry] = useState(0);
@@ -387,12 +391,14 @@ function ResultsScreen({ product }: { product: Product }) {
   const visualTest =
     process.env.EXPO_PUBLIC_VISUAL_TEST === "1" && one(params.visual) === "1";
   const load = useCallback(async () => {
-    activeSearch.current?.abort("superseded");
+    abortTravelRequest(activeSearch.current, "superseded");
     const controller = new AbortController();
     activeSearch.current = controller;
     const sequence = ++searchSequence.current;
     const requestId = randomUUID();
+    presentationDiagnostics.begin(requestId);
     const clientStartedAt = performance.now();
+    if (product === "flight") setFlightFailure("unavailable");
     let deadlineExpired = false;
     const isLatest = () => sequence === searchSequence.current;
     const requestedSearchKey = plan.plan?.key;
@@ -450,7 +456,7 @@ function ResultsScreen({ product }: { product: Product }) {
               travelApi.searchFlights(plan.plan.payload, { signal: controller.signal, requestId, sandboxDisplay: true }),
               () => {
                 deadlineExpired = true;
-                controller.abort("ui-deadline");
+                abortTravelRequest(controller, "ui-deadline");
               },
             )
           : Platform.OS === "android"
@@ -472,26 +478,11 @@ function ResultsScreen({ product }: { product: Product }) {
         ? flightAcceptance!.accepted
         : hotelAcceptance!.accepted;
       const clientValidationMs = performance.now() - validationStartedAt;
+      presentationDiagnostics.accepted(response.requestId, response.results.length, valid.length, clientValidationMs, valid);
       if (product === "flight") {
         setServerFlightResultCount(flightAcceptance!.canonicalCount);
         logFlightSearchCheckpoint("flight-search:validated", { requestId, serverResultCount: flightAcceptance!.canonicalCount, acceptedResultCount: valid.length, rejectedResultIds: flightAcceptance!.rejectedIds, elapsedMs: performance.now() - clientStartedAt, platform: Platform.OS });
         logFlightSearchCheckpoint("flight-search:derived-ready", { requestId, resultCount: valid.length, elapsedMs: performance.now() - clientStartedAt, platform: Platform.OS });
-        if (flightAcceptance!.rejectedIds.length) {
-          console.warn("[travel-search] canonical flight results failed client safety checks", {
-            requestId,
-            canonicalCount: flightAcceptance!.canonicalCount,
-            acceptedCount: flightAcceptance!.accepted.length,
-            rejectedIds: flightAcceptance!.rejectedIds,
-          });
-        }
-      }
-      if (hotelAcceptance?.rejectedIds.length) {
-        console.warn("[travel-search] canonical hotel results failed client safety checks", {
-          requestId,
-          canonicalCount: hotelAcceptance.canonicalCount,
-          acceptedCount: hotelAcceptance.accepted.length,
-          rejectedIds: hotelAcceptance.rejectedIds,
-        });
       }
       if (hotelAcceptance && canonicalResultsWereSilentlyLost(hotelAcceptance)) {
         setResults([]);
@@ -501,6 +492,7 @@ function ResultsScreen({ product }: { product: Product }) {
         return;
       }
       if (flightAcceptance && canonicalResultsWereSilentlyLost(flightAcceptance)) {
+        setFlightFailure("response");
         setResults([]);
         resultsRef.current = [];
         flightResultsOwnerKey.current = undefined;
@@ -526,6 +518,7 @@ function ResultsScreen({ product }: { product: Product }) {
       }
       const presentation = presentSearchResults(product, valid.length, response);
       setStatus(presentation.status);
+      presentationDiagnostics.published(valid.length, product === "flight" || !("nextCursor" in response && response.nextCursor));
       setMessage(presentation.message);
       void recordRecentSearchBestEffort(buildRecentSearch(product, plan.plan.payload));
       if (presentation.status !== "error" && product === "hotel" && Platform.OS === "android" && "progressive" in response && response.progressive && response.nextCursor) {
@@ -539,7 +532,9 @@ function ResultsScreen({ product }: { product: Product }) {
           try {
             const page = await travelApi.searchHotelsProgressive(plan.plan.payload, cursor, { signal: controller.signal, requestId, sandboxDisplay: true });
             if (!isCurrent()) return;
+            const validationStarted = performance.now();
             const accepted = acceptCanonicalResults(page.results as HotelResult[], safeCanonicalHotelResult);
+            presentationDiagnostics.accepted(page.requestId, page.results.length, accepted.accepted.length, performance.now() - validationStarted, accepted.accepted);
             if (canonicalResultsWereSilentlyLost(accepted)) {
               continuationFailed=true;
               setMessage("Some hotels are still unavailable. You can browse the results already loaded.");
@@ -548,6 +543,7 @@ function ResultsScreen({ product }: { product: Product }) {
             for (const hotel of accepted.accepted) merged.set(hotel.id, hotel);
             const cumulative = [...merged.values()];
             setResults(cumulative);
+            presentationDiagnostics.published(cumulative.length, !page.nextCursor);
             resultsRef.current = cumulative;
             setStatus(cumulative.length ? "ready" : "loading");
             cursor = page.nextCursor ?? null;
@@ -577,6 +573,7 @@ function ResultsScreen({ product }: { product: Product }) {
     } catch (e) {
       if (!isLatest() || (product === "flight" && currentFlightSearchKey.current !== requestedSearchKey)) return;
       if (!deadlineExpired && (controller.signal.aborted || (e instanceof TravelApiError && e.code === "cancelled"))) return;
+      if (product === "flight") setFlightFailure(resolveFlightFailureKind(e instanceof TravelApiError ? e.code : undefined, deadlineExpired));
       const failureMessage =
         product === "flight" && (deadlineExpired ||
         (e instanceof TravelApiError && e.code === "timeout") ||
@@ -607,7 +604,7 @@ function ResultsScreen({ product }: { product: Product }) {
         console.info("[flight-search:event-loop]", { requestId, ...stopEventLoopMonitor() });
       }
     }
-  }, [product, plan.plan?.key, retry, visualTest]);
+  }, [product, plan.plan?.key, retry, visualTest, presentationDiagnostics]);
   useEffect(() => {
     if (product === "flight" && status === "ready") {
       logFlightSearchCheckpoint("flight-search:render-ready", { resultCount: results.length, platform: Platform.OS });
@@ -625,7 +622,7 @@ function ResultsScreen({ product }: { product: Product }) {
       searchAbortTimer.current = setTimeout(() => {
         if (activeExecutionKey.current !== executionKey) return;
         searchSequence.current += 1;
-        activeSearch.current?.abort("screen-cleanup");
+        abortTravelRequest(activeSearch.current, "screen-cleanup");
         activeExecutionKey.current = undefined;
       }, 0);
     };
@@ -1270,6 +1267,7 @@ function ResultsScreen({ product }: { product: Product }) {
           onScrollEndDrag={hideFlightResultsScrollIndicator}
           onMomentumScrollBegin={showFlightResultsScrollIndicator}
           onMomentumScrollEnd={hideFlightResultsScrollIndicator}
+          onViewableItemsChanged={presentationDiagnostics.onViewableItemsChanged}
           sections={[{ data: !flightState ? [null, ...(sorted as FlightResult[])] : [] }]}
           keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
           renderItem={({ item, index }) => item === null ? (
@@ -1299,6 +1297,7 @@ function ResultsScreen({ product }: { product: Product }) {
               <View style={[s0.body, s0.flightResultsBody]}>
                 <FlightResultsState
                   state={terminalFlightState}
+                  failure={flightFailure}
                   onRetry={retrySearch}
                   onEditSearch={edit}
                   onClearFilters={clearFlightFilters}
@@ -1353,6 +1352,7 @@ function ResultsScreen({ product }: { product: Product }) {
             ref={hotelResultsListRef}
             accessibilityState={{ busy: hotelFilterPending }}
             style={[s0.resultsScroll, { backgroundColor: hotelCanvasColor }]}
+            onViewableItemsChanged={presentationDiagnostics.onViewableItemsChanged}
             sections={[{ data: hotelResultsListData }]}
             keyExtractor={(item) => typeof item === "string" ? item : item.id}
             renderItem={({ item }) => {

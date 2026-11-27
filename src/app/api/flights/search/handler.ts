@@ -1,4 +1,6 @@
 import { withOperationalGuestDevice } from "@/lib/operationalGuestDeviceObservation";
+import { createSearchDiagnostics } from "@/shared/search/diagnostics";
+import { withSearchDiagnosticContext } from "@/lib/search/diagnosticContext";
 import { withBotSearch } from "@/lib/botSecurity";
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import {withProductionSandboxRequest,captureFinalSearchHistory,productionSandboxInventory} from "@/lib/productionSandboxPolicy";
@@ -33,6 +35,7 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
     ? `nearby-fare:${resolveSearchRequestId(null)}`
     : resolveSearchRequestId(request.headers.get("x-search-request-id")));
   if (!(await isFeatureEnabled("FLIGHT_SEARCH_ENABLED"))) return NextResponse.json({ error: "Flight search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
+  const trace = createSearchDiagnostics("flight", requestId, "server", { span: "route", startedAt: routeStartedAt });
   const ip = getClientIp(request);
   const rate = bot ? null : checkRateLimit(`flight-search:${ip}`, 35, 60_000);
   if (rate && !rate.allowed) {
@@ -59,13 +62,14 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
 
   const botDenial = await bot?.reserve();
   if (botDenial) return botDenial;
-  const aggregate = await searchFlights(parsed.data, {
+  const aggregate = await withSearchDiagnosticContext("flight", requestId, () => searchFlights(parsed.data, {
     signal: request.signal,
     requestId,
     fareOnly: nearby,
     onProviderStart: () => { providerStartedAt = performance.now(); },
     kayak: { trackId: operationalSession?.reference.id, clientIp: kayakClientIp, userAgent, signal: request.signal },
-  });
+  }));
+  trace("aggregation", { count: aggregate.results.length });
   logNativeFlightProviderDiagnostics({
     requestId,
     mobilePlatform,
@@ -176,7 +180,9 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
     ), operationalSession);
   }
 
+  const projectionStarted = performance.now();
   const publicResults = aggregate.results.map(toPublicFlight);
+  trace("projection", { count: publicResults.length, durationMs: performance.now() - projectionStarted });
   const responseBody = {
     ...classifyFlights(publicResults, parsed.data, aggregate.warnings, requestId),
     resultsCacheValidForMs: aggregate.resultsCacheValidForMs,
@@ -187,8 +193,10 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
   // This is the response's required serialization, not a diagnostics-only copy.
   // Supplying its byte length lets native clients diagnose pressure without
   // retaining a second complete JSON string after parsing.
+  const serializationStarted = performance.now();
   const serializedResponse = JSON.stringify(responseBody);
   const responseBytes = Buffer.byteLength(serializedResponse);
+  trace("serialization", { bytes: responseBytes, durationMs: performance.now() - serializationStarted });
   const legCount = publicResults.reduce((count, result) => count + (result.legs?.length ?? 0), 0);
   const segmentCount = publicResults.reduce((count, result) => count + (result.legs?.reduce((sum, leg) => sum + leg.segments.length, 0) ?? 0), 0);
   console.info("[flight-search:response-pressure]", {
