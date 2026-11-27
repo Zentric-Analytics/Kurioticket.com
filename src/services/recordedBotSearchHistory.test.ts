@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { Prisma } from "@/generated/prisma/client";
-import { botFilters } from "@/lib/adminBotReport";
+import { BOT_PAGE_SIZE, botFilters } from "@/lib/adminBotReport";
 import { combinedBotHistory } from "./adminBotHistory";
 import { getPrisma } from "@/lib/prisma";
 import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { recordedSearchCrawler } from "./adminOperationalReadCore";
-import { detailHistoryQuery, recordedBotSearchRows, summarizeBotNetwork, type BotNetworkIpCandidate, type RecordedBotSearch } from "./recordedBotSearchHistory";
+import { botNetworkIpCandidatePage, detailHistoryQuery, recordedBotSearchRows, summarizeBotNetwork, summarizeBotNetworkPaged, type BotNetworkIpCandidate, type RecordedBotSearch } from "./recordedBotSearchHistory";
 
 test("recorded bot searches reconcile legacy and linked records exactly once, without changing authorization", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
   const previousUrl = process.env.DATABASE_URL;
@@ -163,8 +163,17 @@ test("recorded bot searches reconcile legacy and linked records exactly once, wi
   const [crowded] = await db.$queryRaw<typeof claimedDetail[]>(detailHistoryQuery(environment, verified.id, verified.name,
     combinedBotHistory(environment, verified.id, verified.identityKey, { window: undefined },
       Prisma.sql`SELECT id, "createdAt" AS timestamp FROM recorded WHERE "activityId" IS NULL`), true, 1, 1));
-  const crowdedNetwork = summarizeBotNetwork(crowded.networkIpCandidates, crowded.networkCountryCodes);
-  assert.ok(crowded.networkIpCandidates.length > 25, "Review must scan past 25 newer invalid addresses");
+  let fallbackPages = 0;
+  const crowdedNetwork = await summarizeBotNetworkPaged(
+    crowded.networkIpCandidates, crowded.networkCountryCodes, async offset => {
+      fallbackPages++;
+      const [batch] = await db.$queryRaw<{ candidates: BotNetworkIpCandidate[] }[]>(
+        botNetworkIpCandidatePage(environment, verified.id, verified.name, offset));
+      assert.ok(batch.candidates.length <= BOT_PAGE_SIZE, "Each fallback page stays bounded");
+      return batch.candidates;
+    });
+  assert.equal(crowded.networkIpCandidates.length, BOT_PAGE_SIZE, "Initial SQL summary remains bounded");
+  assert.ok(fallbackPages >= 1, "A newer invalid batch must not hide an older public IP");
   assert.equal(crowdedNetwork.latestIp?.ip, "66.249.67.74");
   assert.equal(crowdedNetwork.latestIp?.id, activity.id, "Original request remains the evidence owner");
   assert.equal(crowdedNetwork.latestIp?.botId, declared.id);

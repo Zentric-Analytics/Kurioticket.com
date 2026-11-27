@@ -62,39 +62,53 @@ export type RecordedBotSearch = {
   evidence: Prisma.JsonValue;
 };
 
+// Shared by the initial summary and the on-demand bounded fallback pages.
+// The original identity and search attribution remain unchanged.
+function botNetworkScope(environment: string, id: string, name: string | null) {
+  return Prisma.sql`
+    SELECT id FROM "BotRegistry" WHERE environment = ${environment}
+    AND (id = ${id}
+      ${name ? Prisma.sql`OR (name = ${name} AND "group" <> 'UNKNOWN')` : Prisma.empty})
+  `;
+}
+
+function botNetworkRecords(environment: string, id: string, name: string | null) {
+  return Prisma.sql`
+    SELECT id, "botId", "createdAt" AS timestamp, 'search'::text AS source,
+      CASE WHEN jsonb_typeof(evidence->'searchNetwork'->'ipAddress') = 'string'
+        THEN nullif(evidence->'searchNetwork'->>'ipAddress', '') END AS ip,
+      CASE WHEN jsonb_typeof(evidence->'searchNetwork'->'countryCode') = 'string'
+        THEN evidence->'searchNetwork'->>'countryCode' END AS country,
+      'Recorded search'::text AS provenance
+    FROM attributed
+    WHERE "botId" = ${id}
+      ${name ? Prisma.sql`OR coalesce(nullif(evidence->>'identifiedCrawler', ''), nullif(evidence->>'verifiedCrawler', '')) = ${name}` : Prisma.empty}
+    UNION ALL
+    SELECT a.id, a."botId", a.timestamp, 'activity'::text AS source,
+      coalesce(nullif(a.ip, ''), nullif(a."renderLogIp", ''), nullif(a."reportedIp", '')) AS ip,
+      coalesce(nullif(a.country, ''), nullif(a."renderLogCountry", ''), nullif(a."reportedCountry", '')) AS country,
+      CASE WHEN nullif(a.ip, '') IS NOT NULL THEN coalesce(a."networkSource", 'Recorded request')
+           WHEN nullif(a."renderLogIp", '') IS NOT NULL THEN 'Render log'
+           ELSE 'Reported request IP' END AS provenance
+    FROM "BotActivity" a
+    WHERE a.environment = ${environment} AND a."botId" IN (SELECT id FROM network_scope)
+  `;
+}
+
 /** Evaluate search attribution once on the same snapshot as the live events.
  * Materialize narrow projections; only serialize the paginated rows and summary evidence. */
 export function detailHistoryQuery(environment: string, id: string, name: string | null, history: Prisma.Sql,
   validWindow: boolean, requestedPage: number, requestedSearchPage: number) {
   return Prisma.sql`
     WITH network_scope AS MATERIALIZED (
-      SELECT id FROM "BotRegistry" WHERE environment = ${environment}
-      AND (id = ${id}
-      ${name ? Prisma.sql`OR (name = ${name} AND "group" <> 'UNKNOWN')` : Prisma.empty})
+      ${botNetworkScope(environment, id, name)}
     ), attributed AS MATERIALIZED (
       SELECT searches.* FROM (${recordedBotSearchRows(environment)}) searches
       WHERE "botId" IN (SELECT id FROM network_scope)
     ), recorded AS MATERIALIZED (
       SELECT * FROM attributed WHERE "botId" = ${id}
     ), network_records AS MATERIALIZED (
-      SELECT id, "botId", "createdAt" AS timestamp, 'search'::text AS source,
-        CASE WHEN jsonb_typeof(evidence->'searchNetwork'->'ipAddress') = 'string'
-          THEN nullif(evidence->'searchNetwork'->>'ipAddress', '') END AS ip,
-        CASE WHEN jsonb_typeof(evidence->'searchNetwork'->'countryCode') = 'string'
-          THEN evidence->'searchNetwork'->>'countryCode' END AS country,
-        'Recorded search'::text AS provenance
-      FROM attributed
-      WHERE "botId" = ${id}
-        ${name ? Prisma.sql`OR coalesce(nullif(evidence->>'identifiedCrawler', ''), nullif(evidence->>'verifiedCrawler', '')) = ${name}` : Prisma.empty}
-      UNION ALL
-      SELECT a.id, a."botId", a.timestamp, 'activity'::text AS source,
-        coalesce(nullif(a.ip, ''), nullif(a."renderLogIp", ''), nullif(a."reportedIp", '')) AS ip,
-        coalesce(nullif(a.country, ''), nullif(a."renderLogCountry", ''), nullif(a."reportedCountry", '')) AS country,
-        CASE WHEN nullif(a.ip, '') IS NOT NULL THEN coalesce(a."networkSource", 'Recorded request')
-             WHEN nullif(a."renderLogIp", '') IS NOT NULL THEN 'Render log'
-             ELSE 'Reported request IP' END AS provenance
-      FROM "BotActivity" a
-      WHERE a.environment = ${environment} AND a."botId" IN (SELECT id FROM network_scope)
+      ${botNetworkRecords(environment, id, name)}
     ), timeline AS MATERIALIZED (
       ${validWindow ? history : Prisma.sql`SELECT NULL::text AS id, NULL::timestamp AS timestamp, NULL::text AS source WHERE FALSE`}
     ), counts AS (
@@ -122,13 +136,12 @@ export function detailHistoryQuery(environment: string, id: string, name: string
         ORDER BY "createdAt" DESC, id DESC
         OFFSET (SELECT ("searchPage" - 1) * ${BOT_PAGE_SIZE} FROM pages) LIMIT ${BOT_PAGE_SIZE}
       ) item), '[]') AS "recordedSearches",
-      -- IP validity is checked by publicVisitorIp in the reporting layer.
-      -- Never limit unvalidated candidates: 25+ newer malformed/private IPs
-      -- could hide the latest saved public IP from an older request or search.
+      -- Return only one page; the server iterates if no public IP is found.
+      -- Do not assume the first 25 candidates have valid public addresses.
       coalesce((SELECT jsonb_agg(item ORDER BY item.timestamp DESC, item.source, item.id DESC) FROM (
         SELECT id, "botId", timestamp, source, ip, provenance FROM network_records
         WHERE ip IS NOT NULL
-        ORDER BY timestamp DESC, source, id DESC
+        ORDER BY timestamp DESC, source, id DESC LIMIT ${BOT_PAGE_SIZE}
       ) item), '[]') AS "networkIpCandidates",
       coalesce((SELECT jsonb_agg(code ORDER BY code) FROM (
         SELECT DISTINCT upper(country) AS code FROM network_records
@@ -141,6 +154,29 @@ export function detailHistoryQuery(environment: string, id: string, name: string
         GROUP BY b.id, b.verification ORDER BY count DESC, b.id LIMIT 10
       ) item), '[]')` : Prisma.sql`'[]'::jsonb`} AS "relatedCohorts"
     FROM pages
+  `;
+}
+
+/** Bounded fallback only when the initial summary has no valid public IP.
+ * Use the same cohort and original evidence as the summary; pagination
+ * prevents huge JSON payloads for high-traffic bots. */
+export function botNetworkIpCandidatePage(environment: string, id: string, name: string | null, offset: number) {
+  return Prisma.sql`
+    WITH network_scope AS MATERIALIZED (
+      ${botNetworkScope(environment, id, name)}
+    ), attributed AS MATERIALIZED (
+      SELECT searches.* FROM (${recordedBotSearchRows(environment)}) searches
+      WHERE "botId" IN (SELECT id FROM network_scope)
+    ), network_records AS MATERIALIZED (
+      ${botNetworkRecords(environment, id, name)}
+    )
+    SELECT coalesce(jsonb_agg(item ORDER BY item.timestamp DESC, item.source, item.id DESC), '[]') AS candidates
+    FROM (
+      SELECT id, "botId", timestamp, source, ip, provenance FROM network_records
+      WHERE ip IS NOT NULL
+      ORDER BY timestamp DESC, source, id DESC
+      OFFSET ${offset} LIMIT ${BOT_PAGE_SIZE}
+    ) item
   `;
 }
 
@@ -159,3 +195,20 @@ export function summarizeBotNetwork(candidates: BotNetworkIpCandidate[], country
   }))].sort();
   return { latestIp, countries };
 }
+
+/** Validate the first bounded batch, fetching later batches only if needed.
+ * An older valid public IP must survive any number of newer invalid records. */
+export async function summarizeBotNetworkPaged(
+  initial: BotNetworkIpCandidate[], countryCodes: string[],
+  nextPage: (offset: number) => Promise<BotNetworkIpCandidate[]>,
+) {
+  const summary = summarizeBotNetwork(initial, countryCodes);
+  if (summary.latestIp || initial.length < BOT_PAGE_SIZE) return summary;
+  for (let offset = BOT_PAGE_SIZE; ; offset += BOT_PAGE_SIZE) {
+    const candidates = await nextPage(offset);
+    const found = summarizeBotNetwork(candidates, []).latestIp;
+    if (found) return { ...summary, latestIp: found };
+    if (candidates.length < BOT_PAGE_SIZE) return summary;
+  }
+}
+

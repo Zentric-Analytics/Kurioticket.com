@@ -8,7 +8,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { activityNetworkEvidence, botReportVerification, reportEvidenceSelect } from "@/lib/adminBotNetworkEvidence";
 import { recordedSearchCrawler } from "./adminOperationalReadCore";
-import { detailHistoryQuery, recordedBotSearchRows, summarizeBotNetwork, type BotNetworkIpCandidate, type RecordedBotSearch } from "./recordedBotSearchHistory";
+import { botNetworkIpCandidatePage, detailHistoryQuery, recordedBotSearchRows, summarizeBotNetworkPaged, type BotNetworkIpCandidate, type RecordedBotSearch } from "./recordedBotSearchHistory";
 import { botSearchNetwork, combinedBotHistory, type BotHistoryPointer, type HistoricalBotSearch } from "./adminBotHistory";
 import { BOT_DAILY_SEARCH_LIMIT, nextSearchTime, utcDayStart } from "./botActivityStore";
 
@@ -229,9 +229,15 @@ export async function readBotDetails(id: string, raw: BotQuery) {
         const event = pointer.source === "activity" ? liveById.get(pointer.id) : olderById.get(pointer.id);
         return event ? [event] : [];
       });
+      const networkSummary = await summarizeBotNetworkPaged(
+        reportRows.networkIpCandidates, reportRows.networkCountryCodes, async offset => {
+          const [batch] = await db.$queryRaw<{ candidates: BotNetworkIpCandidate[] }[]>(
+            botNetworkIpCandidatePage(environment, id, summaryName, offset));
+          return batch.candidates;
+        });
       return {
         bot, actual, historicalActual,
-        networkSummary: summarizeBotNetwork(reportRows.networkIpCandidates, reportRows.networkCountryCodes),
+        networkSummary,
         total, page, quota, searchPage, relatedCohorts,
         recordedSearches: recordedSearches.map(({ evidence, ...row }) => ({
           ...row, createdAt: utcJsonDate(row.createdAt), network: recordedSearchNetwork(evidence), crawler: recordedSearchCrawler(evidence),
