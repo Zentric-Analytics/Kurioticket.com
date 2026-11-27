@@ -70,7 +70,9 @@ test("Journey History links unlinked account actions to the same identity's comp
   assert.match(accountProjection, /id: "e-" \+ event\.id, stage: "ACCOUNT_ACTIVITY"/);
   assert.doesNotMatch(accountProjection, /\b(?:journeyId|searchHistoryId)\s*:/,
     "An unlinked account action cannot acquire an invented journey or search reference");
-  assert.match(reader, /if \(typeof meta\?\.linkedJourneyId === "string" && typeof meta\?\.linkedSearchHistoryId === "string"\) return null/);
+  // adminIdentityActivityComplete.test.ts covers exact replacement, Essential
+  // retention and unchanged optional/legacy suppression; admin-journey.integration.ts
+  // verifies the reader against PostgreSQL.
   assert.match(reader, /row => analyticsActivityRow\(row, environment\) !== null/);
 });
 

@@ -20,18 +20,37 @@ const VALID_CURRENCY_CODE_PATTERN = /^[A-Z]{3}$/;
 function getCookieValue(key: string): string | null {
   if (typeof document === "undefined") return null;
 
-  const part = document.cookie
-    .split(";")
-    .map((value) => value.trim())
-    .find((value) => value.startsWith(`${key}=`));
+  try {
+    const part = document.cookie
+      .split(";")
+      .map((value) => value.trim())
+      .find((value) => value.startsWith(`${key}=`));
 
-  return part ? decodeURIComponent(part.split("=")[1] ?? "") : null;
+    return part ? decodeURIComponent(part.split("=")[1] ?? "") : null;
+  } catch {
+    // A blocked cookie jar or malformed preference must not break the page.
+    return null;
+  }
 }
 
 function setCookieValue(key: string, value: string) {
   if (typeof document === "undefined") return;
 
-  document.cookie = `${key}=${encodeURIComponent(value)}; path=/; max-age=${ONE_YEAR}; samesite=lax`;
+  try {
+    document.cookie = `${key}=${encodeURIComponent(value)}; path=/; max-age=${ONE_YEAR}; samesite=lax`;
+  } catch {
+    // The current-document preference remains usable without persistence.
+  }
+}
+
+function getLocalStorageValue(key: string): string | null {
+  if (typeof window === "undefined") return null;
+  try { return window.localStorage.getItem(key); } catch { return null; }
+}
+
+function setLocalStorageValue(key: string, value: string) {
+  if (typeof window === "undefined") return;
+  try { window.localStorage.setItem(key, value); } catch { /* Optional persistence can be denied or full. */ }
 }
 
 export function getStoredLocale(): LanguageCode {
@@ -40,10 +59,10 @@ export function getStoredLocale(): LanguageCode {
   if (cookie) return normalizeLanguage(cookie);
 
   if (typeof window !== "undefined") {
-    const currentValue = window.localStorage.getItem(LOCALE_COOKIE_KEY);
+    const currentValue = getLocalStorageValue(LOCALE_COOKIE_KEY);
     if (currentValue) return normalizeLanguage(currentValue);
 
-    const legacyValue = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    const legacyValue = getLocalStorageValue(LANGUAGE_STORAGE_KEY);
     if (legacyValue) return normalizeLanguage(legacyValue);
   }
 
@@ -56,8 +75,8 @@ export function setStoredLocale(locale: string) {
   setCookieValue(LOCALE_COOKIE_KEY, normalized);
 
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(LOCALE_COOKIE_KEY, normalized);
-    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, normalized);
+    setLocalStorageValue(LOCALE_COOKIE_KEY, normalized);
+    setLocalStorageValue(LANGUAGE_STORAGE_KEY, normalized);
   }
 }
 
@@ -73,9 +92,9 @@ export function getStoredRegion(): string | null {
 
   if (typeof window !== "undefined") {
     return (
-      window.localStorage.getItem(REGION_OVERRIDE_STORAGE_KEY)?.toUpperCase() ??
-      window.localStorage.getItem(REGION_COOKIE_KEY)?.toUpperCase() ??
-      window.localStorage.getItem(SERVER_REGION_STORAGE_KEY)?.toUpperCase() ??
+      getLocalStorageValue(REGION_OVERRIDE_STORAGE_KEY)?.toUpperCase() ??
+      getLocalStorageValue(REGION_COOKIE_KEY)?.toUpperCase() ??
+      getLocalStorageValue(SERVER_REGION_STORAGE_KEY)?.toUpperCase() ??
       null
     );
   }
@@ -90,8 +109,8 @@ export function setStoredDetectedRegion(regionCode: string) {
   setCookieValue(SERVER_REGION_COOKIE_KEY, normalizedRegionCode);
 
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(REGION_COOKIE_KEY, normalizedRegionCode);
-    window.localStorage.setItem(
+    setLocalStorageValue(REGION_COOKIE_KEY, normalizedRegionCode);
+    setLocalStorageValue(
       SERVER_REGION_STORAGE_KEY,
       normalizedRegionCode,
     );
@@ -105,7 +124,7 @@ export function setStoredRegion(regionCode: string) {
   setStoredDetectedRegion(normalizedRegionCode);
 
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(
+    setLocalStorageValue(
       REGION_OVERRIDE_STORAGE_KEY,
       normalizedRegionCode,
     );
@@ -118,7 +137,7 @@ export function getStoredCurrency(): string | null {
 
   if (typeof window !== "undefined") {
     return (
-      window.localStorage.getItem(CURRENCY_COOKIE_KEY)?.toUpperCase() ?? null
+      getLocalStorageValue(CURRENCY_COOKIE_KEY)?.toUpperCase() ?? null
     );
   }
 
@@ -133,6 +152,6 @@ export function setStoredCurrency(currency: string) {
   setCookieValue(CURRENCY_COOKIE_KEY, normalizedCurrency);
 
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(CURRENCY_COOKIE_KEY, normalizedCurrency);
+    setLocalStorageValue(CURRENCY_COOKIE_KEY, normalizedCurrency);
   }
 }

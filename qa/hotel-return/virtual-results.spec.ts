@@ -917,8 +917,16 @@ test("desktop Cars sizes one-to-three seller rows to content and expands additio
     if (count > 3) await expect(offerList).toHaveCSS("min-height", "98px");
     await expect(rows.first()).toHaveCSS("min-height", "30px");
     const assertEvenDesktopRowGap = async (index: number) => {
-      const current = await rows.nth(index).boundingBox();
-      const next = await rows.nth(index + 1).boundingBox();
+      // Read both rows in one browser turn so a shared hover/scroll movement
+      // cannot enter the gap calculation between separate snapshots.
+      const { current, next } = await rows.evaluateAll((offers, rowIndex) => {
+        const box = (offer: Element | undefined) => {
+          if (!offer || !offer.getClientRects().length) return null;
+          const rect = offer.getBoundingClientRect();
+          return { y: rect.y, height: rect.height };
+        };
+        return { current: box(offers[rowIndex]), next: box(offers[rowIndex + 1]) };
+      }, index);
       expect(current).not.toBeNull();
       expect(next).not.toBeNull();
       const gap = next!.y - (current!.y + current!.height);
