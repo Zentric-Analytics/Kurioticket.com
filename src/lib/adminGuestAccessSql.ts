@@ -36,20 +36,29 @@ export function guestAccessRecordsSql(query: DeviceHistoryQuery, environment: Pu
   const nativeKeys = keys.filter(key => pageViewCatalog[key].native.length > 0);
   const platforms = pageHistoryPlatformValues(query.platform ?? "all");
   const transport = pageHistoryTransport(query.platform ?? "all");
-  // Operational source is deliberately coarse: WEB does not establish mobile
-  // versus desktop. Unknown browser class cannot match either specific filter.
-  const operationalPlatform = query.platform === "ios" ? "IOS" : query.platform === "android" ? "ANDROID" : null;
-  const operationalAllowed = !query.platform || query.platform === "all" || operationalPlatform !== null;
   const operational = (type: "search" | "handoff") => {
     const table = type === "search" ? Prisma.sql`"SearchHistory" x` : Prisma.sql`"RedirectLog" x`;
     const meta = type === "search" ? Prisma.sql`x."query"` : Prisma.sql`x."metadata"`;
     const session = Prisma.sql`${meta}->>'operationalSessionId'`;
     const source = Prisma.sql`${meta}->>'applicationSource'`;
+    const webDevice = Prisma.sql`${source} = 'WEB' AND ${meta}->'guestAccess'->>'version' = '1'
+      AND ${meta}->'guestAccess'->>'platform' IN ('desktop', 'mobile')`;
+    // Native source already records a platform-bound app declaration. WEB
+    // alone cannot establish desktop/mobile; only this request's saved
+    // device observation can refine it. Legacy unobserved web stays coarse.
+    const platform = Prisma.sql`CASE ${source} WHEN 'IOS' THEN 'ios' WHEN 'ANDROID' THEN 'android'
+      WHEN 'WEB' THEN CASE WHEN ${webDevice} THEN ${meta}->'guestAccess'->>'platform' ELSE 'web' END
+      ELSE 'unknown' END`;
     return Prisma.sql`
       SELECT ${session} AS "guestId", 'operational'::text AS "guestSource",
         ${type} || ':' || x."id" AS "recordId", ${type}::text AS "evidence",
-        CASE ${source} WHEN 'IOS' THEN 'ios' WHEN 'ANDROID' THEN 'android' WHEN 'WEB' THEN 'web' ELSE 'unknown' END AS "platform",
-        NULL::text AS "deviceLabel", NULL::text AS "browser", NULL::text AS "os", NULL::text AS "locationLabel",
+        ${platform} AS "platform",
+        CASE ${source} WHEN 'IOS' THEN 'iOS device' WHEN 'ANDROID' THEN 'Android device'
+          ELSE CASE WHEN ${webDevice} THEN ${meta}->'guestAccess'->>'deviceLabel' END END AS "deviceLabel",
+        CASE WHEN ${webDevice} THEN ${meta}->'guestAccess'->>'browser' END AS "browser",
+        CASE ${source} WHEN 'IOS' THEN 'iOS' WHEN 'ANDROID' THEN 'Android'
+          ELSE CASE WHEN ${webDevice} THEN ${meta}->'guestAccess'->>'os' END END AS "os",
+        NULL::text AS "locationLabel",
         ${type === "search" ? Prisma.sql`CASE WHEN jsonb_typeof(x."query" #> '{searchNetwork,countryCode}') = 'string' THEN x."query" #>> '{searchNetwork,countryCode}' END` : Prisma.sql`NULL::text`} AS "recordedCountryCode",
         x."createdAt" AS "at"
       FROM ${table}
@@ -60,7 +69,7 @@ export function guestAccessRecordsSql(query: DeviceHistoryQuery, environment: Pu
         AND NOT EXISTS (SELECT 1 FROM "Visitor" existing WHERE existing."id" = ${session})
         AND ${accessDatePredicate(Prisma.sql`x."createdAt"`, window)}
         ${identityPredicate(session)}
-        ${operationalPlatform ? Prisma.sql`AND ${source} = ${operationalPlatform}` : Prisma.empty}
+        ${query.platform && query.platform !== "all" ? Prisma.sql`AND ${platform} = ${query.platform}` : Prisma.empty}
     `;
   };
   const consented = Prisma.sql`
@@ -93,7 +102,7 @@ export function guestAccessRecordsSql(query: DeviceHistoryQuery, environment: Pu
       ${platforms.length ? Prisma.sql`AND a."metadata"->>'platform' IN (${Prisma.join(platforms)})` : Prisma.empty}
       ${transport ? Prisma.sql`AND a."metadata"->>'transport' = ${transport}` : Prisma.empty}
   `;
-  return operationalAllowed ? Prisma.sql`${consented} UNION ALL ${operational("search")} UNION ALL ${operational("handoff")}` : consented;
+  return Prisma.sql`${consented} UNION ALL ${operational("search")} UNION ALL ${operational("handoff")}`;
 }
 
 /** Identical source and filters for directory counts and detail history. */

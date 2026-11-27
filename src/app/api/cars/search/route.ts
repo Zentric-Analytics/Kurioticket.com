@@ -1,3 +1,4 @@
+import { withOperationalGuestDevice } from "@/lib/operationalGuestDeviceObservation";
 import { withBotSearch } from "@/lib/botSecurity";
 import { carUnsupportedCategory, carUnsupportedSearchMessage } from "@/shared/cars/carSearchFeedback";
 import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
  return withBotSearch(request, async bot => {
  return withProductionSandboxRequest(request, async () => {
   const projectHistory=captureFinalSearchHistory();
-  const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(input));
+  const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(withOperationalGuestDevice(request, input)));
 
   const crawler = bot?.crawler ?? null;
   const requestId = bot?.requestId ?? resolveSearchRequestId(request.headers.get("x-search-request-id"));

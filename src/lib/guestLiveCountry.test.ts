@@ -64,3 +64,54 @@ test("live fallback trusts managed public client IP, not an unauthenticated coun
     assert.equal(await resolve(req({...headers,"x-kurioticket-edge-auth":process.env.BOT_EDGE_SECRET!}),"staging"),null);
   } finally {keys.forEach((key,i)=>{if(before[i]===undefined)delete process.env[key];else process.env[key]=before[i];});}
 });
+
+test("verified Render ingress accepts Next internal URLs only with valid public configuration", () => {
+  const keys = ["RENDER", "GUEST_LIVE_RENDER_INGRESS_VERIFIED", "NEXT_PUBLIC_APP_URL", "RENDER_EXTERNAL_HOSTNAME"] as const;
+  const before = keys.map(key => process.env[key]);
+  const canonical = "https://staging.example.invalid";
+  const request = (url: string, headers: Record<string, string> = {}) => new Request(url + "/api/identity/online-presence", {
+    headers: { "cf-connecting-ip": "8.8.8.8", ...headers },
+  });
+  const internal = ["localhost", "127.0.0.1", "0.0.0.0", "[::]", "[::1]"];
+  try {
+    process.env.RENDER = "true";
+    process.env.GUEST_LIVE_RENDER_INGRESS_VERIFIED = "true";
+    process.env.NEXT_PUBLIC_APP_URL = canonical;
+    process.env.RENDER_EXTERNAL_HOSTNAME = "qa.onrender.com";
+    assert.equal(renderGuestCountryIp(request(canonical)), "8.8.8.8");
+    assert.equal(renderGuestCountryIp(request("https://qa.onrender.com")), "8.8.8.8");
+    for (const host of internal) {
+      const url = "http://" + host + ":10000";
+      assert.equal(renderGuestCountryIp(request(url)), "8.8.8.8", host);
+      assert.equal(renderGuestCountryIp(request(url, {
+        host: "untrusted.example", "x-forwarded-host": "untrusted.example", "cf-ipcountry": "US",
+      })), "8.8.8.8", "headers do not establish or expand the configured trust boundary");
+      for (const ip of ["127.0.0.1", "10.1.2.3", "::1", "fc00::1", "203.0.113.1", "2a06:98c0:3600::103", "not-an-ip"]) {
+        assert.equal(renderGuestCountryIp(request(url, { "cf-connecting-ip": ip })), null, ip);
+      }
+      assert.equal(renderGuestCountryIp(request(url, { "cf-worker": "foreign.example" })), null);
+    }
+    for (const url of ["https://other.example.invalid", "http://10.1.2.3:10000", "http://localhost.untrusted.example:10000"]) {
+      assert.equal(renderGuestCountryIp(request(url, {
+        host: "staging.example.invalid", "x-forwarded-host": "staging.example.invalid",
+        forwarded: "host=staging.example.invalid;proto=https",
+      })), null, "request headers cannot make an unconfigured target eligible");
+    }
+    for (const configured of [undefined, "", "invalid", "ftp://staging.example.invalid", "https://name:password@staging.example.invalid",
+      "https://staging.example.invalid/path", "https://staging.example.invalid?query=1", "https://staging.example.invalid#fragment",
+      "http://localhost:10000", "http://127.0.0.1:10000", "http://10.1.2.3:10000", "http://[::1]:10000"]) {
+      if (configured === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+      else process.env.NEXT_PUBLIC_APP_URL = configured;
+      assert.equal(renderGuestCountryIp(request("http://localhost:10000")), null, "invalid public configuration stays closed");
+      assert.equal(renderGuestCountryIp(request("https://qa.onrender.com")), null);
+    }
+    process.env.NEXT_PUBLIC_APP_URL = canonical;
+    delete process.env.GUEST_LIVE_RENDER_INGRESS_VERIFIED;
+    assert.equal(renderGuestCountryIp(request("http://localhost:10000")), null);
+    process.env.GUEST_LIVE_RENDER_INGRESS_VERIFIED = "true";
+    delete process.env.RENDER;
+    assert.equal(renderGuestCountryIp(request("http://localhost:10000")), null);
+  } finally {
+    keys.forEach((key, i) => { if (before[i] === undefined) delete process.env[key]; else process.env[key] = before[i]; });
+  }
+});

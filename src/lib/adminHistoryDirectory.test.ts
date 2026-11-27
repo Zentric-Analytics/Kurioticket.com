@@ -156,10 +156,14 @@ test("guest access directory and detail use the identical consent and operationa
   assert.match(text, /NOT EXISTS \(SELECT 1 FROM "Visitor" existing/);
   assert.match(text, /'operational'::text AS "guestSource"/);
   assert.match(text, /'consented'::text AS "guestSource"/);
-  assert.ok(sql.values.includes("IOS"));
+  assert.ok(sql.values.includes("ios"));
   assert.ok(sql.values.includes("iOS app (reported)"));
   const browser = historyDirectorySql("devices", query("devices", { tab: "guests", platform: "desktop" }), "staging", now);
-  assert.doesNotMatch(browser.strings.join("?"), /FROM "SearchHistory"|FROM "RedirectLog"/);
+  assert.match(browser.strings.join("?"), /FROM "SearchHistory" x/);
+  assert.match(browser.strings.join("?"), /FROM "RedirectLog" x/);
+  assert.match(browser.strings.join("?"), /'guestAccess'->>'version' = '1'/);
+  assert.match(browser.strings.join("?"), /'guestAccess'->>'platform' IN \('desktop', 'mobile'\)/);
+  assert.ok(browser.values.includes("desktop"));
   const all = historyDirectorySql("devices", query("devices"), "production", now);
   assert.match(all.strings.join("?"), /FROM "AccountSession"/);
   assert.match(all.strings.join("?"), /FROM "AnalyticsEvent"/);

@@ -58,7 +58,7 @@ export async function AdminGuestAccessHistory({ id, query, path, backHref, backL
         <ul className="divide-y divide-[#E2E8F0]">
           {result.records.map(record => <li key={record.id} data-testid="guest-access-row" className={"grid min-w-0 gap-2 px-3 py-3 text-[13px] lg:items-center lg:gap-3 " + columns}>
             <span className="font-medium">{record.platform}</span>
-            <div className="min-w-0 break-words"><span>{record.deviceLabel ?? "Unavailable"}</span><p className="text-[12px] text-[#64748B]">{[record.os, record.browser].filter(Boolean).join(" · ") || "Browser / OS unavailable"}</p></div>
+            <div className="min-w-0 break-words"><span>{record.deviceLabel ?? "Unavailable"}</span><p className="text-[12px] text-[#64748B]">{[record.os, record.platform === "iOS app" || record.platform === "Android app" ? "Native app" : record.browser].filter(Boolean).join(" · ") || "Browser / OS unavailable"}</p></div>
             <span data-testid="guest-access-location" className="min-w-0 break-words text-[12px] text-[#64748B]">{record.locationLabel ?? "Unavailable"}</span>
             <time dateTime={record.at.toISOString()} className="min-w-0 break-words text-[12px] tabular-nums text-[#64748B]">{format(record.at, timeZone)}</time>
             <div className="min-w-0 text-[12px]"><span>{record.evidence === "page" ? "Page access" : record.evidence === "search" ? "Search access" : "Provider handoff"}</span><p className="mt-0.5 text-[#64748B]">{record.source === "consented" ? "Consented" : "Operational"}</p></div>

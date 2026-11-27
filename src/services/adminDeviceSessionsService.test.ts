@@ -51,9 +51,9 @@ test("Activity embeds the latest recorded access with a separate full history", 
   assert.match(activity, /guestAccess.records\[0\]/);
   const unified = readFileSync("src/services/adminUnifiedActivityService.ts", "utf8");
   assert.match(unified, /row.guestId !== id/);
-  assert.match(unified, /const optional = kind === "guest" && row\.guestSource === "consented"/);
+  assert.match(unified, /const detail = kind === "guest" \? \[/);
   for (const field of ["deviceLabel", "browser", "os"]) {
-    assert.ok(unified.includes("optional ? safeGuestDeviceDescription(row." + field + ', "' + field + '") : null'), field);
+    assert.ok(unified.includes("safeGuestDeviceDescription(row." + field + ', "' + field + '")'), field);
   }
   // Location uses the shared source-scoped projection: consented page observations
   // retain their sanitized label, and operational searches expose only their own saved country.

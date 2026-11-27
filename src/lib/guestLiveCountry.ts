@@ -1,4 +1,5 @@
 import { createHmac, randomBytes } from "node:crypto";
+import { isIP } from "node:net";
 import { trustedBotEdge } from "./botEdge";
 import { publicVisitorIp, resolveIpinfoLiteCountryContext } from "./geo/ipinfo";
 import { isIsoCountryCode, normalizeCountryCode } from "./geo/context";
@@ -34,6 +35,7 @@ type GuestCountryDiagnostic = "disabled" | "edge_country" | "render_ingress_not_
   "lookup_country" | "lookup_unavailable" | "resolver_failed" |
   "heartbeat_country" | "heartbeat_country_unavailable" | "roster_country_read_failed";
 const diagnosticLastAt = new Map<string, number>();
+const nextInternalHosts = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::]", "[::1]"]);
 /** Staging-only, bounded operational diagnostics. Never log a location, IP,
  * source credential, visitor identifier, request header, or provider response. */
 export function reportGuestCountryDiagnostic(
@@ -57,11 +59,21 @@ export function reportGuestCountryDiagnostic(
 export function renderGuestCountryIp(request: Request): string | null {
   if (process.env.RENDER !== "true" || process.env.GUEST_LIVE_RENDER_INGRESS_VERIFIED !== "true") return null;
   try {
-    const host = new URL(request.url).hostname.toLowerCase();
-    const configured = process.env.NEXT_PUBLIC_APP_URL;
-    const publicHost = configured ? new URL(configured).hostname.toLowerCase() : "";
+    const target = new URL(request.url);
+    const configured = new URL(process.env.NEXT_PUBLIC_APP_URL ?? "");
+    const publicHost = configured.hostname.toLowerCase();
+    const publicIp = publicHost.replace(/^\[|\]$/g, "");
+    if ((configured.protocol !== "https:" && configured.protocol !== "http:")
+        || configured.username || configured.password || configured.pathname !== "/"
+        || configured.search || configured.hash || nextInternalHosts.has(publicHost)
+        || (isIP(publicIp) && !publicVisitorIp(publicIp))) return null;
+    if ((target.protocol !== "https:" && target.protocol !== "http:") || target.username || target.password) return null;
+    const host = target.hostname.toLowerCase();
     const renderHost = process.env.RENDER_EXTERNAL_HOSTNAME?.trim().toLowerCase() ?? "";
-    if (host !== publicHost && host !== renderHost) return null;
+    // Next builds Request.url from its bind hostname behind Render's proxy.
+    // A loopback/wildcard URL is valid only with the verified-ingress opt-in
+    // above and valid public configuration. Host/Forwarded headers grant no trust.
+    if (host !== publicHost && host !== renderHost && !nextInternalHosts.has(host)) return null;
   } catch { return null; }
   if (request.headers.has("cf-worker")) return null;
   const ip = publicVisitorIp(request.headers.get("cf-connecting-ip"));

@@ -20,7 +20,7 @@ export function consentedGuestAccessObservation(request: Request, platform: stri
 export function safeGuestDeviceDescription(value: unknown, field: "deviceLabel" | "browser" | "os" | "locationLabel"): string | null {
   if (typeof value !== "string" || value.length > 100) return null;
   if (field === "deviceLabel") return /^(?:Mobile device|Desktop device|iOS device|Android device|Android phone|iPad|iPhone|Windows computer|Mac|Linux computer)$/.test(value) ? value : null;
-  if (field === "browser") return /^(?:Edge|Firefox|Chrome|Opera|Safari) \d{1,6}$/.test(value) ? value : null;
+  if (field === "browser") return /^(?:Edge|Firefox|Chrome|Opera|Safari|Samsung Internet) \d{1,6}$/.test(value) ? value : null;
   if (field === "os") return /^(?:Android|iOS|Windows|macOS|Linux)$/.test(value) ? value : null;
   return /^[\p{L}\p{M} .,'’()&-]{2,100}$/u.test(value) ? value : null;
 }

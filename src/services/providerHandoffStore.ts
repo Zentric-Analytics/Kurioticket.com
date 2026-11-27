@@ -5,6 +5,7 @@ import { journeySourcePath } from "@/lib/search-journey";
 import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
 import { applicationMetadata, type ApplicationAttribution } from "@/lib/application-source";
+import type { OperationalGuestDeviceObservation } from "@/lib/operationalGuestDeviceObservation";
 
 export type ProviderHandoffActivity = {
   type: "flight" | "hotel" | "car";
@@ -23,7 +24,7 @@ export type ProviderHandoffActivity = {
   operationalHotelSnapshotId?: string;
   handoffId?: string;
 };
-export type AttributedHandoff = ProviderHandoffActivity & ApplicationAttribution & { userId: string | null; visitorId: string | null; operationalSessionId?: string | null; operationalSessionExpiresAtMs?: number };
+export type AttributedHandoff = ProviderHandoffActivity & ApplicationAttribution & { userId: string | null; visitorId: string | null; operationalSessionId?: string | null; operationalSessionExpiresAtMs?: number; guestAccess?: OperationalGuestDeviceObservation };
 export type HandoffReceipt = {
   id: string;
   created: boolean;
@@ -118,7 +119,8 @@ export function createProviderHandoffStore(
           provider: input.provider, route: input.route, price: input.price, currency: input.currency,
           destinationUrl: input.destinationUrl, userType: input.userId ? "user" : "guest",
           sourcePage: journeySourcePath(input.sourcePage) ?? "unknown",
-          metadata: withEnvironmentMetadata({ ...applicationMetadata(input), resultId: input.resultId, ...(requestId && (visitorId || (!operationalHotelSnapshotId && input.operationalSessionId)) ? { requestId } : {}), ...(operationalRequestId ? { operationalRequestId } : {}), ...(operationalHotelSnapshotId ? { operationalHotelSnapshotId } : {}), ...(input.operationalSessionId ? { operationalSessionId: input.operationalSessionId, ...(Number.isSafeInteger(input.operationalSessionExpiresAtMs) ? { operationalSessionExpiresAtMs: input.operationalSessionExpiresAtMs } : {}) } : {}) }),
+          metadata: withEnvironmentMetadata({ ...applicationMetadata(input), resultId: input.resultId, ...(requestId && (visitorId || (!operationalHotelSnapshotId && input.operationalSessionId)) ? { requestId } : {}), ...(operationalRequestId ? { operationalRequestId } : {}), ...(operationalHotelSnapshotId ? { operationalHotelSnapshotId } : {}), ...(input.operationalSessionId ? { operationalSessionId: input.operationalSessionId, ...(Number.isSafeInteger(input.operationalSessionExpiresAtMs) ? { operationalSessionExpiresAtMs: input.operationalSessionExpiresAtMs } : {}) } : {}),
+            ...(!input.userId && !visitorId && input.operationalSessionId && getPublicEnvironment() === "staging" && input.guestAccess ? { guestAccess: input.guestAccess } : {}) }),
         }, select: { id: true } });
         return { id: redirect.id, created: true, visitorId, userId: input.userId,
           ...await correlate(tx, input, visitorId) };

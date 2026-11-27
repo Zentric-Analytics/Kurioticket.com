@@ -37,11 +37,10 @@ export async function loadAdminGuestAccessHistory(id: string, query: DeviceHisto
         || !(row.at instanceof Date) || !Number.isFinite(+row.at)) throw new Error("Invalid guest observation");
       const platform = row.platform && Object.prototype.hasOwnProperty.call(recordedDevicePlatformLabels, row.platform)
         ? recordedDevicePlatformLabels[row.platform as RecordedDevicePlatform] : "Unknown";
-      const optional = row.guestSource === "consented";
       records.push({ id: row.recordId, source: row.guestSource, evidence: row.evidence, platform, at: row.at,
-        deviceLabel: optional ? safeGuestDeviceDescription(row.deviceLabel, "deviceLabel") : null,
-        browser: optional ? safeGuestDeviceDescription(row.browser, "browser") : null,
-        os: optional ? safeGuestDeviceDescription(row.os, "os") : null,
+        deviceLabel: safeGuestDeviceDescription(row.deviceLabel, "deviceLabel"),
+        browser: safeGuestDeviceDescription(row.browser, "browser"),
+        os: safeGuestDeviceDescription(row.os, "os"),
         locationLabel: recordedGuestAccessLocation(row) });
     }
     if (records.length !== Math.max(0, Math.min(DEVICE_HISTORY_PAGE_SIZE, total - (query.page - 1) * DEVICE_HISTORY_PAGE_SIZE)))

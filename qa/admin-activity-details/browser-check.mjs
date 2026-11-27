@@ -307,12 +307,37 @@ try {
   await expect(page.getByTestId("guest-access-row")).toHaveCount(1);
   await expect(page.getByTestId("guest-access-row")).toContainText("Operational");
   await expect(page.getByTestId("guest-access-row").getByTestId("guest-access-location")).toHaveText("Nigeria");
-  await expect(page.getByTestId("guest-access-row")).toContainText("Browser / OS unavailable");
+  await expect(page.getByTestId("guest-access-row")).toContainText("Android device");
+  await expect(page.getByTestId("guest-access-row")).toContainText("Android · Native app");
   await page.getByRole("link",{name:"Back to Device & Access",exact:true}).click();
   await expect(page).toHaveURL(url => url.pathname === "/admin/users/devices" && url.searchParams.get("platform")==="android");
   await page.setViewportSize({width:320,height:800});
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1),false,"Device directory must not overflow");
   await page.setViewportSize({width:1280,height:900});
+
+  // Render actual history rows for each newly observed platform, with a
+  // separate unobserved legacy website record that must remain unknown.
+  await page.goto(base + "/admin/users/guest/22345678-1234-4123-8123-123456789abc/devices?range=all");
+  const observedGuestRows = page.getByTestId("guest-access-row");
+  await expect(observedGuestRows).toHaveCount(5);
+  await expect(observedGuestRows.filter({ hasText: "Desktop web" })).toContainText("Windows computer");
+  await expect(observedGuestRows.filter({ hasText: "Desktop web" })).toContainText("Windows · Chrome 140");
+  await expect(observedGuestRows.filter({ hasText: "Mobile web" })).toContainText("iPhone");
+  await expect(observedGuestRows.filter({ hasText: "Mobile web" })).toContainText("iOS · Safari 18");
+  await expect(observedGuestRows.filter({ hasText: "iOS app" })).toContainText("iOS · Native app");
+  await expect(observedGuestRows.filter({ hasText: "Android app" })).toContainText("Android · Native app");
+  await expect(observedGuestRows.filter({ hasText: "Website" })).toContainText("Browser / OS unavailable");
+  await page.screenshot({caret:"initial",path:output+"/guest-observed-devices-desktop.png",fullPage:true});
+  await page.setViewportSize({width:320,height:800});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, "Guest device history must fit mobile without overflow");
+  await page.screenshot({caret:"initial",path:output+"/guest-observed-devices-mobile-320.png",fullPage:true});
+  await page.setViewportSize({width:1280,height:900});
+  await page.getByRole("button",{name:"Device history platform: All platforms"}).click();
+  await page.getByRole("listbox",{name:"Device history platform"}).getByRole("option",{name:"Mobile web",exact:true}).click();
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
+  await expect(observedGuestRows).toHaveCount(1);
+  await expect(observedGuestRows).toContainText("iOS · Safari 18");
+  console.log("PASS observed guest devices on all four platforms, native app labels, and honest legacy unknown");
 
   await usersSidebar.getByRole("link",{name:"Pages Visited",exact:true}).click();
   await expect(page).toHaveURL(url => url.pathname === "/admin/users/pages");

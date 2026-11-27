@@ -87,12 +87,11 @@ export async function loadAdminUnifiedActivity(kind: IdentityKind, id: string, f
     )) return {status:"unavailable"};
 
     const safeAccess = access.map(row => {
-      const optional = kind === "guest" && row.guestSource === "consented";
       const detail = kind === "guest" ? [
         row.detail,
-        optional ? safeGuestDeviceDescription(row.deviceLabel, "deviceLabel") : null,
-        optional ? safeGuestDeviceDescription(row.browser, "browser") : null,
-        optional ? safeGuestDeviceDescription(row.os, "os") : null,
+        safeGuestDeviceDescription(row.deviceLabel, "deviceLabel"),
+        safeGuestDeviceDescription(row.browser, "browser"),
+        safeGuestDeviceDescription(row.os, "os"),
         recordedGuestAccessLocation(row) ?? "Location unavailable",
       ].filter(Boolean).join(" · ") : row.detail;
       return {id: row.id, at: row.at, label: row.label, detail};

@@ -20,6 +20,18 @@ export async function loadAdminHistoryDirectory(section, query, now) {
 
 export async function loadAdminGuestAccessHistory(id, query) {
   const now = new Date();
+  if (id === "22345678-1234-4123-8123-123456789abc") {
+    const observed = [
+      { key: "desktop", platform: "Desktop web", deviceLabel: "Windows computer", os: "Windows", browser: "Chrome 140" },
+      { key: "mobile", platform: "Mobile web", deviceLabel: "iPhone", os: "iOS", browser: "Safari 18" },
+      { key: "ios", platform: "iOS app", deviceLabel: "iOS device", os: "iOS", browser: null },
+      { key: "android", platform: "Android app", deviceLabel: "Android device", os: "Android", browser: null },
+      // Legacy website evidence never recorded a device/browser: it stays unknown.
+      { key: "web", platform: "Website", deviceLabel: null, os: null, browser: null },
+    ].map((record, i) => ({ ...record, id: "observed-" + record.key, source: "operational", evidence: "search", locationLabel: "Nigeria", at: new Date(+now - i * 1000) }));
+    const records = observed.filter(record => !query.platform || query.platform === "all" || query.platform === record.key);
+    return { status: "ok", records, total: records.length, firstSeenAt: records.at(-1)?.at ?? null, lastSeenAt: records[0]?.at ?? null };
+  }
   const consented = id === "qa-page-history-guest";
   const operational = id === "12345678-1234-4123-8123-123456789abc";
   const platform = consented ? "ios" : "android";
@@ -28,7 +40,7 @@ export async function loadAdminGuestAccessHistory(id, query) {
     ? Array.from({ length: consented ? 2 : 1 }, (_, i) => ({
       id: "access-" + i, source, evidence: consented ? "page" : "search",
       platform: consented ? "iOS app" : "Android app", at: new Date(+now - i * 1000),
-      deviceLabel: consented ? "iOS device" : null, os: consented ? "iOS" : null, browser: null, locationLabel: operational ? "Nigeria" : null,
+      deviceLabel: consented ? "iOS device" : "Android device", os: consented ? "iOS" : "Android", browser: null, locationLabel: operational ? "Nigeria" : null,
     })) : [];
   return { status: "ok", records: records.slice((query.page - 1) * 20, query.page * 20), total: records.length,
     firstSeenAt: records.at(-1)?.at ?? null, lastSeenAt: records[0]?.at ?? null };
