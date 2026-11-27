@@ -60,8 +60,13 @@ export function botHref(path: string, current: URLSearchParams, changes: Record<
   return params.size ? path + "?" + params.toString() : path;
 }
 
-export function botName(bot: { group: string; name: string | null }) {
-  return bot.group === "UNKNOWN" ? "Unknown bot" : knownCrawler(bot.name)?.agent ?? bot.name ?? "Unnamed bot";
+/** Unknown registry keys retain the declared token even after activity retention expires.
+ * They are attribution evidence only: never use this display name to approve a bot. */
+export function botName(bot: { group: string; name: string | null; identityKey?: string }) {
+  if (bot.group !== "UNKNOWN") return knownCrawler(bot.name)?.agent ?? bot.name ?? "Unnamed bot";
+  const token = bot.identityKey?.startsWith("UNKNOWN:") ? bot.identityKey.slice("UNKNOWN:".length) : null;
+  if (!token || token === "UNATTRIBUTED") return "Unknown bot";
+  return knownCrawler(token)?.agent ?? (/^[A-Z0-9_-]{2,48}(?:BOT|CRAWLER|SPIDER)$/.test(token) ? token : "Unknown bot");
 }
 
 /** Keep the full registry ID for navigation and details, not the directory subtitle. */
@@ -69,7 +74,8 @@ export function botDirectorySubtitle(bot: { id: string; group: string; owner: st
   return bot.group !== "UNKNOWN" && bot.owner ? bot.owner : "Ref: " + bot.id.slice(0, 8);
 }
 
-export function botType(category: string | null) {
+export function botType(category: string | null, group?: string) {
+  if (group === "UNKNOWN") return "Unknown";
   const labels: Record<string, string> = {
     search: "Search engine", ai: "AI crawler & retrieval", social: "Social media & Meta",
     google: "Google additional services", seo: "SEO tools", archive: "Archiving",
