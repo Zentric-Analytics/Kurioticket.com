@@ -174,7 +174,8 @@ jobs:
         run: |
           BOT_TEST_DATABASE_URL="$DATABASE_URL" node --test --import jiti/register \
             src/lib/botPolicy.test.ts src/lib/verifiedSearchCrawler.test.ts src/lib/searchCrawlerGate.test.ts \
-            src/lib/operatorCrawlerNetwork.test.ts src/lib/renderBotEvidence.test.ts src/services/botActivityStore.test.ts
+            src/lib/operatorCrawlerNetwork.test.ts src/lib/renderBotEvidence.test.ts src/lib/botReportNetwork.test.ts \
+            src/services/botActivityStore.test.ts src/services/recordedBotSearchHistory.test.ts
 
       - name: Validate live guest country on disposable PostgreSQL
         env:

@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { BotReportFilters } from "@/components/admin/BotReportFilters";
 import { BOT_DECISIONS, BOT_DIRECTORY, BOT_KINDS, botAccessLabel, botDirectoryHref, botDirectoryTime, botFilters, botLabel, botName, botTime, botType, botVerification, type BotQuery } from "@/lib/adminBotReport";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
+import { searchDetailCrawlerName, searchDetailCrawlerEvidenceLabel } from "@/lib/adminSearchDetailPresentation";
 import { readBotDetails } from "@/services/adminBotReportService";
 import { BOT_DAILY_SEARCH_LIMIT, BOT_SEARCH_COOLDOWN_MS } from "@/services/botActivityStore";
 import { BotIcon, Metrics, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel, reportRow } from "../report-ui";
@@ -50,7 +51,11 @@ export default async function BotDetailsPage({ params, searchParams }: {
   const activityParams = new URLSearchParams(Object.entries({
     directory, range: filters.range, from: filters.from, to: filters.to,
     kind: filters.kind ?? "", decision: filters.decision ?? "",
+    searchPage: report.searchPage > 1 ? String(report.searchPage) : "",
   }).filter(([, value]) => value));
+  const searchParamsForPagination = new URLSearchParams(activityParams);
+  if (report.page > 1) searchParamsForPagination.set("page", String(report.page));
+  const searchHref = (searchId: string) => "/admin/searches/" + encodeURIComponent(searchId) + "?environment=" + getPublicEnvironment();
   return <div className="min-w-0 space-y-3">
     <header className="space-y-3">
       {backLink}
@@ -67,12 +72,26 @@ export default async function BotDetailsPage({ params, searchParams }: {
         ["Owner", bot.owner],
         ["Category", botType(bot)],
         ["Verification status", botVerification(bot.verification)],
-        ["IP addresses", observed(observations.map(row => row.ip))],
-        ["Countries", observed(observations.map(row => row.country))],
+        ["IP addresses", observed([
+          ...observations.map(row => row.ip ?? (row.renderLogIp ? row.renderLogIp + " (Render log)" : row.reportedIp ? row.reportedIp + " (reported)" : null)),
+          ...report.searchEvidence.map(row => row.ipAddress ? row.ipAddress + " (recorded search)" : null),
+        ])],
+        ["Countries", observed([
+          ...observations.map(row => row.country ?? (row.renderLogCountry ? row.renderLogCountry + " (IP estimate)" : row.reportedCountry ? row.reportedCountry + " (reported)" : null)),
+          ...report.searchEvidence.map(row => row.countryCode ? row.countryCode + " (recorded search)" : null),
+        ])],
         ["First seen (UTC)", <span key="first-seen" title={botTime(bot.firstSeen)}>{botDirectoryTime(bot.firstSeen)}</span>],
         ["Last seen (UTC)", <span key="last-seen" title={botTime(bot.lastSeen)}>{botDirectoryTime(bot.lastSeen)}</span>],
       ]} />
-      <p className="text-xs text-slate-600">IP addresses and countries are based on up to 20 most recent recorded requests.</p>
+      <p className="text-xs text-slate-600">Network information includes up to 20 recent requests and 20 recorded searches with saved evidence for this identity. Reported and historical evidence does not establish current authenticity.</p>
+      {bot.requests === BigInt(0) && report.actual > 0 && <p className="text-xs text-slate-600">Historical search identity. No retained live requests have established its current verification.</p>}
+      {report.relatedCohorts.length > 0 && <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
+        <span>Other recorded identities with the same declared name:</span>
+        {report.relatedCohorts.map(cohort => <Link key={cohort.id} prefetch={false} className={reportLink}
+          href={BOT_DIRECTORY + "/" + cohort.id + (directory ? "?directory=" + encodeURIComponent(directory) : "")}>
+          {botVerification(cohort.verification)} · {cohort.count.toLocaleString()} searches
+        </Link>)}
+      </div>}
       {bot.group === "UNKNOWN" && <p className="text-xs text-slate-600">This reference groups observations that may come from multiple clients.</p>}
     </Section>
     <Section title="Activity Summary">
@@ -80,7 +99,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
       <Metrics labels={["Total requests", "Allowed requests", "Denied requests", "Rate-limited requests", "Search attempts", "Searches dispatched", "Policy violations"]}
         values={[bot.requests, bot.allowed, bot.denied, bot.rateLimited, bot.searchAttempts, bot.searches, bot.violations]} />
       <div className="border-t border-[#D8E1EC] pt-3">
-        <Metrics labels={["Actual searches linked to retained activity"]} values={[report.actual]} />
+        <Metrics labels={["Actual searches (all time)"]} values={[report.actual]} />
       </div>
     </Section>
     {quota && <Section title="Search Allowance">
@@ -92,6 +111,34 @@ export default async function BotDetailsPage({ params, searchParams }: {
       <progress aria-label="Daily search allowance used" className="block h-2 w-full max-w-64 accent-[#004BB8]" max={BOT_DAILY_SEARCH_LIMIT} value={quota.used} />
       <p className="text-xs text-slate-600">Flights, Hotels, Cars and Packages share the allowance. It resets at midnight UTC and the cooldown continues across midnight.</p>
     </Section>}
+    <Section title="Recorded Searches">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
+        <span>All time · Actual searches only · One row per counted Search History record</span>
+        <Link prefetch={false} className={reportLink} href="/admin/searches/activity?identity=bot&range=all">View all bot searches</Link>
+      </div>
+      <div className={reportPanel}>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[850px] text-left text-[13px] text-slate-700">
+            <thead className={reportHead}><tr>{["Time (UTC)", "Bot", "Product", "Verification at search", "IP address", "Country", "Outcome / Results", "Action"].map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead>
+            <tbody>
+              {report.recordedSearches.map(search => <tr key={search.id} className={reportRow + " align-top"}>
+                <td className="whitespace-nowrap tabular-nums">{botTime(search.createdAt)}</td>
+                <td>{searchDetailCrawlerName(search.crawler?.name)}</td>
+                <td>{botLabel(search.product)}</td>
+                <td>{searchDetailCrawlerEvidenceLabel(search.crawler?.evidence)}</td>
+                <td className="break-all">{search.network.ipAddress ?? "Not recorded"}</td>
+                <td>{search.network.countryCode ?? "Not recorded"}</td>
+                <td>{botLabel(search.status)} · {search.resultCount.toLocaleString()}</td>
+                <td><Link prefetch={false} className={reportLink} href={searchHref(search.id)}>View details</Link></td>
+              </tr>)}
+              {report.actual === 0 && <tr><td colSpan={8} className="px-3 py-5">No actual searches recorded for this identity</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        {report.actual > 0 && <ReportPagination path={BOT_DIRECTORY + "/" + bot.id} params={searchParamsForPagination}
+          page={report.searchPage} total={report.actual} label="Recorded searches" pageParam="searchPage" />}
+      </div>
+    </Section>
     <Section title="Activity History">
       <p className="text-xs text-slate-600">Retained requests, newest first. Allowed public requests record access decisions at ingress. Page delivery and indexing are outside these observations.</p>
       <BotReportFilters filters={filters} now={new Date().toISOString()} history />
@@ -121,6 +168,10 @@ export default async function BotDetailsPage({ params, searchParams }: {
                           ["Network ASN", event.networkAsn ? "AS" + event.networkAsn : null], ["Network organization", event.networkOrganization],
                           ["Network evidence source", event.networkSource ? botLabel(event.networkSource) : null], ["Cloudflare Ray ID", event.edgeRay],
                           ["Render request ID", event.renderRequestId],
+                          ...(event.reportedIp ? [
+                            ["Reported IP (not authenticated)", event.reportedIp],
+                            ["Reported country (not authenticated)", event.reportedCountry],
+                          ] as [string, ReactNode][] : []),
                           ...(event.renderLogIp ? [
                             ["IP address from Render log", event.renderLogIp],
                             ["Country estimate from logged IP", event.renderLogCountry],

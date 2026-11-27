@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
+import { botReportNetwork } from "@/lib/botReportNetwork";
 import type { botTarget, observeBot } from "@/lib/botPolicy";
 
 type Bot = Awaited<ReturnType<typeof observeBot>>;
@@ -26,6 +27,8 @@ export function nextSearchTime(now: Date, latest: Date | undefined, used: number
 
 export async function recordBotAttempt(request: Request, bot: Bot, target: Target, reason: string | null, edgeBlock?: { id: string; status: number; timestamp: Date }) {
   const environment = getPublicEnvironment();
+  // Do not apply fallback observations to imported denials or overwrite authenticated evidence.
+  const reportNetwork = !edgeBlock && !bot.ip ? botReportNetwork(request, environment) : {};
   // Render emits the same Rndr-Id as requestID in the public HTTP request log.
   // Imported edge denials never reached this service as an original request.
   const trace = edgeBlock ? null : request.headers.get("rndr-id");
@@ -64,6 +67,7 @@ export async function recordBotAttempt(request: Request, bot: Bot, target: Targe
         endpoint: target.endpoint, kind: target.kind, product: target.product, method,
         declaredName: bot.declaredName, verification: bot.verification, evidence: bot.evidence,
         renderRequestId, ip: bot.ip, country: bot.country, userAgent: bot.userAgent, edgeRay: bot.edgeRay,
+        ...reportNetwork,
         networkAsn: bot.networkAsn, networkOrganization: bot.networkOrganization, networkSource: bot.networkSource,
         decision: throttled ? "RATE_LIMITED" : reason ? "DENIED" : searchPending ? "PENDING" : "ALLOWED",
         reason: reason ?? (throttled ? "CRAWL_LIMIT" : searchPending ? "VALIDATION_PENDING" : "PUBLIC_CRAWL"),

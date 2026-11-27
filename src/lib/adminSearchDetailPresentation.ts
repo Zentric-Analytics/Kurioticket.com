@@ -32,6 +32,7 @@ const crawlerNames: Readonly<Record<string, string>> = {
   GOOGLEBOT: "Googlebot",
   BINGBOT: "Bingbot",
   GOOGLEOTHER: "GoogleOther",
+  GOOGLE_CRAWLER_UNRESOLVED: "Unresolved Google crawler",
   GOOGLE_INSPECTION_TOOL: "Google-InspectionTool",
   MEDIAPARTNERS_GOOGLE: "Mediapartners-Google",
   PERPLEXITYBOT: "PerplexityBot",

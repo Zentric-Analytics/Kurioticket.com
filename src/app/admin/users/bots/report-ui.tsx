@@ -27,17 +27,17 @@ export function ReportUnavailable() {
   return <p role="status" className={reportPanel + " p-4 text-sm text-slate-700"}>Bot reporting is temporarily unavailable.</p>;
 }
 
-export function ReportPagination({ path, params, page, total, label }: {
-  path: string; params: URLSearchParams; page: number; total: number; label: string;
+export function ReportPagination({ path, params, page, total, label, pageParam = "page" }: {
+  path: string; params: URLSearchParams; page: number; total: number; label: string; pageParam?: "page" | "searchPage";
 }) {
   const pages = Math.ceil(total / BOT_PAGE_SIZE);
   return (
     <nav aria-label={label + " pagination"} className="flex flex-wrap items-center justify-between gap-2 border-t border-[#D8E1EC] px-3 py-2 text-xs text-slate-600">
       <span>{numberFormat.format((page - 1) * BOT_PAGE_SIZE + 1)}–{numberFormat.format(Math.min(page * BOT_PAGE_SIZE, total))} of {numberFormat.format(total)}</span>
       {pages > 1 && <div className="flex items-center gap-4">
-        {page > 1 && <Link scroll={false} prefetch={false} className={reportLink} href={botHref(path, params, { page: page > 2 ? String(page - 1) : "" })}>Previous</Link>}
+        {page > 1 && <Link scroll={false} prefetch={false} className={reportLink} href={botHref(path, params, { [pageParam]: page > 2 ? String(page - 1) : "" })}>Previous</Link>}
         <span>Page {page} of {pages}</span>
-        {page < pages && <Link scroll={false} prefetch={false} className={reportLink} href={botHref(path, params, { page: String(page + 1) })}>Next</Link>}
+        {page < pages && <Link scroll={false} prefetch={false} className={reportLink} href={botHref(path, params, { [pageParam]: String(page + 1) })}>Next</Link>}
       </div>}
     </nav>
   );

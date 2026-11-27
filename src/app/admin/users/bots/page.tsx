@@ -32,6 +32,10 @@ export default async function BotManagementPage({ searchParams }: { searchParams
             <span className="text-right text-[11px] text-slate-600">{period} · UTC</span>
           </div>
           <Metrics labels={["Total requests", "Actual searches", "Denied requests", "Rate-limited requests"]} values={report.activity} />
+          {report.unassignedSearches > BigInt(0) && <p className="text-xs text-slate-600">
+            {report.unassignedSearches.toLocaleString()} recorded searches have no matching registry identity.{" "}
+            <Link className={reportLink} href="/admin/searches/activity?identity=bot&range=all">View all bot searches</Link>
+          </p>}
         </div>
       </section>}
       <BotReportFilters filters={filters} now={now.toISOString()} />
