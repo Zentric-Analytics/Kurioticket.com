@@ -4,7 +4,7 @@ import { z } from "zod";
 import { botTarget } from "@/lib/botPolicy";
 import { botNetworkAsn, botNetworkOrganization } from "@/lib/botEdge";
 import { declaredSearchCrawler } from "@/lib/searchCrawlerGate";
-import { knownCrawler } from "@/lib/botRegistry";
+import { recognizedCrawler, crawlerPolicy } from "@/lib/botRegistry";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { BOT_ACTIVITY_RETENTION_DAYS, pruneBotActivity, recordBotAttempt } from "@/services/botActivityStore";
 
@@ -61,12 +61,12 @@ export async function POST(request: Request) {
     const observation = new Request("https://bot-event.invalid" + row.path, { method: row.method });
     const target = botTarget(observation);
     const declaredName = declaredSearchCrawler(row.userAgent ?? null);
-    const catalog = knownCrawler(declaredName);
+    const catalog = recognizedCrawler(declaredName);
     const id = "edge:" + getPublicEnvironment() + ":" + row.ray;
     await recordBotAttempt(observation, {
       crawler: null,
       identityKey: "UNKNOWN:" + (declaredName ?? "UNATTRIBUTED"),
-      name: null, group: "UNKNOWN", category: null, owner: null, access: "BLOCKED",
+      name: declaredName, ...crawlerPolicy(declaredName, false),
       verification: catalog ? "SUSPICIOUS" : "UNVERIFIED",
       evidence: "CLOUDFLARE_BLOCKED_EVENT",
       declaredName, userAgent: catalog?.agent ?? declaredName,
