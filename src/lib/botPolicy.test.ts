@@ -70,5 +70,60 @@ test("only the authenticated edge can supply a correlatable Ray ID and automatio
   assert.equal(trustedBotEdge(request("/", "Mozilla/5.0", "GET", headers)), null);
   assert.deepEqual(trustedBotEdge(request("/", "Mozilla/5.0", "GET", { ...headers, "X-Kurioticket-Edge-Auth": secret })), {
     ray: "1234567890abcdef", ip: "192.0.2.1", country: "GB", automated: true,
+    networkAsn: null, networkOrganization: null,
   });
+});
+
+test("authenticated original network evidence is collected for every catalog category and unknown bots without changing policy", async (t) => {
+  const previous = process.env.BOT_EDGE_SECRET;
+  const secret = "fixture".repeat(5);
+  process.env.BOT_EDGE_SECRET = secret;
+  t.after(() => {
+    if (previous === undefined) delete process.env.BOT_EDGE_SECRET;
+    else process.env.BOT_EDGE_SECRET = previous;
+  });
+  const headers = {
+    "X-Kurioticket-Edge-Auth": secret, "X-Kurioticket-Edge-Version": "1",
+    "X-Kurioticket-Edge-IP": "192.0.2.1", "X-Kurioticket-Edge-Country": "GB",
+    "X-Kurioticket-Edge-Ray": "1234567890abcdef-LHR", "X-Kurioticket-Edge-ASN": "64512",
+    "X-Kurioticket-Edge-Organization": encodeURIComponent("Example Network"),
+    "CF-Connecting-IP": "2a06:98c0:3600::103", "CF-IPCountry": "US",
+  };
+  // Search-engine DNS verification is covered independently; no external
+  // DNS calls are needed to check the network evidence handoff.
+  for (const entry of Object.values(crawlerCatalog).filter(entry => entry.category !== "search")) {
+    const req = request("/", entry.agent, "GET", headers);
+    const bot = await observeBot(req, automationSignal(req)!);
+    assert.equal(bot.group, "OTHER_RECOGNIZED");
+    assert.equal(bot.ip, "192.0.2.1");
+    assert.equal(bot.country, "GB");
+    assert.equal(bot.edgeRay, "1234567890abcdef");
+    assert.equal(bot.networkAsn, "64512");
+    assert.equal(bot.networkOrganization, "Example Network");
+    assert.equal(bot.networkSource, "AUTHENTICATED_EDGE");
+    assert.equal(botAccess(bot, botTarget(req)), null);
+    assert.equal(botAccess(bot, botTarget(request("/api/flights/search", entry.agent, "POST"))), "SEARCH_NOT_ALLOWED");
+  }
+  for (const agent of ["MJ12bot", "python-requests/2.0"]) {
+    const req = request("/robots.txt", agent, "GET", headers);
+    const bot = await observeBot(req, automationSignal(req)!);
+    assert.equal(bot.group, "UNKNOWN");
+    assert.equal(bot.access, "BLOCKED");
+    assert.equal(botAccess(bot, botTarget(req)), "UNAPPROVED_BOT");
+    assert.equal(bot.ip, "192.0.2.1");
+    assert.equal(bot.networkAsn, "64512");
+    assert.equal(bot.networkOrganization, "Example Network");
+    assert.equal(bot.userAgent, agent === "MJ12bot" ? "MJ12BOT" : null);
+  }
+  assert.equal(trustedBotEdge(request("/", "MJ12bot", "GET", { ...headers, "X-Kurioticket-Edge-Auth": "forged" })), null);
+  assert.equal(trustedBotEdge(request("/", "MJ12bot", "GET", { ...headers, "X-Kurioticket-Edge-Version": "2" })), null);
+  const incomplete = trustedBotEdge(request("/", "MJ12bot", "GET", { ...headers,
+    "X-Kurioticket-Edge-IP": "", "X-Kurioticket-Edge-Country": "XX",
+    "X-Kurioticket-Edge-ASN": "4294967296", "X-Kurioticket-Edge-Organization": "%00invalid",
+  }));
+  assert.equal(incomplete?.ip, null, "Never fall back to rewritten proxy IP");
+  assert.equal(incomplete?.country, null);
+  assert.equal(incomplete?.networkAsn, null);
+  assert.equal(incomplete?.networkOrganization, null);
+  assert.equal(automationSignal(request("/", "Mozilla/5.0 Chrome/133.0", "GET", headers)), null);
 });
