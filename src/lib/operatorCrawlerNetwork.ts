@@ -1,6 +1,8 @@
 import { BlockList, isIP } from "node:net";
 
 const sources = new Map([
+  // Google's official common-crawler feed, not its general cloud IP space.
+  ["GOOGLEBOT", "https://developers.google.com/crawling/ipranges/common-crawlers.json"],
   ["BINGBOT", "https://www.bing.com/toolbox/bingbot.json"],
   ["CHATGPT_USER", "https://openai.com/chatgpt-user.json"],
   ["GPTBOT", "https://openai.com/gptbot.json"],
@@ -40,7 +42,9 @@ async function loadRanges(url: string): Promise<BlockList | null> {
   return ranges;
 }
 
-/** Checks the provider's published crawler network using the authenticated ingress IP. */
+/** Whether an address is in the provider's official crawler feed. Callers
+ * must establish IP provenance independently before using this for identity
+ * verification or access decisions. Report-only callers must not promote it. */
 export async function confirmedOperatorNetwork(token: string | null, ip: string | null) {
   const url = token && sources.get(token);
   if (!url || !ip || !isIP(ip)) return false;
