@@ -61,8 +61,15 @@ export async function readBotDirectory(raw: BotQuery) {
       // A date filter includes searches recorded before BotActivity existed.
       // All time still includes every registry identity, even after pruning.
       const historicalKeys = timestamp ? await db.$queryRaw<{ identityKey: string }[]>(Prisma.sql`
-        SELECT DISTINCT "identityKey" FROM (${historicalBotSearches(environment)}) history
+        SELECT "identityKey" FROM (${historicalBotSearches(environment)}) history
         WHERE TRUE ${botHistoryWindow(filters.window ?? undefined)}
+        UNION
+        SELECT b."identityKey" FROM "SearchHistory" s
+        JOIN "BotActivity" a ON a.id = s."requestId" AND a.environment = ${environment}
+        JOIN "BotRegistry" b ON b.id = a."botId" AND b.environment = ${environment}
+        WHERE s.query->>'environment' = ${environment}
+          AND s.query->>'applicationSource' = 'BOT' AND s."countAsSearch" = TRUE
+          AND s."createdAt" >= ${timestamp.gte} AND s."createdAt" < ${timestamp.lt}
       `) : [];
       const where: Prisma.BotRegistryWhereInput = {
         environment, AND: searchIdentity(filters.query),
