@@ -28,7 +28,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import {
   ArrowRightLeft,
   ArrowUp,
@@ -138,11 +138,6 @@ import {
   type FlightResultsReturnView,
 } from "@/lib/flights/flightResultsReturnView";
 import { isFlightResultsPreparing } from "@/components/results/flightResultsReadiness";
-import {
-  readSavedItemIds,
-  toggleSavedItemId,
-  writeSavedItemIds,
-} from "@/lib/saved-items-local";
 import {
   deleteBackendDiscovery,
   fetchBackendSavedDiscoveries,
@@ -1887,7 +1882,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     const timeoutId = window.setTimeout(() => {
       setBackendSavedItemIds({});
-      setSavedItemIds(readSavedItemIds());
+      setSavedItemIds([]);
     }, 0);
     return () => window.clearTimeout(timeoutId);
   }, [guidedMode, refreshBackendSavedItems, sessionStatus]);
@@ -2376,14 +2371,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     event.preventDefault();
     event.stopPropagation();
 
+    if (sessionStatus === "loading") return;
     if (sessionStatus !== "authenticated") {
-      const next = toggleSavedItemId(savedItemIds, itemId);
-      if (!writeSavedItemIds(next)) {
-        setSavedItemError("Unable to update saved items on this device.");
-        return;
+      try {
+        await signIn(undefined, { callbackUrl: window.location.href });
+      } catch {
+        setSavedItemError("Unable to open sign-in. Please try again.");
       }
-      setSavedItemError("");
-      setSavedItemIds(next);
       return;
     }
 

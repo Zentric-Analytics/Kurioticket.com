@@ -5,6 +5,8 @@ const EXACT_MIGRATION_PATHS = new Set([
   ".github/workflows/migration-validation.yml",
   "package-lock.json",
   "package.json",
+  "src/services/recordedBotSearchHistory.ts",
+  "src/services/recordedBotSearchHistory.test.ts",
   "tools/cloudflare/bot-edge.mjs",
   "tools/cloudflare/bot-edge.test.mjs",
   "prisma.config.ts",
