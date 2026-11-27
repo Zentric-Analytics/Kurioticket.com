@@ -311,11 +311,12 @@ test("an action opened after refresh starts stays visible when the pending paylo
   });
 });
 
-test("explicit filter or identity navigation takes precedence over a held activity payload", async () => {
+test("explicit filter or identity navigation clears the reviewed scope and accepts updates on return", async () => {
   for (const pathname of ["/admin/users/user/fixture-account/activity", "/admin/users/user/other-account/activity"]) {
     await withComponentBrowser(activityBundle(), reviewFixtureSetup(true), async page => {
       await page.clock.install();
       await page.evaluate(() => (window as unknown as FixtureWindow).fixtureMount());
+      const original = new URL(page.url());
       const reviewed = page.locator('[data-activity-id="record-4"]');
       await reviewed.locator("summary").click();
       await expect(page.getByTestId("users-live-refresh-status")).toHaveText("Updates paused while reviewing details");
@@ -325,6 +326,19 @@ test("explicit filter or identity navigation takes precedence over a held activi
       assert.equal(new URL(page.url()).pathname, pathname);
       assert.equal(new URL(page.url()).searchParams.get("range"), "7d");
       await expect(page.getByTestId("users-live-refresh-status")).toHaveText("Updates automatically");
+      await page.evaluate(({ pathname, query }) => (window as unknown as FixtureWindow).fixtureNavigate(pathname, query),
+        { pathname: original.pathname, query: original.search.slice(1) });
+      await expect(page.locator('[data-activity-id] details[open]')).toHaveCount(0);
+      await expect(page.getByTestId("users-live-refresh-status")).toHaveText("Updates automatically");
+      assert.equal(page.url(), original.href);
+      await page.evaluate(() => {
+        (window as unknown as FixtureWindow).fixtureNext = { count: 1, rows: ["newly-recorded-page"] };
+      });
+      await page.clock.runFor(15_100);
+      await expectRefreshProgress(page, 1, 1);
+      await expect(page.locator('[data-activity-id="newly-recorded-page"]')).toHaveCount(1);
+      await expect(page.locator('[data-activity-id="record-9"]')).toHaveCount(0);
+      assert.equal(page.url(), original.href);
     });
   }
 });

@@ -49,6 +49,9 @@ export function AdminUsersLiveRefresh({ children }: { children: ReactNode }) {
   const [observation, setObservation] = useState<{ scope: string; state: AdminUsersRefreshState }>({ scope, state: "live" });
   const state = observation.scope === scope ? observation.state : "live";
   const [review, setReview] = useState({ scope, open: false });
+  // The shared layout survives navigation. Discard the previous route's review
+  // so returning to it cannot revive a pause after its disclosure was removed.
+  if (review.scope !== scope) setReview({ scope, open: false });
   const reviewingActivity = review.scope === scope && review.open;
   const [committedContent, setCommittedContent] = useState({ scope, children });
   // A server refresh may already be pending when an action is opened. Keep

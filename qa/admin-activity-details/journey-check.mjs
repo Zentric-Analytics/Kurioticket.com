@@ -108,6 +108,36 @@ try {
   assert.equal(scopedAccount.searchParams.get("to"),"2026-10-23T00:00:00.000Z");
   assert.equal(scopedAccount.searchParams.get("product"),"FLIGHT");
   assert.equal(scopedAccount.searchParams.get("stage"),"ACCOUNT_ACTIVITY");
+  await page.screenshot({caret:"initial",path:output+"/journey-history-1280.png",fullPage:true});
+  // The same real history route must retain its responsive record cells and
+  // usable actions on phones, including the narrowest supported viewport.
+  for(const width of [390,320]) {
+    await page.setViewportSize({width,height:900});
+    const historyTable=page.getByRole("region",{name:"Journey history table",exact:true});
+    await expect(historyTable.getByRole("link",{name:"View journey",exact:true}).first()).toBeVisible();
+    const layout=await historyTable.evaluate(region=>{
+      const table=region.querySelector("table");
+      const firstRow=region.querySelector("tbody tr");
+      return {viewport:innerWidth,documentWidth:document.documentElement.scrollWidth,
+        available:region.clientWidth,content:region.scrollWidth,tableWidth:table?.getBoundingClientRect().width,
+        rowDisplay:firstRow ? getComputedStyle(firstRow).display : null,
+        overflowingCells:[...region.querySelectorAll("tbody td")].filter(cell=>cell.scrollWidth>cell.clientWidth+1)
+          .map(cell=>({label:cell.getAttribute("data-label"),width:cell.clientWidth,content:cell.scrollWidth}))};
+    });
+    assert.equal(layout.rowDisplay,"grid","Journey records use their phone layout: "+JSON.stringify(layout));
+    assert.ok(layout.documentWidth<=layout.viewport+1 && layout.content<=layout.available+1
+      && layout.tableWidth<=layout.available+1,"Journey history fits the phone viewport: "+JSON.stringify(layout));
+    assert.deepEqual(layout.overflowingCells,[],"Journey history cells retain all content without horizontal overflow");
+    await expect(page.getByRole("link",{name:"View other activity",exact:true})).toBeVisible();
+    await page.evaluate(()=>window.scrollTo({top:0,left:0,behavior:"instant"}));
+    await page.screenshot({caret:"initial",path:output+"/journey-history-"+width+".png",fullPage:true});
+  }
+  await page.getByRole("link",{name:"View other activity",exact:true}).click();
+  await expect(page).toHaveURL(url=>url.pathname===scopedAccount.pathname
+    && ["range","from","to","product","stage"].every(key=>url.searchParams.get(key)===scopedAccount.searchParams.get(key)));
+  await expect(page.getByRole("heading",{name:"All activity",exact:true})).toBeVisible();
+  console.log("PASS Journey history at390/320 and scoped footer return to the same identity/date/product");
+  await page.setViewportSize({width:1280,height:900});
   // The legacy 90-day journey preset has no Activity preset equivalent.
   // Its link must retain the exact validated interval as a custom period.
   const ninetyDayStarted = Date.now();
