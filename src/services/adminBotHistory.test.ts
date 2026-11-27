@@ -13,6 +13,7 @@ test("historical evidence is display-only, and All time has no date cutoff", () 
   assert.equal(botRecordedVerification({ verification: "VERIFIED", requests: BigInt(0) }), "Verified (historical searches)");
   assert.equal(botRecordedVerification({ verification: "DECLARED", requests: BigInt(5) }), "Unverified (self-declared)");
   assert.equal(botRecordedAccess({ access: "CRAWL_AND_LIMITED_SEARCH", requests: BigInt(0) }), "Historical record");
+  assert.equal(botRecordedAccess({ access: "BLOCKED", requests: BigInt(0) }), "Blocked");
   assert.equal(historicalVerificationLabel("VERIFIED_DNS"), "DNS verified at search time");
 });
 
@@ -44,8 +45,9 @@ test("PostgreSQL combines all historical searches and live activity without dupl
     { id: deniedId, botId: verifiedId, environment, timestamp: recent, endpoint: "/private", method: "GET", kind: "PAGE", verification: "VERIFIED", decision: "DENIED", reason: "PATH_NOT_ALLOWED" },
   ] });
   const base = { environment, applicationSource: "BOT", identifiedCrawler: "GOOGLEBOT", verifiedCrawler: "GOOGLEBOT", crawlerEvidence: "VERIFIED_DNS", searchNetwork: { ipAddress: "8.8.8.8", countryCode: "US" } };
-  const rows = await db.searchHistory.createManyAndReturn({ data: [
-    { type: "FLIGHT", query: base, createdAt: old },
+  const savedSearchId = "bot-history-" + randomUUID();
+  await db.searchHistory.createMany({ data: [
+    { id: savedSearchId, type: "FLIGHT", query: base, createdAt: old },
     { type: "HOTEL", query: { ...base, crawlerEvidence: "VERIFIED_IP_RANGE" }, createdAt: old },
     { type: "CAR", query: { ...base, verifiedCrawler: "BINGBOT" }, createdAt: old },
     { type: "CAR", query: { ...base, crawlerEvidence: "DECLARED_USER_AGENT" }, createdAt: old },
@@ -62,7 +64,7 @@ test("PostgreSQL combines all historical searches and live activity without dupl
   assert.equal(historical.filter(row => row.identityKey === "UNKNOWN:UNATTRIBUTED").length, 1);
   assert.ok(historical.every(row => row.requestId !== linkedId));
   assert.deepEqual(historical.filter(row => row.identityKey === "UNKNOWN:GOOGLEBOT").map(row => row.evidence).sort(), ["DECLARED_USER_AGENT", null].sort());
-  assert.ok(historical.some(row => row.id === rows[0].id && botSearchNetwork(row.network).countryCode === "US"));
+  assert.ok(historical.some(row => row.id === savedSearchId && botSearchNetwork(row.network).countryCode === "US"));
   const timeline = (filters: Parameters<typeof combinedBotHistory>[3]) => db.$queryRaw<BotHistoryPointer[]>(Prisma.sql`
     SELECT * FROM (${combinedBotHistory(environment, verifiedId, "SEARCH_ENGINE:GOOGLEBOT", filters)}) t ORDER BY timestamp DESC, source DESC, id DESC
   `);
