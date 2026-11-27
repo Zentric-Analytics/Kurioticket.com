@@ -120,3 +120,11 @@ test("full migration failures remain authoritative", () => {
   assert.match(workflow, /exit 1/u);
   assert.doesNotMatch(workflow, /continue-on-error:\s*true/u);
 });
+
+test("flight cache changes require disposable PostgreSQL certification", () => {
+  for (const prefix of ["src/lib/searchCache", "src/lib/search/cacheWriteGate"]) {
+    for (const extension of [".ts", ".test.ts"]) assert.equal(isMigrationValidationPath(prefix + extension), true);
+    assert.ok(workflow.includes(prefix + "*|"));
+  }
+  assert.ok(workflow.includes('FLIGHT_CACHE_TEST_DATABASE_URL="$DATABASE_URL" node --test --import jiti/register src/lib/searchCache.postgres.test.ts'));
+});
