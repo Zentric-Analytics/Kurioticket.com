@@ -164,7 +164,11 @@ export function AdminUnifiedActivityList({ events, timeZone, environment, overvi
                     {event?.originalSearchIdentity === "guest" ? <span className="rounded bg-[#FFF8E8] px-1.5 py-0.5 text-[#89662D]">Search originally recorded as guest</span> : null}
                   </span> : null}
                 </span>
-                <ChevronRight size={16} aria-hidden="true" className="mt-0.5 shrink-0 text-[#94A3B8] transition-transform group-open:rotate-90"/>
+                {/* The 16px icon reaches roughly 23px across mid-rotation.
+                    Reserve that space so the animation stays inside the row. */}
+                <span className="flex h-5 w-6 shrink-0 items-center justify-center">
+                  <ChevronRight size={16} aria-hidden="true" className="text-[#94A3B8] transition-transform group-open:rotate-90"/>
+                </span>
               </summary>
               <EventDetails row={row} timeZone={timeZone} environment={environment} returnHref={returnHref} accessHref={accessHref}/>
             </details>

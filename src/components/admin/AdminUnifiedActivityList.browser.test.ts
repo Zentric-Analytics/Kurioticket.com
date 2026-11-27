@@ -66,6 +66,32 @@ for (const width of [390, 1280]) test(`activity details open by keyboard, retain
     await saved.locator("summary").focus();
     await page.keyboard.press("Enter");
     await expect(saved.locator("code")).not.toBeVisible();
-    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), "the action list must not overflow the viewport");
+    const viewportGeometry = () => page.evaluate(() => ({
+      viewport: window.innerWidth,
+      document: document.documentElement.scrollWidth,
+      mode: document.compatMode,
+      outside: [...document.querySelectorAll("[data-testid='unified-activity-list'], [data-testid='unified-activity-list'] *")]
+        .map(node => {
+          const rect = node.getBoundingClientRect();
+          const style = getComputedStyle(node);
+          return { tag: node.tagName, classes: node.getAttribute("class"), activity: node.closest("[data-activity-id]")?.getAttribute("data-activity-id"),
+            left: rect.left, right: rect.right, width: rect.width, clientWidth: node.clientWidth, scrollWidth: node.scrollWidth,
+            rotate: style.rotate, transform: style.transform };
+        }).filter(rect => rect.left < -1 || rect.right > window.innerWidth + 1),
+    }));
+    const closing = await viewportGeometry();
+    assert.ok(closing.document <= closing.viewport + 1, "the action list must not overflow the viewport: " + JSON.stringify(closing));
+
+    // A square has its widest transformed bounds at 45 degrees. Pause the
+    // real disclosure icon there to cover every intermediate animation frame
+    // without relying on wall-clock timing or removing its transition.
+    await saved.locator("summary .lucide-chevron-right").evaluate(node => {
+      const animation = node.animate([{ rotate: "45deg" }, { rotate: "45deg" }], { duration: 1000, fill: "both" });
+      animation.pause();
+      animation.currentTime = 500;
+    });
+    const midpoint = await viewportGeometry();
+    assert.ok(midpoint.document <= midpoint.viewport + 1, "the disclosure animation must not overflow the viewport at 45 degrees: " + JSON.stringify(midpoint));
+    await saved.locator("summary .lucide-chevron-right").evaluate(node => node.getAnimations().forEach(animation => animation.cancel()));
   }, width);
 });
