@@ -1,14 +1,14 @@
 import { z } from "zod";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { BOT_DIRECTORY, BOT_PAGE_SIZE, botFilters, type BotQuery } from "@/lib/adminBotReport";
-import { crawlerCatalog } from "@/lib/botRegistry";
+import { crawlerCatalog, recognizedCrawler } from "@/lib/botRegistry";
 import { getPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { Prisma } from "@/generated/prisma/client";
 import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { activityNetworkEvidence, botReportVerification, reportEvidenceSelect } from "@/lib/adminBotNetworkEvidence";
 import { recordedSearchCrawler } from "./adminOperationalReadCore";
-import { detailHistoryQuery, recordedBotSearchRows, type RecordedBotSearch } from "./recordedBotSearchHistory";
+import { detailHistoryQuery, recordedBotSearchRows, summarizeBotNetwork, type BotNetworkIpCandidate, type RecordedBotSearch } from "./recordedBotSearchHistory";
 import { botSearchNetwork, combinedBotHistory, type BotHistoryPointer, type HistoricalBotSearch } from "./adminBotHistory";
 import { BOT_DAILY_SEARCH_LIMIT, nextSearchTime, utcDayStart } from "./botActivityStore";
 
@@ -121,7 +121,6 @@ export async function readBotDirectory(raw: BotQuery) {
   }
 }
 
-type SearchEvidence = { createdAt: string; evidence: Prisma.JsonValue };
 type DetailHistoryRows = {
   total: number | null;
   actual: number;
@@ -132,23 +131,12 @@ type DetailHistoryRows = {
   historical: Array<Omit<HistoricalBotSearch, "timestamp" | "identityKey"> & { timestamp: string }>;
   recordedSearches: Array<Omit<RecordedBotSearch, "createdAt"> & { createdAt: string }>;
   relatedCohorts: { id: string; verification: string; count: number }[];
-  latestSearchIp: SearchEvidence | null;
-  searchEvidence: SearchEvidence[];
+  networkIpCandidates: BotNetworkIpCandidate[];
+  networkCountryCodes: string[];
 };
 
 function utcJsonDate(timestamp: string) {
   return new Date(timestamp + "Z");
-}
-
-function latestSummaryIp(
-  activity: { timestamp: Date; ip: string | null; renderLogIp: string | null; reportedIp: string | null } | null,
-  search: SearchEvidence | null,
-) {
-  if (search && (!activity || utcJsonDate(search.createdAt) > activity.timestamp)) {
-    const { ipAddress } = recordedSearchNetwork(search.evidence);
-    if (ipAddress) return ipAddress;
-  }
-  return activity?.ip ?? activity?.renderLogIp ?? activity?.reportedIp ?? null;
 }
 
 export async function readBotDetails(id: string, raw: BotQuery) {
@@ -179,20 +167,12 @@ export async function readBotDetails(id: string, raw: BotQuery) {
       const history = combinedBotHistory(environment, id, bot.identityKey, {
         window: filters.window ?? undefined, kind: filters.kind, decision: filters.decision,
       }, Prisma.sql`SELECT id, "createdAt" AS timestamp FROM recorded WHERE "activityId" IS NULL`);
-      const [[reportRows], observations, latestIp, quota] = await Promise.all([
-        db.$queryRaw<DetailHistoryRows[]>(detailHistoryQuery(environment, id, bot.name, history,
+      // Only recognized, non-unknown names may share display-only network
+      // evidence across cohorts. The exact identity still owns all counts.
+      const summaryName = bot.group !== "UNKNOWN" && recognizedCrawler(bot.name) ? bot.name : null;
+      const [[reportRows], quota] = await Promise.all([
+        db.$queryRaw<DetailHistoryRows[]>(detailHistoryQuery(environment, id, summaryName, history,
           filters.window !== null, filters.page, requestedSearchPage)),
-        db.botActivity.findMany({
-          where: { ...where, OR: [
-            { country: { not: null } }, { renderLogCountry: { not: null } }, { reportedCountry: { not: null } },
-          ] },
-          orderBy: [{ timestamp: "desc" }, { id: "desc" }], take: 20,
-          select: { country: true, renderLogCountry: true, reportedCountry: true },
-        }),
-        db.botActivity.findFirst({
-          where: { ...where, OR: [{ ip: { not: null } }, { renderLogIp: { not: null } }, { reportedIp: { not: null } }] },
-          orderBy: [{ timestamp: "desc" }, { id: "desc" }], select: { timestamp: true, ip: true, renderLogIp: true, reportedIp: true },
-        }),
         bot.requests > BigInt(0) && bot.group === "SEARCH_ENGINE" && bot.verification === "VERIFIED" ? (async () => {
           const [{ now }] = await db.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
           const [last, used] = await Promise.all([
@@ -208,7 +188,7 @@ export async function readBotDetails(id: string, raw: BotQuery) {
           };
         })() : null,
       ]);
-      const { pointers, relatedCohorts, recordedSearches, historical, searchEvidence, total, actual, historicalActual, searchPage, page } = reportRows;
+      const { pointers, relatedCohorts, recordedSearches, historical, total, actual, historicalActual, searchPage, page } = reportRows;
       const activityIds = pointers.filter(row => row.source === "activity").map(row => row.id);
       const events = activityIds.length ? await db.botActivity.findMany({
         where: { ...where, id: { in: activityIds } }, omit: { retryKey: true },
@@ -250,10 +230,9 @@ export async function readBotDetails(id: string, raw: BotQuery) {
         return event ? [event] : [];
       });
       return {
-        bot, observations, actual, historicalActual,
-        latestIp: latestSummaryIp(latestIp, reportRows.latestSearchIp),
+        bot, actual, historicalActual,
+        networkSummary: summarizeBotNetwork(reportRows.networkIpCandidates, reportRows.networkCountryCodes),
         total, page, quota, searchPage, relatedCohorts,
-        searchEvidence: searchEvidence.map(row => recordedSearchNetwork(row.evidence)),
         recordedSearches: recordedSearches.map(({ evidence, ...row }) => ({
           ...row, createdAt: utcJsonDate(row.createdAt), network: recordedSearchNetwork(evidence), crawler: recordedSearchCrawler(evidence),
         })),
