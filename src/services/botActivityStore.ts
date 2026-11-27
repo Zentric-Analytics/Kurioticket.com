@@ -28,7 +28,7 @@ export function nextSearchTime(now: Date, latest: Date | undefined, used: number
 export async function recordBotAttempt(request: Request, bot: Bot, target: Target, reason: string | null, edgeBlock?: { id: string; status: number; timestamp: Date }) {
   const environment = getPublicEnvironment();
   // Do not apply fallback observations to imported denials or overwrite authenticated evidence.
-  const reportNetwork = !edgeBlock && !bot.ip ? botReportNetwork(request, environment) : {};
+  const reportNetwork: ReturnType<typeof botReportNetwork> = !edgeBlock && !bot.ip ? botReportNetwork(request, environment) : {};
   const reportedNetworkMatch = !edgeBlock && !bot.ip
     ? await reportedCrawlerNetworkMatch(bot.declaredName, reportNetwork.reportedIp).catch(() => null) : null;
   // Render emits the same Rndr-Id as requestID in the public HTTP request log.
