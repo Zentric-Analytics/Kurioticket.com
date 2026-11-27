@@ -30,10 +30,11 @@ test("shared Google crawler ranges cannot authenticate a specific non-search pro
 });
 
 test("Googlebot uses only the official common crawler feed, not generic Google addresses", async t => {
-  const fetch = t.mock.method(globalThis, "fetch", async () => Response.json({ prefixes: [
-    { ipv4Prefix: "66.249.66.0/24" },
-  ] }));
+  const fetch = t.mock.method(globalThis, "fetch", async (url: string) => {
+    assert.equal(url, "https://developers.google.com/crawling/ipranges/common-crawlers.json");
+    return Response.json({ prefixes: [{ ipv4Prefix: "66.249.66.0/24" }] });
+  });
   assert.equal(await confirmedOperatorNetwork("GOOGLEBOT", "66.249.66.9"), true);
   assert.equal(await confirmedOperatorNetwork("GOOGLEBOT", "8.8.8.8"), false);
-  assert.equal(fetch.mock.calls[0].arguments[0], "https://developers.google.com/crawling/ipranges/common-crawlers.json");
+  assert.equal(fetch.mock.callCount(), 1);
 });
