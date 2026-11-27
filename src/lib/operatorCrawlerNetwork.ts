@@ -11,6 +11,8 @@ const sources = new Map([
   ["PERPLEXITY_USER", "https://www.perplexity.ai/perplexity-user.json"],
 ]);
 
+// RIPEstat routing evidence covers Meta's network, not a particular crawler.
+const metaRoutingFeed = "https://stat.ripe.net/data/announced-prefixes/data.json?resource=AS32934";
 const cache = new Map<string, { ranges: BlockList | null; expires: number }>();
 const refreshing = new Map<string, Promise<BlockList | null>>();
 
@@ -27,11 +29,15 @@ async function loadRanges(url: string): Promise<BlockList | null> {
     if (bytes > 262144) { await reader.cancel(); return null; }
     chunks.push(value);
   }
-  const rows = JSON.parse(Buffer.concat(chunks).toString("utf8"))?.prefixes;
+  const document = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  // Only this fixed public feed may use the ASN-wide parser. No caller IP is sent.
+  const meta = url === metaRoutingFeed;
+  if (meta && (document?.status !== "ok" || document?.data?.resource !== "AS32934")) return null;
+  const rows = meta ? document.data.prefixes : document?.prefixes;
   if (!Array.isArray(rows) || !rows.length || rows.length > 4096) return null;
   const ranges = new BlockList();
   for (const row of rows) {
-    const cidr = row?.ipv4Prefix ?? row?.ipv6Prefix;
+    const cidr = meta ? row?.prefix : row?.ipv4Prefix ?? row?.ipv6Prefix;
     if (typeof cidr !== "string") return null;
     const match = /^([^/]+)\/(\d{1,3})$/.exec(cidr);
     if (!match) return null;
@@ -45,9 +51,8 @@ async function loadRanges(url: string): Promise<BlockList | null> {
 /** Whether an address is in the provider's official crawler feed. Callers
  * must establish IP provenance independently before using this for identity
  * verification or access decisions. Report-only callers must not promote it. */
-export async function confirmedOperatorNetwork(token: string | null, ip: string | null) {
-  const url = token && sources.get(token);
-  if (!url || !ip || !isIP(ip)) return false;
+async function matchesNetworkFeed(url: string, ip: string) {
+  if (!isIP(ip)) return false;
   const entry = cache.get(url);
   let ranges = entry?.ranges;
   if (!entry || entry.expires <= Date.now()) {
@@ -62,4 +67,16 @@ export async function confirmedOperatorNetwork(token: string | null, ip: string 
     ranges = await pending;
   }
   return ranges?.check(ip, isIP(ip) === 4 ? "ipv4" : "ipv6") ?? false;
+}
+
+export async function confirmedOperatorNetwork(token: string | null, ip: string | null) {
+  const url = token && sources.get(token);
+  return url && ip ? matchesNetworkFeed(url, ip) : false;
+}
+
+// Reporting only: this recent routing feed includes other Meta services.
+// Never return an ASN-wide match from confirmedOperatorNetwork.
+export async function matchesReportedMetaNetwork(token: string | null, ip: string | null) {
+  if (!ip || !token || !["FACEBOOKEXTERNALHIT", "META_WEBINDEXER", "META_EXTERNALAGENT", "META_EXTERNALFETCHER"].includes(token)) return false;
+  return matchesNetworkFeed(metaRoutingFeed, ip);
 }
