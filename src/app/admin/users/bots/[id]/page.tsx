@@ -3,14 +3,14 @@ import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { BotReportFilters } from "@/components/admin/BotReportFilters";
-import { BOT_DECISIONS, BOT_DIRECTORY, BOT_KINDS, botAccessLabel, botDirectoryHref, botFilters, botLabel, botName, botTime, botType, botVerification, type BotQuery } from "@/lib/adminBotReport";
+import { BOT_DECISIONS, BOT_DIRECTORY, BOT_KINDS, botAccessLabel, botDirectoryHref, botDirectoryTime, botFilters, botLabel, botName, botTime, botType, botVerification, type BotQuery } from "@/lib/adminBotReport";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { readBotDetails } from "@/services/adminBotReportService";
-import { BOT_ACTIVITY_RETENTION_DAYS, BOT_DAILY_SEARCH_LIMIT, BOT_SEARCH_COOLDOWN_MS, botCrawlRequestsPerMinute } from "@/services/botActivityStore";
+import { BOT_DAILY_SEARCH_LIMIT, BOT_SEARCH_COOLDOWN_MS } from "@/services/botActivityStore";
 import { BotIcon, Metrics, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel, reportRow } from "../report-ui";
 
-function Fields({ entries }: { entries: [string, ReactNode][] }) {
-  return <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+function Fields({ entries, threeColumns = false }: { entries: [string, ReactNode][]; threeColumns?: boolean }) {
+  return <dl className={"grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2" + (threeColumns ? " lg:grid-cols-3" : "")}>
     {entries.map(([label, value]) => <div key={label} className="min-w-0">
       <dt className="text-xs text-slate-600">{label}</dt>
       <dd className="mt-0.5 break-words text-[13px] text-slate-950">{value ?? "Not recorded"}</dd>
@@ -46,8 +46,6 @@ export default async function BotDetailsPage({ params, searchParams }: {
   if (report.state === "unavailable") return <div className="space-y-3">{backLink}<ReportUnavailable /></div>;
 
   const { bot, observations, quota, filters } = report;
-  const blocked = bot.access === "BLOCKED";
-  const allowedSearch = bot.access === "CRAWL_AND_LIMITED_SEARCH" && bot.verification === "VERIFIED" && bot.group === "SEARCH_ENGINE";
   const cooldownMinutes = BOT_SEARCH_COOLDOWN_MS / 60_000;
   const activityParams = new URLSearchParams(Object.entries({
     directory, range: filters.range, from: filters.from, to: filters.to,
@@ -65,10 +63,16 @@ export default async function BotDetailsPage({ params, searchParams }: {
       </div>
     </header>
     <Section title="Bot Information">
-      <Fields entries={[
-        ["Bot reference ID", bot.id], ["Owner", bot.owner], ["Category", botType(bot)],
-        ["Verification status", botVerification(bot.verification)], ["First seen (UTC)", botTime(bot.firstSeen)], ["Last seen (UTC)", botTime(bot.lastSeen)],
+      <Fields threeColumns entries={[
+        ["Owner", bot.owner],
+        ["Category", botType(bot)],
+        ["Verification status", botVerification(bot.verification)],
+        ["IP addresses", observed(observations.map(row => row.ip))],
+        ["Countries", observed(observations.map(row => row.country))],
+        ["First seen (UTC)", <span key="first-seen" title={botTime(bot.firstSeen)}>{botDirectoryTime(bot.firstSeen)}</span>],
+        ["Last seen (UTC)", <span key="last-seen" title={botTime(bot.lastSeen)}>{botDirectoryTime(bot.lastSeen)}</span>],
       ]} />
+      <p className="text-xs text-slate-600">IP addresses and countries are based on up to 20 most recent recorded requests.</p>
       {bot.group === "UNKNOWN" && <p className="text-xs text-slate-600">This reference groups observations that may come from multiple clients.</p>}
     </Section>
     <Section title="Activity Summary">
@@ -88,23 +92,6 @@ export default async function BotDetailsPage({ params, searchParams }: {
       <progress aria-label="Daily search allowance used" className="block h-2 w-full max-w-64 accent-[#004BB8]" max={BOT_DAILY_SEARCH_LIMIT} value={quota.used} />
       <p className="text-xs text-slate-600">Flights, Hotels, Cars and Packages share the allowance. It resets at midnight UTC and the cooldown continues across midnight.</p>
     </Section>}
-    <Section title="Network Information">
-      <p className="text-xs text-slate-600">Based on up to 20 most recent recorded requests</p>
-      <Fields entries={[
-        ["IP addresses", observed(observations.map(row => row.ip))],
-        ["Countries", observed(observations.map(row => row.country))],
-        ["Network organizations", observed(observations.map(row => row.networkOrganization))],
-      ]} />
-    </Section>
-    <Section title="Security Policy">
-      <Fields entries={[
-        ["Public page access", blocked ? "Blocked" : "GET and HEAD access to approved public pages and resources"],
-        ["Travel search permissions", allowedSearch ? "Limited searches on the approved Flights, Hotels, Cars and Packages endpoints" : "Blocked"],
-        ["Private and Admin resources", "Blocked"],
-        ["Public crawl rate limit", blocked ? "Public crawl blocked" : botCrawlRequestsPerMinute(bot.group) + " requests per minute for this identity"],
-        ["Registration and monitoring", "Observed requests are registered and monitored. Detailed activity is retained for " + BOT_ACTIVITY_RETENTION_DAYS + " days."],
-      ]} />
-    </Section>
     <Section title="Activity History">
       <p className="text-xs text-slate-600">Retained requests, newest first. Allowed public requests record access decisions at ingress. Page delivery and indexing are outside these observations.</p>
       <BotReportFilters filters={filters} now={new Date().toISOString()} history />
@@ -129,7 +116,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
                       <summary className={reportLink + " cursor-pointer"}>View evidence</summary>
                       <div className="mt-3">
                         <Fields entries={[
-                          ["Request reference", event.id], ["HTTP method", event.method], ["Recorded endpoint", event.endpoint],
+                          ["Bot reference ID", bot.id], ["Request reference", event.id], ["HTTP method", event.method], ["Recorded endpoint", event.endpoint],
                           ["IP address", event.ip], ["Country", event.country], ["Declared bot identity", event.declaredName],
                           ["Network ASN", event.networkAsn ? "AS" + event.networkAsn : null], ["Network organization", event.networkOrganization],
                           ["Network evidence source", event.networkSource ? botLabel(event.networkSource) : null], ["Cloudflare Ray ID", event.edgeRay],
