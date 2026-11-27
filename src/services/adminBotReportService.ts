@@ -64,8 +64,8 @@ export async function readBotDirectory(raw: BotQuery) {
         SELECT "botId", count(*) AS count FROM (${recordedBotSearchRows(environment, filters.window ?? undefined)}) searches
         GROUP BY "botId"
       `;
-      const actualSearches = recordedCounts.reduce((total, row) => total + row.count, 0n);
-      const unassignedSearches = recordedCounts.find(row => row.botId === null)?.count ?? 0n;
+      const actualSearches = recordedCounts.reduce((total, row) => total + row.count, BigInt(0));
+      const unassignedSearches = recordedCounts.find(row => row.botId === null)?.count ?? BigInt(0);
       const where: Prisma.BotRegistryWhereInput = {
         environment, AND: searchIdentity(filters.query),
         OR: timestamp ? [
@@ -148,7 +148,7 @@ export async function readBotDetails(id: string, raw: BotQuery) {
           SELECT count(*) FROM (${recorded}) searches WHERE "botId" = ${id}
         `,
         filters.window === null ? null : db.botActivity.count({ where: historyWhere }),
-        bot.requests > 0n && bot.group === "SEARCH_ENGINE" && bot.verification === "VERIFIED" ? (async () => {
+        bot.requests > BigInt(0) && bot.group === "SEARCH_ENGINE" && bot.verification === "VERIFIED" ? (async () => {
           const [{ now }] = await db.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
           const [last, used] = await Promise.all([
             db.botActivity.findFirst({
