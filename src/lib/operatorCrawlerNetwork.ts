@@ -32,7 +32,7 @@ async function loadRanges(url: string): Promise<BlockList | null> {
   const document = JSON.parse(Buffer.concat(chunks).toString("utf8"));
   // Only this fixed public feed may use the ASN-wide parser. No caller IP is sent.
   const meta = url === metaRoutingFeed;
-  if (meta && (document?.status !== "ok" || document?.data?.resource !== "AS32934")) return null;
+  if (meta && (document?.status !== "ok" || !["AS32934", "32934"].includes(String(document?.data?.resource)))) return null;
   const rows = meta ? document.data.prefixes : document?.prefixes;
   if (!Array.isArray(rows) || !rows.length || rows.length > 4096) return null;
   const ranges = new BlockList();
