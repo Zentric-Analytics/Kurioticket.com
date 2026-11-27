@@ -93,6 +93,10 @@ jobs:
             while IFS= read -r -d '' changed_file; do
               changed_file="${changed_file//\\//}"
               case "$changed_file" in
+                src/lib/bot*|\
+                src/lib/verifiedSearchCrawler*|\
+                src/lib/searchCrawlerGate*|\
+                src/services/botActivityStore*|\
                 src/services/recordedBotSearchHistory.ts|\
                 src/services/recordedBotSearchHistory.test.ts|\
                 tools/cloudflare/bot-edge.mjs|\
@@ -175,7 +179,7 @@ jobs:
           JITI_TSCONFIG_PATHS: ./tsconfig.json
         run: |
           BOT_TEST_DATABASE_URL="$DATABASE_URL" node --test --import jiti/register \
-            src/lib/botPolicy.test.ts src/lib/verifiedSearchCrawler.test.ts src/lib/searchCrawlerGate.test.ts \
+            src/lib/botPolicy.test.ts src/lib/botSearchAuthorization.test.ts src/lib/verifiedSearchCrawler.test.ts src/lib/searchCrawlerGate.test.ts \
             src/lib/operatorCrawlerNetwork.test.ts src/lib/renderBotEvidence.test.ts src/lib/botReportNetwork.test.ts src/lib/adminBotNetworkEvidence.test.ts \
             src/services/botActivityStore.test.ts src/services/recordedBotSearchHistory.test.ts \
             src/services/adminBotHistory.test.ts
