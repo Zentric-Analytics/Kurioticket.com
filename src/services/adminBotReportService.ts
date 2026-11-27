@@ -34,13 +34,16 @@ function searchIdentity(query: string): Prisma.BotRegistryWhereInput | undefined
       { id: { contains, mode: "insensitive" } },
       { name: { contains, mode: "insensitive" } },
       { name: { in: names } },
+      // The UNKNOWN registry key stores the declared token, independent of retained events.
+      { group: "UNKNOWN", identityKey: { startsWith: "UNKNOWN:", not: "UNKNOWN:UNATTRIBUTED", contains, mode: "insensitive" } },
+      { group: "UNKNOWN", identityKey: { in: names.map(name => "UNKNOWN:" + name) } },
       ...("unknown bot".includes(query.toLowerCase()) ? [{ group: "UNKNOWN" }] : []),
     ],
   };
 }
 
 const registrySelect = {
-  id: true, name: true, group: true, category: true, owner: true, access: true,
+  id: true, identityKey: true, name: true, group: true, category: true, owner: true, access: true,
   verification: true, firstSeen: true, lastSeen: true,
 } satisfies Prisma.BotRegistrySelect;
 
