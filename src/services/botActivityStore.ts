@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
-import { knownCrawler } from "@/lib/botRegistry";
+import { knownCrawler, crawlerPolicy } from "@/lib/botRegistry";
 import type { Prisma } from "@/generated/prisma/client";
 import { botReportNetwork, reportedCrawlerNetworkMatch } from "@/lib/botReportNetwork";
 import type { botTarget, observeBot } from "@/lib/botPolicy";
@@ -134,9 +134,21 @@ export async function reserveBotSearch(attempt: Attempt, suppliedId: string | nu
     // A stable transaction lock spans both evidence cohorts, even if one
     // does not yet exist. Take it before the per-record lock and quota reads.
     await tx.$queryRaw`SELECT 1::int FROM pg_advisory_xact_lock(hashtext(${"bot-search-quota:" + registry.environment}), hashtext(${botSearchQuotaKey(registry)}))`;
-    await tx.$queryRaw`SELECT id FROM "BotRegistry" WHERE id = ${attempt.botId} FOR UPDATE`;
+    const [lockedRegistry] = await tx.$queryRaw<(QuotaRegistry & { name: string | null; group: string; access: string; verification: string })[]>`
+      SELECT id, environment, "identityKey", name, "group", access, verification
+      FROM "BotRegistry" WHERE id = ${attempt.botId} FOR UPDATE`;
     const current = await tx.botActivity.findUniqueOrThrow({ where: { id: attempt.id } });
     if (current.botId !== registry.id || current.environment !== registry.environment || current.decision !== "PENDING") return { status: 409 };
+    // Recheck the locked durable identity and this specific request before any
+    // quota/dispatch mutation. Old declared cohorts remain history, not grants.
+    if (!lockedRegistry || current.verification !== "VERIFIED" || lockedRegistry.access !== "CRAWL_AND_LIMITED_SEARCH"
+      || crawlerPolicy(lockedRegistry.name, lockedRegistry.group === "SEARCH_ENGINE" && lockedRegistry.verification === "VERIFIED").access !== "CRAWL_AND_LIMITED_SEARCH") {
+      await tx.botActivity.update({ where: { id: attempt.id }, data: {
+        decision: "DENIED", reason: "CRAWLER_VERIFICATION_REQUIRED", responseStatus: 403,
+      } });
+      await tx.botRegistry.update({ where: { id: attempt.botId }, data: { denied: { increment: 1 } } });
+      return { status: 403 };
+    }
     if (signal.aborted) return { status: 499 };
     const [{ now }] = await tx.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
     const scope = botSearchQuotaWhere(registry);

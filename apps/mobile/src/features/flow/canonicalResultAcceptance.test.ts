@@ -29,3 +29,8 @@ test("partial rejection preserves accepted inventory and rejected diagnostics", 
   assert.deepEqual(acceptance.rejectedIds, ["unsafe"]);
   assert.equal(canonicalResultsWereSilentlyLost(acceptance), false);
 });
+test("malformed rows cannot throw away valid inventory from another supplier", () => {
+  const rows = [null, undefined, "invalid", { id: "valid" }] as unknown as { id: string }[];
+  const accepted = acceptCanonicalResults(rows, row => row.id === "valid");
+  assert.deepEqual(accepted.accepted, [{ id: "valid" }]); assert.equal(accepted.rejectedIds.length, 3);
+});
