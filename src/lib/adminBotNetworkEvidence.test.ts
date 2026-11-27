@@ -29,7 +29,8 @@ test("existing reported addresses are checked on report reads; only the exact la
   assert.equal(fetch.mock.callCount(), 1);
 });
 
-test("stored evidence is not carried across conflicting IPs or historical and live requests", async () => {
+test("stored evidence is not carried across conflicting IPs or historical and live requests", async t => {
+  t.mock.method(globalThis, "fetch", async () => Response.json({ prefixes: [{ ipv4Prefix: "52.167.144.0/24" }] }));
   const matched = { ...request, reportedNetworkMatch: "OFFICIAL_CRAWLER_RANGE_MATCH" };
   assert.equal((await activityNetworkEvidence(matched))?.label, "Crawler network matched");
   assert.equal(await activityNetworkEvidence({ ...matched, renderLogIp: "8.8.8.8" }), null);
