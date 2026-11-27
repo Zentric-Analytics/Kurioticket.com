@@ -108,6 +108,8 @@ export type AdminSearchRead = {
 };
 
 export type AdminSearchActivityRead = Omit<AdminSearchRead, "identity"> & {
+  /** Stored crawler declaration; not proof of current identity or access. */
+  crawlerName?: string | null;
   identity: Omit<AdminOperationalIdentity, "kind"> & {
     kind: Exclude<AdminSearchActivityIdentityFilter, "all">;
   };
