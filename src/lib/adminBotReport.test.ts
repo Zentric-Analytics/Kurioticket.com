@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { BOT_DIRECTORY, botDirectoryHref, botFilters, botName } from "./adminBotReport";
+import { BOT_DIRECTORY, botDirectoryHref, botDirectorySubtitle, botDirectoryTime, botFilters, botName, botTime } from "./adminBotReport";
 import { isAdminWorkspaceSectionActive } from "./adminNavigation";
 
 const now = new Date("2026-11-26T15:30:00.000Z");
@@ -31,4 +31,20 @@ test("directory links keep the validated directory filters and exclude investiga
 test("bot details highlight the Bot Management workspace entry", () => {
   assert.equal(isAdminWorkspaceSectionActive(BOT_DIRECTORY + "/example", BOT_DIRECTORY), true);
   assert.equal(isAdminWorkspaceSectionActive(BOT_DIRECTORY + "/example", "/admin/users"), false);
+});
+
+test("bot directory shows the owner or short reference without replacing the full identity", () => {
+  const id = "415cbf42-0d0f-4efb-a4b7-6047bd20d38f";
+  assert.equal(botDirectorySubtitle({ id, group: "UNKNOWN", owner: null }), "Ref: 415cbf42");
+  assert.equal(botDirectorySubtitle({ id, group: "UNKNOWN", owner: "Unverified claim" }), "Ref: 415cbf42");
+  assert.equal(botDirectorySubtitle({ id, group: "OTHER_RECOGNIZED", owner: "Meta" }), "Meta");
+  assert.equal(botDirectorySubtitle({ id, group: "SEARCH_ENGINE", owner: null }), "Ref: 415cbf42");
+});
+
+test("directory displays UTC minutes without changing details timestamp precision", () => {
+  const instant = new Date("2026-11-27T07:02:08Z");
+  assert.equal(botDirectoryTime(instant), "27 Nov 2026, 07:02");
+  assert.equal(botTime(instant), "27 Nov 2026, 07:02:08");
+  assert.equal(botDirectoryTime(null), "Not recorded");
+  assert.equal(botDirectoryTime(undefined), "Not recorded");
 });
