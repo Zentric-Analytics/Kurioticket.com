@@ -142,13 +142,13 @@ export async function readBotDetails(id: string, raw: BotQuery) {
           where, orderBy: [{ timestamp: "desc" }, { id: "desc" }], take: 20,
           select: { ip: true, country: true, userAgent: true, declaredName: true, evidence: true,
             networkAsn: true, networkOrganization: true, networkSource: true, edgeRay: true,
-            renderLogIp: true, renderLogCountry: true },
+            renderLogIp: true, renderLogCountry: true, reportedIp: true, reportedCountry: true },
         }),
         db.$queryRaw<{ count: bigint }[]>`
           SELECT count(*) FROM (${recorded}) searches WHERE "botId" = ${id}
         `,
         filters.window === null ? null : db.botActivity.count({ where: historyWhere }),
-        bot.group === "SEARCH_ENGINE" && bot.verification === "VERIFIED" ? (async () => {
+        bot.requests > 0n && bot.group === "SEARCH_ENGINE" && bot.verification === "VERIFIED" ? (async () => {
           const [{ now }] = await db.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
           const [last, used] = await Promise.all([
             db.botActivity.findFirst({
@@ -164,6 +164,7 @@ export async function readBotDetails(id: string, raw: BotQuery) {
         })() : null,
         db.$queryRaw<Pick<RecordedBotSearch, "evidence">[]>`
           SELECT evidence FROM (${recorded}) searches WHERE "botId" = ${id}
+            AND (evidence->'searchNetwork'->>'ipAddress' IS NOT NULL OR evidence->'searchNetwork'->>'countryCode' IS NOT NULL)
           ORDER BY "createdAt" DESC, id DESC LIMIT 20
         `,
         bot.name ? db.$queryRaw<{ id: string; verification: string; count: bigint }[]>`
