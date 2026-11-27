@@ -17,6 +17,7 @@ import { AdminRecordedGuestLocation } from "@/components/admin/AdminRecordedGues
 import { loadAdminGuestRecordedLocations, guestRecordedLocationKey } from "@/services/adminGuestRecordedLocationsService";
 import { loadAdminDeviceSessions } from "@/services/adminDeviceSessionsService";
 import { pageHistoryHrefFromActivity } from "@/lib/adminPageHistory";
+import { deviceHistoryHrefFromActivity } from "@/lib/adminDeviceHistory";
 import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
 import { normalizeLiveUserActivityQuery, liveActivityQueryParams } from "@/lib/adminActivityLiveQuery";
@@ -121,10 +122,11 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   ]);
   const recordedLocation = locations?.get(guestRecordedLocationKey(id, operational ? "operational" : "consented"));
   const activityReturn = activityHref(basePath, queryParams, {});
+  const range = typeof raw.range === "string" ? raw.range : "today";
   // Keep the reporting window while letting page visits ignore travel-specific filters.
   const pageFilters: ActivityFilters = { ...filters, tab: "pages", stage: "all", product: "all", q: "", order: "newest" };
   const pagesHref = pageHistoryHrefFromActivity(kind, id, pageFilters, typeof raw.range === "string" ? raw.range : undefined, activityReturn);
-  const accessHref = basePath.replace(/\/activity$/, "/devices") + "?range=all&activityReturn=" + encodeURIComponent(activityReturn);
+  const accessHref = deviceHistoryHrefFromActivity(kind, id, filters, range, activityReturn, timeZone);
   const latestDevice = deviceSessions?.status === "ok" ? deviceSessions.sessions[0] : undefined;
   const latestGuest = guestAccess?.status === "ok" ? guestAccess.records[0] : undefined;
   const access: AccessPreview | null = latestDevice
@@ -133,7 +135,6 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
     : null;
   const recentEvents = data.events;
   const allHref = activityHref(basePath + "/all", queryParams, { cursor: null });
-  const range = typeof raw.range === "string" ? raw.range : "all";
   const activityMetricHref = (tab: string, stage?: string) => activityHref(basePath + "/all", queryParams, { tab, stage: stage ?? null, cursor: null });
   const unsupported = "Not collected for this essential guest session.";
 
@@ -161,10 +162,13 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       location={kind === "guest" ? <AdminRecordedGuestLocation location={recordedLocation} timeZone={timeZone}/> : null}/>}
     identityDetails={<>
       {data.email ? <p className="mt-1 break-words text-sm text-[#475569] [overflow-wrap:anywhere]">{data.email}</p> : null}
-      <div className="mt-1 flex min-w-0 items-center gap-2">
-        <code className="max-w-[240px] truncate text-xs" title={id}>{id}</code>
-        <CopyIdentityId id={id} kind={kind}/>
-      </div>
+      <details className="mt-1.5 min-w-0 text-[12px] text-[#64748B]">
+        <summary className="focus-ring w-fit cursor-pointer rounded-sm">{kind === "user" ? "Account reference" : "Guest reference"}</summary>
+        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
+          <code className="break-all text-xs">{id}</code>
+          <CopyIdentityId id={id} kind={kind}/>
+        </div>
+      </details>
     </>}
     management={kind === "user"
       ? <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>

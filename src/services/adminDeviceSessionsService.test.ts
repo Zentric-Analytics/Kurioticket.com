@@ -4,8 +4,12 @@ import test from "node:test";
 
 test("device history is account-scoped and excludes credentials and network identifiers", () => {
   const source = readFileSync("src/services/adminDeviceSessionsService.ts", "utf8");
-  assert.match(source, /where:\s*\{ userId, lastSeenAt: range === "all" \? \{ lte: now \} : deviceTodayWindow\(now, timeZone\) \}/);
+  // The profile's latest observation remains account-scoped but must include a
+  // heartbeat committed after its request timestamp. Today/full history keep
+  // their explicit windows; the writer/reader race is covered on PostgreSQL.
+  assert.match(source, /where:\s*\{ userId, \.\.\.\(range === "all" \? \{\} : \{ lastSeenAt: deviceTodayWindow\(now, timeZone\) \}\) \}/);
   assert.match(source, /const where = \{ userId, lastSeenAt: deviceHistoryWindow\(query, now, timeZone\), \.\.\.accountDevicePlatformWhere\(query.platform\) \}/);
+  assert.match(source, /orderBy: \[\{ lastSeenAt: "desc" \}, \{ id: "desc" \}\]/);
   assert.match(source, /take:\s*1,/);
   assert.match(source, /deviceTodayWindow\(now, timeZone\)/);
   assert.match(source, /loadAdminFullDeviceHistory/);

@@ -43,10 +43,10 @@ export function displayActivityCalendarDate(value: string, timeZone: string, end
 export function normalizeUserActivityQuery(input: RawActivityQuery, now: Date, timeZone = "UTC"): RawActivityQuery {
   const raw = { ...input };
   const selected = typeof raw.range === "string" ? raw.range : "";
-  // An individual history starts with all retained eligible activity. Directory
-  // reports keep their own Today defaults; explicit windows remain untouched.
-  if (!Array.isArray(raw.range) && !selected) raw.range = raw.from || raw.to ? "custom" : "all";
-  const range = selected || "all";
+  // A fresh identity view shares the directory's Today default. Explicit
+  // dates and All time bookmarks remain the administrator's chosen scope.
+  if (!Array.isArray(raw.range) && !selected) raw.range = raw.from || raw.to ? "custom" : "today";
+  const range = typeof raw.range === "string" ? raw.range : "";
   const materializedToday = selected === "today" && [raw.from, raw.to].every(
     value => typeof value === "string" && validActivityUtcInstant(value),
   ) && String(raw.from) < String(raw.to);

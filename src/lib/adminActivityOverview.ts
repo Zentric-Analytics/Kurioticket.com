@@ -150,7 +150,7 @@ export function journeyHistoryHrefFromActivity(
   // Both views interpret calendar dates in the active reporting time zone.
   const legacyDates = dateOnly.test(filters.from) || dateOnly.test(filters.to);
   const range = legacyDates ? "custom"
-    : rawRange && ranges.has(rawRange) ? rawRange : filters.from || filters.to ? "custom" : "all";
+    : rawRange && ranges.has(rawRange) ? rawRange : filters.from || filters.to ? "custom" : "today";
   params.set("range", range);
   // A new preset view resolves its own current window. Generated cutoffs stay
   // in the return context of the originating history page, not in this list.

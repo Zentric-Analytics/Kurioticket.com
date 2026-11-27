@@ -38,7 +38,11 @@ export async function loadAdminDeviceSessions(userId: string, timeZone = "UTC", 
     const db = getOptionalPrisma();
     if (!db) return { status: "unavailable" };
     const sessions = await db.accountSession.findMany({
-      where: { userId, lastSeenAt: range === "all" ? { lte: now } : deviceTodayWindow(now, timeZone) },
+      // The profile asks for the latest current session observation. A
+      // heartbeat may commit after the request's captured timestamp while the
+      // activity summary loads; excluding it would reveal an older device.
+      // Explicit Today previews still retain their selected calendar window.
+      where: { userId, ...(range === "all" ? {} : { lastSeenAt: deviceTodayWindow(now, timeZone) }) },
       orderBy: [{ lastSeenAt: "desc" }, { id: "desc" }],
       take: 1,
       select: {

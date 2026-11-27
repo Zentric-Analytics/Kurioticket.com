@@ -73,13 +73,13 @@ export function AdminIdentityTable({
   const hasSearch = Boolean(active.get("q"));
   const currentTab = active.get("tab") || active.get("identity") || "ALL";
   const activityHref = (kind: "guest" | "user", id: string) =>
-    adminUsersActivityHref(kind, id, pageHref)
-    ?? "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity?range=all";
+    adminUsersActivityHref(kind, id, pageHref, timeZone)
+    ?? "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity?range=today";
   return (
     <section className="mt-3 min-w-0 bg-white">
       <h2 id="identity-directory-title" className="sr-only">Users directory</h2>
       <div
-        className="admin-responsive-records focus-ring overflow-x-auto"
+        className="admin-responsive-records admin-identity-directory focus-ring overflow-x-auto"
         role="region"
         aria-labelledby="identity-directory-title"
         tabIndex={0}

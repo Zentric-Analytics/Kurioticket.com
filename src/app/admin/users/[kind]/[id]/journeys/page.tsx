@@ -11,7 +11,8 @@ import { formatViewerTimestamp } from "@/lib/adminLocalTime";
 import { decodeActivityJourneyReturn, encodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
 import { journeyCalendarTimeZone, JOURNEY_ALL_TIME_FROM } from "@/lib/adminJourneyDateRange";
 import { identityJourneyHistoryHref, identityJourneyHistoryQuery, resetStaleIdentityJourneyDateCursor } from "@/lib/adminIdentityJourneyHistory";
-import { validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
+import { activityHref, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
+import { safeActivityQueryParams } from "@/lib/adminActivityDateQuery";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { adminJourneys } from "@/services/adminJourneyService";
@@ -133,18 +134,18 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
   </div>;
 
   const operational = identity.data.source === "operational";
-  // Account-only actions are a separate authorized ledger, not an inferred
-  // search journey. Use the complete reader so the history is not silently
-  // truncated by the normal 20-row activity-page cursor. Never mix this
-  // section with a requested stage/provider filter that it cannot satisfy.
-  const accountActions = !operational && !scope.stage && !scope.provider
-    ? await loadAdminIdentityActivity(kind, id, {
-        ...activityFilters, tab: "all", stage: "ACCOUNT_ACTIVITY",
-      }, undefined, "all")
-    : null;
-  const otherActions = accountActions?.status === "ok"
-    ? accountActions.data.events.filter(event => event.stage === "ACCOUNT_ACTIVITY")
-    : [];
+  // Account actions remain in the same identity's complete Activity history.
+  // Do not load a second unbounded timeline or infer a journey association.
+  const backContext = safeActivityQueryParams(Object.fromEntries(new URL(backHref, "https://admin.kurioticket.invalid").searchParams));
+  const accountActivityRange = requested.range === "90d" ? "custom" : requested.range;
+  const accountActivityHref = activityHref(route + "/activity/all", backContext, {
+    range: accountActivityRange,
+    from: accountActivityRange === "custom" ? scope.from : null,
+    to: accountActivityRange === "custom" ? scope.to : null,
+    tab: "all", stage: "ACCOUNT_ACTIVITY", product: scope.product ?? null,
+    q: null, cursor: null, order: null,
+  });
+  const accountActivityLabel = kind === "user" ? "View account activity" : "View other activity";
   const list = operational ? null : await adminJourneys.list(requested.input, calendarTimeZone);
   const summary = list?.status === "ok"
     ? await adminJourneys.summary(list.data.scope, calendarTimeZone)
@@ -173,18 +174,6 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
       <span aria-hidden="true">/</span>
       <span className="font-medium text-[#020617]">Journey history</span>
     </nav>
-    {!operational && summary?.status === "ok" ? (
-      <section aria-label="Selected visitor journey summary" className="grid min-w-0 grid-cols-2 border-y border-[#D8E1EC] sm:grid-cols-3 lg:grid-cols-5">
-        {[
-          ["Journeys", summary.data.journeys],
-          ["Searches in journeys", summary.data.recordedSearches.total],
-          ["Results viewed", summary.data.stages.RESULTS_VIEWED.events],
-          ["Offers selected", summary.data.stages.OFFER_SELECTED.events],
-          ["Provider handoffs", summary.data.stages.PROVIDER_HANDOFF_STARTED.events],
-        ].map(([label, value]) => metric(String(label), Number(value)))}
-      </section>
-    ) : null}
-
     <section aria-label="Selected visitor" className="min-w-0 rounded-xl border border-[#D8E1EC] bg-white p-4 sm:p-5">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
@@ -192,15 +181,25 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
           <div className="min-w-0">
             <h1 className="text-[19px] font-semibold leading-7">Journey history</h1>
             <p className="mt-1 break-words text-[13px] text-[#475569]">{identity.data.title}</p>
-            <p className="mt-1 break-all text-[11px] text-[#64748B]">{id}</p>
           </div>
         </div>
       </div>
       <p className="mt-3 text-[12px] leading-5 text-[#64748B]">
         {operational
           ? "This essential-only guest session contains recorded operational activity. It does not establish a consented tracked journey."
-          : "Journey records belong to this selected identity only. A recorded handoff is not a confirmed booking. Unlinked activity is separate from tracked journeys."}
+          : "Searches and steps with a recorded journey link. These totals cover journeys in the selected period; All activity also includes actions recorded separately."}
       </p>
+      {!operational && summary?.status === "ok" ? (
+        <section aria-label="Selected visitor journey summary" className="mt-4 grid min-w-0 grid-cols-2 border-t border-[#E7ECF5] pt-2 sm:grid-cols-3 lg:grid-cols-5">
+          {[
+            ["Journeys", summary.data.journeys],
+            ["Searches in journeys", summary.data.recordedSearches.total],
+            ["Results viewed", summary.data.stages.RESULTS_VIEWED.events],
+            ["Offers selected", summary.data.stages.OFFER_SELECTED.events],
+            ["Provider handoffs", summary.data.stages.PROVIDER_HANDOFF_STARTED.events],
+          ].map(([label, value]) => metric(String(label), Number(value)))}
+        </section>
+      ) : null}
     </section>
 
     <form action={route + "/journeys"} method="get" aria-label="Filter this visitor's journeys"
@@ -235,7 +234,8 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
         message="The journey reader could not return the selected visitor's records. No missing records have been treated as zero." />
     ) : list.data.items.length === 0 ? (
       <AdminEmptyState title="No tracked journeys in this range"
-        message="No eligible consented journeys match these filters. Unlinked account activity remains available from the Activity page."
+        message="No recorded journeys match these filters. Other account actions remain available in All activity."
+        action={<Link href={accountActivityHref} className={linkStyle}>{accountActivityLabel} <ChevronRight size={14} aria-hidden="true"/></Link>}
       />
     ) : (
       <section aria-label="Selected visitor journey records" className="min-w-0">
@@ -255,17 +255,17 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
             <tbody className="divide-y divide-[#E7ECF5]">
               {list.data.items.map(item => (
                 <tr key={item.id} data-users-refresh-anchor={item.id} className="align-top hover:bg-[#F8FAFC]">
-                  <td className="px-3 py-3">
+                  <td data-label="Started / Last activity" className="px-3 py-3">
                     <p className="font-medium">{formatViewerTimestamp(item.startedAt, timeZone)}</p>
                     <p className="mt-1 text-[11px] text-[#64748B]">Last {formatViewerTimestamp(item.lastEventAt, timeZone)}</p>
                   </td>
-                  <td className="break-words px-3 py-3 text-[#334155]">{item.products.join(", ") || "—"}</td>
-                  <td className="break-words px-3 py-3 text-[#334155]">
+                  <td data-label="Products" className="break-words px-3 py-3 text-[#334155]">{item.products.map(product => products.find(option => option.value === product)?.label ?? product).join(", ") || "—"}</td>
+                  <td data-label="Providers" className="break-words px-3 py-3 text-[#334155]">
                     {item.providers.join(", ") || "—"}
                     {item.providerCount > item.providers.length ? " +" + (item.providerCount - item.providers.length) : ""}
                   </td>
-                  <td className="px-3 py-3 tabular-nums text-[#334155]">{item.searchCount} / {item.eventCount}</td>
-                  <td className="px-3 py-3">
+                  <td data-label="Searches / Events" className="px-3 py-3 tabular-nums text-[#334155]">{item.searchCount} / {item.eventCount}</td>
+                  <td data-label="Observed stages" className="px-3 py-3">
                     <div className="flex flex-wrap gap-1.5">
                       {stages.filter(stage => item.stages[stage.value] > 0).map(stage => (
                         <span key={stage.value} className="rounded-md border border-[#D8E1EC] px-1.5 py-1 text-[11px] text-[#475569]">
@@ -274,7 +274,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
                       ))}
                     </div>
                   </td>
-                  <td className="px-3 py-3">
+                  <td data-label="Action" className="px-3 py-3">
                     <Link href={detailHref(item, list.data.scope, returnPath)}
                       className="inline-flex min-h-8 items-center gap-1 whitespace-nowrap text-[12px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2">
                       View journey <ChevronRight size={14} aria-hidden="true" />
@@ -292,19 +292,9 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
         </div> : null}
       </section>
     )}
-    {!operational && !scope.stage && !scope.provider ? (
-      accountActions?.status === "ok" && otherActions.length ? (
-        <section aria-label="Other recorded account actions" className="min-w-0 border-t border-[#D8E1EC] pt-4">
-          <h2 className="text-[16px] font-semibold">Other recorded account actions</h2>
-          <p className="mt-1 mb-3 text-[12px] text-[#64748B]">
-            Verified account actions without an eligible exact journey link are shown separately.
-            They are not assigned to searches by time, route or device.
-          </p>
-          <ActivityTimeline timeZone={timeZone} events={otherActions} nextHref={null} environment={environment} order="newest" />
-        </section>
-      ) : accountActions?.status !== "ok" ? (
-        <p role="status" className="text-[12px] text-[#64748B]">Other recorded account actions are temporarily unavailable; this does not mean there are no records.</p>
-      ) : null
-    ) : null}
+    {!operational && list?.status === "ok" && list.data.items.length > 0 ? <aside aria-label="Account activity" className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-lg bg-[#F8FAFC] px-4 py-3">
+      <p className="min-w-0 text-[13px] leading-5 text-[#64748B]">{kind === "user" ? "Saved items, alert changes and other account actions recorded separately are available in All activity." : "Other recorded actions for this guest are available in All activity."}</p>
+      <Link href={accountActivityHref} className={linkStyle}>{accountActivityLabel} <ChevronRight size={14} aria-hidden="true"/></Link>
+    </aside> : null}
   </div>;
 }

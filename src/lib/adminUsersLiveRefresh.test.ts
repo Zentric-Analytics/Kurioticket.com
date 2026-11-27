@@ -1,9 +1,31 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  createAdminUsersRefreshController, isAdminUsersRefreshPath, probeAdminUsersRefresh,
+  adminOnlineUsersLiveUntil, createAdminUsersRefreshController, isAdminUsersRefreshPath, probeAdminUsersRefresh,
   type AdminUsersRefreshAvailability, type AdminUsersRefreshProbe, type AdminUsersRefreshState,
 } from "./adminUsersLiveRefresh";
+
+test("a retained online sample expires when its oldest included heartbeat leaves the window", () => {
+  const at = Date.parse("2026-11-27T08:00:00Z");
+  const sample = { observedAt: new Date(at).toISOString(), windowSeconds: 90, rows: [
+    { lastSeenAt: new Date(at - 2_000).toISOString() },
+    { lastSeenAt: new Date(at - 89_000).toISOString() },
+  ] };
+  const original = structuredClone(sample);
+  assert.equal(adminOnlineUsersLiveUntil(sample), at + 1_000);
+  assert.deepEqual(sample, original, "expiry classification does not remove rows or invent replacement counts");
+  assert.equal(adminOnlineUsersLiveUntil({ ...sample, rows: [{ lastSeenAt: new Date(at).toISOString() }] }), at + 90_000);
+  assert.equal(adminOnlineUsersLiveUntil({ ...sample, rows: [] }), at + 90_000);
+});
+
+test("online sample expiry is bounded by observation time and malformed timestamps fail closed", () => {
+  const at = Date.parse("2026-11-27T08:00:00Z");
+  const sample = { observedAt: new Date(at).toISOString(), windowSeconds: 90 };
+  assert.equal(adminOnlineUsersLiveUntil({ ...sample, rows: [{ lastSeenAt: new Date(at + 60_000).toISOString() }] }), at + 90_000);
+  assert.equal(adminOnlineUsersLiveUntil({ ...sample, rows: [{ lastSeenAt: "invalid" }] }), 0);
+  assert.equal(adminOnlineUsersLiveUntil({ ...sample, observedAt: "invalid" }), 0);
+  assert.equal(adminOnlineUsersLiveUntil({ ...sample, windowSeconds: 0 }), 0);
+});
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

@@ -39,6 +39,7 @@ on:
       - src/lib/sessionDeviceObservation*
       - src/services/adminGuestAccessService.ts
       - src/services/adminUnifiedActivityService.ts
+      - src/services/adminDeviceSessions*
       - src/components/admin/JourneyEventHistory*
       - src/components/admin/ActivityTimeline.tsx
       - src/components/admin/UserStatusActions.tsx
@@ -76,7 +77,7 @@ permissions:
 
 jobs:
   guest-observations-postgres:
-    name: Verify guest ownership, country and device observations on PostgreSQL
+    name: Verify identity ownership and access observations on PostgreSQL
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -105,13 +106,15 @@ jobs:
       - run: npm ci
       - name: Apply schema to disposable database
         run: npx --no-install prisma migrate deploy
-      - name: Verify current heartbeat country and exact guest device history
+      - name: Verify heartbeat ownership, country and current access timing
         run: >-
           GUEST_COUNTRY_TEST_DATABASE_URL="$DATABASE_URL"
+          USER_ACCESS_TEST_DATABASE_URL="$DATABASE_URL"
           node --test --import jiti/register
           src/lib/liveGuestPresenceWrite.test.ts
           src/lib/adminGuestAccessPostgres.test.ts
           src/lib/liveGuestHistoryPostgres.test.ts
+          src/services/adminDeviceSessionsPostgres.test.ts
 
   customer-activity:
     name: Validate customer activity page and capture real screenshots
@@ -154,6 +157,7 @@ jobs:
           src/lib/adminActivityLiveQuery.test.ts
           src/lib/adminDeviceHistory.test.ts
           src/components/admin/AdminUsersLiveRefresh.browser.test.ts
+          src/components/admin/AdminUnifiedActivityList.browser.test.ts
           src/components/admin/AdminOnlineUsersDirectory.browser.test.ts
           src/components/admin/AdminPageHistoryFilters.browser.test.ts
           src/components/admin/adminStateSynchronization.browser.test.ts

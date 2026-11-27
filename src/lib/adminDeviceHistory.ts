@@ -28,7 +28,7 @@ function validUtcDay(value: string): boolean {
 /** Full session history must not silently default an invalid range to all time. */
 export function parseDeviceHistoryQuery(raw: RawQuery): DeviceHistoryParsed {
   if (Object.values(raw).some(Array.isArray)) return { ok: false, error: "Repeated filters are not supported." };
-  const range = raw.range ?? "all";
+  const range = raw.range ?? "today";
   const rawPage = raw.page ?? "1";
   if (typeof range !== "string" || !deviceHistoryRanges.includes(range as DeviceHistoryRange))
     return { ok: false, error: "Unsupported date range." };
@@ -96,7 +96,7 @@ export function deviceHistoryHrefFromActivity(
   returnHref: string, timeZone = "UTC",
 ): string | undefined {
   if (!validActivityIdentity(kind, id) || !parseActivityFilters({ ...filters }, timeZone).ok) return undefined;
-  const range = rawRange || (filters.from || filters.to ? "custom" : "all");
+  const range = rawRange || (filters.from || filters.to ? "custom" : "today");
   if (!deviceHistoryRanges.includes(range as DeviceHistoryRange)) return undefined;
   const query: DeviceHistoryQuery = { range: range as DeviceHistoryRange, page: 1 };
   if (range === "custom") {
