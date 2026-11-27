@@ -1,4 +1,4 @@
-/** Per-process backpressure for optional cache persistence, not provider quotas. */
+/** Per-process cache backpressure. The deadline bounds admission, not an active transaction. */
 export function createCacheWriteGate(now = Date.now) {
   let tail: Promise<unknown> = Promise.resolve();
   let queued = 0;
@@ -8,13 +8,23 @@ export function createCacheWriteGate(now = Date.now) {
     queued++;
     const previous = tail;
     let release!: () => void;
-    tail = new Promise<void>(resolve => { release = resolve; });
+    const slot = new Promise<void>(resolve => { release = resolve; });
+    // An expired waiter may release its own slot before its predecessor ends.
+    // Keep that predecessor in the chain so successors cannot overlap a writer.
+    tail = previous.then(() => slot);
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      await previous;
+      await Promise.race([
+        previous,
+        new Promise<never>((_resolve, reject) => {
+          timer = setTimeout(() => reject(new Error("Cache persistence deadline exceeded")), Math.max(0, deadline - now()));
+        }),
+      ]);
+      clearTimeout(timer);
       if (now() >= deadline || now() < unavailableUntil) throw new Error("Cache persistence deadline exceeded");
       try { return await task(); }
       catch (error) { unavailableUntil = now() + 5_000; throw error; }
-    } finally { queued--; release(); }
+    } finally { clearTimeout(timer); queued--; release(); }
   };
 }
 export const runCacheWrite = createCacheWriteGate();
