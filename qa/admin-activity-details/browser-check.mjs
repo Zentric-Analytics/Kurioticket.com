@@ -595,7 +595,7 @@ try {
   for(const [name,suffix,dateLabel] of [
     [/^View pages visited: /,"pages","Page history range: Today · UTC"],
     ["Device & Access history","devices","Device history range: Today · UTC"],
-    [/^View journeys tracked: /,"journeys","Date range: Today"],
+    [/^View journeys tracked: /,"journeys","Date range: Today · UTC"],
   ]) {
     await page.getByRole("link",{name,exact:typeof name==="string"}).click();
     await expect(page).toHaveURL(u=>u.pathname===todayPath+"/"+suffix&&u.searchParams.get("range")==="today");
