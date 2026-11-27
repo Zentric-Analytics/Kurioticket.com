@@ -12,9 +12,10 @@ import { takeResultsReturn } from "@/lib/results/resultsReturnIntent";
 import { takeResultsScroll } from "@/lib/results/resultsReturnScroll";
 
 /** Keep the document small; inventory arrives through the canonical JSON API. */
-export function CarInventoryLoader({ values, fallback }: {
+export function CarInventoryLoader({ values, fallback, sharedCarId = null }: {
   values: LocationBoundCarSearchParams & { returnToDifferentLocation: boolean };
   fallback: ReactNode;
+  sharedCarId?: string | null;
 }) {
   const [rawSandboxResults, setResults] = useState<NormalizedCarResult[] | null>(null);
   const {results,pending:displayPending,unavailable:displayUnavailable} = useSandboxResultState(rawSandboxResults);
@@ -97,7 +98,7 @@ export function CarInventoryLoader({ values, fallback }: {
     <button type="button" className="focus-ring mt-4 rounded-lg border border-[#004BB8] px-4 py-2 font-semibold text-[#004BB8]"
       onClick={() => { setExpiredReturn(false); setResults(null); setAttempt(value => value + 1); }}>Search again</button>
   </main>;
-  if (invalidSearch) return <CarsResultsClient values={values} initialResults={[]} inventoryStatus="invalid-search" />;
+  if (invalidSearch) return <CarsResultsClient values={values} initialResults={[]} inventoryStatus="invalid-search" sharedCarId={sharedCarId} />;
   if (unsupported) return <main className="page-shell py-8">
     <p role="alert">{unsupported}</p>
     <a className="mt-4 inline-block rounded border px-4 py-2" href={carSearchRecoveryHref(values)}>Change search</a>
@@ -109,5 +110,5 @@ export function CarInventoryLoader({ values, fallback }: {
     }}>Retry search</button>
   </main>;
   if (results === null || displayPending) return fallback;
-  return <CarsResultsClient values={values} initialResults={results} inventoryStatus="available" requestId={requestId} />;
+  return <CarsResultsClient values={values} initialResults={results} inventoryStatus="available" requestId={requestId} sharedCarId={sharedCarId} />;
 }

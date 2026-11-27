@@ -6,7 +6,7 @@ import ts from "typescript";
 import { readSavedItemIds, toggleSavedItemId, writeSavedItemIds } from "./saved-items-local";
 
 // Execute the actual production handler AST with explicit UI/network boundaries.
-// The persistence module is unchanged; this does not replace a whole-route test.
+// Legacy storage is deliberately unchanged; result saves must not use it for guests.
 const surfaces = [
   { label: "homepage discovery", path: "src/app/page.tsx", handler: "handleSavedItemToggle", recordsLocalAction: false },
   { label: "flight discovery", path: "src/components/results/FlightResultsClient.tsx", handler: "handleSavedRouteToggle", recordsLocalAction: false },
@@ -40,10 +40,11 @@ async function runHandler(surface: typeof surfaces[number], mode: "quota" | "blo
   let pending = false;
   const actions: string[] = [];
   const backendCalls: string[] = [];
+  const signIns: unknown[] = [];
   const events: string[] = [];
   const browser = Object.defineProperty({
     dispatchEvent(event: Event) { events.push(event.type); },
-    location: { pathname: "/flights/details/fixture-item", search: "" },
+    location: { pathname: "/flights/details/fixture-item", search: "", href: "https://example.test/flights/details/fixture-item" },
   }, "localStorage", { get() {
     if (mode === "blocked") throw new DOMException("Fixture storage denied", "SecurityError");
     return {
@@ -57,6 +58,7 @@ async function runHandler(surface: typeof surfaces[number], mode: "quota" | "blo
     Object.defineProperty(globalThis, "window", { configurable: true, value: browser });
     const handler = productionHandler(surface.path, surface.handler, {
       readSavedItemIds, toggleSavedItemId, writeSavedItemIds,
+      signIn: async (_provider: unknown, options: unknown) => { signIns.push(options); },
       sessionStatus: authenticated ? "authenticated" : "unauthenticated",
       status: authenticated ? "authenticated" : "unauthenticated",
       savedItemIds: initial, backendSavedItemIds: { [key]: "fixture-server-item" },
@@ -82,35 +84,25 @@ async function runHandler(surface: typeof surfaces[number], mode: "quota" | "blo
       window: browser, Event, LOCAL_SAVED_FLIGHTS_CHANGED_EVENT: "fixture-local-saves-changed",
     });
     await handler({ preventDefault() {}, stopPropagation() {} }, key);
-    return { state, error, pending, actions, backendCalls, events, stored: stored.get("kurioticket_saved_items_v1"), initial };
+    return { state, error, pending, actions, backendCalls, signIns, events, stored: stored.get("kurioticket_saved_items_v1"), initial };
   } finally {
     if (previous) Object.defineProperty(globalThis, "window", previous); else Reflect.deleteProperty(globalThis, "window");
   }
 }
 
 for (const surface of surfaces) {
-  test(`${surface.label} retains prior guest save state and reports blocked or full storage`, async () => {
-    for (const mode of ["quota", "blocked"] as const) for (const saved of [false, true]) {
+  test(`${surface.label} requires sign-in and never writes or records a guest save`, async () => {
+    for (const mode of ["normal", "quota", "blocked"] as const) for (const saved of [false, true]) {
       const result = await runHandler(surface, mode, saved);
-      assert.deepEqual(result.state, result.initial, `${mode}: failed ${saved ? "removal" : "save"} must retain prior state`);
-      assert.ok(result.error, `${mode}: a failed update needs the existing error UI`);
-      assert.equal(result.pending, false);
+      assert.deepEqual(result.state, result.initial);
       assert.equal(result.stored, JSON.stringify(result.initial));
-      assert.deepEqual(result.actions, [], "failed persistence must not produce a success action");
-      assert.deepEqual(result.events, [], "failed persistence must not publish a saved-state change");
-      assert.deepEqual(result.backendCalls, [], "guest failure must not start an account save");
-    }
-  });
-
-  test(`${surface.label} preserves successful guest saves and removals`, async () => {
-    for (const saved of [false, true]) {
-      const result = await runHandler(surface, "normal", saved);
-      const expected = saved ? [] : ["fixture-item"];
-      assert.deepEqual(result.state, expected);
-      assert.equal(result.stored, JSON.stringify(expected));
       assert.ok(!result.error);
-      assert.deepEqual(result.actions, surface.recordsLocalAction ? [saved ? "local_unsaved" : "local_saved"] : []);
+      assert.equal(result.pending, false);
+      assert.deepEqual(result.actions, []);
+      assert.deepEqual(result.events, []);
       assert.deepEqual(result.backendCalls, []);
+      assert.equal(result.signIns.length, 1);
+      assert.equal((result.signIns[0] as { callbackUrl: string }).callbackUrl, "https://example.test/flights/details/fixture-item");
     }
   });
 
