@@ -56,6 +56,7 @@ export async function recordBotAttempt(request: Request, bot: Bot, target: Targe
         endpoint: target.endpoint, kind: target.kind, product: target.product, method,
         declaredName: bot.declaredName, verification: bot.verification, evidence: bot.evidence,
         ip: bot.ip, country: bot.country, userAgent: bot.userAgent, edgeRay: bot.edgeRay,
+        networkAsn: bot.networkAsn, networkOrganization: bot.networkOrganization, networkSource: bot.networkSource,
         decision: throttled ? "RATE_LIMITED" : reason ? "DENIED" : searchPending ? "PENDING" : "ALLOWED",
         reason: reason ?? (throttled ? "CRAWL_LIMIT" : searchPending ? "VALIDATION_PENDING" : "PUBLIC_CRAWL"),
         responseStatus: status,
