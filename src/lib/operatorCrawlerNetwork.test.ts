@@ -20,3 +20,11 @@ test("invalid feed or unavailable provider cannot confirm a declaration", async 
   fetch.mock.mockImplementation(async () => { throw new Error("offline"); });
   assert.equal(await confirmedOperatorNetwork("PERPLEXITY_USER", "192.0.2.20"), false);
 });
+
+test("shared Google crawler ranges cannot authenticate a specific non-search product", async t => {
+  const fetch = t.mock.method(globalThis, "fetch");
+  for (const token of ["GOOGLEOTHER", "GOOGLE_INSPECTION_TOOL", "MEDIAPARTNERS_GOOGLE"]) {
+    assert.equal(await confirmedOperatorNetwork(token, "192.0.2.20"), false);
+  }
+  assert.equal(fetch.mock.callCount(), 0);
+});

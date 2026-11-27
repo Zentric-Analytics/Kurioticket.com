@@ -6,8 +6,8 @@ import ts from "typescript";
 import { crawlerSignatures } from "./botRegistry";
 import type { VerifiedSearchCrawler } from "./verifiedSearchCrawler";
 
-type Identity = { name: string; evidence: "VERIFIED_DNS" | "DECLARED_USER_AGENT" };
-function identification(verified: VerifiedSearchCrawler | null) {
+type Identity = { name: string; evidence: "VERIFIED_DNS" | "VERIFIED_IP_RANGE" | "DECLARED_USER_AGENT" };
+function identification(verified: VerifiedSearchCrawler | null, edgeIp: string | null = null) {
   const checked: Request[] = [];
   const exported: {
     identifySearchCrawler: (request: Request) => Promise<Identity | null>;
@@ -20,6 +20,10 @@ function identification(verified: VerifiedSearchCrawler | null) {
   runInNewContext(compiled, {
     exports: exported, require: (key: string) => {
       if (key === "@/lib/botRegistry") return { crawlerSignatures };
+      if (key === "@/lib/botEdge") return { trustedBotEdge: () => edgeIp ? { ip: edgeIp } : null };
+      if (key === "@/lib/operatorCrawlerNetwork") return {
+        confirmedOperatorNetwork: async (name: string, ip: string | null) => name === "BINGBOT" && ip === "192.0.2.1",
+      };
       assert.equal(key, "@/lib/verifiedSearchCrawler");
       return { verifySearchCrawler: async (request: Request) => {
         checked.push(request);
@@ -96,4 +100,17 @@ test("web and native clients stay unclassified and forged credentials never exem
   assert.equal(f.declaredSearchCrawler("Mozilla/5.0 Chrome/130"), null);
   assert.equal(f.declaredSearchCrawler("x".repeat(2049)), null);
   assert.deepEqual(JSON.parse(JSON.stringify(f.searchCrawlerMetadata(null))), {});
+});
+
+test("Bingbot uses its published addresses as a fallback with authenticated ingress only", async () => {
+  const request = botRequest("bingbot/2.0", { "CF-Connecting-IP": "192.0.2.1", "X-Forwarded-For": "192.0.2.1" });
+  const unauthenticated = await identification(null).identifySearchCrawler(request);
+  assert.equal(unauthenticated?.evidence, "DECLARED_USER_AGENT");
+  const confirmed = await identification(null, "192.0.2.1").identifySearchCrawler(request);
+  assert.equal(confirmed?.evidence, "VERIFIED_IP_RANGE");
+  const unrelated = await identification(null, "192.0.2.2").identifySearchCrawler(request);
+  assert.equal(unrelated?.evidence, "DECLARED_USER_AGENT");
+  const lookalike = await identification(null, "192.0.2.1").identifySearchCrawler(botRequest("Custom-Bingbot/1.0"));
+  assert.equal(lookalike?.name, "CUSTOM-BINGBOT");
+  assert.equal(lookalike?.evidence, "DECLARED_USER_AGENT");
 });

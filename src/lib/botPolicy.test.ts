@@ -133,6 +133,12 @@ test("authenticated original network evidence is collected for every catalog cat
   assert.equal(incomplete?.country, null);
   assert.equal(incomplete?.networkAsn, null);
   assert.equal(incomplete?.networkOrganization, null);
+  const empty = request("/", "NovelSpider", "GET", {
+    "X-Kurioticket-Edge-Auth": secret, "X-Kurioticket-Edge-Version": "1",
+  });
+  const emptyObservation = await observeBot(empty, automationSignal(empty)!);
+  assert.equal(emptyObservation.networkSource, null);
+  assert.equal(emptyObservation.evidence, "USER_AGENT");
   assert.equal(automationSignal(request("/", "Mozilla/5.0 Chrome/133.0", "GET", headers)), null);
 });
 
