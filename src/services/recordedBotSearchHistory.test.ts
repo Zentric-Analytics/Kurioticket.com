@@ -199,10 +199,13 @@ test("recorded bot searches reconcile legacy and linked records exactly once, wi
   } });
   // A search linked to the same bot reference but identifying a different
   // crawler must not enter either GOOGLEBOT cohort's shared summary.
-  await create({ identifiedCrawler: "BINGBOT", verifiedCrawler: "BINGBOT",
-    crawlerEvidence: "VERIFIED_DNS",
-    searchNetwork: { ipAddress: "8.8.8.8", countryCode: "GB" } },
-    { requestId: activity.id, createdAt: new Date("2026-11-27T13:00:00Z") });
+  await db.searchHistory.update({ where: { id: f.id }, data: {
+    createdAt: new Date("2026-11-27T13:00:00Z"),
+    query: { environment, applicationSource: "BOT",
+      identifiedCrawler: "BINGBOT", verifiedCrawler: "BINGBOT",
+      crawlerEvidence: "VERIFIED_DNS",
+      searchNetwork: { ipAddress: "8.8.8.8", countryCode: "GB" } },
+  } });
 
   for (const cohort of [verified, declared]) {
     const [cohortDetail] = await db.$queryRaw<typeof claimedDetail[]>(detailHistoryQuery(
