@@ -84,7 +84,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
         ["Last seen (UTC)", <span key="last-seen" title={botTime(bot.lastSeen)}>{botDirectoryTime(bot.lastSeen)}</span>],
       ]} />
       <p className="text-xs text-slate-600">Network information includes up to 20 recent requests and 20 recorded searches with saved evidence for this identity. Reported and historical evidence does not establish current authenticity.</p>
-      {bot.requests === 0n && report.actual > 0 && <p className="text-xs text-slate-600">Historical search identity. No retained live requests have established its current verification.</p>}
+      {bot.requests === BigInt(0) && report.actual > 0 && <p className="text-xs text-slate-600">Historical search identity. No retained live requests have established its current verification.</p>}
       {report.relatedCohorts.length > 0 && <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
         <span>Other recorded identities with the same declared name:</span>
         {report.relatedCohorts.map(cohort => <Link key={cohort.id} prefetch={false} className={reportLink}
