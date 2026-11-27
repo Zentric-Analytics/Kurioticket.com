@@ -149,6 +149,27 @@ test("recorded bot searches reconcile legacy and linked records exactly once, wi
   assert.equal(unchanged.access, "CRAWL_ONLY");
   assert.equal(unchanged.searches, BigInt(0));
   assert.equal(await db.botActivity.count({ where: { environment } }), 1);
+
+  // Codex P2 regression: invalid/private observations newer than the latest
+  // valid IP must never push that older public IP out of the summary.
+  await db.botActivity.createMany({ data: Array.from({ length: 30 }, (_, index) => ({
+    id: randomUUID(), botId: declared.id, environment,
+    timestamp: new Date(Date.UTC(2026, 10, 26, 0, 0, index)),
+    endpoint: "/robots.txt", method: "GET", kind: "PAGE",
+    verification: "DECLARED", decision: "ALLOWED", reason: "PUBLIC_CRAWL",
+    reportedIp: ["127.0.0.1", "10.0.0.1", "not-an-ip", "192.0.2.1"][index % 4],
+    reportedCountry: "US",
+  })) });
+  const [crowded] = await db.$queryRaw<typeof claimedDetail[]>(detailHistoryQuery(environment, verified.id, verified.name,
+    combinedBotHistory(environment, verified.id, verified.identityKey, { window: undefined },
+      Prisma.sql`SELECT id, "createdAt" AS timestamp FROM recorded WHERE "activityId" IS NULL`), true, 1, 1));
+  const crowdedNetwork = summarizeBotNetwork(crowded.networkIpCandidates, crowded.networkCountryCodes);
+  assert.ok(crowded.networkIpCandidates.length > 25, "Review must scan past 25 newer invalid addresses");
+  assert.equal(crowdedNetwork.latestIp?.ip, "66.249.67.74");
+  assert.equal(crowdedNetwork.latestIp?.id, activity.id, "Original request remains the evidence owner");
+  assert.equal(crowdedNetwork.latestIp?.botId, declared.id);
+  assert.deepEqual(crowdedNetwork.countries, ["CA", "US"]);
+  assert.equal(crowded.actual, 2, "Network observations must not inflate actual searches");
 });
 
 test("network summary leaves missing and invalid network data unrecorded and deduplicates countries", () => {
