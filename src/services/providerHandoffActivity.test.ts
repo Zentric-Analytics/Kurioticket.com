@@ -144,9 +144,12 @@ test("withdrawal during deferred correlation cannot restore stale visitor attrib
 });
 
 test("an anonymous handoff records its own bounded device on the existing operational log", async () => {
-  const before = { AUTH_SECRET: process.env.AUTH_SECRET, TRAVEL_PROVIDER_MODE: process.env.TRAVEL_PROVIDER_MODE };
+  const before = { AUTH_SECRET: process.env.AUTH_SECRET, TRAVEL_PROVIDER_MODE: process.env.TRAVEL_PROVIDER_MODE,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL, NEXTAUTH_URL: process.env.NEXTAUTH_URL };
   process.env.AUTH_SECRET = "synthetic-device-observation-test-secret";
   process.env.TRAVEL_PROVIDER_MODE = "staging";
+  process.env.NEXT_PUBLIC_APP_URL = "https://staging.kurioticket.com";
+  process.env.NEXTAUTH_URL = "https://staging.kurioticket.com";
   try {
     const initial = new Request("https://staging.kurioticket.com/api/cars/search", { headers: {
       origin: "https://staging.kurioticket.com", "sec-fetch-site": "same-origin",
