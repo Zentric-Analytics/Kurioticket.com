@@ -101,7 +101,7 @@ test("detected unknown automation is registered, blocked and never invokes searc
     else process.env.BOT_EDGE_SECRET = previousSecret;
   });
   const req = new Request("https://kurioticket.com/api/flights/search?secret=hidden", {
-    method: "POST", headers: { "User-Agent": name, "X-Mobile-Platform": "ios",
+    method: "POST", headers: { "User-Agent": name, "X-Mobile-Platform": "ios", "Rndr-Id": "f6e46dca-32d5-4d0f",
       "X-Kurioticket-Edge-Auth": secret, "X-Kurioticket-Edge-Version": "1",
       "X-Kurioticket-Edge-IP": "192.0.2.42", "X-Kurioticket-Edge-Country": "GB",
       "X-Kurioticket-Edge-Ray": "1234567890abcdef", "X-Kurioticket-Edge-ASN": "64512",
@@ -120,6 +120,7 @@ test("detected unknown automation is registered, blocked and never invokes searc
   assert.equal(bot.activities[0].responseStatus, 403);
   assert.equal(bot.activities[0].ip, "192.0.2.42");
   assert.equal(bot.activities[0].country, "GB");
+  assert.equal(bot.activities[0].renderRequestId, "f6e46dca-32d5-4d0f");
   assert.equal(bot.activities[0].edgeRay, "1234567890abcdef");
   assert.equal(bot.activities[0].networkAsn, "64512");
   assert.equal(bot.activities[0].networkOrganization, "Example Network");

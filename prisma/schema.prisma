@@ -1373,6 +1373,7 @@ model BotActivity {
   ip                 String?
   country            String?
   userAgent          String?
+  renderRequestId    String?
   edgeRay            String?
   networkAsn         String?
   networkOrganization String?

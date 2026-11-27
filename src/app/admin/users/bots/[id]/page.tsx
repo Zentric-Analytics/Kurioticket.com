@@ -139,6 +139,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
                           ["IP address", event.ip], ["Country", event.country], ["Declared bot identity", event.declaredName],
                           ["Network ASN", event.networkAsn ? "AS" + event.networkAsn : null], ["Network organization", event.networkOrganization],
                           ["Network evidence source", event.networkSource ? botLabel(event.networkSource) : null], ["Cloudflare Ray ID", event.edgeRay],
+                          ["Render request ID", event.renderRequestId],
                           ["Recorded User-Agent token", event.userAgent],
                           ["Verification evidence", event.evidence ? botLabel(event.evidence) : null],
                           ["Access decision", decision], ["Reason", botLabel(event.reason)], ["HTTP response status", event.responseStatus],
