@@ -104,6 +104,11 @@ export class VisitorIdentityCoordinator {
   /** Local generation only; never an identity credential or a value sent to the server. */
   trackingContext = () => this.snapshot().tracking ? this.revision : null;
 
+  /** Read an already-confirmed guest identity without loading, granting,
+   * refreshing, merging, or extending analytics activity from a heartbeat. */
+  existingGuestToken = (): string | null => this.sessionKnown && this.session === null
+    && this.state.userId === null && this.snapshot().tracking ? this.state.visitorToken : null;
+
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
   private publish() { this.listeners.forEach(listener => listener()); }
 

@@ -1,7 +1,7 @@
 import { chromium, expect } from "@playwright/test";
 import assert from "node:assert/strict";
 const base=process.env.ADMIN_ACTIVITY_QA_URL,output=process.env.ADMIN_ACTIVITY_QA_OUTPUT;
-const browser=await chromium.launch({headless:true,args:["--no-sandbox"]});
+const browser=await chromium.launch({headless:true,args:["--no-sandbox"],executablePath:process.env.ADMIN_ACTIVITY_QA_CHROMIUM});
 try {
   const page=await browser.newPage({viewport:{width:1280,height:900}});
   const errors=[];page.on("pageerror",e=>errors.push(e.message));
@@ -14,18 +14,21 @@ try {
     await page.setViewportSize({width,height:900});
     await page.goto(base+"/admin/users/online");
     const rows=page.getByTestId("online-user-row");
-    await expect(rows).toHaveCount(3);
+    await expect(rows).toHaveCount(5);
     const byPlatform=label=>rows.filter({has:page.locator('td[data-label="Platforms"] span').filter({hasText:new RegExp("^\\s*"+label+"\\s*$")})});
     const guest=byPlatform("Desktop web"),missing=byPlatform("iOS");
     await expect(guest).toHaveCount(1);
     await expect(missing).toHaveCount(1);
     await expect(guest.getByTestId("online-user-location")).toHaveText("Nigeria");
     await expect(missing.getByTestId("online-user-location")).toHaveText("Unavailable");
-    await expect(byPlatform("Android")).toHaveCount(0);
-    const registeredHref=await byPlatform("Mobile web").getByRole("link",{name:"View Activity"}).getAttribute("href");
+    await expect(byPlatform("Android")).toHaveCount(1);
+    const byType=(candidates,label)=>candidates.filter({has:page.locator('td[data-label="Type"]').filter({hasText:new RegExp("^\\s*"+label+"\\s*$")})});
+    const registeredHref=await byType(byPlatform("Mobile web"),"Customer").getByRole("link",{name:"View Activity"}).getAttribute("href");
     assert.equal(registeredHref,"/admin/users/user/qa-registered-0001/activity");
     const guestHref=await guest.getByRole("link",{name:"View Activity"}).getAttribute("href");
     const otherHref=await missing.getByRole("link",{name:"View Activity"}).getAttribute("href");
+    const visitorHref=await byType(byPlatform("Mobile web"),"Guest").getByRole("link",{name:"View Activity"}).getAttribute("href");
+    const operationalHref=await byPlatform("Android").getByRole("link",{name:"View Activity"}).getAttribute("href");
     assert.notEqual(guestHref,otherHref);
     assert.match(guestHref,/^\/admin\/users\/live-guest\/[A-Za-z0-9_-]{43}\/activity$/);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
@@ -67,6 +70,22 @@ try {
     await directorySelected();
     await expect(page.getByRole("heading",{name:"All activity",exact:true})).toBeVisible();
     await expect(page.locator("[data-activity-id]")).toHaveCount(1);
+    const fullCard=page.getByTestId("activity-history-card");
+    const fullLayout=async()=>fullCard.evaluate(el=>{
+      const filters=el.querySelector('[data-testid="activity-filters-row"]');
+      const categories=el.querySelector('[aria-label="Activity categories"]');
+      return {wrapper:el.className,header:el.querySelector("header").className,
+        filters:filters.className,filterCols:getComputedStyle(filters).gridTemplateColumns.split(" ").length,
+        categoryFrame:categories.className,
+        categories:[...categories.children].map(category=>category.firstChild.textContent.trim()),
+        historyActions:el.querySelector('[data-testid="activity-history-actions"]').className};
+    });
+    const liveFullLayout=await fullLayout();
+    await expect(fullCard.getByRole("textbox",{name:"Search activity"})).toBeDisabled();
+    await expect(fullCard.getByRole("button",{name:"Apply filters",exact:true})).toBeDisabled();
+    await expect(fullCard.getByTestId("activity-history-actions").getByRole("link")).toHaveCount(0);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+    await page.screenshot({path:output+"/live-guest-all-activity-"+width+".png",fullPage:true});
     const categories=page.getByRole("navigation",{name:"Activity categories"});
     await expect(categories.locator('[aria-disabled="true"]')).toHaveCount(5);
     await categories.getByRole("link",{name:"Device & Access",exact:true}).click();
@@ -85,6 +104,43 @@ try {
     const accountLayout=await layout();
     assert.deepEqual({...liveLayout,facts:["Joined","Last seen","Events"]},accountLayout,"guest must use identical registered layout at "+width);
     await page.screenshot({path:output+"/registered-comparison-"+width+".png",fullPage:true});
+    await card.getByRole("link",{name:"View all activity"}).click();
+    await expect(page).toHaveURL(u=>u.pathname===registeredHref+"/all");
+    assert.deepEqual(await fullLayout(),liveFullLayout,"full guest history must use the registered workspace at "+width);
+    await expect(fullCard.getByRole("textbox",{name:"Search activity"})).toBeEnabled();
+    await expect(fullCard.getByRole("button",{name:"Apply filters",exact:true})).toBeEnabled();
+    await expect(fullCard.getByRole("navigation",{name:"Activity categories"}).getByRole("link")).toHaveCount(7);
+    await expect(fullCard.getByRole("link",{name:"Device & Access history",exact:true})).toBeVisible();
+    await expect(fullCard.getByRole("link",{name:"Pages visited history",exact:true})).toBeVisible();
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+    await page.screenshot({path:output+"/registered-all-activity-"+width+".png",fullPage:true});
+    for (const [liveHref,id,source] of [
+      [visitorHref,"qa-page-history-guest","Consented guest"],
+      [operationalHref,"12345678-1234-4123-8123-123456789abc","Essential operational activity"],
+    ]) {
+      const recordedPath="/admin/users/guest/"+id+"/activity";
+      await page.goto(base+liveHref+"?range=all");
+      await expect(page).toHaveURL(u=>u.pathname===recordedPath&&u.searchParams.get("range")==="all");
+      await directorySelected();
+      await expect(card.getByText(source,{exact:true})).toBeVisible();
+      assert.ok(await card.locator("[data-activity-id]").count()>1,"verified guest has recorded activity");
+      assert.equal((await card.getByTestId("activity-metric-value").allTextContents()).includes("—"),false);
+      assert.deepEqual({...await layout(),facts:["Joined","Last seen","Events"]},accountLayout,"verified guest uses registered overview at "+width);
+      await expect(card.getByRole("link",{name:"View access history",exact:true})).toBeVisible();
+      await page.screenshot({path:output+"/linked-guest-"+(source==="Consented guest"?"visitor":"operational")+"-"+width+".png",fullPage:true});
+      await card.getByRole("link",{name:"View all activity"}).click();
+      await expect(page).toHaveURL(u=>u.pathname===recordedPath+"/all");
+      assert.deepEqual(await fullLayout(),liveFullLayout,"verified guest uses registered full history at "+width);
+      await expect(fullCard.getByRole("textbox",{name:"Search activity"})).toBeEnabled();
+      await expect(fullCard.getByRole("link",{name:"Device & Access history",exact:true})).toBeVisible();
+      const recordedCategories=fullCard.getByRole("navigation",{name:"Activity categories"});
+      await expect(recordedCategories.locator('[aria-disabled="true"]')).toHaveCount(source==="Consented guest"?0:1);
+      await expect(fullCard.getByRole("link",{name:"Pages visited history",exact:true})).toHaveCount(source==="Consented guest"?1:0);
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+    }
+    await page.goto(base+operationalHref+"/all?range=all&tab=searches&product=FLIGHT&stage=SEARCH_COMPLETED");
+    await expect(page).toHaveURL(u=>u.pathname==="/admin/users/guest/12345678-1234-4123-8123-123456789abc/activity/all"&&u.searchParams.get("tab")==="searches"&&u.searchParams.get("product")==="FLIGHT"&&u.searchParams.get("stage")==="SEARCH_COMPLETED");
+    await expect(page.locator("[data-activity-id]")).toHaveCount(1);
     await page.goto(base+otherHref);
     await directorySelected();
     await expect(card.locator('section[aria-label="Customer identity"]').getByText("Unavailable",{exact:true})).toBeVisible();
@@ -97,8 +153,9 @@ try {
     await expect(card.getByText("Nigeria",{exact:true})).toHaveCount(0);
     await expect(card.getByRole("link",{name:"View all activity"})).toHaveCount(0);
     await page.goto(base+"/admin/users/live-guest/"+invalid+"/activity/all");
-    await expect(page.getByText("This live guest session is no longer available or cannot be verified.")).toBeVisible();
+    await expect(fullCard.getByRole("status")).toHaveText("This live guest session is no longer available or cannot be verified.");
     await expect(page.locator("[data-activity-id]")).toHaveCount(0);
+    await expect(page.getByRole("navigation",{name:"Activity categories"}).locator('[aria-disabled="true"]')).toHaveCount(7);
     const ref=guestHref.split("/").at(-2);
     await page.goto(base+"/admin/users/online/guest/"+ref);
     await expect(page).toHaveURL(u=>u.pathname===guestHref);

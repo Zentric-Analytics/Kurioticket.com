@@ -3,6 +3,7 @@ import { presenceSigningSecret } from "@/lib/onlinePresenceCredential";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { recordOnlinePresence, reportOnlinePresenceIngestionFailure } from "@/services/onlinePresenceService";
+import { resolveGuestPresenceActivityIdentity } from "@/services/guestPresenceActivityIdentity";
 
 export const runtime = "nodejs";
 
@@ -15,5 +16,6 @@ export const POST = createOnlinePresenceHandler("web", {
     return session?.client === "WEB" ? session : null;
   },
   record: recordOnlinePresence,
+  resolveGuestActivity: resolveGuestPresenceActivityIdentity,
   onFailure: reportOnlinePresenceIngestionFailure,
 });

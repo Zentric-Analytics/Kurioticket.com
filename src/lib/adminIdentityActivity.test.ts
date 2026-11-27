@@ -325,12 +325,15 @@ test("contiguous journey grouping preserves interleaved event chronology", () =>
 test("User Activity removes redundant journey navigation and related records but keeps handoff filters", () => {
   const source = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx","utf8");
   const full = readFileSync("src/app/admin/users/[kind]/[id]/activity/all/page.tsx","utf8");
-  assert.match(full, /value:\s*"handoffs",\s*label:\s*"Provider handoffs"/);
+  const fullWorkspace = readFileSync("src/components/admin/AdminFullActivityWorkspace.tsx","utf8");
+  assert.match(fullWorkspace, /value:\s*"handoffs",\s*label:\s*"Provider handoffs"/);
+  assert.match(full, /categories=\{FULL_ACTIVITY_CATEGORIES\.map/);
   assert.match(source, /normalizeUserActivityQuery/);
   const helper = readFileSync("src/lib/adminActivityDateQuery.ts","utf8");
   assert.match(helper, /if \(raw\.tab === "journeys"\) delete raw\.tab/);
   assert.match(source, /<AdminUnifiedActivityList/);
-  assert.match(full, /<ActivityFiltersBar/);
+  assert.match(full, /<AdminFullActivityWorkspace/);
+  assert.match(fullWorkspace, /<ActivityFiltersBar/);
   assert.match(full, /<AdminUnifiedActivityList/);
   assert.doesNotMatch(source, /<ActivityTimeline|<ActivityFiltersBar/);
   assert.doesNotMatch(source, /value: "journeys", label: "Journeys"|Related records|const related =|searchesHref|journeysHref/);

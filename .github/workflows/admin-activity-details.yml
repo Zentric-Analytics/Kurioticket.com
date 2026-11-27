@@ -8,13 +8,23 @@ on:
       - src/components/admin/AdminIdentityTable.tsx
       - src/components/admin/AdminCustomerActivityWorkspace.tsx
       - src/components/admin/AdminLiveGuestActivity.tsx
+      - src/components/admin/AdminFullActivityWorkspace*
+      - src/components/admin/ActivityFiltersBar.tsx
       - src/components/admin/AdminUnifiedActivityList*
       - src/components/admin/AdminGuestAccessHistory.tsx
       - src/lib/adminGuestAccess*
       - src/lib/guestAccessObservation.ts
       - src/lib/guestLiveCountry*
+      - src/lib/onlinePresenceWrite*
       - src/lib/onlinePresenceRoute*
       - src/lib/liveGuestPresenceWrite*
+      - src/lib/guestPresenceActivityIdentity*
+      - src/lib/adminLiveGuestHistory*
+      - src/lib/adminLiveGuestActivityNavigation*
+      - src/lib/liveGuestHistoryPostgres.test.ts
+      - src/services/guestPresenceActivityIdentity.ts
+      - src/services/adminLiveGuestHistoryService.ts
+      - prisma/migrations/**
       - src/lib/operationalGuestDeviceObservation*
       - src/lib/sessionDeviceObservation*
       - src/services/adminGuestAccessService.ts
@@ -42,7 +52,7 @@ permissions:
 
 jobs:
   guest-observations-postgres:
-    name: Verify guest country and device observations on PostgreSQL
+    name: Verify guest ownership, country and device observations on PostgreSQL
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -77,6 +87,7 @@ jobs:
           node --test --import jiti/register
           src/lib/liveGuestPresenceWrite.test.ts
           src/lib/adminGuestAccessPostgres.test.ts
+          src/lib/liveGuestHistoryPostgres.test.ts
 
   customer-activity:
     name: Validate customer activity page and capture real screenshots
@@ -95,7 +106,7 @@ jobs:
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json
           JITI_JSX: "true"
-        run: node --test --import jiti/register src/lib/adminActivityJourneyNavigation.test.ts src/lib/adminJourneyPageContract.test.ts src/services/adminJourneyContract.test.ts src/services/adminJourneyCore.test.ts src/components/admin/AdminIdentityTable.test.ts src/components/admin/ActivityTimeline.test.ts src/components/admin/JourneyEventHistory.test.ts src/components/admin/UserStatusActions.test.ts src/components/admin/GuestTrackingActions.test.ts src/services/adminGuestManagement.test.ts src/lib/adminActivityEnvironmentBoundary.test.ts src/lib/adminIdentityActivity.test.ts src/lib/adminIdentityActivityComplete.test.ts src/lib/adminIdentityJourney.test.ts src/lib/guestLiveCountry.test.ts src/lib/guestFirstAccessObservation.test.ts src/lib/onlinePresenceRoute.test.ts src/lib/adminOnlineUsersSnapshot.test.ts src/lib/adminLiveGuestReference.test.ts src/lib/adminNavigation.test.ts src/components/admin/AdminUnifiedActivityList.test.ts src/components/admin/AdminCustomerActivityWorkspace.test.ts src/lib/adminGuestAccess.test.ts
+        run: node --test --import jiti/register src/lib/adminActivityJourneyNavigation.test.ts src/lib/adminJourneyPageContract.test.ts src/services/adminJourneyContract.test.ts src/services/adminJourneyCore.test.ts src/components/admin/AdminIdentityTable.test.ts src/components/admin/ActivityTimeline.test.ts src/components/admin/JourneyEventHistory.test.ts src/components/admin/UserStatusActions.test.ts src/components/admin/GuestTrackingActions.test.ts src/services/adminGuestManagement.test.ts src/lib/adminActivityEnvironmentBoundary.test.ts src/lib/adminIdentityActivity.test.ts src/lib/adminIdentityActivityComplete.test.ts src/lib/adminIdentityJourney.test.ts src/lib/guestLiveCountry.test.ts src/lib/guestFirstAccessObservation.test.ts src/lib/onlinePresenceRoute.test.ts src/lib/adminOnlineUsersSnapshot.test.ts src/lib/adminLiveGuestReference.test.ts src/lib/adminNavigation.test.ts src/components/admin/AdminUnifiedActivityList.test.ts src/components/admin/AdminCustomerActivityWorkspace.test.ts src/components/admin/AdminFullActivityWorkspace.test.ts src/lib/adminLiveGuestActivityNavigation.test.ts src/lib/adminLiveGuestHistory.test.ts src/lib/guestPresenceActivityIdentity.test.ts src/lib/adminGuestAccess.test.ts
       - run: npx playwright install --with-deps chromium
       - name: Render and test real Admin Activity component with labelled QA data
         run: node qa/admin-activity-details/run.mjs

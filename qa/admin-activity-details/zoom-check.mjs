@@ -8,7 +8,7 @@ const output = process.env.ADMIN_ACTIVITY_QA_OUTPUT;
 const extension = await mkdtemp(path.join(os.tmpdir(), "kt-zoom-extension-"));
 await writeFile(path.join(extension,"manifest.json"), JSON.stringify({manifest_version:3,name:"Activity QA zoom",version:"1.0",permissions:["tabs"],background:{service_worker:"worker.js"}}));
 await writeFile(path.join(extension,"worker.js"), 'chrome.runtime.onInstalled.addListener(() => {});');
-const context = await chromium.launchPersistentContext("", {channel:"chromium",headless:true,viewport:{width:1280,height:900},args:["--no-sandbox","--disable-extensions-except="+extension,"--load-extension="+extension]});
+const context = await chromium.launchPersistentContext("", {channel:"chromium",headless:true,viewport:{width:1280,height:900},args:["--no-sandbox","--disable-extensions-except="+extension,"--load-extension="+extension],executablePath:process.env.ADMIN_ACTIVITY_QA_CHROMIUM});
 try {
   const worker = context.serviceWorkers()[0] || await context.waitForEvent("serviceworker");
   const page = await context.newPage();

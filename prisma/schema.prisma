@@ -354,6 +354,11 @@ model OnlinePresenceSession {
   // Independent verified live country; never copied from older preview data.
   guestLiveCountryCode String?
   guestLiveCountryObservedAt DateTime?
+  // Ephemeral proof of an existing guest history owner. No credential is stored.
+  guestActivityKind String?
+  guestActivityId String?
+  guestActivityObservedAt DateTime?
+  guestActivityExpiresAt DateTime?
   accountSession   AccountSession? @relation(fields: [accountSessionId], references: [id], onDelete: Cascade)
 
   @@id([environment, sourceId])

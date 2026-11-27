@@ -138,6 +138,12 @@ export async function loadAdminIdentityActivity(
       select: { id: true, firstSeenAt: true, lastSeenAt: true },
     }) : null;
     if (kind === "user" && !account) return { status: "not_found" };
+    // A withdrawn or account-linked Visitor must never be reinterpreted as an
+    // operational session with the same imported ID. Recheck on the canonical
+    // page even when navigation previously verified a current guest owner.
+    if (kind === "guest" && !visitor && await db.visitor.findUnique({ where: { id }, select: { id: true } })) {
+      return { status: "not_found" };
+    }
     const isOperationalGuest = kind === "guest" && !visitor;
     // One guest activity reader serves both consented visitor IDs and the
     // short-lived operational session IDs. The history rows themselves persist

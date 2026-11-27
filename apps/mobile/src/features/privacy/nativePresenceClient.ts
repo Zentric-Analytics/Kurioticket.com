@@ -6,6 +6,12 @@ const missingEndpointBackoffMs = 5 * 60_000;
 const credentialHeader = "x-kt-presence-session";
 
 type PresenceSession = Pick<StoredSession, "token" | "expires" | "recovery"> | null;
+export type ExistingGuestPresenceCredentials = {
+  visitorToken?: string | null;
+  operationalSearchCredential?: string | null;
+};
+const visitorTokenPattern = /^[A-Za-z0-9_-]{43}$/;
+const nativeSearchCredentialPattern = /^v2\.[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(\d{10,13})\.staging\.(ios|android)\.[A-Za-z0-9_-]{43}$/;
 
 function retryTime(response: Response, now: number) {
   if (response.status === 404 || response.status === 405) return now + missingEndpointBackoffMs;
@@ -16,7 +22,11 @@ function retryTime(response: Response, now: number) {
   return Number.isSafeInteger(time) && time > now ? time : 0;
 }
 
-export function createNativePresenceClient(baseUrl: string, platform: "ios" | "android", fetcher = fetch) {
+export function createNativePresenceClient(
+  baseUrl: string, platform: "ios" | "android", fetcher = fetch,
+  readGuestCredentials?: () => ExistingGuestPresenceCredentials,
+) {
+  const guestActivityEnabled = baseUrl === "https://staging.kurioticket.com";
   let foreground = false;
   let stopped = false;
   let nextHeartbeatAt = 0;
@@ -33,6 +43,31 @@ export function createNativePresenceClient(baseUrl: string, platform: "ios" | "a
     return null;
   }
 
+  function guestHeaders(bearer: string | null): Record<string, string> {
+    // Reuse existing credentials only. In particular, an expired stored account
+    // is not an explicit guest context, and production receives no new headers.
+    if (!guestActivityEnabled || bearer !== null || session !== null || !readGuestCredentials) return {};
+    try {
+      const existing = readGuestCredentials();
+      const headers: Record<string, string> = {};
+      if (typeof existing.visitorToken === "string" && visitorTokenPattern.test(existing.visitorToken)) {
+        headers["x-kt-visitor"] = existing.visitorToken;
+      }
+      const credential = existing.operationalSearchCredential;
+      const match = typeof credential === "string" ? nativeSearchCredentialPattern.exec(credential) : null;
+      const expiresAt = match ? Number(match[1]) : 0;
+      const now = Date.now();
+      if (match && match[2] === platform && Number.isSafeInteger(expiresAt)
+          && expiresAt > now && expiresAt <= now + 30 * 60_000) {
+        headers["x-kt-search-session"] = credential!;
+      }
+      return headers;
+    } catch {
+      // Optional history context must never suppress otherwise valid presence.
+      return {};
+    }
+  }
+
   function postHeartbeat(bearer: string | null, signal: AbortSignal) {
     return fetcher(`${baseUrl}/api/mobile/v1/presence`, {
       method: "POST",
@@ -42,6 +77,7 @@ export function createNativePresenceClient(baseUrl: string, platform: "ios" | "a
         "x-mobile-platform": platform,
         ...(credential ? { [credentialHeader]: credential } : {}),
         ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
+        ...guestHeaders(bearer),
       },
     });
   }
@@ -101,6 +137,13 @@ export function createNativePresenceClient(baseUrl: string, platform: "ios" | "a
   }
 
   return {
+    refreshGuestCredentials() {
+      if (!guestActivityEnabled || !readGuestCredentials || session !== null) return;
+      nextHeartbeatAt = Date.now();
+      // Let all account/consent listeners finish before reading their current
+      // state. An in-flight heartbeat finishes before this prompt update runs.
+      queueMicrotask(schedule);
+    },
     setSession(next: PresenceSession) {
       const previous = activeBearer();
       session = next;

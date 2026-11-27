@@ -54,13 +54,14 @@ function matches(value: any, condition: any): boolean {
 function setup(kind: "guest" | "user" | "operational", count = 1105, products = ["FLIGHT", "HOTEL"], includeOfferJourneys = false, handoffProduct: "FLIGHT" | "HOTEL" | "CAR" = "HOTEL", registeredLinkedVisitors = 1, eventBearingVisitors = 1, pageViews = 0) {
   const userId = "qa-complete-account";
   const visitorId = "qa-complete-visitor";
-  const id = kind === "user" ? userId : kind === "operational" ? "qa-operational-session" : visitorId;
+  const id = kind === "user" ? userId : kind === "operational" ? "b9ab6aa4-e28f-4daf-9b10-b1bb5616f6ef" : visitorId;
   const visitor: Row = {
     id: visitorId, firstSeenAt: baseTime, lastSeenAt: baseTime,
     consentStatus: "GRANTED", trackingDisabledAt: null, currentUserId: kind === "user" ? userId : null,
     identityLinks: kind === "user" ? [{ userId }] : [],
     currentUser: { status: "ACTIVE", emailVerified: baseTime },
   };
+  let identityVisitor: Row | null = kind === "operational" ? null : visitor;
   const owner = {
     userId: kind === "user" ? userId : null,
     visitorId: kind === "operational" ? null : visitorId,
@@ -138,9 +139,11 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     journeysById.get(journey.id)!.events.push(event);
   }
   const calls: Array<{ source: string; take: number; skip?: number }> = [];
+  let historyReads = 0;
   let failAfterFirstBatch = false;
   const delegate = (source: string, rows: Row[]) => ({
     async findMany(args: Row) {
+      historyReads++;
       if (failAfterFirstBatch && source === "search" && calls.some(call => call.source === source)) throw new Error("Batch unavailable");
       calls.push({ source, take: args.take, skip: args.skip });
       const matching = rows.filter(row => matches(row, args.where));
@@ -155,8 +158,9 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
       });
       return matching.slice(args.skip ?? 0, (args.skip ?? 0) + args.take);
     },
-    async count(args: Row) { return rows.filter(row => matches(row, args.where)).length; },
+    async count(args: Row) { historyReads++; return rows.filter(row => matches(row, args.where)).length; },
     async groupBy(args: Row) {
+      historyReads++;
       const counts = new Map<string, number>();
       for (const row of rows.filter(row => matches(row, args.where))) counts.set(row.type, (counts.get(row.type) ?? 0) + 1);
       return [...counts].map(([type, total]) => ({ type, _count: { _all: total } }));
@@ -170,7 +174,8 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
   const db: Row = {
     user: { async findUnique() { return { id: userId, name: "Test account", role: "USER", status: "ACTIVE", createdAt: baseTime }; } },
     visitor: {
-      async findFirst() { return kind === "operational" ? null : visitor; },
+      async findFirst(args: Row) { return identityVisitor && matches(identityVisitor, args.where) ? identityVisitor : null; },
+      async findUnique(args: Row) { return identityVisitor?.id === args.where.id ? identityVisitor : null; },
       async findMany(args: Row) {
         if (kind !== "user") return [];
         candidateQueries.push(args.where);
@@ -193,9 +198,11 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     journeyEvent: delegate("journey", journeyRows), searchHistory: delegate("search", allSearchRows),
     redirectLog: delegate("handoff", handoffRows), analyticsEvent: delegate("analytics", analyticsRows),
     searchJourney: { async count(args: Row) {
+      historyReads++;
       return [...journeysById.values()].filter(journey => matches(journey, args.where)).length;
     } },
     async $queryRaw(query?: Row) {
+      historyReads++;
       if (query?.activityHandoffIds) {
         const firstMatchingSearch = searchRows.find(row => row.type === handoffProduct);
         return kind === "operational" && firstMatchingSearch && query.activityHandoffIds.includes(handoffRows[0].id)
@@ -210,22 +217,75 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
       return action(db);
     },
   };
-  const service = loadProduction("src/services/adminIdentityActivityService.ts", {
+  const productionOverrides = {
     "server-only": {},
     "@/generated/prisma/client": { Prisma: { TransactionIsolationLevel: { RepeatableRead: "RepeatableRead" }, sql: () => ({}) } },
     "@/lib/prisma": { getOptionalPrisma: () => db },
     "@/services/adminHandoffEvidence": { handoffEvidenceForActivitySql: (ids: string[], environment: string) => { assert.equal(environment, "staging"); assert.ok(ids.length <= 500 && ids.every(id => handoffRows.some(row => row.id === id))); return { activityHandoffIds: ids }; } },
     "@/lib/stagingSafety": { getPublicEnvironment: () => "staging" },
     "@/lib/adminIdentityDirectory": { escapePrismaContainsQuery: (value: string) => value },
-  });
+  };
+  const service = loadProduction("src/services/adminIdentityActivityService.ts", productionOverrides);
   return {
     load: (filters = allFilters, cursor?: string, mode: "page" | "all" | "summary" = "all", pageHistory?: { page: number; platform: string }) =>
       service.loadAdminIdentityActivity(kind === "user" ? "user" : "guest", id, filters, cursor, mode, pageHistory),
+    loadUnified: async (filters = allFilters) => {
+      const unexpectedAccess = () => { throw new Error("Ineligible identity reached access history"); };
+      const unified = loadProduction("src/services/adminUnifiedActivityService.ts", {
+        ...productionOverrides,
+        "@/services/adminIdentityActivityService": service,
+        "@/lib/adminGuestAccessSql": { guestAccessRecordsSql: unexpectedAccess, accessDatePredicate: unexpectedAccess },
+        "@/lib/guestAccessObservation": {},
+      });
+      return unified.loadAdminUnifiedActivity(kind === "user" ? "user" : "guest", id, filters, undefined, baseTime);
+    },
+    setGuestVisitor: (state: Row | null) => { identityVisitor = state ? { ...visitor, ...state, id } : null; },
+    historyReads: () => historyReads,
     transactionOptions, calls, candidateQueries,
     failNextBatch: () => { failAfterFirstBatch = true; }, transactions: () => transactions,
     expected: count + handoffRows.length + analyticsRows.length,
   };
 }
+
+test("a true operational UUID remains readable in page, all and summary modes", async () => {
+  for (const mode of ["page", "all", "summary"] as const) {
+    const scenario = setup("operational", 3);
+    const result = await scenario.load(allFilters, undefined, mode);
+    assert.equal(result.status, "ok", mode);
+    assert.equal(result.data.source, "operational", mode);
+    assert.equal(result.data.summary.searches, 3, mode);
+    assert.equal(result.data.summary.providerHandoffs, 53, mode);
+    assert.ok(scenario.historyReads() > 0, mode);
+  }
+});
+
+test("an existing ineligible UUID Visitor never falls back to operational history", async () => {
+  const states: Row[] = [
+    { consentStatus: "WITHDRAWN" },
+    { trackingDisabledAt: baseTime },
+    { currentUserId: "qa-linked-account" },
+    { identityLinks: [{ userId: "qa-linked-account" }] },
+  ];
+  for (const state of states) {
+    for (const mode of ["page", "all", "summary"] as const) {
+      const scenario = setup("operational", 3);
+      scenario.setGuestVisitor(state);
+      assert.deepEqual(await scenario.load(allFilters, undefined, mode), { status: "not_found" }, mode);
+      assert.equal(scenario.historyReads(), 0, mode);
+      assert.equal(scenario.transactions(), 0, mode);
+    }
+  }
+});
+
+test("unified guest activity stops at the canonical ineligible identity result", async () => {
+  for (const tab of ["all", "access"]) {
+    const scenario = setup("operational", 3);
+    scenario.setGuestVisitor({ consentStatus: "WITHDRAWN" });
+    assert.deepEqual(await scenario.loadUnified({ ...allFilters, tab }), { status: "not_found" }, tab);
+    assert.equal(scenario.historyReads(), 0, tab);
+    assert.equal(scenario.transactions(), 0, tab);
+  }
+});
 
 for (const kind of ["guest", "user", "operational"] as const) {
   test("complete " + kind + " activity includes all sources and batches without duplicates", async () => {

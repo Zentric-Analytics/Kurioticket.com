@@ -238,7 +238,7 @@ export function AdminOnlineUsersDirectory({ initial, timeZone = "UTC" }: { initi
                 {row.kind === "registered" ? <Link href={"/admin/users/user/" + encodeURIComponent(row.id) + "/activity"}
                   className="focus-ring font-medium text-[#004BB8] hover:underline">View Activity</Link>
                   : row.liveReference && /^[A-Za-z0-9_-]{43}$/.test(row.liveReference) ? <Link prefetch={false} href={"/admin/users/live-guest/" + encodeURIComponent(row.liveReference) + "/activity"}
-                    className="focus-ring font-medium text-[#004BB8] hover:underline" title="Current verified guest access only">View Activity</Link>
+                    className="focus-ring font-medium text-[#004BB8] hover:underline" title="View guest activity">View Activity</Link>
                   : <span className="text-[11px] text-[#64748B]">Not linked</span>}
               </td>
             </tr>)}

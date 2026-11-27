@@ -1,4 +1,4 @@
-import { isIP } from "node:net";
+import { BlockList, isIP } from "node:net";
 
 import { normalizeCountryCode } from "@/lib/geo/context";
 
@@ -61,53 +61,56 @@ const normalizeIpCandidate = (value: string) => {
   return trimmed;
 };
 
-const isPrivateOrInternalIpv4 = (ip: string) => {
-  const octets = ip.split(".").map((part) => Number(part));
-  const [first, second, third] = octets;
+// Numeric subnet checks normalize compressed, expanded and mixed IPv6 forms.
+// Node also applies IPv4 rules to IPv4-mapped IPv6, so a different spelling
+// cannot turn a private address into a public lookup input.
+// Registries: https://www.iana.org/assignments/iana-ipv4-special-registry/
+// https://www.iana.org/assignments/iana-ipv6-special-registry/
+const nonPublicAddresses = new BlockList();
+const publicExceptions = new BlockList();
+const publicIpv6Space = new BlockList();
+const mappedIpv4Space = new BlockList();
+mappedIpv4Space.addSubnet("::ffff:0:0", 96, "ipv6");
+publicIpv6Space.addSubnet("2000::", 3, "ipv6");
+publicIpv6Space.addSubnet("64:ff9b::", 96, "ipv6");
 
-  if (octets.length !== 4 || octets.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return true;
-
-  return (
-    first === 0 ||
-    first === 10 ||
-    first === 127 ||
-    first >= 224 ||
-    (first === 100 && second >= 64 && second <= 127) ||
-    (first === 169 && second === 254) ||
-    (first === 172 && second >= 16 && second <= 31) ||
-    (first === 192 && second === 168) ||
-    (first === 192 && second === 0 && third === 0) ||
-    (first === 192 && second === 0 && third === 2) ||
-    (first === 198 && (second === 18 || second === 19)) ||
-    (first === 198 && second === 51 && third === 100) ||
-    (first === 203 && second === 0 && third === 113)
-  );
-};
-
-const isPrivateOrInternalIpv6 = (ip: string) => {
-  const lower = ip.toLowerCase();
-  const mappedIpv4 = lower.startsWith("::ffff:") ? lower.slice("::ffff:".length) : null;
-
-  return (
-    lower === "::" ||
-    lower === "::1" ||
-    lower.startsWith("fc") ||
-    lower.startsWith("fd") ||
-    lower.startsWith("fe80:") ||
-    lower.startsWith("2001:db8:") ||
-    (mappedIpv4 ? isPrivateOrInternalIpv4(mappedIpv4) : false)
-  );
-};
+for (const [network, prefix] of [
+  ["0.0.0.0", 8], ["10.0.0.0", 8], ["100.64.0.0", 10], ["127.0.0.0", 8],
+  ["169.254.0.0", 16], ["172.16.0.0", 12], ["192.0.0.0", 24], ["192.0.2.0", 24],
+  ["192.88.99.0", 24], ["192.168.0.0", 16], ["198.18.0.0", 15],
+  ["198.51.100.0", 24], ["203.0.113.0", 24], ["224.0.0.0", 4], ["240.0.0.0", 4],
+] as const) {
+  nonPublicAddresses.addSubnet(network, prefix, "ipv4");
+  // A well-known NAT64 address must not conceal a nonpublic IPv4 destination.
+  nonPublicAddresses.addSubnet("64:ff9b::" + network, 96 + prefix, "ipv6");
+}
+for (const address of ["192.0.0.9", "192.0.0.10"]) {
+  publicExceptions.addAddress(address, "ipv4");
+  publicExceptions.addAddress("64:ff9b::" + address, "ipv6");
+}
+for (const [network, prefix] of [
+  ["2001::", 23], ["2001:db8::", 32], ["2002::", 16], ["3fff::", 20],
+] as const) nonPublicAddresses.addSubnet(network, prefix, "ipv6");
+// More-specific globally reachable assignments inside the IETF protocol block.
+for (const address of ["2001:1::1", "2001:1::2", "2001:1::3"]) {
+  publicExceptions.addAddress(address, "ipv6");
+}
+for (const [network, prefix] of [
+  ["2001:3::", 32], ["2001:4:112::", 48], ["2001:20::", 28], ["2001:30::", 28],
+] as const) publicExceptions.addSubnet(network, prefix, "ipv6");
 
 const isPublicIp = (value: string) => {
   const ip = normalizeIpCandidate(value);
-  if (!ip) return null;
+  // Zone identifiers describe a local interface, not a public visitor address.
+  if (!ip || ip.includes("%")) return null;
 
   const version = isIP(ip);
-  if (version === 4 && !isPrivateOrInternalIpv4(ip)) return ip;
-  if (version === 6 && !isPrivateOrInternalIpv6(ip)) return ip;
-
-  return null;
+  if (version !== 4 && version !== 6) return null;
+  const family = version === 4 ? "ipv4" : "ipv6";
+  // Only global-unicast/translation candidates and mapped IPv4 are eligible;
+  // local, multicast, discard-only and compatible-address space is excluded.
+  if (version === 6 && !mappedIpv4Space.check(ip, family) && !publicIpv6Space.check(ip, family)) return null;
+  return !nonPublicAddresses.check(ip, family) || publicExceptions.check(ip, family) ? ip : null;
 };
 
 const firstPublicIp = (value: string | null) => splitHeaderValues(value).map(isPublicIp).find(Boolean) || null;

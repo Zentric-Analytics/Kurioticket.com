@@ -36,6 +36,7 @@ await put("next.config.mjs",
   'config.resolve.alias["@/services/adminIdentityActivityService"]=path.resolve("mocks/activity.js");\n' +
   'config.resolve.alias["@/services/adminUnifiedActivityService"]=path.resolve("mocks/activity.js");\n' +
   'config.resolve.alias["@/services/adminOnlineUsersService"]=path.resolve("mocks/online-users.js");\n' +
+  'config.resolve.alias["@/services/adminLiveGuestHistoryService"]=path.resolve("mocks/online-users.js");\n' +
   'config.resolve.alias["@/services/adminHistoryDirectoryService"]=path.resolve("mocks/history-directory.js");\n' +
   'config.resolve.alias["@/services/adminGuestAccessService"]=path.resolve("mocks/history-directory.js");\n' +
   'config.resolve.alias["@/services/onlinePresenceService"]=path.resolve("mocks/presence.js");\n' +

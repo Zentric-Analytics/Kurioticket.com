@@ -2,7 +2,7 @@ import { chromium, expect } from "@playwright/test";
 import assert from "node:assert/strict";
 const base = process.env.ADMIN_ACTIVITY_QA_URL;
 const output = process.env.ADMIN_ACTIVITY_QA_OUTPUT;
-const browser = await chromium.launch({headless:true,args:["--no-sandbox"]});
+const browser = await chromium.launch({headless:true,args:["--no-sandbox"],executablePath:process.env.ADMIN_ACTIVITY_QA_CHROMIUM});
 try {
   const page = await browser.newPage({viewport:{width:1280,height:900}});
   // The retained QA journey is older than the default rolling 24-hour window.
