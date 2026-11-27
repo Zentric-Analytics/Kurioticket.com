@@ -1,3 +1,4 @@
+import { abortTravelRequest } from "../../api/travelTransportFailure";
 import { randomUUID } from "expo-crypto";
 import { hasDisplayOnlyInventory } from "../../../../../src/shared/presentation/sandboxInventory";
 import { useSandboxResultState } from "./useSandboxResults";
@@ -388,7 +389,7 @@ function ResultsScreen({ product }: { product: Product }) {
   const visualTest =
     process.env.EXPO_PUBLIC_VISUAL_TEST === "1" && one(params.visual) === "1";
   const load = useCallback(async () => {
-    activeSearch.current?.abort("superseded");
+    abortTravelRequest(activeSearch.current, "superseded");
     const controller = new AbortController();
     activeSearch.current = controller;
     const sequence = ++searchSequence.current;
@@ -452,7 +453,7 @@ function ResultsScreen({ product }: { product: Product }) {
               travelApi.searchFlights(plan.plan.payload, { signal: controller.signal, requestId, sandboxDisplay: true }),
               () => {
                 deadlineExpired = true;
-                controller.abort("ui-deadline");
+                abortTravelRequest(controller, "ui-deadline");
               },
             )
           : Platform.OS === "android"
@@ -629,7 +630,7 @@ function ResultsScreen({ product }: { product: Product }) {
       searchAbortTimer.current = setTimeout(() => {
         if (activeExecutionKey.current !== executionKey) return;
         searchSequence.current += 1;
-        activeSearch.current?.abort("screen-cleanup");
+        abortTravelRequest(activeSearch.current, "screen-cleanup");
         activeExecutionKey.current = undefined;
       }, 0);
     };

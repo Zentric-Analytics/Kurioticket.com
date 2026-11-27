@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "../config/apiUrl";
-import { describeTransportFailure, type TravelFailureCode } from "./travelTransportFailure";
+import { abortTravelRequest, travelAbortReason, describeTransportFailure, type TravelFailureCode } from "./travelTransportFailure";
 import { applySessionRevocation, readSession, readStoredSession, subscribeSession, type StoredSession } from "../storage/sessionStorage";
 import { Platform } from "react-native";
 import type { CanonicalLocation } from "@/lib/locations/types";
@@ -201,9 +201,9 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   }
   if (accountOwned && epoch !== accountEpoch) throw new TravelApiError("Account changed. Discarding the previous request.", 0, "cancelled");
   const controller = new AbortController();
-  const onAbort = () => controller.abort("cancelled");
+  const onAbort = () => abortTravelRequest(controller, String(travelAbortReason(options.signal) ?? "cancelled"));
   options.signal?.addEventListener("abort", onAbort, { once: true });
-  const timeout = setTimeout(() => controller.abort("timeout"), options.timeoutMs ?? 20000);
+  const timeout = setTimeout(() => abortTravelRequest(controller, "timeout"), options.timeoutMs ?? 20000);
   try {
     const sentOperationalCredential = operationalPaths.has(path) && epoch === accountEpoch && actor === operationalSearchActor ? operationalSearchCredential : null;
     const response = await fetch(`${base.baseUrl}${path}`, {

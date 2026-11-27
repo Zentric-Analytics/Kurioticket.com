@@ -1,4 +1,4 @@
-import { describeTransportFailure } from "../api/travelTransportFailure";
+import { abortTravelRequest, travelAbortReason, describeTransportFailure } from "../api/travelTransportFailure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
@@ -32,7 +32,7 @@ test("saved transport refuses wrong-owner work and discards a response after sig
   let finish!: (response: Response) => void;
   let requests = 0;
   const modules: Record<string, unknown> = {
-    "./travelTransportFailure": { describeTransportFailure },
+    "./travelTransportFailure": { abortTravelRequest, travelAbortReason, describeTransportFailure },
     "../config/apiUrl": { getApiBaseUrl: () => ({ ok: true, baseUrl: "https://kurioticket.com" }) },
     "../storage/sessionStorage": { readSession: async () => actor, subscribeSession: (fn: typeof onSession) => { onSession = fn; } },
     "react-native": { Platform: { OS: "ios" } }, "expo-constants": { default: { expoConfig: { version: "0.3.0" } } }, "expo-crypto": { randomUUID: () => "request" },

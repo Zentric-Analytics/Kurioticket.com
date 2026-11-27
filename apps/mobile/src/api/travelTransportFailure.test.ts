@@ -43,3 +43,26 @@ test("partial inventory and genuine empty responses are preserved", async () => 
     assert.deepEqual(result.results, body.results); assert.equal(result.status, body.status); assert.equal(result.partial, body.partial);
   }
 });
+
+// Exercise the same installed polyfill used by React Native, not Node's signal.reason.
+import { AbortController as NativeAbortController } from "abort-controller";
+import { abortTravelRequest } from "./travelTransportFailure";
+for (const phase of ["fetch", "body"] as const) test(`native polyfill: ${phase} timeout remains terminal timeout`, async t => {
+  t.mock.timers.enable({ apis: ["setTimeout"] }); let waiting = false;
+  const harness = nativeTravelApiHarness("android", "0.3.0", undefined, async (_url, init) => {
+    const wait = () => new Promise<never>((_resolve, reject) => { waiting = true; init.signal!.addEventListener("abort", () => reject(new Error("synthetic native abort")), { once: true }); });
+    if (phase === "fetch") return wait();
+    const response = Response.json({ results: [] }); response.json = wait; return response;
+  }, { abortController: NativeAbortController as unknown as typeof AbortController });
+  const result = assert.rejects(harness.api.searchFlights({}), (e: { code: string }) => e.code === "timeout");
+  await started(() => waiting); t.mock.timers.tick(35000); await result;
+});
+for (const [reason, code] of [["caller", "cancelled"], ["superseded", "superseded"], ["ui-deadline", "ui-deadline"]] as const) test(`native polyfill preserves explicit ${code} during body consumption`, async () => {
+  const parent = new NativeAbortController() as unknown as AbortController;
+  let waiting = false;
+  const harness = nativeTravelApiHarness("android", "0.3.0", undefined, async (_url, init) => {
+    const response = Response.json({ results: [] }); response.json = () => new Promise((_resolve, reject) => { waiting = true; init.signal!.addEventListener("abort", () => reject(new Error("synthetic native abort")), { once: true }); }); return response;
+  }, { abortController: NativeAbortController as unknown as typeof AbortController });
+  const result = assert.rejects(harness.api.searchFlights({}, { signal: parent.signal }), (e: { code: string }) => e.code === code);
+  await started(() => waiting); abortTravelRequest(parent, reason); await result;
+});
