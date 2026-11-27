@@ -36,7 +36,9 @@ export async function expectActivityFilterLayout(page, context = "All activity")
   assert.ok(Math.abs(searchBox.left - geometry.grid.left) <= 1
     && Math.abs(searchBox.right - geometry.grid.right) <= 1, "Search fills its own row. " + evidence);
   assert.ok(filters.every(box => box.top >= searchBox.bottom + 6), "The four filters follow the search row. " + evidence);
-  assert.ok(geometry.controls.every(box => box.height >= 44 && box.width > 0
+  // Chromium reports 43.993px for declared 44px controls at 90% tab zoom.
+  // Permit subpixel layout rounding while still rejecting a 43px target.
+  assert.ok(geometry.controls.every(box => box.height >= 44 - 0.1 && box.width > 0
     && box.left >= geometry.grid.left - 1 && box.right <= geometry.grid.right + 1), "Every control stays inside the grid and retains its touch target. " + evidence);
   const columns = geometry.viewport >= 1024 ? 4 : geometry.viewport >= 640 ? 2 : 1;
   for (let index = 0; index < filters.length; index++) {
