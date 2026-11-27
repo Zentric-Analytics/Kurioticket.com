@@ -1374,6 +1374,9 @@ model BotActivity {
   country            String?
   userAgent          String?
   edgeRay            String?
+  networkAsn         String?
+  networkOrganization String?
+  networkSource      String?
   decision           String
   reason             String
   responseStatus     Int?
