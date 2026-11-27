@@ -101,7 +101,8 @@ export function botRecordedVerification(bot: { verification: string; requests: b
 }
 
 export function botRecordedAccess(bot: { access: string; requests: bigint }) {
-  return bot.requests === BigInt(0) ? "Historical record" : botAccessLabel(bot.access);
+  return bot.requests === BigInt(0) && bot.access === "CRAWL_AND_LIMITED_SEARCH"
+    ? "Historical record" : botAccessLabel(bot.access);
 }
 
 export function botAccessLabel(access: string) {
