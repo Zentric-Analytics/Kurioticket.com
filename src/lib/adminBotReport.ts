@@ -64,6 +64,11 @@ export function botName(bot: { group: string; name: string | null }) {
   return bot.group === "UNKNOWN" ? "Unknown bot" : knownCrawler(bot.name)?.agent ?? bot.name ?? "Unnamed bot";
 }
 
+/** Keep the full registry ID for navigation and details, not the directory subtitle. */
+export function botDirectorySubtitle(bot: { id: string; group: string; owner: string | null }) {
+  return bot.group !== "UNKNOWN" && bot.owner ? bot.owner : "Ref: " + bot.id.slice(0, 8);
+}
+
 export function botType(category: string | null) {
   const labels: Record<string, string> = {
     search: "Search engine", ai: "AI crawler & retrieval", social: "Social media & Meta",
@@ -89,4 +94,14 @@ const utcFormat = new Intl.DateTimeFormat("en-GB", {
 
 export function botTime(value: Date | null | undefined) {
   return value ? utcFormat.format(value) : "Not recorded";
+}
+
+const utcDirectoryFormat = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "UTC", day: "2-digit", month: "short", year: "numeric",
+  hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+});
+
+/** Minute precision is presentation-only; activity evidence retains seconds. */
+export function botDirectoryTime(value: Date | null | undefined) {
+  return value ? utcDirectoryFormat.format(value) : "Not recorded";
 }
