@@ -78,6 +78,7 @@ test("durable lookup rejects wrong snapshots, corrupt/incomplete generations and
   index[1].expiresAt = new Date(0); assert.equal(await cache.getProviderResultWithContext("hotel", hotel.id), null); index[1].expiresAt = new Date(Date.now() + 60000);
   const chunk = [...f.rows.keys()].find(key => key.includes(":snapshot:") && key.includes(":chunk:"))!; f.rows.delete(chunk);
   assert.equal(await f.restart().getProviderResult("hotel", hotel.id), null);
+  assert.equal(await f.restart().getProviderResultWithContext("hotel", hotel.id), null);
 });
 
 test("lookup publication is mandatory and deferral defaults off for old rolling readers", async () => {

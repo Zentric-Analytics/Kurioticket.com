@@ -266,7 +266,7 @@ export async function getProviderResultWithContext<T>(
     const row = await getPrisma().providerResultCache.findUnique({
       where: { cacheKey: cacheKey(vertical, resultId) },
     });
-    if (!row || row.expiresAt.getTime() <= now) return vertical === "hotel" ? readHotelSnapshotResultWithContext<T>(resultId, now) : null;
+    if (!row || row.expiresAt.getTime() <= now) return vertical === "hotel" ? await readHotelSnapshotResultWithContext<T>(resultId, now) : null;
     if (productionSandboxInventory(row.normalizedResult)) return null;
     return {
       result: structuredClone(row.normalizedResult) as T,
