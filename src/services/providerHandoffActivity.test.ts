@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { recordProviderHandoffActivity, type ProviderHandoffActivity } from "./providerHandoffActivity";
+import { createProviderHandoffStore } from "./providerHandoffStore";
+import { prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
 
 const handoff: ProviderHandoffActivity = {
   type: "hotel", provider: "Test provider", route: "Lagos", price: 120, currency: "USD",
@@ -139,4 +141,43 @@ test("withdrawal during deferred correlation cannot restore stale visitor attrib
     journey: async () => { optionalCalls++; return null; },
   });
   assert.equal(optionalCalls, 0);
+});
+
+test("an anonymous handoff records its own bounded device on the existing operational log", async () => {
+  const before = { AUTH_SECRET: process.env.AUTH_SECRET, TRAVEL_PROVIDER_MODE: process.env.TRAVEL_PROVIDER_MODE };
+  process.env.AUTH_SECRET = "synthetic-device-observation-test-secret";
+  process.env.TRAVEL_PROVIDER_MODE = "staging";
+  try {
+    const initial = new Request("https://staging.kurioticket.com/api/cars/search", { headers: {
+      origin: "https://staging.kurioticket.com", "sec-fetch-site": "same-origin",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0) Chrome/140.0.0.0",
+    } });
+    const session = prepareOperationalSearchSession(initial)!;
+    assert.ok(session);
+    const headers = new Headers(initial.headers);
+    headers.set("cookie", "kt_search_session=" + session.credential);
+    const request = new Request("https://staging.kurioticket.com/api/redirect", { headers });
+    const rows: Array<{ metadata: Record<string, unknown> }> = [];
+    const tx = { redirectLog: { create: async ({ data }: { data: typeof rows[number] }) => {
+      rows.push(data); return { id: "redirect-observation" };
+    } } };
+    type Database = NonNullable<ReturnType<Parameters<typeof createProviderHandoffStore>[0]>>;
+    const database = { $transaction: async (callback: (transaction: typeof tx) => Promise<unknown>) => callback(tx) } as unknown as Database;
+    const store = createProviderHandoffStore(() => database);
+    await recordProviderHandoffActivity(request, handoff, {
+      identity: async () => ({ userId: null, visitorId: null, applicationSource: "WEB" }),
+      redirect: store.recordRedirect,
+      event: async () => { assert.fail("no optional analytics without consent"); },
+      journey: async () => { assert.fail("no optional journey without consent"); },
+    });
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].metadata.operationalSessionId, session.reference.id);
+    assert.deepEqual(rows[0].metadata.guestAccess, { version: 1, platform: "desktop", deviceLabel: "Windows computer", browser: "Chrome 140", os: "Windows" });
+    assert.ok(!JSON.stringify(rows[0].metadata).includes(session.credential));
+    assert.doesNotMatch(JSON.stringify(rows[0].metadata), /Mozilla|user-agent/);
+  } finally {
+    for (const [key, value] of Object.entries(before)) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+  }
 });

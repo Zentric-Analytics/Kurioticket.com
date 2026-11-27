@@ -1,3 +1,4 @@
+import { withOperationalGuestDevice } from "@/lib/operationalGuestDeviceObservation";
 import { withProductionSandboxRequest, captureFinalSearchHistory } from "@/lib/productionSandboxPolicy";
 import { applicationMetadata } from "@/lib/application-source";
 import { carUnsupportedCategory, carUnsupportedSearchMessage } from "@/shared/cars/carSearchFeedback";
@@ -15,7 +16,7 @@ const query = {
   dropoffDate: "2099-05-02", dropoffTime: "10:00", driverAge: "30",
 };
 
-function fixture(t: TestContext, options: { status?: "available" | "unavailable"; consent?: boolean; failingLog?: boolean; failingProviderLog?: boolean; session?: boolean; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT"; unsupported?: "unsupported_search" | "unsupported_location" } = {}) {
+function fixture(t: TestContext, options: { status?: "available" | "unavailable"; consent?: boolean; failingLog?: boolean; failingProviderLog?: boolean; session?: boolean; applicationSource?: "WEB" | "IOS" | "ANDROID"; agent?: string; verifiedCrawler?: "GOOGLEBOT" | "BINGBOT"; unsupported?: "unsupported_search" | "unsupported_location" } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: Array<Record<string, unknown>> = [];
   const analytics: Array<Record<string, unknown>> = [];
@@ -34,7 +35,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
   let attachCalls = 0;
   let providerLogCalls = 0;
   const request = new Request("https://staging.kurioticket.com/api/cars/search", {
-    method: "POST", headers: { "content-type": "application/json", "x-search-request-id": requestId, ...(options.verifiedCrawler ? { "user-agent": options.verifiedCrawler } : {}) },
+    method: "POST", headers: { "content-type": "application/json", "x-search-request-id": requestId, ...(options.agent ? { "user-agent": options.agent } : {}), ...(options.verifiedCrawler ? { "user-agent": options.verifiedCrawler } : {}) },
     body: JSON.stringify(query),
   });
   const session: PreparedOperationalSession | null = options.session === false ? null : {
@@ -50,6 +51,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
     "@/shared/cars/carSearchFeedback": { carUnsupportedCategory, carUnsupportedSearchMessage },
     "@/lib/productionSandboxPolicy": {withProductionSandboxRequest,captureFinalSearchHistory},
     "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
+    "@/lib/operationalGuestDeviceObservation": { withOperationalGuestDevice },
     "@/lib/application-source": { applicationMetadata },
     "@/lib/botSecurity": { withBotSearch: async (_: Request, run: (value?: unknown) => unknown) =>
       run(options.verifiedCrawler ? { crawler: { name: options.verifiedCrawler, evidence: "VERIFIED_DNS" },
@@ -79,7 +81,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
     "@/services/requestActivityIdentity": { resolveRequestActivityIdentity: async (value: Request) => {
       check(value === request && identityCalls === 0, "resolve identity once for the actual request");
       identityCalls++;
-      return options.consent === false ? { userId: null, visitorId: null, applicationSource: "UNKNOWN" } : { userId: null, visitorId: "consented-guest", applicationSource: "WEB" };
+      return options.consent === false ? { userId: null, visitorId: null, applicationSource: options.applicationSource ?? "UNKNOWN" } : { userId: null, visitorId: "consented-guest", applicationSource: "WEB" };
     } },
     "@/services/operationalActivityService": {
       logSearchHistory: async (value: Record<string, unknown>) => {
@@ -272,3 +274,20 @@ for (const category of ["unsupported_search", "unsupported_location"] as const) 
     assert.equal(f.providerLogs[0].errorMessage, category);
   });
 }
+
+test("guest car history stores the observed browser after attribution and keeps optional analytics off", async (t) => {
+  const previous = process.env.TRAVEL_PROVIDER_MODE;
+  process.env.TRAVEL_PROVIDER_MODE = "staging";
+  try {
+    const f = fixture(t, { consent: false, applicationSource: "WEB", agent: "Mozilla/5.0 (Windows NT 10.0) Chrome/140.0.0.0" });
+    assert.equal((await f.post()).status, 200);
+    assert.equal(f.histories.length, 0);
+    await f.flush();
+    const query = f.histories[0].query as Record<string, unknown>;
+    assert.deepEqual(query.guestAccess, { version: 1, platform: "desktop", deviceLabel: "Windows computer", browser: "Chrome 140", os: "Windows" });
+    assert.equal(query.operationalSessionId, f.session!.reference.id);
+    assert.deepEqual(f.analytics, []);
+  } finally {
+    if (previous === undefined) delete process.env.TRAVEL_PROVIDER_MODE; else process.env.TRAVEL_PROVIDER_MODE = previous;
+  }
+});

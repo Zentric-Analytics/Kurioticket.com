@@ -1,4 +1,5 @@
 import { countHotelInventory } from "@/lib/hotels/hotelResultAccounting";
+import { withOperationalGuestDevice } from "@/lib/operationalGuestDeviceObservation";
 import { isProviderHotelResult } from "@/services/travel/hotelInventorySource";
 import { searchHotelBatch, hotelSearchRequiresCanonicalResponse } from "@/services/travel/hotelAggregator";
 import { productionSandboxHost } from "@/lib/productionSandboxPolicy";
@@ -8,7 +9,7 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { after, NextResponse } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession, operationalSessionMetadata } from "@/lib/operationalSearchSession";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
-import { logProviderCall, logSearchHistory } from "@/services/operationalActivityService";
+import { logProviderCall, logSearchHistory as persistSearchHistory } from "@/services/operationalActivityService";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { hotelSearchSchema } from "@/lib/validation";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
@@ -60,6 +61,7 @@ function decode(value: unknown, key: string): State | null {
 
 /** Native Android opt-in only: legacy web/iOS/full hotel search is untouched. */
 export async function POST(request: Request) {
+  const logSearchHistory = (input: Parameters<typeof persistSearchHistory>[0]) => persistSearchHistory(withOperationalGuestDevice(request, input));
   if (productionSandboxHost()) {
     const payload=await request.json().catch(()=>null);
     if(!payload?.search || typeof payload.search !== "object" || payload.cursor) return Response.json({results:[],status:"unavailable",error:"Start a new display-only search."},{status:410,headers:{"Cache-Control":"no-store"}});

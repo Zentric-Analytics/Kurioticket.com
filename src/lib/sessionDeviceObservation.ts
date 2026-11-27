@@ -17,8 +17,9 @@ const parseVersion = (agent: string, pattern: RegExp, name: string) => {
 function browserName(agent: string) {
   return parseVersion(agent, /Edg(?:e|A|iOS)?\/([\d.]+)/, "Edge")
     ?? parseVersion(agent, /(?:FxiOS|Firefox)\/([\d.]+)/, "Firefox")
-    ?? parseVersion(agent, /(?:CriOS|Chrome)\/([\d.]+)/, "Chrome")
     ?? parseVersion(agent, /OPR\/([\d.]+)/, "Opera")
+    ?? parseVersion(agent, /SamsungBrowser\/([\d.]+)/, "Samsung Internet")
+    ?? parseVersion(agent, /(?:CriOS|Chrome)\/([\d.]+)/, "Chrome")
     ?? (/Safari\//.test(agent) ? parseVersion(agent, /Version\/([\d.]+)/, "Safari") : null);
 }
 

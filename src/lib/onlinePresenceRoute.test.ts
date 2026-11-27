@@ -17,14 +17,14 @@ let savedPublicUrl:string|undefined,savedAuthUrl:string|undefined;
 beforeEach(()=>{savedPublicUrl=process.env.NEXT_PUBLIC_APP_URL;savedAuthUrl=process.env.NEXTAUTH_URL;process.env.NEXT_PUBLIC_APP_URL=origin;process.env.NEXTAUTH_URL=origin;});
 afterEach(()=>{if(savedPublicUrl===undefined)delete process.env.NEXT_PUBLIC_APP_URL;else process.env.NEXT_PUBLIC_APP_URL=savedPublicUrl;if(savedAuthUrl===undefined)delete process.env.NEXTAUTH_URL;else process.env.NEXTAUTH_URL=savedAuthUrl;});
 
-function fixture(resolveGuestCountry?: typeof resolveGuestLiveCountry) {
+function fixture(resolveGuestCountry?: typeof resolveGuestLiveCountry, clock = () => now) {
   const records: OnlinePresenceHeartbeat[] = [];
   const handler = (transport: "web" | "native", environment: "staging" | "production" = "production") =>
     createOnlinePresenceHandler(transport, {
       environment: () => environment,
       secret: () => secret,
       automationSecret: () => automationSecret,
-      now: () => now,
+      now: clock,
       authenticate: async () => ({ id: "canonical-session", platform: transport === "native" ? "ios" : null }),
       admit: () => true,
       resolveGuestCountry,
@@ -270,7 +270,7 @@ test("independent live-country capture requires an authenticated edge and return
   } finally {keys.forEach((key,index)=>{if(before[index]===undefined)delete process.env[key];else process.env[key]=before[index];});}
 });
 
-test("public ingress fallback on verified guest heartbeat works without analytics or historical access",async()=>{
+test("verified Render heartbeats retain current country behind Next's proxy on all four platforms",async()=>{
   const keys=["GUEST_LIVE_COUNTRY_ENABLED","GUEST_LIVE_RENDER_INGRESS_VERIFIED","GUEST_FIRST_ACCESS_PREVIEW","RENDER"] as const;
   const before=keys.map(k=>process.env[k]);
   try {
@@ -279,11 +279,24 @@ test("public ingress fallback on verified guest heartbeat works without analytic
     process.env.RENDER="true";
     delete process.env.GUEST_FIRST_ACCESS_PREVIEW;
     const calls:string[]=[];
-    const {handler,records}=fixture(createGuestCountryResolver(async ip=>{calls.push(ip);return "NG";}));
+    let observedAt = now;
+    const {handler,records}=fixture(createGuestCountryResolver(async ip=>{
+      calls.push(ip);
+      return ip === "8.8.8.8" ? "NG" : "GB";
+    }), () => observedAt);
     const headers={"cf-connecting-ip":"8.8.8.8","cf-ipcountry":"US"};
-    for(const transport of ["web","native"] as const){
-      const post=handler(transport,"staging");
-      const send=(h:Record<string,string>)=>post(transport==="web"?web({cookie:"kt_analytics_consent=declined",...h}):native(h));
+    for(const platform of ["desktop_web", "mobile_web", "ios", "android"] as const){
+      const isNative = platform === "ios" || platform === "android";
+      const post=handler(isNative ? "native" : "web","staging");
+      const send=(h:Record<string,string>)=>{
+        const context: Record<string, string> = isNative ? { "x-mobile-platform": platform } : {
+          origin, "sec-fetch-site": "same-origin", "sec-ch-ua-mobile": platform === "mobile_web" ? "?1" : "?0",
+          cookie: "kt_analytics_consent=declined",
+        };
+        return post(new Request("http://localhost:10000" + (isNative ? nativePath : webPath), {
+          method: "POST", headers: { ...context, ...h },
+        }));
+      };
       const count=records.length;
       const lookups=calls.length;
       const first=await send(headers);
@@ -295,11 +308,26 @@ test("public ingress fallback on verified guest heartbeat works without analytic
       const response=await send({...headers,[tokenHeader]:token});
       assert.equal(response.status,204);
       assert.equal(response.headers.get("set-cookie"),null);
+      assert.equal(records.at(-1)?.platform,platform);
       assert.equal(records.at(-1)?.guestLiveCountryCode,"NG");
       assert.equal(records.at(-1)?.guestAccess,undefined);
       assert.doesNotMatch(JSON.stringify(records.at(-1)),/8\.8\.8\.8/);
+      const sourceId = records.at(-1)?.sourceId;
+
+      observedAt = new Date(+observedAt + 30_000);
+      assert.equal((await send({ ...headers, "cf-connecting-ip": "1.1.1.1", [tokenHeader]: token })).status, 204);
+      assert.equal(records.at(-1)?.guestLiveCountryCode, "GB", "a network change uses the current request IP");
+      assert.equal(records.at(-1)?.now, observedAt);
+      assert.equal(records.at(-1)?.sourceId, sourceId);
+
+      observedAt = new Date(+observedAt + 30_000);
+      assert.equal((await send({ "cf-ipcountry": "US", "x-forwarded-for": "8.8.8.8", [tokenHeader]: token })).status, 204);
+      assert.equal(records.at(-1)?.guestLiveCountryCode, null, "missing current evidence never reuses a prior country");
+      assert.equal(records.at(-1)?.now, observedAt);
+      assert.equal(records.at(-1)?.sourceId, sourceId);
+      assert.equal(records.at(-1)?.accountSessionId, null);
     }
-    assert.deepEqual(calls,["8.8.8.8"]);
+    assert.deepEqual(calls,["8.8.8.8", "1.1.1.1"]);
   } finally {keys.forEach((k,i)=>{if(before[i]===undefined)delete process.env[k];else process.env[k]=before[i];});}
 });
 

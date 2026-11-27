@@ -204,3 +204,36 @@ Live guest country remains independent of historical access. The resolver accept
 Users Directory, recorded Activity/All Activity, and Device & Access directory/history use the same eligible, environment-scoped guest access observations. The **last recorded location** is the newest actual country-bearing observation (within the device filters where applicable), shown with its observation time. A newer handoff without country does not erase that summary or acquire a fabricated country. The historical location is not linked to a temporary live presence reference, and it is not used as a live fallback. No new collection, migration, identity association or production activation is included.
 
 The online roster reads the country and accepted heartbeat in one database snapshot. Optional resolver errors cannot interrupt valid presence; negative lookups retry on the next regular heartbeat. Staging logs include only bounded status categories and platform (no IPs, country values, IDs, headers, or credentials): disabled, render_ingress_not_verified, no_trusted_public_ip, ipinfo_unconfigured, lookup_unavailable, heartbeat_country, heartbeat_country_unavailable, roster_country_read_failed, and other resolver outcomes. Validate the deployment's actual trusted ingress and privacy approval before setting either live-country flag. Do not turn on the Render ingress assertion merely because registered locations are available. The deployment is not accepted until four-platform live country evidence and matching activity/access displays are verified; no historical location should be passed off as live.
+
+### Guest location and device follow-up (2026-11-26)
+
+The deployed staging release `c724e06efb7792eda124d4bc80409ca70380dd93`
+contained the earlier location changes and both required migrations. Runtime
+diagnostics still reported `disabled` for guest heartbeats. This is a deployment
+configuration failure: merging the country resolver does not set
+`GUEST_LIVE_COUNTRY_ENABLED=true` in the running service. Before accepting a
+release, verify an enabled resolver outcome and a country attached to a fresh
+accepted heartbeat, as well as the common online roster and activity display.
+
+Next.js can expose an internal bind address such as `localhost:10000` or
+`0.0.0.0:10000` in a route's Request URL behind Render's reverse proxy. The
+verified Render fallback accepts those known internal addresses only with valid
+canonical public configuration and the existing verified-ingress opt-in. It
+continues to reject unrelated public origins, arbitrary forwarded host hints,
+untrusted country headers, nonpublic client IPs and worker subrequests.
+
+Device & Access History previously projected null device/browser/OS fields for
+every operational search or provider handoff. Existing staging search and
+handoff writes now save a bounded description of that same request after its
+application source and operational session are validated. Only coarse device,
+browser family/major version, OS and observed platform are included; there is no
+raw user-agent, hardware identifier, new cookie or new identity. Optional page
+analytics remains subject to consent. The current-country feature does not
+enable the deferred first-access preview.
+
+History reads the observation from the exact record and identity. A legacy
+native record's existing IOS/ANDROID source can identify its app and OS; native
+apps display `Native app` in the browser position. A legacy WEB record without
+device evidence remains unavailable. Desktop/mobile filters use recorded web
+platform evidence and do not infer it from the current admin's device. This
+change does not backfill old observations or copy descriptions between guests.

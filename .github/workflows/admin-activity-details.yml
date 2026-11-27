@@ -14,6 +14,9 @@ on:
       - src/lib/guestAccessObservation.ts
       - src/lib/guestLiveCountry*
       - src/lib/onlinePresenceRoute*
+      - src/lib/liveGuestPresenceWrite*
+      - src/lib/operationalGuestDeviceObservation*
+      - src/lib/sessionDeviceObservation*
       - src/services/adminGuestAccessService.ts
       - src/services/adminUnifiedActivityService.ts
       - src/components/admin/JourneyEventHistory*
@@ -38,6 +41,43 @@ permissions:
   contents: read
 
 jobs:
+  guest-observations-postgres:
+    name: Verify guest country and device observations on PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kurioticket_guest_observations_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kurioticket_guest_observations_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kurioticket_guest_observations_test
+      JITI_TSCONFIG_PATHS: ./tsconfig.json
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Apply schema to disposable database
+        run: npx --no-install prisma migrate deploy
+      - name: Verify current heartbeat country and exact guest device history
+        run: >-
+          GUEST_COUNTRY_TEST_DATABASE_URL="$DATABASE_URL"
+          node --test --import jiti/register
+          src/lib/liveGuestPresenceWrite.test.ts
+          src/lib/adminGuestAccessPostgres.test.ts
+
   customer-activity:
     name: Validate customer activity page and capture real screenshots
     runs-on: ubuntu-latest

@@ -1,3 +1,4 @@
+import { withOperationalGuestDevice } from "@/lib/operationalGuestDeviceObservation";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
@@ -161,6 +162,7 @@ test("actual Android progressive route refuses an ownership-changing replay befo
     "@/lib/productionSandboxPolicy": { productionSandboxHost: () => false },
     "@/app/api/hotels/search/route": { POST: () => { throw new Error("unexpected canonical fallback"); } },
     "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
+    "@/lib/operationalGuestDeviceObservation": { withOperationalGuestDevice },
     "next/server": { after: (task: () => Promise<unknown>) => tasks.push(task), NextResponse: { json: Response.json } },
     "@/lib/operationalSearchSession": {
       prepareOperationalSearchSession: (request: Request) => ({ reference: request.headers.get("x-fixture-session") === "changed"
@@ -168,7 +170,7 @@ test("actual Android progressive route refuses an ownership-changing replay befo
       operationalSessionMetadata: (reference: OperationalSessionReference) => ({ operationalSessionId: reference.id }),
       attachOperationalSearchSession: (response: Response) => response,
     },
-    "@/services/requestActivityIdentity": { resolveRequestActivityIdentity: async (request: Request) => ({ userId: request.headers.get("x-fixture-actor"), visitorId: null }) },
+    "@/services/requestActivityIdentity": { resolveRequestActivityIdentity: async (request: Request) => ({ userId: request.headers.get("x-fixture-actor") || null, visitorId: null, applicationSource: "ANDROID" }) },
     "@/services/operationalActivityService": {
       logProviderCall: async () => {},
       logSearchHistory: async (value: { requestId: string; query: Record<string, unknown> }) => { histories.push(value); },
@@ -216,4 +218,15 @@ test("actual Android progressive route refuses an ownership-changing replay befo
   assert.equal(histories[1].requestId, page.requestId);
   assert.equal(histories[1].query.operationalHotelSnapshotId, histories[0].query.operationalHotelSnapshotId);
   assert.deepEqual(readHotelResultAccounting(histories[1].query, 2), { version: 1, offerCount: 2, propertyCount: 1 });
+  const previous = process.env.TRAVEL_PROVIDER_MODE;
+  process.env.TRAVEL_PROVIDER_MODE = "staging";
+  try {
+    const guest = await post({ search: { destination: "Paris", checkIn: "2099-01-01", checkOut: "2099-01-02", guests: 1, rooms: 1 } }, "");
+    assert.equal(guest.status, 200);
+    await tasks.shift()!();
+    assert.deepEqual(histories.at(-1)?.query.guestAccess, { version: 1, platform: "android", deviceLabel: "Android device", browser: null, os: "Android" });
+    assert.ok(histories.slice(0, 2).every(history => !Object.hasOwn(history.query, "guestAccess")), "registered history does not acquire anonymous device metadata");
+  } finally {
+    if (previous === undefined) delete process.env.TRAVEL_PROVIDER_MODE; else process.env.TRAVEL_PROVIDER_MODE = previous;
+  }
 });

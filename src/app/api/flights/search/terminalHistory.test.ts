@@ -1,3 +1,4 @@
+import { withOperationalGuestDevice } from "@/lib/operationalGuestDeviceObservation";
 import { withProductionSandboxRequest, captureFinalSearchHistory, productionSandboxInventory } from "@/lib/productionSandboxPolicy";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -46,6 +47,7 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
     "next/server": { NextResponse: { json: Response.json }, after: (callback: () => Promise<unknown>) => { deferred.push(callback); } },
     "node:crypto": { createHash },
     "@/lib/searchNetworkObservation": { searchNetworkObservation: () => ({}) },
+    "@/lib/operationalGuestDeviceObservation": { withOperationalGuestDevice },
     "@/lib/rate-limit": { getClientIp: () => "192.0.2.1", checkRateLimit: (key: string, limit: number, period: number) => { rates.push([key, limit, period]); return { allowed: !options.rateLimited }; } },
     "@/lib/searchCache": { toPublicFlight: (value: unknown) => value, toPublicHotel: (value: unknown) => value },
     "@/lib/validation": { flightSearchSchema: schema, hotelSearchSchema: schema },
@@ -397,4 +399,31 @@ test("hotel operational counts exclude inventory rejected by the public classifi
   assert.equal(fixture.histories[0].resultCount, 3);
   assert.deepEqual(readHotelResultAccounting(fixture.histories[0].query, 3), { version: 1, offerCount: 3, propertyCount: 2 });
   assert.deepEqual(fixture.analyticsEvents, []);
+});
+
+test("flight and hotel history retain each operational guest request's device without optional analytics", async () => {
+  const previous = process.env.TRAVEL_PROVIDER_MODE;
+  process.env.TRAVEL_PROVIDER_MODE = "staging";
+  try {
+    for (const product of ["flight", "hotel"] as const) {
+      for (const [applicationSource, agent, platform, browser] of [
+        ["WEB", "Mozilla/5.0 (Windows NT 10.0) Chrome/140.0.0.0", "desktop", "Chrome 140"],
+        ["WEB", "Mozilla/5.0 (Linux; Android 15) Chrome/140.0.0.0 Mobile", "mobile", "Chrome 140"],
+        ["IOS", "", "ios", null], ["ANDROID", "", "android", null],
+      ] as const) {
+        const fixture = routeFixture(product, { available: true, operationalGuest: true, anonymous: true, applicationSource });
+        assert.equal((await fixture.post({ "user-agent": agent })).status, 200);
+        await Promise.all(fixture.deferred.map(run => run()));
+        assert.equal(fixture.histories.length, 1);
+        const device = (fixture.histories[0].query as { guestAccess?: { platform: string; browser: string | null } }).guestAccess;
+        assert.equal(device?.platform, platform, product + " " + platform);
+        assert.equal(device?.browser, browser);
+        assert.deepEqual(fixture.analyticsEvents, []);
+        assert.deepEqual(fixture.errors, []);
+        assert.doesNotMatch(JSON.stringify(device), /Mozilla|192\.0\.2\.1|synthetic-test-only/);
+      }
+    }
+  } finally {
+    if (previous === undefined) delete process.env.TRAVEL_PROVIDER_MODE; else process.env.TRAVEL_PROVIDER_MODE = previous;
+  }
 });

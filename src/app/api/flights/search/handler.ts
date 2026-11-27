@@ -1,3 +1,4 @@
+import { withOperationalGuestDevice } from "@/lib/operationalGuestDeviceObservation";
 import { withBotSearch } from "@/lib/botSecurity";
 import { searchNetworkObservation } from "@/lib/searchNetworkObservation";
 import {withProductionSandboxRequest,captureFinalSearchHistory,productionSandboxInventory} from "@/lib/productionSandboxPolicy";
@@ -21,7 +22,7 @@ export async function handleFlightSearch(request: Request, purpose: "customer" |
  return withBotSearch(request, async bot => {
  return withProductionSandboxRequest(request,async()=>{
   const projectHistory=captureFinalSearchHistory();
-  const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(input));
+  const logSearchHistory=(input:Parameters<typeof persistSearchHistory>[0])=>persistSearchHistory(projectHistory(withOperationalGuestDevice(request, input)));
   const crawler = bot?.crawler ?? null;
   const nearby = purpose === "nearby-fare";
   const routeStartedAt = performance.now();
