@@ -77,6 +77,15 @@ function createDb() {
     },
     async $queryRaw(sql) {
       const statement = sql.strings.join("?");
+      if (statement.includes('SELECT COUNT(*) AS "count" FROM "User" u')) {
+        const parameter = fragment => sql.values[sql.strings.findIndex(part => part.endsWith(fragment))];
+        const role = parameter('u."role"::text = ');
+        const status = parameter('u."status"::text = ');
+        const query = parameter("strpos(lower(COALESCE(u.\"name\", '')), lower(");
+        filteredUsers = users.filter(user => (!role || user.role === role) && (!status || user.status === status)
+          && matchSearch(query ? { OR: [{ name: { contains: query } }] } : undefined, user));
+        return [{ count: BigInt(filteredUsers.length) }];
+      }
       // This fixture has no location-bearing guest observations. Do not return
       // directory identities for the separate, bounded location enrichment read.
       if (statement.includes('SELECT DISTINCT ON ("guestId", "guestSource")')) return [];
