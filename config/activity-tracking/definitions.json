@@ -70,6 +70,7 @@
         "src/app/admin/users/bots/[id]/page.tsx",
         "src/app/admin/users/bots/page.tsx",
         "src/app/admin/users/devices/page.tsx",
+        "src/app/admin/users/online/bot-activity/page.tsx",
         "src/app/admin/users/online/page.tsx",
         "src/app/admin/users/page.tsx",
         "src/app/admin/users/pages/page.tsx"
@@ -227,9 +228,6 @@
     "customer.navigation-proposed": "Deferred account, legal, packages or in-page navigation gap. Collection requires approval."
   },
   "reviews": {
-    "src/components/admin/AdminOverviewDashboard.tsx#ba09c2b7555d1d58": {
-      "definition": "admin.navigation-proposed"
-    },
     "src/app/admin/searches/activity/page.tsx#3d30a77d75da0538": {
       "definition": "admin.navigation-proposed"
     },
@@ -243,6 +241,39 @@
       "definition": "admin.navigation-proposed"
     },
     "src/app/admin/users/bots/[id]/request-evidence.tsx#e922bc6774892e29": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/app/admin/users/online/active-bot-directory.tsx#91f3c1b3dd7feb25": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/app/admin/users/online/active-bot-directory.tsx#c03a068d35b107e8": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/app/admin/users/online/bot-activity/page.tsx#1ebf887efec5de8f": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/app/admin/users/online/bot-activity/page.tsx#4b30643368bbbdce": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/app/admin/users/online/bot-activity/page.tsx#442eb7d623e35923": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/app/admin/users/online/bot-activity/page.tsx#376387c62c260612": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/app/admin/users/online/bot-activity/page.tsx#b880090004fc120e": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/app/admin/users/online/bot-activity/page.tsx#e50b15133fcde522": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/app/admin/users/online/page.tsx#db44399de579575d": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/app/admin/users/online/page.tsx#fc6db7c44e93d1fa": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/components/admin/AdminOverviewDashboard.tsx#38bba1b388835537": {
       "definition": "admin.navigation-proposed"
     }
   },

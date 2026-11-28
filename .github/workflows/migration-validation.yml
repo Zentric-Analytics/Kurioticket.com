@@ -98,6 +98,7 @@ jobs:
                 src/lib/bot*|\
                 src/lib/verifiedSearchCrawler*|\
                 src/lib/searchCrawlerGate*|\
+                src/services/adminLiveBots*|\
                 src/services/botActivityStore*|\
                 src/services/recordedBotSearchHistory.ts|\
                 src/services/recordedBotSearchHistory.test.ts|\
@@ -184,7 +185,7 @@ jobs:
             src/lib/botPolicy.test.ts src/lib/botSearchAuthorization.test.ts src/lib/verifiedSearchCrawler.test.ts src/lib/searchCrawlerGate.test.ts \
             src/lib/operatorCrawlerNetwork.test.ts src/lib/renderBotEvidence.test.ts src/lib/botReportNetwork.test.ts src/lib/adminBotNetworkEvidence.test.ts \
             src/services/botActivityStore.test.ts src/services/recordedBotSearchHistory.test.ts \
-            src/services/adminBotHistory.test.ts
+            src/services/adminBotHistory.test.ts src/services/adminLiveBots.test.ts
 
       # This journey shares canonical staging bot keys with the policy fixtures above.
       - name: Verify the crawler search journey and reporting

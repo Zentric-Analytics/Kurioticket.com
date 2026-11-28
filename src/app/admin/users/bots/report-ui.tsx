@@ -28,7 +28,7 @@ export function ReportUnavailable() {
 }
 
 export function ReportPagination({ path, params, page, total, label, pageParam = "page" }: {
-  path: string; params: URLSearchParams; page: number; total: number; label: string; pageParam?: "page" | "searchPage";
+  path: string; params: URLSearchParams; page: number; total: number; label: string; pageParam?: "page" | "searchPage" | "botPage";
 }) {
   const pages = Math.ceil(total / BOT_PAGE_SIZE);
   return (
