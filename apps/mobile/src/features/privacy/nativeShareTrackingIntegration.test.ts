@@ -56,8 +56,10 @@ test("existing server checks consent, exact search ownership and event UUID idem
   assert.match(server, /if \(verifiedLink\)/);
   assert.match(server, /type: stage/);
   const admin = read(repoRoot + "src/services/adminIdentityActivityService.ts");
-  assert.match(admin, /share_sheet_completed: "Share sheet completed"/);
-  assert.match(admin, /share_sheet_requested: "Share sheet requested"/);
+  const journeyLabels = read(repoRoot + "src/lib/adminIdentityJourney.ts");
+  assert.match(journeyLabels, /share_sheet_completed: "Share sheet completed"/);
+  assert.match(journeyLabels, /share_sheet_requested: "Share sheet requested"/);
+  assert.match(admin, /\.\.\.sharedJourneyActionLabels/);
   assert.match(admin, /const allowed = allowedActivityStages\(filters\)/);
   assert.match(admin, /const stages = activityJourneyStages\.filter\(stage => allowed\.has\(stage\)\)/);
   assert.match(admin, /type: \{ in: stages \}/);

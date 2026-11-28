@@ -282,7 +282,10 @@ test("native Cars Rate details has clean X, leading icons and softer values with
 
 test("native Cars rows keep logo, name, rate info, price and View deal in that exact order", () => {
   const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
-  const rows = picker.slice(picker.indexOf("{visibleChoices.map("), picker.indexOf("{choices.length > INITIAL_VISIBLE_OFFER_COUNT ? ("));
+  const start = picker.indexOf("{visibleChoices.map(");
+  const end = picker.indexOf("{hasMoreOffers ? (", start);
+  assert.ok(start >= 0 && end > start);
+  const rows = picker.slice(start, end);
   const positions = [
     rows.indexOf("<ProviderMark name={providerName} logoUrl={logoUrl} />"),
     rows.indexOf("{providerName}</Text>"),
@@ -293,7 +296,8 @@ test("native Cars rows keep logo, name, rate info, price and View deal in that e
   assert.ok(positions.every(index => index >= 0), positions.join(","));
   assert.ok(positions.every((position, index) => index === 0 || position > positions[index - 1]!));
   assert.match(rows, /<Info accessible=\{false\} size=\{18\} strokeWidth=\{1\.9\}/);
-  assert.match(rows, /onPress=\{\(\) => setSelectedKey\(key\)\}/);
+  assert.match(rows, /onPress=\{\(\) => \{\s*ratePreviewContext\.current = journeyEvents\.captureContext\(\);\s*setSelectedKey\(key\);\s*\}\}/);
+  assert.match(picker, /onShow=\{recordRatePreview\}/);
   assert.match(rows, /onPress=\{bookingUrl \? \(\) => continueRateDeal\(offer\.id, providerName, bookingUrl\)/);
   assert.match(picker, /infoAction: \{ width: 32, height: 36, flexShrink: 0/);
   assert.match(picker, /meta: \{ minWidth: 0, flexDirection: "row"/);

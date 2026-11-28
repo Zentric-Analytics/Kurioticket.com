@@ -10,7 +10,9 @@ const outer = read("src/features/search/HotelEditSearchModal.tsx");
 
 test("Hotel Results Edit keeps its outer sheet and routes every field to normal popup sheets", () => {
   assert.match(outer, /<Modal transparent animationType="none"/);
-  assert.match(outer, /<HotelSearchPanel[^>]+editAppearance/);
+  const embeddedPanel = outer.match(/<HotelSearchPanel\b[\s\S]*?\/>/)?.[0];
+  assert.ok(embeddedPanel);
+  assert.match(embeddedPanel, /\beditAppearance\b/);
   assert.match(panel, /<DateRangeSheet[^>]+presentation="sheet"/);
   assert.match(panel, /<HotelDestinationSheet[^>]+pickerPresentation="sheet"/);
   assert.match(panel, /<HotelGuestsRoomsSheet[^>]+presentation="sheet"/);
