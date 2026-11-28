@@ -102,7 +102,7 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
       { ...sample, id: "qa-page-foreign", userId: "other-account", visitorId: "other-visitor",
         visitor: { ...visitor, id: "other-visitor", currentUserId: "other-account", identityLinks: [{ userId: "other-account" }] } },
       { ...sample, id: "qa-page-production", metadata: { ...sample.metadata, environment: "production" } },
-      { ...sample, id: "qa-page-bad-route", metadata: { ...sample.metadata, pageKey: "trips", transport: "web" } },
+      { ...sample, id: "qa-page-bad-route", metadata: { ...sample.metadata, pageKey: "notifications", transport: "web" } },
     );
   }
   const journeyRows: Row[] = [];
@@ -250,6 +250,7 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
       const unified = loadProduction("src/services/adminUnifiedActivityService.ts", {
         ...productionOverrides,
         "@/services/adminIdentityActivityService": service,
+        "@/services/adminAuditReadService": { canReadAdminAudit: async () => false },
         "@/lib/adminGuestAccessSql": { guestAccessRecordsSql: unexpectedAccess, accessDatePredicate: unexpectedAccess },
         "@/lib/guestAccessObservation": {},
       });
@@ -460,10 +461,10 @@ for (const kind of ["guest", "user", "operational"] as const) {
 }
 
 for (const kind of ["guest", "user", "operational"] as const) {
-  test(kind + " product counts reconcile including cars and other searches", async () => {
+  test(kind + " product counts reconcile including packages and unknown products", async () => {
     const result = await setup(kind, 10, ["FLIGHT", "HOTEL", "CAR", "PACKAGE", "UNKNOWN"]).load();
     assert.equal(result.status, "ok");
-    assert.deepEqual(result.data.summary.searchProducts, { flights: 2, hotels: 2, cars: 2, other: 4 });
+    assert.deepEqual(result.data.summary.searchProducts, { flights: 2, hotels: 2, cars: 2, packages: 2, other: 2 });
     assert.equal(Object.values(result.data.summary.searchProducts).reduce((sum: number, n) => sum + Number(n), 0), result.data.summary.searches);
   });
 }
@@ -690,6 +691,50 @@ test("text search matches the displayed edit, filter and sort action labels", as
       assert.equal(result.data.summary.recordedActions, 1, q);
     }
   }
+});
+
+test("share filters find both linked and unlinked observations by their displayed action", async () => {
+  const scenario = setup("guest", 1);
+  const source = scenario.records.journeys[0];
+  const canonical = { ...source, id: "qa-linked-share", type: "RESULT_SHARED",
+    metadata: { environment: "staging", action: "share_sheet_requested" } };
+  const direct = { ...scenario.records.analytics[0], id: "qa-unlinked-share", type: "SHARE", name: "share_sheet_requested",
+    metadata: { environment: "staging", product: "FLIGHT" } };
+  scenario.records.journeys.push(canonical);
+  scenario.records.analytics.push(direct, { ...direct, id: "qa-direct-linked-duplicate", metadata: {
+    ...direct.metadata, linkedJourneyId: source.journey.id, linkedSearchHistoryId: source.searchHistoryId,
+  } });
+  const result = await scenario.load({ ...allFilters, tab: "interactions", stage: "RESULT_SHARED", q: "Share sheet requested" }, undefined, "page");
+  assert.equal(result.status, "ok");
+  assert.equal(result.data.summary.recordedActions, 2);
+  assert.deepEqual(result.data.events.map((row: Row) => row.id).sort(), ["e-qa-unlinked-share", "j-qa-linked-share"]);
+  assert.ok(result.data.events.every((row: Row) => row.label === "Share sheet requested"));
+});
+
+test("the interactions tab excludes unrelated signup, support and provider-failure audits", async () => {
+  const scenario = setup("user", 1);
+  const sample = scenario.records.analytics[0];
+  const related = [
+    { type: "SAVE", name: "saved_item_confirmed", label: "Save confirmed" },
+    { type: "SHARE", name: "share_link_copied", label: "Result link copied" },
+    { type: "ALERT_CREATED", name: "price_alert_created", label: "Price alert enabled" },
+  ];
+  const unrelated = [
+    { type: "SIGNUP", name: "password_signup", label: "Account signup" },
+    { type: "SUPPORT_TICKET", name: "support_ticket_created", label: "Support ticket" },
+    { type: "PROVIDER_FAILURE", name: "provider_issue", label: "Provider issue" },
+  ];
+  scenario.records.analytics.splice(0, scenario.records.analytics.length, ...[...related, ...unrelated].map(({ type, name }) => ({
+    ...sample, id: "qa-account-event-" + name, type, name,
+  })));
+  const broad = await scenario.load({ ...allFilters, stage: "ACCOUNT_ACTIVITY" }, undefined, "page");
+  assert.equal(broad.status, "ok");
+  assert.equal(broad.data.summary.recordedActions, related.length + unrelated.length);
+  assert.deepEqual(broad.data.events.map((row: Row) => row.label).sort(), [...related, ...unrelated].map(row => row.label).sort());
+  const interactions = await scenario.load({ ...allFilters, tab: "interactions" }, undefined, "page");
+  assert.equal(interactions.status, "ok");
+  assert.equal(interactions.data.summary.recordedActions, related.length);
+  assert.deepEqual(interactions.data.events.map((row: Row) => row.label).sort(), related.map(row => row.label).sort());
 });
 
 test("invalid canonical references preserve eligible guest and account legacy actions, counts and pages", async () => {
@@ -935,11 +980,22 @@ async function essentialWriterLinkerScenario() {
     "@/lib/prisma": { getOptionalPrisma: () => db, getPrisma: () => db },
     "@/lib/stagingSafety": { getPublicEnvironment: () => "staging",
       withEnvironmentMetadata: (metadata: Row) => ({ ...metadata, environment: "staging" }) },
-    "@/services/requestActivityIdentity": { resolveRequestActivityIdentity: async () => ({ userId, visitorId: visitor.id, applicationSource: "WEB" }) },
+    "@/services/requestActivityIdentity": {
+      resolveRequestActivityIdentity: async () => ({ userId, visitorId: visitor.id, applicationSource: "WEB" }),
+      resolveObservedActivityIdentity: async (request: Request) => ({ userId,
+        visitorId: matchesBrowserActivityConfirmation(request, userId) ? visitor.id : null, applicationSource: "WEB" }),
+    },
     "@/lib/feature-controls/service": { isFeatureEnabled: async (key: string) => { assert.equal(key, "PRICE_ALERTS_ENABLED"); return true; } },
   };
   const savedService = loadProduction("src/services/savedRecentService.ts", overrides);
   const interactions = loadProduction("src/app/api/activity/interactions/route.ts", overrides);
+  const { analyticsConfirmationHeader, analyticsConfirmationVersion } = loadProduction("src/lib/visitor-consent-constants.ts");
+  const { createVisitorToken, issueBrowserActivityConfirmation, matchesBrowserActivityConfirmation, visitorCookieName } = loadProduction("src/lib/visitor-identity.ts", overrides);
+  const visitorToken = createVisitorToken();
+  const url = "https://essential.fixture/api/activity/interactions";
+  const { confirmation } = issueBrowserActivityConfirmation(new Request(url, {
+    headers: { [analyticsConfirmationHeader]: analyticsConfirmationVersion },
+  }), visitorToken, userId);
   const input = savedService.createSavedItemInputSchema.parse({ type: "flight", provider: "synthetic-partner",
     airlineName: "Synthetic Air", originAirport: "LOS", destinationAirport: "LHR",
     departureTime: "2026-12-12T10:00:00Z", arrivalTime: "2026-12-12T17:00:00Z", price: 100, currency: "USD",
@@ -947,8 +1003,9 @@ async function essentialWriterLinkerScenario() {
   const item = await savedService.createSavedItemWriter(() => db, true)(userId, input, { applicationSource: "WEB" });
   for (const action of ["saved_item_confirmed", "saved_item_removed"]) {
     if (action === "saved_item_removed") await savedService.createSavedItemRemover(() => db)(userId, { type: "flight", id: item.id }, { applicationSource: "WEB" });
-    const response = await interactions.POST(new Request("https://essential.fixture/api/activity/interactions", {
-      method: "POST", headers: { "sec-fetch-site": "same-origin", "content-type": "application/json" },
+    const response = await interactions.POST(new Request(url, {
+      method: "POST", headers: { "sec-fetch-site": "same-origin", "content-type": "application/json",
+        cookie: visitorCookieName + "=" + visitorToken, [analyticsConfirmationHeader]: confirmation.proof },
       body: JSON.stringify({ action, product: "FLIGHT", resultId: "synthetic-flight-offer", requestId, eventId: crypto.randomUUID() }),
     }));
     assert.deepEqual(await response.json(), { accepted: true });
@@ -1172,17 +1229,30 @@ test("page writer rejects unlinked registered visitors and keeps the original ac
       return result;
     },
   };
-  const { POST } = loadProduction("src/app/api/activity/page-views/route.ts", {
+  const overrides = {
     "next/server": runtimeRequire("next/server"), zod: runtimeRequire("zod"), "node:crypto": runtimeRequire("node:crypto"),
     "@/lib/prisma": { getOptionalPrisma: () => db },
     "@/lib/guestAccessObservation": { consentedGuestAccessObservation: () => undefined },
     "@/lib/stagingSafety": { getPublicEnvironment: () => "staging",
       withEnvironmentMetadata: (metadata: Row) => ({ ...metadata, environment: "staging" }) },
-    "@/services/requestActivityIdentity": { resolveRequestActivityIdentity: async () => ({ ...identity }) },
-  });
-  const send = async (eventId: string, extra?: Row) => {
-    const response = await POST(new Request("https://pages.fixture/api/activity/page-views", {
-      method: "POST", headers: { "sec-fetch-site": "same-origin", "content-type": "application/json" },
+    "@/services/requestActivityIdentity": {
+      resolveRequestActivityIdentity: async () => ({ ...identity }),
+      resolveObservedActivityIdentity: async (request: Request) => ({ ...identity,
+        visitorId: matchesBrowserActivityConfirmation(request, identity.userId) ? identity.visitorId : null }),
+    },
+  };
+  const { POST } = loadProduction("src/app/api/activity/page-views/route.ts", overrides);
+  const { analyticsConfirmationHeader, analyticsConfirmationVersion } = loadProduction("src/lib/visitor-consent-constants.ts");
+  const { createVisitorToken, issueBrowserActivityConfirmation, matchesBrowserActivityConfirmation, visitorCookieName } = loadProduction("src/lib/visitor-identity.ts", overrides);
+  const visitorToken = createVisitorToken();
+  const url = "https://pages.fixture/api/activity/page-views";
+  const send = async (eventId: string, extra?: Row, confirmedUserId = identity.userId) => {
+    const { confirmation } = issueBrowserActivityConfirmation(new Request(url, {
+      headers: { [analyticsConfirmationHeader]: analyticsConfirmationVersion },
+    }), visitorToken, confirmedUserId);
+    const response = await POST(new Request(url, {
+      method: "POST", headers: { "sec-fetch-site": "same-origin", "content-type": "application/json",
+        cookie: visitorCookieName + "=" + visitorToken, [analyticsConfirmationHeader]: confirmation.proof },
       body: JSON.stringify({ eventId, pageKey: "home", ...extra }),
     }));
     return { status: response.status, ...await response.json() };
@@ -1199,6 +1269,7 @@ test("page writer rejects unlinked registered visitors and keeps the original ac
 
   Object.assign(visitor, { currentUserId: account.id, identityLinks: [{ userId: account.id }] });
   identity.userId = account.id;
+  assert.equal((await send(crypto.randomUUID(), undefined, null)).accepted, false);
   assert.equal((await send(guestEventId)).accepted, false);
   assert.equal(rows.length, 1);
   assert.equal(rows[0].metadata.originalIdentity, "guest");
@@ -1212,7 +1283,7 @@ test("page writer rejects unlinked registered visitors and keeps the original ac
   assert.equal(rows[1].metadata.interface, "customer");
   assert.equal((await send(crypto.randomUUID(), { userId: "qa-customer-subject" })).status, 400);
   assert.equal((await send(crypto.randomUUID(), { pageKey: "admin_users" })).status, 400);
-  assert.equal((await send(crypto.randomUUID(), { previousPageKey: "home_hotels" })).status, 400);
+  assert.equal((await send(crypto.randomUUID(), { previousPageKey: "notifications" })).status, 400);
   identity.visitorId = "qa-other-visitor";
   assert.deepEqual(await send(accountEventId), { status: 409, accepted: false, retryable: false });
   identity.visitorId = "qa-page-visitor";

@@ -8,26 +8,27 @@ test("interactions always validate origin, identity and consent on the server", 
   const route = read("src/app/api/activity/interactions/route.ts");
   assert.match(route, /isSameOriginRequest\(request\)/);
   assert.match(route, /readBoundedJsonBody\(request, 1024\)/);
-  assert.match(route, /resolveRequestActivityIdentity\(request\)/);
+  assert.match(route, /resolveObservedActivityIdentity\(request\)/);
   assert.match(route, /if \(!identity\.visitorId\) return json\(\{ accepted: false \}\)/);
-  assert.match(route, /lockConsentedVisitor\(tx, identity\.visitorId!, identity\.userId\)/);
+  assert.match(route, /lockConsentedVisitor\(tx, identity\.visitorId!, identity\.userId, \{ requireExclusiveLink: true \}\)/);
   assert.doesNotMatch(route, /request\.headers\.get\(["']x-user-id/);
   assert.match(route, /name\.startsWith\("share_"\) \? "SHARE"/);
-  assert.match(route, /matchesInteractionSearch\(search, identity, parsed\.data\.product, getPublicEnvironment\(\), new Date\(\)\)/);
+  assert.match(route, /matchesInteractionSearch\(search, identity, event\.product, environment, new Date\(\)\)/);
   assert.match(route, /candidates\.length === 1/);
   assert.match(route, /linkedSearchHistoryId/);
   assert.match(route, /tx\.journeyEvent\.create/);
-  assert.match(route, /eventKey: confirmedAudit \? "saved-audit:" \+ confirmedAudit\.id : "interaction:" \+ parsed\.data\.eventId/);
-  assert.match(route, /if \(isConfirmedAccountAction && !confirmedAudit\) return false/);
-  assert.match(route, /metadata: \{ path: \["environment"\], equals: getPublicEnvironment\(\) \}/);
+  assert.match(route, /eventKey: confirmedAudit \? "saved-audit:" \+ confirmedAudit\.id : "interaction:" \+ eventId/);
+  assert.match(route, /if \(isConfirmedAccountAction && !confirmedAudit\) return \{ accepted: false \}/);
+  assert.match(route, /metadata: \{ path: \["environment"\], equals: environment \}/);
+  assert.match(route, /if \(existing && \(existing\.name !== name \|\| existing\.type !== type\)\) return \{ accepted: false \}/);
 });
 
 test("clients send bounded references and only after observed result actions", () => {
   const sender = read("src/lib/customerInteractionClient.ts");
-  assert.match(sender, /analyticsConsentStorageKey/);
-  assert.match(sender, /!== "granted"/);
+  assert.match(sender, /export const beginCustomerInteraction = getConfirmedBrowserAnalyticsSignal/);
+  assert.match(sender, /consent\.aborted \|\| consent !== getConfirmedBrowserAnalyticsSignal\(\)/);
   assert.match(sender, /randomUUID\(\)/);
-  assert.match(sender, /credentials: "same-origin"/);
+  assert.match(sender, /deliverCustomerActivity\("\/api\/activity\/interactions", payload, consent\)/);
   assert.match(sender, /window\.crypto\.subtle\.digest/);
 
   for (const [file, type] of [

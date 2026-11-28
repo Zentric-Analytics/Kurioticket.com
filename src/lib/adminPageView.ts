@@ -40,7 +40,8 @@ export function toAdminPageView(event: { id: string; createdAt: Date; metadata: 
   const originalIdentity = item.originalIdentity === "guest" || item.originalIdentity === "registered"
     ? item.originalIdentity
     : event.userId === undefined ? undefined : customerPageProvenance(event.userId).originalIdentity;
-  return { id: "e-" + event.id, stage: "PAGE_VIEW", label: page.label, detail: [path, platform].join(" · "), product: page.product, at: event.createdAt,
+  return { id: "e-" + event.id, stage: "PAGE_VIEW", interface: "customer", originalIdentity,
+    label: page.label, detail: [path, platform].join(" · "), product: page.product, at: event.createdAt,
     pageView: { path, previousPath, transport, platform, interface: "customer", originalIdentity,
       href: safePath ? (environment === "staging" ? "https://staging.kurioticket.com" : "https://kurioticket.com") + safePath : null } };
 }

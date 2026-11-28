@@ -18,7 +18,7 @@ const id = "cmvju17ci00062ajiy60e0yhf";
 
 test("All activity exposes every retained canonical journey action type", () => {
   assert.deepEqual(new Set(activityJourneyStages), new Set(Object.values(JourneyEventType)));
-  assert.deepEqual(new Set([...allowedActivityStages(filters)].filter(stage => stage !== "ACCOUNT_ACTIVITY" && stage !== "PAGE_VIEW")), new Set(Object.values(JourneyEventType)));
+  assert.deepEqual(new Set(activityJourneyStages.filter(stage => allowedActivityStages(filters).has(stage))), new Set(Object.values(JourneyEventType)));
 });
 
 test("identity routes accept only explicit user or guest IDs", () => {
@@ -80,7 +80,7 @@ test("every tab exposes only its own recorded stages", () => {
   const stages = (tab: ActivityFilters["tab"], stage: ActivityFilters["stage"] = "all") =>
     [...allowedActivityStages({ ...filters, tab, stage })];
   assert.deepEqual(stages("searches"), ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED",
-    "SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"]);
+    "SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED", "PACKAGE_SEARCH_SUBMITTED"]);
   assert.deepEqual(stages("selections"), ["OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"]);
   assert.deepEqual(stages("journeys"), ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED",
     "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED",
@@ -110,6 +110,22 @@ test("page cursor is bound to one identity and exact filters", () => {
   assert.equal(decodeActivityCursor(token, "guest", id, { ...filters, product: "FLIGHT" }, "production"), null);
   assert.equal(decodeActivityCursor("invalid?cursor", "guest", id, filters, "production"), null);
   assert.equal(decodeActivityCursor(undefined, "guest", id, filters, "production"), undefined);
+});
+
+test("interface filters distinguish customer activity from administrative audit records", () => {
+  assert.equal(parseActivityFilters({ interface: "internal" }).ok, false);
+  assert.equal(parseActivityFilters({ interface: ["admin", "customer"] }).ok, false);
+  assert.deepEqual(parseActivityFilters({ interface: "customer" }), {
+    ok: true, filters: { ...filters, order: "newest", interface: "customer" },
+  });
+  assert.deepEqual([...allowedActivityStages({ ...filters, interface: "admin" })], ["ADMIN_SECURITY_AUDIT"]);
+  assert.ok(!allowedActivityStages({ ...filters, interface: "customer" }).has("ADMIN_SECURITY_AUDIT"));
+  const row = { id: "a-cmvuevent104", at: new Date("2026-10-22T17:48:00.000Z") };
+  const admin = { ...filters, interface: "admin" } as const;
+  const cursor = encodeActivityCursor(row, "user", id, admin, "staging");
+  assert.deepEqual(decodeActivityCursor(cursor, "user", id, admin, "staging"), { id: row.id, at: row.at.toISOString() });
+  assert.equal(decodeActivityCursor(cursor, "user", id, { ...admin, interface: "customer" }, "staging"), null);
+  assert.deepEqual(sourceActivitySeek({ id: row.id, at: row.at.toISOString() }, "e"), { createdAt: { lte: row.at } });
 });
 
 test("cross-source keyset keeps stable ties without repeating the cursor item", () => {

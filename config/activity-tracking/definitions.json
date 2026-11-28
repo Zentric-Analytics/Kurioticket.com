@@ -90,75 +90,74 @@
     },
     "web": {
       "observed": [
+        "src/app/about/page.tsx",
+        "src/app/auth/signin/page.tsx",
+        "src/app/auth/signup/page.tsx",
         "src/app/cars/details/[id]/page.tsx",
         "src/app/cars/page.tsx",
         "src/app/cars/results/page.tsx",
-        "src/app/dashboard/page.tsx",
-        "src/app/dashboard/settings/page.tsx",
-        "src/app/destinations/page.tsx",
-        "src/app/explore/page.tsx",
-        "src/app/faq/page.tsx",
-        "src/app/flights/details/[id]/page.tsx",
-        "src/app/flights/page.tsx",
-        "src/app/flights/results/page.tsx",
-        "src/app/hotels/details/[id]/page.tsx",
-        "src/app/hotels/page.tsx",
-        "src/app/hotels/results/page.tsx",
-        "src/app/legal/[slug]/page.tsx",
-        "src/app/legal/page.tsx",
-        "src/app/packages/page.tsx",
-        "src/app/page.tsx",
-        "src/app/saved/page.tsx",
-        "src/app/support/page.tsx"
-      ],
-      "deferred": [
-        "src/app/about/page.tsx",
-        "src/app/account/pending-deletion/page.tsx",
-        "src/app/auth/forgot-password/page.tsx",
-        "src/app/auth/reset-password/page.tsx",
-        "src/app/auth/signin/page.tsx",
-        "src/app/auth/signup/page.tsx",
-        "src/app/auth/two-factor/page.tsx",
-        "src/app/auth/verify-email/page.tsx",
-        "src/app/auth/verify-login/page.tsx",
         "src/app/contact/page.tsx",
         "src/app/dashboard/account/page.tsx",
         "src/app/dashboard/alerts/page.tsx",
-        "src/app/dashboard/preferences/booking/page.tsx",
+        "src/app/dashboard/page.tsx",
         "src/app/dashboard/preferences/customization/page.tsx",
         "src/app/dashboard/preferences/email/page.tsx",
-        "src/app/dashboard/preferences/page.tsx",
         "src/app/dashboard/preferences/travel/page.tsx",
-        "src/app/dashboard/saved/page.tsx",
         "src/app/dashboard/security/page.tsx",
+        "src/app/dashboard/settings/page.tsx",
         "src/app/dashboard/support/page.tsx",
         "src/app/dashboard/trips/page.tsx",
         "src/app/deals/handoff/page.tsx",
         "src/app/deals/journey/[stage]/page.tsx",
+        "src/app/deals/page.tsx",
         "src/app/deals/results/page.tsx",
-        "src/app/email/preferences/page.tsx",
+        "src/app/destinations/page.tsx",
+        "src/app/explore/page.tsx",
+        "src/app/faq/page.tsx",
         "src/app/flights/[slug]/page.tsx",
+        "src/app/flights/details/[id]/page.tsx",
+        "src/app/flights/page.tsx",
+        "src/app/flights/results/page.tsx",
         "src/app/guides/[slug]/page.tsx",
         "src/app/guides/page.tsx",
         "src/app/hotels/[slug]/page.tsx",
+        "src/app/hotels/details/[id]/page.tsx",
+        "src/app/hotels/page.tsx",
+        "src/app/hotels/results/page.tsx",
         "src/app/how-it-works/page.tsx",
-        "src/app/legal-center/page.tsx",
-        "src/app/mobile/legal/[slug]/page.tsx",
+        "src/app/legal/[slug]/page.tsx",
+        "src/app/legal/page.tsx",
         "src/app/more-service-info/page.tsx",
         "src/app/onboarding/page.tsx",
         "src/app/onboarding/security/page.tsx",
         "src/app/packages/handoff/page.tsx",
         "src/app/packages/journey/[stage]/page.tsx",
+        "src/app/packages/page.tsx",
         "src/app/packages/results/page.tsx",
+        "src/app/page.tsx",
+        "src/app/saved/page.tsx",
+        "src/app/service-guarantee/page.tsx",
+        "src/app/support/page.tsx"
+      ],
+      "deferred": [],
+      "excluded": [
+        "src/app/account/pending-deletion/page.tsx",
+        "src/app/auth/forgot-password/page.tsx",
+        "src/app/auth/reset-password/page.tsx",
+        "src/app/auth/two-factor/page.tsx",
+        "src/app/auth/verify-email/page.tsx",
+        "src/app/auth/verify-login/page.tsx",
+        "src/app/dashboard/preferences/booking/page.tsx",
+        "src/app/dashboard/preferences/page.tsx",
+        "src/app/dashboard/saved/page.tsx",
+        "src/app/email/preferences/page.tsx",
+        "src/app/legal-center/page.tsx",
+        "src/app/mobile/legal/[slug]/page.tsx",
+        "src/app/privacy/page.tsx",
         "src/app/qa-only/mobile-results/flights/page.tsx",
         "src/app/redirect/page.tsx",
         "src/app/sandbox/kayak/details/page.tsx",
         "src/app/sandbox/kayak/page.tsx",
-        "src/app/service-guarantee/page.tsx"
-      ],
-      "excluded": [
-        "src/app/deals/page.tsx",
-        "src/app/privacy/page.tsx",
         "src/app/terms/page.tsx"
       ]
     },
@@ -213,9 +212,132 @@
       ]
     }
   },
+  "adminBehavioralSections": {
+    "workspace": [
+      "notifications",
+      "workspace-search",
+      "workspace-search-all",
+      "workspace-search-pages",
+      "workspace-search-users",
+      "workspace-search-searches",
+      "workspace-search-providers"
+    ],
+    "routes": {
+      "/admin": [
+        "online-users-information",
+        "active-bots-information"
+      ],
+      "/admin/account-deletions/[id]": [
+        "linked-support-preview"
+      ],
+      "/admin/cars": [
+        "product-search-record-details"
+      ],
+      "/admin/confirmed-trips/monitoring": [
+        "flight-status",
+        "trip-confirmations",
+        "confirmation-delivery-health",
+        "delivery-alert-details"
+      ],
+      "/admin/content/homepage/[section]": [
+        "destinations",
+        "flight-routes",
+        "hotel-destinations"
+      ],
+      "/admin/content/homepage/[section]/[id]": [
+        "destinations",
+        "flight-routes",
+        "hotel-destinations"
+      ],
+      "/admin/content/homepage/[section]/new": [
+        "destinations",
+        "flight-routes",
+        "hotel-destinations"
+      ],
+      "/admin/homepage-fares": [
+        "market-readiness-details"
+      ],
+      "/admin/homepage-fares/diagnostics": [
+        "refresh-diagnostics"
+      ],
+      "/admin/hotels": [
+        "product-search-record-details"
+      ],
+      "/admin/logs": [
+        "audit-log-details"
+      ],
+      "/admin/preview-testers": [
+        "team-member-details",
+        "team-member-editor"
+      ],
+      "/admin/providers": [
+        "health",
+        "referral-attribution",
+        "provider-attention-details",
+        "provider-directory-details",
+        "unlinked-handoff-details"
+      ],
+      "/admin/referral-attribution": [
+        "unlinked-handoff-details"
+      ],
+      "/admin/searches/[id]": [
+        "search-diagnostics"
+      ],
+      "/admin/settings/recent-changes": [
+        "settings-change-details"
+      ],
+      "/admin/support": [
+        "all-tickets",
+        "open",
+        "awaiting-team",
+        "awaiting-customer",
+        "resolved",
+        "closed"
+      ],
+      "/admin/support/[id]": [
+        "linked-deletion-preview",
+        "request-context"
+      ],
+      "/admin/system/cms-health": [
+        "content-scope-details"
+      ],
+      "/admin/users": [
+        "all",
+        "registered",
+        "guests"
+      ],
+      "/admin/users/bots/[id]": [
+        "request-evidence"
+      ],
+      "/admin/users/devices": [
+        "all",
+        "registered",
+        "guests"
+      ],
+      "/admin/users/pages": [
+        "all",
+        "registered",
+        "guests"
+      ],
+      "/admin/users/[kind]/[id]/activity": [
+        "activity-details"
+      ],
+      "/admin/users/[kind]/[id]/activity/all": [
+        "all",
+        "access",
+        "pages",
+        "searches",
+        "selections",
+        "handoffs",
+        "interactions",
+        "activity-data-information",
+        "activity-details"
+      ]
+    }
+  },
   "activityDefinitions": {
     "customer.page-visit": "Approved customer catalogue, consented Visitor and committed eligible destination.",
-    "customer.section-visit": "Approved customer subsection such as native Home product selection. Proposed additions remain disabled.",
+    "customer.section-visit": "Visible closed customer sections, including Home product tabs, Saved & Recent tabs and My Trips tabs, observed after confirmed analytics consent.",
     "customer.search-decision": "Existing eligible journey events for results, details, explicit edit, filter, sort and selection.",
     "customer.operational-search": "Existing requested search accounting with independent essential guest continuity.",
     "customer.provider-handoff": "Existing supported provider handoff or outcome supplied by the responsible server flow.",
@@ -224,10 +346,24 @@
     "customer.security-audit": "Existing authenticated account security operation and approved safe outcome.",
     "customer.device-access": "Existing authorized session/access observation. Separate from intentional actions.",
     "admin.audit-action": "Existing authorized administrative audit. Project by verified actor and keep restricted targets separate.",
-    "admin.navigation-proposed": "Deferred navigation and section observation pending an approved monitoring policy.",
+    "admin.navigation-proposed": "Dormant page and section definitions for authorized Admin destinations. Requires an approved employee monitoring purpose, notice, scope, viewer permissions and retention policy before collection.",
     "customer.navigation-proposed": "Deferred account, legal, packages or in-page navigation gap. Collection requires approval."
   },
   "reviews": {
+    "apps/mobile/src/features/flow/PackageResultsScreen.tsx#5166a1ddde59c57b": { "definition": "customer.page-visit" },
+    "apps/mobile/src/features/flow/PackageResultsScreen.tsx#d1e0c3d684a0ddfd": { "definition": "customer.search-decision" },
+    "apps/mobile/src/features/search/ApprovedCarResultsScreen.tsx#c71fd9262669c6b3": { "definition": "customer.search-decision" },
+    "apps/mobile/src/features/search/ApprovedCarResultsScreen.tsx#d79972d52e842b94": { "definition": "customer.search-decision" },
+    "apps/mobile/src/features/search/ApprovedResultsScreen.tsx#5f3a8182ac51131b": { "definition": "customer.search-decision" },
+    "apps/mobile/src/features/search/ApprovedResultsScreen.tsx#2722b241bd52a87e": { "definition": "customer.search-decision" },
+    "apps/mobile/src/features/search/NativeCarResultOfferPicker.tsx#5ceba42ab401504b": { "definition": "customer.search-decision" },
+    "apps/mobile/src/features/search/NativeCarResultOfferPicker.tsx#c14d815f493bef0d": { "definition": "customer.search-decision" },
+    "src/components/admin/AdminUnifiedActivityList.tsx#1cb6cb631e4f01ee": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/lib/admin.ts#d1cf2093d0acb059": {
+      "definition": "admin.audit-action"
+    },
     "src/app/admin/searches/activity/page.tsx#3d30a77d75da0538": {
       "definition": "admin.navigation-proposed"
     },
@@ -275,9 +411,67 @@
     },
     "src/components/admin/AdminOverviewDashboard.tsx#38bba1b388835537": {
       "definition": "admin.navigation-proposed"
+    },
+    "src/app/dashboard/trips/TripsManagementPage.tsx#5cefc9a3c31c66ff": {
+      "definition": "customer.section-visit"
+    },
+    "src/components/saved/SavedRecentContent.tsx#c523baae8f80761b": {
+      "definition": "customer.section-visit"
+    },
+    "src/components/search/SearchTabs.tsx#53fb975e434724c9": {
+      "definition": "customer.section-visit"
+    },
+    "src/components/search/SearchTabs.tsx#2a59b85e13880f46": {
+      "definition": "customer.section-visit"
+    },
+    "src/components/search/SearchTabs.tsx#44bd8445d0e122b0": {
+      "definition": "customer.section-visit"
+    },
+    "src/components/search/SearchTabs.tsx#8ba181bc46b3e619": {
+      "definition": "customer.section-visit"
+    },
+    "src/components/search/SearchTabs.tsx#60aa24056384e33c": {
+      "definition": "customer.section-visit"
+    },
+    "src/components/search/SearchTabs.tsx#0d68b9204f8bf757": {
+      "definition": "customer.section-visit"
+    },
+    "src/components/search/SearchTabs.tsx#ba2a6b80d91dd851": {
+      "definition": "customer.section-visit"
+    },
+    "src/components/search/SearchTabs.tsx#5f9efdf4dd701b45": {
+      "definition": "customer.section-visit"
+    },
+    "src/components/search/SearchTabs.tsx#afe9fb4971670fb3": {
+      "definition": "customer.section-visit"
+    },
+    "src/components/search/SearchTabs.tsx#c09a00307520fa30": {
+      "definition": "customer.section-visit"
+    },
+    "src/components/results/CarsResultsClient.tsx#4e20b0068af514fe": {
+      "definition": "customer.search-decision"
+    },
+    "src/components/results/CarsResultsClient.tsx#3dbc6c643a2cd840": {
+      "definition": "customer.search-decision"
+    },
+    "src/components/results/FlightResultsClient.tsx#3b3fecf346168778": {
+      "definition": "customer.search-decision"
+    },
+    "src/components/results/HotelResultsClient.tsx#3b3fecf346168778": {
+      "definition": "customer.search-decision"
     }
   },
   "routeExclusions": {
+    "apps/mobile/app/(tabs)/_layout.tsx": "Navigation shell has no independent committed screen.",
+    "apps/mobile/app/(tabs)/profile/_layout.tsx": "Navigation shell has no independent committed screen.",
+    "apps/mobile/app/(tabs)/profile/sign-in.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
+    "apps/mobile/app/_layout.tsx": "Navigation shell has no independent committed screen.",
+    "apps/mobile/app/connection-status.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
+    "apps/mobile/app/email-auth.tsx": "Sensitive native auth screens are excluded from optional page observations. Approved security audit is separate.",
+    "apps/mobile/app/home.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
+    "apps/mobile/app/index.tsx": "Root launches the eligible destination and owns bootstrap recovery state.",
+    "apps/mobile/app/welcome.tsx": "Compatibility redirect is not a destination. Its onboarding target needs separate runtime review.",
+    "src/app/account/pending-deletion/page.tsx": "Sensitive account-deletion workflow status stays in existing approved account operations.",
     "src/app/admin/confirmed-trips/alerts/page.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
     "src/app/admin/confirmed-trips/operations/page.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
     "src/app/admin/content/health/page.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
@@ -288,17 +482,22 @@
     "src/app/admin/searches/sessions/[id]/page.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
     "src/app/admin/users/online/guest/[reference]/page.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
     "src/app/admin/users/platforms-devices/page.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
-    "src/app/deals/page.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
+    "src/app/auth/forgot-password/page.tsx": "Account recovery navigation is intentionally restricted to the existing security workflow.",
+    "src/app/auth/reset-password/page.tsx": "Token-linked account recovery page is excluded from behavioral navigation.",
+    "src/app/auth/two-factor/page.tsx": "Sensitive authentication challenge pages remain outside optional navigation history.",
+    "src/app/auth/verify-email/page.tsx": "Token-linked verification page remains outside optional navigation history.",
+    "src/app/auth/verify-login/page.tsx": "Token-linked verification page remains outside optional navigation history.",
+    "src/app/dashboard/preferences/booking/page.tsx": "Compatibility alias redirects to a canonical travel preferences destination.",
+    "src/app/dashboard/preferences/page.tsx": "Compatibility alias redirects to a canonical travel preferences destination.",
+    "src/app/dashboard/saved/page.tsx": "Compatibility alias redirects to the canonical Saved destination.",
+    "src/app/email/preferences/page.tsx": "Signed email preference link is outside optional navigation. The separate authenticated settings page is eligible.",
+    "src/app/legal-center/page.tsx": "Compatibility alias redirects to the canonical Legal Center destination.",
+    "src/app/mobile/legal/[slug]/page.tsx": "Embedded native legal document has no customer web consent lifecycle. Native navigation has its own tracker.",
     "src/app/privacy/page.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
-    "src/app/terms/page.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
-    "apps/mobile/app/(tabs)/_layout.tsx": "Navigation shell has no independent committed screen.",
-    "apps/mobile/app/(tabs)/profile/_layout.tsx": "Navigation shell has no independent committed screen.",
-    "apps/mobile/app/(tabs)/profile/sign-in.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
-    "apps/mobile/app/_layout.tsx": "Navigation shell has no independent committed screen.",
-    "apps/mobile/app/connection-status.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
-    "apps/mobile/app/email-auth.tsx": "Sensitive native auth screens are excluded from optional page observations. Approved security audit is separate.",
-    "apps/mobile/app/home.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
-    "apps/mobile/app/index.tsx": "Root launches the eligible destination and owns bootstrap recovery state.",
-    "apps/mobile/app/welcome.tsx": "Compatibility redirect is not a destination. Its onboarding target needs separate runtime review."
+    "src/app/qa-only/mobile-results/flights/page.tsx": "QA fixture route is outside customer behavioral navigation.",
+    "src/app/redirect/page.tsx": "Provider redirect lifecycle uses existing authoritative handoff accounting.",
+    "src/app/sandbox/kayak/details/page.tsx": "Provider integration sandbox is outside customer behavioral navigation.",
+    "src/app/sandbox/kayak/page.tsx": "Provider integration sandbox is outside customer behavioral navigation.",
+    "src/app/terms/page.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence."
   }
 }

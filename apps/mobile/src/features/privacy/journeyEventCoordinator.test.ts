@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { JourneyEventCoordinator, type JourneyEvent, type JourneyEventResponse } from "./journeyEventCoordinator";
+import { JourneyEventCoordinator, nativeChangedJourneySearchFields, type JourneyEvent, type JourneyEventResponse } from "./journeyEventCoordinator";
 import { journeyResponseContext, rememberJourneyResponseContext } from "./journeyResponseContext";
 
 const turn = () => new Promise<void>(resolve => setImmediate(resolve));
@@ -87,6 +87,19 @@ test("unknown or declined consent creates no events, UUIDs, retries or retrospec
   h.coordinator.resultsViewed(requestId, "/flight-results", 3);
   await turn();
   assert.deepEqual(h.calls, [], "granting later cannot attribute an unconsented cached search");
+});
+
+test("native search edits transmit allowlisted field categories without submitted values", async () => {
+  const previous = { pickupLocation: ["private-airport-a"], pickupDate: "2030-05-01", driverAge: "28" };
+  const next = { ...previous, pickupLocation: "private-airport-b", pickupDate: "2030-06-01" };
+  const editFields = nativeChangedJourneySearchFields("CAR", previous, next);
+  assert.deepEqual(editFields, ["pickup_location", "rental_dates"]);
+  const h = harness();
+  const requestId = h.remember();
+  h.coordinator.workflowDecision("SEARCH_EDIT_APPLIED", requestId, "/car-results", { editFields });
+  await turn();
+  assert.deepEqual(h.calls[0].event.editFields, editFields);
+  assert.doesNotMatch(JSON.stringify(h.calls[0].event), /private-airport|2030/);
 });
 
 test("actual displayed results use the response ID once across renders, progressive pages and cached navigation", async () => {

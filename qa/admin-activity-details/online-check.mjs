@@ -1,5 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import assert from "node:assert/strict";
+import { expectActivityFilterLayout } from "./activity-filter-layout.mjs";
 const base=process.env.ADMIN_ACTIVITY_QA_URL,output=process.env.ADMIN_ACTIVITY_QA_OUTPUT;
 const browser=await chromium.launch({headless:true,args:["--no-sandbox"],executablePath:process.env.ADMIN_ACTIVITY_QA_CHROMIUM});
 try {
@@ -111,6 +112,7 @@ try {
     await openFilters();
     const liveFullLayout=await fullLayout();
     await expect(fullCard.getByRole("textbox",{name:"Search activity"})).toBeDisabled();
+    await expect(fullCard.getByRole("button",{name:/^Activity interface:/})).toHaveCount(0);
     await expect(fullCard.getByRole("button",{name:"Apply filters",exact:true})).toBeDisabled();
     await expect(fullCard.getByTestId("activity-history-actions")).toHaveCount(0);
     await noOverflow();
@@ -145,7 +147,11 @@ try {
     await card.getByRole("link",{name:"View all activity"}).click();
     await expect(page).toHaveURL(url=>url.pathname===new URL(registeredHref,base).pathname+"/all");
     await openFilters();
-    assert.deepEqual(await fullLayout(),liveFullLayout,"shared registered/live full workspace at "+width);
+    const registeredFullLayout={...liveFullLayout,
+      filters:liveFullLayout.filters.replace("repeat(3,","repeat(4,"),
+      filterCols:liveFullLayout.filterCols+(width>=1024?1:0)};
+    assert.deepEqual(await fullLayout(),registeredFullLayout,"shared full workspace with the registered Interface filter at "+width);
+    await expectActivityFilterLayout(page,"Registered activity from Online Users at "+width,{showInterface:true});
     await expect(fullCard.getByRole("textbox",{name:"Search activity"})).toBeEnabled();
     await expect(fullCard.getByRole("button",{name:"Apply filters",exact:true})).toBeEnabled();
     await expect(fullCard.getByRole("navigation",{name:"Activity categories"}).getByRole("link")).toHaveCount(7);
@@ -178,6 +184,7 @@ try {
       await openFilters();
       assert.deepEqual(await fullLayout(),liveFullLayout,"shared recorded-guest full workspace at "+width);
       await expect(fullCard.getByRole("textbox",{name:"Search activity"})).toBeEnabled();
+      await expect(fullCard.getByRole("button",{name:/^Activity interface:/})).toHaveCount(0);
       await expect(fullCard.getByTestId("activity-history-actions")).toHaveCount(0);
       await expect(fullCard.getByRole("navigation",{name:"Activity categories"}).locator('[aria-disabled="true"]')).toHaveCount(operational?3:0);
       await noOverflow();

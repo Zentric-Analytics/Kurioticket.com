@@ -19,6 +19,10 @@ const identitySelect = {
 } as const;
 type Identity = Prisma.VisitorGetPayload<{ select: typeof identitySelect }>;
 
+export class VisitorGrantWithdrawnError extends Error {
+  constructor() { super("The Visitor credential has been withdrawn."); }
+}
+
 function hasConsent(visitor: Identity) {
   return visitor.consentStatus === "GRANTED" && visitor.trackingDisabledAt === null;
 }
@@ -77,7 +81,10 @@ export function createVisitorIdentityService(getDatabase: () => VisitorIdentityD
         const tokenHash = hashVisitorToken(input.token);
         await lockVisitorCredential(tx, tokenHash);
         const visitor = await tx.visitor.findUnique({ where: { tokenHash }, select: identitySelect });
-        if (visitor && hasConsent(visitor) && belongsToContext(visitor, input.userId ?? null)) {
+        // An older grant can reach this lock after withdrawal. The retired
+        // credential cannot authorize either a replacement or a reactivation.
+        if (visitor && !hasConsent(visitor)) throw new VisitorGrantWithdrawnError();
+        if (visitor && belongsToContext(visitor, input.userId ?? null)) {
           // A returning visit belongs to the existing identity. Refresh its
           // activity timestamp without changing firstSeenAt or counting a new grant.
           const touched = await tx.visitor.updateMany({
@@ -93,8 +100,8 @@ export function createVisitorIdentityService(getDatabase: () => VisitorIdentityD
           return { id: visitor.id, token: input.token, created: false };
         }
       }
-      // Never revive withdrawn identities or transfer an account's browser history.
-      // Unknown client-supplied tokens are replaced with server-generated randomness too.
+      // Use a fresh identity after a confirmed withdrawal clears its credential,
+      // for a known context change, or for an unrecognized client token.
       return createVisitor(tx, input.policyVersion);
     });
   }

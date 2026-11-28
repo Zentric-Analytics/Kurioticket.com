@@ -1,7 +1,8 @@
 import { recordedHotelPropertyCount } from "@/lib/hotels/hotelResultAccounting";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
-import { isJourneySourcePath, journeySourcePath } from "@/lib/search-journey";
+import { isJourneySourcePath, journeySourcePath, safeJourneySearchEditFields } from "@/lib/search-journey";
 import { toAdminPageView } from "@/lib/adminPageView";
+import { safeObservedResult } from "@/lib/adminObservedResult";
 import { safeAdminJourneySearchDetails } from "./adminJourneySearchDetails";
 import {
   adminJourneyProducts,
@@ -41,6 +42,7 @@ type JourneyRecord = {
 type EventRecord = {
   id: string; type: AdminJourneyEventType; createdAt: Date; product: AdminJourneyProduct | null;
   action: string | null; resultReference: string | null; filterGroup: string | null; sortMode: string | null; sortChoice?: string | null; filterSelections?: unknown;
+  editFields?: unknown;
   alertMode?: string | null; alertCurrency?: string | null; alertTargetPrice?: string | null; alertBaselinePrice?: string | null;
   observedResult?: unknown;
   pageViewMetadata?: unknown;
@@ -87,6 +89,7 @@ function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
         e."metadata"->>'sourcePage' AS "sourcePage", e."metadata"->>'action' AS "action", e."metadata"->>'resultId' AS "resultReference",
         e."metadata"->'observedResult' AS "observedResult",
         e."metadata"->>'filterGroup' AS "filterGroup", e."metadata"->'filterSelections' AS "filterSelections", e."metadata"->>'sortMode' AS "sortMode", e."metadata"->>'sortChoice' AS "sortChoice",
+        e."metadata"->'editFields' AS "editFields",
         e."metadata"->>'alertMode' AS "alertMode", e."metadata"->>'alertCurrency' AS "alertCurrency",
         e."metadata"->>'alertTargetPrice' AS "alertTargetPrice", e."metadata"->>'alertBaselinePrice' AS "alertBaselinePrice", j."visitorId", v."currentUserId" AS "userId", j."startedAt",
         s."id" AS "searchHistoryId", s."requestId", s."type"::text AS "searchProduct", s."origin", s."destination",
@@ -183,7 +186,8 @@ function detailSql(query: AdminJourneyQuery, journeyId: string) {
       SELECT *, NULL::jsonb AS "pageViewMetadata", NULL::text AS "pageViewUserId" FROM scoped_events
       UNION ALL
       SELECT 'pv-' || a."id", s."journeyId", 'PAGE_VIEW', s."product", NULL, a."createdAt",
-        NULL, NULL, NULL, NULL::jsonb, NULL, NULL::jsonb, NULL, NULL, NULL, NULL, NULL, NULL,
+        NULL, NULL, NULL, NULL::jsonb, NULL, NULL::jsonb, NULL, NULL, NULL::jsonb AS "editFields",
+        NULL, NULL, NULL, NULL,
         s."visitorId", s."userId", s."startedAt",
         s."searchHistoryId", s."requestId", s."searchProduct", s."origin", s."destination",
         s."checkIn", s."checkOut", s."searchQuery", s."searchStatus", s."resultCount", s."latencyMs",
@@ -199,7 +203,8 @@ function detailSql(query: AdminJourneyQuery, journeyId: string) {
         AND a."metadata"->>'transport' IN ('web', 'native')
         AND ((s."product" = 'FLIGHT' AND a."metadata"->>'pageKey' IN ('flight_results', 'flight_details'))
           OR (s."product" = 'HOTEL' AND a."metadata"->>'pageKey' IN ('hotel_results', 'hotel_details'))
-          OR (s."product" = 'CAR' AND a."metadata"->>'pageKey' IN ('car_results', 'car_details')))
+          OR (s."product" = 'CAR' AND a."metadata"->>'pageKey' IN ('car_results', 'car_details'))
+          OR (s."product" = 'PACKAGE' AND a."metadata"->>'pageKey' = 'package_results'))
     ) SELECT * FROM detail_events
     WHERE "journeyId" = ${journeyId}
       ${query.cursor ? Prisma.sql`AND ("createdAt", "id") > (${new Date(query.cursor.at)}, ${query.cursor.id})` : Prisma.empty}
@@ -324,26 +329,6 @@ function journeyDto(row: JourneyRecord): AdminJourneyRow {
       PROVIDER_DEAL_SELECTED: count(row.providerDealSelected), PROVIDER_HANDOFF_STARTED: count(row.handoffStarted) },
   };
 }
-function safeObservedResult(value: unknown): AdminJourneyEvent["observedResult"] {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const result = value as Record<string, unknown>;
-  const label = typeof result.label === "string" ? result.label.trim() : "";
-  const provider = typeof result.provider === "string" ? result.provider.trim() : "";
-  const amount = result.amount;
-  const currency = result.currency;
-  const basis = result.priceBasis;
-  if (!label || label.length > 120 || !provider || provider.length > 100
-    || /[\u0000-\u001f\u007f<>]/.test(label + provider)
-    || typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0 || amount > 1e9
-    || typeof currency !== "string" || !/^[A-Z]{3}$/.test(currency)
-    || !["total", "per_night", "per_day"].includes(String(basis))) return null;
-  const total = result.totalAmount;
-  return {
-    label, provider, amount, currency, priceBasis: basis as "total" | "per_night" | "per_day",
-    ...(typeof total === "number" && Number.isFinite(total) && total > 0 && total <= 1e9 ? { totalAmount: total } : {}),
-    provenance: "customer_display",
-  };
-}
 function eventDto(row: EventRecord): AdminJourneyEvent {
   const page = row.type === "PAGE_VIEW" ? toAdminPageView({ id: row.id, createdAt: row.createdAt, metadata: row.pageViewMetadata, userId: row.pageViewUserId }, (row.pageViewMetadata as { environment?: string } | null)?.environment === "staging" ? "staging" : "production") : null;
   return {
@@ -353,6 +338,7 @@ function eventDto(row: EventRecord): AdminJourneyEvent {
     filterGroup: row.type === "SEARCH_FILTER_APPLIED" && ["all", "price", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "transmission", "other"].includes(row.filterGroup ?? "") ? row.filterGroup : null,
     sortMode: row.type === "SEARCH_SORT_CHANGED" && ["price", "best", "fastest", "stops", "rating", "recommended", "other"].includes(row.sortMode ?? "") ? row.sortMode : null,
     sortChoice: row.type === "SEARCH_SORT_CHANGED" && ["best", "cheapest", "fastest", "stops", "bestValue", "topRated", "recommended", "lowestTotal", "price", "duration", "departure-asc", "departure-desc"].includes(row.sortChoice ?? "") ? row.sortChoice : null,
+    ...(row.type === "SEARCH_EDIT_APPLIED" ? { editFields: safeJourneySearchEditFields(row.editFields, row.product ?? row.searchProduct) } : {}),
     filterSelections: row.type === "SEARCH_FILTER_APPLIED" && Array.isArray(row.filterSelections)
       ? row.filterSelections.slice(0, 20).flatMap((choice: unknown) => {
           if (!choice || typeof choice !== "object" || Array.isArray(choice)) return [];
@@ -369,7 +355,7 @@ function eventDto(row: EventRecord): AdminJourneyEvent {
           baselinePrice: row.alertBaselinePrice && /^\d{1,12}(?:\.\d{1,2})?$/.test(row.alertBaselinePrice) ? row.alertBaselinePrice : null,
         } } : {}),
     ...(["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"].includes(row.type) ? {
-      action: ["local_saved", "local_unsaved", "saved_item_confirmed", "saved_item_removed", "share_link_copied", "share_sheet_completed"].includes(row.action ?? "")
+      action: ["local_saved", "local_unsaved", "saved_item_confirmed", "saved_item_removed", "share_link_copied", "share_sheet_completed", "share_sheet_requested"].includes(row.action ?? "")
         ? row.action as AdminJourneyEvent["action"] : null,
       resultReference: row.resultReference && /^[A-Za-z0-9._:+~=-]{1,128}$/.test(row.resultReference) ? row.resultReference : null,
     } : {}),

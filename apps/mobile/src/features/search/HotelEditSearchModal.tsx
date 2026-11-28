@@ -9,9 +9,10 @@ import { useRetainedPickerContext } from "../flow/retainedPickerContext";
 import { useSearchPickerMotion } from "../flow/searchPickerPresentation";
 import { FLIGHT_FLOATING_SHEET_BOTTOM_GAP, FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, FLIGHT_RESULTS_LIGHT_CANVAS } from "./FlightResultsSheetShell";
 
-type Props = { visible: boolean; params: Record<string, RouteValue>; onClose: () => void; onAndroidSubmit?: (params: Record<string, string | undefined>) => void; onAfterClose?: () => void };
+type Submit = (params: Record<string, string | undefined>) => void;
+type Props = { visible: boolean; params: Record<string, RouteValue>; onClose: () => void; onAndroidSubmit?: Submit; onBeforeNavigate?: Submit; onAfterClose?: () => void };
 
-export function HotelEditSearchModal({ visible, params, onClose, onAndroidSubmit, onAfterClose }: Props) {
+export function HotelEditSearchModal({ visible, params, onClose, onAndroidSubmit, onBeforeNavigate, onAfterClose }: Props) {
   const ft = useFlowTheme();
   const resultsCanvas = ft.theme.dark ? ft.colors.page : FLIGHT_RESULTS_LIGHT_CANVAS;
   const { bottom: bottomSafeAreaInset } = useSafeAreaInsets();
@@ -36,7 +37,7 @@ export function HotelEditSearchModal({ visible, params, onClose, onAndroidSubmit
               </Pressable>
             </View>
             <ScrollView style={{ backgroundColor: resultsCanvas }} contentContainerStyle={[styles.content, { paddingBottom: internalBottomPadding }]} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
-              <HotelSearchPanel embedded params={presentedParams} submitNavigation="replace" onBeforeNavigate={onClose} onValidatedSubmit={Platform.OS === "android" ? onAndroidSubmit : undefined} editAppearance submitLabel="Search" />
+              <HotelSearchPanel embedded params={presentedParams} submitNavigation="replace" onBeforeNavigate={nextParams => { onBeforeNavigate?.(nextParams); onClose(); }} onValidatedSubmit={Platform.OS === "android" ? onAndroidSubmit : undefined} editAppearance submitLabel="Search" />
             </ScrollView>
           </Animated.View>
         </SafeAreaView>

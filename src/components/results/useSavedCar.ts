@@ -5,7 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { deleteBackendCar, fetchBackendSavedCars, saveBackendCar, type SavedCarApiItem } from "@/lib/saved-items-api";
 import { SAVED_CARS_INVALIDATED_EVENT } from "@/lib/saved-car-events";
-import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
+import { beginCustomerInteraction, recordCustomerInteraction } from "@/lib/customerInteractionClient";
 
 const SAVED_CARS_CHANGED_EVENT = "kurioticket:saved-cars-changed";
 let savedCarsOwner = "";
@@ -90,6 +90,7 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams, r
     } : undefined;
 
   async function toggleSavedCar() {
+    const analyticsConsent = beginCustomerInteraction();
     if (pending || status === "loading") return;
     if (status !== "authenticated") { await signIn(undefined, { callbackUrl: window.location.href }); return; }
     const previous = savedItem;
@@ -100,7 +101,7 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams, r
         const response = await deleteBackendCar(previous.id);
         if (response.ok) {
           publishSavedCars((savedCarsCache ?? []).filter((item) => item.id !== previous.id));
-          recordCustomerInteraction({ action: "saved_item_removed", product: "CAR", resultId: car.id, requestId, observedResult });
+          recordCustomerInteraction(analyticsConsent, { action: "saved_item_removed", product: "CAR", resultId: car.id, requestId, observedResult });
         }
         else setSavedItem(previous);
         return;
@@ -125,7 +126,7 @@ export function useSavedCar(car: NormalizedCarResult, search: CarSearchParams, r
       if (response.ok && response.item) {
         const item = { ...response.item, type: "car" as const, resultId: car.id };
         publishSavedCars([...(savedCarsCache ?? []), item]);
-        recordCustomerInteraction({ action: "saved_item_confirmed", product: "CAR", resultId: car.id, requestId, observedResult });
+        recordCustomerInteraction(analyticsConsent, { action: "saved_item_confirmed", product: "CAR", resultId: car.id, requestId, observedResult });
       }
       else if (response.duplicate) {
         clearSavedCarsCache(owner);

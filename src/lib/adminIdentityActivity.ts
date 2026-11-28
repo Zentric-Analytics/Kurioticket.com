@@ -3,6 +3,7 @@ import { isAdminReportingRange } from "./adminReportingRanges";
 import type { Prisma } from "@/generated/prisma/client";
 import type { ActivityRow, IdentityKind } from "./adminIdentityJourney";
 import type { PublicEnvironment } from "./stagingSafety";
+import type { ActivityInterface } from "./activityTrackingContract";
 
 export const ACTIVITY_PAGE_SIZE = 20;
 export const ACTIVITY_FETCH_LIMIT = ACTIVITY_PAGE_SIZE + 25;
@@ -11,8 +12,13 @@ export const activityTabs = ["all", "searches", "journeys", "selections", "hando
 export const activityJourneyStages = ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED",
   "RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED",
   "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"] as const;
-export const activityStages = ["all", ...activityJourneyStages, "ACCOUNT_ACTIVITY", "PAGE_VIEW"] as const;
+export const activityStages = ["all", ...activityJourneyStages, "ACCOUNT_ACTIVITY", "PAGE_VIEW", "PACKAGE_SEARCH_SUBMITTED", "ADMIN_SECURITY_AUDIT"] as const;
 export const activityProducts = ["all", "FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const;
+export const activityInterfaceOptions = [
+  { value: "all", label: "All interfaces" },
+  { value: "customer", label: "Customer" },
+  { value: "admin", label: "Admin" },
+] as const;
 
 export type ActivityTab = (typeof activityTabs)[number];
 export type ActivityStage = (typeof activityStages)[number];
@@ -27,6 +33,7 @@ export type ActivityFilters = {
   q: string;
   order?: ActivityOrder;
   timeZone?: string;
+  interface?: ActivityInterface;
 };
 export type ActivityCursor = { at: string; id: string };
 /** Latest recorded timestamp among visible events, independent of sort direction. */
@@ -87,8 +94,10 @@ export function parseActivityFilters(raw: Query, timeZone = "UTC"): ParseResult 
   const to = one(raw.to);
   const q = one(raw.q).trim();
   const order = one(raw.order) || "newest";
+  const activityInterface = one(raw.interface) || "all";
   if (!activityTabs.includes(tab as ActivityTab) || !activityStages.includes(stage as ActivityStage)
     || !activityProducts.includes(product as ActivityProduct)
+    || !activityInterfaceOptions.some(option => option.value === activityInterface)
     || !["newest", "oldest"].includes(order)) return { ok: false, error: "Unsupported activity filter." };
   const start = from ? activityBoundary(from, "from", timeZone).getTime() : -Infinity;
   const end = to ? activityBoundary(to, "to", timeZone).getTime() : Infinity;
@@ -99,6 +108,7 @@ export function parseActivityFilters(raw: Query, timeZone = "UTC"): ParseResult 
   if (q.length > 80 || /[\u0000-\u001f\u007f]/.test(q)) return { ok: false, error: "Search text must contain at most 80 ordinary characters." };
   return { ok: true, filters: {
     tab: tab as ActivityTab, stage: stage as ActivityStage, product: product as ActivityProduct, from, to, q, order: order as ActivityOrder,
+    ...(activityInterface === "admin" || activityInterface === "customer" ? { interface: activityInterface } : {}),
     ...(timeZone !== "UTC" && (from.length === 10 || to.length === 10) ? { timeZone } : {}),
   } };
 }
@@ -108,26 +118,28 @@ export function activityWindow(filters: ActivityFilters) {
     ...(filters.to ? { lt: activityBoundary(filters.to, "to", filters.timeZone) } : {}),
   };
 }
-export type JourneyStage = Exclude<ActivityStage, "all" | "ACCOUNT_ACTIVITY" | "PAGE_VIEW">;
+export type JourneyStage = (typeof activityJourneyStages)[number];
 export function allowedActivityStages(filters: ActivityFilters): Set<ActivityStage> {
   const available: ActivityStage[] = filters.tab === "all"
-    ? [...activityJourneyStages, "ACCOUNT_ACTIVITY", "PAGE_VIEW"]
+    ? [...activityJourneyStages, "ACCOUNT_ACTIVITY", "PAGE_VIEW", "PACKAGE_SEARCH_SUBMITTED", "ADMIN_SECURITY_AUDIT"]
     : filters.tab === "access" ? []
     : filters.tab === "pages" ? ["PAGE_VIEW"]
     : filters.tab === "journeys" ? [...activityJourneyStages]
     : filters.tab === "searches" ? ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED",
-      "SEARCH_SORT_CHANGED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"]
+      "SEARCH_SORT_CHANGED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED", "PACKAGE_SEARCH_SUBMITTED"]
     : filters.tab === "selections" ? ["OFFER_SELECTED", "PROVIDER_DEAL_SELECTED"]
     : filters.tab === "interactions" ? ["RESULT_SAVED", "RESULT_UNSAVED", "RESULT_SHARED", "PRICE_ALERT_CREATED", "ACCOUNT_ACTIVITY"]
     : ["PROVIDER_HANDOFF_STARTED"];
-  return new Set(filters.stage === "all" ? available : available.filter(stage => stage === filters.stage));
+  return new Set(available.filter(stage => (filters.stage === "all" || stage === filters.stage)
+    && (filters.interface === "admin" ? stage === "ADMIN_SECURITY_AUDIT" : filters.interface !== "customer" || stage !== "ADMIN_SECURITY_AUDIT")));
 }
-export const activitySource = (id: string) => id.startsWith("d-") ? "d" : id.startsWith("j-") ? "j" : id.startsWith("s-") ? "s"
+export const activitySource = (id: string) => id.startsWith("a-") ? "a" : id.startsWith("d-") ? "d" : id.startsWith("j-") ? "j" : id.startsWith("s-") ? "s"
   : id.startsWith("r-") ? "r" : "e";
 function scope(kind: IdentityKind, id: string, filters: ActivityFilters, environment: PublicEnvironment) {
   // Preserve existing newest-first cursors; bind oldest-first tokens to their own order.
   return JSON.stringify([kind, id, environment, filters.tab, filters.stage, filters.product, filters.from, filters.to, filters.q,
-    ...(filters.order === "oldest" ? ["oldest"] : []), ...(filters.timeZone ? [filters.timeZone] : [])]);
+    ...(filters.order === "oldest" ? ["oldest"] : []), ...(filters.timeZone ? [filters.timeZone] : []),
+    ...(filters.interface ? [filters.interface] : [])]);
 }
 export function encodeActivityCursor(row: Pick<ActivityRow, "id" | "at">, kind: IdentityKind, id: string, filters: ActivityFilters, environment: PublicEnvironment) {
   return Buffer.from(JSON.stringify({ v: 1, at: row.at.toISOString(), id: row.id, scope: scope(kind, id, filters, environment) }), "utf8").toString("base64url");
@@ -139,7 +151,7 @@ function readActivityCursor(input: string): (ActivityCursor & { scope: string })
     if (!item || typeof item !== "object") return null;
     const x = item as {v?: unknown; id?: unknown; at?: unknown; scope?: unknown};
     if (x.v !== 1 || typeof x.scope !== "string"
-      || typeof x.id !== "string" || !/^[djesr]-[a-z0-9_-]{6,100}$/i.test(x.id)
+      || typeof x.id !== "string" || !/^[adjesr]-[a-z0-9_-]{6,100}$/i.test(x.id)
       || typeof x.at !== "string" || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(x.at)) return null;
     if (!Number.isFinite(new Date(x.at).getTime())) return null;
     return { id: x.id, at: x.at, scope: x.scope };
@@ -195,7 +207,7 @@ export function excludeCanonicalLegacyRows(
 }
 
 /** Stable cross-table (createdAt DESC, prefixed ID ASC) keyset. */
-export function sourceActivitySeek(cursor: ActivityCursor | undefined, prefix: "j" | "s" | "r" | "e", order: ActivityOrder = "newest") {
+export function sourceActivitySeek(cursor: ActivityCursor | undefined, prefix: "a" | "j" | "s" | "r" | "e", order: ActivityOrder = "newest") {
   if (!cursor) return {};
   const at = new Date(cursor.at);
   const priorPrefix = activitySource(cursor.id);

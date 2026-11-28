@@ -80,7 +80,8 @@ import {
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { journeyEvents } from "../privacy/journeyEvents";
-import { recordNativeResultsPage } from "../privacy/useNativePageViews";
+import { nativeChangedJourneySearchFields } from "../privacy/journeyEventCoordinator";
+import { useNativeResultsPage } from "../privacy/useNativePageViews";
 import { normalizeJourneySortMode, normalizeJourneySortChoice, boundedJourneyFilterSelections } from "../../../../../src/lib/search-journey";
 import { shareNativeResult } from "../privacy/nativeShareTracking";
 import { journeyResponseContext } from "../privacy/journeyResponseContext";
@@ -256,6 +257,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   return product === "flight" ? <FlightResultsPresentationProvider><ResultsScreen product={product} /></FlightResultsPresentationProvider> : <ResultsScreen product={product} />;
 }
 function ResultsScreen({ product }: { product: Product }) {
+  const recordNativeResultsPage = useNativeResultsPage();
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
   const insets = useSafeAreaInsets();
@@ -673,9 +675,11 @@ function ResultsScreen({ product }: { product: Product }) {
       return;
     }
     pendingFlightEditTargetKey.current = nextPlan.plan.key;
-    journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", resultsRequestId, "/flight-results");
+    journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", resultsRequestId, "/flight-results", {
+      editFields: nativeChangedJourneySearchFields("FLIGHT", params, nextParams),
+    });
     router.setParams(flightSearchRouteParamPatch(nextParams));
-  }, [plan.plan?.key, resultsRequestId]);
+  }, [params, plan.plan?.key, resultsRequestId]);
   const closeFlightEditSearch = useCallback(() => {
     pendingFlightEditTargetKey.current = null;
     setEditSearchOpen(false);
@@ -686,13 +690,17 @@ function ResultsScreen({ product }: { product: Product }) {
     pendingFlightEditTargetKey.current = null;
     setEditSearchOpen(false);
   }, [editSearchOpen, plan.plan?.key]);
+  const recordHotelSearchEdit = useCallback((nextParams: Record<string, string | undefined>) => {
+    const editFields = nativeChangedJourneySearchFields("HOTEL", params, nextParams);
+    if (editFields.length) journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", resultsRequestId, "/hotel-results", { editFields });
+  }, [params, resultsRequestId]);
   const submitAndroidHotelEdit = useCallback((nextParams: Record<string, string | undefined>) => {
     const nextPlan = buildSearchPlan("hotel", nextParams);
     if (!nextPlan.plan) return;
     pendingHotelEditParams.current = nextPlan.plan.key === plan.plan?.key ? null : nextParams;
-    if (pendingHotelEditParams.current) journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", resultsRequestId, "/hotel-results");
+    if (pendingHotelEditParams.current) recordHotelSearchEdit(nextParams);
     setHotelEditSearchOpen(false);
-  }, [plan.plan?.key, resultsRequestId]);
+  }, [plan.plan?.key, recordHotelSearchEdit]);
   const finishAndroidHotelEdit = useCallback(() => {
     const nextParams = pendingHotelEditParams.current;
     if (!nextParams) return;
@@ -759,7 +767,7 @@ function ResultsScreen({ product }: { product: Product }) {
     recordDisplayedResults();
     const subscription = AppState.addEventListener("change", state => { if (state === "active") recordDisplayedResults(); });
     return () => subscription.remove();
-  }, [product, resultsRequestId, sorted.length, status, visualTest]));
+  }, [product, recordNativeResultsPage, resultsRequestId, sorted.length, status, visualTest]));
   const hotelScrollIdentity = JSON.stringify([plan.plan?.key, retry, hotelSort, hotelFilters]);
   const hotelScrolling = useHotelResultsScrolling(hotelScrollIdentity, product === "hotel" ? sorted.length : 0);
   const cheapestHotelId = useMemo(() => product === "hotel"
@@ -1444,6 +1452,7 @@ function ResultsScreen({ product }: { product: Product }) {
           params={params}
           onClose={closeHotelEditSearch}
           onAndroidSubmit={Platform.OS === "android" ? submitAndroidHotelEdit : undefined}
+          onBeforeNavigate={recordHotelSearchEdit}
           onAfterClose={Platform.OS === "android" ? finishAndroidHotelEdit : undefined}
         />
       ) : null}

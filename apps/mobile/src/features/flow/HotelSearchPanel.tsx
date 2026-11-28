@@ -29,7 +29,7 @@ type Props = {
   showSubmit?: boolean;
   submitLabel?: string;
   submitNavigation?: "push" | "replace";
-  onBeforeNavigate?: () => void;
+  onBeforeNavigate?: (params: ReturnType<typeof hotelSearchParams>) => void;
   editAppearance?: boolean;
   onValidatedSubmit?: (params: ReturnType<typeof hotelSearchParams>) => void;
 };
@@ -78,9 +78,10 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
     const nextErrors = validateHotelForm(form);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) { setNotice("Please correct the highlighted search details."); if (nextErrors.destination) setDestinationOpen(true); else if (nextErrors.checkIn || nextErrors.checkOut) setDatesOpen(true); return; }
-    if (onValidatedSubmit) { onValidatedSubmit(hotelSearchParams(form)); return; }
-    onBeforeNavigate?.();
-    router[submitNavigation]({ pathname: "/hotel-results", params: hotelSearchParams(form) });
+    const searchParams = hotelSearchParams(form);
+    if (onValidatedSubmit) { onValidatedSubmit(searchParams); return; }
+    onBeforeNavigate?.(searchParams);
+    router[submitNavigation]({ pathname: "/hotel-results", params: searchParams });
   };
   const datesValue = form.checkIn && form.checkOut ? `${displayDate(form.checkIn)} — ${displayDate(form.checkOut)}` : "Check-in — Check-out";
   const destinationDisplay = getHotelLocationFieldDisplay(form.destination, locale);

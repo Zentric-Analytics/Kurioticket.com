@@ -6,19 +6,20 @@ import { AdminCalendarInput } from "./AdminCalendarInput";
 import { adminCalendarRange, formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { displayActivityCalendarDate } from "@/lib/adminActivityDateQuery";
 import { ADMIN_REPORTING_RANGE_OPTIONS } from "@/lib/adminReportingRanges";
+import { activityInterfaceOptions } from "@/lib/adminIdentityActivity";
 import { useRouter } from "next/navigation";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
-export type ActivityFilterValues = { tab: string; q: string; product: string; stage: string; order: string; from: string; to: string; range: string };
+export type ActivityFilterValues = { tab: string; q: string; product: string; stage: string; order: string; from: string; to: string; range: string; interface?: string };
 const options = {
   product: [["all","All products"],["FLIGHT","Flights"],["HOTEL","Hotels"],["CAR","Cars"],["PACKAGE","Packages"]],
-  stage: [["all","All activity types"],["SEARCH_COMPLETED","Search completed"],["RESULTS_VIEWED","Results viewed"],["SEARCH_EDIT_APPLIED","Search edit submitted"],["SEARCH_FILTER_APPLIED","Results filter applied"],["SEARCH_SORT_CHANGED","Results sort changed"],["FLIGHT_DETAILS_VIEWED","Flight details viewed"],["RESULT_DETAILS_OPENED","Result details opened"],["RATE_DETAILS_OPENED","Rate details opened"],["OFFER_SELECTED","Offer selected"],["PROVIDER_DEAL_SELECTED","Provider deal selected"],["PROVIDER_HANDOFF_STARTED","Provider handoff"],["RESULT_SAVED","Result saved"],["RESULT_UNSAVED","Result unsaved"],["RESULT_SHARED","Result shared"],["PRICE_ALERT_CREATED","Price alert created"],["ACCOUNT_ACTIVITY","Account activity"],["PAGE_VIEW","Page viewed"]],
+  stage: [["all","All activity types"],["SEARCH_COMPLETED","Search completed"],["PACKAGE_SEARCH_SUBMITTED","Package search submitted"],["RESULTS_VIEWED","Results viewed"],["SEARCH_EDIT_APPLIED","Search edit submitted"],["SEARCH_FILTER_APPLIED","Results filter applied"],["SEARCH_SORT_CHANGED","Results sort changed"],["FLIGHT_DETAILS_VIEWED","Flight details viewed"],["RESULT_DETAILS_OPENED","Result details opened"],["RATE_DETAILS_OPENED","Rate details opened"],["OFFER_SELECTED","Offer selected"],["PROVIDER_DEAL_SELECTED","Provider deal selected"],["PROVIDER_HANDOFF_STARTED","Provider handoff"],["RESULT_SAVED","Result saved"],["RESULT_UNSAVED","Result unsaved"],["RESULT_SHARED","Share activity"],["PRICE_ALERT_CREATED","Price alert created"],["ACCOUNT_ACTIVITY","Account activity"],["PAGE_VIEW","Page viewed"],["ADMIN_SECURITY_AUDIT","Administrative security audit"]],
 };
 const labelFor = (items: string[][], value: string) => items.find(([key]) => key === value)?.[1] ?? value;
 
-export function ActivityFiltersBar({ path, initial, directory, usersReturn, tabs, timeZone, now, unavailableReason, compact = false, availableStages }: {
+export function ActivityFiltersBar({ path, initial, directory, usersReturn, tabs, timeZone, now, unavailableReason, compact = false, availableStages, allowInterface = false }: {
   path: string; initial: ActivityFilterValues; directory: string; usersReturn?: string; tabs: ReactNode;
-  timeZone: string; now: string; unavailableReason?: string; compact?: boolean; availableStages?: readonly string[];
+  timeZone: string; now: string; unavailableReason?: string; compact?: boolean; availableStages?: readonly string[]; allowInterface?: boolean;
 }) {
   const unavailableId = useId();
   const panelId = useId();
@@ -35,7 +36,7 @@ export function ActivityFiltersBar({ path, initial, directory, usersReturn, tabs
   const [pending, startTransition] = useTransition();
   // A rolling server cutoff changes on every refresh. It is not a changed
   // applied filter and must never reset an administrator's unfinished draft.
-  const scope = JSON.stringify([path, initial.tab, initial.q, initial.product, initial.stage, initial.order,
+  const scope = JSON.stringify([path, initial.tab, initial.q, initial.product, initial.stage, initial.order, initial.interface,
     initial.range, initial.range === "custom" ? initial.from : "", initial.range === "custom" ? initial.to : "",
     timeZone, directory, usersReturn]);
   const [previousScope, setPreviousScope] = useState(scope);
@@ -53,6 +54,7 @@ export function ActivityFiltersBar({ path, initial, directory, usersReturn, tabs
     if (next.tab !== "all") params.set("tab", next.tab);
     if (next.q.trim()) params.set("q", next.q.trim());
     if (next.product !== "all") params.set("product", next.product);
+    if (next.interface && next.interface !== "all") params.set("interface", next.interface);
     if (next.stage !== "all") { params.set("stage", next.stage); params.set("type", next.stage); }
     if (next.order !== "newest") { params.set("order", next.order); params.set("sort", next.order); }
     params.set("range", next.range);
@@ -78,6 +80,7 @@ export function ActivityFiltersBar({ path, initial, directory, usersReturn, tabs
     update({ range, from: "", to: "" });
   };
   const accessOrPages = values.tab === "access" || values.tab === "pages";
+  const showInterface = allowInterface && !compact && !accessOrPages;
   const validCustom = Boolean(adminCalendarRange(draftDates.from, draftDates.to, timeZone));
   const customDates = initial.range === "custom" && draftDates.from === initialDates.from && draftDates.to === initialDates.to
     ? { from: initial.from, to: initial.to } : draftDates;
@@ -99,6 +102,7 @@ export function ActivityFiltersBar({ path, initial, directory, usersReturn, tabs
     ...(initial.q ? [{label:'Search: ' + initial.q,clear:{q:""}}] : []),
     ...(initial.product !== "all" ? [{label:labelFor(options.product, initial.product),clear:{product:"all"}}] : []),
     ...(initial.stage !== "all" ? [{label:labelFor(options.stage, initial.stage),clear:{stage:"all"}}] : []),
+    ...(initial.interface && initial.interface !== "all" ? [{label:activityInterfaceOptions.find(option => option.value === initial.interface)?.label ?? "Interface",clear:{interface:"all"}}] : []),
   ];
   return <div className="min-w-0 space-y-3" data-users-navigation-pending={pending ? "true" : undefined}>
     {!compact ? <div className={"flex min-w-0 flex-wrap items-center justify-between gap-2" + (!chips.length || disabled ? " md:hidden" : "")}>
@@ -113,8 +117,8 @@ export function ActivityFiltersBar({ path, initial, directory, usersReturn, tabs
         className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-lg border border-[#E2E8F0] px-3 text-[13px] font-medium text-[#334155] md:hidden"><SlidersHorizontal size={16} aria-hidden="true"/> Filters</button>
     </div> : null}
     <div id={panelId} className={compact || expanded ? "min-w-0 space-y-3" : "hidden min-w-0 space-y-3 md:block"}>
-      <div data-testid="activity-filters-row" className={"grid min-w-0 grid-cols-1 items-end gap-2 [&_button]:min-h-11 " + (compact ? "min-[420px]:grid-cols-[minmax(0,1fr)_auto]" : accessOrPages ? "sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto]" : "sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto]")}>
-      {!compact ? <label className={"relative block min-w-0" + (!accessOrPages ? " sm:col-span-2 lg:col-span-4" : "")}>
+      <div data-testid="activity-filters-row" className={"grid min-w-0 grid-cols-1 items-end gap-2 [&_button]:min-h-11 " + (compact ? "min-[420px]:grid-cols-[minmax(0,1fr)_auto]" : accessOrPages ? "sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto]" : showInterface ? "sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto]" : "sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto]")}>
+      {!compact ? <label className={"relative block min-w-0" + (!accessOrPages ? " col-span-full" : "")}>
         <span className="sr-only">Search activity</span>
         <Search aria-hidden="true" size={16} className="pointer-events-none absolute left-3 top-3.5 text-[#64748B]"/>
         <input aria-label="Search activity" value={values.q} maxLength={80} disabled={disabled}
@@ -129,7 +133,10 @@ export function ActivityFiltersBar({ path, initial, directory, usersReturn, tabs
         {!compact && !accessOrPages ? <><SearchMonitorSelect label="Activity product" name="product" disabled={disabled} value={values.product}
           options={options.product.map(([value,label])=>({value,label}))} appearance="fare" truncateLabel onValueChange={product=>update({product})}/>
           <SearchMonitorSelect label="Activity type" name="stage" disabled={disabled} value={values.stage}
-            options={options.stage.map(([value,label])=>({value,label,disabled:availableStages && value !== "all" && !availableStages.includes(value)}))} appearance="fare" truncateLabel onValueChange={stage=>update({stage})}/></> : null}
+            options={options.stage.filter(([value]) => allowInterface || value !== "ADMIN_SECURITY_AUDIT")
+              .map(([value,label])=>({value,label,disabled:availableStages && value !== "all" && !availableStages.includes(value)}))} appearance="fare" truncateLabel onValueChange={stage=>update({stage})}/></> : null}
+        {showInterface ? <SearchMonitorSelect label="Activity interface" name="interface" disabled={disabled} value={values.interface ?? "all"}
+          options={[...activityInterfaceOptions]} appearance="fare" truncateLabel onValueChange={value=>update({interface:value})}/> : null}
         <button type="button" onClick={apply} disabled={disabled || pending || ((editingCustom || values.range === "custom") && !validCustom)}
           className="focus-ring inline-flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60">{compact ? "Apply period" : "Apply filters"}</button>
       </div>

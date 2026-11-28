@@ -34,8 +34,8 @@ test("the Car inventory loader sends an impression only after accepted visible r
 test("Car views retain the existing consent-aware journey sender", () => {
   assert.match(loader, /useJourneyEvents\(\)/);
   assert.match(journey, /const browserActionId = \(\) => crypto\.randomUUID\(\)/);
-  assert.match(journey, /allowed: browserAllowsAnalytics/);
-  assert.match(journey, /resultsViewed\(requestId\) \{\s*if \(requestId\) \{\s*sender\.send\(\{ type: "RESULTS_VIEWED", requestId/);
+  assert.match(journey, /allowed: \(\) => getConfirmedBrowserAnalyticsSignal\(\) !== null/);
+  assert.match(journey, /resultsViewed\(requestId\) \{[\s\S]*?if \(!requestId \|\| !signal[\s\S]*?return;\s*sender\.send\(\{ type: "RESULTS_VIEWED", requestId/);
 });
 
 test("Car provider handoffs propagate the validated search request ID", () => {

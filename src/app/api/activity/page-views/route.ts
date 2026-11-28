@@ -1,23 +1,23 @@
 import { NextResponse } from "next/server";
 import type { Prisma } from "@/generated/prisma/client";
-import { customerPageProvenance, optionalAnalyticsPurpose } from "@/lib/activityTrackingContract";
+import { customerObservedPlatform, customerPageProvenance, optionalAnalyticsPurpose } from "@/lib/activityTrackingContract";
 import { matchesInteractionSearch } from "@/lib/verifiedInteractionSearch";
 import { z } from "zod";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { readBoundedJsonBody } from "@/lib/bounded-json-body";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { isSameOriginRequest, isNativeVisitorRequest } from "@/lib/visitor-identity";
-import { isPageViewKey, pageViewInfo, pageViewCanLink } from "@/lib/pageViewCatalog";
+import { customerWebSectionHost, isPageViewKey, pageViewInfo, pageViewCanLink, type PageViewKey } from "@/lib/pageViewCatalog";
 import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
 import { consentedGuestAccessObservation } from "@/lib/guestAccessObservation";
-import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
+import { resolveObservedActivityIdentity } from "@/services/requestActivityIdentity";
 
 export const runtime = "nodejs";
 const schema = z.object({
   eventId: z.string().uuid(),
-  pageKey: z.string().refine(isPageViewKey),
-  previousPageKey: z.string().refine(isPageViewKey).optional(),
+  pageKey: z.custom<PageViewKey>(isPageViewKey),
+  previousPageKey: z.custom<PageViewKey>(isPageViewKey).optional(),
   requestId: z.string().uuid().optional(),
 }).strict();
 const json = (body: unknown, status = 202) => NextResponse.json(body, {
@@ -30,11 +30,13 @@ const json = (body: unknown, status = 202) => NextResponse.json(body, {
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) return json({ accepted: false }, 403);
   const limit = checkRateLimit("page-view:" + getClientIp(request), 90, 60_000);
-  if (!limit.allowed) return json({ accepted: false }, 429);
+  if (!limit.allowed) {
+    const response = json({ accepted: false }, 429);
+    response.headers.set("Retry-After", String(Math.max(1, Math.ceil((limit.resetAt - Date.now()) / 1000))));
+    return response;
+  }
   const parsed = schema.safeParse(await readBoundedJsonBody(request, 512).catch(() => null));
   if (!parsed.success) return json({ accepted: false }, 400);
-  const identity = await resolveRequestActivityIdentity(request);
-  if (!identity.visitorId) return json({ accepted: false });
   const page = pageViewInfo(parsed.data.pageKey);
   if (!page) return json({ accepted: false }, 400);
   const native = isNativeVisitorRequest(request);
@@ -43,14 +45,16 @@ export async function POST(request: Request) {
   if (parsed.data.previousPageKey && !(native ? previousPage?.nativePath : previousPage?.webPath)) {
     return json({ accepted: false }, 400);
   }
-  const declaredPlatform = request.headers.get("x-mobile-platform");
-  // Guest native OS and web device class are reported transport attributes,
-  // not device attestation or authorization. Never collect raw user-agent.
-  const source = identity.applicationSource;
-  const platform = source === "IOS" ? "iOS app" : source === "ANDROID" ? "Android app"
-    : native ? declaredPlatform === "ios" ? "iOS app (reported)" : declaredPlatform === "android" ? "Android app (reported)" : "Native app"
-    : request.headers.get("sec-ch-ua-mobile") === "?1" || /Mobile|Android|iPhone|iPad/i.test(request.headers.get("user-agent") ?? "")
-      ? "Mobile web (reported)" : request.headers.get("sec-ch-ua-mobile") === "?0" || /Windows|Macintosh|X11|Linux/i.test(request.headers.get("user-agent") ?? "") ? "Desktop web (reported)" : "Website";
+  const sectionHost = native ? null : customerWebSectionHost(parsed.data.pageKey);
+  if (sectionHost) {
+    const previous = parsed.data.previousPageKey;
+    if (!previous || previous === parsed.data.pageKey || (previous !== sectionHost && customerWebSectionHost(previous) !== sectionHost)) {
+      return json({ accepted: false }, 400);
+    }
+  }
+  const identity = await resolveObservedActivityIdentity(request);
+  if (!identity.visitorId) return json({ accepted: false });
+  const platform = customerObservedPlatform(request, native, identity.applicationSource);
   try {
     const db = getOptionalPrisma();
     if (!db) return json({ accepted: false }, 503);
@@ -76,6 +80,7 @@ export async function POST(request: Request) {
       if (existing && (existing.userId !== identity.userId || meta?.pageKey !== parsed.data.pageKey
         || meta?.transport !== (native ? "native" : "web"))) return { accepted: false, retryable: false };
       let verifiedLink: { linkedJourneyId: string; linkedSearchHistoryId: string } | null = null;
+      let linkPending = false;
       // Only an explicit, current search response/reference can link a product
       // results or details view. A support visit or guessed latest search cannot.
       if (parsed.data.requestId && page.product && pageViewCanLink(parsed.data.pageKey) && !meta?.linkedJourneyId) {
@@ -83,7 +88,8 @@ export async function POST(request: Request) {
           where: { requestId: parsed.data.requestId.toLowerCase() },
           select: { id: true, visitorId: true, userId: true, type: true, query: true, createdAt: true },
         });
-        if (search && matchesInteractionSearch(search, identity, page.product, getPublicEnvironment(), new Date())) {
+        if (!search) linkPending = true;
+        else if (matchesInteractionSearch(search, identity, page.product, getPublicEnvironment(), new Date())) {
           const candidates = await tx.journeyEvent.findMany({
             where: { type: "SEARCH_COMPLETED", searchHistoryId: search.id,
               journey: { visitorId: identity.visitorId! },
@@ -91,6 +97,7 @@ export async function POST(request: Request) {
             select: { journeyId: true }, distinct: ["journeyId"], take: 2,
           });
           if (candidates.length === 1) verifiedLink = { linkedJourneyId: candidates[0].journeyId, linkedSearchHistoryId: search.id };
+          linkPending = candidates.length === 0;
         }
       }
       if (existing) {
@@ -98,7 +105,7 @@ export async function POST(request: Request) {
           where: { id: existing.id },
           data: { metadata: { ...meta, ...verifiedLink } as Prisma.InputJsonValue },
         });
-        return { accepted: true, retryable: Boolean(parsed.data.requestId && pageViewCanLink(parsed.data.pageKey) && !meta?.linkedJourneyId && !verifiedLink) };
+        return { accepted: true, retryable: linkPending };
       }
       // Optional device evidence is captured only for a newly accepted, consented guest visit.
       // It does not create a new event, credential, or authenticated session.
@@ -118,7 +125,7 @@ export async function POST(request: Request) {
           ...(verifiedLink ?? {}),
         }) as Prisma.InputJsonValue,
       } });
-      return { accepted: true, retryable: Boolean(parsed.data.requestId && pageViewCanLink(parsed.data.pageKey) && !verifiedLink) };
+      return { accepted: true, retryable: linkPending };
     });
     return json(accepted);
   } catch (error) {

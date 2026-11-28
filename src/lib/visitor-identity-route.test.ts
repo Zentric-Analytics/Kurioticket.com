@@ -3,6 +3,7 @@ import { test as runTest } from "node:test";
 import { createIdentityHandlers } from "./visitor-identity-route";
 import { createVisitorToken, visitorCookieName } from "./visitor-identity";
 import { visitorDenialCookieName } from "./visitor-consent-constants";
+import { VisitorGrantWithdrawnError } from "../services/visitorIdentityCore";
 import { analyticsConsentPolicyVersion, createVisitorConsentSynchronizer, type AnalyticsConsentChoice } from "./analyticsConsentClient";
 
 const browserToken = createVisitorToken();
@@ -318,15 +319,36 @@ test("browser denial stops status and merge immediately while withdrawal still r
   assert.deepEqual(f.calls, [{ operation: "withdraw", value: browserToken }]);
 });
 
-test("browser denial permits explicit regrant and never changes native identity status or merging", async () => {
+test("a stale browser grant cannot override denial and native identity remains independent", async () => {
   const headers = { cookie: `${visitorCookieName}=${browserToken}; ${visitorDenialCookieName}=1` };
   const web = fixture();
-  assert.equal((await web.handlers.POST(request("POST", { analytics: true }, headers))).status, 201);
+  const stale = await web.handlers.POST(request("POST", { analytics: true }, headers));
+  assert.equal(stale.status, 409);
+  assert.deepEqual(await stale.json(), { analyticsTracking: "disabled" });
+  assert.equal(stale.headers.has("set-cookie"), false);
+  assert.equal(web.calls.length, 0);
+  // The explicit Allow control clears the browser's denial marker.
+  assert.equal((await web.handlers.POST(request("POST", { analytics: true }))).status, 201);
   assert.equal(web.calls[0].operation, "register");
   const native = fixture("native");
   native.setUser("account-a");
+  assert.equal((await native.handlers.POST(request("POST", { analytics: true }, headers))).status, 201);
   assert.deepEqual(await (await native.handlers.GET(request("GET", undefined, headers))).json(), { analyticsTracking: "enabled", linked: false });
   assert.deepEqual(await (await native.handlers.MERGE(request("POST", undefined, headers))).json(), { merged: true, visitorToken: issuedToken });
+});
+
+test("a credential retired during an in-flight grant never issues a replacement cookie or native token", async () => {
+  for (const transport of ["web", "native"] as const) {
+    const f = fixture(transport);
+    const handler = createIdentityHandlers({ ...f.dependencies, identity: {
+      ...f.dependencies.identity,
+      async registerAnalyticsVisitor() { throw new VisitorGrantWithdrawnError(); },
+    } });
+    const response = await handler.POST(request("POST", { analytics: true }));
+    assert.equal(response.status, 409);
+    assert.deepEqual(await response.json(), { analyticsTracking: "disabled" });
+    assert.equal(response.headers.has("set-cookie"), false);
+  }
 });
 
 test("storage and authentication errors return safe unavailable responses", async () => {

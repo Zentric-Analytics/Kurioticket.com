@@ -13,7 +13,7 @@ import { createAdminJourneyService } from "../src/services/adminJourneyCore";
 import { createAdminJourneyHttpHandlers } from "../src/services/adminJourneyHttp";
 import { createAdminOperationalReadService } from "../src/services/adminOperationalReadCore";
 import { handoffEvidenceForActivitySql } from "../src/services/adminHandoffEvidence";
-import type { AdminJourneyResult, AdminJourneyStage } from "../src/services/adminJourneyContract";
+import type { AdminJourneyResult } from "../src/services/adminJourneyContract";
 import { declaredSearchCrawler, searchCrawlerMetadata } from "../src/lib/searchCrawlerGate";
 import type { ActivityFilters } from "../src/lib/adminIdentityActivity";
 
@@ -86,7 +86,7 @@ async function redirect(visitorId: string | null, at: Date, data: Partial<Prisma
     destinationUrl: "https://private:password@provider.example/book?secret=value", userType: "guest", createdAt: at, ...data,
   } });
 }
-async function event(journeyId: string, at: Date, type: AdminJourneyStage, data: Partial<Prisma.JourneyEventUncheckedCreateInput> = {}) {
+async function event(journeyId: string, at: Date, type: Prisma.JourneyEventUncheckedCreateInput["type"], data: Partial<Prisma.JourneyEventUncheckedCreateInput> = {}) {
   return db.journeyEvent.create({ data: {
     journeyId, type, eventKey: randomUUID(), product: "HOTEL", createdAt: at,
     metadata: { environment: "staging", sourcePage: "/hotels/results?private=value", sensitive: "never-return-this" }, ...data,
@@ -247,6 +247,42 @@ test("equal-time event pages use ascending IDs and bind continuation to one jour
   assert.deepEqual(visited, expected);
   assert.equal((await service.detail(randomUUID(), { cursor: firstCursor })).status, "invalid");
   assert.equal((await service.detail(j.id, { cursor: firstCursor, provider: "Other provider" })).status, "invalid");
+});
+
+test("PostgreSQL journey detail projects approved edit fields and exact native Package results page links", async () => {
+  const owner = await account();
+  const other = await account();
+  const v = await visitor(owner.id);
+  const at = time(20);
+  const { j, s: hotel } = await searchEvent(v.id, at, { userId: owner.id });
+  const edit = await event(j.id, time(20, 61), "SEARCH_EDIT_APPLIED", {
+    searchHistoryId: hotel.id,
+    metadata: { environment: "staging", editFields: ["destination", "dates", "destination", "rental_times", "private-typed-input"] },
+  });
+  const packageSearch = await search(v.id, time(20, 62), { userId: owner.id, type: "PACKAGE" });
+  await event(j.id, time(20, 62), "SEARCH_COMPLETED", { product: "PACKAGE", searchHistoryId: packageSearch.id });
+  const metadata = { environment: "staging", transport: "native", platform: "iOS app", pageKey: "package_results",
+    previousPageKey: "packages", originalIdentity: "registered", linkedJourneyId: j.id, linkedSearchHistoryId: packageSearch.id };
+  const pageData = { type: "PAGE_VIEW" as const, name: "page_viewed", visitorId: v.id, userId: owner.id, createdAt: time(20, 63), metadata };
+  const page = await db.analyticsEvent.create({ data: pageData });
+  await db.analyticsEvent.create({ data: { ...pageData, userId: other.id } });
+  await db.analyticsEvent.create({ data: { ...pageData, metadata: { ...metadata, linkedSearchHistoryId: hotel.id } } });
+  await db.analyticsEvent.create({ data: { ...pageData, metadata: { ...metadata, environment: "production" } } });
+
+  const detail = ok(await service.detail(j.id, { ...window(20), identity: "registered", userId: owner.id }));
+  const projectedEdit = detail.events.find(row => row.id === edit.id);
+  assert.deepEqual(projectedEdit?.editFields, ["destination", "dates"]);
+  assert.equal(projectedEdit?.search?.id, hotel.id);
+  assert.doesNotMatch(JSON.stringify(detail), /private-typed-input|rental_times/);
+  const pageRows = detail.events.filter(row => row.type === "PAGE_VIEW");
+  assert.deepEqual(pageRows.map(row => row.id), ["pv-" + page.id]);
+  assert.equal(pageRows[0].search?.id, packageSearch.id);
+  assert.equal(pageRows[0].product, "PACKAGE");
+  assert.equal(pageRows[0].pageView?.path, "/package-results");
+  assert.equal(pageRows[0].pageView?.previousPath, "/packages");
+  assert.equal(pageRows[0].pageView?.platform, "iOS app");
+  assert.equal(pageRows[0].pageView?.href, null);
+  assert.equal(pageRows[0].editFields, undefined);
 });
 
 test("product/provider/stage filters select a journey cohort without deleting its other observed stages", async () => {
@@ -653,4 +689,72 @@ test("PostgreSQL Essential account audits remain exactly once after canonical jo
   }
   assert.equal(await db.analyticsEvent.count({ where: { id: { in: audits }, userId: owner.id, visitorId: null } }), 3,
     "Withdrawal retains each original source-owned Essential account audit");
+});
+
+test("unified registered activity scopes security audits by viewer, actor, environment and interface", async () => {
+  const { loadAdminIdentityActivity } = identityActivityReader();
+  const actor = await account({ role: "ADMIN" });
+  assert.ok(actor.email);
+  const subject = await account();
+  const linked = await visitor(actor.id);
+  const at = time(19);
+  const filters: ActivityFilters = { tab: "all", stage: "all", product: "all", ...window(19), q: "", order: "newest" };
+  const draft = { adminUserId: actor.id, adminEmail: actor.email, targetId: subject.id, targetEmail: subject.email,
+    targetType: "User", action: "USER_ROLE_UPDATED", createdAt: at };
+  const auditIds = [];
+  for (let index = 0; index < 22; index++) {
+    const row = await db.adminAuditLog.create({ data: { ...draft, metadata: { environment: "staging", payload: "private-audit" } } });
+    auditIds.push("a-" + row.id);
+  }
+  for (const data of [
+    { ...draft, metadata: { environment: "production" } },
+    { ...draft, metadata: {} },
+    { ...draft, metadata: { environment: "staging" }, action: "UNAPPROVED_OPERATION" },
+    { ...draft, metadata: { environment: "staging" }, targetType: "UnapprovedTarget" },
+    { ...draft, metadata: { environment: "staging" }, adminUserId: null },
+  ]) await db.adminAuditLog.create({ data });
+  const page = await db.analyticsEvent.create({ data: { userId: actor.id, visitorId: linked.id, type: "PAGE_VIEW", name: "page_viewed", createdAt: at,
+    metadata: { environment: "staging", transport: "web", platform: "Desktop web (reported)", pageKey: "home", interface: "customer", originalIdentity: "registered" } } });
+  const packageSearch = await search(linked.id, at, { userId: actor.id, type: "PACKAGE", resultCount: 2,
+    query: { environment: "staging", applicationSource: "WEB", resultUnit: "component_results" } });
+  const packageSubmission = await db.analyticsEvent.create({ data: { userId: actor.id, visitorId: linked.id, type: "SEARCH", name: "package_search_submitted", createdAt: at,
+    metadata: { environment: "staging", applicationSource: "WEB", interface: "customer", product: "PACKAGE", recordPurpose: "optional_analytics" } } });
+  const unknownDiagnostics = await db.analyticsEvent.create({ data: { userId: actor.id, type: "PROVIDER_FAILURE", name: "provider_diagnostic", createdAt: at,
+    metadata: { environment: "staging" } } });
+  const customerIds = ["e-" + page.id, "s-" + packageSearch.id, "e-" + packageSubmission.id].sort();
+  const authorize = async () => true;
+  const denied = await loadAdminIdentityActivity("user", actor.id, filters, undefined, "all", undefined, async () => false);
+  const unrestricted = await loadAdminIdentityActivity("user", actor.id, filters, undefined, "all", undefined, authorize);
+  const getRows = (result: Awaited<ReturnType<typeof loadAdminIdentityActivity>>) => {
+    if (result.status !== "ok") throw new Error("Expected available activity, received " + result.status);
+    return result.data;
+  };
+  assert.deepEqual(getRows(denied).events.map(row => row.id), [...customerIds, "e-" + unknownDiagnostics.id].sort());
+  const all = getRows(unrestricted);
+  assert.deepEqual(all.events.map(row => row.id), [...auditIds, ...customerIds, "e-" + unknownDiagnostics.id].sort());
+  assert.equal(all.summary.recordedActions, 26);
+  assert.equal(all.summary.searches, 1);
+  assert.equal(all.summary.searchProducts?.packages, 1);
+  assert.equal(all.events.find(row => row.id === "s-" + packageSearch.id)?.resultUnit, "component_results");
+  const customer = getRows(await loadAdminIdentityActivity("user", actor.id, { ...filters, interface: "customer" }, undefined, "all", undefined, authorize));
+  assert.deepEqual(customer.events.map(row => row.id), customerIds);
+  assert.equal(customer.summary.recordedActions, 3);
+  assert.equal(customer.summary.pagesVisited, 1);
+  const submissions = getRows(await loadAdminIdentityActivity("user", actor.id, { ...filters, tab: "searches", stage: "PACKAGE_SEARCH_SUBMITTED", product: "PACKAGE" }));
+  assert.deepEqual(submissions.events.map(row => [row.stage, row.label]), [["PACKAGE_SEARCH_SUBMITTED", "Package search submitted"]]);
+  assert.equal(submissions.summary.searches, 0);
+  const subjectHistory = getRows(await loadAdminIdentityActivity("user", subject.id, filters, undefined, "all", undefined, authorize));
+  assert.deepEqual(subjectHistory.events, [], "Admin audit targets never inherit the actor's history");
+  const adminFilters = { ...filters, interface: "admin", q: "role" } as const;
+  const first = getRows(await loadAdminIdentityActivity("user", actor.id, adminFilters, undefined, "page", undefined, authorize));
+  const second = getRows(await loadAdminIdentityActivity("user", actor.id, adminFilters, first.nextCursor!, "page", undefined, authorize));
+  assert.ok(first.nextCursor);
+  assert.equal(second.nextCursor, null);
+  assert.deepEqual([...first.events, ...second.events].map(row => row.id), auditIds.sort());
+  assert.equal(first.summary.recordedActions, 22);
+  assert.equal(second.summary.recordedActions, 22);
+  assert.deepEqual(first.events[0], { id: auditIds[0], at, stage: "ADMIN_SECURITY_AUDIT", interface: "admin", originalIdentity: "administrator",
+    outcome: "succeeded", label: "Updated account role", detail: "Administrative security audit" });
+  assert.deepEqual(await loadAdminIdentityActivity("user", actor.id, { ...adminFilters, interface: "customer" }, first.nextCursor!, "page", undefined, authorize),
+    { status: "invalid_cursor" });
 });

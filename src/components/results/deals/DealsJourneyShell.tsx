@@ -1,8 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { recordPackageSearchSubmission } from "@/lib/deals/packageSearchActivityClient";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { translations as en } from "@/lib/i18n/en";
 import {
@@ -90,6 +92,7 @@ export function DealsJourneyShell({
   carId: string | null;
 }) {
   const router = useRouter();
+  const journeyEvents = useJourneyEvents();
   const { start } = useRouteProgress();
   const { t: dictionary, locale } = useLocale();
   const t = useCallback(
@@ -259,6 +262,7 @@ export function DealsJourneyShell({
     setAnnouncement(t("deals.results.editor.updatingAnnouncement"));
     start();
     removeDealsStagedJourneyPlan();
+    recordPackageSearchSubmission(draft.mode);
     router.push(
       buildDealsJourneyUrl(getFirstDealsJourneyStage(draft.mode), draft),
     );
@@ -384,6 +388,13 @@ export function DealsJourneyShell({
     displayPlanStatus === "storage-unavailable" &&
     stage === firstStage &&
     (stage === "hotel-results" || stage === "flight-results");
+  const allowedStageSurface = displayPlanStatus !== "fingerprint-mismatch" && displayPlanStatus !== "invalid"
+    && displayPlanStatus !== "expired" && (displayPlanStatus !== "storage-unavailable" || canRenderStoragelessFirstResults);
+  useEffect(() => {
+    if (invalid || pendingSearchFingerprint || !resolved || requiredStage !== stage || !allowedStageSurface) return;
+    if (stage === "flight-details" || stage === "car-details" || (stage === "review" && !plan)) return;
+    journeyEvents.observeCommittedPackageStage(stage, stage === "hotel-details" ? hotelId : null);
+  }, [allowedStageSurface, hotelId, invalid, journeyEvents, pendingSearchFingerprint, plan, requiredStage, resolved, stage]);
   const clearConfirmationFailure = () => {
     const product = confirmationFailure?.product;
     setConfirmationFailure(null);

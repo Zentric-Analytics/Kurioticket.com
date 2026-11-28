@@ -28,7 +28,7 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOverlay";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSavedCar } from "@/components/results/useSavedCar";
-import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
+import { beginCustomerInteraction, recordCustomerInteraction } from "@/lib/customerInteractionClient";
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import {
   getCarSpecificationIcon,
@@ -260,15 +260,16 @@ export function CarResultCard({
       : undefined;
 
   async function shareCar() {
+    const analyticsConsent = beginCustomerInteraction();
     const url = new URL(buildCarShareHref(car.id, search), window.location.origin).toString();
     try {
       if (navigator.share) {
         await navigator.share({ title: car.modelName, url });
-        recordCustomerInteraction({ action: "share_sheet_completed", product: "CAR", resultId: car.id, requestId, observedResult: observedShareResult });
+        recordCustomerInteraction(analyticsConsent, { action: "share_sheet_completed", product: "CAR", resultId: car.id, requestId, observedResult: observedShareResult });
         return;
       }
       await navigator.clipboard.writeText(url);
-      recordCustomerInteraction({ action: "share_link_copied", product: "CAR", resultId: car.id, requestId, observedResult: observedShareResult });
+      recordCustomerInteraction(analyticsConsent, { action: "share_link_copied", product: "CAR", resultId: car.id, requestId, observedResult: observedShareResult });
       setShareConfirmation(`${car.modelName} link copied`);
       window.setTimeout(() => setShareConfirmation(""), 2200);
     } catch (error) {

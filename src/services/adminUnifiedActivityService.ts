@@ -7,6 +7,7 @@ import type { IdentityKind } from "@/lib/adminIdentityJourney";
 import { mergeUnifiedActivityPage } from "@/lib/adminUnifiedActivityPage";
 import { guestAccessRecordsSql, accessDatePredicate } from "@/lib/adminGuestAccessSql";
 import { loadAdminIdentityActivity, type ActivityReadResult } from "@/services/adminIdentityActivityService";
+import { canReadAdminAudit } from "@/services/adminAuditReadService";
 
 import { recordedGuestAccessLocation, safeGuestDeviceDescription } from "@/lib/guestAccessObservation";
 
@@ -34,11 +35,11 @@ export async function loadAdminUnifiedActivity(kind: IdentityKind, id: string, f
   const environment = getPublicEnvironment();
   const cursor = decodeActivityCursor(cursorInput, kind, id, filters, environment);
   if (cursor === null || filters.order === "oldest") return { status: "invalid_cursor" };
-  const result = await loadAdminIdentityActivity(kind, id, filters, cursorInput);
+  const result = await loadAdminIdentityActivity(kind, id, filters, cursorInput, "page", undefined, canReadAdminAudit);
   if (result.status !== "ok") return result;
   // Device sessions and derived guest access evidence are observations, not
   // additional customer actions. Both identity types show them only in Access.
-  if (filters.tab !== "access" || filters.stage !== "all" || filters.product !== "all")
+  if (filters.tab !== "access" || filters.stage !== "all" || filters.product !== "all" || filters.interface)
     return result;
   try {
     const db = getOptionalPrisma();

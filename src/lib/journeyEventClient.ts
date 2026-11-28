@@ -1,4 +1,6 @@
-import { isJourneySourcePath, type ClientJourneyEventType, type JourneyFilterGroup, type JourneySortMode, type JourneySortChoice, type JourneyFilterSelection, type JourneyObservedResult } from "./search-journey";
+import { customerJourneySourcePath } from "./pageViewCatalog";
+import { analyticsConfirmationHeader } from "./visitor-consent-constants";
+import type { ClientJourneyEventType, JourneyFilterGroup, JourneySortMode, JourneySortChoice, JourneyFilterSelection, JourneyObservedResult, JourneySearchEditField } from "./search-journey";
 
 export type WebJourneyEvent = {
   type: ClientJourneyEventType;
@@ -10,18 +12,21 @@ export type WebJourneyEvent = {
   sortMode?: JourneySortMode;
   sortChoice?: JourneySortChoice;
   filterSelections?: JourneyFilterSelection[];
+  editFields?: JourneySearchEditField[];
   observedResult?: JourneyObservedResult;
 };
 type Timer = ReturnType<typeof setTimeout>;
 type Dependencies = {
   request: (url: string, init: RequestInit) => Promise<Response>;
   allowed: () => boolean;
+  confirmationProof?: () => string | null;
   eventId: () => string;
   schedule?: (callback: () => void, delay: number) => Timer;
   cancel?: (timer: Timer) => void;
 };
 type Pending = {
   payload: WebJourneyEvent & { eventId: string };
+  proof?: string;
   context: string;
   generation: number;
   attempts: number;
@@ -39,7 +44,7 @@ export function journeyRequestId(value: unknown): string | null {
 
 export function journeySourcePath(value: string): string | undefined {
   const path = value.split(/[?#]/, 1)[0];
-  return path.length <= 240 && isJourneySourcePath(path) ? path : undefined;
+  return customerJourneySourcePath(path, "web");
 }
 
 /** Optional delivery is bounded, never awaited by navigation, and uses only a first-party endpoint. */
@@ -64,7 +69,8 @@ export function createJourneyEventSender(dependencies: Dependencies) {
   }
 
   const current = (event: Pending) => pending.has(event) && event.generation === generation
-    && context === event.context && consent && dependencies.allowed();
+    && context === event.context && consent && dependencies.allowed()
+    && (!dependencies.confirmationProof || event.proof === dependencies.confirmationProof());
 
   async function attempt(event: Pending) {
     if (!current(event)) { pending.delete(event); return; }
@@ -75,9 +81,9 @@ export function createJourneyEventSender(dependencies: Dependencies) {
     let retry = false;
     try {
       const response = await dependencies.request("/api/journey/events", {
-        method: "POST", credentials: "same-origin", cache: "no-store", keepalive: true,
+        method: "POST", credentials: "same-origin", cache: "no-store", keepalive: true, referrerPolicy: "origin",
         signal: controller.signal,
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: { "Content-Type": "application/json", Accept: "application/json", ...(event.proof ? { [analyticsConfirmationHeader]: event.proof } : {}) },
         body: JSON.stringify(event.payload),
       });
       if (response.ok) {
@@ -132,6 +138,8 @@ export function createJourneyEventSender(dependencies: Dependencies) {
         viewed.add(requestId);
       }
       if (!dependencies.allowed() || pending.size >= maximumPendingEvents) return false;
+      const proof = dependencies.confirmationProof?.();
+      if (dependencies.confirmationProof && !proof) return false;
       let eventId: string;
       try { eventId = dependencies.eventId(); } catch { return false; }
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(eventId)) return false;
@@ -144,8 +152,9 @@ export function createJourneyEventSender(dependencies: Dependencies) {
           ...(input.sortMode ? { sortMode: input.sortMode } : {}),
           ...(input.sortChoice ? { sortChoice: input.sortChoice } : {}),
           ...(input.filterSelections ? { filterSelections: input.filterSelections } : {}),
+          ...(input.editFields?.length ? { editFields: input.editFields } : {}),
           ...(input.observedResult ? { observedResult: input.observedResult } : {}) },
-        context, generation, attempts: 0, waiting: !consent,
+        context, generation, attempts: 0, waiting: !consent, ...(proof ? { proof } : {}),
       };
       pending.add(event);
       if (consent) void attempt(event);

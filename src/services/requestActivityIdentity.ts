@@ -1,7 +1,7 @@
 import { getMobileSession } from "@/lib/mobile-auth";
 import { readOperationalSearchSession, type PreparedOperationalSession } from "@/lib/operationalSearchSession";
 import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
-import { isNativeVisitorRequest, readVisitorToken, visitorTrackingDenied } from "@/lib/visitor-identity";
+import { isNativeVisitorRequest, matchesBrowserActivityConfirmation, readVisitorToken, visitorTrackingDenied } from "@/lib/visitor-identity";
 import { resolveApplicationSource, type ApplicationAttribution } from "@/lib/application-source";
 
 type IdentityDependencies = {
@@ -29,6 +29,7 @@ export async function resolveRequestActivityIdentity(
   request: Request,
   resolve: IdentityDependencies = dependencies,
   operationalSession?: PreparedOperationalSession | null,
+  options?: { requireBrowserConfirmation: true },
 ): Promise<{ userId: string | null; visitorId: string | null } & ApplicationAttribution> {
   let userId: string | null = null;
   let application = resolveApplicationSource(request);
@@ -79,10 +80,19 @@ export async function resolveRequestActivityIdentity(
 
   let visitorId: string | null = null;
   if (visitorTrackingDenied(request)) return { userId, visitorId, ...application };
+  if (options?.requireBrowserConfirmation && !matchesBrowserActivityConfirmation(request, userId)) {
+    return { userId, visitorId, ...application };
+  }
   try {
     visitorId = await resolve.visitor(readVisitorToken(request), userId);
   } catch {
     // Visitor attribution is optional; retain an independently verified user.
   }
   return { userId, visitorId, ...application };
+}
+
+/** Optional browser observations bind to the confirmed account and Visitor
+ * before any Visitor lookup or activity timestamp update. */
+export function resolveObservedActivityIdentity(request: Request, resolve: IdentityDependencies = dependencies) {
+  return resolveRequestActivityIdentity(request, resolve, undefined, { requireBrowserConfirmation: true });
 }

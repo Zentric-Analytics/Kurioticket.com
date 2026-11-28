@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { adminReportingWindowExceedsLimit } from "@/lib/adminReportingRanges";
+import type { JourneySearchEditField } from "@/lib/search-journey";
 
 export const adminJourneyStages = ["SEARCH_COMPLETED", "RESULTS_VIEWED", "FLIGHT_DETAILS_VIEWED", "OFFER_SELECTED", "PROVIDER_DEAL_SELECTED", "PROVIDER_HANDOFF_STARTED"] as const;
 export const adminJourneyProducts = ["FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const;
@@ -70,12 +71,13 @@ export type AdminJourneyEvent = {
   id: string;
   type: AdminJourneyEventType;
   createdAt: string;
-  action?: "local_saved" | "local_unsaved" | "saved_item_confirmed" | "saved_item_removed" | "share_link_copied" | "share_sheet_completed" | null;
+  action?: "local_saved" | "local_unsaved" | "saved_item_confirmed" | "saved_item_removed" | "share_link_copied" | "share_sheet_completed" | "share_sheet_requested" | null;
   resultReference?: string | null;
   filterGroup?: string | null;
   filterSelections?: Array<{ group: string; option: string }> | null;
   sortMode?: string | null;
   sortChoice?: string | null;
+  editFields?: JourneySearchEditField[];
   alertDetails?: { mode: "TARGET" | "AUTOMATIC"; currency: string; targetPrice: string | null; baselinePrice: string | null } | null;
   /** Optional result card information observed on the customer device, not server-confirmed. */
   observedResult?: {

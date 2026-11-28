@@ -5,11 +5,18 @@ import {
   createVisitorConsentSynchronizer,
   analyticsConsentAccountKey,
   analyticsDenialCookie,
+  analyticsConsentStorageKey,
+  getConfirmedBrowserAnalyticsProof,
+  getConfirmedBrowserAnalyticsSignal,
   hasAnalyticsDenial,
+  isAnalyticsConsentStorageEvent,
   parseAnalyticsConsent,
   resolveAnalyticsConsentChoice,
+  setBrowserAnalyticsAccount,
+  setBrowserAnalyticsConfirmation,
   type AnalyticsConsentChoice,
 } from "./analyticsConsentClient";
+import { analyticsConfirmationHeader, analyticsConfirmationVersion } from "./visitor-consent-constants";
 
 const enabled = () => Response.json({ analyticsTracking: "enabled" });
 const disabled = () => Response.json({ analyticsTracking: "disabled" });
@@ -20,6 +27,73 @@ test("consent parsing accepts only an explicit saved choice", () => {
   assert.equal(parseAnalyticsConsent("granted"), "granted");
   assert.equal(parseAnalyticsConsent("declined"), "declined");
   for (const input of [null, "true", "enabled", "{}", ""]) assert.equal(parseAnalyticsConsent(input), null);
+});
+
+test("optional web delivery holds the exact confirmed account and rejects stale grants", () => {
+  let choice: AnalyticsConsentChoice = "granted";
+  const localStorage = { getItem: (key: string) => key === analyticsConsentStorageKey ? choice : null };
+  const document = { cookie: "" };
+  Object.defineProperties(globalThis, {
+    window: { configurable: true, value: { localStorage } },
+    document: { configurable: true, value: document },
+  });
+  try {
+    setBrowserAnalyticsAccount("account-1");
+    assert.equal(getConfirmedBrowserAnalyticsSignal(), null, "saved preference alone cannot send");
+    const proof = "d".repeat(64);
+    setBrowserAnalyticsConfirmation("account-2", true, proof);
+    assert.equal(getConfirmedBrowserAnalyticsSignal(), null, "stale account cannot confirm");
+    setBrowserAnalyticsConfirmation("account-1", true);
+    assert.equal(getConfirmedBrowserAnalyticsSignal(), null, "unbound confirmation cannot send");
+    setBrowserAnalyticsConfirmation("account-1", true, proof);
+    const matching = getConfirmedBrowserAnalyticsSignal();
+    assert.ok(matching);
+    assert.equal(getConfirmedBrowserAnalyticsProof(matching), proof);
+    document.cookie = "kt_analytics_denied=1";
+    assert.equal(getConfirmedBrowserAnalyticsSignal(), null);
+    assert.equal(getConfirmedBrowserAnalyticsProof(matching), null);
+    setBrowserAnalyticsConfirmation("account-1", false);
+    assert.equal(matching.aborted, true);
+    document.cookie = "";
+    assert.equal(getConfirmedBrowserAnalyticsSignal(), null, "clearing denial cannot restore old confirmation");
+    setBrowserAnalyticsConfirmation("account-1", true, proof);
+    const beforeSwitch = getConfirmedBrowserAnalyticsSignal();
+    assert.ok(beforeSwitch);
+    setBrowserAnalyticsAccount("account-2");
+    assert.equal(beforeSwitch.aborted, true);
+    assert.equal(getConfirmedBrowserAnalyticsSignal(), null);
+    choice = "declined";
+    setBrowserAnalyticsConfirmation("account-2", true, proof);
+    assert.equal(getConfirmedBrowserAnalyticsSignal(), null);
+    assert.equal(isAnalyticsConsentStorageEvent({ key: analyticsConsentStorageKey, storageArea: localStorage } as unknown as StorageEvent), true);
+    assert.equal(isAnalyticsConsentStorageEvent({ key: null, storageArea: {} } as unknown as StorageEvent), false);
+  } finally {
+    setBrowserAnalyticsAccount(null);
+    Reflect.deleteProperty(globalThis, "window");
+    Reflect.deleteProperty(globalThis, "document");
+  }
+});
+
+test("web identity responses confirm only the originally requested account and a valid equality proof", async () => {
+  let resolvedAccount = "replacement-account";
+  const proof = "b".repeat(64);
+  const saved: Array<string | undefined> = [];
+  const sync = createVisitorConsentSynchronizer({
+    bindBrowserConfirmation: true,
+    readChoice: () => "granted",
+    onSaved: context => saved.push(context.proof),
+    request: async (url, init) => {
+      assert.equal(new Headers(init.headers).get(analyticsConfirmationHeader), analyticsConfirmationVersion);
+      return Response.json({ ...(url.endsWith("/merge") ? { merged: true } : { analyticsTracking: "enabled" }),
+        confirmation: { accountKey: resolvedAccount, proof } });
+    },
+  });
+  const expected = { choice: "granted", accountKey: "original-account" } as const;
+  assert.equal(await sync.sync(expected), "error");
+  assert.deepEqual(saved, []);
+  resolvedAccount = expected.accountKey;
+  assert.equal(await sync.sync(expected, true), "saved");
+  assert.deepEqual(saved, [proof]);
 });
 
 test("consent and journey observers share the same verified-account boundary", () => {

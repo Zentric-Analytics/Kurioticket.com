@@ -41,7 +41,7 @@ export type MobileHotelDetailsResponse = { hotel: PublicHotelResult; propertyDet
 export type MobileHotelDetailsRequest = { id: string; destination: string; checkIn: string; checkOut: string; guests: number; rooms: number };
 export type CarResult = ContractResult<NormalizedCarResult>;
 export type PackageComponent = { status: "success" | "empty" | "unavailable"; results: (FlightResult | HotelResult | CarResult)[]; warnings: string[]; source: string; requestId: string };
-export type PackageSearchResponse = { mode: string; status: "success" | "partial" | "empty" | "unavailable"; components: Partial<Record<"flight" | "hotel" | "car", PackageComponent>>; packageOffers: unknown[] };
+export type PackageSearchResponse = { mode: string; status: "success" | "partial" | "empty" | "unavailable"; requestId?: string; components: Partial<Record<"flight" | "hotel" | "car", PackageComponent>>; packageOffers: unknown[] };
 export type MobileTrip = { id: string; providerConfirmationCode: string; providerName: string; tripType: string; status: "upcoming" | "past" | "cancelled"; origin: string | null; destination: string; departureDate: string; returnDate: string | null; travelerCount: number; currency: string; totalAmount: number | null; providerAction: { url: string; label: string; external: true } | null; providerConfirmed: boolean; providerConfirmedAt: string | null };
 export type MobileFlightStatus =
   | { dataAvailable: false; providerName: string }
@@ -186,6 +186,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   trace("initiation");
   const base = getApiBaseUrl(Platform.OS, __DEV__);
   if (!base.ok) { trace("terminal", { category: "configuration" }); throw new TravelApiError(base.message, 0, "configuration"); }
+  const startingEpoch = accountEpoch;
   const session = options.session ?? await readSession().catch(() => null);
   const ordinarySession = session?.recovery ? null : session;
   const actor = ordinarySession?.user?.id ?? null;
@@ -193,6 +194,9 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   const epoch = accountEpoch;
   const accountOwned = accountPath.test(path);
   if (options.expectedUserId && actor !== options.expectedUserId) throw new TravelApiError("Account changed. Refresh before trying again.", 0, "cancelled");
+  if (options.visitorContext !== undefined && (startingEpoch !== epoch || (ordinarySession?.token ?? null) !== observedSessionToken)) {
+    throw new TravelApiError("Account changed. Discarding the previous activity.", 0, "cancelled");
+  }
   if (operationalSearchActor !== actor) {
     operationalSearchActor = actor;
     setOperationalSearchCredential(null);
@@ -202,7 +206,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   const requestVisitorContext = "x-kt-visitor" in visitorHeaders ? visitorIdentity.trackingContext() : null;
   // Session/storage work may have changed consent or account ownership since an
   // optional event was queued. Never send it under the replacement identity.
-  if (options.signal?.aborted || (options.visitorContext !== undefined && visitorIdentity.trackingContext() !== options.visitorContext)) {
+  if (options.signal?.aborted || (options.visitorContext !== undefined && (requestVisitorContext !== options.visitorContext || epoch !== accountEpoch))) {
     trace("terminal", { category: "cancelled" });
     throw new TravelApiError("Request cancelled.", 0, "cancelled");
   }
@@ -297,10 +301,8 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
       const mobileRoundTripMs = Date.now() - requestStartedAt;
       data.mobileRoundTripMs = mobileRoundTripMs;
     }
-    if (operationalSearchPaths.has(path)) {
-      rememberOperationalSearchResponse(data.requestId, epoch, responseOperationalCredential);
-      rememberJourneyResponseContext(data, requestVisitorContext);
-    }
+    if (operationalSearchPaths.has(path)) rememberOperationalSearchResponse(data.requestId, epoch, responseOperationalCredential);
+    if (operationalSearchPaths.has(path) || path === "/api/packages/search") rememberJourneyResponseContext(data, requestVisitorContext);
     trace("terminal", { category: "success", count: Array.isArray(data.results) ? data.results.length : undefined, completed: data.completed !== false && !data.nextCursor });
     return data as T;
   } catch (error) {
@@ -350,12 +352,12 @@ export const travelApi = {
   pageView: (body: { eventId: string; pageKey: string; previousPageKey?: string; requestId?: string }, options: { visitorContext: number; signal?: AbortSignal }) =>
     request<{ accepted: boolean; retryable?: boolean }>("/api/activity/page-views", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: 4000 }),
   customerInteraction: (body: {
-    action: "share_sheet_completed" | "saved_item_confirmed" | "saved_item_removed"; product: "FLIGHT" | "HOTEL" | "CAR";
+    action: "share_sheet_completed" | "share_sheet_requested" | "saved_item_confirmed" | "saved_item_removed"; product: "FLIGHT" | "HOTEL" | "CAR";
     resultId: string; eventId: string; requestId?: string;
     observedResult?: { label: string; provider: string; amount: number; currency: string;
       priceBasis: "total" | "per_night" | "per_day"; totalAmount?: number };
-  }, options: { visitorContext: number }) =>
-    request<{ accepted: boolean }>("/api/activity/interactions", {
+  }, options: { visitorContext: number; signal?: AbortSignal }) =>
+    request<{ accepted: boolean; retryable?: boolean }>("/api/activity/interactions", {
       method: "POST", body: JSON.stringify(body),
     }, { ...options, timeoutMs: 4000 }),
   searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string; sandboxDisplay?: boolean }) => request<FlightSearchResponse>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),

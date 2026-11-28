@@ -1,7 +1,16 @@
 import { createProviderHandoffMetadata } from "../../../../../src/lib/providerHandoffClient";
-import type { ClientJourneyDecisionType, JourneyFilterGroup, JourneySortMode, JourneySortChoice, JourneyFilterSelection, JourneyObservedResult } from "../../../../../src/lib/search-journey";
+import { changedJourneySearchFields } from "../../../../../src/lib/journeySearchEdit";
+import type { ClientJourneyDecisionType, JourneyFilterGroup, JourneySortMode, JourneySortChoice, JourneyFilterSelection, JourneyObservedResult, JourneySearchEditField } from "../../../../../src/lib/search-journey";
 
-export type JourneyEvent = {
+type JourneyDecision = {
+  filterGroup?: JourneyFilterGroup;
+  sortMode?: JourneySortMode;
+  sortChoice?: JourneySortChoice;
+  filterSelections?: JourneyFilterSelection[];
+  observedResult?: JourneyObservedResult;
+  editFields?: JourneySearchEditField[];
+};
+export type JourneyEvent = JourneyDecision & {
   eventId: string;
   type: "RESULTS_VIEWED" | "FLIGHT_DETAILS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_DEAL_SELECTED" | ClientJourneyDecisionType;
   requestId: string;
@@ -9,11 +18,6 @@ export type JourneyEvent = {
   /** Safe, bounded reference only on explicit new flight interactions. */
   offerId?: string;
   sourcePage: string;
-  filterGroup?: JourneyFilterGroup;
-  sortMode?: JourneySortMode;
-  sortChoice?: JourneySortChoice;
-  filterSelections?: JourneyFilterSelection[];
-  observedResult?: JourneyObservedResult;
 };
 export type JourneyEventResponse = { accepted: boolean; retryable?: boolean };
 
@@ -39,6 +43,19 @@ const maximumEvents = 256;
 export function journeySourcePath(value: string) {
   const path = value.split(/[?#]/, 1)[0];
   return path.startsWith("/") && !path.startsWith("//") && !path.includes("\\") && path.length <= 240 ? path : undefined;
+}
+
+type NativeSearchParams = Record<string, string | string[] | undefined>;
+export function nativeChangedJourneySearchFields(product: "FLIGHT" | "HOTEL" | "CAR", before: NativeSearchParams, after: NativeSearchParams) {
+  const searchParams = (values: NativeSearchParams) => {
+    const search = new URLSearchParams();
+    for (const [name, value] of Object.entries(values)) {
+      const first = Array.isArray(value) ? value[0] : value;
+      if (first !== undefined) search.set(name, first);
+    }
+    return search;
+  };
+  return changedJourneySearchFields(product, searchParams(before), searchParams(after));
 }
 
 function validRequestId(value: unknown): value is string {
@@ -93,6 +110,11 @@ export class JourneyEventCoordinator {
     if (this.searches.size > maximumSearches) this.searches.delete(this.searches.values().next().value!);
   }
 
+  hasSearch(requestId: string | undefined) {
+    this.contextChanged();
+    return validRequestId(requestId) && this.searches.has(requestId);
+  }
+
   resultsViewed(requestId: string | undefined, sourcePage: string, displayedCount: number) {
     if (displayedCount <= 0) return;
     return this.enqueue("RESULTS_VIEWED", requestId, sourcePage);
@@ -120,13 +142,13 @@ export class JourneyEventCoordinator {
 
   /** Each committed action is distinct; retries keep the same eventId. */
   workflowDecision(type: ClientJourneyDecisionType, requestId: string | undefined, sourcePage: string,
-    detail: { offerId?: string; filterGroup?: JourneyFilterGroup; sortMode?: JourneySortMode; sortChoice?: JourneySortChoice; filterSelections?: JourneyFilterSelection[]; observedResult?: JourneyObservedResult } = {}) {
+    detail: JourneyDecision & { offerId?: string } = {}) {
     const requiresReference = type === "RESULT_DETAILS_OPENED" || type === "RATE_DETAILS_OPENED";
     if (requiresReference && !/^[A-Za-z0-9._:+~=-]{1,128}$/.test(detail.offerId ?? "")) return;
     if (type === "SEARCH_FILTER_APPLIED" ? !detail.filterGroup : Boolean(detail.filterGroup)) return;
     if (type === "SEARCH_SORT_CHANGED" ? !detail.sortMode : Boolean(detail.sortMode)) return;
-    return this.enqueue(type, requestId, sourcePage, detail.offerId ?? "", undefined, requiresReference,
-      { filterGroup: detail.filterGroup, sortMode: detail.sortMode, sortChoice: detail.sortChoice, filterSelections: detail.filterSelections, observedResult: detail.observedResult }, true);
+    if (type !== "SEARCH_EDIT_APPLIED" && detail.editFields) return;
+    return this.enqueue(type, requestId, sourcePage, detail.offerId ?? "", undefined, requiresReference, detail, true);
   }
 
   prepareHandoff(requestId: string | undefined) {
@@ -140,7 +162,7 @@ export class JourneyEventCoordinator {
 
   private enqueue(type: JourneyEvent["type"], requestId: string | undefined, sourcePage: string,
     offerId = "", provider?: string, includeOfferReference = false,
-    decision: { filterGroup?: JourneyFilterGroup; sortMode?: JourneySortMode; sortChoice?: JourneySortChoice; filterSelections?: JourneyFilterSelection[]; observedResult?: JourneyObservedResult } = {}, allowRepeat = false) {
+    decision: JourneyDecision = {}, allowRepeat = false) {
     this.contextChanged();
     const sourcePath = journeySourcePath(sourcePage);
     if (this.context === null || !validRequestId(requestId) || !this.searches.has(requestId) || !sourcePath) return;
@@ -163,6 +185,7 @@ export class JourneyEventCoordinator {
         ...(decision.sortChoice ? { sortChoice: decision.sortChoice } : {}),
         ...(decision.filterSelections ? { filterSelections: decision.filterSelections } : {}),
         ...(decision.observedResult ? { observedResult: decision.observedResult } : {}),
+        ...(decision.editFields?.length ? { editFields: decision.editFields } : {}),
       },
       context: this.context,
       controller: new AbortController(),

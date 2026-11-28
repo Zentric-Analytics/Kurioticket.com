@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { visitorDenialCookieName } from "@/lib/visitor-consent-constants";
+import { analyticsConfirmationHeader, analyticsConfirmationVersion, isAnalyticsConfirmationProof, visitorDenialCookieName } from "@/lib/visitor-consent-constants";
 
 export const visitorCookieName = "kt_visitor";
 export const visitorHeaderName = "x-kt-visitor";
@@ -55,6 +55,25 @@ export function readVisitorToken(request: Request, transport: "web" | "native" |
   }
 
   return null;
+}
+
+function browserActivityProof(token: string, userId: string | null) {
+  return createHash("sha256").update(JSON.stringify([analyticsConfirmationVersion, token, userId])).digest("hex");
+}
+
+export function issueBrowserActivityConfirmation(request: Request, token: string, userId: string | null) {
+  return request.headers.get(analyticsConfirmationHeader) === analyticsConfirmationVersion
+    ? { confirmation: { accountKey: userId ?? "guest", proof: browserActivityProof(token, userId) } }
+    : {};
+}
+
+/** Equality-only check after trusted session and Visitor resolution. The
+ * proof cannot authorize a Visitor or authenticate an account on its own. */
+export function matchesBrowserActivityConfirmation(request: Request, userId: string | null): boolean {
+  if (isNativeVisitorRequest(request)) return true;
+  const proof = request.headers.get(analyticsConfirmationHeader);
+  const token = readVisitorToken(request, "web");
+  return token !== null && isAnalyticsConfirmationProof(proof) && proof === browserActivityProof(token, userId);
 }
 
 export function visitorCookieOptions() {

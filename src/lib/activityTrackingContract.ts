@@ -1,3 +1,5 @@
+import type { ApplicationAttribution } from "./application-source";
+
 /** Shared vocabulary for activity definitions. Definitions never enable collection. */
 export type ActivityInterface = "admin" | "customer";
 export type ActivityPlatform = "desktop_web" | "mobile_web" | "ios" | "android";
@@ -37,4 +39,19 @@ export function customerPageProvenance(userId: string | null) {
     interface: "customer",
     originalIdentity: userId === null ? "guest" : "registered",
   } as const;
+}
+
+/** A declared device class is a reporting hint and carries no identity or permission. */
+export function customerObservedPlatform(request: Request, native: boolean, source: ApplicationAttribution["applicationSource"]) {
+  if (source === "IOS") return "iOS app";
+  if (source === "ANDROID") return "Android app";
+  if (native) {
+    const declared = request.headers.get("x-mobile-platform")?.trim().toLowerCase();
+    return declared === "ios" ? "iOS app (reported)" : declared === "android" ? "Android app (reported)" : "Native app";
+  }
+  const mobile = request.headers.get("sec-ch-ua-mobile");
+  const agent = request.headers.get("user-agent") ?? "";
+  if (mobile === "?1" || /Mobile|Android|iPhone|iPad/i.test(agent)) return "Mobile web (reported)";
+  if (mobile === "?0" || /Windows|Macintosh|X11|Linux/i.test(agent)) return "Desktop web (reported)";
+  return "Website";
 }

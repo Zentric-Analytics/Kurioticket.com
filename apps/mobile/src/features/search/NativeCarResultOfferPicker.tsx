@@ -15,6 +15,7 @@ import { presentCarOfferCurrency } from "./carDisplayCurrency";
 import { nativeCarResultDealChoices } from "./nativeCarResultDeals";
 import { resolveTravelProviderLogo } from "./providerLogoResolver";
 import { getCarRateDisclosureSections, getCarRatePaymentLabel, type CarRateDisclosureSection } from "../../../../../src/lib/cars/carRateDisclosure";
+import { hasDisplayOnlyInventory } from "../../../../../src/shared/presentation/sandboxInventory";
 
 function ProviderMark({ name, logoUrl }: { name: string; logoUrl?: string }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
@@ -77,6 +78,7 @@ export function NativeCarResultOfferPicker({
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [priceAlertFeedback, setPriceAlertFeedback] = useState<CarPriceAlertFeedback>(null);
   const dealOpeningRef = useRef(false);
+  const ratePreviewContext = useRef<number | null>(null);
 
   // Mirror native Hotels: present the seller inside the app instead of launching Safari.
   const openProviderInApp = async (url: string): Promise<boolean> => {
@@ -116,6 +118,12 @@ export function NativeCarResultOfferPicker({
   const selectedPrice = selectedChoice
     ? presentCarOfferCurrency(selectedChoice.offer, displayCurrency, rates)
     : null;
+  const recordRatePreview = () => {
+    const context = ratePreviewContext.current;
+    ratePreviewContext.current = null;
+    if (!selectedChoice || context === null || context !== journeyEvents.captureContext() || hasDisplayOnlyInventory(result)) return;
+    journeyEvents.workflowDecision("RATE_DETAILS_OPENED", journeyRequestId ?? undefined, "/car-results", { offerId: selectedChoice.offer.id });
+  };
   if (!choices.length) return null;
 
   return <View
@@ -141,7 +149,10 @@ export function NativeCarResultOfferPicker({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={"Rate information for " + providerName}
-              onPress={() => setSelectedKey(key)}
+              onPress={() => {
+                ratePreviewContext.current = journeyEvents.captureContext();
+                setSelectedKey(key);
+              }}
               style={styles.infoAction}
               hitSlop={{ top: 4, bottom: 4, left: 6, right: 6 }}
             >
@@ -187,6 +198,7 @@ export function NativeCarResultOfferPicker({
       animationType="slide"
       presentationStyle="fullScreen"
       statusBarTranslucent={false}
+      onShow={recordRatePreview}
       onRequestClose={() => setSelectedKey(null)}
     >
       <SafeAreaProvider>

@@ -6,6 +6,9 @@ import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { searchCrawlerMetadata } from "@/lib/searchCrawlerGate";
 import { after } from "next/server";
 import { logProviderCall, logSearchHistory } from "@/services/operationalActivityService";
+import { resolveSearchRequestId } from "@/lib/search-journey";
+import { isSameOriginRequest } from "@/lib/visitor-identity";
+import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 
 const noStore = { "Cache-Control": "no-store" };
 
@@ -13,7 +16,7 @@ export function createPackageSearchHandler(isFeatureEnabled = resolveFeatureEnab
 return async function POST(request: Request) {
  return withBotSearch(request, async bot => {
   const crawler = bot?.crawler ?? null;
-  const requestId = bot?.requestId ?? (request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID());
+  const requestId = bot?.requestId ?? resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("DEALS_ENABLED"))) return Response.json({ error: "Package search is temporarily unavailable.", status: "unavailable", requestId }, { status: 503, headers: noStore });
   const rate = bot ? null : checkRateLimit(`package-search:${getClientIp(request)}`, 25, 60_000);
   if (rate && !rate.allowed) return Response.json({ error: "Too many searches. Please pause for a moment.", requestId }, { status: 429, headers: noStore });
@@ -47,20 +50,29 @@ return async function POST(request: Request) {
     });
   } : undefined);
   bot?.outcome(result.status.toUpperCase());
-  if (crawler) {
-    // Count only a completed package-search execution. Internal flight/hotel/car
-    // fan-out belongs to this one parent search, not three new bot searches.
+  if (crawler || isSameOriginRequest(request)) {
+    const resultCount = Object.values(result.components).reduce((sum, component) => sum + (component?.results.length ?? 0), 0);
+    const latencyMs = Math.max(0, Math.round(performance.now() - started));
+    // Account for one executed parent request. The internal component calls
+    // do not go through the standalone product history writers.
     after(async () => {
+      const identity = crawler
+        ? { applicationSource: "BOT" as const, userId: null, visitorId: null }
+        : await resolveRequestActivityIdentity(request, undefined, null);
+      if (!crawler && !identity.userId && !identity.visitorId) return;
       await logSearchHistory({
-        applicationSource: "BOT", userId: null, visitorId: null, requestId,
-        type: "PACKAGE", query: { mode: query.mode, ...searchCrawlerMetadata(crawler), searchPurpose: "package" },
-        resultCount: Object.values(result.components).reduce((sum, component) => sum + (component?.results.length ?? 0), 0),
-        latencyMs: Math.max(0, Math.round(performance.now() - started)),
+        ...identity, requestId, type: "PACKAGE",
+        requiresActivityOwner: !crawler,
+        query: {
+          mode: query.mode, ...searchCrawlerMetadata(crawler), searchPurpose: "package",
+          packageScope: scope === "hotel-only" ? "hotel_only" : "all", resultUnit: "component_results",
+        },
+        resultCount, latencyMs,
         status: result.status === "unavailable" ? "FAILED" : result.status === "partial" ? "PARTIAL" : "SUCCESS",
       });
     });
   }
-  return Response.json(result, { headers: noStore });
+  return Response.json({ ...result, requestId }, { headers: noStore });
  });
 }
 }

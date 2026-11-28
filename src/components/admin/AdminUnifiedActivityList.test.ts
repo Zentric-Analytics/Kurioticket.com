@@ -130,10 +130,34 @@ test("collapsed action titles contain no repeated navigation or raw page/referen
   assert.equal(document.querySelectorAll("summary a").length, 0);
   assert.equal(document.querySelectorAll("details[open]").length, 0);
   assert.equal(document.querySelector('[data-activity-id="e-saved"] code')?.textContent, "item-exact-01");
+  assert.match(document.querySelector('[data-activity-id="e-page-1"]')?.textContent ?? document.body.textContent ?? "", /Previous observed page/);
   assert.equal(document.querySelectorAll('a[href="/admin/users/user/account-1/pages"]').length, 0);
   const ids = Array.from(document.querySelectorAll("summary"), node => node.getAttribute("aria-controls"));
   assert.equal(new Set(ids).size, ids.length);
   for (const id of ids) assert.ok(id && document.getElementById(id));
+});
+
+test("complete history presents sanitized audit outcomes and verified journey context", () => {
+  const returnHref = "/admin/users/user/account-0001/activity/all?interface=customer";
+  const document = renderDocument([
+    { id: "a-admin-action", at, stage: "ADMIN_SECURITY_AUDIT", label: "Updated account role", detail: "Administrative security audit",
+      interface: "admin", originalIdentity: "administrator", outcome: "succeeded" },
+    { id: "j-package-search", at, stage: "SEARCH_COMPLETED", label: "Search completed", detail: "PACKAGE",
+      interface: "customer", product: "PACKAGE", resultCount: 2, resultUnit: "component_results", journeyId: "journey-package-0001" },
+  ], { identity: { kind: "user", id: "account-0001" }, now: at, returnHref });
+  const audit = document.querySelector('[data-activity-id="a-admin-action"]');
+  assert.match(audit?.textContent ?? "", /Administrative security audit/);
+  assert.match(audit?.textContent ?? "", /Succeeded/);
+  assert.match(audit?.textContent ?? "", /Administrator/);
+  assert.equal(audit?.querySelectorAll("a").length, 0);
+  const search = document.querySelector('[data-activity-id="j-package-search"]');
+  assert.match(search?.textContent ?? "", /2 component results/);
+  const link = search?.querySelector('a[href^="/admin/journeys/"]');
+  assert.equal(link?.textContent?.trim(), "View journey");
+  const url = new URL(link!.getAttribute("href")!, "https://test.invalid");
+  assert.equal(url.searchParams.get("userId"), "account-0001");
+  assert.equal(url.searchParams.get("environment"), "staging");
+  assert.ok(url.searchParams.get("activityReturn"));
 });
 
 test("failed searches show their recorded outcome and exact guest search context inside the account view", () => {

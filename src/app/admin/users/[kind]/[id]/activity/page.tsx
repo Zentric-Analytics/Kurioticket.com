@@ -29,6 +29,7 @@ import { getAdminEmails } from "@/lib/env";
 import { withOptionalDb } from "@/lib/prisma";
 import { activityHref, parseActivityFilters, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
 import { loadAdminIdentityActivity } from "@/services/adminIdentityActivityService";
+import { canReadAdminAudit } from "@/services/adminAuditReadService";
 
 export const metadata = { title: "Admin Customer Activity" };
 // Live session reads must not be served from a static route cache.
@@ -83,7 +84,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
   // Preserve existing filtered Activity bookmarks at the new full-history route.
   // Never silently broaden an invalid query, or reintroduce old cursor semantics.
-  const hasDetailFilter = ["tab", "stage", "product", "q"].some(key =>
+  const hasDetailFilter = ["tab", "stage", "product", "interface", "q"].some(key =>
     typeof raw[key] === "string" && raw[key] !== "" && raw[key] !== "all");
   if (hasDetailFilter && !Object.values(raw).some(Array.isArray)) {
     redirect(activityHref(basePath + "/all", safeActivityQueryParams(raw), { cursor: null, order: null }));
@@ -101,7 +102,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       action={<Link className={buttonClass} href={basePath}>Reset activity filters</Link>} />
   </div>;
   const filters: ActivityFilters = filtersResult.filters;
-  const result = await loadAdminIdentityActivity(kind, id, filters, undefined, "summary");
+  const result = await loadAdminIdentityActivity(kind, id, filters, undefined, "summary", undefined, canReadAdminAudit);
   if (result.status === "not_found") notFound();
   if (result.status !== "ok") return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -173,7 +174,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
     management={kind === "user"
       ? <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
       : data.source === "visitor" ? <GuestTrackingActions visitorId={id} backHref={backHref} /> : null}>
-      <AdminUnifiedActivityList events={recentEvents} timeZone={timeZone} environment={environment}
+      <AdminUnifiedActivityList events={recentEvents} timeZone={timeZone} environment={environment} identity={operational ? undefined : { kind, id }} now={now}
         overview pagesHref={!operational ? pagesHref : undefined}
         allHref={allHref} returnHref={activityReturn}/>
   </AdminCustomerActivityWorkspace>;

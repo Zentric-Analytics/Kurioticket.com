@@ -67,7 +67,7 @@ export function normalizeUserActivityQuery(input: RawActivityQuery, now: Date, t
 
 export function safeActivityQueryParams(raw: RawActivityQuery): Record<string, string> {
   const result: Record<string, string> = {};
-  for (const key of ["tab", "range", "stage", "product", "from", "to", "q", "order", "directory", "usersReturn"]) {
+  for (const key of ["tab", "range", "stage", "product", "interface", "from", "to", "q", "order", "directory", "usersReturn"]) {
     const value = raw[key];
     if (typeof value === "string" && value.length <= (key === "usersReturn" ? 2048 : 1100) && !/[\u0000-\u001f\u007f]/.test(value)) result[key] = value;
   }

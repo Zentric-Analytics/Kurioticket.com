@@ -1,4 +1,4 @@
-import { visitorDenialCookieName } from "./visitor-consent-constants";
+import { analyticsConfirmationHeader, analyticsConfirmationVersion, isAnalyticsConfirmationProof, visitorDenialCookieName } from "./visitor-consent-constants";
 
 export type AnalyticsConsentChoice = "granted" | "declined" | null;
 
@@ -34,6 +34,53 @@ export function analyticsDenialCookie(denied: boolean, secure: boolean) {
   return `${visitorDenialCookieName}=${denied ? "1" : ""}; Path=/; SameSite=Lax; Max-Age=${denied ? 60 * 60 * 24 * 365 : 0}${secure ? "; Secure" : ""}`;
 }
 
+let browserAnalyticsAccount: string | null = null;
+let browserAnalyticsConfirmation: { controller: AbortController; proof: string } | null = null;
+
+export function browserAllowsAnalytics() {
+  try {
+    return !hasAnalyticsDenial(document.cookie)
+      && parseAnalyticsConsent(window.localStorage.getItem(analyticsConsentStorageKey)) === "granted";
+  } catch {
+    return false;
+  }
+}
+
+export function isAnalyticsConsentStorageEvent(event: StorageEvent) {
+  if (event.key !== null && event.key !== analyticsConsentStorageKey) return false;
+  try { return event.storageArea === window.localStorage; }
+  catch { return false; }
+}
+
+export function setBrowserAnalyticsAccount(accountKey: string | null) {
+  if (browserAnalyticsAccount === accountKey) return;
+  setBrowserAnalyticsConfirmation(browserAnalyticsAccount, false);
+  browserAnalyticsAccount = accountKey;
+}
+
+/** Used by the consent bridge's consumer after canonical Visitor synchronization. */
+export function setBrowserAnalyticsConfirmation(accountKey: string | null, confirmed: boolean, proof?: unknown) {
+  if (accountKey !== browserAnalyticsAccount) return;
+  const previous = browserAnalyticsConfirmation;
+  if (accountKey && confirmed && isAnalyticsConfirmationProof(proof) && browserAllowsAnalytics()) {
+    if (previous?.proof === proof) return;
+    browserAnalyticsConfirmation = { controller: new AbortController(), proof };
+  } else {
+    browserAnalyticsConfirmation = null;
+  }
+  previous?.controller.abort();
+}
+
+/** In-memory permission for this document and actor only. Never a request credential. */
+export function getConfirmedBrowserAnalyticsSignal(): AbortSignal | null {
+  if (!browserAllowsAnalytics()) return null;
+  return browserAnalyticsConfirmation?.controller.signal ?? null;
+}
+
+export function getConfirmedBrowserAnalyticsProof(signal = getConfirmedBrowserAnalyticsSignal()): string | null {
+  return signal && signal === getConfirmedBrowserAnalyticsSignal() ? browserAnalyticsConfirmation!.proof : null;
+}
+
 /** A current refusal must not be replaced by an older successfully saved grant. */
 export function resolveAnalyticsConsentChoice(input: {
   saved: AnalyticsConsentChoice;
@@ -57,7 +104,8 @@ type Dependencies = {
   request: (url: string, init: RequestInit) => Promise<Response>;
   readChoice: () => AnalyticsConsentChoice;
   onState?: (state: VisitorConsentSyncState) => void;
-  onSaved?: (context: VisitorConsentContext) => void;
+  onSaved?: (context: VisitorConsentContext & { proof?: string }) => void;
+  bindBrowserConfirmation?: boolean;
   exclusively?: <T>(work: () => Promise<T>) => Promise<T>;
 };
 
@@ -71,6 +119,7 @@ export function createVisitorConsentSynchronizer(dependencies: Dependencies) {
   let revision = 0;
   let confirmedRevision = -1;
   let appliedKey: string | null = null;
+  let appliedProof: string | undefined;
   let running: Promise<VisitorConsentSyncState> | null = null;
   let disposed = false;
   const controller = new AbortController();
@@ -94,11 +143,12 @@ export function createVisitorConsentSynchronizer(dependencies: Dependencies) {
       cache: "no-store",
       keepalive: true,
       signal: controller.signal,
-      headers: { Accept: "application/json", ...(body ? { "Content-Type": "application/json" } : {}) },
+      headers: { Accept: "application/json", ...(body ? { "Content-Type": "application/json" } : {}),
+        ...(dependencies.bindBrowserConfirmation && method === "POST" ? { [analyticsConfirmationHeader]: analyticsConfirmationVersion } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
     if (!response.ok) throw new Error("Could not update analytics preferences.");
-    return response.json() as Promise<{ analyticsTracking?: string; merged?: boolean }>;
+    return response.json() as Promise<{ analyticsTracking?: string; merged?: boolean; confirmation?: { accountKey?: unknown; proof?: unknown } }>;
   }
 
   async function drain(): Promise<VisitorConsentSyncState> {
@@ -116,12 +166,13 @@ export function createVisitorConsentSynchronizer(dependencies: Dependencies) {
         dependencies.onState?.("saved");
         if (!disposed && revision === currentRevision && confirmedRevision !== currentRevision) {
           confirmedRevision = currentRevision;
-          dependencies.onSaved?.(current);
+          dependencies.onSaved?.({ ...current, ...(appliedProof ? { proof: appliedProof } : {}) });
         }
         return "saved";
       }
 
       dependencies.onState?.("saving");
+      let proof: string | undefined;
       try {
         await exclusively(async () => {
           refreshChoice();
@@ -144,6 +195,17 @@ export function createVisitorConsentSynchronizer(dependencies: Dependencies) {
           if (current.accountKey !== "guest") {
             const merged = await mutate("/api/identity/merge", "POST");
             if (!merged.merged) throw new Error("Account connection was not confirmed.");
+            if (dependencies.bindBrowserConfirmation) {
+              if (merged.confirmation?.accountKey !== current.accountKey || !isAnalyticsConfirmationProof(merged.confirmation.proof)) {
+                throw new Error("Account connection changed.");
+              }
+              proof = merged.confirmation.proof;
+            }
+          } else if (dependencies.bindBrowserConfirmation) {
+            if (response.confirmation?.accountKey !== "guest" || !isAnalyticsConfirmationProof(response.confirmation.proof)) {
+              throw new Error("Visitor connection changed.");
+            }
+            proof = response.confirmation.proof;
           }
         });
       } catch {
@@ -158,10 +220,11 @@ export function createVisitorConsentSynchronizer(dependencies: Dependencies) {
       refreshChoice();
       if (revision !== currentRevision) continue;
       appliedKey = key;
+      appliedProof = proof;
       dependencies.onState?.("saved");
       if (!disposed && revision === currentRevision) {
         confirmedRevision = currentRevision;
-        dependencies.onSaved?.(current);
+        dependencies.onSaved?.({ ...current, ...(appliedProof ? { proof: appliedProof } : {}) });
       }
       return "saved";
     }

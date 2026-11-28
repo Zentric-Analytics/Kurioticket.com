@@ -15,7 +15,7 @@ import { formatMobileHotelPrice, mobileHotelAbout, mobileHotelAmenityGroups, mob
 import { MobileHotelStayEditor } from "./MobileHotelStayEditor";
 import { HotelPriceAlertControl } from "../HotelPriceAlertControl";
 import { shareProductLink } from "@/lib/shareProductLink";
-import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
+import { beginCustomerInteraction, recordCustomerInteraction } from "@/lib/customerInteractionClient";
 import type { HotelDetailsProviderOffer } from "./hotelDetailsPresentation";
 import { MobileProviderOffer } from "./HotelPriceComparisonSection";
 import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScrollLock";
@@ -117,9 +117,10 @@ export function MobileHotelDetails(props: StandaloneHotelDetailsProps) {
   }
 
   async function share() {
+    const analyticsConsent = beginCustomerInteraction();
     const outcome = await shareProductLink({ title: props.hotelName, url: window.location.href });
     if (outcome === "shared" || outcome === "copied") {
-      recordCustomerInteraction({
+      recordCustomerInteraction(analyticsConsent, {
         action: outcome === "shared" ? "share_sheet_completed" : "share_link_copied",
         product: "HOTEL", resultId: props.hotelResultId, requestId: props.searchRequestId,
       });

@@ -4,14 +4,15 @@ import { prefetchCarImagesInBackground } from "./carImagePrefetch";
 import { presentSearchResults, searchUnavailableMessage } from "./searchFailurePresentation";
 import { useSandboxResultState } from "./useSandboxResults";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { AppState, FlatList, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, ChevronDown, SlidersHorizontal, SquarePen } from "lucide-react-native";
 import { travelApi, TravelApiError, type CarResult } from "../../api/travelApi";
 import { carUnsupportedSearchMessage } from "../../../../../src/shared/cars/carSearchFeedback";
 import { journeyEvents } from "../privacy/journeyEvents";
-import { recordNativeResultsPage } from "../privacy/useNativePageViews";
+import { nativeChangedJourneySearchFields } from "../privacy/journeyEventCoordinator";
+import { useNativeResultsPage } from "../privacy/useNativePageViews";
 import { normalizeJourneySortMode, normalizeJourneySortChoice } from "../../../../../src/lib/search-journey";
 import { carJourneyFilterSelections } from "../../../../../src/lib/cars/carFilterPresentation";
 import { journeyResponseContext } from "../privacy/journeyResponseContext";
@@ -55,6 +56,7 @@ const resolveNativeCarImageUri=(value?:string)=>{const resolved=resolveCarResult
 async function prefetchInitialCarImages(results: readonly CarResult[]){const carUris=[...new Set(results.map(result=>resolveNativeCarImageUri(result.imageUrl)).filter((value):value is string=>Boolean(value)))].slice(0,CAR_RESULT_INITIAL_IMAGE_COUNT);const uris=[KURIOTICKET_COMPARE_LOGO_URI,...carUris].filter(Boolean);if(!uris.length)return;let timeout:ReturnType<typeof setTimeout>|undefined;try{await Promise.race([Promise.allSettled(uris.map(uri=>Image.prefetch(uri))).then(()=>undefined),new Promise<void>(resolve=>{timeout=setTimeout(resolve,CAR_RESULT_IMAGE_PREFETCH_TIMEOUT_MS);})]);}finally{if(timeout)clearTimeout(timeout);}}
 
 export function ApprovedCarResultsScreen() {
+  const recordNativeResultsPage = useNativeResultsPage();
   const { theme } = useAppTheme();
   const carCanvasColor = theme.dark ? theme.background : CAR_RESULTS_LIGHT_CANVAS;
   const headerSurfaceColor = theme.dark ? theme.background : "#FFFFFF";
@@ -110,12 +112,6 @@ export function ApprovedCarResultsScreen() {
   },[plan.plan?.key,retry,presentationDiagnostics]);
   useEffect(()=>{const executionKey=`${plan.plan?.key??"invalid"}:${retry}`;if(searchAbortTimer.current)clearTimeout(searchAbortTimer.current);searchAbortTimer.current=undefined;if(activeExecutionKey.current!==executionKey){activeExecutionKey.current=executionKey;void load();}return()=>{searchAbortTimer.current=setTimeout(()=>{if(activeExecutionKey.current!==executionKey)return;searchSequence.current+=1;activeSearch.current?.abort("screen-cleanup");activeExecutionKey.current=undefined;},0);};},[load,plan.plan?.key,retry]);
   useEffect(()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);carResultsApplyingTimer.current=undefined;setCarResultsApplying(false);return()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);};},[plan.plan?.key]);
-  useFocusEffect(useCallback(()=>{
-    if(status==="ready" || status==="empty") {
-      recordNativeResultsPage("car", resultsRequestId);
-      if(status==="ready" && results.length>0) journeyEvents.resultsViewed(resultsRequestId,"/car-results",results.length);
-    }
-  },[status,results.length,resultsRequestId]));
   const filterGroups=useMemo(()=>visibleCarFilterGroups(results,pricePerDay),[pricePerDay,results]);
   const quickGroups=useMemo(()=>carQuickFilterGroupIds.flatMap(id=>{const group=filterGroups.find(candidate=>candidate.id===id);return group?[group]:[];}),[filterGroups]);
   const copy=useMemo(()=>carFilterCopy(locale),[locale]);
@@ -129,12 +125,17 @@ export function ApprovedCarResultsScreen() {
   const edit=()=>setCarEditSearchOpen(true);
   const applyEditedSearch=useCallback((next:Record<string,string>)=>{
     const update=carResultsRouteUpdate(next);
-    if (buildSearchPlan("car",update).plan?.key !== plan.plan?.key) journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", resultsRequestId, "/car-results");
+    const nextPlan = buildSearchPlan("car", update).plan;
+    if (nextPlan && nextPlan.key !== plan.plan?.key) {
+      journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", resultsRequestId, "/car-results", {
+        editFields: nativeChangedJourneySearchFields("CAR", params, update),
+      });
+    }
     setFilters({}); currentFiltersRef.current={}; setSort("recommended"); setQuickSheetKind(null); setFilterSheetVisible(false);
     setStatus("loading"); setMessage(""); scrollCarResultsToTop();
-    if(buildSearchPlan("car",update).plan?.key===plan.plan?.key) setRetry(value=>value+1);
+    if(nextPlan?.key===plan.plan?.key) setRetry(value=>value+1);
     else router.setParams(update);
-  },[plan.plan?.key,scrollCarResultsToTop]);
+  },[params,plan.plan?.key,resultsRequestId,scrollCarResultsToTop]);
   const startCarResultsTransition=()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);setCarResultsApplying(true);scrollCarResultsToTop();carResultsApplyingTimer.current=setTimeout(()=>setCarResultsApplying(false),NATIVE_FILTER_RESULTS_TRANSITION_MS);};
   const changeCarFilters=(next:SelectedCarFilters)=>{carFilterSessionDirtyRef.current=true;currentFiltersRef.current=next;setFilters(next);};
   const openAllFilters=()=>{carFilterSessionDirtyRef.current=false;setFilterSheetVisible(true);};
@@ -143,6 +144,17 @@ export function ApprovedCarResultsScreen() {
   const completeCarFilterSession=()=>{closeFilterSheet();if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;journeyEvents.workflowDecision("SEARCH_FILTER_APPLIED",resultsRequestId,"/car-results",{filterGroup:"all",filterSelections:carJourneyFilterSelections(currentFiltersRef.current)});startCarResultsTransition();}};
   const clearFilters=()=>{setFilters({});startCarResultsTransition();};
   const listData=status==="ready"&&!carResultsApplying?filtered:[];
+  useFocusEffect(useCallback(() => {
+    const recordDisplayedResults = () => {
+      if (AppState.currentState !== "active" || displayPending || displayUnavailable) return;
+      if (status !== "ready" && status !== "empty") return;
+      recordNativeResultsPage("car", resultsRequestId);
+      if (status === "ready") journeyEvents.resultsViewed(resultsRequestId, "/car-results", listData.length);
+    };
+    recordDisplayedResults();
+    const subscription = AppState.addEventListener("change", state => { if (state === "active") recordDisplayedResults(); });
+    return () => subscription.remove();
+  }, [displayPending, displayUnavailable, listData.length, recordNativeResultsPage, resultsRequestId, status]));
   const listHeader=<>{message?<Text accessibilityRole="alert" style={[r.notice,{backgroundColor:theme.surface,color:theme.textPrimary,borderColor:theme.dark?theme.border:"#D8E1EC"}]}>{message}</Text>:null}{status==="ready"?<View accessibilityLabel="Car results summary" style={[r.carResultsSummaryRow, viewportWidth < 360 && r.carResultsSummaryRowNarrow]}>
     {!carResultsApplying?<Text accessibilityRole="header" numberOfLines={1} style={[r.carResultCount,{color:theme.textPrimary}]}>{carResultCountLabel(filtered.length)}</Text>:null}
   </View>:null}</>;

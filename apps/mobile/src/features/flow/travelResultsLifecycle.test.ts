@@ -51,7 +51,11 @@ test("car search uses canonical identity generations, abort, and stale-response 
   assert.match(cars, /controller\.signal\.aborted\|\|sequence!==searchSequence\.current/);
   assert.match(cars, /activeSearch\.current\?\.abort\("screen-cleanup"\)/);
   assert.match(cars, /activeExecutionKey\.current!==executionKey/);
-  assert.doesNotMatch(cars, /AppState/);
+  const foregroundListeners = Array.from(cars.matchAll(/AppState\.addEventListener[^\n]*/g), ([listener]) => listener);
+  assert.deepEqual(foregroundListeners, ['AppState.addEventListener("change", state => { if (state === "active") recordDisplayedResults(); });']);
+  const displayObserver = cars.match(/const recordDisplayedResults = \(\) => \{[\s\S]*?\n    \};/)?.[0];
+  assert.ok(displayObserver);
+  assert.doesNotMatch(displayObserver, /searchCars|load\(|setRetry/);
 });
 
 test("every product leaves loading on timeout and exposes an explicit retry", () => {

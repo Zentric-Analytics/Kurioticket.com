@@ -5,16 +5,19 @@ import { allowedActivityStages, parseActivityFilters } from "../../../../../src/
 
 const read = (file: string) => readFileSync(file, "utf8");
 const share = read("src/features/privacy/nativeShareTracking.ts");
+const delivery = read("src/features/privacy/nativeInteractionDelivery.ts");
 const identity = read("src/features/privacy/visitorIdentityCoordinator.ts");
 const api = read("src/api/travelApi.ts");
 const repoRoot = "../../";
 
 test("native shares use only the existing first-party, authenticated, consent-gated API", () => {
   assert.match(api, /customerInteraction:\s*\(body:/);
-  assert.match(api, /request<\{ accepted: boolean \}>\("\/api\/activity\/interactions"/);
+  assert.match(api, /request<\{ accepted: boolean; retryable\?: boolean \}>\("\/api\/activity\/interactions"/);
   assert.match(identity, /"\/api\/activity\/interactions"/);
   assert.match(share, /visitorIdentity\.trackingContext/);
-  assert.match(share, /visitorContext: context/);
+  assert.match(share, /deliverNativeInteraction\(/);
+  assert.match(delivery, /travelApi\.customerInteraction\(event, \{ visitorContext, signal \}\)/);
+  assert.match(delivery, /visitorIdentity\.subscribe\(delivery\.contextChanged\)/);
   assert.match(share, /digestStringAsync\(CryptoDigestAlgorithm\.SHA256, resultId\)/);
   assert.match(share, /eventId: randomUUID\(\)/);
   assert.match(share, /requestIdPattern\.test\(requestId\)/);
@@ -44,16 +47,21 @@ test("native flight hotel and car share buttons record only through consent-gate
 test("existing server checks consent, exact search ownership and event UUID idempotency", () => {
   const server = read(repoRoot + "src/app/api/activity/interactions/route.ts");
   assert.match(server, /lockConsentedVisitor/);
-  assert.match(server, /resolveRequestActivityIdentity/);
+  assert.match(server, /resolveObservedActivityIdentity/);
   assert.match(server, /matchesInteractionSearch/);
-  assert.match(server, /eventId: parsed\.data\.eventId/);
+  assert.match(server, /const eventId = event\.eventId\.toLowerCase\(\)/);
+  assert.match(server, /metadata: \{ path: \["eventId"\], equals: eventId \}/);
+  assert.match(server, /event\.action === "share_sheet_requested" && \(\s*request\.headers\.get\("x-mobile-platform"\)\?\.trim\(\)\.toLowerCase\(\) !== "android"/);
   assert.match(server, /type: "SEARCH_COMPLETED", searchHistoryId: search\.id/);
   assert.match(server, /if \(verifiedLink\)/);
   assert.match(server, /type: stage/);
   const admin = read(repoRoot + "src/services/adminIdentityActivityService.ts");
-  assert.match(admin, /share_sheet_completed: "Share sheet completed"/);
+  const journeyLabels = read(repoRoot + "src/lib/adminIdentityJourney.ts");
+  assert.match(journeyLabels, /share_sheet_completed: "Share sheet completed"/);
+  assert.match(journeyLabels, /share_sheet_requested: "Share sheet requested"/);
+  assert.match(admin, /\.\.\.sharedJourneyActionLabels/);
   assert.match(admin, /const allowed = allowedActivityStages\(filters\)/);
-  assert.match(admin, /const stages = \[\.\.\.allowed\]/);
+  assert.match(admin, /const stages = activityJourneyStages\.filter\(stage => allowed\.has\(stage\)\)/);
   assert.match(admin, /type: \{ in: stages \}/);
   for (const tab of ["all", "journeys", "interactions"]) {
     for (const stage of ["all", "RESULT_SHARED"]) {

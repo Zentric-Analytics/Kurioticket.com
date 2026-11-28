@@ -72,7 +72,7 @@ try {
       }
       await page.goto(base+"/admin/users/user/qa-realistic-identity-0001/activity/all?range=all");
       await applyZoom(zoom);
-      await expectActivityFilterLayout(page, `All activity ${width}px at ${Math.round(zoom*100)}% zoom`);
+      await expectActivityFilterLayout(page, `All activity ${width}px at ${Math.round(zoom*100)}% zoom`, { showInterface: true });
       await screenshot(`all-activity-filters-${width}-zoom-${Math.round(zoom*100)}`,zoom);
       await page.goto(base+"/before?kind=user");
       await applyZoom(zoom);
@@ -98,7 +98,7 @@ try {
   for (const zoom of [1.25,2]) {
     await page.goto(base+"/admin/users/user/qa-realistic-identity-0001/activity/all?range=all");
     await applyZoom(zoom);
-    await expectActivityFilterLayout(page, `All activity 1280px at ${Math.round(zoom*100)}% zoom`);
+    await expectActivityFilterLayout(page, `All activity 1280px at ${Math.round(zoom*100)}% zoom`, { showInterface: true });
     await screenshot(`all-activity-filters-1280-zoom-${Math.round(zoom*100)}`,zoom);
     console.log("PASS activity filters at actual browser zoom",zoom);
   }

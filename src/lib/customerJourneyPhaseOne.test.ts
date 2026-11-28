@@ -55,6 +55,7 @@ test("Journey History links unlinked account actions to the same identity's comp
   assert.match(actionLink, /from: accountActivityRange === "custom" \? scope\.from : null/);
   assert.match(actionLink, /to: accountActivityRange === "custom" \? scope\.to : null/);
   assert.match(actionLink, /tab: "all", stage: "ACCOUNT_ACTIVITY", product: scope\.product \?\? null/);
+  assert.match(actionLink, /interface: null/, "The dedicated account-activity link clears any Admin interface filter");
   assert.match(actionLink, /q: null, cursor: null, order: null/);
   assert.match(page, /<Link href=\{accountActivityHref\}[^>]*>\{accountActivityLabel\}/);
   assert.equal((page.match(/\bloadAdminIdentityActivity\(/g) ?? []).length, 1,
@@ -67,7 +68,8 @@ test("Journey History links unlinked account actions to the same identity's comp
   const reader = read("src/services/adminIdentityActivityService.ts");
   const accountProjection = reader.match(/function analyticsActivityRow\([\s\S]*?\n\}/)?.[0];
   assert.ok(accountProjection, "The complete history retains the separate account-action classification");
-  assert.match(accountProjection, /id: "e-" \+ event\.id, stage: "ACCOUNT_ACTIVITY"/);
+  assert.match(accountProjection, /id: "e-" \+ event\.id/);
+  assert.match(accountProjection, /stage: isPackageSubmission \? "PACKAGE_SEARCH_SUBMITTED" : "ACCOUNT_ACTIVITY"/);
   assert.doesNotMatch(accountProjection, /\b(?:journeyId|searchHistoryId)\s*:/,
     "An unlinked account action cannot acquire an invented journey or search reference");
   // adminIdentityActivityComplete.test.ts covers exact replacement, Essential
@@ -76,25 +78,19 @@ test("Journey History links unlinked account actions to the same identity's comp
   assert.match(reader, /row => analyticsActivityRow\(row, environment\) !== null/);
 });
 
-test("the interactions tab excludes unrelated signup, support and provider-failure audits", () => {
-  const reader = read("src/services/adminIdentityActivityService.ts");
-  assert.match(reader, /filters\.tab === "interactions"/);
-  assert.match(reader, /type: "SAVE" as const/);
-  assert.match(reader, /type: "SHARE" as const/);
-  assert.match(reader, /type: "ALERT_CREATED" as const/);
-  assert.match(reader, /safeAnalyticsLabels/);
-  assert.match(reader, /SIGNUP: "Account signup"/);
-  assert.match(reader, /SUPPORT_TICKET: "Support ticket"/);
-  // These other categories remain present in the broad All activity view.
-  assert.match(reader, /PROVIDER_FAILURE: "Provider issue"/);
-});
-
-test("no optional client instrumentation, screenshot collection or new data capture is introduced", () => {
+test("optional client instrumentation requires confirmed context and keeps screenshot data outside history", () => {
   const source = read("src/lib/adminIdentityJourney.ts");
   assert.match(source, /allowedActions\[event\.type\]/);
   assert.doesNotMatch(source, /JSON\.stringify\(event\.metadata\)/);
   const native = read("apps/mobile/src/features/privacy/journeyEventCoordinator.ts");
-  assert.match(native, /trackingContext|contextChanged/);
+  assert.match(native, /this\.contextChanged\(\)/);
+  assert.match(native, /pending\.controller\.abort\(\)/);
+  assert.match(native, /this\.context === null \|\| !validRequestId\(requestId\)/);
   const web = read("src/components/privacy/JourneyEventsProvider.tsx");
-  assert.match(web, /analyticsConsentStorageKey/);
+  assert.match(web, /allowed: \(\) => getConfirmedBrowserAnalyticsSignal\(\) !== null/);
+  assert.match(web, /isAnalyticsConsentStorageEvent\(event\)/);
+  assert.match(web, /if \(event && signal\) deliverCustomerActivity\("\/api\/activity\/page-views", event, signal\)/);
+  const consent = read("src/lib/analyticsConsentClient.ts");
+  assert.match(consent, /parseAnalyticsConsent\(window\.localStorage\.getItem\(analyticsConsentStorageKey\)\) === "granted"/);
+  assert.doesNotMatch(web + native, /getDisplayMedia|getUserMedia|takeScreenshot|captureScreen|html2canvas/);
 });

@@ -2,6 +2,32 @@ const journeyIdleWindowMs = 30 * 60 * 1000;
 
 export const clientJourneyDecisionTypes = ["SEARCH_EDIT_APPLIED", "SEARCH_FILTER_APPLIED", "SEARCH_SORT_CHANGED", "RESULT_DETAILS_OPENED", "RATE_DETAILS_OPENED"] as const;
 export type ClientJourneyDecisionType = (typeof clientJourneyDecisionTypes)[number];
+export const journeySearchEditFieldLabels = {
+  origin: "Origin", destination: "Destination", dates: "Dates", trip_type: "Trip type",
+  travelers: "Travelers", cabin: "Cabin", segments: "Flight segments", rooms: "Rooms", pet_policy: "Pet policy",
+  pickup_location: "Pick-up location", dropoff_location: "Drop-off location",
+  rental_dates: "Rental dates", rental_times: "Rental times", driver_age: "Driver age",
+} as const;
+export type JourneySearchEditField = keyof typeof journeySearchEditFieldLabels;
+export function isJourneySearchEditField(value: unknown): value is JourneySearchEditField {
+  return typeof value === "string" && Object.hasOwn(journeySearchEditFieldLabels, value);
+}
+const journeySearchEditProductFields: Record<string, readonly JourneySearchEditField[]> = {
+  FLIGHT: ["origin", "destination", "dates", "trip_type", "travelers", "cabin", "segments"],
+  HOTEL: ["destination", "dates", "travelers", "rooms", "pet_policy"],
+  CAR: ["pickup_location", "dropoff_location", "rental_dates", "rental_times", "driver_age"],
+};
+export function safeJourneySearchEditFields(value: unknown, product: string | null): JourneySearchEditField[] {
+  if (!Array.isArray(value) || !product || !Object.hasOwn(journeySearchEditProductFields, product)) return [];
+  const fields = journeySearchEditProductFields[product];
+  return [...new Set(value.slice(0, 7).filter((field): field is JourneySearchEditField =>
+    isJourneySearchEditField(field) && fields.includes(field)))];
+}
+
+export function journeyDecisionSourceProduct(path: string | undefined) {
+  const match = path?.match(/^\/(?:packages\/journey\/)?(flight|hotel|car)s?[-/](?:results|details)$/);
+  return match?.[1].toUpperCase() ?? null;
+}
 export const journeyFilterGroups = ["all", "price", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "transmission", "other"] as const;
 export type JourneyFilterGroup = (typeof journeyFilterGroups)[number];
 export const journeyFilterSelectionGroups = ["price", "pricePerDay", "stops", "airlines", "airports", "duration", "baggage", "stars", "facilities", "roomTypes", "vehicle", "vehicleType", "transmission", "locations", "propertyTypes", "meals", "accessibility", "travellerFeatures", "bedTypes", "cancellation", "seats", "bags", "fuelPolicy", "mileagePolicy", "pickupLocationType", "fromAirports", "toAirports", "quality", "areas"] as const;

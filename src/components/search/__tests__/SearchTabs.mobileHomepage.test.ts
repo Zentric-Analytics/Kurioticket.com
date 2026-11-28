@@ -423,7 +423,10 @@ test("mobile pickers and one-way/query behavior remain wired", () => {
 });
 
 test("all mobile homepage products remain switchable without route navigation", () => {
-  assert.match(mobileProductTabs, /setTab\(mode\)/);
+  assert.match(mobileProductTabs, /onClick=\{\(\) => selectProductTab\(mode\)\}/);
+  const tabHandler = source.slice(source.indexOf("function selectProductTab("), source.indexOf("const mobileHomepageProductTabs ="));
+  assert.match(tabHandler, /setTab\(next\)/);
+  assert.doesNotMatch(tabHandler, /router\.|startRouteProgress/);
   assert.match(mobileProductTabs, /"flights"[\s\S]*"hotels"[\s\S]*"cars"[\s\S]*"deals"/);
   assert.match(sharedBranch, /\) : tab === "hotels" \? \(/);
   assert.match(sharedBranch, /\) : \([\s\S]*?onSubmit=\{onCarsSubmit\}/);

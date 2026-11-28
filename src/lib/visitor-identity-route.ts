@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { readBoundedJsonBody } from "@/lib/bounded-json-body";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { isSameOriginRequest, readVisitorToken, visitorCookieName, visitorCookieOptions, visitorTrackingDenied } from "@/lib/visitor-identity";
-import type { createVisitorIdentityService } from "@/services/visitorIdentityCore";
+import { issueBrowserActivityConfirmation, isSameOriginRequest, readVisitorToken, visitorCookieName, visitorCookieOptions, visitorTrackingDenied } from "@/lib/visitor-identity";
+import { VisitorGrantWithdrawnError, type createVisitorIdentityService } from "@/services/visitorIdentityCore";
 
 const consentSchema = z.object({
   analytics: z.literal(true),
@@ -52,6 +52,9 @@ export function createIdentityHandlers({ transport, authenticate, identity, rate
   async function POST(request: Request) {
     const denied = originError(request) ?? limited(request, "consent", 10);
     if (denied) return denied;
+    // An explicit browser grant clears this marker before sending consent.
+    // A stale grant carrying a refusal may not issue a new Visitor cookie.
+    if (visitorTrackingDenied(request, transport)) return json({ analyticsTracking: "disabled" }, 409);
     const parsed = consentSchema.safeParse(await readBoundedJsonBody(request, 2048).catch(() => null));
     if (!parsed.success) return json({ error: "Analytics consent is required to enable visitor tracking." }, 400);
     try {
@@ -61,10 +64,13 @@ export function createIdentityHandlers({ transport, authenticate, identity, rate
         userId: account?.userId ?? null,
         policyVersion: parsed.data.policyVersion,
       });
-      const response = json({ analyticsTracking: "enabled", ...(transport === "native" ? { visitorToken: visitor.token } : {}) }, visitor.created ? 201 : 200);
+      const identityMetadata = transport === "native" ? { visitorToken: visitor.token }
+        : issueBrowserActivityConfirmation(request, visitor.token, account?.userId ?? null);
+      const response = json({ analyticsTracking: "enabled", ...identityMetadata }, visitor.created ? 201 : 200);
       if (transport === "web") response.cookies.set(visitorCookieName, visitor.token, visitorCookieOptions());
       return response;
-    } catch {
+    } catch (error) {
+      if (error instanceof VisitorGrantWithdrawnError) return json({ analyticsTracking: "disabled" }, 409);
       return unavailable();
     }
   }
@@ -91,7 +97,9 @@ export function createIdentityHandlers({ transport, authenticate, identity, rate
       const account = await authenticate(request);
       if (!account) return json({ error: "Authentication required." }, 401);
       const visitor = await identity.mergeAnalyticsVisitor({ token: readVisitorToken(request, transport), userId: account.userId, source: "ACCOUNT_API" });
-      const response = json({ merged: Boolean(visitor), ...(transport === "native" && visitor ? { visitorToken: visitor.token } : {}) });
+      const identityMetadata = !visitor ? {} : transport === "native" ? { visitorToken: visitor.token }
+        : issueBrowserActivityConfirmation(request, visitor.token, account.userId);
+      const response = json({ merged: Boolean(visitor), ...identityMetadata });
       if (transport === "web" && visitor) response.cookies.set(visitorCookieName, visitor.token, visitorCookieOptions());
       return response;
     } catch {

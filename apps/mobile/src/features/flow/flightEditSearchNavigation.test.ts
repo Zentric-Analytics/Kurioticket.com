@@ -133,7 +133,7 @@ test("changed flight edits update route params while open and close after observ
   assert.ok(submitStart >= 0 && closeStart > submitStart && effectStart > closeStart && editStart > effectStart);
   assert.match(submitHandler, /const nextPlan = buildSearchPlan\("flight", nextParams\);\s*if \(!nextPlan\.plan\) return;/);
   assert.match(submitHandler, /if \(nextPlan\.plan\.key === plan\.plan\?\.key\) \{\s*pendingFlightEditTargetKey\.current = null;\s*setEditSearchOpen\(false\);\s*return;\s*\}/);
-  assert.match(submitHandler, /pendingFlightEditTargetKey\.current = nextPlan\.plan\.key;\s*journeyEvents\.workflowDecision\("SEARCH_EDIT_APPLIED", resultsRequestId, "\/flight-results"\);\s*router\.setParams\(flightSearchRouteParamPatch\(nextParams\)\);/);
+  assert.match(submitHandler, /pendingFlightEditTargetKey\.current = nextPlan\.plan\.key;\s*journeyEvents\.workflowDecision\("SEARCH_EDIT_APPLIED", resultsRequestId, "\/flight-results", \{\s*editFields: nativeChangedJourneySearchFields\("FLIGHT", params, nextParams\),\s*\}\);\s*router\.setParams\(flightSearchRouteParamPatch\(nextParams\)\);/);
   assert.equal(submitHandler.match(/setEditSearchOpen\(false\)/g)?.length, 1, "only the same-key branch closes from submit");
   assert.ok(submitHandler.indexOf("setEditSearchOpen(false)") < submitHandler.indexOf("pendingFlightEditTargetKey.current = nextPlan.plan.key"));
   assert.match(observedKeyEffect, /const targetKey = pendingFlightEditTargetKey\.current;\s*if \(!editSearchOpen \|\| !targetKey \|\| plan\.plan\?\.key !== targetKey\) return;\s*pendingFlightEditTargetKey\.current = null;\s*setEditSearchOpen\(false\);/);

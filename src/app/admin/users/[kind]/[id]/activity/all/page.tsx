@@ -39,13 +39,13 @@ export default async function AdminAllActivityPage({params,searchParams}:Props) 
   if (!raw.to) raw.to = now.toISOString();
   const parsed = parseActivityFilters(raw,timeZone);
   const accessOrPages = parsed.ok && (parsed.filters.tab === "access" || parsed.filters.tab === "pages");
-  const incompatible = accessOrPages && (parsed.filters.product !== "all" ||
+  const incompatible = accessOrPages && (parsed.filters.product !== "all" || parsed.filters.interface ||
     (parsed.filters.stage !== "all" && !(parsed.filters.tab === "pages" && parsed.filters.stage === "PAGE_VIEW")));
   const queryParams = safeActivityQueryParams(raw);
   const newestParams = liveActivityQueryParams(raw);
-  const back = activityHref(base + "/activity",newestParams,{tab:null,stage:null,q:null,product:null});
+  const back = activityHref(base + "/activity",newestParams,{tab:null,stage:null,q:null,product:null,interface:null});
   const breadcrumb = <Link href={back} className={linkClass}><ArrowLeft size={15} aria-hidden="true"/> Back to Activity</Link>;
-  if (!parsed.ok || Array.isArray(input.cursor) || incompatible) return <div className="space-y-4">{breadcrumb}<AdminEmptyState title="Invalid activity filters" message={!parsed.ok ? parsed.error : incompatible ? "Product and travel activity types do not apply to this category." : "Invalid activity page."} action={<Link href={path} className={linkClass}>Reset filters</Link>}/></div>;
+  if (!parsed.ok || Array.isArray(input.cursor) || incompatible) return <div className="space-y-4">{breadcrumb}<AdminEmptyState title="Invalid activity filters" message={!parsed.ok ? parsed.error : incompatible ? "Product, interface and travel activity filters do not apply to this category." : "Invalid activity page."} action={<Link href={path} className={linkClass}>Reset filters</Link>}/></div>;
   const filters = parsed.filters;
   const result = await loadAdminUnifiedActivity(kind,id,filters,cursor,now);
   if (result.status === "not_found") notFound();
@@ -72,16 +72,19 @@ export default async function AdminAllActivityPage({params,searchParams}:Props) 
     journeyAction={filters.tab === "access" ? {label:"View access history",href:accessHref}
       : filters.tab === "pages" && !operational ? {label:"View page history",href:pagesHref}
       : !operational ? {label:"View journey history",href:journeysHref} : undefined}
-    filters={{timeZone,now:now.toISOString(),path,directory:queryParams.directory ?? "",usersReturn:queryParams.usersReturn,
+    filters={{timeZone,now:now.toISOString(),path,directory:queryParams.directory ?? "",usersReturn:queryParams.usersReturn,allowInterface:kind === "user",
       availableStages:operational ? ["SEARCH_COMPLETED","PROVIDER_HANDOFF_STARTED"] : undefined,
-      initial:{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order:"newest",from:filters.from,to:filters.to,range}}}
+      initial:{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,interface:filters.interface,order:"newest",from:filters.from,to:filters.to,range}}}
     activeCategory={filters.tab}
     categories={FULL_ACTIVITY_CATEGORIES.map(tab=>({...tab,...(operational && ["pages","selections","interactions"].includes(tab.value)
       ? {unavailableReason:"Not collected for this essential guest session."}
-      : {href:activityHref(path,newestParams,{tab:tab.value,cursor:null,stage:null,product:tab.value==="access"||tab.value==="pages"?null:queryParams.product ?? null,q:tab.value==="access"||tab.value==="pages"?null:queryParams.q ?? null})})}))}>
+      : {href:activityHref(path,newestParams,{tab:tab.value,cursor:null,stage:null,
+        product:tab.value==="access"||tab.value==="pages"?null:queryParams.product ?? null,
+        q:tab.value==="access"||tab.value==="pages"?null:queryParams.q ?? null,
+        interface:tab.value==="access"||tab.value==="pages"?null:queryParams.interface ?? null})})}))}>
     {cursor ? <p className="rounded-lg bg-[#F1F6FF] px-3 py-2.5 text-[13px] leading-5 text-[#475569]">You’re browsing older activity. This page keeps its position as new actions arrive. <Link href={newestHref!} className="font-medium text-[#004BB8] hover:underline">View newest activity</Link></p> : null}
     {kind==="guest"&&filters.tab==="access"?<p className="text-[12px] text-[#64748B]">Guest access observations describe recorded evidence, not authenticated device sessions.</p>:null}
-    <AdminUnifiedActivityList events={data.events} timeZone={timeZone} environment={data.environment}
+    <AdminUnifiedActivityList events={data.events} timeZone={timeZone} environment={data.environment} identity={operational ? undefined : { kind, id }} now={now}
       accessHref={accessHref} pagesHref={!operational?pagesHref:undefined} nextHref={nextHref} newestHref={newestHref} returnHref={returnHref}
       historyUnavailable={unavailableCategory || unavailableStage ? operationalUnavailable : undefined}/>
   </AdminFullActivityWorkspace>;
