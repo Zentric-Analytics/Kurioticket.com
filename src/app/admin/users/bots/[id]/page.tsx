@@ -1,33 +1,56 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { BotReportFilters } from "@/components/admin/BotReportFilters";
 import { BOT_DECISIONS, BOT_DIRECTORY, BOT_KINDS, botRecordedAccess, botDirectoryHref, botDirectoryTime, botFilters, botLabel, botName, botTime, botType, botVerification, type BotQuery } from "@/lib/adminBotReport";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
-import { searchDetailCrawlerName, searchDetailCrawlerEvidenceLabel } from "@/lib/adminSearchDetailPresentation";
+import { searchActivityReturnHref } from "@/lib/adminSearchActivityNavigation";
 import { readBotDetails } from "@/services/adminBotReportService";
-import { historicalVerificationLabel } from "@/services/adminBotHistory";
-import { BOT_DAILY_SEARCH_LIMIT, BOT_SEARCH_COOLDOWN_MS } from "@/services/botActivityStore";
-import { BotIcon, Metrics, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel, reportRow } from "../report-ui";
+import { RequestEvidence } from "./request-evidence";
+import { BotIcon, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel, reportRow } from "../report-ui";
 
 function Fields({ entries, threeColumns = false }: { entries: [string, ReactNode][]; threeColumns?: boolean }) {
-  return <dl className={"grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2" + (threeColumns ? " lg:grid-cols-3" : "")}>
+  return <dl className={"grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2" + (threeColumns ? " md:grid-cols-3" : "")}>
     {entries.map(([label, value]) => <div key={label} className="min-w-0">
       <dt className="text-xs text-slate-600">{label}</dt>
-      <dd className="mt-0.5 break-words text-[13px] text-slate-950">{value ?? "Not recorded"}</dd>
+      <dd className="mt-0.5 wrap-anywhere text-sm text-slate-950">{value ?? "—"}</dd>
     </div>)}
   </dl>;
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
-  return <section className={reportPanel + " space-y-3 p-4"}>
-    <h2 className="text-sm font-semibold text-slate-950">{title}</h2>
+  return <section className={reportPanel + " space-y-4 p-4 sm:p-5"}>
+    <h2 className="text-base font-semibold text-slate-950">{title}</h2>
     {children}
   </section>;
 }
 
-const activityColumns = ["Time (UTC)", "Activity / Endpoint", "Decision", "Outcome / Evidence"];
+const activityColumns = ["Time (UTC)", "Activity", "Decision", "Outcome / Evidence", "Action"];
+const numberFormat = new Intl.NumberFormat("en-US");
+const decisionStyles: Record<string, string> = {
+  ALLOWED: "bg-emerald-50 text-emerald-800",
+  DENIED: "bg-rose-50 text-rose-800",
+  RATE_LIMITED: "bg-amber-50 text-amber-900",
+};
+
+function responseOutcome(status: number | null) {
+  if (status === null) return "—";
+  if (status === 304) return "Resource unchanged";
+  if (status === 404) return "Resource not found";
+  if (status === 429) return "Too many requests";
+  if (status >= 500) return "Server error";
+  if (status >= 400) return "Client error";
+  if (status >= 300) return "Redirected";
+  return "Response sent";
+}
+
+function ActivityCell({ column, children }: { column: string; children: ReactNode }) {
+  return <td role="cell" className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] gap-2 md:table-cell">
+    <span aria-hidden="true" className="text-xs font-medium text-slate-600 md:hidden">{column}</span>
+    <div className="min-w-0">{children}</div>
+  </td>;
+}
 
 export default async function BotDetailsPage({ params, searchParams }: {
   params: Promise<{ id: string }>;
@@ -43,194 +66,138 @@ export default async function BotDetailsPage({ params, searchParams }: {
   </Link>;
   if (report.state === "unavailable") return <div className="space-y-3">{backLink}<ReportUnavailable /></div>;
 
-  const { bot, networkSummary, quota, filters } = report;
-  const cooldownMinutes = BOT_SEARCH_COOLDOWN_MS / 60_000;
+  const { bot, countries, filters } = report;
   const activityParams = new URLSearchParams(Object.entries({
     directory, range: filters.range, from: filters.from, to: filters.to,
     kind: filters.kind ?? "", decision: filters.decision ?? "",
-    searchPage: report.searchPage > 1 ? String(report.searchPage) : "",
   }).filter(([, value]) => value));
-  const searchParamsForPagination = new URLSearchParams(activityParams);
-  if (report.page > 1) searchParamsForPagination.set("page", String(report.page));
+  const botSearchesHref = searchActivityReturnHref({ identity: "bot", botId: bot.id, range: "all" });
   const searchHref = (searchId: string) => "/admin/searches/" + encodeURIComponent(searchId) + "?environment=" + getPublicEnvironment();
-  const latest = networkSummary.latestIp;
-  const sourceTitle = latest ? latest.provenance + " · " + botTime(new Date(latest.timestamp + "Z")) + " UTC"
-    + (latest.botId !== bot.id ? " · Related identity with same bot name" : "") : undefined;
-  const latestIp = !latest ? null : latest.source === "search"
-    ? <Link prefetch={false} className={reportLink} href={searchHref(latest.id)} title={sourceTitle}
-        aria-label={latest.ip + " — view original recorded search"}>{latest.ip}</Link>
-    : latest.botId !== bot.id
-      ? <Link prefetch={false} className={reportLink}
-          href={BOT_DIRECTORY + "/" + latest.botId + (directory ? "?directory=" + encodeURIComponent(directory) : "")}
-          title={sourceTitle} aria-label={latest.ip + " — view related recorded identity"}>{latest.ip}</Link>
-      : <span title={sourceTitle}>{latest.ip}</span>;
-  return <div className="min-w-0 space-y-3">
+  const category = bot.group === "SEARCH_ENGINE" ? "Search engine"
+    : bot.group === "OTHER_RECOGNIZED" ? "Other recognized" : "Unknown";
+  const metrics = [
+    { label: "Total Requests", value: bot.requests },
+    { label: "Allowed Requests", value: bot.allowed },
+    { label: "Denied Requests", value: bot.denied },
+    { label: "Rate-limited Requests", value: bot.rateLimited },
+    { label: "Search Attempts", value: bot.searchAttempts },
+    { label: "Searches Dispatched", value: bot.searches },
+    { label: "Actual Searches", value: report.actual, href: botSearchesHref },
+  ];
+
+  return <div className="min-w-0 space-y-4">
     <header className="space-y-3">
       {backLink}
-      <div className="flex items-center gap-3">
-        <BotIcon />
-        <div>
-          <h1 className="text-xl font-semibold text-slate-950">{botName(bot)}</h1>
-          <p className="text-[13px] text-slate-600">{botType(bot)} · {report.reportVerification.label} · {botRecordedAccess(bot)}</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <BotIcon />
+          <div className="min-w-0">
+            <h1 className="wrap-anywhere text-xl font-semibold text-slate-950">{botName(bot)}</h1>
+            <p className="text-[13px] text-slate-600">{botType(bot)} · {report.reportVerification.label} · {botRecordedAccess(bot)}</p>
+          </div>
         </div>
+        <Link prefetch={false} href={botSearchesHref}
+          className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#004BB8] px-3.5 text-[13px] font-medium text-white hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+          View bot searches <ArrowRight size={15} aria-hidden="true" />
+        </Link>
       </div>
     </header>
     <Section title="Bot Information">
       <Fields threeColumns entries={[
         ["Owner", bot.owner],
-        ["Category", botType(bot)],
+        ["Category", category],
         ["Verification status", report.reportVerification.label],
-        ["Latest IP address", latestIp],
-        ["Countries", networkSummary.countries.length
-          ? <span title="Countries observed in recorded searches and requests for this bot name; not proof of current identity">{networkSummary.countries.join(", ")}</span>
-          : null],
-        ["First seen (UTC)", <span key="first-seen" title={botTime(bot.firstSeen)}>{botDirectoryTime(bot.firstSeen)}</span>],
-        ["Last seen (UTC)", <span key="last-seen" title={botTime(bot.lastSeen)}>{botDirectoryTime(bot.lastSeen)}</span>],
+        ["Country", countries.length ? <span title="Countries observed in recorded requests and searches for this bot name">{countries.join(", ")}</span> : null],
+        ["First seen (UTC)", <time key="first-seen" dateTime={bot.firstSeen.toISOString()} title={botTime(bot.firstSeen)}>{botDirectoryTime(bot.firstSeen)}</time>],
+        ["Last seen (UTC)", <time key="last-seen" dateTime={bot.lastSeen.toISOString()} title={botTime(bot.lastSeen)}>{botDirectoryTime(bot.lastSeen)}</time>],
       ]} />
     </Section>
     <Section title="Activity Summary">
-      <p className="text-xs text-slate-600">Lifetime registry totals</p>
-      <Metrics labels={["Total requests", "Allowed requests", "Denied requests", "Rate-limited requests", "Search attempts", "Searches dispatched", "Policy violations"]}
-        values={[bot.requests, bot.allowed, bot.denied, bot.rateLimited, bot.searchAttempts, bot.searches, bot.violations]} />
-      <div className="border-t border-[#D8E1EC] pt-3">
-        <Metrics labels={["Actual searches (all time)", "Historical searches without a retained request"]} values={[report.actual, report.historicalActual]} />
-      </div>
-    </Section>
-    {quota && <Section title="Search Allowance">
-      <Fields entries={[
-        ["Daily search limit", BOT_DAILY_SEARCH_LIMIT], ["Searches used today (UTC)", quota.used],
-        ["Remaining allowance", quota.remaining], ["Minimum search interval", cooldownMinutes + " minutes"],
-        ["Last search dispatch (UTC)", botTime(quota.last)], ["Next permitted search time (UTC)", botTime(quota.next)],
-      ]} />
-      <progress aria-label="Daily search allowance used" className="block h-2 w-full max-w-64 accent-[#004BB8]" max={BOT_DAILY_SEARCH_LIMIT} value={quota.used} />
-      <p className="text-xs text-slate-600">Flights, Hotels, Cars and Packages share the allowance. It resets at midnight UTC and the cooldown continues across midnight.</p>
-    </Section>}
-    <Section title="Recorded Searches">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
-        <span>All time · Actual searches only · One row per counted Search History record</span>
-        <Link prefetch={false} className={reportLink} href="/admin/searches/activity?identity=bot&range=all">View all bot searches</Link>
-      </div>
-      {report.relatedCohorts.length > 0 && <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
-        <span>Other recorded identities with the same declared name</span>
-        {report.relatedCohorts.map(cohort => <Link key={cohort.id} prefetch={false} className={reportLink}
-          href={BOT_DIRECTORY + "/" + cohort.id + (directory ? "?directory=" + encodeURIComponent(directory) : "")}>
-          {botVerification(cohort.verification)} · {cohort.count.toLocaleString()} searches
-        </Link>)}
-      </div>}
-      <div className={reportPanel}>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[850px] text-left text-[13px] text-slate-700">
-            <thead className={reportHead}><tr>{["Time (UTC)", "Bot", "Product", "Verification at search", "IP address", "Country", "Outcome / Results", "Action"].map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead>
-            <tbody>
-              {report.recordedSearches.map(search => <tr key={search.id} className={reportRow + " align-top"}>
-                <td className="whitespace-nowrap tabular-nums">{botTime(search.createdAt)}</td>
-                <td>{searchDetailCrawlerName(search.crawler?.name)}</td>
-                <td>{botLabel(search.product)}</td>
-                <td>{searchDetailCrawlerEvidenceLabel(search.crawler?.evidence)}</td>
-                <td className="break-all">{search.network.ipAddress ?? "Not recorded"}</td>
-                <td>{search.network.countryCode ?? "Not recorded"}</td>
-                <td>{botLabel(search.status)} · {search.resultCount.toLocaleString()}</td>
-                <td><Link prefetch={false} className={reportLink} href={searchHref(search.id)}>View details</Link></td>
-              </tr>)}
-              {report.actual === 0 && <tr><td colSpan={8} className="px-3 py-5">No actual searches recorded for this identity</td></tr>}
-            </tbody>
-          </table>
-        </div>
-        {report.actual > 0 && <ReportPagination path={BOT_DIRECTORY + "/" + bot.id} params={searchParamsForPagination}
-          page={report.searchPage} total={report.actual} label="Recorded searches" pageParam="searchPage" />}
-      </div>
+      <dl className="grid auto-rows-fr grid-cols-2 gap-3 md:grid-cols-4">
+        {metrics.map(({ label, value, href }) => <div key={label} className={reportPanel + " min-w-0 p-3"}>
+          <dt className="text-xs font-medium text-slate-600">{label}</dt>
+          <dd className="mt-1 wrap-anywhere text-xl font-semibold tabular-nums text-slate-950">
+            {value == null ? <span className="text-sm font-medium">Not tracked</span> : numberFormat.format(value)}
+          </dd>
+          {href && <dd className="mt-1 text-xs">
+            <Link prefetch={false} href={href} className={reportLink}>Open in Search Activity <span aria-hidden="true">→</span></Link>
+          </dd>}
+        </div>)}
+      </dl>
     </Section>
     <Section title="Activity History">
-      <p className="text-xs text-slate-600">Retained requests and historical searches, newest first. Older searches without a retained request do not establish access decisions, HTTP status or provider dispatch. Page delivery and indexing are outside these observations.</p>
       <BotReportFilters filters={filters} now={new Date().toISOString()} history />
       {report.total !== null && <div className={reportPanel}>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left text-[13px] text-slate-700">
-            <thead className={reportHead}><tr>{activityColumns.map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead>
-            <tbody>
-              {report.events.map(event => {
-                if (event.source === "search") return <tr key={"search:" + event.id} className={reportRow + " align-top"}>
-                  <td className="whitespace-nowrap tabular-nums">{botTime(event.timestamp)}</td>
-                  <td><p className="font-medium text-slate-950">Historical search</p><p>{botLabel(event.product)}</p></td>
-                  <td>Not recorded</td>
-                  <td className="w-2/5">
-                    <p>{botLabel(event.status)} · {event.resultCount.toLocaleString()} results</p>
-                    <details className="mt-1">
-                      <summary className={reportLink + " cursor-pointer"}>View evidence</summary>
-                      <div className="mt-3">
-                        <Fields entries={[
-                          ["Bot reference ID", bot.id], ["Recorded search request", event.requestId],
-                          ["IP address (saved search)", event.ipAddress],
-                          ["Country (saved search)", event.countryCode],
-                          ["Verification at search", historicalVerificationLabel(event.evidence)],
-                          ["Access decision", "Not recorded"],
-                          ["Related recorded search", <Link key={event.id} className={reportLink} prefetch={false} href={searchHref(event.id)}>View search record</Link>],
-                        ]} />
-                      </div>
-                    </details>
-                  </td>
-                </tr>;
-                const decision = BOT_DECISIONS.find(item => item.value === event.decision)?.label ?? botLabel(event.decision);
-                return <tr key={"activity:" + event.id} className={reportRow + " align-top"}>
-                  <td className="whitespace-nowrap tabular-nums">{botTime(event.timestamp)}</td>
-                  <td>
-                    <p className="font-medium text-slate-950">{BOT_KINDS.find(item => item.value === event.kind)?.label ?? botLabel(event.kind)}</p>
-                    <code className="break-all text-xs">{event.endpoint}</code>
-                  </td>
-                  <td className={event.decision === "DENIED" || event.decision === "RATE_LIMITED" ? "text-rose-700" : undefined}>{decision}</td>
-                  <td className="w-2/5">
-                    <p>{event.search ? botLabel(event.search.status) : event.executionOutcome ? botLabel(event.executionOutcome)
-                      : event.responseStatus ? "HTTP " + event.responseStatus : "Not recorded"}</p>
-                    <details className="mt-1">
-                      <summary className={reportLink + " cursor-pointer"}>View evidence</summary>
-                      <div className="mt-3">
-                        <Fields entries={[
-                          ["Bot reference ID", bot.id], ["Request reference", event.id], ["HTTP method", event.method], ["Recorded endpoint", event.endpoint],
-                          ["IP address", event.ip], ["Country", event.country], ["Declared bot identity", event.declaredName],
-                          ...(event.search ? [
-                            ["IP address (linked search)", event.search.network.ipAddress],
-                            ["Country (linked search)", event.search.network.countryCode],
-                          ] as [string, ReactNode][] : []),
-                          ["Network ASN", event.networkAsn ? "AS" + event.networkAsn : null], ["Network organization", event.networkOrganization],
-                          ["Network evidence source", event.networkSource ? botLabel(event.networkSource) : null], ["Cloudflare Ray ID", event.edgeRay],
-                          ["Render request ID", event.renderRequestId],
-                          ...(event.reportedIp || event.reportedCountry ? [
-                            ["Reported IP (not authenticated)", event.reportedIp],
-                            ["Reported country (not authenticated)", event.reportedCountry],
-                          ] as [string, ReactNode][] : []),
-                          ...(event.renderLogIp || event.renderLogCountry ? [
-                            ["IP address from Render log", event.renderLogIp],
-                            ["Country estimate from logged IP", event.renderLogCountry],
-                            ["Render log time (UTC)", botTime(event.renderLogTimestamp)],
-                            ["Evidence recovered (UTC)", botTime(event.renderLogRecoveredAt)],
-                            ["Retrospective identity evidence", event.renderLogCorroboration ? botLabel(event.renderLogCorroboration) : "Not confirmed"],
-                          ] as [string, ReactNode][] : []),
-                          ["Recorded User-Agent token", event.userAgent],
-                          ["Verification evidence", event.evidence ? botLabel(event.evidence) : null],
-                          ...(event.networkEvidence ? [
-                            ["Network check", event.networkEvidence.label],
-                            ["Network check basis", event.networkEvidence.detail],
-                          ] as [string, ReactNode][] : []),
-                          ["Access decision", decision], ["Reason", botLabel(event.reason)], ["HTTP response status", event.responseStatus],
-                          ["Search dispatch (UTC)", botTime(event.dispatchedAt)],
-                          ["Search outcome", event.search ? botLabel(event.search.status) + " · " + event.search.resultCount + " results"
-                            : event.executionOutcome ? botLabel(event.executionOutcome) : null],
-                          ["Request duration", event.durationMs === null ? null : event.durationMs + " ms"],
-                          ["Related recorded search", event.search ? <Link className={reportLink} prefetch={false}
-                            href={"/admin/searches/" + encodeURIComponent(event.search.id) + "?environment=" + getPublicEnvironment()}>View search record</Link> : null],
-                          ["Related provider calls", event.providers.length ? <ul className="space-y-1">
-                            {event.providers.map(provider => <li key={provider.id}>{provider.provider} · {provider.service} · {botLabel(provider.status)}</li>)}
-                          </ul> : null],
-                        ]} />
-                      </div>
-                    </details>
-                  </td>
-                </tr>;
-              })}
-              {report.total === 0 && <tr><td colSpan={4} className="px-3 py-5">No recorded activity matches your filters</td></tr>}
-            </tbody>
-          </table>
-        </div>
+        <table role="table" aria-label="Bot request activity" className="block w-full text-left text-[13px] text-slate-700 md:table">
+          <thead role="rowgroup" className={reportHead + " sr-only md:not-sr-only"}>
+            <tr role="row">{activityColumns.map(column => <th role="columnheader" scope="col" key={column}>{column}</th>)}</tr>
+          </thead>
+          <tbody role="rowgroup" className="block md:table-row-group">
+            {report.events.map(event => {
+              const decision = BOT_DECISIONS.find(item => item.value === event.decision)?.label ?? botLabel(event.decision);
+              const outcome = event.search ? "Search " + botLabel(event.search.status).toLowerCase()
+                : event.executionOutcome ? botLabel(event.executionOutcome)
+                : responseOutcome(event.responseStatus);
+              return <tr key={event.id} role="row" className={reportRow + " block space-y-2 p-3 align-top max-md:[&>td]:p-0 md:table-row md:space-y-0 md:p-0"}>
+                <ActivityCell column={activityColumns[0]}>
+                  <time dateTime={event.timestamp.toISOString()} className="tabular-nums">{botTime(event.timestamp)}</time>
+                </ActivityCell>
+                <ActivityCell column={activityColumns[1]}>
+                  <span className="font-medium text-slate-950">{BOT_KINDS.find(item => item.value === event.kind)?.label ?? botLabel(event.kind)}</span>
+                </ActivityCell>
+                <ActivityCell column={activityColumns[2]}>
+                  <span className={"inline-block rounded-full px-2 py-0.5 text-xs font-medium " + (decisionStyles[event.decision] ?? "bg-slate-100 text-slate-700")}>{decision}</span>
+                </ActivityCell>
+                <ActivityCell column={activityColumns[3]}>{outcome}</ActivityCell>
+                <ActivityCell column={activityColumns[4]}>
+                  <RequestEvidence>
+                    <Fields entries={[
+                      ["Request ID", event.id], ["Recorded path", event.endpoint], ["HTTP method", event.method],
+                      ["Request timestamp (UTC)", botTime(event.timestamp)], ["Bot reference ID", bot.id],
+                      ["IP address", event.ip], ["Country", event.country], ["Declared bot identity", event.declaredName],
+                      ...(event.search ? [
+                        ["IP address (linked search)", event.search.network.ipAddress],
+                        ["Country (linked search)", event.search.network.countryCode],
+                      ] as [string, ReactNode][] : []),
+                      ["Network ASN", event.networkAsn ? "AS" + event.networkAsn : null], ["Network organization", event.networkOrganization],
+                      ["Network evidence source", event.networkSource ? botLabel(event.networkSource) : null], ["Cloudflare Ray ID", event.edgeRay],
+                      ["Render request ID", event.renderRequestId],
+                      ...(event.reportedIp || event.reportedCountry ? [
+                        ["Reported IP (not authenticated)", event.reportedIp],
+                        ["Reported country (not authenticated)", event.reportedCountry],
+                      ] as [string, ReactNode][] : []),
+                      ...(event.renderLogIp || event.renderLogCountry ? [
+                        ["IP address from Render log", event.renderLogIp],
+                        ["Country estimate from logged IP", event.renderLogCountry],
+                        ["Render log time (UTC)", event.renderLogTimestamp && botTime(event.renderLogTimestamp)],
+                        ["Evidence recovered (UTC)", event.renderLogRecoveredAt && botTime(event.renderLogRecoveredAt)],
+                        ["Retrospective identity evidence", event.renderLogCorroboration ? botLabel(event.renderLogCorroboration) : "Not confirmed"],
+                      ] as [string, ReactNode][] : []),
+                      ["Recorded User-Agent token", event.userAgent],
+                      ["Recorded verification status", botVerification(event.verification)],
+                      ["Verification evidence", event.evidence ? botLabel(event.evidence) : null],
+                      ...(event.networkEvidence ? [
+                        ["Network check", event.networkEvidence.label],
+                        ["Network check basis", event.networkEvidence.detail],
+                      ] as [string, ReactNode][] : []),
+                      ["Access decision", decision], ["Reason", botLabel(event.reason)], ["HTTP response status", event.responseStatus],
+                      ["Search dispatch (UTC)", event.dispatchedAt && botTime(event.dispatchedAt)],
+                      ["Search outcome", event.search ? botLabel(event.search.status) + " · " + event.search.resultCount + " results"
+                        : event.executionOutcome ? botLabel(event.executionOutcome) : null],
+                      ["Request duration", event.durationMs === null ? null : event.durationMs + " ms"],
+                      ["Related recorded search", event.search ? <Link className={reportLink} prefetch={false}
+                        href={searchHref(event.search.id)}>View search record</Link> : null],
+                      ["Related provider calls", event.providers.length ? <ul className="space-y-1">
+                        {event.providers.map(provider => <li key={provider.id}>{provider.provider} · {provider.service} · {botLabel(provider.status)}</li>)}
+                      </ul> : null],
+                    ]} />
+                  </RequestEvidence>
+                </ActivityCell>
+              </tr>;
+            })}
+            {report.total === 0 && <tr role="row" className="block md:table-row"><td role="cell" colSpan={5} className="block px-3 py-5 md:table-cell">No recorded requests match your filters.</td></tr>}
+          </tbody>
+        </table>
         {report.total > 0 && <ReportPagination path={BOT_DIRECTORY + "/" + bot.id} params={activityParams}
           page={report.page} total={report.total} label="Bot activity" />}
       </div>}

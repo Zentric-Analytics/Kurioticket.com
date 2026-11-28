@@ -63,18 +63,25 @@ export type HistoricalBotSearch = {
 
 export type BotHistoryPointer = { id: string; timestamp: Date; source: "activity" | "search" };
 
-export function combinedBotHistory(environment: string, botId: string, identityKey: string, filters: {
+type BotHistoryFilters = {
   window: BotReportWindow;
   kind?: string;
   decision?: string;
-}, historicalSource = Prisma.sql`SELECT id, timestamp FROM (${historicalBotSearches(environment)}) history WHERE "identityKey" = ${identityKey}`) {
-  const live = filters.kind === "HISTORICAL_SEARCH" ? Prisma.empty : Prisma.sql`
+};
+
+export function botRequestHistory(environment: string, botId: string, filters: BotHistoryFilters) {
+  return Prisma.sql`
     SELECT id, timestamp, 'activity'::text AS source FROM "BotActivity"
     WHERE environment = ${environment} AND "botId" = ${botId}
     ${botHistoryWindow(filters.window)}
     ${filters.kind ? Prisma.sql`AND kind = ${filters.kind}` : Prisma.empty}
     ${filters.decision ? Prisma.sql`AND decision = ${filters.decision}` : Prisma.empty}
   `;
+}
+
+export function combinedBotHistory(environment: string, botId: string, identityKey: string, filters: BotHistoryFilters,
+  historicalSource = Prisma.sql`SELECT id, timestamp FROM (${historicalBotSearches(environment)}) history WHERE "identityKey" = ${identityKey}`) {
+  const live = filters.kind === "HISTORICAL_SEARCH" ? Prisma.empty : botRequestHistory(environment, botId, filters);
   const includeHistorical = !filters.decision && (!filters.kind || filters.kind === "HISTORICAL_SEARCH");
   const historical = includeHistorical ? Prisma.sql`
     SELECT id, timestamp, 'search'::text AS source FROM (${historicalSource}) history
