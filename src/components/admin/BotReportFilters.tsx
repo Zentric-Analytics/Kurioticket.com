@@ -81,6 +81,8 @@ export function BotReportFilters({ filters, now, history = false, details }: {
   }
 
   const invalid = range === "custom" && !adminCustomDateRange(from, to, new Date(now), "UTC");
+  const awaitingScope = range !== filters.range ||
+    (range === "custom" && (from !== filters.from || to !== filters.to));
   const rangeControl = <SearchMonitorSelect label={history ? "Time range" : "Date range"} name="range" value={range} options={ADMIN_REPORTING_RANGE_OPTIONS}
         timeZoneLabel="UTC" appearance="fare" align={history && !details ? "start" : "end"} truncateLabel
         onValueChange={value => {
@@ -124,12 +126,12 @@ export function BotReportFilters({ filters, now, history = false, details }: {
         <div className="w-full min-w-0 sm:w-52">{rangeControl}</div>
       </div>
       {customDates}
-      {!invalid && details.summary}
+      {!invalid && (awaitingScope ? <p role="status" className="text-xs text-slate-600">Updating activity…</p> : details.summary)}
     </section>
     <section className={details.sectionClassName}>
       <h2 className="text-base font-semibold text-slate-950">Activity History</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{historyControls}</div>
-      {!invalid && details.history}
+      {!invalid && !awaitingScope && details.history}
     </section>
   </>;
 

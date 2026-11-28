@@ -119,7 +119,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
           </div>)}
         </dl>
         {report.requestSummary === null && filters.window !== null &&
-          <p className="text-xs text-slate-600">Request totals are not tracked for the full selected period because detailed records have expired.</p>}
+          <p className="text-xs text-slate-600">Request history may be incomplete outside the 90-day retention period.</p>}
         <div className="flex justify-end">
           <Link prefetch={false} href={botSearchesHref} className={reportLink + " text-xs"}>Open in Search Activity <span aria-hidden="true">→</span></Link>
         </div>
