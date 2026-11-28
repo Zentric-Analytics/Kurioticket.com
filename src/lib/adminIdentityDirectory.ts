@@ -1,4 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
+import { directAccountAnalyticsSql } from "./adminAnalyticsVisibility";
 import { adminCalendarRange, adminLocalDate, adminStartOfLocalDay } from "./adminLocalTime";
 import { adminRollingRange } from "./adminReportingRanges";
 
@@ -38,31 +39,6 @@ export function adminIdentityDateBounds(date: AdminIdentityDate, now = new Date(
   return { from: monthStart(-2), to: monthStart(1) };
 }
 
-/** An existing registered account is discoverable when it was created OR
- * when an authenticated session, search or handoff was observed in the range.
- * Keep this predicate identical to the SQL directory read below so counts,
- * identifiers and account revalidation cannot disagree.
- *
- * A session has no environment label; search/handoff records must match the
- * deployment environment before they can qualify the account.
- */
-export function adminRegisteredActivityDateWhere(
-  bounds: { from: Date; to?: Date } | null,
-  environment: "staging" | "production",
-): Prisma.UserWhereInput {
-  if (!bounds) return {};
-  const at = { gte: bounds.from, ...(bounds.to ? { lt: bounds.to } : {}) };
-  return {
-    OR: [
-      { createdAt: at },
-      { accountSessions: { some: { lastSeenAt: at } } },
-      { searchHistory: { some: { createdAt: at, query: { path: ["environment"], equals: environment } } } },
-      { redirectLogs: { some: { createdAt: at, metadata: { path: ["environment"], equals: environment } } } },
-      { apiEvents: { some: { createdAt: at, metadata: { path: ["environment"], equals: environment } } } },
-    ],
-  };
-}
-
 /** Same account-owned recorded-observation calculation for Directory and Activity.
  * Session observations are independent of journey-event filters; searches,
  * handoffs and analytics are scoped to the active deployment environment. */
@@ -74,8 +50,7 @@ export function adminRegisteredLastSeenSql(environment: "staging" | "production"
         WHERE s."userId" = u."id" AND s."query"->>'environment' = ${environment}),
       (SELECT MAX(r."createdAt") FROM "RedirectLog" r
         WHERE r."userId" = u."id" AND r."metadata"->>'environment' = ${environment}),
-      (SELECT MAX(e."createdAt") FROM "AnalyticsEvent" e
-        WHERE e."userId" = u."id" AND e."metadata"->>'environment' = ${environment})
+      (SELECT MAX(evidence."createdAt") FROM (${directAccountAnalyticsSql(environment)}) evidence)
     )
   `;
 }
@@ -126,16 +101,65 @@ export type AdminIdentityPageRequest = {
   timeZone?: string;
 };
 
+/** One predicate for listing and counting, so optional analytics cannot keep
+ * an account visible in the selected period after its Visitor withdraws. */
+function registeredIdentityPredicate(
+  { query, role, status }: Pick<AdminIdentityPageRequest, "query" | "role" | "status">,
+  bounds: ReturnType<typeof adminIdentityDateBounds>,
+  environment: "staging" | "production",
+) {
+  return Prisma.sql`
+    ${bounds ? Prisma.sql`AND (
+      (u."createdAt" >= ${bounds.from}
+        ${bounds.to ? Prisma.sql`AND u."createdAt" < ${bounds.to}` : Prisma.empty})
+      OR EXISTS (
+        SELECT 1 FROM "AccountSession" a
+        WHERE a."userId" = u."id" AND a."lastSeenAt" >= ${bounds.from}
+          ${bounds.to ? Prisma.sql`AND a."lastSeenAt" < ${bounds.to}` : Prisma.empty}
+      )
+      OR EXISTS (
+        SELECT 1 FROM "SearchHistory" s
+        WHERE s."userId" = u."id" AND s."createdAt" >= ${bounds.from}
+          ${bounds.to ? Prisma.sql`AND s."createdAt" < ${bounds.to}` : Prisma.empty}
+          AND s."query"->>'environment' = ${environment}
+      )
+      OR EXISTS (
+        SELECT 1 FROM "RedirectLog" r
+        WHERE r."userId" = u."id" AND r."createdAt" >= ${bounds.from}
+          ${bounds.to ? Prisma.sql`AND r."createdAt" < ${bounds.to}` : Prisma.empty}
+          AND r."metadata"->>'environment' = ${environment}
+      )
+      OR EXISTS (${directAccountAnalyticsSql(environment, bounds)})
+    )` : Prisma.empty}
+    ${query ? Prisma.sql`AND (
+      strpos(lower(COALESCE(u."name", '')), lower(${query})) > 0
+      OR strpos(lower(COALESCE(u."email", '')), lower(${query})) > 0
+      OR strpos(lower(u."id"), lower(${query})) > 0
+    )` : Prisma.empty}
+    ${role !== "ALL" ? Prisma.sql`AND u."role"::text = ${role}` : Prisma.empty}
+    ${status !== "ALL" ? Prisma.sql`AND u."status"::text = ${status}` : Prisma.empty}
+  `;
+}
+
+export function adminRegisteredIdentityCountSql(input: Pick<AdminIdentityPageRequest,
+  "query" | "role" | "status" | "environment" | "date" | "now" | "from" | "to" | "timeZone">) {
+  const bounds = adminIdentityDateBounds(input.date ?? "all", input.now, input.from, input.to, input.timeZone);
+  return Prisma.sql`
+    SELECT COUNT(*) AS "count" FROM "User" u WHERE TRUE
+      ${registeredIdentityPredicate(input, bounds, input.environment ?? "production")}
+  `;
+}
+
 /**
  * Page the combined identity timeline IN PostgreSQL, rather than putting all
  * registered accounts before guests or loading every record into memory.
  *
- * Filters intentionally mirror Admin Users' Prisma count queries. In
- * particular, analytics visitor records must be consented and unlinked;
- * essential-only guests are represented by their operational session ID.
+ * Counts and listing share the registered eligibility predicate.
+ * Guest Visitors must be consented and unlinked. Essential-only guests
+ * are represented by their operational session ID.
  */
 export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sql | null {
-  const { query, role, status, showUsers, showGuests, limit, offset } = input;
+  const { query, status, showUsers, showGuests, limit, offset } = input;
   const showOperationalGuests = input.showOperationalGuests ?? false;
   const environment = input.environment ?? "production";
   const sort = parseAdminIdentitySort(input.sort);
@@ -216,40 +240,7 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
         ${adminRegisteredLastSeenSql(environment)} AS "lastSeenAt", NULL::text AS "guestSource", NULL::text AS "guestStatus"
       FROM "User" u
       WHERE TRUE
-        ${bounds ? Prisma.sql`AND (
-          (u."createdAt" >= ${bounds.from}
-            ${bounds.to ? Prisma.sql`AND u."createdAt" < ${bounds.to}` : Prisma.empty})
-          OR EXISTS (
-            SELECT 1 FROM "AccountSession" a
-            WHERE a."userId" = u."id" AND a."lastSeenAt" >= ${bounds.from}
-              ${bounds.to ? Prisma.sql`AND a."lastSeenAt" < ${bounds.to}` : Prisma.empty}
-          )
-          OR EXISTS (
-            SELECT 1 FROM "SearchHistory" s
-            WHERE s."userId" = u."id" AND s."createdAt" >= ${bounds.from}
-              ${bounds.to ? Prisma.sql`AND s."createdAt" < ${bounds.to}` : Prisma.empty}
-              AND s."query"->>'environment' = ${environment}
-          )
-          OR EXISTS (
-            SELECT 1 FROM "RedirectLog" r
-            WHERE r."userId" = u."id" AND r."createdAt" >= ${bounds.from}
-              ${bounds.to ? Prisma.sql`AND r."createdAt" < ${bounds.to}` : Prisma.empty}
-              AND r."metadata"->>'environment' = ${environment}
-          )
-          OR EXISTS (
-            SELECT 1 FROM "AnalyticsEvent" e
-            WHERE e."userId" = u."id" AND e."createdAt" >= ${bounds.from}
-              ${bounds.to ? Prisma.sql`AND e."createdAt" < ${bounds.to}` : Prisma.empty}
-              AND e."metadata"->>'environment' = ${environment}
-          )
-        )` : Prisma.empty}
-        ${query ? Prisma.sql`AND (
-          strpos(lower(COALESCE(u."name", '')), lower(${query})) > 0
-          OR strpos(lower(COALESCE(u."email", '')), lower(${query})) > 0
-          OR strpos(lower(u."id"), lower(${query})) > 0
-        )` : Prisma.empty}
-        ${role !== "ALL" ? Prisma.sql`AND u."role"::text = ${role}` : Prisma.empty}
-        ${status !== "ALL" ? Prisma.sql`AND u."status"::text = ${status}` : Prisma.empty}
+        ${registeredIdentityPredicate(input, bounds, environment)}
     `);
   }
 

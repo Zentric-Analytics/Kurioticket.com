@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
-  adminIdentityPageSql, adminRegisteredActivityDateWhere, escapePrismaContainsQuery, parseAdminIdentitySort,
+  adminIdentityPageSql, adminRegisteredIdentityCountSql, escapePrismaContainsQuery, parseAdminIdentitySort,
   type AdminIdentityPageRequest,
 } from "./adminIdentityDirectory";
 
@@ -74,8 +74,11 @@ test("filters and page bounds remain parameterized even when sorting by name", (
   assert.deepEqual(result.values.slice(-2), [100, 100]);
 });
 
-test("registered-only list never joins guests and empty selection is empty", () => {
-  assert.doesNotMatch(sql({ ...base, showGuests: false }).text, /"Visitor"/);
+test("registered-only list validates Visitor-backed evidence without admitting the guest cohort", () => {
+  const result = sql({ ...base, showGuests: false });
+  assert.doesNotMatch(result.text, /'guest'::text AS "kind"/);
+  assert.match(result.text, /v\."currentUserId" = u\."id"/);
+  assert.match(result.text, /v\."consentStatus" = 'GRANTED'/);
   assert.equal(adminIdentityPageSql({ ...base, showUsers: false, showGuests: false }), null);
 });
 
@@ -169,15 +172,17 @@ test("metric summary is returned even when the directory has no selected identit
 test("Today includes returning account sessions and environment-scoped searches/handoffs", () => {
   const now = new Date("2026-11-20T08:00:00.000Z");
   const start = new Date("2026-11-20T00:00:00.000Z");
-  const where = adminRegisteredActivityDateWhere({ from: start, to: now }, "staging");
-  assert.ok(where.OR);
-  assert.equal(where.OR.length, 5);
-  assert.deepEqual(where.OR[0], { createdAt: { gte: start, lt: now } });
-  assert.deepEqual(where.OR[1], { accountSessions: { some: { lastSeenAt: { gte: start, lt: now } } } });
-  assert.deepEqual(where.OR[2], { searchHistory: { some: { createdAt: { gte: start, lt: now }, query: { path: ["environment"], equals: "staging" } } } });
-  assert.deepEqual(where.OR[3], { redirectLogs: { some: { createdAt: { gte: start, lt: now }, metadata: { path: ["environment"], equals: "staging" } } } });
-  assert.deepEqual(where.OR[4], { apiEvents: { some: { createdAt: { gte: start, lt: now }, metadata: { path: ["environment"], equals: "staging" } } } });
-  assert.deepEqual(adminRegisteredActivityDateWhere(null, "staging"), {});
+  const input = { ...base, date: "today" as const, now, environment: "staging" as const };
+  const count = adminRegisteredIdentityCountSql(input);
+  const predicate = count.strings.join("?").split('WHERE TRUE')[1].trim();
+  assert.match(predicate, /u\."createdAt" >= \?/);
+  assert.match(predicate, /"AccountSession"/);
+  assert.match(predicate, /"SearchHistory"/);
+  assert.match(predicate, /"RedirectLog"/);
+  assert.match(predicate, /"AnalyticsEvent"/);
+  assert.match(predicate, /v\."consentStatus" = 'GRANTED'/);
+  assert.ok(sql(input).text.includes(predicate), "count and ordered listing share the same eligibility predicate");
+  assert.doesNotMatch(adminRegisteredIdentityCountSql({ ...input, date: "all" }).strings.join("?"), /"AnalyticsEvent"/);
   const result = sql({ ...base, date: "today", now, environment: "staging" });
   assert.match(result.text, /OR EXISTS \([\s\S]*?"AccountSession"/);
   assert.match(result.text, /OR EXISTS \([\s\S]*?"SearchHistory"/);

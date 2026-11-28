@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { Prisma } from "@/generated/prisma/client";
+import { customerPageProvenance, optionalAnalyticsPurpose } from "@/lib/activityTrackingContract";
 import { matchesInteractionSearch } from "@/lib/verifiedInteractionSearch";
 import { z } from "zod";
 import { getOptionalPrisma } from "@/lib/prisma";
@@ -38,6 +39,10 @@ export async function POST(request: Request) {
   if (!page) return json({ accepted: false }, 400);
   const native = isNativeVisitorRequest(request);
   if (!(native ? page.nativePath : page.webPath)) return json({ accepted: false }, 400);
+  const previousPage = pageViewInfo(parsed.data.previousPageKey);
+  if (parsed.data.previousPageKey && !(native ? previousPage?.nativePath : previousPage?.webPath)) {
+    return json({ accepted: false }, 400);
+  }
   const declaredPlatform = request.headers.get("x-mobile-platform");
   // Guest native OS and web device class are reported transport attributes,
   // not device attestation or authorization. Never collect raw user-agent.
@@ -52,16 +57,24 @@ export async function POST(request: Request) {
     const accepted = await db.$transaction(async tx => {
       // The existing visitor row lock serializes duplicate event IDs and
       // rechecks account ownership and consent against concurrent withdrawal.
-      if (!await lockConsentedVisitor(tx, identity.visitorId!, identity.userId)) return { accepted: false, retryable: false };
-      const existing = await tx.analyticsEvent.findFirst({
-        where: { visitorId: identity.visitorId, userId: identity.userId, type: "PAGE_VIEW",
-          AND: [{ metadata: { path: ["eventId"], equals: parsed.data.eventId } },
-            { metadata: { path: ["environment"], equals: getPublicEnvironment() } }] },
-        select: { id: true, metadata: true },
-      });
+      // Page readers require an exclusively linked Visitor for registered
+      // events. Normal clients confirm the link before enabling capture.
+      if (!await lockConsentedVisitor(tx, identity.visitorId!, identity.userId, { requireExclusiveLink: true })) {
+        return { accepted: false, retryable: false };
+      }
+      // Match the existing expression index while keeping lookup scoped to the
+      // authenticated Visitor and this deployment.
+      const [existing] = await tx.$queryRaw<Array<{ id: string; userId: string | null; metadata: unknown }>>`
+        SELECT "id", "userId", "metadata" FROM "AnalyticsEvent"
+        WHERE "metadata"->>'eventId' = ${parsed.data.eventId}
+          AND "visitorId" = ${identity.visitorId} AND "type" = 'PAGE_VIEW'
+          AND "metadata"->>'environment' = ${getPublicEnvironment()}
+      `;
       const meta = existing?.metadata && typeof existing.metadata === "object" && !Array.isArray(existing.metadata)
         ? existing.metadata as Record<string, unknown> : null;
-      if (existing && (meta?.pageKey !== parsed.data.pageKey || meta?.transport !== (native ? "native" : "web"))) return { accepted: false, retryable: false };
+      // The same occurrence can never move to a new actor during sign-in.
+      if (existing && (existing.userId !== identity.userId || meta?.pageKey !== parsed.data.pageKey
+        || meta?.transport !== (native ? "native" : "web"))) return { accepted: false, retryable: false };
       let verifiedLink: { linkedJourneyId: string; linkedSearchHistoryId: string } | null = null;
       // Only an explicit, current search response/reference can link a product
       // results or details view. A support visit or guessed latest search cannot.
@@ -95,7 +108,8 @@ export async function POST(request: Request) {
       await tx.analyticsEvent.create({ data: {
         type: "PAGE_VIEW", name: "page_viewed", userId: identity.userId, visitorId: identity.visitorId,
         metadata: withEnvironmentMetadata({
-          recordPurpose: "optional_analytics",
+          recordPurpose: optionalAnalyticsPurpose,
+          ...customerPageProvenance(identity.userId),
           eventId: parsed.data.eventId, pageKey: parsed.data.pageKey,
           ...(parsed.data.previousPageKey ? { previousPageKey: parsed.data.previousPageKey } : {}),
           transport: native ? "native" : "web", platform,
@@ -107,5 +121,12 @@ export async function POST(request: Request) {
       return { accepted: true, retryable: Boolean(parsed.data.requestId && pageViewCanLink(parsed.data.pageKey) && !verifiedLink) };
     });
     return json(accepted);
-  } catch { return json({ accepted: false }, 503); }
+  } catch (error) {
+    // The existing unique expression index also rejects collisions outside the
+    // verified Visitor scope. Expose neither the other row nor its identity.
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+      return json({ accepted: false, retryable: false }, 409);
+    }
+    return json({ accepted: false }, 503);
+  }
 }

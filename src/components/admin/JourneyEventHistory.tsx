@@ -111,7 +111,7 @@ export function JourneyEventHistory({ events, timeZone = "UTC" }: { events: Admi
                 {event.resultReference ? <p className="mt-1.5 break-all text-[11px] leading-4 text-[#64748B]">
                   Recorded result reference: {event.resultReference}
                 </p> : null}
-                {event.pageView ? <p className="mt-1 text-xs break-all text-[#475569]">{event.pageView.href ? <a href={event.pageView.href} target="_blank" rel="noopener noreferrer" className="text-[#004BB8] underline">{event.pageView.href}</a> : event.pageView.path} · {event.pageView.platform}</p> : null}
+                {event.pageView ? <p className="mt-1 text-xs break-all text-[#475569]">{event.pageView.href ? <a href={event.pageView.href} target="_blank" rel="noopener noreferrer" className="text-[#004BB8] underline">{event.pageView.href}</a> : event.pageView.path} · {event.pageView.platform}{event.pageView.originalIdentity === "guest" ? " · Recorded as a guest" : null}</p> : null}
                 {event.sourcePage ? <p className="mt-1.5 break-all text-[11px] leading-4 text-[#64748B]"><span className="mr-1">Source:</span>{event.sourcePage}</p> : null}
               </td>
               <td className="px-3 py-3 [overflow-wrap:anywhere]">
