@@ -35,7 +35,13 @@ node --test scripts/check-activity-coverage.test.mjs
 node scripts/check-activity-coverage.mjs
 ```
 
-The check detects source routes and recognizable navigation, subsection, action and audit candidates. On a route addition, declare its disposition and give an explicit reason for any exclusion. On an action or navigation addition, use the emitted file and candidate ID in `reviews` with either the applicable activity definition or the reason for exclusion. Keep the pinned source-signal baseline intact. A search for unrecognized navigation and comparison with the 1,085-row inventory still belong in review for dynamic routes, custom event wrappers, permission states and in-app behavior. The check establishes that discovered surfaces were reviewed. It does not certify live capture.
+The check detects source routes and recognizable navigation, subsection, action and audit candidates. On a route addition, declare its disposition and give an explicit reason for any exclusion. On an action or navigation addition, use the emitted file and candidate ID in `reviews` with either the applicable activity definition or the reason for exclusion. This includes additional occurrences of an audited expression in the same file.
+
+The guard checks the declared revision and sheet metadata against the original Phase 1 values and reconstructs the signal inventory directly from the pinned Git objects. It rejects a missing audited commit or any difference in the checked-in manifest. Run it from a clone that contains the audited commit. The required `Validate mobile preview` job uses a full-history checkout and invokes coverage validation even when mobile tests are skipped.
+
+A PR can also change validation code, dependencies or the workflow itself. The required status check alone does not authenticate those files. Protect changes to those inputs through repository review rules or require a workflow maintained outside the proposed revision.
+
+A search for unrecognized navigation and comparison with the 1,085-row inventory still belong in review for dynamic routes, custom event wrappers, permission states and in-app behavior. The check establishes that discovered surfaces have coverage declarations. Live capture requires separate verification.
 
 ## Reliability and database baseline
 
