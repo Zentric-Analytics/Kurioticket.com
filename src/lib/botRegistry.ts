@@ -44,6 +44,11 @@ const additionalCrawlers = new Map([
   ["AASA-BOT", { agent: "AASA-BOT", category: "association", owner: "Apple" }],
 ]);
 
+// Robots guidance may use the complete recognized catalog without changing
+// the existing parser, categories, access decisions or verification policy.
+export const recognizedCrawlerAgents = [...Object.values(crawlerCatalog), ...additionalCrawlers.values()]
+  .map(entry => entry.agent);
+
 export function recognizedCrawler(token: string | null) {
   return knownCrawler(token) ?? additionalCrawlers.get(token ?? "") ?? null;
 }
