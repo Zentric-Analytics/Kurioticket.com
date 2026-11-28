@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { Prisma } from "@/generated/prisma/client";
 import { BOT_PAGE_SIZE, botFilters } from "@/lib/adminBotReport";
-import { botRequestHistory, combinedBotHistory } from "./adminBotHistory";
+import { botRequestHistory, botRequestSummaryQuery, combinedBotHistory, type BotRequestSummary } from "./adminBotHistory";
 import { getPrisma } from "@/lib/prisma";
 import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { createAdminOperationalReadService, recordedSearchCrawler } from "./adminOperationalReadCore";
@@ -37,7 +37,7 @@ test("recorded bot searches reconcile legacy and linked records exactly once, wi
   const prior = new Date("2026-11-16T00:00:00Z");
   const activity = await db.botActivity.create({ data: {
     id: randomUUID(), botId: declared.id, environment, timestamp: at, endpoint: "/api/flights/search",
-    method: "POST", kind: "SEARCH_ATTEMPT", verification: "DECLARED", evidence: "USER_AGENT",
+    method: "POST", kind: "SEARCH_ATTEMPT", product: "FLIGHT", verification: "DECLARED", evidence: "USER_AGENT",
     decision: "DENIED", reason: "SEARCH_NOT_ALLOWED",
   } });
   const claim = { identifiedCrawler: "GOOGLEBOT", verifiedCrawler: "GOOGLEBOT", crawlerEvidence: "VERIFIED_DNS" };
@@ -117,6 +117,16 @@ test("recorded bot searches reconcile legacy and linked records exactly once, wi
   assert.equal(requestOnly.historicalActual, 1);
   assert.equal(requestOnly.total, 1);
   assert.deepEqual(requestOnly.pointers.map(row => row.id), [activity.id]);
+  const range = { from: at, to: new Date("2026-11-25T00:00:00Z") };
+  const [requestSummary] = await db.$queryRaw<BotRequestSummary[]>(botRequestSummaryQuery(environment, declared.id, range));
+  assert.deepEqual(requestSummary, { requests: BigInt(1), allowed: BigInt(0), denied: BigInt(1), searchAttempts: BigInt(1), searches: BigInt(0) });
+  const [foreignSummary] = await db.$queryRaw<BotRequestSummary[]>(botRequestSummaryQuery(elsewhere, declared.id, range));
+  assert.deepEqual(foreignSummary, { requests: BigInt(0), allowed: BigInt(0), denied: BigInt(0), searchAttempts: BigInt(0), searches: BigInt(0) });
+  const [scoped] = await db.$queryRaw<{ summaryActual: number; total: number }[]>(
+    detailHistoryQuery(environment, declared.id, declared.name,
+      botRequestHistory(environment, declared.id, { window: range, decision: "ALLOWED" }), true, 1, 1, range));
+  assert.equal(scoped.summaryActual, 2, "History-only decision filters must not change the summary");
+  assert.equal(scoped.total, 0);
 
   const now = new Date("2026-11-24T12:00:00Z");
   for (const [query, expected] of [
@@ -134,11 +144,12 @@ test("recorded bot searches reconcile legacy and linked records exactly once, wi
       window: window ?? undefined, kind, decision,
     }, Prisma.sql`SELECT id, "createdAt" AS timestamp FROM recorded WHERE "activityId" IS NULL`);
     const [detail] = await db.$queryRaw<{
-      actual: number; historicalActual: number; total: number; page: number; searchPage: number;
+      actual: number; summaryActual: number; historicalActual: number; total: number; page: number; searchPage: number;
       pointers: { id: string }[]; historical: { id: string; network: unknown }[]; relatedCohorts: { id: string }[];
-    }[]>(detailHistoryQuery(environment, verified.id, verified.name, history, true, 99, 99));
+    }[]>(detailHistoryQuery(environment, verified.id, verified.name, history, true, 99, 99, window));
     assert.equal(detail.total, expected);
     assert.equal(detail.actual, 2);
+    assert.equal(detail.summaryActual, window ? expected : 2, "Actual searches follow the date window, not history-only filters");
     assert.equal(detail.historicalActual, 2);
     assert.equal(detail.page, 1);
     assert.equal(detail.searchPage, 1);
@@ -225,6 +236,20 @@ test("recorded bot searches reconcile legacy and linked records exactly once, wi
   assert.equal(crowdedNetwork.latestIp?.botId, declared.id);
   assert.deepEqual(crowdedNetwork.countries, ["CA", "US"]);
   assert.equal(crowded.actual, 2, "Network observations must not inflate actual searches");
+
+  // Dispatch time and request time are independently scoped. An attempt
+  // just before midnight may dispatch within the selected day.
+  await db.botActivity.createMany({ data: [
+    { id: randomUUID(), botId: other.id, environment, timestamp: new Date(at.getTime() - 1000), endpoint: "/api/flights/search", method: "POST", kind: "SEARCH_ATTEMPT", product: "FLIGHT", verification: "DECLARED", decision: "ALLOWED", reason: "SEARCH_DISPATCH", dispatchedAt: at },
+    { id: randomUUID(), botId: other.id, environment, timestamp: at, endpoint: "/", method: "GET", kind: "PAGE", verification: "DECLARED", decision: "ALLOWED", reason: "PUBLIC_CRAWL" },
+    { id: randomUUID(), botId: other.id, environment, timestamp: at, endpoint: "/api/flights/search", method: "POST", kind: "SEARCH_ATTEMPT", product: "FLIGHT", verification: "DECLARED", decision: "RATE_LIMITED", reason: "SEARCH_QUOTA" },
+    { id: randomUUID(), botId: other.id, environment, timestamp: range.to, endpoint: "/", method: "GET", kind: "PAGE", verification: "DECLARED", decision: "DENIED", reason: "PATH_NOT_ALLOWED" },
+  ] });
+  const [boundary] = await db.$queryRaw<BotRequestSummary[]>(botRequestSummaryQuery(environment, other.id, range));
+  assert.deepEqual(boundary, { requests: BigInt(2), allowed: BigInt(1), denied: BigInt(0), searchAttempts: BigInt(1), searches: BigInt(1) });
+  const [invalidWindow] = await db.$queryRaw<{ summaryActual: number | null }[]>(
+    detailHistoryQuery(environment, other.id, other.name, botRequestHistory(environment, other.id, { window: undefined }), false, 1, 1, null));
+  assert.equal(invalidWindow.summaryActual, null);
 
   // Invalid higher-priority request fields must not hide valid Render/reported
   // fallback evidence, including the independently recorded country codes.

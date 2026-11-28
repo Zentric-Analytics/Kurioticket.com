@@ -71,18 +71,18 @@ export default async function BotDetailsPage({ params, searchParams }: {
     directory, range: filters.range, from: filters.from, to: filters.to,
     kind: filters.kind ?? "", decision: filters.decision ?? "",
   }).filter(([, value]) => value));
-  const botSearchesHref = searchActivityReturnHref({ identity: "bot", botId: bot.id, range: "all" });
+  const botSearchesHref = searchActivityReturnHref({ identity: "bot", botId: bot.id,
+    range: filters.range, from: filters.from, to: filters.to });
   const searchHref = (searchId: string) => "/admin/searches/" + encodeURIComponent(searchId) + "?environment=" + getPublicEnvironment();
   const category = bot.group === "SEARCH_ENGINE" ? "Search engine"
     : bot.group === "OTHER_RECOGNIZED" ? "Other recognized" : "Unknown";
   const metrics = [
-    { label: "Total Requests", value: bot.requests },
-    { label: "Allowed Requests", value: bot.allowed },
-    { label: "Denied Requests", value: bot.denied },
-    { label: "Rate-limited Requests", value: bot.rateLimited },
-    { label: "Search Attempts", value: bot.searchAttempts },
-    { label: "Searches Dispatched", value: bot.searches },
-    { label: "Actual Searches", value: report.actual, href: botSearchesHref },
+    { label: "Total Requests", value: report.requestSummary?.requests },
+    { label: "Allowed Requests", value: report.requestSummary?.allowed },
+    { label: "Denied Requests", value: report.requestSummary?.denied },
+    { label: "Search Attempts", value: report.requestSummary?.searchAttempts },
+    { label: "Searches Dispatched", value: report.requestSummary?.searches },
+    { label: "Actual Searches", value: report.summaryActual },
   ];
 
   return <div className="min-w-0 space-y-4">
@@ -102,28 +102,30 @@ export default async function BotDetailsPage({ params, searchParams }: {
       <Fields threeColumns entries={[
         ["Owner", bot.owner],
         ["Category", category],
-        ["Verification status", report.reportVerification],
         ["Country", countries.length ? <span title="Countries observed in recorded requests and searches for this bot name">{countries.join(", ")}</span> : null],
         ["First seen (UTC)", <time key="first-seen" dateTime={bot.firstSeen.toISOString()} title={botTime(bot.firstSeen)}>{botDirectoryTime(bot.firstSeen)}</time>],
         ["Last seen (UTC)", <time key="last-seen" dateTime={bot.lastSeen.toISOString()} title={botTime(bot.lastSeen)}>{botDirectoryTime(bot.lastSeen)}</time>],
       ]} />
     </Section>
-    <Section title="Activity Summary">
-      <dl className="grid auto-rows-fr grid-cols-2 gap-3 md:grid-cols-4">
-        {metrics.map(({ label, value, href }) => <div key={label} className={reportPanel + " min-w-0 p-3"}>
-          <dt className="text-xs font-medium text-slate-600">{label}</dt>
-          <dd className="mt-1 wrap-anywhere text-xl font-semibold tabular-nums text-slate-950">
-            {value == null ? <span className="text-sm font-medium">Not tracked</span> : numberFormat.format(value)}
-          </dd>
-          {href && <dd className="mt-1 text-xs">
-            <Link prefetch={false} href={href} className={reportLink}>Open in Search Activity <span aria-hidden="true">→</span></Link>
-          </dd>}
-        </div>)}
-      </dl>
-    </Section>
-    <Section title="Activity History">
-      <BotReportFilters filters={filters} now={new Date().toISOString()} history />
-      {report.total !== null && <div className={reportPanel}>
+    <BotReportFilters filters={filters} now={report.now.toISOString()} history details={{
+      sectionClassName: reportPanel + " space-y-3 p-4 sm:p-5",
+      summary: <>
+        <dl className="grid grid-cols-2 gap-2 md:grid-cols-3">
+          {metrics.map(({ label, value }) => <div key={label} className={reportPanel + " min-w-0 px-3 py-2"}>
+            <dt className="text-xs font-medium text-slate-600">{label}</dt>
+            <dd className="mt-1 wrap-anywhere text-xl font-semibold tabular-nums text-slate-950">
+              {value == null ? <span className="text-sm font-medium">Not tracked</span> : numberFormat.format(value)}
+            </dd>
+          </div>)}
+        </dl>
+        {report.requestSummary === null && filters.window !== null &&
+          <p className="text-xs text-slate-600">Request totals are not tracked for the full selected period because detailed records have expired.</p>}
+        <div className="flex justify-end">
+          <Link prefetch={false} href={botSearchesHref} className={reportLink + " text-xs"}>Open in Search Activity <span aria-hidden="true">→</span></Link>
+        </div>
+      </>,
+      history: <>
+        {report.total !== null && <div className={reportPanel}>
         <table role="table" aria-label="Bot request activity" className="block w-full text-left text-[13px] text-slate-700 md:table">
           <thead role="rowgroup" className={reportHead + " sr-only md:not-sr-only"}>
             <tr role="row">{activityColumns.map(column => <th role="columnheader" scope="col" key={column}>{column}</th>)}</tr>
@@ -197,6 +199,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
         {report.total > 0 && <ReportPagination path={BOT_DIRECTORY + "/" + bot.id} params={activityParams}
           page={report.page} total={report.total} label="Bot activity" />}
       </div>}
-    </Section>
+      </>,
+    }} />
   </div>;
 }

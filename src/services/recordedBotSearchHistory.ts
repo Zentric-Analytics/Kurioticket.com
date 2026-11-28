@@ -100,7 +100,8 @@ function botNetworkRecords(environment: string, id: string, name: string | null)
 /** Evaluate search attribution once on the same snapshot as the live events.
  * Materialize narrow projections; only serialize the paginated rows and summary evidence. */
 export function detailHistoryQuery(environment: string, id: string, name: string | null, history: Prisma.Sql,
-  validWindow: boolean, requestedPage: number, requestedSearchPage: number) {
+  validWindow: boolean, requestedPage: number, requestedSearchPage: number,
+  summaryWindow?: { from: Date; to: Date } | null) {
   return Prisma.sql`
     WITH network_scope AS MATERIALIZED (
       ${botNetworkScope(environment, id, name)}
@@ -115,7 +116,10 @@ export function detailHistoryQuery(environment: string, id: string, name: string
       ${validWindow ? history : Prisma.sql`SELECT NULL::text AS id, NULL::timestamp AS timestamp, NULL::text AS source WHERE FALSE`}
     ), counts AS (
       SELECT (SELECT count(*)::int FROM timeline) AS total,
-             count(*)::int AS actual, count(*) FILTER (WHERE "activityId" IS NULL)::int AS historical
+             count(*)::int AS actual, count(*) FILTER (WHERE "activityId" IS NULL)::int AS historical,
+             ${summaryWindow === null ? Prisma.sql`NULL::int` : summaryWindow
+               ? Prisma.sql`count(*) FILTER (WHERE "createdAt" >= ${summaryWindow.from} AND "createdAt" < ${summaryWindow.to})::int`
+               : Prisma.sql`count(*)::int`} AS "summaryActual"
       FROM recorded
     ), pages AS (
       SELECT *, least(${requestedPage}, greatest(1, ceil(total::numeric / ${BOT_PAGE_SIZE})::int)) AS page,
@@ -126,7 +130,7 @@ export function detailHistoryQuery(environment: string, id: string, name: string
       OFFSET (SELECT (page - 1) * ${BOT_PAGE_SIZE} FROM pages) LIMIT ${BOT_PAGE_SIZE}
     )
     SELECT ${validWindow ? Prisma.sql`total` : Prisma.sql`NULL::int`} AS total,
-      actual, historical AS "historicalActual", page, "searchPage",
+      actual, "summaryActual", historical AS "historicalActual", page, "searchPage",
       coalesce((SELECT jsonb_agg(p ORDER BY p.timestamp DESC, p.source DESC, p.id DESC) FROM timeline_page p), '[]') AS pointers,
       coalesce((SELECT jsonb_agg(item) FROM (
         SELECT r.id, r."createdAt" AS timestamp, r."requestId", r.product, r.status, r."resultCount",

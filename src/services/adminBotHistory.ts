@@ -79,6 +79,32 @@ export function botRequestHistory(environment: string, botId: string, filters: B
   `;
 }
 
+export type BotRequestSummary = {
+  requests: bigint;
+  allowed: bigint;
+  denied: bigint;
+  searchAttempts: bigint;
+  searches: bigint;
+};
+
+/** Read-only date-scoped counts; request accounting follows the original
+ * request timestamp, while a dispatch is observed at its dispatch time.
+ * Keep this separate from the paginated/decision-filtered activity list. */
+export function botRequestSummaryQuery(environment: string, botId: string, window: NonNullable<BotReportWindow>) {
+  const request = Prisma.sql`timestamp >= ${window.from} AND timestamp < ${window.to}`;
+  const dispatch = Prisma.sql`"dispatchedAt" >= ${window.from} AND "dispatchedAt" < ${window.to}`;
+  return Prisma.sql`
+    SELECT count(*) FILTER (WHERE ${request}) AS requests,
+      count(*) FILTER (WHERE ${request} AND decision = 'ALLOWED') AS allowed,
+      count(*) FILTER (WHERE ${request} AND decision = 'DENIED') AS denied,
+      count(*) FILTER (WHERE ${request} AND product IS NOT NULL) AS "searchAttempts",
+      count(*) FILTER (WHERE ${dispatch}) AS searches
+    FROM "BotActivity"
+    WHERE environment = ${environment} AND "botId" = ${botId}
+      AND ((${request}) OR (${dispatch}))
+  `;
+}
+
 export function combinedBotHistory(environment: string, botId: string, identityKey: string, filters: BotHistoryFilters,
   historicalSource = Prisma.sql`SELECT id, timestamp FROM (${historicalBotSearches(environment)}) history WHERE "identityKey" = ${identityKey}`) {
   const live = filters.kind === "HISTORICAL_SEARCH" ? Prisma.empty : botRequestHistory(environment, botId, filters);

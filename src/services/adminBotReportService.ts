@@ -8,7 +8,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { activityNetworkEvidence, botReportVerification, reportEvidenceSelect } from "@/lib/adminBotNetworkEvidence";
 import { detailHistoryQuery, recordedBotSearchRows, summarizeBotNetwork } from "./recordedBotSearchHistory";
-import { botRequestHistory, type BotHistoryPointer } from "./adminBotHistory";
+import { botRequestHistory, botRequestSummaryQuery, type BotHistoryPointer, type BotRequestSummary } from "./adminBotHistory";
+import { BOT_ACTIVITY_RETENTION_DAYS } from "./botActivityStore";
 
 type Filters = ReturnType<typeof botFilters>;
 type Environment = ReturnType<typeof getPublicEnvironment>;
@@ -121,6 +122,7 @@ export async function readBotDirectory(raw: BotQuery) {
 type DetailHistoryRows = {
   total: number | null;
   actual: number;
+  summaryActual: number | null;
   historicalActual: number;
   page: number;
   pointers: Pick<BotHistoryPointer, "id">[];
@@ -130,7 +132,8 @@ type DetailHistoryRows = {
 export async function readBotDetails(id: string, raw: BotQuery) {
   await requireAdminSession(BOT_DIRECTORY);
   if (!z.uuid().safeParse(id).success) return { state: "missing" } as const;
-  const filters = botFilters(raw.kind === "HISTORICAL_SEARCH" ? { ...raw, kind: undefined } : raw, "all");
+  const now = new Date();
+  const filters = botFilters(raw.kind === "HISTORICAL_SEARCH" ? { ...raw, kind: undefined } : raw, "all", now);
   const environment = getPublicEnvironment();
 
   try {
@@ -155,9 +158,20 @@ export async function readBotDetails(id: string, raw: BotQuery) {
       });
       // The existing country summary can include related recorded network observations.
       const summaryName = bot.group !== "UNKNOWN" && recognizedCrawler(bot.name) ? bot.name : null;
-      const [{ pointers, total, actual, historicalActual, page, networkCountryCodes }] =
+      const [{ pointers, total, actual, summaryActual, historicalActual, page, networkCountryCodes }] =
         await db.$queryRaw<DetailHistoryRows[]>(detailHistoryQuery(environment, id, summaryName, history,
-          filters.window !== null, filters.page, 1));
+          filters.window !== null, filters.page, 1, filters.window));
+      // Lifetime counters survive the existing request retention policy. Do
+      // not substitute a partial retained-event count for an older date range.
+      const retentionCutoff = new Date(now.getTime() - BOT_ACTIVITY_RETENTION_DAYS * 86_400_000);
+      let requestSummary: BotRequestSummary | null = null;
+      if (filters.window === undefined) {
+        requestSummary = { requests: bot.requests, allowed: bot.allowed, denied: bot.denied,
+          searchAttempts: bot.searchAttempts, searches: bot.searches };
+      } else if (filters.window && (filters.window.from >= retentionCutoff || bot.firstSeen >= retentionCutoff)) {
+        [requestSummary] = await db.$queryRaw<BotRequestSummary[]>(
+          botRequestSummaryQuery(environment, id, filters.window));
+      }
       const activityIds = pointers.map(row => row.id);
       const events = activityIds.length ? await db.botActivity.findMany({
         where: { ...where, id: { in: activityIds } }, omit: { retryKey: true },
@@ -191,7 +205,7 @@ export async function readBotDetails(id: string, raw: BotQuery) {
       });
       const liveById = new Map(live.map(event => [event.id, event]));
       return {
-        bot, actual, historicalActual, total, page,
+        bot, actual, summaryActual, requestSummary, historicalActual, total, page,
         countries: summarizeBotNetwork([], networkCountryCodes).countries,
         events: pointers.flatMap(({ id }) => {
           const event = liveById.get(id);
@@ -204,7 +218,7 @@ export async function readBotDetails(id: string, raw: BotQuery) {
     const reportVerification = botReportVerification(bot, activities[0]);
     // Request-specific network evidence remains separate from the summary.
     const events = await Promise.all(data.events.map(async event => ({ ...event, networkEvidence: await activityNetworkEvidence(event) })));
-    return { state: "ready", filters: { ...filters, page: data.page }, ...data, bot: { ...bot, access: currentBotAccess(bot, environment) }, reportVerification, events } as const;
+    return { state: "ready", filters: { ...filters, page: data.page }, now, ...data, bot: { ...bot, access: currentBotAccess(bot, environment) }, reportVerification, events } as const;
   } catch {
     console.error("[admin:bot-management] Bot details unavailable");
     return { state: "unavailable" } as const;

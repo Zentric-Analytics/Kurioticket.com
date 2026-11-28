@@ -71,7 +71,10 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
   const currentEnvironment = getPublicEnvironment();
   const providerOptions = buildAdminSearchProviderOptions(getProviderIntegrationStatuses(), one(raw.provider) || null);
   const now = new Date();
-  const timeZone = await getAdminViewerTimeZone();
+  // Bot Management uses UTC for every administrator. Its identity-scoped
+  // drill-down must interpret the same calendar range, not a local day.
+  const botScoped = one(raw.identity) === "bot" && Boolean(one(raw.botId));
+  const timeZone = botScoped ? "UTC" : await getAdminViewerTimeZone();
   const referenceNow = now.toISOString();
   const range = resolveRange(raw);
   const rangeIssue = range === "custom" ? activityCalendarRangeIssue(raw, now, timeZone) : null;
@@ -82,7 +85,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
       </AdminPageShell>
     );
   }
-  const params = toBackendParams(raw, range, now, timeZone);
+  const params = toBackendParams(raw, range, now, timeZone, botScoped);
   params.set("environment", currentEnvironment);
   const listParams = new URLSearchParams(params);
   listParams.set("limit", "100");
@@ -243,7 +246,7 @@ function resolveRange(raw: Record<string, string | string[] | undefined>): Range
   return "today";
 }
 
-function toBackendParams(raw: Record<string, string | string[] | undefined>, range: RangeKey, now: Date, timeZone: string) {
+function toBackendParams(raw: Record<string, string | string[] | undefined>, range: RangeKey, now: Date, timeZone: string, botScoped = false) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(raw)) {
     if (key === "range" || key === "cursor" || key === "limit") continue;
@@ -257,11 +260,13 @@ function toBackendParams(raw: Record<string, string | string[] | undefined>, ran
   }
 
   if (range !== "all" && range !== "custom") {
-    params.set("from", adminRollingRange(range, now, timeZone).from);
+    const window = adminRollingRange(range, now, timeZone);
+    params.set("from", window.from);
+    if (botScoped) params.set("to", window.to);
   } else if (range === "custom") {
     for (const key of ["from", "to"] as const) {
       const value = raw[key];
-      if (typeof value === "string" && value) params.set(key, activityCustomDateBound(value, key, timeZone));
+      if (typeof value === "string" && value) params.set(key, activityCustomDateBound(value, key, timeZone, botScoped ? now : undefined));
     }
   }
 
