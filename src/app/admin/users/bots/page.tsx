@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { BotReportFilters } from "@/components/admin/BotReportFilters";
-import { BOT_DIRECTORY, BOT_GROUPS, botRecordedAccess, botDirectoryHref, botHref, botDirectorySubtitle, botDirectoryTime, botName, botType, type BotQuery } from "@/lib/adminBotReport";
+import { BOT_DIRECTORY, BOT_GROUPS, BOT_PAGE_SIZE, botRecordedAccess, botDirectoryHref, botHref, botDirectorySubtitle, botDirectoryTime, botName, botType, type BotQuery } from "@/lib/adminBotReport";
 import { readBotDirectory } from "@/services/adminBotReportService";
 import { Metrics, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel } from "./report-ui";
 
@@ -24,7 +24,6 @@ export default async function BotManagementPage({ searchParams }: { searchParams
         <div className="space-y-2 border-t border-[#D8E1EC] px-4 py-3">
           <h2 className="text-[13px] font-semibold text-slate-950">Bot Activity</h2>
           <Metrics labels={["Total requests", "Actual searches", "Denied requests", "Rate-limited requests"]} values={report.activity} />
-          <p className="text-[11px] text-slate-600">Actual searches include saved Search History records. Older searches do not imply additional request counts.</p>
           {report.unassignedSearches > BigInt(0) && <p className="text-xs text-slate-600">
             {report.unassignedSearches.toLocaleString()} recorded searches have no matching registry identity.{" "}
             <Link className={reportLink} href="/admin/searches/activity?identity=bot&range=all">View all bot searches</Link>
@@ -71,7 +70,7 @@ export default async function BotManagementPage({ searchParams }: { searchParams
               </tbody>
             </table>
           </div>
-          {report.total > 0 && <ReportPagination path={BOT_DIRECTORY} params={params} page={report.page} total={report.total} label="Bot directory" />}
+          {report.total > BOT_PAGE_SIZE && <ReportPagination path={BOT_DIRECTORY} params={params} page={report.page} total={report.total} label="Bot directory" />}
         </div>
       </section>}
     </div>
