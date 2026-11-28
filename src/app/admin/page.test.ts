@@ -52,10 +52,11 @@ test("Operations Snapshot includes handoffs and visitor metrics without the remo
   for (const [label, value] of [
     ["Total accounts", "data.users.total"],
     ["Online Users", "<OnlineUsersValue initial={data.onlinePresence} />"],
+    ["Active Bot", "<ActiveBotValue />"],
   ]) {
     assert.ok(accountGroup.includes('label="' + label + '" value={' + value + "}"), label);
   }
-  assert.equal((snapshot.match(/<SnapshotLink /g) ?? []).length, 2);
+  assert.equal((snapshot.match(/<SnapshotLink /g) ?? []).length, 3);
   assert.match(snapshot, /<SnapshotLink href="\/admin\/users" label="Total accounts"/);
   assert.match(snapshot, /<SnapshotLink href="\/admin\/users\/online" label="Online Users"/);
   assert.doesNotMatch(snapshot, /<SnapshotLink href="\/admin\/users" label="Online Users"/);
@@ -245,7 +246,7 @@ test("complete provider diagnostics remain on the linked Providers page", () => 
 test("Preview places Attention Required and accounts before Visitor Activity and Provider Handoffs", () => {
   const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />"));
   const activityPair = snapshot.indexOf("{/* Customer activity and actual outbound provider handoffs share the snapshot row. */}");
-  const attentionPair = snapshot.indexOf("{/* The two account totals sit beside Attention Required, not above it. */}");
+  const attentionPair = snapshot.indexOf("{/* Account and live activity totals sit beside Attention Required, not above it. */}");
   const workPair = snapshot.indexOf('<Section title="Support Workload"');
   assert.ok(attentionPair >= 0 && activityPair > attentionPair && workPair > activityPair);
   const activity = snapshot.slice(activityPair, workPair);
@@ -255,7 +256,7 @@ test("Preview places Attention Required and accounts before Visitor Activity and
   const attention = snapshot.slice(attentionPair, activityPair);
   assert.match(attention, /grid min-w-0 items-stretch gap-3 lg:grid-cols-2/);
   assert.ok(attention.indexOf('aria-label="Attention Required"') < attention.indexOf('aria-label="Account snapshot"'));
-  assert.equal((attention.match(/<SnapshotLink /g) ?? []).length, 2);
+  assert.equal((attention.match(/<SnapshotLink /g) ?? []).length, 3);
   for (const title of ["Support Workload", "Deletion Workload"]) {
     assert.ok(snapshot.includes('<Section title="' + title + '"'), title);
   }
@@ -496,4 +497,28 @@ test("the required CI gate validates overview integrity and both presence contra
   assert.match(metrics, /Unknown admin Overview workflow status/);
   assert.match(presence, /if \(!row\) return unavailable\(\)/);
   assert.match(presence, /checkedPresenceCount\(registeredAccounts \+ guestIdentities\)/);
+});
+
+test("Active Bot shares the live row, uses existing named bot evidence, and refreshes independently", () => {
+  const value = readFileSync("src/components/admin/ActiveBotValue.tsx", "utf8");
+  const route = readFileSync("src/app/api/admin/overview/active-bot/route.ts", "utf8");
+  assert.match(display, /aria-label="Live activity snapshot" className="grid min-w-0 grid-cols-2 items-stretch gap-2"/);
+  assert.match(display, /<SnapshotLink href="\/admin\/users\/bots" label="Active Bot" value=\{<ActiveBotValue \/>\}/);
+  assert.match(display, /label="How Active Bot is counted"/);
+  assert.match(value, /fetch\("\/api\/admin\/overview\/active-bot"/);
+  assert.match(value, /onlinePresenceHeartbeatMs/);
+  assert.match(value, /document\.visibilityState === "visible"/);
+  assert.match(value, /activeRequest\?\.abort\(\)/);
+  assert.match(value, /Number\.isSafeInteger\(snapshot\.total\)/);
+  assert.match(value, /total === "unavailable" \? "Unavailable"/);
+  assert.ok(route.indexOf("await requireAdminApiSession()") < route.indexOf("db.$queryRaw"));
+  assert.match(route, /COUNT\(DISTINCT UPPER\(COALESCE/);
+  assert.match(route, /NULLIF\(BTRIM\(a\."declaredName"\), ''\)/);
+  assert.match(route, /FROM "BotActivity" a/);
+  assert.match(route, /b\.environment = a\.environment/);
+  assert.match(route, /a\.environment = \$\{getPublicEnvironment\(\)\}/);
+  assert.match(route, /a\.timestamp > \$\{cutoff\} AND a\.timestamp <= \$\{now\}/);
+  assert.match(route, /windowSeconds = onlinePresenceWindowSeconds/);
+  assert.match(route, /"Cache-Control": "private, no-store"/);
+  assert.match(route, /status: 503/);
 });
