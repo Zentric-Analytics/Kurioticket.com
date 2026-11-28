@@ -1,10 +1,17 @@
 import { createHash, randomUUID } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
+import { knownCrawler, crawlerPolicy } from "@/lib/botRegistry";
+import type { Prisma } from "@/generated/prisma/client";
 import { botReportNetwork, reportedCrawlerNetworkMatch } from "@/lib/botReportNetwork";
 import type { botTarget, observeBot } from "@/lib/botPolicy";
 
-type Bot = Awaited<ReturnType<typeof observeBot>>;
+type LiveBot = Awaited<ReturnType<typeof observeBot>>;
+/** Imported, authenticated WAF block events have their own provenance, separate
+ * from either live ingress source. This affects recording only, never access. */
+type Bot = Omit<LiveBot, "networkSource"> & {
+  networkSource: LiveBot["networkSource"] | "AUTHENTICATED_EDGE_EVENT";
+};
 type Target = ReturnType<typeof botTarget>;
 
 export const BOT_SEARCH_COOLDOWN_MS = 30 * 60_000;
@@ -92,20 +99,63 @@ export async function recordBotAttempt(request: Request, bot: Bot, target: Targe
 }
 
 type Attempt = Awaited<ReturnType<typeof recordBotAttempt>>;
+type QuotaRegistry = { id: string; environment: string; identityKey: string };
+
+function searchQuotaName(identityKey: string) {
+  const match = /^(?:SEARCH_ENGINE|UNKNOWN):([A-Z0-9_-]+)$/.exec(identityKey);
+  const token = match?.[1] ?? null;
+  return knownCrawler(token)?.category === "search" ? token : null;
+}
+
+/** Verified and declared cohorts of a recognized search engine must never
+ * receive independent allowances. No historical records are merged. */
+export function botSearchQuotaKey(registry: QuotaRegistry) {
+  const name = searchQuotaName(registry.identityKey);
+  return name ? "crawler:" + name : "registry:" + registry.id;
+}
+
+export function botSearchQuotaRegistryWhere(registry: QuotaRegistry): Prisma.BotRegistryWhereInput {
+  const name = searchQuotaName(registry.identityKey);
+  return name ? { environment: registry.environment, identityKey: { in: ["SEARCH_ENGINE:" + name, "UNKNOWN:" + name] } }
+    : { environment: registry.environment, id: registry.id };
+}
+
+export function botSearchQuotaWhere(registry: QuotaRegistry): Prisma.BotActivityWhereInput {
+  return { environment: registry.environment, bot: botSearchQuotaRegistryWhere(registry) };
+}
+
 
 export async function reserveBotSearch(attempt: Attempt, suppliedId: string | null, signal: AbortSignal) {
   const retryKey = suppliedId ? createHash("sha256").update(suppliedId).digest("hex") : null;
   return getPrisma().$transaction(async tx => {
-    await tx.$queryRaw`SELECT id FROM "BotRegistry" WHERE id = ${attempt.botId} FOR UPDATE`;
+    const registry = await tx.botRegistry.findUniqueOrThrow({
+      where: { id: attempt.botId }, select: { id: true, environment: true, identityKey: true },
+    });
+    // A stable transaction lock spans both evidence cohorts, even if one
+    // does not yet exist. Take it before the per-record lock and quota reads.
+    await tx.$queryRaw`SELECT 1::int FROM pg_advisory_xact_lock(hashtext(${"bot-search-quota:" + registry.environment}), hashtext(${botSearchQuotaKey(registry)}))`;
+    const [lockedRegistry] = await tx.$queryRaw<(QuotaRegistry & { name: string | null; group: string; access: string; verification: string })[]>`
+      SELECT id, environment, "identityKey", name, "group", access, verification
+      FROM "BotRegistry" WHERE id = ${attempt.botId} FOR UPDATE`;
     const current = await tx.botActivity.findUniqueOrThrow({ where: { id: attempt.id } });
-    if (current.decision !== "PENDING") return { status: 409 };
+    if (current.botId !== registry.id || current.environment !== registry.environment || current.decision !== "PENDING") return { status: 409 };
+    // Recheck the locked durable identity and this specific request before any
+    // quota/dispatch mutation. Old declared cohorts remain history, not grants.
+    if (!lockedRegistry || current.verification !== "VERIFIED" || lockedRegistry.access !== "CRAWL_AND_LIMITED_SEARCH"
+      || crawlerPolicy(lockedRegistry.name, lockedRegistry.group === "SEARCH_ENGINE" && lockedRegistry.verification === "VERIFIED").access !== "CRAWL_AND_LIMITED_SEARCH") {
+      await tx.botActivity.update({ where: { id: attempt.id }, data: {
+        decision: "DENIED", reason: "CRAWLER_VERIFICATION_REQUIRED", responseStatus: 403,
+      } });
+      await tx.botRegistry.update({ where: { id: attempt.botId }, data: { denied: { increment: 1 } } });
+      return { status: 403 };
+    }
     if (signal.aborted) return { status: 499 };
     const [{ now }] = await tx.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
-    const duplicate = retryKey && await tx.botActivity.findUnique({
-      where: { botId_retryKey: { botId: attempt.botId, retryKey } },
-      select: { id: true },
+    const scope = botSearchQuotaWhere(registry);
+    const duplicate = retryKey && await tx.botActivity.findFirst({
+      where: { ...scope, retryKey }, select: { id: true },
     });
-    const where = { botId: attempt.botId, dispatchedAt: { not: null } };
+    const where = { ...scope, dispatchedAt: { not: null } };
     const latest = await tx.botActivity.findFirst({ where, orderBy: { dispatchedAt: "desc" }, select: { dispatchedAt: true } });
     const used = await tx.botActivity.count({ where: { ...where, dispatchedAt: { gte: utcDayStart(now) } } });
     const next = nextSearchTime(now, latest?.dispatchedAt ?? undefined, used);

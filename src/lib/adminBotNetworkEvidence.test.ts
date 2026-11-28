@@ -14,17 +14,35 @@ const request = {
   reportedIp: "52.167.144.161", reportedNetworkMatch: null, renderLogIp: null, renderLogCorroboration: null,
 };
 
-test("verification is binary and scoped to the latest matching observation", () => {
-  for (const state of ["DECLARED", "SUSPICIOUS", "UNVERIFIED", "UNKNOWN"]) {
-    assert.equal(botReportVerification({ ...identity, verification: state }), "Unverified");
+test("directory verification is binary, synchronous and based only on matching recorded identity", t => {
+  const fetch = t.mock.method(globalThis, "fetch", async () => { throw new Error("summary must not look up networks"); });
+  for (const verification of ["DECLARED", "SUSPICIOUS", "UNVERIFIED", "UNKNOWN"]) {
+    assert.equal(botReportVerification({ ...identity, verification }), "Unverified");
   }
   assert.equal(botReportVerification(identity, request), "Unverified");
   const verified = { ...request, verification: "VERIFIED" };
-  assert.equal(botReportVerification({ ...identity, verification: "VERIFIED" }), "Verified");
   assert.equal(botReportVerification(identity, verified), "Verified");
   assert.equal(botReportVerification(identity, { ...verified, timestamp: new Date(0) }), "Unverified");
   assert.equal(botReportVerification(identity, { ...verified, declaredName: "OTHER" }), "Unverified");
   assert.equal(botReportVerification({ ...identity, verification: "SUSPICIOUS" }, verified), "Unverified");
+  assert.equal(botReportVerification({ ...identity, group: "UNKNOWN" }, verified), "Unverified");
+  assert.equal(botReportVerification({ ...identity, name: null, verification: "VERIFIED" }), "Unverified");
+  assert.equal(botReportVerification({ ...identity, verification: "VERIFIED" }, request), "Unverified");
+  assert.equal(botReportVerification({ ...identity, verification: "VERIFIED" }), "Verified");
+  assert.equal(fetch.mock.callCount(), 0);
+});
+
+test("the per-request network evidence retains the report-only check", async t => {
+  const fetch = t.mock.method(globalThis, "fetch", async (url: string) => {
+    assert.equal(url, "https://www.bing.com/toolbox/bingbot.json");
+    return Response.json({ prefixes: [{ ipv4Prefix: "52.167.144.0/24" }] });
+  });
+  const evidence = await activityNetworkEvidence(request);
+  assert.equal(evidence?.label, "Crawler network matched");
+  assert.match(evidence?.detail ?? "", /Reported IP/);
+  assert.equal(botReportVerification(identity, request), "Unverified");
+  assert.equal(await activityNetworkEvidence({ ...request, reportedIp: "127.0.0.1" }), null);
+  assert.equal(fetch.mock.callCount(), 1);
 });
 
 test("stored evidence is not carried across conflicting IPs or historical and live requests", async t => {
@@ -34,7 +52,7 @@ test("stored evidence is not carried across conflicting IPs or historical and li
   assert.equal(await activityNetworkEvidence({ ...matched, renderLogIp: "8.8.8.8" }, async () => null), null);
   assert.match((await activityNetworkEvidence({ ...matched, renderLogIp: "52.167.144.161", renderLogCorroboration: "FORWARD_CONFIRMED_DNS" }))?.detail ?? "", /Render log IP/);
   assert.equal(await activityNetworkEvidence({ ...matched, verification: "SUSPICIOUS" }), null);
-
+  assert.equal(botReportVerification({ ...identity, verification: "VERIFIED" }), "Verified");
 });
 
 test("Meta network match is report-only, not crawler authentication, and does not disclose caller IP to the feed", async t => {
@@ -60,6 +78,7 @@ test("an unsupported identity and a failed official feed stay unverified", async
   const fetch = t.mock.method(globalThis, "fetch", async () => { throw new Error("offline"); });
   assert.equal(await activityNetworkEvidence({ ...request, declaredName: "NEWBOT" }), null);
   assert.equal(await activityNetworkEvidence({ ...request, declaredName: "GPTBOT" }), null);
+  assert.equal(botReportVerification({ ...identity, name: "GPTBOT" }, { ...request, declaredName: "GPTBOT" }), "Unverified");
   assert.equal(fetch.mock.callCount(), 1);
 });
 

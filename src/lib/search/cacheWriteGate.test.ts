@@ -30,3 +30,59 @@ test("expired work does not start", async () => {
   const run = createCacheWriteGate(() => 100);
   await assert.rejects(run(async () => assert.fail("must not write"), 99));
 });
+
+test("queued admission expires even when the active writer has not settled", async t => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let now = 0;
+  const run = createCacheWriteGate(() => now);
+  let release!: () => void;
+  const writer = run(() => new Promise<void>(resolve => { release = resolve; }));
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+  let calls = 0;
+  const rejected = assert.rejects(run(async () => { calls++; }, 10), /deadline exceeded/);
+  now = 10;
+  t.mock.timers.tick(10);
+  await rejected;
+  assert.equal(calls, 0);
+  // A successor must still wait for the original writer, even though its
+  // immediate predecessor has expired and released its own queue slot.
+  const successor = run(async () => { calls++; }, 100);
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+  assert.equal(calls, 0);
+  release();
+  await Promise.all([writer, successor]);
+  assert.equal(calls, 1);
+  t.mock.timers.tick(100);
+});
+
+test("multiple expired waiters cannot reopen a running writer's slot", async t => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let now = 0;
+  const run = createCacheWriteGate(() => now);
+  let release!: () => void;
+  const writer = run(() => new Promise<void>(resolve => { release = resolve; }));
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+  const expired = [10, 20, 30].map(deadline => assert.rejects(run(async () => assert.fail("expired work must not start"), deadline), /deadline exceeded/));
+  now = 30; t.mock.timers.tick(30); await Promise.all(expired);
+  let successorStarted = false;
+  const successor = run(async () => { successorStarted = true; }, 100);
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+  assert.equal(successorStarted, false);
+  release(); await Promise.all([writer, successor]);
+  assert.equal(successorStarted, true);
+});
+
+test("the existing default ten-second admission budget is enforced without a database-failure cooldown", async t => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let now = 0;
+  const run = createCacheWriteGate(() => now);
+  let release!: () => void;
+  const writer = run(() => new Promise<void>(resolve => { release = resolve; }));
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+  const rejected = assert.rejects(run(async () => assert.fail("expired work must not start")), /deadline exceeded/);
+  now = 10_000; t.mock.timers.tick(10_000); await rejected;
+  release(); await writer;
+  let recovered = false;
+  await run(async () => { recovered = true; });
+  assert.equal(recovered, true);
+});

@@ -69,3 +69,18 @@ test("Worker restores only definite unverified automation from trusted Cloudflar
     }
   }
 });
+
+test("Worker subrequests do not receive an authenticated client IP", () => {
+  for (const [ip, headers] of [
+    ["66.249.66.1", { "CF-Worker": "kurioticket.com" }],
+    ["2a06:98c0:3600::103", {}],
+  ]) {
+    const request = new Request("https://staging.kurioticket.com/robots.txt", {
+      headers: { "CF-Connecting-IP": ip, "X-Kurioticket-Edge-IP": "66.249.66.1", ...headers },
+    });
+    Object.defineProperty(request, "cf", { value: {} });
+    const forwarded = edgeRequest(request, env);
+    assert.equal(forwarded.headers.get("x-kurioticket-edge-version"), "1");
+    assert.equal(forwarded.headers.get("x-kurioticket-edge-ip"), null);
+  }
+});

@@ -9,6 +9,7 @@ test("large cohort persistence binds payload once without returning the full JSO
   assert.match(helper, /\$executeRaw/);
   assert.match(helper, /EXCLUDED\."normalizedResult"/);
   assert.doesNotMatch(helper, /RETURNING|\.upsert\(/);
-  assert.match(source, /await writeSearchCohort\("hotel"/);
+  assert.match(source, /await publishHotelCohortAliases\(results, resultId,/);
+  assert.match(source, /\(key, rows, encoded\) => writeSearchCohort\("hotel", key, rows, search, now, encoded\)/);
   assert.match(source, /await writeSearchCohort\("car"/);
 });

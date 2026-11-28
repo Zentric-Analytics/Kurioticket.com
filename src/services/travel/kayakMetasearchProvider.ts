@@ -1,5 +1,6 @@
 import { currentSandboxGrant, productionSandboxHost } from "@/lib/productionSandboxPolicy";
 import { displayOnlyInventory } from "@/shared/presentation/sandboxInventory";
+import { createSearchDiagnostics } from "@/shared/search/diagnostics";
 
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import type { FlightSearchParams, HotelSearchParams, NormalizedFlightResult, PublicHotelResult, ProviderResult } from "@/lib/types";
@@ -28,14 +29,16 @@ export function scopeKayakOfferIds<T extends { id: string; hotelPropertyKey?: st
 
 /** Supplier-facing identity only; the incoming native identity remains in context
  * and diagnostics. Owner-confirmed supplier authorization covers Android flight/
- * car sandbox searches on staging, not production. No response-driven fallback.
+ * car sandbox searches on staging, not production. Only cars are retained after
+ * Android acceptance; flights restore their incoming identity after a visible
+ * search failure. No response-driven fallback.
  * Hotels retain their historical bare OkHttp/Dalvik compatibility behavior. */
 export function kayakProviderUserAgent(vertical: KayakVertical, incoming?: string, env: Record<string, string | undefined> = process.env): string | undefined {
   const agent = incoming?.trim();
   if (!agent) return undefined;
   if (vertical === "hotels") return /^(?:okhttp|dalvik)\//i.test(agent) ? undefined : agent;
   const kind = kayakAgentKind(agent);
-  if ((kind === "android_transport" || kind === "android_application") &&
+  if (vertical === "cars" && (kind === "android_transport" || kind === "android_application") &&
       env.TRAVEL_PROVIDER_MODE?.trim().toLowerCase() === "staging" && isKayakSandboxEnabled(env)) {
     try {
       const url = new URL(env.NEXT_PUBLIC_APP_URL || "");
@@ -81,7 +84,10 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
       await client.search(resolved.search, trackId, context.signal),
       crypto.randomUUID(),
     );
-    const results = await protect(offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; }));
+    const normalizationStarted = performance.now();
+    const normalized = offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; });
+    createSearchDiagnostics(vertical === "flights" ? "flight" : vertical === "hotels" ? "hotel" : "car", context.requestId, "server", { span: "normalization" })("normalization", { provider: "kayak", count: normalized.length, durationMs: performance.now() - normalizationStarted });
+    const results = await protect(normalized);
     reportProviderRows(context.requestId, vertical, "success", offers.length, results.length);
     return { provider: "KAYAK sandbox", results, status: "success", latencyMs: Date.now() - startedAt };
   } catch (error) {
@@ -135,10 +141,12 @@ export async function searchKayakHotelBatch(criteria: HotelSearchParams, context
   if (!resolved.supported || resolved.search.vertical !== "hotels") return { supported: false as const };
   const batch = await client.searchHotelBatch(resolved.search, trackId, checkpoint, context.signal);
   const nights = Math.max(1, Math.round((Date.parse(criteria.checkOut)-Date.parse(criteria.checkIn))/86_400_000));
+  const normalizationStarted = performance.now();
   const results = scopeKayakOfferIds(batch.offers, snapshot).flatMap(offer => {
     const model = kayakHotelCardModel(offer, nights);
     return model ? [model] : [];
   });
+  createSearchDiagnostics("hotel", context.requestId, "server", { span: "normalization" })("normalization", { provider: "kayak", count: results.length, durationMs: performance.now() - normalizationStarted });
   return { supported: true as const, batch, results };
 }
 /** Only KAYAK's search-scoped result identity groups cars, never a model name. */

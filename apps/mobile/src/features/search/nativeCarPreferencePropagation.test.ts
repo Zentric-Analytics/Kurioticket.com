@@ -59,7 +59,7 @@ test("language and currency presentation changes cannot restart or rewrite the c
   assert.ok(carPlanStart >= 0 && carPlanEnd > carPlanStart);
   assert.doesNotMatch(carPlan, /\blocale\b|\blanguage\b|\bcurrency\b/);
   assert.match(results, /travelApi\.searchCars\(plan\.plan\.payload,\{signal:controller\.signal,requestId,sandboxDisplay:true\}\)/);
-  assert.match(results, /\},\[plan\.plan\?\.key,retry\]\);/);
+  assert.match(results, /\},\[plan\.plan\?\.key,retry,presentationDiagnostics\]\);/);
   assert.doesNotMatch(card + currencyHook, /searchCars\(|setFilters\(|setSort\(/);
 });
 

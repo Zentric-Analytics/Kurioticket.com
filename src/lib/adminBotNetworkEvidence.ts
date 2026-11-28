@@ -2,12 +2,16 @@ import { publicVisitorIp } from "./geo/ipinfo";
 import { confirmedOperatorNetwork, matchesReportedMetaNetwork } from "./operatorCrawlerNetwork";
 import { matchReportedSearchCrawlerAddress } from "./verifiedSearchCrawler";
 
+export const reportEvidenceSelect = {
+  timestamp: true, declaredName: true, verification: true,
+} as const;
+
 type Observation = {
   timestamp: Date; declaredName: string | null; verification: string; ip: string | null;
   reportedIp: string | null; reportedNetworkMatch: string | null;
   renderLogIp: string | null; renderLogCorroboration: string | null;
 };
-type Identity = { name: string | null; verification: string; lastSeen: Date };
+type Identity = { name: string | null; group: string; verification: string; lastSeen: Date };
 type Evidence = { label: string; detail: string | null };
 const recoveredMatches = new Set(["FORWARD_CONFIRMED_DNS", "OFFICIAL_IP_LIST", "OFFICIAL_CRAWLER_NETWORK"]);
 
@@ -54,10 +58,16 @@ export async function activityNetworkEvidence(
   return null;
 }
 
-/** The directory and details show the same latest-request status. Do not
- * apply an old positive observation to a newer or unrelated registry row. */
-export function botReportVerification(bot: Identity, latest?: Pick<Observation, "declaredName" | "verification" | "timestamp"> | null) {
+/** Binary recorded verification only. Report-only network checks are never
+ * authentication. A matching latest observation may refine the registry
+ * status; a different name or timestamp cannot supply verification.
+ * A verified historical registry record is not proof of a current caller. */
+export function botReportVerification(
+  bot: Identity,
+  latest?: Pick<Observation, "declaredName" | "verification" | "timestamp"> | null,
+): "Verified" | "Unverified" {
+  if (!bot.name || bot.group === "UNKNOWN" || bot.verification === "SUSPICIOUS") return "Unverified";
   const matches = latest && latest.timestamp.getTime() === bot.lastSeen.getTime() && latest.declaredName === bot.name;
-  const state = matches && bot.verification !== "SUSPICIOUS" ? latest.verification : bot.verification;
+  const state = matches ? latest.verification : bot.verification;
   return state === "VERIFIED" ? "Verified" : "Unverified";
 }

@@ -26,7 +26,7 @@ test("the Car inventory loader sends an impression only after accepted visible r
   assert.match(loader, /setRequestId\(id\);\s*setResults\(data\.results\)/);
   assert.match(loader, /useEffect\(\(\) => \{\s*if \(results\?\.length && requestId\) journeyEvents\.resultsViewed\(requestId\)/);
   assert.match(loader, /credentials: "same-origin"/);
-  assert.match(loader, /<CarsResultsClient values=\{values\} initialResults=\{results\} inventoryStatus="available" requestId=\{requestId\} \/>/);
+  assert.match(loader, /<CarsResultsClient values=\{values\} initialResults=\{results\} inventoryStatus="available" requestId=\{requestId\} sharedCarId=\{sharedCarId\} \/>/);
   assert.match(endpoint, /logSearchHistory\(\{/);
   assert.match(endpoint, /type: "CAR"/);
 });

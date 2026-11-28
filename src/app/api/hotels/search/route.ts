@@ -1,4 +1,6 @@
 import { withOperationalGuestDevice } from "@/lib/operationalGuestDeviceObservation";
+import { withSearchDiagnosticContext } from "@/lib/search/diagnosticContext";
+import { diagnosticSearchResponse } from "@/lib/search/diagnosticResponse";
 import { withBotSearch } from "@/lib/botSecurity";
 import { countHotelInventory } from "@/lib/hotels/hotelResultAccounting";
 import { withProductionSandboxRequest, captureFinalSearchHistory, productionSandboxHost } from "@/lib/productionSandboxPolicy";
@@ -105,9 +107,9 @@ export async function POST(request: Request) {
   };
   const botDenial = await bot?.reserve();
   if (botDenial) return botDenial;
-  const aggregate = providerMode
+  const aggregate = await withSearchDiagnosticContext("hotel", requestId, async () => providerMode
     ? await searchHotelsByProvider(providerSearch, providerMode, { kayak: kayakContext, requestId, signal: request.signal, defer: after })
-    : await searchHotels(providerSearch, { kayak: kayakContext, defer: after, ...(bot ? { requestId, signal: request.signal } : {}) });
+    : await searchHotels(providerSearch, { kayak: kayakContext, defer: after, requestId, ...(bot ? { signal: request.signal } : {}) }));
   if (aggregate.unavailableMessage) {
     bot?.outcome("FAILED");
     after(async () => {
@@ -215,7 +217,7 @@ export async function POST(request: Request) {
     ]);
   });
 
-  return attachOperationalSearchSession(NextResponse.json({
+  return attachOperationalSearchSession(diagnosticSearchResponse("hotel", requestId, {
     ...classified,
     source: providerMode || classified.source,
     warningCategory: deriveHotelWarningCategory(aggregate),

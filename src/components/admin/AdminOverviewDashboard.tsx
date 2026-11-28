@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   Activity,
   ArrowUpRight,
+  Bot,
   Database,
   Headphones,
   KeyRound,
@@ -15,6 +16,7 @@ import {
 import { ActivityDataInfo } from "@/components/admin/ActivityDataInfo";
 import { AdminOverviewRangeSensitive } from "@/components/admin/AdminOverviewControls";
 import { OnlineUsersValue } from "@/components/admin/OnlineUsersValue";
+import { ActiveBotValue } from "@/components/admin/ActiveBotValue";
 import { summarizeAttentionRequired, summarizePlatformIncidents } from "@/lib/adminAttentionRequired";
 import type { AdminAlertSnapshot } from "@/services/adminAlertService";
 import type { getAdminOverview } from "@/services/adminOverviewService";
@@ -234,7 +236,7 @@ export function AdminOverviewDashboard({ data, system, activity, incidents }: {
       <section aria-label="Operations Snapshot" className="min-w-0 space-y-3">
         <h2 className="text-[16px] font-semibold tracking-tight text-slate-950">Operations Snapshot</h2>
 
-        {/* The two account totals sit beside Attention Required, not above it. */}
+        {/* Account and live activity totals sit beside Attention Required, not above it. */}
         <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
           <section aria-label="Attention Required" className="min-w-0 rounded-xl border border-slate-200 p-3 sm:p-4">
             <h2 className="mb-2 text-[15px] font-semibold text-slate-950">Attention Required</h2>
@@ -247,15 +249,26 @@ export function AdminOverviewDashboard({ data, system, activity, incidents }: {
           </section>
           <div aria-label="Account snapshot" className="grid min-w-0 grid-cols-1 grid-rows-2 items-stretch gap-2">
             <SnapshotLink href="/admin/users" label="Total accounts" value={data.users.total} icon={Users} hint="Current account records" />
-            <SnapshotLink href="/admin/users/online" label="Online Users" value={<OnlineUsersValue initial={data.onlinePresence} />} icon={Activity}
-              info={(
-                <ActivityDataInfo label="How Online Users are counted">
-                  Activity in the last {data.onlinePresence.windowSeconds} seconds on the website, Admin panel, Android, and iOS.
-                  Counts each verified account once across devices and each recognized guest session once.
-                  A person can have multiple guest sessions.
-                </ActivityDataInfo>
-              )}
-            />
+            <div aria-label="Live activity snapshot" className="grid min-w-0 grid-cols-2 items-stretch gap-2">
+              <SnapshotLink href="/admin/users/online" label="Online Users" value={<OnlineUsersValue initial={data.onlinePresence} />} icon={Activity}
+                info={(
+                  <ActivityDataInfo label="How Online Users are counted">
+                    Activity in the last {data.onlinePresence.windowSeconds} seconds on the website, Admin panel, Android, and iOS.
+                    Counts each verified account once across devices and each recognized guest session once.
+                    A person can have multiple guest sessions.
+                  </ActivityDataInfo>
+                )}
+              />
+              <SnapshotLink href="/admin/users/bots" label="Active Bot" value={<ActiveBotValue />} icon={Bot}
+                info={(
+                  <ActivityDataInfo label="How Active Bot is counted">
+                    Distinct named bot identities with recorded requests in the last {data.onlinePresence.windowSeconds} seconds.
+                    Repeated requests and different verification records for the same name count once.
+                    Includes blocked requests; unnamed automation is not counted as an identified bot.
+                  </ActivityDataInfo>
+                )}
+              />
+            </div>
           </div>
         </div>
 

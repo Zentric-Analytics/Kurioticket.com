@@ -9,6 +9,7 @@ import ts from "typescript";
 
 type Row = Record<string, any>;
 const baseTime = new Date("2026-10-28T09:00:00.000Z");
+const jsonAnyNull = Symbol("JSON null or missing");
 const allFilters = { tab: "all", stage: "all", product: "all", from: "", to: "", q: "", order: "newest" };
 
 function loadProduction(relative: string, overrides: Record<string, unknown> = {}): any {
@@ -29,6 +30,7 @@ function loadProduction(relative: string, overrides: Record<string, unknown> = {
 
 // Fail on unsupported predicates rather than silently broadening a test query.
 function matches(value: any, condition: any): boolean {
+  if (condition === jsonAnyNull) return value == null;
   if (condition === null || typeof condition !== "object") return value === condition;
   if (condition instanceof Date) return value instanceof Date && +value === +condition;
   return Object.entries(condition).every(([key, expected]: [string, any]) => {
@@ -38,8 +40,10 @@ function matches(value: any, condition: any): boolean {
     if (key === "is") return value != null && matches(value, expected);
     if (key === "none") return (value ?? []).every((item: any) => !matches(item, expected));
     if (key === "some") return (value ?? []).some((item: any) => matches(item, expected));
+    if (key === "not" && condition.path) return !matches(condition.path.reduce((v: any, part: string) => v?.[part], value), expected);
     if (key === "not") return !matches(value, expected);
     if (key === "in") return expected.includes(value);
+    if (key === "notIn") return !expected.includes(value);
     if (key === "lt") return value < expected;
     if (key === "lte") return value <= expected;
     if (key === "gt") return value > expected;
@@ -231,7 +235,7 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
   };
   const productionOverrides = {
     "server-only": {},
-    "@/generated/prisma/client": { Prisma: { TransactionIsolationLevel: { RepeatableRead: "RepeatableRead" }, sql: () => ({}) } },
+    "@/generated/prisma/client": { Prisma: { AnyNull: jsonAnyNull, TransactionIsolationLevel: { RepeatableRead: "RepeatableRead" }, sql: () => ({}) } },
     "@/lib/prisma": { getOptionalPrisma: () => db },
     "@/services/adminHandoffEvidence": { handoffEvidenceForActivitySql: (ids: string[], environment: string) => { assert.equal(environment, "staging"); assert.ok(ids.length <= 500 && ids.every(id => handoffRows.some(row => row.id === id))); return { activityHandoffIds: ids }; } },
     "@/lib/stagingSafety": { getPublicEnvironment: () => "staging" },
@@ -1106,4 +1110,148 @@ test("essential audit replacement read failure returns unavailable rather than g
   const scenario = essentialAuditScenario(1);
   scenario.failAuditReplacement();
   assert.deepEqual(await scenario.load({ ...allFilters, tab: "interactions" }), { status: "unavailable" });
+});
+
+test("registered optional interactions stop contributing rows and totals after consent withdrawal", async () => {
+  const { records, load } = setup("user", 0);
+  const template = records.analytics[0];
+  const visitor = template.visitor;
+  records.analytics.splice(0, records.analytics.length,
+    { ...template, id: "qa-registered-share", type: "SHARE", name: "share_link_copied",
+      metadata: { environment: "staging", recordPurpose: "optional_analytics" } },
+    { ...template, id: "qa-registered-local-save", type: "SAVE", name: "local_saved",
+      metadata: { environment: "staging" } },
+    { ...template, id: "qa-established-save", visitorId: null, visitor: null, type: "SAVE", name: "saved_item_confirmed",
+      metadata: { environment: "staging", recordPurpose: "essential_account_audit" } },
+  );
+  const filters = { ...allFilters, tab: "interactions" };
+  for (const mode of ["all", "page", "summary"] as const) {
+    const before = await load(filters, undefined, mode);
+    assert.equal(before.status, "ok");
+    assert.equal(before.data.summary.recordedActions, 3);
+  }
+  Object.assign(visitor, { consentStatus: "WITHDRAWN", trackingDisabledAt: baseTime, currentUserId: null, identityLinks: [] });
+  for (const mode of ["all", "page", "summary"] as const) {
+    const after = await load(filters, undefined, mode);
+    assert.equal(after.status, "ok");
+    assert.equal(after.data.summary.recordedActions, 1);
+    assert.deepEqual(after.data.events.map((row: Row) => row.id), ["e-qa-established-save"]);
+  }
+});
+
+test("page writer rejects unlinked registered visitors and keeps the original actor through retries", async () => {
+  const runtimeRequire = createRequire(import.meta.url);
+  const visitor: Row = { currentUserId: null, identityLinks: [], consentStatus: "GRANTED", trackingDisabledAt: null };
+  const account = { id: "qa-page-account", role: "ADMIN", status: "ACTIVE", emailVerified: baseTime };
+  const identity: Row = { userId: account.id, visitorId: "qa-page-visitor", applicationSource: "WEB" };
+  const rows: Row[] = [];
+  const tx = {
+    async $queryRaw(query: TemplateStringsArray, ...values: string[]) {
+      const sql = query.join("");
+      if (sql.includes('FROM "User"')) return [account];
+      if (sql.includes('FROM "AnalyticsEvent"')) {
+        const [eventId, visitorId, environment] = values;
+        return rows.filter(row => row.visitorId === visitorId && row.metadata.eventId === eventId
+          && row.metadata.environment === environment);
+      }
+      return [];
+    },
+    visitor: { async findUnique() { return visitor; } },
+    analyticsEvent: {
+      async create({ data }: Row) {
+        if (rows.some(row => row.metadata.eventId === data.metadata.eventId)) throw Object.assign(new Error("Unique event ID"), { code: "P2002" });
+        rows.push({ ...data, id: "qa-page-" + rows.length });
+      },
+    },
+  };
+  let pending = Promise.resolve<unknown>(undefined);
+  const db = {
+    $transaction<T>(action: (transaction: typeof tx) => Promise<T>) {
+      const result = pending.then(() => action(tx));
+      pending = result.catch(() => undefined);
+      return result;
+    },
+  };
+  const { POST } = loadProduction("src/app/api/activity/page-views/route.ts", {
+    "next/server": runtimeRequire("next/server"), zod: runtimeRequire("zod"), "node:crypto": runtimeRequire("node:crypto"),
+    "@/lib/prisma": { getOptionalPrisma: () => db },
+    "@/lib/guestAccessObservation": { consentedGuestAccessObservation: () => undefined },
+    "@/lib/stagingSafety": { getPublicEnvironment: () => "staging",
+      withEnvironmentMetadata: (metadata: Row) => ({ ...metadata, environment: "staging" }) },
+    "@/services/requestActivityIdentity": { resolveRequestActivityIdentity: async () => ({ ...identity }) },
+  });
+  const send = async (eventId: string, extra?: Row) => {
+    const response = await POST(new Request("https://pages.fixture/api/activity/page-views", {
+      method: "POST", headers: { "sec-fetch-site": "same-origin", "content-type": "application/json" },
+      body: JSON.stringify({ eventId, pageKey: "home", ...extra }),
+    }));
+    return { status: response.status, ...await response.json() };
+  };
+
+  const guestEventId = crypto.randomUUID();
+  assert.equal((await send(guestEventId)).accepted, false);
+  assert.equal(rows.length, 0);
+
+  identity.userId = null;
+  assert.equal((await send(guestEventId)).accepted, true);
+  assert.equal(rows[0].userId, null);
+  assert.equal(rows[0].metadata.originalIdentity, "guest");
+
+  Object.assign(visitor, { currentUserId: account.id, identityLinks: [{ userId: account.id }] });
+  identity.userId = account.id;
+  assert.equal((await send(guestEventId)).accepted, false);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].metadata.originalIdentity, "guest");
+
+  const accountEventId = crypto.randomUUID();
+  const duplicates = await Promise.all(Array.from({ length: 5 }, () => send(accountEventId)));
+  assert.ok(duplicates.every(result => result.accepted));
+  assert.equal(rows.length, 2);
+  assert.equal(rows[1].userId, account.id);
+  assert.equal(rows[1].metadata.originalIdentity, "registered");
+  assert.equal(rows[1].metadata.interface, "customer");
+  assert.equal((await send(crypto.randomUUID(), { userId: "qa-customer-subject" })).status, 400);
+  assert.equal((await send(crypto.randomUUID(), { pageKey: "admin_users" })).status, 400);
+  assert.equal((await send(crypto.randomUUID(), { previousPageKey: "home_hotels" })).status, 400);
+  identity.visitorId = "qa-other-visitor";
+  assert.deepEqual(await send(accountEventId), { status: 409, accepted: false, retryable: false });
+  identity.visitorId = "qa-page-visitor";
+
+  Object.assign(visitor, { consentStatus: "WITHDRAWN", trackingDisabledAt: baseTime });
+  assert.equal((await send(crypto.randomUUID())).accepted, false);
+  assert.equal(rows.length, 2);
+});
+
+test("admin role audit keeps the verified actor separate from the route subject", async () => {
+  const runtimeRequire = createRequire(import.meta.url);
+  const actor = { id: "qa-admin-actor", email: "actor@example.invalid" };
+  const target = { id: "qa-affected-account", email: "subject@example.invalid", role: "ADMIN", status: "ACTIVE" };
+  let authorized = false;
+  let reads = 0;
+  const audits: Row[] = [];
+  const { PATCH } = loadProduction("src/app/api/admin/users/[id]/role/route.ts", {
+    "next/server": runtimeRequire("next/server"),
+    "@/lib/admin": {
+      requireAdminApiSession: async () => authorized ? { session: { user: actor } } : { response: new Response(null, { status: 403 }) },
+      isProtectedAdminEmail: () => false,
+      countActiveAdminsExcluding: async () => 1,
+      writeAdminAuditLog: async (entry: Row) => { audits.push(entry); },
+    },
+    "@/lib/prisma": { getPrisma: () => ({ user: {
+      async findUnique({ where }: Row) { reads++; assert.equal(where.id, target.id); return target; },
+      async update({ where, data }: Row) { assert.equal(where.id, target.id); return { ...target, role: data.role }; },
+    } }) },
+  });
+  const send = () => PATCH(new Request("https://admin.fixture/api/admin/users/subject/role", {
+    method: "PATCH", body: JSON.stringify({ role: "USER", adminUserId: target.id }),
+  }), { params: Promise.resolve({ id: target.id }) });
+  assert.equal((await send()).status, 403);
+  assert.equal(reads, 0);
+  assert.equal(audits.length, 0);
+  authorized = true;
+  assert.equal((await send()).status, 200);
+  assert.equal(audits.length, 1);
+  assert.equal(audits[0].adminUserId, actor.id);
+  assert.equal(audits[0].targetId, target.id);
+  assert.equal(audits[0].action, "USER_ROLE_UPDATED");
 });

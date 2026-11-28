@@ -15,6 +15,7 @@ export const searchActivityFilterKeys = [
   "provider",
   "userId",
   "visitorId",
+  "botId",
   "from",
   "to",
 ] as const;

@@ -90,7 +90,10 @@ export type AdminJourneyEvent = {
   product: AdminJourneyProduct | null;
   provider: string | null;
   sourcePage: string | null;
-  pageView?: { label: string; path: string; previousPath: string | null; transport: "web" | "native"; platform: string; href: string | null };
+  pageView?: {
+    label: string; path: string; previousPath: string | null; transport: "web" | "native"; platform: string; href: string | null;
+    originalIdentity?: "guest" | "registered";
+  };
   search: AdminJourneySearch | null;
   handoff: {
     id: string;

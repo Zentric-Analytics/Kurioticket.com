@@ -15,11 +15,10 @@ test("desktop Flight result save state uses the existing canonical flight backen
   assert.match(source, /detailsHref/);
 });
 
-test("desktop Flight result save state preserves the guest local fallback used by Flight Details", () => {
-  assert.match(source, /readSavedItemIds/);
-  assert.match(source, /toggleSavedItemId/);
-  assert.match(source, /writeSavedItemIds/);
-  assert.match(source, /LOCAL_SAVED_FLIGHTS_CHANGED_EVENT/);
+test("flight result favorites require sign-in and ignore guest local storage", () => {
+  assert.match(source, /if \(status === "unauthenticated"\) \{[\s\S]*?await signIn\(undefined, \{ callbackUrl: window.location.href \}\)/);
+  assert.doesNotMatch(source, /readSavedItemIds|toggleSavedItemId|writeSavedItemIds|LOCAL_SAVED_FLIGHTS_CHANGED_EVENT|local_saved|local_unsaved/);
+  assert.match(source, /isSaved: status === "authenticated" && Boolean\(savedItem\)/);
 });
 
 test("saved Flight loading is shared across visible result cards", () => {
@@ -31,7 +30,7 @@ test("saved Flight loading is shared across visible result cards", () => {
 });
 
 
-test("saved Flight result state waits for session resolution before guest persistence", () => {
+test("saved Flight result state waits for session resolution before sign-in or account mutation", () => {
   assert.match(source, /if \(status === "loading"\) return;/);
   assert.match(source, /if \(pending \|\| status === "loading"\) return;/);
   assert.match(source, /pending: pending \|\| status === "loading"/);
