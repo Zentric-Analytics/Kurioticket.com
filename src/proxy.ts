@@ -6,8 +6,9 @@ import { getToken } from "next-auth/jwt";
 import { REGION_COOKIE_KEY, REGION_OVERRIDE_COOKIE_KEY } from "@/config/regionConfig";
 import { countryToRegion, normalizeRegion } from "@/lib/region/detectRegion";
 import { resolveAuthSecret } from "@/lib/authSecret";
+import { isStagingEnvironment } from "@/lib/stagingSafety";
 
-export async function proxy(request: NextRequest) {
+async function handleRequest(request: NextRequest) {
   const response = await botProxy(request);
   const pathname = request.nextUrl.pathname;
   if (!(response instanceof NextResponse) || !response.headers.has("x-middleware-next") || automationSignal(request) ||
@@ -59,6 +60,20 @@ export async function proxy(request: NextRequest) {
   }
   response.headers.set("x-kurioticket-region", region);
 
+  return response;
+}
+
+export async function proxy(request: NextRequest) {
+  const response = await handleRequest(request);
+  const hostname = request.nextUrl.hostname.toLowerCase();
+  // Crawlers must be able to retrieve a staging document to observe noindex.
+  // Apply the header to all staging responses, including bot early returns,
+  // redirects, assets and denials. Preserve any more specific route directives.
+  // The deployment mode also covers requests to the Render origin/other aliases.
+  if (isStagingEnvironment() || hostname === "staging.kurioticket.com"
+      || hostname === "kurioticket-web-staging.onrender.com") {
+    response.headers.append("X-Robots-Tag", "noindex");
+  }
   return response;
 }
 
