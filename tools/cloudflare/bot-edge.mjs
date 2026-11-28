@@ -14,7 +14,9 @@ export function edgeRequest(request, env) {
   }
   // Only a Cloudflare ingress request can contribute edge observations.
   const cf = request.cf;
-  const ip = cf ? request.headers.get("cf-connecting-ip") : null;
+  // In a same-zone Worker subrequest, CF-Connecting-IP can reflect a
+  // caller-controlled x-real-ip. Forward the request without attesting that IP.
+  const ip = cf && !request.headers.has("cf-worker") ? request.headers.get("cf-connecting-ip") : null;
   const ray = cf ? request.headers.get("cf-ray") : null;
   const country = cf?.country;
   const asn = cf?.asn;

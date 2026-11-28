@@ -64,6 +64,7 @@ test("sandbox route enforces environment, validation, origin, session continuity
     assert.equal(tracks.length, 0);
     const first = await POST(req(body));
     assert.equal(first.status, 200);
+    assert.equal(first.headers.get("x-robots-tag"), "noindex, nofollow");
     assert.equal(first.headers.get("cache-control"), "no-store");
     const cookie = first.headers.get("set-cookie")!;
     assert.match(cookie, /HttpOnly/i);
