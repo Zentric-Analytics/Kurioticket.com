@@ -658,6 +658,7 @@ test("PostgreSQL Essential account audits remain exactly once after canonical jo
 test("unified registered activity scopes security audits by viewer, actor, environment and interface", async () => {
   const { loadAdminIdentityActivity } = identityActivityReader();
   const actor = await account({ role: "ADMIN" });
+  assert.ok(actor.email);
   const subject = await account();
   const linked = await visitor(actor.id);
   const at = time(19);

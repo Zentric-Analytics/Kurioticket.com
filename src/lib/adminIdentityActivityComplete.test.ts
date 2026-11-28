@@ -695,13 +695,14 @@ test("text search matches the displayed edit, filter and sort action labels", as
 
 test("share filters find both linked and unlinked observations by their displayed action", async () => {
   const scenario = setup("guest", 1);
-  const canonical = { ...scenario.records.journeys[0], id: "qa-linked-share", type: "RESULT_SHARED",
+  const source = scenario.records.journeys[0];
+  const canonical = { ...source, id: "qa-linked-share", type: "RESULT_SHARED",
     metadata: { environment: "staging", action: "share_sheet_requested" } };
   const direct = { ...scenario.records.analytics[0], id: "qa-unlinked-share", type: "SHARE", name: "share_sheet_requested",
     metadata: { environment: "staging", product: "FLIGHT" } };
   scenario.records.journeys.push(canonical);
   scenario.records.analytics.push(direct, { ...direct, id: "qa-direct-linked-duplicate", metadata: {
-    ...direct.metadata, linkedJourneyId: canonical.journey.id, linkedSearchHistoryId: canonical.searchHistoryId,
+    ...direct.metadata, linkedJourneyId: source.journey.id, linkedSearchHistoryId: source.searchHistoryId,
   } });
   const result = await scenario.load({ ...allFilters, tab: "interactions", stage: "RESULT_SHARED", q: "Share sheet requested" }, undefined, "page");
   assert.equal(result.status, "ok");
