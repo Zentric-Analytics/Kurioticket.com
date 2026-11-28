@@ -259,7 +259,7 @@ export function AdminOverviewDashboard({ data, system, activity, incidents }: {
                   </ActivityDataInfo>
                 )}
               />
-              <SnapshotLink href="/admin/users/bots" label="Active Bot" value={<ActiveBotValue />} icon={Bot}
+              <SnapshotLink href="/admin/users/online?tab=active-bot&period=now" label="Active Bot" value={<ActiveBotValue />} icon={Bot}
                 info={(
                   <ActivityDataInfo label="How Active Bot is counted">
                     Distinct named bot identities with recorded requests in the last {data.onlinePresence.windowSeconds} seconds.
