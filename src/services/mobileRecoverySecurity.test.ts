@@ -258,7 +258,12 @@ test("restricted credentials cannot satisfy ordinary mobile, canonical web or ad
   const web = loadIsolatedModule<{ requireWebApiSession: () => Promise<unknown> }>("src/lib/web-api-auth.ts", {
     "next-auth": { getServerSession: async () => ({ user: { ...h.user, role: "ADMIN", accountSessionId: row.id } }) }, "@/lib/auth": { authOptions: {} }, "@/lib/account-session": h.sessions,
   });
-  const admin = loadIsolatedModule<{ requireAdminApiSession: () => Promise<{ response: Response }> }>("src/lib/admin.ts", { "next/server": { NextResponse }, "@/lib/web-api-auth": web, "@/lib/auth-diagnostics": { logSafeAuthDiagnostics: () => {} }, "@/lib/env": {}, "@/lib/prisma": {}, "@/lib/previewTesterAccess": {}, "@/lib/stagingSafety": {} });
+  const admin = loadIsolatedModule<{ requireAdminApiSession: () => Promise<{ response: Response }> }>("src/lib/admin.ts", {
+    "next/server": { NextResponse }, "@/lib/web-api-auth": web,
+    "@/lib/auth-diagnostics": { logSafeAuthDiagnostics: () => {} }, "@/lib/env": {}, "@/lib/prisma": {},
+    "@/lib/previewTesterAccess": {}, "@/lib/stagingSafety": {},
+    "@/lib/adminSecurityAuditActivity": loadIsolatedModule("src/lib/adminSecurityAuditActivity.ts", {}),
+  });
   for (const stage of ["PENDING_DELETION", "ACTIVE"]) {
     h.user.status = stage;
     assert.equal(await mobile.requireMobileSecurity(h.bearer(result.session.token)), null);

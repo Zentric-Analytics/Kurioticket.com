@@ -116,6 +116,7 @@ test("actual database-backed session and admin boundaries reject stale, invalid,
     "@/lib/env": { getAdminEmails: () => [user.email] }, "@/lib/prisma": {},
     "@/lib/previewTesterAccess": { isTrustedPreviewCompanyEmail: (email: string) => email.endsWith("@zentricanalytics.com") },
     "@/lib/stagingSafety": { isStagingEnvironment: () => true },
+    "@/lib/adminSecurityAuditActivity": load("src/lib/adminSecurityAuditActivity.ts", {}),
   });
   assert.ok(await web.requireWebApiSession());
   assert.ok((await admin.requireAdminApiSession() as { session?: unknown }).session);

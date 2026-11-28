@@ -143,6 +143,7 @@ export default async function AdminIdentityJourneyHistoryPage({ params, searchPa
     from: accountActivityRange === "custom" ? scope.from : null,
     to: accountActivityRange === "custom" ? scope.to : null,
     tab: "all", stage: "ACCOUNT_ACTIVITY", product: scope.product ?? null,
+    interface: null,
     q: null, cursor: null, order: null,
   });
   const accountActivityLabel = kind === "user" ? "View account activity" : "View other activity";

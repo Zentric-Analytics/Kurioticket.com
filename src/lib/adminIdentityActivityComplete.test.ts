@@ -711,6 +711,32 @@ test("share filters find both linked and unlinked observations by their displaye
   assert.ok(result.data.events.every((row: Row) => row.label === "Share sheet requested"));
 });
 
+test("the interactions tab excludes unrelated signup, support and provider-failure audits", async () => {
+  const scenario = setup("user", 1);
+  const sample = scenario.records.analytics[0];
+  const related = [
+    { type: "SAVE", name: "saved_item_confirmed", label: "Save confirmed" },
+    { type: "SHARE", name: "share_link_copied", label: "Result link copied" },
+    { type: "ALERT_CREATED", name: "price_alert_created", label: "Price alert enabled" },
+  ];
+  const unrelated = [
+    { type: "SIGNUP", name: "password_signup", label: "Account signup" },
+    { type: "SUPPORT_TICKET", name: "support_ticket_created", label: "Support ticket" },
+    { type: "PROVIDER_FAILURE", name: "provider_issue", label: "Provider issue" },
+  ];
+  scenario.records.analytics.splice(0, scenario.records.analytics.length, ...[...related, ...unrelated].map(({ type, name }) => ({
+    ...sample, id: "qa-account-event-" + name, type, name,
+  })));
+  const broad = await scenario.load({ ...allFilters, stage: "ACCOUNT_ACTIVITY" }, undefined, "page");
+  assert.equal(broad.status, "ok");
+  assert.equal(broad.data.summary.recordedActions, related.length + unrelated.length);
+  assert.deepEqual(broad.data.events.map((row: Row) => row.label).sort(), [...related, ...unrelated].map(row => row.label).sort());
+  const interactions = await scenario.load({ ...allFilters, tab: "interactions" }, undefined, "page");
+  assert.equal(interactions.status, "ok");
+  assert.equal(interactions.data.summary.recordedActions, related.length);
+  assert.deepEqual(interactions.data.events.map((row: Row) => row.label).sort(), related.map(row => row.label).sort());
+});
+
 test("invalid canonical references preserve eligible guest and account legacy actions, counts and pages", async () => {
   for (const kind of ["guest", "user"] as const) {
     for (const source of ["search", "handoff"] as const) {

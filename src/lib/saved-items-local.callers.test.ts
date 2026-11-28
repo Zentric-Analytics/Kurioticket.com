@@ -8,10 +8,10 @@ import { readSavedItemIds, toggleSavedItemId, writeSavedItemIds } from "./saved-
 // Execute the actual production handler AST with explicit UI/network boundaries.
 // Legacy storage is deliberately unchanged; result saves must not use it for guests.
 const surfaces = [
-  { label: "homepage discovery", path: "src/app/page.tsx", handler: "handleSavedItemToggle", recordsLocalAction: false },
-  { label: "flight discovery", path: "src/components/results/FlightResultsClient.tsx", handler: "handleSavedRouteToggle", recordsLocalAction: false },
-  { label: "flight details", path: "src/components/results/flightDetails/StandaloneFlightDetails.tsx", handler: "toggleSavedFlight", recordsLocalAction: true },
-  { label: "flight result card", path: "src/components/results/useSavedFlightResult.ts", handler: "toggleSavedFlight", recordsLocalAction: true },
+  { label: "homepage discovery", path: "src/app/page.tsx", handler: "handleSavedItemToggle", reportsConfirmedAction: false },
+  { label: "flight discovery", path: "src/components/results/FlightResultsClient.tsx", handler: "handleSavedRouteToggle", reportsConfirmedAction: false },
+  { label: "flight details", path: "src/components/results/flightDetails/StandaloneFlightDetails.tsx", handler: "toggleSavedFlight", reportsConfirmedAction: true },
+  { label: "flight result card", path: "src/components/results/useSavedFlightResult.ts", handler: "toggleSavedFlight", reportsConfirmedAction: true },
 ] as const;
 
 function productionHandler(path: string, name: string, boundaries: Record<string, unknown>) {
@@ -42,6 +42,7 @@ async function runHandler(surface: typeof surfaces[number], mode: "quota" | "blo
   const backendCalls: string[] = [];
   const signIns: unknown[] = [];
   const events: string[] = [];
+  const analyticsConsent = authenticated && mode !== "blocked" ? new AbortController().signal : null;
   const browser = Object.defineProperty({
     dispatchEvent(event: Event) { events.push(event.type); },
     location: { pathname: "/flights/details/fixture-item", search: "", href: "https://example.test/flights/details/fixture-item" },
@@ -77,7 +78,11 @@ async function runHandler(surface: typeof surfaces[number], mode: "quota" | "blo
       setSavedFlightBackendId(value: unknown) { state = value ? [key] : []; },
       setBackendSavedItemIds() {}, invalidateSavedFlightsClientCache() {}, publishSavedFlights() {},
       journeyEvents: { interactionRequestId: () => null }, searchRequestId: null, observedResult: undefined,
-      recordCustomerInteraction(value: { action: string }) { actions.push(value.action); },
+      beginCustomerInteraction: () => analyticsConsent,
+      recordCustomerInteraction(consent: AbortSignal | null, value: { action: string }) {
+        assert.equal(consent, analyticsConsent);
+        if (consent && !consent.aborted) actions.push(value.action);
+      },
       deleteBackendDiscovery: async (id: string) => { backendCalls.push(id); return { ok: true }; },
       fetch: async (url: string) => { backendCalls.push(url); return { ok: true }; },
       SavedFlightTimeError: class SavedFlightTimeError extends Error {},
@@ -107,11 +112,13 @@ for (const surface of surfaces) {
   });
 
   test(`${surface.label} keeps signed-in backend updates independent of local storage`, async () => {
-    const result = await runHandler(surface, "blocked", true, true);
-    assert.deepEqual(result.state, []);
-    assert.equal(result.backendCalls.length, 1);
-    assert.equal(result.stored, '["fixture-item"]', "account backend update must not mutate guest persistence");
-    assert.ok(!result.error);
-    assert.deepEqual(result.actions, surface.recordsLocalAction ? ["saved_item_removed"] : []);
+    for (const mode of ["normal", "quota", "blocked"] as const) {
+      const result = await runHandler(surface, mode, true, true);
+      assert.deepEqual(result.state, []);
+      assert.equal(result.backendCalls.length, 1);
+      assert.equal(result.stored, '["fixture-item"]', "account backend update must not mutate guest persistence");
+      assert.ok(!result.error);
+      assert.deepEqual(result.actions, surface.reportsConfirmedAction && mode !== "blocked" ? ["saved_item_removed"] : []);
+    }
   });
 }
