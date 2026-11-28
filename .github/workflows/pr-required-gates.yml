@@ -225,18 +225,23 @@ jobs:
         run: echo "No mobile-relevant files changed; the required mobile check is conclusive without running the mobile suite."
 
       - name: Setup Node.js
-        if: steps.changes.outputs.mobile_relevant == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: apps/mobile/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            apps/mobile/package-lock.json
 
       # Native notice fixtures deliberately use one root React/server-renderer pair.
       # Install that declared toolchain rather than mixing it with native React.
-      - name: Install root component-test dependencies
-        if: steps.changes.outputs.mobile_relevant == 'true'
+      - name: Install root validation dependencies
         run: npm ci
+
+      - name: Validate declared activity coverage
+        run: |
+          node --test scripts/check-activity-coverage.test.mjs
+          node scripts/check-activity-coverage.mjs
 
       - name: Install mobile dependencies
         if: steps.changes.outputs.mobile_relevant == 'true'

@@ -46,3 +46,12 @@ test("unknown platform evidence stays unknown and environment and route checks r
   assert.equal(toAdminPageView({ id: "event-2", createdAt: at, metadata: { ...metadata, pageKey: "private-route" } }, "production"), null);
   assert.equal(toAdminPageView({ id: "event-2", createdAt: at, metadata: { ...metadata, transport: "unknown" } }, "production"), null);
 });
+
+test("page projection preserves the original guest and registered identity of legacy visits", () => {
+  const metadata = { pageKey: "home", transport: "web", environment: "staging" };
+  const guest = { id: "guest-event", createdAt: at, metadata, userId: null };
+  const account = { ...guest, id: "account-event", userId: "qa-account" };
+  assert.equal(toAdminPageView(guest, "staging")?.pageView?.originalIdentity, "guest");
+  assert.equal(toAdminPageView(account, "staging")?.pageView?.originalIdentity, "registered");
+  assert.equal(toAdminPageView(account, "production"), null);
+});

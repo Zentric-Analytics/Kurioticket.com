@@ -98,6 +98,7 @@ function EventDetails({ row, timeZone, environment, returnHref, accessHref }: {
       {page ? <>
         <div className={fieldClass}><dt className={termClass}>{page.transport === "native" ? "App screen" : "Page address"}</dt><dd className="break-all">{page.href ? <a href={page.href} target="_blank" rel="noopener noreferrer" className="focus-ring text-[#004BB8] hover:underline">{page.href}</a> : page.path}</dd></div>
         <div className={fieldClass}><dt className={termClass}>Platform</dt><dd>{page.platform}</dd></div>
+        {page.originalIdentity ? <div className={fieldClass}><dt className={termClass}>Identity at visit</dt><dd>{page.originalIdentity === "guest" ? "Guest" : "Registered account"}</dd></div> : null}
         {page.previousPath ? <div className={fieldClass}><dt className={termClass}>Previous page</dt><dd className="break-all">{page.previousPath}</dd></div> : null}
       </> : <>
         {description ? <div className={fieldClass + " sm:col-span-2"}><dt className={termClass}>Recorded details</dt><dd className="break-words leading-6 text-[#334155]">{description}</dd></div> : null}

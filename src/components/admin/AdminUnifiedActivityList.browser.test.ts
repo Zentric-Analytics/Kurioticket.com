@@ -13,7 +13,7 @@ const setup = `
     {id:'s-guest-search',at,stage:'SEARCH_COMPLETED',label:'Search completed',detail:'CAR · CDG → CDG · FAILED',product:'CAR',resultCount:0,
       searchHistoryId:'original-guest-search-0001',originalSearchIdentity:'guest',searchOutcome:'FAILED',platform:'WEB',platformSource:'search'},
     {id:'e-saved',at:new Date(+at-1000),stage:'ACCOUNT_ACTIVITY',label:'Save confirmed',detail:'Flight · Web · Reference: result-0123456789',product:'FLIGHT',platform:'WEB',platformSource:'action'},
-    {id:'e-page',at:new Date(+at-2000),stage:'PAGE_VIEW',label:'Homepage',detail:'/ · Desktop web',pageView:{path:'/',previousPath:'/cars',transport:'web',platform:'Desktop web',href:'https://staging.kurioticket.com/'}},
+    {id:'e-page',at:new Date(+at-2000),stage:'PAGE_VIEW',label:'Homepage',detail:'/ · Desktop web',pageView:{path:'/',previousPath:'/cars',transport:'web',platform:'Desktop web',href:'https://staging.kurioticket.com/',interface:'customer',originalIdentity:'guest'}},
     {id:'e-unlabelled',at:new Date(+at-3000),stage:'SEARCH_COMPLETED',label:'Search completed',detail:'HOTEL · Lagos',product:'HOTEL',resultCount:0},
     {id:'e-old',at:new Date(+at-4000),stage:'RESULTS_VIEWED',label:'Results viewed',detail:'FLIGHT · LOS → LHR',product:'FLIGHT'}
   ];
@@ -33,6 +33,11 @@ for (const width of [390, 1280]) test(`activity details open by keyboard, retain
     await expect(guest.locator("summary")).toContainText("Search originally recorded as guest");
     await expect(guest.getByRole("link", { name: "View original search" })).not.toBeVisible();
     await expect(saved.locator("code")).not.toBeVisible();
+    const visit = page.locator('[data-activity-id="e-page"]');
+    await visit.locator("summary").focus();
+    await page.keyboard.press("Enter");
+    await expect(visit.getByText("Identity at visit")).toBeVisible();
+    await expect(visit.getByText("Guest", { exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "View pages visited" })).toHaveCount(0);
     await expect(page.locator('[data-activity-id="e-unlabelled"] summary')).not.toContainText("guest");
     await expect(page.locator('[data-activity-id="e-unlabelled"] summary')).not.toContainText("Search failed");
