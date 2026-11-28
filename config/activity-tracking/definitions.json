@@ -226,7 +226,23 @@
     "admin.navigation-proposed": "Deferred navigation and section observation pending an approved monitoring policy.",
     "customer.navigation-proposed": "Deferred account, legal, packages or in-page navigation gap. Collection requires approval."
   },
-  "reviews": {},
+  "reviews": {
+    "src/app/admin/searches/activity/page.tsx#3d30a77d75da0538": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/app/admin/users/bots/[id]/page.tsx#176fd42be59b43d3": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/app/admin/users/bots/[id]/page.tsx#fdfed9e812f69a25": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/app/admin/users/bots/[id]/page.tsx#4e98162924d2314f": {
+      "definition": "admin.navigation-proposed"
+    },
+    "src/app/admin/users/bots/[id]/request-evidence.tsx#e922bc6774892e29": {
+      "definition": "admin.navigation-proposed"
+    }
+  },
   "routeExclusions": {
     "src/app/admin/confirmed-trips/alerts/page.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
     "src/app/admin/confirmed-trips/operations/page.tsx": "Compatibility alias redirects to a canonical destination. The alias has no independent page occurrence.",
