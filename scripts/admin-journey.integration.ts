@@ -13,7 +13,7 @@ import { createAdminJourneyService } from "../src/services/adminJourneyCore";
 import { createAdminJourneyHttpHandlers } from "../src/services/adminJourneyHttp";
 import { createAdminOperationalReadService } from "../src/services/adminOperationalReadCore";
 import { handoffEvidenceForActivitySql } from "../src/services/adminHandoffEvidence";
-import type { AdminJourneyResult, AdminJourneyStage } from "../src/services/adminJourneyContract";
+import type { AdminJourneyResult } from "../src/services/adminJourneyContract";
 import { declaredSearchCrawler, searchCrawlerMetadata } from "../src/lib/searchCrawlerGate";
 import type { ActivityFilters } from "../src/lib/adminIdentityActivity";
 
@@ -86,7 +86,7 @@ async function redirect(visitorId: string | null, at: Date, data: Partial<Prisma
     destinationUrl: "https://private:password@provider.example/book?secret=value", userType: "guest", createdAt: at, ...data,
   } });
 }
-async function event(journeyId: string, at: Date, type: AdminJourneyStage, data: Partial<Prisma.JourneyEventUncheckedCreateInput> = {}) {
+async function event(journeyId: string, at: Date, type: Prisma.JourneyEventUncheckedCreateInput["type"], data: Partial<Prisma.JourneyEventUncheckedCreateInput> = {}) {
   return db.journeyEvent.create({ data: {
     journeyId, type, eventKey: randomUUID(), product: "HOTEL", createdAt: at,
     metadata: { environment: "staging", sourcePage: "/hotels/results?private=value", sensitive: "never-return-this" }, ...data,
