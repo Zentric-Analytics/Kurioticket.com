@@ -1,11 +1,9 @@
-import { botRecordedVerification } from "./adminBotReport";
 import { publicVisitorIp } from "./geo/ipinfo";
 import { confirmedOperatorNetwork, matchesReportedMetaNetwork } from "./operatorCrawlerNetwork";
 import { matchReportedSearchCrawlerAddress } from "./verifiedSearchCrawler";
 
 export const reportEvidenceSelect = {
-  timestamp: true, declaredName: true, verification: true, ip: true,
-  reportedIp: true, reportedNetworkMatch: true, renderLogIp: true, renderLogCorroboration: true,
+  timestamp: true, declaredName: true, verification: true,
 } as const;
 
 type Observation = {
@@ -13,7 +11,7 @@ type Observation = {
   reportedIp: string | null; reportedNetworkMatch: string | null;
   renderLogIp: string | null; renderLogCorroboration: string | null;
 };
-type Identity = { name: string | null; group: string; verification: string; requests: bigint; lastSeen: Date };
+type Identity = { name: string | null; group: string; verification: string; lastSeen: Date };
 type Evidence = { label: string; detail: string | null };
 const recoveredMatches = new Set(["FORWARD_CONFIRMED_DNS", "OFFICIAL_IP_LIST", "OFFICIAL_CRAWLER_NETWORK"]);
 
@@ -60,13 +58,16 @@ export async function activityNetworkEvidence(
   return null;
 }
 
-/** The directory and details show the same latest-request status. Do not
- * apply an old positive observation to a newer or unrelated registry row. */
-export async function botReportVerification(bot: Identity, latest?: Observation | null): Promise<Evidence> {
-  const fallback = { label: botRecordedVerification(bot), detail: null };
-  if (bot.group === "UNKNOWN" || bot.verification === "SUSPICIOUS" ||
-      !latest || latest.timestamp.getTime() !== bot.lastSeen.getTime() || latest.declaredName !== bot.name) return fallback;
-  if (bot.verification === "VERIFIED" && latest.verification === "VERIFIED") return fallback;
-  const original = { label: botRecordedVerification({ verification: latest.verification, requests: bot.requests }), detail: null };
-  return await activityNetworkEvidence(latest) ?? original;
+/** Binary recorded verification only. Report-only network checks are never
+ * authentication. A matching latest observation may refine the registry
+ * status; a different name or timestamp cannot supply verification.
+ * A verified historical registry record is not proof of a current caller. */
+export function botReportVerification(
+  bot: Identity,
+  latest?: Pick<Observation, "declaredName" | "verification" | "timestamp"> | null,
+): "Verified" | "Unverified" {
+  if (!bot.name || bot.group === "UNKNOWN" || bot.verification === "SUSPICIOUS") return "Unverified";
+  const matches = latest && latest.timestamp.getTime() === bot.lastSeen.getTime() && latest.declaredName === bot.name;
+  const state = matches ? latest.verification : bot.verification;
+  return state === "VERIFIED" ? "Verified" : "Unverified";
 }

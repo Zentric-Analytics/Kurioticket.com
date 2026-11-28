@@ -108,10 +108,9 @@ export async function readBotDirectory(raw: BotQuery) {
         ],
       };
     }, { isolationLevel: "RepeatableRead" });
-    // Network checks run outside the read-only database transaction.
-    const rows = await Promise.all(data.rows.map(async ({ activities, ...bot }) => ({
-      ...bot, access: currentBotAccess(bot, environment), reportVerification: await botReportVerification(bot, activities[0]),
-    })));
+    const rows = data.rows.map(({ activities, ...bot }) => ({
+      ...bot, access: currentBotAccess(bot, environment), reportVerification: botReportVerification(bot, activities[0]),
+    }));
     return { state: "ready", filters: { ...filters, page: data.page }, now, ...data, rows } as const;
   } catch {
     console.error("[admin:bot-management] Directory report unavailable");
@@ -202,10 +201,9 @@ export async function readBotDetails(id: string, raw: BotQuery) {
     }, { isolationLevel: "RepeatableRead" });
     if (!data) return { state: "missing" } as const;
     const { activities, ...bot } = data.bot;
-    const [reportVerification, events] = await Promise.all([
-      botReportVerification(bot, activities[0]),
-      Promise.all(data.events.map(async event => ({ ...event, networkEvidence: await activityNetworkEvidence(event) }))),
-    ]);
+    const reportVerification = botReportVerification(bot, activities[0]);
+    // Request-specific network evidence remains separate from the summary.
+    const events = await Promise.all(data.events.map(async event => ({ ...event, networkEvidence: await activityNetworkEvidence(event) })));
     return { state: "ready", filters: { ...filters, page: data.page }, ...data, bot: { ...bot, access: currentBotAccess(bot, environment) }, reportVerification, events } as const;
   } catch {
     console.error("[admin:bot-management] Bot details unavailable");

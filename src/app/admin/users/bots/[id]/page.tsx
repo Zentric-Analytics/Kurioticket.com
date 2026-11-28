@@ -93,7 +93,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
           <BotIcon />
           <div className="min-w-0">
             <h1 className="wrap-anywhere text-xl font-semibold text-slate-950">{botName(bot)}</h1>
-            <p className="text-[13px] text-slate-600">{botType(bot)} · {report.reportVerification.label} · {botRecordedAccess(bot)}</p>
+            <p className="text-[13px] text-slate-600">{botType(bot)} · {report.reportVerification} · {botRecordedAccess(bot)}</p>
           </div>
         </div>
         <Link prefetch={false} href={botSearchesHref}
@@ -106,7 +106,7 @@ export default async function BotDetailsPage({ params, searchParams }: {
       <Fields threeColumns entries={[
         ["Owner", bot.owner],
         ["Category", category],
-        ["Verification status", report.reportVerification.label],
+        ["Verification status", report.reportVerification],
         ["Country", countries.length ? <span title="Countries observed in recorded requests and searches for this bot name">{countries.join(", ")}</span> : null],
         ["First seen (UTC)", <time key="first-seen" dateTime={bot.firstSeen.toISOString()} title={botTime(bot.firstSeen)}>{botDirectoryTime(bot.firstSeen)}</time>],
         ["Last seen (UTC)", <time key="last-seen" dateTime={bot.lastSeen.toISOString()} title={botTime(bot.lastSeen)}>{botDirectoryTime(bot.lastSeen)}</time>],
