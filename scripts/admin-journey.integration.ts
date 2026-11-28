@@ -249,6 +249,42 @@ test("equal-time event pages use ascending IDs and bind continuation to one jour
   assert.equal((await service.detail(j.id, { cursor: firstCursor, provider: "Other provider" })).status, "invalid");
 });
 
+test("PostgreSQL journey detail projects approved edit fields and exact native Package results page links", async () => {
+  const owner = await account();
+  const other = await account();
+  const v = await visitor(owner.id);
+  const at = time(20);
+  const { j, s: hotel } = await searchEvent(v.id, at, { userId: owner.id });
+  const edit = await event(j.id, time(20, 61), "SEARCH_EDIT_APPLIED", {
+    searchHistoryId: hotel.id,
+    metadata: { environment: "staging", editFields: ["destination", "dates", "destination", "rental_times", "private-typed-input"] },
+  });
+  const packageSearch = await search(v.id, time(20, 62), { userId: owner.id, type: "PACKAGE" });
+  await event(j.id, time(20, 62), "SEARCH_COMPLETED", { product: "PACKAGE", searchHistoryId: packageSearch.id });
+  const metadata = { environment: "staging", transport: "native", platform: "iOS app", pageKey: "package_results",
+    previousPageKey: "packages", originalIdentity: "registered", linkedJourneyId: j.id, linkedSearchHistoryId: packageSearch.id };
+  const pageData = { type: "PAGE_VIEW" as const, name: "page_viewed", visitorId: v.id, userId: owner.id, createdAt: time(20, 63), metadata };
+  const page = await db.analyticsEvent.create({ data: pageData });
+  await db.analyticsEvent.create({ data: { ...pageData, userId: other.id } });
+  await db.analyticsEvent.create({ data: { ...pageData, metadata: { ...metadata, linkedSearchHistoryId: hotel.id } } });
+  await db.analyticsEvent.create({ data: { ...pageData, metadata: { ...metadata, environment: "production" } } });
+
+  const detail = ok(await service.detail(j.id, { ...window(20), identity: "registered", userId: owner.id }));
+  const projectedEdit = detail.events.find(row => row.id === edit.id);
+  assert.deepEqual(projectedEdit?.editFields, ["destination", "dates"]);
+  assert.equal(projectedEdit?.search?.id, hotel.id);
+  assert.doesNotMatch(JSON.stringify(detail), /private-typed-input|rental_times/);
+  const pageRows = detail.events.filter(row => row.type === "PAGE_VIEW");
+  assert.deepEqual(pageRows.map(row => row.id), ["pv-" + page.id]);
+  assert.equal(pageRows[0].search?.id, packageSearch.id);
+  assert.equal(pageRows[0].product, "PACKAGE");
+  assert.equal(pageRows[0].pageView?.path, "/package-results");
+  assert.equal(pageRows[0].pageView?.previousPath, "/packages");
+  assert.equal(pageRows[0].pageView?.platform, "iOS app");
+  assert.equal(pageRows[0].pageView?.href, null);
+  assert.equal(pageRows[0].editFields, undefined);
+});
+
 test("product/provider/stage filters select a journey cohort without deleting its other observed stages", async () => {
   const v = await visitor();
   const j = await journey(v.id, time(7));

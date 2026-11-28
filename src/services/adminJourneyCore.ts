@@ -186,7 +186,8 @@ function detailSql(query: AdminJourneyQuery, journeyId: string) {
       SELECT *, NULL::jsonb AS "pageViewMetadata", NULL::text AS "pageViewUserId" FROM scoped_events
       UNION ALL
       SELECT 'pv-' || a."id", s."journeyId", 'PAGE_VIEW', s."product", NULL, a."createdAt",
-        NULL, NULL, NULL, NULL::jsonb, NULL, NULL::jsonb, NULL, NULL, NULL, NULL, NULL, NULL,
+        NULL, NULL, NULL, NULL::jsonb, NULL, NULL::jsonb, NULL, NULL, NULL::jsonb AS "editFields",
+        NULL, NULL, NULL, NULL,
         s."visitorId", s."userId", s."startedAt",
         s."searchHistoryId", s."requestId", s."searchProduct", s."origin", s."destination",
         s."checkIn", s."checkOut", s."searchQuery", s."searchStatus", s."resultCount", s."latencyMs",
@@ -202,7 +203,8 @@ function detailSql(query: AdminJourneyQuery, journeyId: string) {
         AND a."metadata"->>'transport' IN ('web', 'native')
         AND ((s."product" = 'FLIGHT' AND a."metadata"->>'pageKey' IN ('flight_results', 'flight_details'))
           OR (s."product" = 'HOTEL' AND a."metadata"->>'pageKey' IN ('hotel_results', 'hotel_details'))
-          OR (s."product" = 'CAR' AND a."metadata"->>'pageKey' IN ('car_results', 'car_details')))
+          OR (s."product" = 'CAR' AND a."metadata"->>'pageKey' IN ('car_results', 'car_details'))
+          OR (s."product" = 'PACKAGE' AND a."metadata"->>'pageKey' = 'package_results'))
     ) SELECT * FROM detail_events
     WHERE "journeyId" = ${journeyId}
       ${query.cursor ? Prisma.sql`AND ("createdAt", "id") > (${new Date(query.cursor.at)}, ${query.cursor.id})` : Prisma.empty}
