@@ -111,6 +111,22 @@ export function customerWebSectionHost(key: PageViewKey): PageViewKey | null {
   const entry = pageViewCatalog[key];
   return "webSectionOf" in entry ? entry.webSectionOf : null;
 }
+
+/** Shared sign-in can be a redirect into a restricted Admin or recovery flow. */
+export function isRestrictedWebSignIn(pathname: string | null, search: string, origin: string) {
+  if (pathname !== "/auth/signin") return false;
+  const callbacks = new URLSearchParams(search).getAll("callbackUrl");
+  return callbacks.some(callback => {
+    try {
+      const destination = new URL(callback, origin);
+      const path = decodeURIComponent(destination.pathname);
+      return destination.origin === origin && (path === "/admin" || path.startsWith("/admin/")
+        || path === "/account/pending-deletion");
+    } catch {
+      return true;
+    }
+  });
+}
 /** Persist a public route label for journey context, without dynamic identifiers. */
 export function customerJourneySourcePath(path: string, transport: PageViewTransport): string | undefined {
   const key = pageViewKey(path, transport);

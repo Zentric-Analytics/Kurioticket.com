@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { createPageViewCapture, isCustomerPackageStagePath } from "@/lib/pageViewCatalog";
+import { createPageViewCapture, isCustomerPackageStagePath, isRestrictedWebSignIn } from "@/lib/pageViewCatalog";
 import { analyticsConsentAccountKey, analyticsConsentChangedEvent, browserAllowsAnalytics, getConfirmedBrowserAnalyticsProof, getConfirmedBrowserAnalyticsSignal, isAnalyticsConsentStorageEvent, setBrowserAnalyticsAccount, setBrowserAnalyticsConfirmation } from "@/lib/analyticsConsentClient";
 import { deliverCustomerActivity } from "@/lib/customerActivityDelivery";
 import { createJourneyEventSender, forgetJourneySelections, journeyRequestId, readJourneySelection, rememberJourneySelection } from "@/lib/journeyEventClient";
@@ -113,7 +113,8 @@ export function JourneyEventsProvider({ children }: { children: ReactNode }) {
     if (isCustomerPackageStagePath(pathname)) return;
     const event = observePage({
       requestId: new URLSearchParams(window.location.search).get("requestId"),
-      pathname, transport: "web", context: signal && signal === confirmation.signal ? pageContext : null, visible,
+      pathname: isRestrictedWebSignIn(pathname, window.location.search, window.location.origin) ? null : pathname,
+      transport: "web", context: signal && signal === confirmation.signal ? pageContext : null, visible,
     });
     if (event && signal) deliverCustomerActivity("/api/activity/page-views", event, signal);
   }, [actor, confirmation.signal, pathname, pageContext, visible, observePage]);

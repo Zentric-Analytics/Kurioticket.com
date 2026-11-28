@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createPageViewCapture, isCustomerPackageStagePath, pageViewInfo, pageViewKey, publicPageViewPath } from "./pageViewCatalog";
+import { createPageViewCapture, isCustomerPackageStagePath, isRestrictedWebSignIn, pageViewInfo, pageViewKey, publicPageViewPath } from "./pageViewCatalog";
 
 test("customer web routes report the committed account, package and public destinations", () => {
   const routes = {
@@ -65,6 +65,16 @@ test("distinct detail visits sharing a template get distinct occurrence IDs and 
   assert.deepEqual(visit("/flights/details/third%3Aid"), { eventId: "4", pageKey: "flight_details" });
   assert.equal(visit("/flights/details/third%3Aid", { context: null }), null);
   assert.deepEqual(visit("/flights/details/third%3Aid", { context: "another-consented-actor" }), { eventId: "5", pageKey: "flight_details" });
+});
+
+test("shared sign-in remains in scope for customer navigation and excludes Admin and account recovery entries", () => {
+  const origin = "https://staging.kurioticket.example";
+  for (const target of ["/admin", "/admin/users?scope=private", origin + "/%61dmin", "/account/pending-deletion"]) {
+    assert.equal(isRestrictedWebSignIn("/auth/signin", new URLSearchParams({ callbackUrl: target }).toString(), origin), true);
+  }
+  assert.equal(isRestrictedWebSignIn("/auth/signin", "", origin), false);
+  assert.equal(isRestrictedWebSignIn("/auth/signin", "callbackUrl=/dashboard", origin), false);
+  assert.equal(isRestrictedWebSignIn("/support", "callbackUrl=/admin", origin), false);
 });
 
 test("committed guided package hotel detail instances are separate without exposing selection references", () => {
