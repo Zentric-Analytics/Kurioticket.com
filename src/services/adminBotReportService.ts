@@ -7,10 +7,8 @@ import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { Prisma } from "@/generated/prisma/client";
 import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { activityNetworkEvidence, botReportVerification, reportEvidenceSelect } from "@/lib/adminBotNetworkEvidence";
-import { recordedSearchCrawler } from "./adminOperationalReadCore";
-import { declareBotNetworkIpCursor, detailHistoryQuery, recordedBotSearchRows, summarizeBotNetworkPaged, type BotNetworkIpCandidate, type RecordedBotSearch } from "./recordedBotSearchHistory";
-import { botSearchNetwork, combinedBotHistory, type BotHistoryPointer, type HistoricalBotSearch } from "./adminBotHistory";
-import { BOT_DAILY_SEARCH_LIMIT, botSearchQuotaWhere, nextSearchTime, utcDayStart } from "./botActivityStore";
+import { detailHistoryQuery, recordedBotSearchRows, summarizeBotNetwork } from "./recordedBotSearchHistory";
+import { botRequestHistory, type BotHistoryPointer } from "./adminBotHistory";
 
 type Filters = ReturnType<typeof botFilters>;
 type Environment = ReturnType<typeof getPublicEnvironment>;
@@ -126,23 +124,14 @@ type DetailHistoryRows = {
   actual: number;
   historicalActual: number;
   page: number;
-  searchPage: number;
-  pointers: Pick<BotHistoryPointer, "id" | "source">[];
-  historical: Array<Omit<HistoricalBotSearch, "timestamp" | "identityKey"> & { timestamp: string }>;
-  recordedSearches: Array<Omit<RecordedBotSearch, "createdAt"> & { createdAt: string }>;
-  relatedCohorts: { id: string; verification: string; count: number }[];
-  networkIpCandidates: BotNetworkIpCandidate[];
+  pointers: Pick<BotHistoryPointer, "id">[];
   networkCountryCodes: string[];
 };
-
-function utcJsonDate(timestamp: string) {
-  return new Date(timestamp + "Z");
-}
 
 export async function readBotDetails(id: string, raw: BotQuery) {
   await requireAdminSession(BOT_DIRECTORY);
   if (!z.uuid().safeParse(id).success) return { state: "missing" } as const;
-  const filters = botFilters(raw, "all");
+  const filters = botFilters(raw.kind === "HISTORICAL_SEARCH" ? { ...raw, kind: undefined } : raw, "all");
   const environment = getPublicEnvironment();
 
   try {
@@ -162,35 +151,15 @@ export async function readBotDetails(id: string, raw: BotQuery) {
 
       const where = { botId: id, environment };
       const searchWhere = botSearchWhere(environment);
-      const requestedSearchPage = typeof raw.searchPage === "string" && /^[1-9]\d{0,8}$/.test(raw.searchPage)
-        ? Number(raw.searchPage) : 1;
-      const history = combinedBotHistory(environment, id, bot.identityKey, {
+      const history = botRequestHistory(environment, id, {
         window: filters.window ?? undefined, kind: filters.kind, decision: filters.decision,
-      }, Prisma.sql`SELECT id, "createdAt" AS timestamp FROM recorded WHERE "activityId" IS NULL`);
-      // Only recognized, non-unknown names may share display-only network
-      // evidence across cohorts. The exact identity still owns all counts.
+      });
+      // The existing country summary can include related recorded network observations.
       const summaryName = bot.group !== "UNKNOWN" && recognizedCrawler(bot.name) ? bot.name : null;
-      const [[reportRows], quota] = await Promise.all([
-        db.$queryRaw<DetailHistoryRows[]>(detailHistoryQuery(environment, id, summaryName, history,
-          filters.window !== null, filters.page, requestedSearchPage)),
-        bot.requests > BigInt(0) && bot.group === "SEARCH_ENGINE" && currentBotAccess(bot, environment) === "CRAWL_AND_LIMITED_SEARCH" ? (async () => {
-          const [{ now }] = await db.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
-          const scope = botSearchQuotaWhere({ ...bot, environment });
-          const [last, used] = await Promise.all([
-            db.botActivity.findFirst({
-              where: { ...scope, dispatchedAt: { not: null } },
-              orderBy: { dispatchedAt: "desc" }, select: { dispatchedAt: true },
-            }),
-            db.botActivity.count({ where: { ...scope, dispatchedAt: { gte: utcDayStart(now) } } }),
-          ]);
-          return {
-            used, remaining: Math.max(0, BOT_DAILY_SEARCH_LIMIT - used), last: last?.dispatchedAt,
-            next: nextSearchTime(now, last?.dispatchedAt ?? undefined, used),
-          };
-        })() : null,
-      ]);
-      const { pointers, relatedCohorts, recordedSearches, historical, total, actual, historicalActual, searchPage, page } = reportRows;
-      const activityIds = pointers.filter(row => row.source === "activity").map(row => row.id);
+      const [{ pointers, total, actual, historicalActual, page, networkCountryCodes }] =
+        await db.$queryRaw<DetailHistoryRows[]>(detailHistoryQuery(environment, id, summaryName, history,
+          filters.window !== null, filters.page, 1));
+      const activityIds = pointers.map(row => row.id);
       const events = activityIds.length ? await db.botActivity.findMany({
         where: { ...where, id: { in: activityIds } }, omit: { retryKey: true },
       }) : [];
@@ -213,7 +182,7 @@ export async function readBotDetails(id: string, raw: BotQuery) {
       const live = events.map(event => {
         const saved = searches.find(search => search.requestId === event.id);
         return {
-          ...event, source: "activity" as const,
+          ...event,
           search: saved ? {
             id: saved.id, status: saved.status, resultCount: saved.resultCount,
             network: recordedSearchNetwork(saved.query),
@@ -221,47 +190,21 @@ export async function readBotDetails(id: string, raw: BotQuery) {
           providers: providers.flatMap(({ requestId, ...provider }) => requestId === event.id ? [provider] : []),
         };
       });
-      const older = historical.map(({ network, ...row }) => ({
-        ...row, timestamp: utcJsonDate(row.timestamp), source: "search" as const, ...botSearchNetwork(network),
-      }));
       const liveById = new Map(live.map(event => [event.id, event]));
-      const olderById = new Map(older.map(event => [event.id, event]));
-      const timeline = pointers.flatMap(pointer => {
-        const event = pointer.source === "activity" ? liveById.get(pointer.id) : olderById.get(pointer.id);
-        return event ? [event] : [];
-      });
-      let cursorOpen = false;
-      let networkSummary;
-      try {
-        networkSummary = await summarizeBotNetworkPaged(
-          reportRows.networkIpCandidates, reportRows.networkCountryCodes, async () => {
-            if (!cursorOpen) {
-              await db.$executeRaw(declareBotNetworkIpCursor(environment, id, summaryName));
-              cursorOpen = true;
-              await db.$executeRaw`MOVE FORWARD 25 FROM bot_network_ip_cursor`;
-            }
-            return db.$queryRaw<BotNetworkIpCandidate[]>`FETCH FORWARD 25 FROM bot_network_ip_cursor`;
-          });
-      } finally {
-        if (cursorOpen) await db.$executeRaw`CLOSE bot_network_ip_cursor`;
-      }
       return {
-        bot, actual, historicalActual,
-        networkSummary,
-        total, page, quota, searchPage, relatedCohorts,
-        recordedSearches: recordedSearches.map(({ evidence, ...row }) => ({
-          ...row, createdAt: utcJsonDate(row.createdAt), network: recordedSearchNetwork(evidence), crawler: recordedSearchCrawler(evidence),
-        })),
-        events: timeline,
+        bot, actual, historicalActual, total, page,
+        countries: summarizeBotNetwork([], networkCountryCodes).countries,
+        events: pointers.flatMap(({ id }) => {
+          const event = liveById.get(id);
+          return event ? [event] : [];
+        }),
       };
     }, { isolationLevel: "RepeatableRead" });
     if (!data) return { state: "missing" } as const;
     const { activities, ...bot } = data.bot;
     const [reportVerification, events] = await Promise.all([
       botReportVerification(bot, activities[0]),
-      Promise.all(data.events.map(async event => event.source === "activity"
-        ? { ...event, networkEvidence: await activityNetworkEvidence(event) }
-        : event)),
+      Promise.all(data.events.map(async event => ({ ...event, networkEvidence: await activityNetworkEvidence(event) }))),
     ]);
     return { state: "ready", filters: { ...filters, page: data.page }, ...data, bot: { ...bot, access: currentBotAccess(bot, environment) }, reportVerification, events } as const;
   } catch {

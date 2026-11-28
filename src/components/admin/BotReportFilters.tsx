@@ -91,7 +91,7 @@ export function BotReportFilters({ filters, now, history = false }: {
             className="h-11 w-full rounded-lg border border-[#D8E1EC] bg-white py-2 pl-9 pr-2 text-[13px] text-slate-950 focus-visible:outline-2 focus-visible:outline-[#004BB8]" />
         </div>
       )}
-      <SearchMonitorSelect label="Date range" name="range" value={range} options={ADMIN_REPORTING_RANGE_OPTIONS}
+      <SearchMonitorSelect label={history ? "Time range" : "Date range"} name="range" value={range} options={ADMIN_REPORTING_RANGE_OPTIONS}
         timeZoneLabel="UTC" appearance="fare" align={history ? "start" : "end"} truncateLabel
         onValueChange={value => {
           setRange(value);
@@ -105,9 +105,9 @@ export function BotReportFilters({ filters, now, history = false }: {
         }} />
       {history && <>
         <SearchMonitorSelect label="Activity type" name="kind" value={filters.kind ?? ""}
-          options={[{ value: "", label: "All activity types" }, ...BOT_KINDS]} appearance="boxed"
+          options={[{ value: "", label: "All activity types" }, ...BOT_KINDS.filter(item => item.value !== "HISTORICAL_SEARCH")]} appearance="boxed"
           onValueChange={kind => navigate({ kind })} />
-        <SearchMonitorSelect label="Access decision" name="decision" value={filters.decision ?? ""}
+        <SearchMonitorSelect label="Decision" name="decision" value={filters.decision ?? ""}
           options={[{ value: "", label: "All decisions" }, ...BOT_DECISIONS]} appearance="boxed"
           onValueChange={decision => navigate({ decision })} />
       </>}

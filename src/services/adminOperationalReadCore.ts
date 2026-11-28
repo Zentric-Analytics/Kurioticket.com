@@ -7,6 +7,7 @@ import { eligibleGuestVisitorWhere, eligibleLinkedVisitorWhere } from "@/lib/adm
 import { isJourneySourcePath, journeySourcePath } from "@/lib/search-journey";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 import { classifyProviderIssue, providerSearchService } from "@/services/searchFailureDiagnostics";
+import { recordedBotSearchRows } from "./recordedBotSearchHistory";
 import {
   encodeAdminOperationalCursor,
   parseAdminDeletionQuery,
@@ -484,6 +485,10 @@ function exactProviderFilteredSearchSql(scope: SearchScope, cursor: { at: string
     // Only the stored crawler attribution determines bot status on this read.
     // A missing source still participates in the two human identity filters.
     if (scope.identity === "bot") clauses.push(Prisma.sql`s."query"->>'applicationSource' = 'BOT'`);
+    if (scope.botId) clauses.push(Prisma.sql`s.id IN (
+      SELECT attributed.id FROM (${recordedBotSearchRows(scope.environment)}) attributed
+      WHERE attributed."botId" = ${scope.botId}
+    )`);
     if (scope.identity === "registered" || scope.identity === "guest") {
       clauses.push(Prisma.sql`s."query"->>'applicationSource' IS DISTINCT FROM 'BOT'`);
       clauses.push(scope.identity === "registered" ? Prisma.sql`s."userId" IS NOT NULL` : Prisma.sql`s."userId" IS NULL`);
