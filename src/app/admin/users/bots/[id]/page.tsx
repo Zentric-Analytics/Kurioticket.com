@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { BotReportFilters } from "@/components/admin/BotReportFilters";
@@ -96,10 +96,6 @@ export default async function BotDetailsPage({ params, searchParams }: {
             <p className="text-[13px] text-slate-600">{botType(bot)} · {report.reportVerification} · {botRecordedAccess(bot)}</p>
           </div>
         </div>
-        <Link prefetch={false} href={botSearchesHref}
-          className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#004BB8] px-3.5 text-[13px] font-medium text-white hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-          View bot searches <ArrowRight size={15} aria-hidden="true" />
-        </Link>
       </div>
     </header>
     <Section title="Bot Information">
