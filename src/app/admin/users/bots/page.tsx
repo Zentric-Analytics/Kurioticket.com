@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { BotReportFilters } from "@/components/admin/BotReportFilters";
-import { BOT_DIRECTORY, BOT_GROUPS, botRecordedAccess, botDirectoryHref, botHref, botDirectorySubtitle, botDirectoryTime, botName, botType, type BotQuery } from "@/lib/adminBotReport";
+import { BOT_DIRECTORY, BOT_GROUPS, BOT_PAGE_SIZE, botRecordedAccess, botDirectoryHref, botHref, botDirectorySubtitle, botDirectoryTime, botName, botType, type BotQuery } from "@/lib/adminBotReport";
 import { readBotDirectory } from "@/services/adminBotReportService";
 import { Metrics, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel } from "./report-ui";
 
@@ -70,7 +70,7 @@ export default async function BotManagementPage({ searchParams }: { searchParams
               </tbody>
             </table>
           </div>
-          {report.total > 0 && <ReportPagination path={BOT_DIRECTORY} params={params} page={report.page} total={report.total} label="Bot directory" />}
+          {report.total > BOT_PAGE_SIZE && <ReportPagination path={BOT_DIRECTORY} params={params} page={report.page} total={report.total} label="Bot directory" />}
         </div>
       </section>}
     </div>
