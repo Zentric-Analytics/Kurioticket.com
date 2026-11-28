@@ -1,7 +1,7 @@
 "use client";
 
 import { savedFlightTimeFields, SavedFlightTimeError } from "@/shared/flights/savedFlightTime";
-import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
+import { beginCustomerInteraction, recordCustomerInteraction } from "@/lib/customerInteractionClient";
 import { shareProductLink } from "@/lib/shareProductLink";
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
@@ -250,6 +250,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   };
 
   async function toggleSavedFlight() {
+    const analyticsConsent = beginCustomerInteraction();
     if (!selectedOffer || savedFlightPending || sessionStatus === "loading") return;
     setSavedFlightPending(true);
     setSavedFlightError(null);
@@ -269,7 +270,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
           if (response.ok) {
             setSavedFlightBackendId(null);
             invalidateSavedFlightsClientCache();
-            recordCustomerInteraction({ action: "saved_item_removed", product: "FLIGHT", resultId: savedFlightKey,
+            recordCustomerInteraction(analyticsConsent, { action: "saved_item_removed", product: "FLIGHT", resultId: savedFlightKey,
               requestId: journeyEvents.interactionRequestId("flight", id) });
           }
           return;
@@ -302,7 +303,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
           const data = await response.json() as { item?: { id?: string } };
           setSavedFlightBackendId(data.item?.id ?? selectedOffer.id);
           invalidateSavedFlightsClientCache();
-          if (data.item?.id) recordCustomerInteraction({ action: "saved_item_confirmed", product: "FLIGHT", resultId: savedFlightKey,
+          if (data.item?.id) recordCustomerInteraction(analyticsConsent, { action: "saved_item_confirmed", product: "FLIGHT", resultId: savedFlightKey,
             requestId: journeyEvents.interactionRequestId("flight", id) });
         } else if (response.status === 409) {
           const existing = await fetch("/api/dashboard/saved?type=flight", {
@@ -325,11 +326,12 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   }
 
   async function shareFlight() {
+    const analyticsConsent = beginCustomerInteraction();
     const outcome = await shareProductLink({
       title: route, text: `${route} · ${tripLine}`, url: window.location.href,
     });
     if (outcome === "shared" || outcome === "copied") {
-      recordCustomerInteraction({
+      recordCustomerInteraction(analyticsConsent, {
         action: outcome === "shared" ? "share_sheet_completed" : "share_link_copied",
         product: "FLIGHT", resultId: savedFlightKey,
         requestId: journeyEvents.interactionRequestId("flight", id),

@@ -85,7 +85,7 @@ test("real selection and detail context survive navigation while the consent bri
   await sync; await tick();
   assert.deepEqual(f.calls.map(call => call.body.type), ["RESULTS_VIEWED", "OFFER_SELECTED", "OFFER_SELECTED"]);
   assert.ok(f.calls.every(call => call.body.requestId === requestId));
-  assert.equal(f.calls[2].body.sourcePage, "/flights/details/offer-1");
+  assert.equal(f.calls[2].body.sourcePage, "/flights/details");
   assert.equal(f.timers.size, 0);
 });
 

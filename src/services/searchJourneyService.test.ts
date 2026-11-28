@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { randomUUID } from "node:crypto";
 import { createSearchJourneyService, type SearchJourneyDatabase, type SearchHistoryInput } from "./searchJourneyService";
+import { getPublicEnvironment } from "../lib/stagingSafety";
 
 import {
   getJourneyActivityCutoff,
@@ -127,7 +128,7 @@ function fixture(countryLookup?: (ip: string) => Promise<string | null>) {
     return row;
   }
   function search(visitorId: string | null, requestId: string = randomUUID(), userId: string | null = null) {
-    const row: History = { id: `history-${histories.length + 1}`, visitorId, userId, requestId, type: "FLIGHT", resultCount: 5, latencyMs: 1, status: "SUCCESS", query: {} };
+    const row: History = { id: `history-${histories.length + 1}`, visitorId, userId, requestId, type: "FLIGHT", resultCount: 5, latencyMs: 1, status: "SUCCESS", query: { environment: getPublicEnvironment() } };
     histories.push(row);
     return row;
   }
@@ -171,6 +172,28 @@ test("linked visitors require their validated account and reject mixed historica
   visitor.identityLinks.push({ userId: "account-b" });
   assert.deepEqual(await f.service.recordClientJourneyEvent({ ...event, eventId: randomUUID(), userId: "account-a" }), { accepted: false });
   assert.equal(f.events.length, 1);
+});
+
+test("all client journey stages require exact environment and an exclusive registered claim", async () => {
+  const f = fixture();
+  const visitor = f.visitor();
+  const search = f.search(visitor.id);
+  const event = client(visitor.id, search.requestId);
+  const environment = getPublicEnvironment();
+  for (const query of [{}, { environment: environment === "staging" ? "production" : "staging" }]) {
+    search.query = query;
+    assert.deepEqual(await f.service.recordClientJourneyEvent(event), { accepted: false });
+  }
+  search.query = { environment };
+  assert.deepEqual(await f.service.recordClientJourneyEvent({ ...event, userId: "account-a" }), { accepted: false });
+  assert.deepEqual(await f.service.recordClientJourneyEvent(event), { accepted: true });
+  assert.equal((f.events[0].metadata as { originalIdentity?: string }).originalIdentity, "guest");
+  visitor.currentUserId = "account-a";
+  visitor.identityLinks = [{ userId: "account-a" }];
+  assert.deepEqual(await f.service.recordClientJourneyEvent({ ...event, userId: "account-a" }), { accepted: false });
+  assert.deepEqual(await f.service.recordClientJourneyEvent({ ...event, eventId: randomUUID(), userId: "account-a" }), { accepted: true });
+  assert.equal((f.events[1].metadata as { originalIdentity?: string }).originalIdentity, "registered");
+  assert.equal(search.userId, null);
 });
 
 test("wrong-visitor, unowned, and other-account searches are permanent rejections", async () => {

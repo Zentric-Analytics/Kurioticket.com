@@ -60,13 +60,13 @@ export function parseStoredVisitorIdentity(value: unknown): StoredVisitorIdentit
 // used for visitors who have not expressly opted in.
 export const nativeJourneySearchPaths = new Set([
   "/api/flights/search", "/api/hotels/search", "/api/cars/search",
-  "/api/mobile/v1/hotels/progressive",
+  "/api/mobile/v1/hotels/progressive", "/api/packages/search",
 ]);
 export const nativeSearchIdentityWaitMs = 750;
 
 /** Only these first-party producers receive the optional visitor reference. */
 export function isVisitorTrackedPath(path: string) {
-  return ["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive", "/api/redirect", "/api/journey/events", "/api/activity/interactions", "/api/activity/page-views"].includes(path);
+  return nativeJourneySearchPaths.has(path) || ["/api/redirect", "/api/journey/events", "/api/activity/interactions", "/api/activity/page-views"].includes(path);
 }
 
 export class VisitorIdentityCoordinator {

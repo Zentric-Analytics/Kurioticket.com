@@ -102,6 +102,7 @@ export function AdminCustomerActivityWorkspace({
                 {[{label:"Flights",count:summary.searchProducts.flights,Icon:Plane},{label:"Hotels",count:summary.searchProducts.hotels,Icon:Building2},{label:"Cars",count:summary.searchProducts.cars,Icon:CarFront}].map(({label,count,Icon}) =>
                   <span key={label} aria-label={label + ": " + count} title={label} className="inline-flex items-center gap-1 tabular-nums"><Icon size={12} aria-hidden="true"/>{count}</span>)}
                 {summary.searchProducts.other > 0 ? <span>Other: {summary.searchProducts.other}</span> : null}
+                {summary.searchProducts.packages ? <span>Packages: {summary.searchProducts.packages}</span> : null}
               </span> : null}
               {href ? <ArrowUpRight aria-hidden="true" size={13} className="absolute right-2 top-2 text-[#64748B]"/> : null}
             </>;

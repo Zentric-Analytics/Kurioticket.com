@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 
@@ -13,7 +13,9 @@ import {
   analyticsConsentAccountKey,
   analyticsDenialCookie,
   createVisitorConsentSynchronizer,
+  getConfirmedBrowserAnalyticsSignal,
   hasAnalyticsDenial,
+  isAnalyticsConsentStorageEvent,
   openAnalyticsSettingsEvent,
   parseAnalyticsConsent,
   resolveAnalyticsConsentChoice,
@@ -54,7 +56,7 @@ async function requestIdentity(url: string, init: RequestInit) {
   else init.signal?.addEventListener("abort", abort, { once: true });
   const timeout = window.setTimeout(() => controller.abort(), 8000);
   try {
-    return await fetch(url, { ...init, signal: controller.signal });
+    return await fetch(url, { ...init, signal: controller.signal, referrerPolicy: "origin" });
   } finally {
     window.clearTimeout(timeout);
     init.signal?.removeEventListener("abort", abort);
@@ -88,17 +90,20 @@ function WebsiteAnalyticsConsentBridge() {
   const decisionPendingRef = useRef(false);
   const revisionRef = useRef(0);
   const activeRef = useRef(false);
+  const accountKeyRef = useRef<string | null>(null);
   const synchronizerRef = useRef<ReturnType<typeof createVisitorConsentSynchronizer> | null>(null);
 
   const accountKey = analyticsConsentAccountKey(status, session?.user);
   const pathname = usePathname();
   const consentConfirmed = syncState === "saved" && choice === "granted" && !decisionPending;
+  useLayoutEffect(() => { accountKeyRef.current = accountKey; }, [accountKey]);
 
   useEffect(() => {
     activeRef.current = true;
     if (synchronizerRef.current === null) {
       synchronizerRef.current = createVisitorConsentSynchronizer({
         request: requestIdentity,
+        bindBrowserConfirmation: true,
         readChoice: () => {
           const nextChoice = resolveAnalyticsConsentChoice({ saved: readSavedChoice(), current: choiceRef.current, saveFailed: saveFailedRef.current, denied: isDenied() });
           if (nextChoice !== choiceRef.current) {
@@ -109,7 +114,7 @@ function WebsiteAnalyticsConsentBridge() {
         },
         onState: (nextState) => { if (activeRef.current) setSyncState(nextState); },
         onSaved: (confirmed) => {
-          if (activeRef.current) window.dispatchEvent(new CustomEvent(analyticsConsentChangedEvent, { detail: { confirmed: confirmed.choice === "granted", accountKey: confirmed.accountKey } }));
+          if (activeRef.current) window.dispatchEvent(new CustomEvent(analyticsConsentChangedEvent, { detail: { confirmed: confirmed.choice === "granted", accountKey: confirmed.accountKey, proof: confirmed.proof } }));
           if (!activeRef.current || !decisionPendingRef.current || confirmed.choice !== choiceRef.current) return;
           decisionPendingRef.current = false;
           setEditing(false);
@@ -134,7 +139,7 @@ function WebsiteAnalyticsConsentBridge() {
       if (!initialChoice) {
         try {
           const response = await fetch("/api/identity/visitor", {
-            credentials: "same-origin", cache: "no-store", signal: controller.signal,
+            credentials: "same-origin", cache: "no-store", signal: controller.signal, referrerPolicy: "origin",
           });
           if (response.ok) {
             const result = await response.json() as { analyticsTracking?: string };
@@ -165,8 +170,10 @@ function WebsiteAnalyticsConsentBridge() {
     void initialise();
 
     function handleStorage(event: StorageEvent) {
-      if (event.key !== analyticsConsentStorageKey && event.key !== null) return;
-      const storedChoice = event.key === null ? null : parseAnalyticsConsent(event.newValue);
+      // A delayed notification must reconcile the current preference, and a
+      // sessionStorage clear does not change this origin's analytics choice.
+      if (!isAnalyticsConsentStorageEvent(event)) return;
+      const storedChoice = readSavedChoice();
       if (storedChoice !== "granted") setDenied(true);
       const nextChoice = isDenied() ? "declined" : storedChoice;
       revisionRef.current += 1;
@@ -174,6 +181,8 @@ function WebsiteAnalyticsConsentBridge() {
       saveFailedRef.current = false;
       setChoice(nextChoice);
       setDraftAnalytics(nextChoice === "granted");
+      // Reconfirm even when this tab's React preference value did not change.
+      void synchronizerRef.current!.sync({ choice: nextChoice, accountKey: accountKeyRef.current }, true);
     }
     function openSettings() {
       if (isDenied()) { choiceRef.current = "declined"; setChoice("declined"); }
@@ -207,12 +216,13 @@ function WebsiteAnalyticsConsentBridge() {
     const controller = new AbortController();
     const send = () => {
       if (!active || document.visibilityState !== "visible" || isDenied() ||
-          readSavedChoice() !== "granted" || choiceRef.current !== "granted") return;
+          !getConfirmedBrowserAnalyticsSignal() || choiceRef.current !== "granted") return;
       void fetch("/api/identity/presence", {
         method: "POST",
         credentials: "same-origin",
         cache: "no-store",
         signal: controller.signal,
+        referrerPolicy: "origin",
         headers: { Accept: "application/json" },
       }).catch(() => { /* Optional telemetry; no user-facing navigation failure. */ });
     };

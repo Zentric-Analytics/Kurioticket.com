@@ -15,7 +15,7 @@ import { RelatedHotelsSection } from "./RelatedHotelsSection";
 import { HotelAmenityList } from "../HotelAmenityList";
 import { HotelPriceAlertControl } from "../HotelPriceAlertControl";
 import { shareProductLink } from "@/lib/shareProductLink";
-import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
+import { beginCustomerInteraction, recordCustomerInteraction } from "@/lib/customerInteractionClient";
 import { buildHotelAddress } from "@/lib/hotels/hotelMap";
 import { buildKurioticketHotelDetailsProviderOffer, isActionableExternalHotelProviderOffer, resolveHotelBookingContinuation, resolveSelectedHotelProviderOfferId } from "./hotelBookingContinuation";
 import { desktopHotelReviewScore } from "./desktopHotelDetailsModel";
@@ -133,9 +133,10 @@ export function DesktopHotelDetails(props: StandaloneHotelDetailsProps) {
   }
 
   async function sharePage() {
+    const analyticsConsent = beginCustomerInteraction();
     const outcome = await shareProductLink({ title: props.hotelName, url: window.location.href });
     if (outcome === "shared" || outcome === "copied") {
-      recordCustomerInteraction({
+      recordCustomerInteraction(analyticsConsent, {
         action: outcome === "shared" ? "share_sheet_completed" : "share_link_copied",
         product: "HOTEL", resultId: props.hotelResultId, requestId: props.searchRequestId,
       });

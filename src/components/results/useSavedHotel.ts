@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
+import { beginCustomerInteraction, recordCustomerInteraction } from "@/lib/customerInteractionClient";
 import { signIn, useSession } from "next-auth/react";
 import type { SavedHotelSnapshot } from "@/components/results/hotelSavedStorage";
 import {
@@ -64,6 +64,7 @@ export function useSavedHotel({ hotelId, getSnapshot, searchRequestId }: UseSave
   }, [hotelId, sessionStatus]);
 
   async function toggleSavedHotel() {
+    const analyticsConsent = beginCustomerInteraction();
     if (sessionStatus === "loading") return;
     if (sessionStatus === "unauthenticated") {
       await signIn(undefined, { callbackUrl: window.location.href });
@@ -79,7 +80,7 @@ export function useSavedHotel({ hotelId, getSnapshot, searchRequestId }: UseSave
         const deleteResult = await deleteBackendHotel(savedHotel.id);
         if (deleteResult.ok) {
           setIsSaved(false);
-          recordCustomerInteraction({ action: "saved_item_removed", product: "HOTEL", resultId: hotelId, requestId: searchRequestId, observedResult: observedResult() });
+          recordCustomerInteraction(analyticsConsent, { action: "saved_item_removed", product: "HOTEL", resultId: hotelId, requestId: searchRequestId, observedResult: observedResult() });
         }
         return;
       }
@@ -96,7 +97,7 @@ export function useSavedHotel({ hotelId, getSnapshot, searchRequestId }: UseSave
         payload: { ...snapshot, hotelResultId: hotelId },
       });
       if (saveResult.ok || saveResult.duplicate) setIsSaved(true);
-      if (saveResult.ok && !saveResult.duplicate) recordCustomerInteraction({
+      if (saveResult.ok && !saveResult.duplicate) recordCustomerInteraction(analyticsConsent, {
         action: "saved_item_confirmed", product: "HOTEL", resultId: hotelId, requestId: searchRequestId, observedResult: observedResult(),
       });
       return;

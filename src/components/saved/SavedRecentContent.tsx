@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { invalidateSavedCarsClientCache } from "@/lib/saved-car-events";
 import { invalidateSavedFlightsClientCache } from "@/lib/saved-flight-events";
+import { recordCustomerSectionVisit } from "@/lib/customerInteractionClient";
 
 type Item = { originAirport?: string; destinationAirport?: string; id: string; type?: string; label?: string | null; airlineName?: string; hotelName?: string; modelName?: string; pickupLocation?: string; destination?: string | null; subtitle?: string; href?: string; payload?: unknown };
 const savedHref = (item: Item) => {
@@ -17,6 +18,7 @@ const savedHref = (item: Item) => {
   const params = new URLSearchParams(Object.entries(payload.searchParams as Record<string, unknown>).flatMap(([key, value]) => typeof value === "string" || typeof value === "number" ? [[key, String(value)]] : []));
   return `/cars/details/${encodeURIComponent(payload.result.id)}?${params.toString()}`;
 };
+const sectionKeys = { saved: "saved_items", recent: "recent" } as const;
 export function SavedRecentContent() {
   const { t } = useLocale();
   const [tab, setTab] = useState<"saved" | "recent">("saved");
@@ -56,12 +58,16 @@ export function SavedRecentContent() {
   const removeSaved = async (item: Item) => mutate(() => fetch("/api/dashboard/saved", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ type: item.type, id: item.id }) }), () => { setSaved(x => x.filter(y => y.id !== item.id)); if (item.type === "car") invalidateSavedCarsClientCache(); if (item.type === "flight") invalidateSavedFlightsClientCache(); });
   const removeRecent = async (id: string) => mutate(() => fetch("/api/account/recent-searches", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ id }) }), () => setRecent(x => x.filter(y => y.id !== id)));
   const clearRecent = async () => mutate(() => fetch("/api/account/recent-searches?clear=all", { method: "DELETE" }), () => setRecent([]));
+  const selectTab = (next: keyof typeof sectionKeys) => {
+    setTab(next);
+    recordCustomerSectionVisit(sectionKeys[tab], sectionKeys[next]);
+  };
   const items = account && account === dataOwner ? tab === "saved" ? saved : recent : [];
   return <section className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
     <h1 className="mt-2 text-3xl font-bold text-navy">{t.savedTripsPageTitle}</h1>
     <p className="mt-2 text-slate-600">{t.savedTripsRecentSearchesSubtitle}</p>
     <div className="mt-7 flex items-center gap-2 border-b border-slate-200" role="tablist" aria-label={t.savedTripsTabsLabel}>
-      {(["saved", "recent"] as const).map(value => <button key={value} role="tab" aria-selected={tab === value} onClick={() => setTab(value)} className={`px-4 py-3 font-semibold capitalize ${tab === value ? "border-b-2 border-teal text-navy" : "text-slate-500"}`}>{value === "saved" ? t.savedTripsTabSaved : t.savedTripsTabHistory}</button>)}
+      {(["saved", "recent"] as const).map(value => <button key={value} role="tab" aria-selected={tab === value} onClick={() => selectTab(value)} className={`px-4 py-3 font-semibold capitalize ${tab === value ? "border-b-2 border-teal text-navy" : "text-slate-500"}`}>{value === "saved" ? t.savedTripsTabSaved : t.savedTripsTabHistory}</button>)}
       {tab === "recent" && recent.length > 0 ? <button className="ml-auto text-sm font-semibold text-red-700" onClick={() => void clearRecent()}>{t.savedTripsClearAllRecent}</button> : null}
     </div>
     {error ? <div role="alert" className="mt-6 rounded-lg bg-red-50 p-4 text-red-800"><p>{t["accountDashboard.trips.state.error.body"]}</p><button className="mt-2 font-semibold underline" onClick={() => void load()}>{t["accountDashboard.trips.state.error.retry"]}</button></div> : null}

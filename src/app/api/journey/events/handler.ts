@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { readBoundedJsonBody } from "@/lib/bounded-json-body";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
-import { clientJourneyDecisionTypes, clientJourneyEventTypes, isJourneySourcePath, journeyFilterGroups, journeySortModes, journeySortChoices, journeyFilterSelectionGroups, type JourneyEventReceipt } from "@/lib/search-journey";
-import { isSameOriginRequest } from "@/lib/visitor-identity";
-import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
+import { clientJourneyDecisionTypes, clientJourneyEventTypes, isJourneySourcePath, isJourneySearchEditField, journeyDecisionSourceProduct, journeyFilterGroups, journeySortModes, journeySortChoices, journeyFilterSelectionGroups, type JourneyEventReceipt } from "@/lib/search-journey";
+import { isNativeVisitorRequest, isSameOriginRequest } from "@/lib/visitor-identity";
+import { customerObservedPlatform } from "@/lib/activityTrackingContract";
+import { resolveObservedActivityIdentity } from "@/services/requestActivityIdentity";
 import { recordClientJourneyEvent } from "@/services/searchJourneyService";
 
 const clientEventSchema = z.object({
@@ -18,6 +19,7 @@ const clientEventSchema = z.object({
   filterGroup: z.enum(journeyFilterGroups).optional(),
   sortMode: z.enum(journeySortModes).optional(),
   sortChoice: z.enum(journeySortChoices).optional(),
+  editFields: z.array(z.string().refine(isJourneySearchEditField)).min(1).max(7).optional(),
   observedResult: z.object({
     label: z.string().trim().min(1).max(120).regex(/^[^\u0000-\u001f\u007f<>]+$/),
     provider: z.string().trim().min(1).max(100).regex(/^[^\u0000-\u001f\u007f<>]+$/),
@@ -32,7 +34,7 @@ const clientEventSchema = z.object({
   }).strict()).max(20).optional(),
 }).strict().superRefine((event, ctx) => {
   const isDecision = (clientJourneyDecisionTypes as readonly string[]).includes(event.type);
-  if (isDecision && (!event.sourcePage || !/^\/(?:flights\/results|hotels\/results|cars\/results|flight-results|hotel-results|car-results|flight-details|hotel-details|car-details)$/.test(event.sourcePage))) {
+  if (isDecision && !journeyDecisionSourceProduct(event.sourcePage)) {
     ctx.addIssue({ code: "custom", path: ["sourcePage"], message: "A normalized travel results screen is required." });
   }
   if ((event.type === "RESULT_DETAILS_OPENED" || event.type === "RATE_DETAILS_OPENED") && !event.offerId) {
@@ -53,19 +55,22 @@ const clientEventSchema = z.object({
   if (event.type !== "SEARCH_SORT_CHANGED" && event.sortChoice) {
     ctx.addIssue({ code: "custom", path: ["sortChoice"], message: "Sort choice is only valid for a sort action." });
   }
+  if (event.editFields && (event.type !== "SEARCH_EDIT_APPLIED" || new Set(event.editFields).size !== event.editFields.length)) {
+    ctx.addIssue({ code: "custom", path: ["editFields"], message: "Distinct approved edit fields require a submitted search edit." });
+  }
   if ((event.type === "FLIGHT_DETAILS_VIEWED" || event.type === "PROVIDER_DEAL_SELECTED") && !event.offerId) {
     ctx.addIssue({ code: "custom", path: ["offerId"], message: "Offer reference required." });
   }
 });
 
 type Dependencies = {
-  identity: typeof resolveRequestActivityIdentity;
+  identity: typeof resolveObservedActivityIdentity;
   record: typeof recordClientJourneyEvent;
   rateLimit: typeof checkRateLimit;
   pause: (milliseconds: number) => Promise<void>;
 };
 const defaults: Dependencies = {
-  identity: resolveRequestActivityIdentity,
+  identity: resolveObservedActivityIdentity,
   record: recordClientJourneyEvent,
   rateLimit: checkRateLimit,
   pause: milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)),
@@ -87,9 +92,11 @@ export function createJourneyEventHandler(dependencies: Dependencies = defaults)
     const parsed = clientEventSchema.safeParse(await readBoundedJsonBody(request, 2048).catch(() => null));
     if (!parsed.success) return response({ error: "Invalid journey event." }, 400);
     try {
+      const native = isNativeVisitorRequest(request);
       const identity = await dependencies.identity(request);
       if (!identity.visitorId) return response({ accepted: false });
-      let receipt = await dependencies.record({ ...parsed.data, ...identity });
+      const platform = customerObservedPlatform(request, native, identity.applicationSource);
+      let receipt = await dependencies.record({ ...parsed.data, ...identity, platform });
       if (receipt.retryable) {
         // Bridge the usual after()-history race here without delaying a travel
         // response or retaining unverified event payloads in a server queue.
@@ -97,7 +104,7 @@ export function createJourneyEventHandler(dependencies: Dependencies = defaults)
         const currentIdentity = await dependencies.identity(request);
         if (!currentIdentity.visitorId || currentIdentity.visitorId !== identity.visitorId
           || currentIdentity.userId !== identity.userId) return response({ accepted: false });
-        receipt = await dependencies.record({ ...parsed.data, ...currentIdentity });
+        receipt = await dependencies.record({ ...parsed.data, ...currentIdentity, platform: customerObservedPlatform(request, native, currentIdentity.applicationSource) });
       }
       return response(receipt);
     } catch {

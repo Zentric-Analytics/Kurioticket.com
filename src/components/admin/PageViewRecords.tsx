@@ -17,7 +17,7 @@ export function PageViewDetails({ row }: { row: ActivityRow }) {
     {page.href ? <a href={page.href} target="_blank" rel="noopener noreferrer" className="break-all text-[#004BB8] hover:underline focus-visible:outline-2">{page.href}</a>
       : <p className="break-words">{page.path}{page.transport === "native" ? " · Screen route" : " · Safe page path"}</p>}
     {page.originalIdentity === "guest" ? <p>Recorded as a guest</p> : null}
-    {page.previousPath ? <p className="break-words text-[#64748B]">Previous: {page.previousPath}</p> : null}
+    {page.previousPath ? <p className="break-words text-[#64748B]">{page.transport === "native" ? "Previous observed screen" : "Previous observed page"}: {page.previousPath}</p> : null}
   </div>;
 }
 

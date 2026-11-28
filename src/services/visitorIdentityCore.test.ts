@@ -236,7 +236,9 @@ test("withdrawal disables, unlinks and records once; regrant never revives old h
   assert.deepEqual(f.rows()[0].identityLinks, []);
   assert.equal(await f.service.resolveConsentedVisitorId(visitor.token, "account-a"), null);
   assert.equal(await f.service.mergeAnalyticsVisitor({ token: visitor.token, userId: "account-b", source: "ACCOUNT_API" }), null);
-  const regranted = await f.service.registerAnalyticsVisitor({ token: visitor.token });
+  await assert.rejects(f.service.registerAnalyticsVisitor({ token: visitor.token }), /withdrawn/);
+  assert.equal(f.rows().length, 1, "stale grants cannot create a replacement Visitor");
+  const regranted = await f.service.registerAnalyticsVisitor({});
   assert.notEqual(regranted.id, visitor.id);
   assert.equal(f.rows()[0].consentStatus, "WITHDRAWN");
 });
@@ -301,7 +303,8 @@ test("permanent deletion retires the old credential before its account links are
   assert.equal(f.rows()[0].consentRecords.filter(record => record.status === "WITHDRAWN").length, 1);
   assert.equal(await f.service.resolveConsentedVisitorId(visitor.token), null);
   assert.equal(await f.service.mergeAnalyticsVisitor({ token: visitor.token, userId: "account-b", source: "SIGN_IN" }), null);
-  const fresh = await f.service.registerAnalyticsVisitor({ token: visitor.token });
+  await assert.rejects(f.service.registerAnalyticsVisitor({ token: visitor.token }), /withdrawn/);
+  const fresh = await f.service.registerAnalyticsVisitor({});
   assert.notEqual(fresh.id, visitor.id, "an explicit new grant cannot revive retired history");
 });
 

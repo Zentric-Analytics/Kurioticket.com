@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import { usePathname, useSegments, useGlobalSearchParams } from "expo-router";
+import { useCallback, useEffect } from "react";
+import { useNavigationContainerRef } from "expo-router";
 import { AppState, Platform } from "react-native";
 import { randomUUID } from "expo-crypto";
-import { pageViewKey, type PageViewKey } from "@/lib/pageViewCatalog";
 import { travelApi } from "../../api/travelApi";
+import { journeyEvents } from "./journeyEvents";
 import { visitorIdentity } from "./visitorIdentity";
-import { NativePageViewTracker } from "./nativePageViewTracker";
+import { activeNativeScreen, NativePageViewTracker } from "./nativePageViewTracker";
 
 const tracker = new NativePageViewTracker({
   context: visitorIdentity.trackingContext,
@@ -15,32 +15,38 @@ const tracker = new NativePageViewTracker({
 visitorIdentity.subscribe(tracker.contextChanged);
 const native = () => Platform.OS === "ios" || Platform.OS === "android";
 
-export function recordNativeResultsPage(product: "flight" | "hotel" | "car", requestId: string | undefined) {
-  if (native() && AppState.currentState === "active" && requestId) tracker.observeResult(`${product}_results`, requestId);
+export function useNativeResultsPage() {
+  const navigation = useNavigationContainerRef();
+  return useCallback((product: "flight" | "hotel" | "car" | "package", requestId: string | undefined) => {
+    if (!native() || AppState.currentState !== "active" || !navigation.isReady() || !journeyEvents.hasSearch(requestId)) return;
+    const screen = activeNativeScreen(navigation.getRootState());
+    if (screen?.pageKey === `${product}_results`) tracker.observeResult(screen.pageKey, requestId, screen.instance);
+  }, [navigation]);
 }
+
 export function recordNativeHomeSection(product: "flights" | "hotels" | "cars" | "packages") {
   if (native() && AppState.currentState === "active") tracker.observeHomeSection(`home_${product}`);
 }
 
 export function useNativePageViews() {
-  const pathname = usePathname();
-  const segments = useSegments() as readonly string[];
-  const params = useGlobalSearchParams();
-  const [context, setContext] = useState(visitorIdentity.trackingContext);
-  const [foreground, setForeground] = useState(AppState.currentState === "active");
-  const key: PageViewKey | null = (pathname === "/" && !segments.includes("(tabs)")) || pathname === "/home" ? null : pageViewKey(pathname, "native");
-  // Result pages get their reference from the actual completed search, not from
-  // user-supplied route parameters. Details still require server verification.
-  const requestId = key?.endsWith("_details") && typeof params.journeyRequestId === "string" ? params.journeyRequestId : undefined;
+  const navigation = useNavigationContainerRef();
   useEffect(() => {
-    const update = () => setContext(visitorIdentity.trackingContext());
-    const unsubscribe = visitorIdentity.subscribe(update);
-    update();
-    const appState = AppState.addEventListener("change", state => setForeground(state === "active"));
-    return () => { unsubscribe(); appState.remove(); };
-  }, []);
-  useEffect(() => {
-    if (!native() || visitorIdentity.trackingContext() !== context) return;
-    tracker.observe(key, foreground && AppState.currentState === "active", requestId);
-  }, [context, foreground, key, requestId]);
+    if (!native()) return;
+    const observe = (visible = AppState.currentState === "active") => {
+      if (!navigation.isReady()) return;
+      const screen = activeNativeScreen(navigation.getRootState());
+      if (screen) tracker.observe(screen.pageKey, visible, screen.requestId, screen.instance);
+    };
+    const unsubscribeContext = visitorIdentity.subscribe(() => observe());
+    const unsubscribeState = navigation.addListener("state", () => observe());
+    const unsubscribeReady = navigation.addListener("ready", () => observe());
+    const appState = AppState.addEventListener("change", state => observe(state === "active"));
+    observe();
+    return () => {
+      unsubscribeContext();
+      unsubscribeState();
+      unsubscribeReady();
+      appState.remove();
+    };
+  }, [navigation]);
 }

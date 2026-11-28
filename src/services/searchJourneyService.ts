@@ -2,10 +2,12 @@ import { advanceHotelResultAccounting } from "@/lib/hotels/hotelResultAccounting
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { getOptionalPrisma } from "@/lib/prisma";
 import {
-  clientJourneyEventTypes,
   clientJourneyDecisionTypes,
+  clientJourneyEventTypes,
   getJourneyActivityCutoff,
+  journeyDecisionSourceProduct,
   journeyEventKey,
+  safeJourneySearchEditFields,
   type ClientJourneyEventType,
   type JourneyEventReceipt,
   type JourneyFilterGroup,
@@ -13,12 +15,15 @@ import {
   type JourneySortChoice,
   type JourneyFilterSelection,
   type JourneyObservedResult,
+  type JourneySearchEditField,
 } from "@/lib/search-journey";
 import { getPublicEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
 import { applicationMetadata, type ApplicationAttribution } from "@/lib/application-source";
 import { completeSearchNetworkObservation, recordedSearchNetwork } from "@/lib/searchNetworkObservation";
 import { carFilterGroups } from "@/lib/cars/carFilterPresentation";
+import { customerPageProvenance, optionalAnalyticsPurpose, type customerObservedPlatform } from "@/lib/activityTrackingContract";
+import { customerJourneySourcePath } from "@/lib/pageViewCatalog";
 
 export { clientJourneyEventTypes, journeyEventKey, type ClientJourneyEventType };
 export type SearchJourneyDatabase = Pick<PrismaClient, "$transaction">;
@@ -43,12 +48,14 @@ export type ClientJourneyEventInput = ApplicationAttribution & {
   requestId: string;
   provider?: string;
   sourcePage?: string;
+  platform?: ReturnType<typeof customerObservedPlatform>;
   /** Canonical offer reference from the validated search response. Not an arbitrary URL. */
   offerId?: string;
   filterGroup?: JourneyFilterGroup;
   sortMode?: JourneySortMode;
   sortChoice?: JourneySortChoice;
   filterSelections?: JourneyFilterSelection[];
+  editFields?: JourneySearchEditField[];
   observedResult?: JourneyObservedResult;
 };
 export type SearchHistoryInput = ApplicationAttribution & {
@@ -64,6 +71,8 @@ export type SearchHistoryInput = ApplicationAttribution & {
   resultCount: number;
   latencyMs: number;
   status: "SUCCESS" | "PARTIAL" | "FAILED";
+  /** Package accounting does not create new anonymous operational histories. */
+  requiresActivityOwner?: boolean;
   progressive?: boolean;
   completed?: boolean;
 };
@@ -119,7 +128,7 @@ function ownsActivity(activity: OwnedActivity, visitorId: string, userId: string
 async function appendEvent(tx: Prisma.TransactionClient, input: JourneyEventInput & { visitorId: string }, now: Date) {
   const existing = await tx.journeyEvent.findUnique({
     where: { eventKey: input.eventKey },
-    select: { journeyId: true, type: true, searchHistoryId: true, redirectLogId: true, provider: true, journey: { select: { visitorId: true } } },
+    select: { journeyId: true, type: true, searchHistoryId: true, redirectLogId: true, provider: true, metadata: true, journey: { select: { visitorId: true } } },
   });
   if (existing) {
     // A reused key is an acknowledgement only for the same owner and activity;
@@ -127,6 +136,11 @@ async function appendEvent(tx: Prisma.TransactionClient, input: JourneyEventInpu
     if (existing.journey.visitorId !== input.visitorId || existing.type !== input.type
       || existing.redirectLogId !== (input.redirectLogId ?? null)
       || existing.provider !== (input.provider ?? null)) return null;
+    if (input.metadata?.recordPurpose === optionalAnalyticsPurpose && existing.metadata
+      && typeof existing.metadata === "object" && !Array.isArray(existing.metadata)) {
+      if (existing.metadata.environment !== getPublicEnvironment()) return null;
+      if (existing.metadata.originalIdentity !== undefined && existing.metadata.originalIdentity !== input.metadata.originalIdentity) return null;
+    }
     if (existing.searchHistoryId !== (input.searchHistoryId ?? null)) {
       // A deferred history row can enrich the same verified handoff on retry.
       // It cannot replace a known search or move/extend the original journey.
@@ -206,7 +220,7 @@ export function createSearchJourneyService(
       const db = getDatabase();
       if (!db) return { accepted: false, retryable: true };
       return await db.$transaction(async tx => {
-        if (!(await lockConsentedVisitor(tx, visitorId, input.userId ?? null))) return { accepted: false };
+        if (!(await lockConsentedVisitor(tx, visitorId, input.userId ?? null, { requireExclusiveLink: true }))) return { accepted: false };
         const search = await tx.searchHistory.findUnique({
           where: { requestId: input.requestId },
           select: { id: true, type: true, visitorId: true, userId: true, query: true },
@@ -215,13 +229,18 @@ export function createSearchJourneyService(
         // Retry this race, but never retry an already-known ownership mismatch.
         if (!search) return { accepted: false, retryable: true };
         if (!ownsActivity(search, visitorId, input.userId ?? null)) return { accepted: false };
+        const query = search.query;
+        if (!query || typeof query !== "object" || Array.isArray(query) || query.environment !== getPublicEnvironment()) return { accepted: false };
+        const sourcePage = input.sourcePage
+          ? customerJourneySourcePath(input.sourcePage, "web") ?? customerJourneySourcePath(input.sourcePage, "native")
+          : undefined;
+        if ((clientJourneyDecisionTypes as readonly string[]).includes(input.type)
+          && journeyDecisionSourceProduct(sourcePage) !== search.type) return { accepted: false };
+        const editFields = safeJourneySearchEditFields(input.editFields, search.type);
+        if (input.editFields && editFields.length !== input.editFields.length) return { accepted: false };
         if (search.type === "CAR" && input.filterSelections?.some(choice =>
           !carFilterGroups.some(group => group.id === choice.group && group.options.some(option => option.id === choice.option))
         )) return { accepted: false };
-        if ((clientJourneyDecisionTypes as readonly string[]).includes(input.type)) {
-          const query = search.query;
-          if (!query || typeof query !== "object" || Array.isArray(query) || query.environment !== getPublicEnvironment()) return { accepted: false };
-        }
         // These stages are specific to native flight navigation. Do not allow
         // other product searches to be recast as a flight action.
         if ((input.type === "FLIGHT_DETAILS_VIEWED" || input.type === "PROVIDER_DEAL_SELECTED")
@@ -234,12 +253,15 @@ export function createSearchJourneyService(
           product: search.type,
           provider: input.provider,
           searchHistoryId: search.id,
-          metadata: { ...applicationMetadata(input), ...(input.sourcePage ? { sourcePage: input.sourcePage } : {}),
+          metadata: { recordPurpose: optionalAnalyticsPurpose, ...customerPageProvenance(input.userId ?? null),
+            ...applicationMetadata(input), ...(sourcePage ? { sourcePage } : {}),
+            ...(input.platform ? { platform: input.platform } : {}),
             ...(input.offerId ? { resultId: input.offerId } : {}),
             ...(input.filterGroup ? { filterGroup: input.filterGroup } : {}),
             ...(input.sortMode ? { sortMode: input.sortMode } : {}),
             ...(input.sortChoice ? { sortChoice: input.sortChoice } : {}),
             ...(input.filterSelections ? { filterSelections: input.filterSelections } : {}),
+            ...(input.type === "SEARCH_EDIT_APPLIED" && editFields.length ? { editFields } : {}),
             ...(input.observedResult ? { observedResult: input.observedResult, observedSource: "customer_display" } : {}) },
         }, now());
         return { accepted: Boolean(result) };
@@ -260,7 +282,9 @@ export function createSearchJourneyService(
         if (input.requestId) {
           await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('search-history-request'), hashtext(${input.requestId}))`;
         }
-        const visitorId = input.visitorId && await lockConsentedVisitor(tx, input.visitorId, userId) ? input.visitorId : null;
+        const visitorId = input.visitorId && await lockConsentedVisitor(tx, input.visitorId, userId,
+          input.requiresActivityOwner ? { requireExclusiveLink: true } : undefined) ? input.visitorId : null;
+        if (input.requiresActivityOwner && !userId && !visitorId) return null;
         const existing = input.requestId ? await tx.searchHistory.findUnique({ where: { requestId: input.requestId } }) : null;
         if (existing) {
           const sameOwner = existing.visitorId === visitorId

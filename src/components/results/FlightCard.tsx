@@ -35,7 +35,7 @@ import { formatFlightCardPrice } from "@/components/results/flightCardPrice";
 import { MobileFlightCard } from "@/components/results/MobileFlightCard";
 import { formatDesktopBaggageValue } from "@/components/results/flightCardBaggage";
 import { useSavedFlightResult } from "@/components/results/useSavedFlightResult";
-import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
+import { beginCustomerInteraction, recordCustomerInteraction } from "@/lib/customerInteractionClient";
 
 type DetailItem = {
   label: string;
@@ -137,17 +137,18 @@ export function FlightCard({
       : undefined;
 
   async function shareFlight() {
+    const analyticsConsent = beginCustomerInteraction();
     const relativeUrl = resolvedDetailsHref ?? window.location.href;
     const url = new URL(relativeUrl, window.location.origin).toString();
     const route = `${flight.originAirport} → ${flight.destinationAirport}`;
     try {
       if (navigator.share) {
         await navigator.share({ title: route, text: flight.airlineName, url });
-        recordCustomerInteraction({ action: "share_sheet_completed", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId, observedResult: observedShareResult });
+        recordCustomerInteraction(analyticsConsent, { action: "share_sheet_completed", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId, observedResult: observedShareResult });
         return;
       }
       await navigator.clipboard.writeText(url);
-      recordCustomerInteraction({ action: "share_link_copied", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId, observedResult: observedShareResult });
+      recordCustomerInteraction(analyticsConsent, { action: "share_link_copied", product: "FLIGHT", resultId: flight.id, requestId: searchRequestId, observedResult: observedShareResult });
       setShareConfirmation(t("linkCopied") || "Flight link copied");
       window.setTimeout(() => setShareConfirmation(""), 2200);
     } catch (error) {

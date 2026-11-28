@@ -48,7 +48,7 @@ import {
 } from "@/components/results/hotelGalleryPresentation";
 import type { SavedHotelSnapshot } from "@/components/results/hotelSavedStorage";
 import { useSavedHotel } from "@/components/results/useSavedHotel";
-import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
+import { beginCustomerInteraction, recordCustomerInteraction } from "@/lib/customerInteractionClient";
 import { HotelAmenityList } from "@/components/results/HotelAmenityList";
 import { buildHotelAmenityPresentation } from "@/components/results/hotelAmenityPresentation";
 
@@ -415,15 +415,16 @@ export function HotelCard({
       : undefined;
 
   async function shareHotel() {
+    const analyticsConsent = beginCustomerInteraction();
     if (!resolvedDetailsHref) return;
     const url = new URL(resolvedDetailsHref, window.location.origin).toString();
     try {
       if (navigator.share) {
         await navigator.share({ title: hotel.name, url });
-        recordCustomerInteraction({ action: "share_sheet_completed", product: "HOTEL", resultId: hotel.id, requestId: searchRequestId, observedResult: observedShareResult });
+        recordCustomerInteraction(analyticsConsent, { action: "share_sheet_completed", product: "HOTEL", resultId: hotel.id, requestId: searchRequestId, observedResult: observedShareResult });
       } else {
         await navigator.clipboard.writeText(url);
-        recordCustomerInteraction({ action: "share_link_copied", product: "HOTEL", resultId: hotel.id, requestId: searchRequestId, observedResult: observedShareResult });
+        recordCustomerInteraction(analyticsConsent, { action: "share_link_copied", product: "HOTEL", resultId: hotel.id, requestId: searchRequestId, observedResult: observedShareResult });
       }
       setShareStatus("shared");
       window.setTimeout(() => setShareStatus("idle"), 2400);

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { recordCustomerSectionVisit } from "@/lib/customerInteractionClient";
 
 type TripStatus = "upcoming" | "past" | "cancelled";
 type MyTrip = {
@@ -37,6 +38,7 @@ type FlightStatus =
     };
 type Response = { trips: MyTrip[]; summary: Record<TripStatus | "total", number> };
 const tabs: TripStatus[] = ["upcoming", "past", "cancelled"];
+const sectionKeys = { upcoming: "upcoming_trips", past: "past_trips", cancelled: "cancelled_trips" } as const;
 
 export function TripsManagementPage() {
   const { locale, t: dictionary } = useLocale();
@@ -60,11 +62,15 @@ export function TripsManagementPage() {
     return () => window.clearTimeout(timeout);
   }, [load]);
   const shown = useMemo(() => trips.filter((trip) => trip.status === active), [active, trips]);
+  const selectTab = (next: TripStatus) => {
+    setActive(next);
+    recordCustomerSectionVisit(sectionKeys[active], sectionKeys[next]);
+  };
 
   return <section className="mx-auto w-full max-w-5xl px-4 py-8">
     <header className="mb-6"><p className="text-sm font-semibold uppercase tracking-wide text-[#0057b8]">{t("accountDashboard.trips.metasearch.eyebrow")}</p><h1 className="text-3xl font-bold text-[#021c2b]">{t("accountDashboard.trips.title")}</h1><p className="mt-2 max-w-3xl text-sm text-slate-600">{t("accountDashboard.trips.metasearch.description")}</p></header>
     <div className="mb-6 flex gap-2" role="tablist" aria-label={t("accountDashboard.trips.metasearch.tabsAriaLabel")}>
-      {tabs.map((tab) => <button key={tab} role="tab" aria-selected={active === tab} onClick={() => setActive(tab)} className={`rounded-full px-4 py-2 text-sm font-semibold ${active === tab ? "bg-[#004bb8] text-white" : "bg-slate-100 text-slate-700"}`}>{t(`accountDashboard.trips.metasearch.tabs.${tab}`)}</button>)}
+      {tabs.map((tab) => <button key={tab} role="tab" aria-selected={active === tab} onClick={() => selectTab(tab)} className={`rounded-full px-4 py-2 text-sm font-semibold ${active === tab ? "bg-[#004bb8] text-white" : "bg-slate-100 text-slate-700"}`}>{t(`accountDashboard.trips.metasearch.tabs.${tab}`)}</button>)}
     </div>
     {loading ? <p>{t("accountDashboard.trips.metasearch.loading")}</p> : null}
     {error ? <p role="alert">{error} <button className="underline" onClick={() => void load()}>{t("accountDashboard.trips.metasearch.retry")}</button></p> : null}

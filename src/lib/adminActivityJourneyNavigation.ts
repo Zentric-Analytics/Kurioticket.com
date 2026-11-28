@@ -14,7 +14,7 @@ export function activityJourneyReturnHref(input: unknown): string | null {
   const candidates = new URLSearchParams(query);
   const safe = new URLSearchParams();
   const keys = target[1].toLowerCase().startsWith("activity")
-    ? ["tab", "range", "stage", "product", "from", "to", "q", "directory", "usersReturn", ...(target[1].toLowerCase() === "activity/all" ? ["cursor"] : [])]
+    ? ["tab", "range", "stage", "product", "interface", "from", "to", "q", "directory", "usersReturn", ...(target[1].toLowerCase() === "activity/all" ? ["cursor"] : [])]
     : ["range", "stage", "product", "provider", "from", "to", "cursor", "activityCursor", "activityReturn"];
   for (const key of keys) {
     const value = candidates.get(key);
@@ -46,7 +46,7 @@ export function decodeActivityJourneyReturn(input: unknown): string | null {
     const data = JSON.parse(new TextDecoder("utf-8", {fatal:true}).decode(bytes));
     if (!data || typeof data.path !== "string" || !data.filters || typeof data.filters !== "object" || Array.isArray(data.filters)) return null;
     const entries = Object.entries(data.filters);
-    if (entries.length > 10 || entries.some(([key,value]) => typeof value !== "string" || value.length > returnValueLimit(key))) return null;
+    if (entries.length > 11 || entries.some(([key,value]) => typeof value !== "string" || value.length > returnValueLimit(key))) return null;
     const query = new URLSearchParams(entries as [string,string][]);
     return activityJourneyReturnHref(data.path + (query.size ? "?" + query : ""));
   } catch {

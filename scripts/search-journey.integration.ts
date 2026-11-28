@@ -76,7 +76,7 @@ async function search(visitorId: string, requestId = randomUUID(), userId: strin
     userId,
     requestId,
     type: "HOTEL",
-    query: {},
+    query: { environment: getPublicEnvironment() },
     resultCount: 2,
     status: "SUCCESS",
   } });
@@ -126,6 +126,42 @@ function gate() {
   const promise = new Promise<void>(resolve => { release = resolve; });
   return { promise, release };
 }
+
+test("package accounting persists one parent and a consented exact-search journey", async () => {
+  const guest = await visitor();
+  const requestId = randomUUID();
+  const input = {
+    requestId, type: "PACKAGE" as const, requiresActivityOwner: true,
+    userId: null, visitorId: guest.id, applicationSource: "WEB" as const,
+    query: { mode: "hotel-flight", searchPurpose: "package", packageScope: "all", resultUnit: "component_results" },
+    resultCount: 3, latencyMs: 11, status: "PARTIAL" as const,
+  };
+  const records = await Promise.all([journey.recordSearchHistory(input), journey.recordSearchHistory(input)]);
+  const row = await db.searchHistory.findUniqueOrThrow({ where: { requestId } });
+  assert.deepEqual(records.map(record => record?.id), [row.id, row.id]);
+  assert.equal(row.type, "PACKAGE");
+  assert.equal(row.visitorId, guest.id);
+  assert.equal(row.resultCount, 3);
+  assert.deepEqual(row.query, { ...input.query, applicationSource: "WEB", environment: getPublicEnvironment() });
+  assert.deepEqual(await journey.recordClientJourneyEvent({
+    visitorId: guest.id, eventId: randomUUID(), type: "RESULTS_VIEWED",
+    sourcePage: "/package-results", requestId,
+  }), { accepted: true });
+  assert.deepEqual((await db.journeyEvent.findMany({
+    where: { searchHistoryId: row.id }, orderBy: { type: "asc" }, select: { type: true, product: true },
+  })).map(event => `${event.type}:${event.product}`).sort(), ["RESULTS_VIEWED:PACKAGE", "SEARCH_COMPLETED:PACKAGE"]);
+
+  await db.visitor.update({ where: { id: guest.id }, data: { consentStatus: "WITHDRAWN", trackingDisabledAt: new Date() } });
+  const afterWithdrawal = randomUUID();
+  assert.equal(await journey.recordSearchHistory({ ...input, requestId: afterWithdrawal }), null);
+  assert.equal(await db.searchHistory.count({ where: { requestId: afterWithdrawal } }), 0);
+  const registered = await account();
+  const registeredId = randomUUID();
+  assert.ok(await journey.recordSearchHistory({ ...input, requestId: registeredId, visitorId: null, userId: registered.id }));
+  const registeredRow = await db.searchHistory.findUniqueOrThrow({ where: { requestId: registeredId } });
+  assert.equal(registeredRow.visitorId, null);
+  assert.equal(await db.journeyEvent.count({ where: { searchHistoryId: registeredRow.id } }), 0);
+});
 
 async function waitForBlockedAccountWriters(expected: number) {
   const deadline = Date.now() + 1500;
@@ -224,6 +260,38 @@ test("a linked visitor accepts the verified account and rejects guest or other-a
   assert.equal((await journey.recordClientJourneyEvent({ ...event, userId: other.id })).accepted, false);
   assert.equal((await journey.recordClientJourneyEvent({ ...event, userId: owner.id })).accepted, true);
   assert.equal(await db.journeyEvent.count({ where: { journey: { visitorId: guest.id } } }), 1);
+});
+
+test("client journey history rejects foreign environments and preserves guest-at-occurrence across a verified claim", async () => {
+  const guest = await visitor();
+  const owner = await account();
+  const history = await search(guest.id);
+  const event = { visitorId: guest.id, eventId: randomUUID(), type: "RESULTS_VIEWED" as const, requestId: history.requestId! };
+  const environment = getPublicEnvironment();
+  await db.searchHistory.update({ where: { id: history.id }, data: { query: { environment: environment === "staging" ? "production" : "staging" } } });
+  assert.deepEqual(await journey.recordClientJourneyEvent(event), { accepted: false });
+  await db.searchHistory.update({ where: { id: history.id }, data: { query: { environment } } });
+  assert.deepEqual(await journey.recordClientJourneyEvent({ ...event, userId: owner.id }), { accepted: false });
+  assert.deepEqual(await journey.recordClientJourneyEvent(event), { accepted: true });
+  await identity.mergeAnalyticsVisitor({ token: guest.token, userId: owner.id, source: "SIGN_IN" });
+  assert.deepEqual(await journey.recordClientJourneyEvent({ ...event, userId: owner.id }), { accepted: false });
+  assert.deepEqual(await journey.recordClientJourneyEvent({ ...event, eventId: randomUUID(), userId: owner.id }), { accepted: true });
+  const events = await db.journeyEvent.findMany({ where: { searchHistoryId: history.id }, select: { metadata: true } });
+  assert.deepEqual(events.map(row => (row.metadata as { originalIdentity?: string }).originalIdentity).sort(), ["guest", "registered"]);
+  assert.equal((await db.searchHistory.findUniqueOrThrow({ where: { id: history.id } })).userId, null);
+});
+
+test("a grant sent before withdrawal cannot rotate the same credential after withdrawal commits", async () => {
+  const former = await visitor();
+  const staleRequest = { token: former.token, policyVersion: "journey-integration" };
+  const before = await db.visitor.count();
+  await identity.withdrawAnalyticsConsent(former.token);
+  await assert.rejects(identity.registerAnalyticsVisitor(staleRequest), /withdrawn/);
+  assert.equal(await db.visitor.count(), before);
+  assert.equal(await identity.resolveConsentedVisitorId(former.token), null);
+  const regrant = await visitor();
+  assert.notEqual(regrant.id, former.id);
+  assert.equal(await identity.resolveConsentedVisitorId(regrant.token), regrant.id);
 });
 
 test("a request belonging to another visitor is permanently rejected", async () => {
@@ -527,7 +595,8 @@ test("successful hard deletion retires linked and pre-merge associated visitors 
   }
   assert.equal((await db.searchHistory.findFirstOrThrow({ where: { visitorId: searchOnly.id } })).userId, null);
   assert.equal((await db.redirectLog.findFirstOrThrow({ where: { provider: redirected.provider } })).userId, null);
-  const fresh = await identity.registerAnalyticsVisitor({ token: linked.token, policyVersion: "explicit-new-grant" });
+  await assert.rejects(identity.registerAnalyticsVisitor({ token: linked.token }), /withdrawn/);
+  const fresh = await identity.registerAnalyticsVisitor({ policyVersion: "explicit-new-grant" });
   assert.notEqual(fresh.id, linked.id);
   assert.equal(fresh.created, true);
   assert.equal(await identity.resolveConsentedVisitorId(unrelated.token), unrelated.id);

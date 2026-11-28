@@ -2,7 +2,7 @@ import { ACTIVITY_FETCH_LIMIT, type ActivityCursor } from "./adminIdentityActivi
 
 /** Batch size limits one database read, never the total visible history. */
 export const COMPLETE_ACTIVITY_BATCH_SIZE = 500;
-export type ActivitySourcePrefix = "j" | "s" | "r" | "e";
+export type ActivitySourcePrefix = "a" | "j" | "s" | "r" | "e";
 export type ActivitySourceRow = { id: string; createdAt: Date };
 
 /**

@@ -4,7 +4,8 @@ import { logSafeAuthDiagnostics } from "@/lib/auth-diagnostics";
 import { getAdminEmails } from "@/lib/env";
 import { getPrisma } from "@/lib/prisma";
 import { isTrustedPreviewCompanyEmail } from "@/lib/previewTesterAccess";
-import { isStagingEnvironment } from "@/lib/stagingSafety";
+import { isStagingEnvironment, withEnvironmentMetadata } from "@/lib/stagingSafety";
+import { isProjectableAdminSecurityAudit } from "@/lib/adminSecurityAuditActivity";
 
 type AdminRequest = Request & {
   headers: Headers;
@@ -143,8 +144,8 @@ export async function writeAdminAuditLog(
             undefined,
 
           metadata:
-            (input.metadata ||
-              {}) as never,
+            (input.adminUserId && isProjectableAdminSecurityAudit(input.action, input.targetType)
+              ? withEnvironmentMetadata(input.metadata) : input.metadata || {}) as never,
 
           ipAddress:
             getRequestIp(

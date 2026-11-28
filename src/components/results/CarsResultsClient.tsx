@@ -3,6 +3,7 @@ import { resultIdKey, VirtualResultsList } from "./VirtualResultsList";
 import { useKayakResults } from "./KayakResultsContext";
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import { normalizeJourneySortMode, normalizeJourneySortChoice } from "@/lib/search-journey";
+import { changedJourneySearchFields } from "@/lib/journeySearchEdit";
 import { CombinedSearchEmpty } from "./CombinedSearchEmpty";
 import { kayakCarCardModel } from "./kayakCardModels";
 import { groupKayakCarResults } from "@/lib/cars/carResults";
@@ -536,6 +537,7 @@ export function CarsResultsClient({
   sharedCarId?: string | null;
 }) {
   const { locale, t: dictionary } = useLocale();
+  const journeyEvents = useJourneyEvents();
   const router = useRouter();
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
   const searchKey = JSON.stringify(values);
@@ -1038,6 +1040,13 @@ export function CarsResultsClient({
     [],
   );
 
+  const recordCarSearchEdit = useCallback((href: string) => {
+    if (!requestId) return;
+    const nextParams = new URL(href, window.location.origin).searchParams;
+    const editFields = changedJourneySearchFields("CAR", new URLSearchParams(window.location.search), nextParams);
+    if (editFields.length) journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", requestId, { editFields });
+  }, [journeyEvents, requestId]);
+
   const submitMobileSearch = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -1073,9 +1082,10 @@ export function CarsResultsClient({
 
       if (isSameSearch) return;
 
+      recordCarSearchEdit(href);
       router.push(href, { scroll: true });
     },
-    [router, validateCurrentPickupTime],
+    [recordCarSearchEdit, router, validateCurrentPickupTime],
   );
 
   useEffect(() => {
@@ -1186,6 +1196,7 @@ export function CarsResultsClient({
             return;
           }
 
+          recordCarSearchEdit(buildCarsResultsHref(new FormData(event.currentTarget)));
           setDesktopStickySearchSection(null);
         }}
       >

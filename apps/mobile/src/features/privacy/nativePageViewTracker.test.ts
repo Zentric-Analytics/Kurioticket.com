@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { pageViewKey, pageViewInfo, publicPageViewPath } from "../../../../../src/lib/pageViewCatalog";
-import { NativePageViewTracker } from "./nativePageViewTracker";
+import { activeNativeScreen, NativePageViewTracker } from "./nativePageViewTracker";
 
 const first = "78e1de9e-6dfe-494f-9fdb-83726d83bf64";
 const second = "78e1de9e-6dfe-494f-9fdb-83726d83bf65";
@@ -35,10 +35,44 @@ test("actual Expo Router screen paths resolve to a closed native catalogue", () 
   for (const [path, key] of Object.entries(routes)) assert.equal(pageViewKey(path, "native"), key, path);
   for (const path of ["/email-auth", "/profile/sign-in", "/connection-status", "/admin", "/support?secret=x", "/home#hotels"]) assert.equal(pageViewKey(path, "native"), null);
   assert.equal(pageViewInfo("explore_destination")?.nativePath, "/explore/destination/[id]");
-  assert.equal(pageViewKey("/trips", "web"), null);
   assert.equal(publicPageViewPath("trips"), null);
   assert.equal(pageViewKey("/support", "web"), "support");
   assert.equal(publicPageViewPath("support"), "/support");
+});
+
+test("only the mounted Expo Router focus branch supplies screen keys and correlation", () => {
+  const root = (state: NonNullable<Parameters<typeof activeNativeScreen>[0]>) => ({
+    index: 0, routes: [{ name: "__root", key: "expo-root", state }],
+  });
+  const home = { name: "index", key: "home" };
+  const boot = { name: "index", key: "boot" };
+  const tabs = { name: "(tabs)", key: "tabs", state: { index: 0, routes: [home] } };
+  const destination = { name: "explore/destination/[id]", key: "destination-1", params: { id: "private-id" } };
+  const details = { name: "flight-details", key: "details-1", params: { journeyRequestId: first, offerId: "private-offer" } };
+  assert.equal(activeNativeScreen(root({ index: 0, routes: [boot, tabs, destination] }))?.pageKey, null);
+  assert.deepEqual(activeNativeScreen(root({ index: 1, routes: [boot, tabs, details] })), { pageKey: "home", instance: "home", requestId: undefined });
+  assert.deepEqual(activeNativeScreen(root({ index: 2, routes: [boot, tabs, destination] })), { pageKey: "explore_destination", instance: "destination-1", requestId: undefined });
+  assert.deepEqual(activeNativeScreen(root({ index: 2, routes: [boot, tabs, details] })), { pageKey: "flight_details", instance: "details-1", requestId: first });
+  const pendingProfile = { name: "profile", key: "profile", params: { screen: "privacy-policy" } };
+  const profileTab = { ...tabs, state: { index: 1, routes: [home, pendingProfile] } };
+  assert.equal(activeNativeScreen(root({ index: 0, routes: [profileTab] })), null);
+  const legal = { ...pendingProfile, state: { index: 0, routes: [{ name: "privacy-policy", key: "privacy" }] } };
+  assert.equal(activeNativeScreen(root({ index: 0, routes: [{ ...tabs, state: { index: 0, routes: [legal] } }] }))?.pageKey, "privacy_policy");
+});
+
+test("same-template visits with a different committed route instance stay distinct", () => {
+  const h = harness();
+  h.setContext(1);
+  h.tracker.observe("flight_details", true, first, "detail-one");
+  h.tracker.observe("flight_details", true, first, "detail-one");
+  h.tracker.observe("flight_details", false, first, "detail-two");
+  h.tracker.observe("flight_details", true, first, "detail-two");
+  h.tracker.observe("flight_details", true, first, "detail-one");
+  assert.deepEqual(h.calls.map(call => call.event), [
+    { eventId: "1", pageKey: "flight_details", requestId: first },
+    { eventId: "2", pageKey: "flight_details", previousPageKey: "flight_details", requestId: first },
+    { eventId: "3", pageKey: "flight_details", previousPageKey: "flight_details", requestId: first },
+  ]);
 });
 
 test("consent, foreground and duplicate rendering do not fabricate screen views", () => {

@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 import { CryptoDigestAlgorithm, digestStringAsync, randomUUID } from "expo-crypto";
-import { travelApi } from "../../api/travelApi";
+import { deliverNativeInteraction } from "./nativeInteractionDelivery";
 import { visitorIdentity } from "./visitorIdentity";
 import { shareAndRecordObservedAction, type NativeShareOutcome } from "./nativeShareTrackingCore";
 
@@ -25,21 +25,19 @@ export async function shareNativeResult<T extends NativeShareOutcome>({
   return shareAndRecordObservedAction({
     share,
     trackingContext: visitorIdentity.trackingContext,
-    // On Android RN 0.81 reports sharedAction on opening the chooser, not on
-    // confirmed selection. Do not misreport a cancelled chooser as a share.
-    canVerifyCompletion: Platform.OS === "ios",
-    record: async context => {
+    platform: Platform.OS,
+    record: async (context, action) => {
       if (!resultId || resultId.length > 4096) return;
       const hashedResultId = await digestStringAsync(CryptoDigestAlgorithm.SHA256, resultId);
       // Check consent once more after hashing and before constructing a request.
       if (visitorIdentity.trackingContext() !== context) return;
-      await travelApi.customerInteraction({
-        action: "share_sheet_completed",
+      deliverNativeInteraction({
+        action,
         product,
         resultId: hashedResultId,
         eventId: randomUUID(),
         ...(requestId && requestIdPattern.test(requestId) ? { requestId: requestId.toLowerCase() } : {}),
-      }, { visitorContext: context });
+      }, context);
     },
   });
 }

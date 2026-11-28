@@ -198,7 +198,7 @@ export type HotelSearchBarProps = {
   onMobileDraftChange?: (draft: HotelSearchDraft) => void;
   onMobileNestedLayerChange?: (open: boolean) => void;
   onDesktopDraftChange?: (draft: HotelSearchDraft) => void;
-  onSubmitStart?: () => void;
+  onSubmitStart?: (submittedParams: URLSearchParams) => void;
   className?: string;
   desktopFormRef?: (node: HTMLFormElement | null) => void;
 };
@@ -885,7 +885,7 @@ export function HotelSearchBar({
     }
 
     setIsSubmitting(true);
-    onSubmitStart?.();
+    onSubmitStart?.(submittedParams);
 
     if (mobileLayout === "drawer") {
       closeMobileSearchPanel();

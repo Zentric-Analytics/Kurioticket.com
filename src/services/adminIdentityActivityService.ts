@@ -2,11 +2,11 @@ import { recordedHotelPropertyCount } from "@/lib/hotels/hotelResultAccounting";
 import "server-only";
 
 import { Prisma } from "@/generated/prisma/client";
-import { eligibleGuestVisitorWhere, eligibleJourneyLinkedVisitorWhere, eligibleJourneyEventCandidateWhere, eligibleLinkedVisitorWhere, journeyActivityLabels, mergeAdminActivity, recordedSearchContext, toAdminJourneyActivity, type ActivityRow, type IdentityKind, type JourneyEventRecord } from "@/lib/adminIdentityJourney";
+import { eligibleGuestVisitorWhere, eligibleJourneyLinkedVisitorWhere, eligibleJourneyEventCandidateWhere, eligibleLinkedVisitorWhere, journeyActivityLabels, mergeAdminActivity, recordedSearchContext, sharedJourneyActionLabels, toAdminJourneyActivity, type ActivityRow, type IdentityKind, type JourneyEventRecord } from "@/lib/adminIdentityJourney";
 import {
   ACTIVITY_OVERVIEW_LIMIT, ACTIVITY_PAGE_SIZE, activityEnvironmentScope, activityWindow, allowedActivityStages,
-  decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, latestVisibleActivityAt, legacyStageLabelMatchesQuery, sourceActivitySeek,
-  type ActivityCursor, type ActivityFilters, type JourneyStage,
+  activityJourneyStages, decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, latestVisibleActivityAt, legacyStageLabelMatchesQuery, sourceActivitySeek,
+  type ActivityCursor, type ActivityFilters,
 } from "@/lib/adminIdentityActivity";
 import { completeActivityReadTimeout, countEligibleActivitySource, readCompleteActivitySource, readEligibleActivitySource, type ActivitySourcePrefix, type ActivitySourceRow } from "@/lib/adminIdentityActivityComplete";
 import { visitorFreeAccountAnalyticsWhere } from "@/lib/adminAnalyticsVisibility";
@@ -18,6 +18,8 @@ import { pageViewCatalog, pageViewInfo, type PageViewKey } from "@/lib/pageViewC
 import { toAdminPageView } from "@/lib/adminPageView";
 import { handoffEvidenceForActivitySql } from "@/services/adminHandoffEvidence";
 import { isPageHistoryPlatform, pageHistoryPlatformValues, pageHistoryTransport, validPageHistoryPage, type PageHistoryPlatform } from "@/lib/adminPageHistory";
+import { adminSecurityAuditActivityWhere, toAdminSecurityAuditActivity } from "@/lib/adminSecurityAuditActivity";
+import { safeObservedResult } from "@/lib/adminObservedResult";
 
 const journeySelect = {
   id: true, type: true, product: true, provider: true, createdAt: true, metadata: true,
@@ -40,17 +42,24 @@ const safeInteractionNames: Record<string, string> = {
   saved_item_removed: "Unsaved item",
   local_saved: "Saved locally",
   local_unsaved: "Removed local save",
-  share_link_copied: "Result link copied",
-  share_sheet_completed: "Share sheet completed",
+  ...sharedJourneyActionLabels,
   price_alert_created: "Price alert enabled",
   price_alert_paused: "Price alert paused",
   price_alert_reactivated: "Price alert resumed",
   price_alert_deleted: "Price alert deleted",
+  package_search_submitted: "Package search submitted",
 };
 function safeSearchPlatform(value: unknown): "WEB" | "IOS" | "ANDROID" | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const source = (value as Record<string, unknown>).applicationSource;
   return source === "WEB" || source === "IOS" || source === "ANDROID" ? source : null;
+}
+
+function safeReportedActionPlatform(value: unknown): ActivityRow["reportedActionPlatform"] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return;
+  const platform = (value as Record<string, unknown>).platform;
+  if (platform === "Desktop web (reported)" || platform === "Mobile web (reported)"
+    || platform === "iOS app (reported)" || platform === "Android app (reported)") return platform;
 }
 
 function safeActivityMetadata(value: unknown): { product: string | null; detail: string } {
@@ -105,14 +114,21 @@ function analyticsActivityRow(event: AnalyticsActivityRecord, environment: Publi
     ? event.metadata as Record<string, unknown> : null;
   if (typeof meta?.linkedJourneyId === "string" && typeof meta?.linkedSearchHistoryId === "string"
     && event.essentialAuditReplacement !== false) return null;
-  const baseLabel = safeAnalyticsLabels[event.type as SafeAnalyticsType];
+  const isPackageSubmission = event.type === "SEARCH" && event.name === "package_search_submitted";
+  const baseLabel = isPackageSubmission ? safeInteractionNames.package_search_submitted : safeAnalyticsLabels[event.type as SafeAnalyticsType];
   if (!baseLabel) return null;
   const safe = safeActivityMetadata(event.metadata);
+  const observedResult = meta?.observedSource === "customer_display" ? safeObservedResult(meta.observedResult) : null;
+  const reportedActionPlatform = safeReportedActionPlatform(meta);
   return {
-    id: "e-" + event.id, stage: "ACCOUNT_ACTIVITY",
+    id: "e-" + event.id, stage: isPackageSubmission ? "PACKAGE_SEARCH_SUBMITTED" : "ACCOUNT_ACTIVITY",
     label: safeInteractionNames[event.name] ?? baseLabel,
     detail: safe.detail, product: safe.product, at: event.createdAt,
     platform: safeSearchPlatform(event.metadata), platformSource: "action",
+    ...(meta?.interface === "customer" || event.type !== "PROVIDER_FAILURE" ? { interface: "customer" as const } : {}),
+    ...(event.userId ? { originalIdentity: "registered" as const } : event.visitorId ? { originalIdentity: "guest" as const } : {}),
+    ...(observedResult ? { observedResult } : {}),
+    ...(reportedActionPlatform ? { reportedActionPlatform } : {}),
   };
 }
 
@@ -123,7 +139,7 @@ export type IdentityActivitySummary = {
   /** Exact page-view total under the selected filters. */
   pagesVisited?: number;
   /** Available on complete and summary reads; uses the same authorized records. */
-  searchProducts?: { flights: number; hotels: number; cars: number; other: number };
+  searchProducts?: { flights: number; hotels: number; cars: number; packages?: number; other: number };
   resultsViewed: number;
   offersSelected: number;
   providerHandoffs: number;
@@ -159,6 +175,7 @@ export async function loadAdminIdentityActivity(
   kind: IdentityKind, id: string, filters: ActivityFilters, cursorInput?: string,
   readMode: "page" | "all" | "summary" = "page",
   pageHistory?: { page: number; platform: PageHistoryPlatform },
+  authorizeSecurityAudit?: () => Promise<boolean>,
 ): Promise<ActivityReadResult> {
   const environment = getPublicEnvironment();
   const complete = readMode === "all";
@@ -263,14 +280,17 @@ export async function loadAdminIdentityActivity(
     };
 
     const allowed = allowedActivityStages(filters);
-    const stages = [...allowed].filter(stage => stage !== "ACCOUNT_ACTIVITY" && stage !== "PAGE_VIEW") as JourneyStage[];
+    const stages = activityJourneyStages.filter(stage => allowed.has(stage));
     const readPages = allowed.has("PAGE_VIEW") && !isOperationalGuest;
-    const readAccountActivity = allowed.has("ACCOUNT_ACTIVITY") && !isOperationalGuest;
+    const readDirectShares = filters.stage === "RESULT_SHARED" && allowed.has("RESULT_SHARED");
+    const readAccountActivity = (allowed.has("ACCOUNT_ACTIVITY") || allowed.has("PACKAGE_SEARCH_SUBMITTED") || readDirectShares) && !isOperationalGuest;
     const canReadAnalytics = readPages || readAccountActivity;
     const product = filters.product === "all" ? null : filters.product;
     const q = filters.q ? escapePrismaContainsQuery(filters.q) : "";
     const ci = (value: string) => ({ contains: value, mode: "insensitive" as const });
     const window = activityWindow(filters);
+    const auditWhere = kind === "user" && !product && allowed.has("ADMIN_SECURITY_AUDIT") && await authorizeSecurityAudit?.()
+      ? adminSecurityAuditActivityWhere(id, environment, window, filters.q) : null;
     const order = !overview && filters.order === "oldest" ? "oldest" : "newest";
     const createdAtDirection = order === "oldest" ? "asc" : "desc";
     const scopedJourneyOwner: Prisma.JourneyEventWhereInput = { AND: [journeyOwner, environmentScope.journey] };
@@ -292,6 +312,9 @@ export async function loadAdminIdentityActivity(
         ...stages.filter(stage => stage.replaceAll("_", " ").toLowerCase().includes(q.toLowerCase())
           || journeyActivityLabels[stage].toLowerCase().includes(q.toLowerCase()))
           .map(type => ({ type })),
+        ...(stages.includes("RESULT_SHARED") ? Object.entries(sharedJourneyActionLabels)
+          .filter(([, label]) => label.toLowerCase().includes(filters.q.toLowerCase()))
+          .map(([action]) => ({ type: "RESULT_SHARED" as const, metadata: { path: ["action"], equals: action } })) : []),
       ],
     } : {};
 
@@ -364,15 +387,19 @@ export async function loadAdminIdentityActivity(
         ...(platformTransport ? [{ metadata: { path: ["transport"], equals: platformTransport } }] : []),
       ],
     };
+    const accountAnalyticsTypes: SafeAnalyticsType[] = filters.tab === "interactions" ? ["SAVE", "SHARE", "ALERT_CREATED"]
+      : (Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[]).filter(type => filters.interface !== "customer" || type !== "PROVIDER_FAILURE");
     const accountAnalyticsWhere: Prisma.AnalyticsEventWhereInput = {
       AND: [
         analyticsOwner, environmentScope.analytics, { createdAt: window },
-        { type: { in: Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[] } },
-        // The dedicated interaction tab excludes signup, support and provider
-        // diagnostics while All activity keeps their operational audit trail.
-        ...(filters.tab === "interactions" ? [{
-          OR: [{ type: "SAVE" as const }, { type: "SHARE" as const }, { type: "ALERT_CREATED" as const }],
-        }] : []),
+        { OR: [
+          ...(allowed.has("ACCOUNT_ACTIVITY") ? [{ type: { in: accountAnalyticsTypes } }] : []),
+          ...(allowed.has("PACKAGE_SEARCH_SUBMITTED") ? [{ type: "SEARCH" as const, name: "package_search_submitted" }] : []),
+          ...(readDirectShares ? [{ type: "SHARE" as const, name: { in: Object.keys(sharedJourneyActionLabels) } }] : []),
+          ...(allowed.has("ACCOUNT_ACTIVITY") && filters.interface === "customer" && filters.tab !== "interactions" ? [{
+            type: "PROVIDER_FAILURE" as const, metadata: { path: ["interface"], equals: "customer" },
+          }] : []),
+        ] },
         ...(product ? [{ OR: [
           { metadata: { path: ["product"], equals: product } },
           // Only legacy SAVEs missing a product may match their saved type.
@@ -425,10 +452,11 @@ export async function loadAdminIdentityActivity(
         ? db.analyticsEvent.count({ where: complete ? analyticsWhere : accountAnalyticsWhere }) : Promise.resolve(0),
       candidateVisitors
         ? db.visitor.count({ where: candidateVisitors }) : Promise.resolve(0),
+      complete && auditWhere ? db.adminAuditLog.count({ where: auditWhere }) : Promise.resolve(0),
     ]) : null;
     preflightMilliseconds = Date.now() - preflightAt;
     const transactionTimeout = readVolume
-      ? completeActivityReadTimeout(readVolume.slice(0, 4), readVolume[4])
+      ? completeActivityReadTimeout([...readVolume.slice(0, 4), readVolume[5]], readVolume[4])
       : 30_000;
     phase = "activity_snapshot";
     const snapshotAt = Date.now();
@@ -436,11 +464,11 @@ export async function loadAdminIdentityActivity(
     // A repeatable-read snapshot keeps canonical + legacy de-duplication stable
     // when a source record and its JourneyEvent are inserted concurrently.
     // The timeline, all totals and every visitor-ID batch observe one snapshot.
-    const [journey, searches, handoffs, analytics, canonicalCounts, legacySearchTotal, legacyHandoffTotal, journeysTracked, pagesVisited,
-      operationalHandoffLinks, accountActivityTotal, searchProducts] =
+    const [journey, searches, handoffs, analytics, audits, canonicalCounts, legacySearchTotal, legacyHandoffTotal, journeysTracked, pagesVisited,
+      operationalHandoffLinks, accountActivityTotal, auditTotal, searchProducts] =
       await db.$transaction(async tx => {
         const counts = new Map<string, number>();
-        const searchProducts = { flights: 0, hotels: 0, cars: 0, other: 0 };
+        const searchProducts = { flights: 0, hotels: 0, cars: 0, other: 0, packages: 0 };
         let distinctJourneyCount = 0;
         const countVisitorBatch = async (visitorIds: string[]) => {
           if (!visitorIds.length) return;
@@ -461,7 +489,7 @@ export async function loadAdminIdentityActivity(
           if (includeSearchProducts && allowed.has("SEARCH_COMPLETED")) {
             // The display product uses the event value, then its exact search.
             // Count with the same fallback without downloading search history.
-            const totals = await Promise.all((["FLIGHT", "HOTEL", "CAR"] as const).map(product => tx.journeyEvent.count({
+            const totals = await Promise.all((["FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const).map(product => tx.journeyEvent.count({
               where: { AND: [validEvents, { type: "SEARCH_COMPLETED" }, { OR: [
                 { product }, { product: null, searchHistory: { is: { type: product } } },
               ] }] },
@@ -469,6 +497,7 @@ export async function loadAdminIdentityActivity(
             searchProducts.flights += totals[0];
             searchProducts.hotels += totals[1];
             searchProducts.cars += totals[2];
+            searchProducts.packages += totals[3];
             searchProducts.other += (grouped.find(row => row.type === "SEARCH_COMPLETED")?._count._all ?? 0)
               - totals.reduce((total, count) => total + count, 0);
           }
@@ -636,7 +665,7 @@ export async function loadAdminIdentityActivity(
           return canReadAnalytics ? readSource("e", (after, take) => readAnalyticsBatch(analyticsWhere, after, take),
             row => analyticsActivityRow(row, environment) !== null) : Promise.resolve([]);
         };
-        const [pageJourney, pageSearches, pageHandoffs, pageAnalytics, searchTotals, handoffTotal, pageTotal] = await Promise.all([
+        const [pageJourney, pageSearches, pageHandoffs, pageAnalytics, pageAudits, searchTotals, handoffTotal, pageTotal, securityAuditTotal] = await Promise.all([
           stages.length && !isOperationalGuest ? readSource("j", (after, take) => tx.journeyEvent.findMany({
             where: { AND: [journeyWhere, sourceActivitySeek(after, "j", order)] },
             orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }],
@@ -645,14 +674,20 @@ export async function loadAdminIdentityActivity(
           allowed.has("SEARCH_COMPLETED") ? readSource("s", readSearchBatch, searchEligible).then(rows => rows.filter(searchEligible)) : Promise.resolve([]),
           canReadHandoffs ? readSource("r", readHandoffBatch, handoffEligible).then(rows => rows.filter(handoffEligible)) : Promise.resolve([]),
           readAnalytics(),
+          auditWhere ? readSource("a", (after, take) => tx.adminAuditLog.findMany({
+            where: { AND: [auditWhere, sourceActivitySeek(after, "a", order)] },
+            select: { id: true, action: true, targetType: true, createdAt: true },
+            orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take,
+          })) : Promise.resolve([]),
           readSearchTotals(),
           canReadHandoffs ? validateHandoffReplacements
             ? countEligibleActivitySource("r", readHandoffBatch, handoffEligible)
             : tx.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
           readPages ? tx.analyticsEvent.count({ where: pageWhere }) : Promise.resolve(0),
+          auditWhere ? tx.adminAuditLog.count({ where: auditWhere }) : Promise.resolve(0),
         ]);
         for (const row of searchTotals.products) {
-          const key = row.type === "FLIGHT" ? "flights" : row.type === "HOTEL" ? "hotels" : row.type === "CAR" ? "cars" : "other";
+          const key = row.type === "FLIGHT" ? "flights" : row.type === "HOTEL" ? "hotels" : row.type === "CAR" ? "cars" : row.type === "PACKAGE" ? "packages" : "other";
           searchProducts[key] += row._count._all;
         }
         // Counts use exactly the same enriched audit eligibility as page filling
@@ -672,21 +707,24 @@ export async function loadAdminIdentityActivity(
           );
           for (const link of links) if (link.searchHistoryId) operationalHandoffLinks.set(link.id, link.searchHistoryId);
         }
-        return [pageJourney, pageSearches, pageHandoffs, pageAnalytics, counts, searchTotals.total, handoffTotal, distinctJourneyCount, pageTotal,
-          operationalHandoffLinks, accountTotal, searchProducts] as const;
+        return [pageJourney, pageSearches, pageHandoffs, pageAnalytics, pageAudits, counts, searchTotals.total, handoffTotal, distinctJourneyCount, pageTotal,
+          operationalHandoffLinks, accountTotal, securityAuditTotal, searchProducts] as const;
       }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead, timeout: transactionTimeout });
     snapshotMilliseconds = Date.now() - snapshotAt;
 
     const summary: IdentityActivitySummary = {
       pagesVisited,
       recordedActions: [...canonicalCounts.values()].reduce((total, count) => total + count, 0)
-        + legacySearchTotal + legacyHandoffTotal + pagesVisited + accountActivityTotal,
+        + legacySearchTotal + legacyHandoffTotal + pagesVisited + accountActivityTotal + auditTotal,
       searches: (canonicalCounts.get("SEARCH_COMPLETED") ?? 0) + legacySearchTotal,
       resultsViewed: canonicalCounts.get("RESULTS_VIEWED") ?? 0,
       offersSelected: canonicalCounts.get("OFFER_SELECTED") ?? 0,
       providerHandoffs: (canonicalCounts.get("PROVIDER_HANDOFF_STARTED") ?? 0) + legacyHandoffTotal,
       journeysTracked,
-      ...(includeSearchProducts ? { searchProducts } : {}),
+      ...(includeSearchProducts ? { searchProducts: {
+        flights: searchProducts.flights, hotels: searchProducts.hotels, cars: searchProducts.cars, other: searchProducts.other,
+        ...(searchProducts.packages ? { packages: searchProducts.packages } : {}),
+      } } : {}),
     };
 
     const canonical = journey.flatMap(event => {
@@ -694,10 +732,13 @@ export async function loadAdminIdentityActivity(
       // reader; the existing five top-level metrics still count only their
       // original funnel categories. Never turn an account audit into a journey.
       const row = toAdminJourneyActivity(event, kind, id);
+      const actionPlatform = safeSearchPlatform(event.metadata);
+      const reportedActionPlatform = safeReportedActionPlatform(event.metadata);
       return row ? [{
         ...row,
-        platform: safeSearchPlatform(event.searchHistory?.query),
-        platformSource: "search" as const,
+        platform: actionPlatform ?? safeSearchPlatform(event.searchHistory?.query),
+        platformSource: actionPlatform ? "action" as const : "search" as const,
+        ...(reportedActionPlatform ? { reportedActionPlatform } : {}),
         resultCount: event.searchHistory?.resultCount ?? null,
         hotelPropertyCount: recordedHotelPropertyCount(event.searchHistory?.type, event.searchHistory?.query, event.searchHistory?.resultCount),
       }] : [];
@@ -705,6 +746,7 @@ export async function loadAdminIdentityActivity(
     const legacy: ActivityRow[] = [
       ...searches.map(s => ({
         id: "s-" + s.id, stage: "SEARCH_COMPLETED" as const, product: s.type,
+        interface: "customer" as const,
         searchHistoryId: s.id, dedupeKey: "search:" + s.id,
         platform: safeSearchPlatform(s.query), resultCount: s.resultCount,
         platformSource: "search" as const, ...recordedSearchContext(s),
@@ -714,6 +756,7 @@ export async function loadAdminIdentityActivity(
       })),
       ...handoffs.map(r => ({
         id: "r-" + r.id, stage: "PROVIDER_HANDOFF_STARTED" as const, product: r.type, provider: r.provider,
+        interface: "customer" as const,
         redirectLogId: r.id, dedupeKey: "handoff:" + r.id,
         searchHistoryId: operationalHandoffLinks.get(r.id) ?? null,
         label: "Provider handoff started", detail: [r.type, r.route, r.provider].filter(Boolean).join(" · "),
@@ -723,6 +766,7 @@ export async function loadAdminIdentityActivity(
         const row = analyticsActivityRow(a, environment);
         return row ? [row] : [];
       }),
+      ...audits.flatMap(row => toAdminSecurityAuditActivity(row) ?? []),
     ];
     const sorted = mergeAdminActivity(canonical, legacy, canonical.length + legacy.length, order);
     const page = complete ? sorted : sorted.slice(0, overview ? ACTIVITY_OVERVIEW_LIMIT : ACTIVITY_PAGE_SIZE);

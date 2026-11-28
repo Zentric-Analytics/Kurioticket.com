@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { test as runTest } from "node:test";
 import { createJourneyEventHandler } from "./handler";
-import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
+import { resolveObservedActivityIdentity, resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import type { ClientJourneyEventInput } from "@/services/searchJourneyService";
 import type { JourneyEventReceipt } from "@/lib/search-journey";
+import { issueBrowserActivityConfirmation } from "@/lib/visitor-identity";
+import { analyticsConfirmationHeader, analyticsConfirmationVersion } from "@/lib/visitor-consent-constants";
 
 const token = "a".repeat(43);
 const nativeToken = "b".repeat(43);
@@ -58,12 +60,29 @@ function fixture() {
     pause: async () => { pauses += 1; await onPause(); },
     rateLimit: () => ({ allowed: true, remaining: 59, resetAt: Date.now() + 60_000 }),
   };
-  return { handler: createJourneyEventHandler(dependencies), dependencies, records,
+  return { handler: createJourneyEventHandler(dependencies), dependencies, records, resolve,
     visits: () => visits, pauses: () => pauses,
     setEnabled: (value: boolean) => { enabled = value; }, setUser: (value: string | null) => { userId = value; },
     onPause: (value: () => Promise<void>) => { onPause = value; },
     respond: (value: typeof receipt) => { receipt = value; } };
 }
+
+test("a retry from a stale tab cannot write to the verified replacement account", async () => {
+  const f = fixture();
+  const liveHandler = createJourneyEventHandler({ ...f.dependencies, identity: value => resolveObservedActivityIdentity(value, f.resolve) });
+  const original = issueBrowserActivityConfirmation(request(event, { [analyticsConfirmationHeader]: analyticsConfirmationVersion }), token, "original-account");
+  assert.ok(original.confirmation);
+  f.setUser("replacement-account");
+  const stale = await liveHandler(request(event, { [analyticsConfirmationHeader]: original.confirmation.proof }));
+  assert.deepEqual(await stale.json(), { accepted: false });
+  assert.equal(f.visits(), 0, "a stale request must not update replacement Visitor activity");
+  assert.equal(f.records.length, 0);
+  const replacement = issueBrowserActivityConfirmation(request(event, { [analyticsConfirmationHeader]: analyticsConfirmationVersion }), token, "replacement-account");
+  assert.ok(replacement.confirmation);
+  const current = await liveHandler(request(event, { [analyticsConfirmationHeader]: replacement.confirmation.proof }));
+  assert.deepEqual(await current.json(), { accepted: true });
+  assert.equal(f.records[0].userId, "replacement-account");
+});
 
 test("browser journey events use the configured public origin behind an internal proxy URL", async () => {
   await withOrigins({ app: publicOrigin }, async () => {
@@ -262,6 +281,21 @@ test("invalid event shapes, client identity fields, and source URLs or queries n
     { ...event, provider: "x".repeat(3000) }, { ...event, type: "SEARCH_COMPLETED" },
   ]) assert.equal((await f.handler(request(body))).status, 400);
   assert.equal(f.records.length, 0);
+});
+
+test("submitted edits accept bounded field names and reject raw values, duplicates or other stages", async () => {
+  const f = fixture();
+  const edit = { ...event, type: "SEARCH_EDIT_APPLIED", sourcePage: "/flights/results", editFields: ["dates", "cabin"] };
+  assert.deepEqual(await (await f.handler(request(edit))).json(), { accepted: true });
+  assert.deepEqual(f.records[0].editFields, ["dates", "cabin"]);
+  for (const body of [
+    { ...edit, editFields: ["dates", "private dates"] },
+    { ...edit, editFields: ["dates", "dates"] },
+    { ...edit, type: "OFFER_SELECTED" },
+    { ...edit, editFields: ["dates"], sourcePage: "/dashboard/account" },
+    { ...edit, editFields: { dates: "2027-04-01" } },
+  ]) assert.equal((await f.handler(request(body))).status, 400);
+  assert.equal(f.records.length, 1);
 });
 
 test("cross-origin and rate-limited events are rejected before identity resolution", async () => {

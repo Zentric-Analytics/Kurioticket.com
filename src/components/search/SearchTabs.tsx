@@ -75,6 +75,7 @@ import {
 } from "@/components/search/CarsPickerContent";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { recordCustomerSectionVisit } from "@/lib/customerInteractionClient";
 import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
 import { getHotelLocationFieldDisplay } from "@/lib/search/hotelLocationFieldDisplay";
 import { canonicalHomepageAirportField } from "@/lib/search/homepageAirportField";
@@ -133,6 +134,7 @@ type TabMode =
   | "hotels"
   | "cars"
   | "deals";
+const homeProductSections = { flights: "home_flights", hotels: "home_hotels", cars: "home_cars", deals: "home_packages" } as const;
 
 type TripType =
   | "round-trip"
@@ -2997,6 +2999,12 @@ export function SearchTabs({
     </div>
   ) : null;
 
+  function selectProductTab(next: TabMode) {
+    setCarsOpenPicker(null);
+    setTab(next);
+    recordCustomerSectionVisit(homeProductSections[tab], homeProductSections[next]);
+  }
+
   const mobileHomepageProductTabs = (
     <div
       data-testid="mobile-homepage-product-tabs-breakout"
@@ -3022,10 +3030,7 @@ export function SearchTabs({
               role="tab"
               aria-selected={selected}
               tabIndex={selected ? 0 : -1}
-              onClick={() => {
-                setCarsOpenPicker(null);
-                setTab(mode);
-              }}
+              onClick={() => selectProductTab(mode)}
               className={cn(
                 "focus-ring homepage-keyboard-focus flex h-[68px] min-w-0 flex-col items-center justify-center gap-1 rounded-[10px] border px-0.5 text-[clamp(13px,3.85vw,16px)] font-medium text-slate-950 shadow-[0_3px_10px_rgba(15,23,42,0.07)] transition-colors",
                 selected
@@ -3327,10 +3332,7 @@ export function SearchTabs({
           role="tab"
           aria-selected={tab === "flights"}
           tabIndex={tab === "flights" ? 0 : -1}
-          onClick={() => {
-            setCarsOpenPicker(null);
-            setTab("flights");
-          }}
+          onClick={() => selectProductTab("flights")}
           className={cn(
             "homepage-keyboard-focus relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
             compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
@@ -3348,10 +3350,7 @@ export function SearchTabs({
           role="tab"
           aria-selected={tab === "hotels"}
           tabIndex={tab === "hotels" ? 0 : -1}
-          onClick={() => {
-            setCarsOpenPicker(null);
-            setTab("hotels");
-          }}
+          onClick={() => selectProductTab("hotels")}
           className={cn(
             "homepage-keyboard-focus relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
             compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
@@ -3369,10 +3368,7 @@ export function SearchTabs({
           role="tab"
           aria-selected={tab === "cars"}
           tabIndex={tab === "cars" ? 0 : -1}
-          onClick={() => {
-            setCarsOpenPicker(null);
-            setTab("cars");
-          }}
+          onClick={() => selectProductTab("cars")}
           className={cn(
             "homepage-keyboard-focus relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
             compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
@@ -3390,10 +3386,7 @@ export function SearchTabs({
           role="tab"
           aria-selected={tab === "deals"}
           tabIndex={tab === "deals" ? 0 : -1}
-          onClick={() => {
-            setCarsOpenPicker(null);
-            setTab("deals");
-          }}
+          onClick={() => selectProductTab("deals")}
           className={cn(
             "homepage-keyboard-focus relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
             compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",

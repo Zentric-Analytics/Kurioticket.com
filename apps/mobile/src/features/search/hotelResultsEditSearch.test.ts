@@ -49,7 +49,7 @@ test("Hotel edit modal embeds the shared form and replaces only after closing", 
   assert.match(modal, /accessibilityViewIsModal/);
   assert.match(modal, /accessibilityLabel="Close hotel edit search"/);
   assert.match(modal, /keyboardShouldPersistTaps="handled"/);
-  assert.match(modal, /<HotelSearchPanel embedded params=\{presentedParams\} submitNavigation="replace" onBeforeNavigate=\{onClose\} onValidatedSubmit=\{Platform\.OS === "android" \? onAndroidSubmit : undefined\} editAppearance submitLabel="Search" \/>/);
+  assert.match(modal, /<HotelSearchPanel embedded params=\{presentedParams\} submitNavigation="replace" onBeforeNavigate=\{nextParams => \{ onBeforeNavigate\?\.\(nextParams\); onClose\(\); \}\} onValidatedSubmit=\{Platform\.OS === "android" \? onAndroidSubmit : undefined\} editAppearance submitLabel="Search" \/>/);
   assert.doesNotMatch(modal, /router\.|hotelSearchParams|travelApi/);
   assert.match(modal, /useRetainedPickerContext\(visible, params\)/);
 });
@@ -57,10 +57,10 @@ test("Hotel edit modal embeds the shared form and replaces only after closing", 
 test("Hotel form preserves push by default and closes before configured navigation", () => {
   const panel = panelSource();
   assert.match(panel, /submitNavigation = "push", onBeforeNavigate, editAppearance = false/);
-  assert.match(panel, /if \(onValidatedSubmit\) \{ onValidatedSubmit\(hotelSearchParams\(form\)\); return; \}/);
-  assert.match(panel, /onBeforeNavigate\?\.\(\);\s*router\[submitNavigation\]\(\{ pathname: "\/hotel-results", params: hotelSearchParams\(form\) \}\)/);
+  assert.match(panel, /const searchParams = hotelSearchParams\(form\);\s*if \(onValidatedSubmit\) \{ onValidatedSubmit\(searchParams\); return; \}/);
+  assert.match(panel, /onBeforeNavigate\?\.\(searchParams\);\s*router\[submitNavigation\]\(\{ pathname: "\/hotel-results", params: searchParams \}\)/);
   const validation = panel.indexOf("const nextErrors = validateHotelForm(form)");
-  const close = panel.indexOf("onBeforeNavigate?.()", validation);
+  const close = panel.indexOf("onBeforeNavigate?.(searchParams)", validation);
   const navigate = panel.indexOf("router[submitNavigation]", close);
   assert.ok(validation >= 0 && close > validation && navigate > close);
 });
@@ -112,4 +112,12 @@ test("hardware Back cannot discard a submitted Android hotel edit during modal e
   assert.doesNotMatch(close, /pendingHotelEditParams\.current = null/);
   assert.match(close, /setHotelEditSearchOpen\(false\)/);
   assert.match(source, /const nextParams = pendingHotelEditParams\.current;[\s\S]*pendingHotelEditParams\.current = null;[\s\S]*router\.setParams\(hotelSearchRouteParamPatch\(nextParams\)\)/);
+});
+
+test("iOS and Android submit only approved hotel edit field names through the same callback", () => {
+  const source = resultsSource();
+  assert.match(source, /if \(pendingHotelEditParams\.current\) recordHotelSearchEdit\(nextParams\)/);
+  assert.match(source, /onBeforeNavigate=\{recordHotelSearchEdit\}/);
+  assert.match(source, /nativeChangedJourneySearchFields\("HOTEL", params, nextParams\)/);
+  assert.match(source, /journeyEvents\.workflowDecision\("SEARCH_EDIT_APPLIED", resultsRequestId, "\/hotel-results", \{ editFields \}\)/);
 });

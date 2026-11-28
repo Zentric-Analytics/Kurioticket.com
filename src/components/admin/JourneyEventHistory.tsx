@@ -2,6 +2,7 @@ import { hotelResultSummary } from "@/lib/hotels/hotelResultAccounting";
 import type { AdminJourneyEvent } from "@/services/adminJourneyContract";
 
 import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
+import { journeySearchEditFieldLabels } from "@/lib/search-journey";
 const readable = (value: string) => value.toLowerCase().replaceAll("_", " ").replace(/^./, c => c.toUpperCase());
 const searchStatusLabel = (status: string, resultCount: number) =>
   status === "PARTIAL"
@@ -68,7 +69,7 @@ export function JourneyEventHistory({ events, timeZone = "UTC" }: { events: Admi
               <td className="px-3 py-3 [overflow-wrap:anywhere]">
                 <span className="block text-[11px] font-semibold tabular-nums text-[#64748B]">Step {index + 1}</span>
                 <span className="mt-1 inline-flex rounded-md border border-[#D8E1EC] bg-white px-2 py-1 text-[11px] font-medium text-[#475569]">{event.type === "PAGE_VIEW" ? event.pageView?.label ?? "Page visited" : event.type === "RESULTS_VIEWED" ? "Results page viewed" : event.type === "RESULT_SHARED"
-                  ? event.action === "share_link_copied" ? "Result link copied" : event.action === "share_sheet_completed" ? "Share sheet completed" : "Result shared"
+                  ? event.action === "share_link_copied" ? "Result link copied" : event.action === "share_sheet_completed" ? "Share sheet completed" : event.action === "share_sheet_requested" ? "Share sheet requested" : "Result shared"
                    : event.type === "PRICE_ALERT_CREATED" ? "Price alert created"
                   : event.type === "RESULT_SAVED"
                     ? event.action === "local_saved" ? "Saved locally" : event.action === "saved_item_confirmed" ? "Saved to account" : "Result saved"
@@ -85,6 +86,7 @@ export function JourneyEventHistory({ events, timeZone = "UTC" }: { events: Admi
                   <p className={searchTitle ? "mt-1 text-xs text-[#64748B]" : "text-xs text-[#64748B]"}>Search status: {searchStatusLabel(event.search.status, event.search.resultCount)} · {event.search.product === "HOTEL" ? hotelResultSummary(event.search.resultCount, event.search.hotelPropertyCount) : event.search.resultCount + " results"}</p>
                   {searchCriteria(event.search).length ? <p className="mt-1.5 text-xs leading-5 text-[#475569]">{searchCriteria(event.search).join(" · ")}</p> : null}
                 </> : <p className="text-xs text-[#64748B]">Search details not recorded</p>}
+                {event.editFields?.length ? <p className="mt-1 text-xs text-[#475569]">Changed fields · {event.editFields.map(field => journeySearchEditFieldLabels[field]).join(", ")}</p> : null}
                 {event.filterSelections?.length ? <div className="mt-1 text-xs text-[#475569]">
                   <p className="font-medium">Selected filters (observed on customer device):</p>
                   <ul className="mt-1 space-y-0.5">{event.filterSelections.map((choice, index) =>
@@ -112,6 +114,7 @@ export function JourneyEventHistory({ events, timeZone = "UTC" }: { events: Admi
                   Recorded result reference: {event.resultReference}
                 </p> : null}
                 {event.pageView ? <p className="mt-1 text-xs break-all text-[#475569]">{event.pageView.href ? <a href={event.pageView.href} target="_blank" rel="noopener noreferrer" className="text-[#004BB8] underline">{event.pageView.href}</a> : event.pageView.path} · {event.pageView.platform}{event.pageView.originalIdentity === "guest" ? " · Recorded as a guest" : null}</p> : null}
+                {event.pageView?.previousPath ? <p className="mt-1 text-xs break-all text-[#475569]">{event.pageView.transport === "native" ? "Previous observed screen" : "Previous observed page"}: {event.pageView.previousPath}</p> : null}
                 {event.sourcePage ? <p className="mt-1.5 break-all text-[11px] leading-4 text-[#64748B]"><span className="mr-1">Source:</span>{event.sourcePage}</p> : null}
               </td>
               <td className="px-3 py-3 [overflow-wrap:anywhere]">

@@ -6,6 +6,7 @@ import { hasDisplayOnlyInventory } from "@/shared/presentation/sandboxInventory"
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import { normalizeJourneySortMode, normalizeJourneySortChoice } from "@/lib/search-journey";
 import { displayedJourneyRequest, journeyRequestId } from "@/lib/journeyEventClient";
+import { changedJourneySearchFields } from "@/lib/journeySearchEdit";
 import { resultIdKey, ResultsViewport, VirtualResultsList } from "./VirtualResultsList";
 
 import Image from "next/image";
@@ -3378,6 +3379,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     restoreMobileSearchScrollPosition();
   }
 
+  function recordFlightSearchEdit(nextParams: URLSearchParams) {
+    if (journeyResponse?.searchKey !== currentFlightSearchKey || !journeyResponse.requestId) return;
+    const editFields = changedJourneySearchFields("FLIGHT", params, nextParams);
+    if (editFields.length) journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", journeyResponse.requestId, { editFields });
+  }
+
   function handleCompactSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -3496,6 +3503,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
 
     clearResultsReturn("flight");
+    recordFlightSearchEdit(nextParams);
     router.push(`/flights/results?${nextParams.toString()}`, { scroll: true });
   }
 
@@ -7072,6 +7080,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           if (value.tripType === "multi-city") { nextParams.set("currency", selectedCurrency); appendFlightLegParams(nextParams, value.legs); }
           closeMobileSearchDrawer({ restoreFocus: false });
           clearResultsReturn("flight");
+          recordFlightSearchEdit(nextParams);
           router.push(`/flights/results?${nextParams.toString()}`, { scroll: true });
         }}
       />

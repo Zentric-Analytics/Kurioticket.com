@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, AppState, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { randomUUID } from "expo-crypto";
 import { travelApi, type PackageSearchResponse } from "../../api/travelApi";
 import { createPackageSearch, includedProducts, packageApiPayload, packageRouteParams, validatePackageSearch, type PackageSearch } from "./packageSearchModel";
 import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
@@ -10,6 +11,9 @@ import { useFlowTheme } from "./flowStyles";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { formatMobileDateOnly } from "../../localization/mobileLocalizationCatalog";
 import { travelAccountMessage } from "../../localization/travelAccountMessages";
+import { journeyEvents } from "../privacy/journeyEvents";
+import { journeyResponseContext } from "../privacy/journeyResponseContext";
+import { useNativeResultsPage } from "../privacy/useNativePageViews";
 
 const one = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
 const number = (value: string | undefined, fallback: number) => /^\d+$/.test(value ?? "") ? Number(value) : fallback;
@@ -37,21 +41,41 @@ function readSearch(params: Record<string, string | string[] | undefined>): Pack
 export function PackageResultsScreen() {
   const ft = useFlowTheme();
   const { locale } = useMobileLocalization();
+  const recordNativeResultsPage = useNativeResultsPage();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const search = useMemo(() => readSearch(params), [JSON.stringify(params)]);
-  const [response, setResponse] = useState<PackageSearchResponse>();
+  const [presentation, setPresentation] = useState<{ search: PackageSearch; response: PackageSearchResponse }>();
+  const response = presentation?.search === search ? presentation.response : undefined;
   const [error, setError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
+  const included = includedProducts(search.mode);
+  const visibleProducts = (["flight", "hotel", "car"] as const).filter(product => included[product]);
+  const displayedCount = visibleProducts.reduce((count, product) => count + Math.min(3, response?.components[product]?.results.length ?? 0), 0);
+  const bundleCount = response?.packageOffers.length ?? 0;
   useEffect(() => {
     if (!validatePackageSearch(search)) { router.replace({ pathname: "/packages", params: { destination: search.destination } }); return; }
     const controller = new AbortController();
     setError("");
-    void travelApi.searchPackages(packageApiPayload(search), { signal: controller.signal, requestId: `mobile-package-${Date.now().toString(36)}` }).then(value => { setResponse(value); void recordRecentSearchBestEffort(buildRecentSearch("package", search)); }).catch((reason: unknown) => {
+    void travelApi.searchPackages(packageApiPayload(search), { signal: controller.signal, requestId: randomUUID() }).then(value => {
+      if (controller.signal.aborted) return;
+      journeyEvents.rememberSearch(value.requestId, journeyResponseContext(value));
+      setPresentation({ search, response: value });
+      void recordRecentSearchBestEffort(buildRecentSearch("package", search));
+    }).catch((reason: unknown) => {
       if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "Package search failed.");
     });
     return () => controller.abort();
   }, [search]);
-  const included = includedProducts(search.mode);
+  useFocusEffect(useCallback(() => {
+    const recordDisplayedResults = () => {
+      if (AppState.currentState !== "active" || !response?.requestId) return;
+      recordNativeResultsPage("package", response.requestId);
+      journeyEvents.resultsViewed(response.requestId, "/package-results", displayedCount + bundleCount);
+    };
+    recordDisplayedResults();
+    const subscription = AppState.addEventListener("change", state => { if (state === "active") recordDisplayedResults(); });
+    return () => subscription.remove();
+  }, [bundleCount, displayedCount, recordNativeResultsPage, response?.requestId]));
   const saveSearch = async () => {
     setSavedMessage("");
     try {
@@ -67,7 +91,7 @@ export function PackageResultsScreen() {
     {error ? <Text accessibilityRole="alert" style={{ color: ft.colors.red }}>{error}</Text> : null}
     {response ? <>
       {response.status === "partial" ? <Text accessibilityRole="alert" style={{ color: ft.colors.secondaryText }}>Some package components are temporarily unavailable. Available results are preserved below.</Text> : null}
-      {(["flight", "hotel", "car"] as const).filter((product) => included[product]).map((product) => {
+      {visibleProducts.map((product) => {
         const component = response.components[product];
         return <View key={product} style={[ft.styles.card, styles.card]}><Text accessibilityRole="header" style={ft.styles.sectionTitle}>{product[0].toUpperCase()}{product.slice(1)}</Text><Text style={ft.styles.value}>{component?.status === "unavailable" ? "Temporarily unavailable" : `${component?.results.length ?? 0} canonical results`}</Text>{component?.results.slice(0, 3).map((result, index) => <Text key={`${product}-${index}`} style={ft.styles.meta}>{resultLabel(result, product)}</Text>)}<Text style={ft.styles.meta}>{component?.source ?? "No provider response"}</Text></View>;
       })}

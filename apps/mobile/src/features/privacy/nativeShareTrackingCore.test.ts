@@ -3,15 +3,15 @@ import test from "node:test";
 import { shareAndRecordObservedAction } from "./nativeShareTrackingCore";
 
 test("OS-reported shared action produces one consented optional observation", async () => {
-  const contexts: number[] = [];
+  const observations: Array<[number, string]> = [];
   const response = await shareAndRecordObservedAction({
     share: async () => ({ action: "sharedAction" }),
-    canVerifyCompletion: true,
+    platform: "ios",
     trackingContext: () => 7,
-    record: async context => { contexts.push(context); },
+    record: async (context, action) => { observations.push([context, action]); },
   });
   assert.equal(response.action, "sharedAction");
-  assert.deepEqual(contexts, [7]);
+  assert.deepEqual(observations, [[7, "share_sheet_completed"]]);
 });
 
 test("dismissed or unknown share actions produce no completion event", async () => {
@@ -19,7 +19,7 @@ test("dismissed or unknown share actions produce no completion event", async () 
     let count = 0;
     await shareAndRecordObservedAction({
       share: async () => ({ action }),
-      canVerifyCompletion: true,
+      platform: "ios",
     trackingContext: () => 4,
       record: async () => { count++; },
     });
@@ -31,7 +31,7 @@ test("no consent or withdrawn consent never records an OS share action", async (
   let count = 0;
   await shareAndRecordObservedAction({
     share: async () => ({ action: "sharedAction" }),
-    canVerifyCompletion: true,
+    platform: "ios",
     trackingContext: () => null,
     record: async () => { count++; },
   });
@@ -40,7 +40,7 @@ test("no consent or withdrawn consent never records an OS share action", async (
   const share = new Promise<{ action: string }>(resolve => { finish = resolve; });
   const pending = shareAndRecordObservedAction({
     share: async () => share,
-    canVerifyCompletion: true,
+    platform: "ios",
     trackingContext: () => active,
     record: async () => { count++; },
   });
@@ -55,7 +55,7 @@ test("a switch to another account never attaches the former share", async () => 
   let finish!: (value: { action: string }) => void;
   const pending = shareAndRecordObservedAction({
     share: () => new Promise<{ action: string }>(resolve => { finish = resolve; }),
-    canVerifyCompletion: true,
+    platform: "ios",
     trackingContext: () => generation,
     record: async () => { assert.fail("no cross-account share event"); },
   });
@@ -67,7 +67,7 @@ test("a switch to another account never attaches the former share", async () => 
 test("an optional analytics failure never changes a valid share outcome", async () => {
   const result = await shareAndRecordObservedAction({
     share: async () => ({ action: "sharedAction" }),
-    canVerifyCompletion: true,
+    platform: "ios",
     trackingContext: () => 3,
     record: async () => { throw new Error("offline"); },
   });
@@ -77,7 +77,7 @@ test("an optional analytics failure never changes a valid share outcome", async 
 test("a rejected or cancelled native share does not invoke analytics", async () => {
   await assert.rejects(() => shareAndRecordObservedAction({
     share: async (): Promise<{ action: string }> => { throw new Error("share unavailable"); },
-    canVerifyCompletion: true,
+    platform: "ios",
     trackingContext: () => 1,
     record: async () => { assert.fail("no analytics after share error"); },
   }), /share unavailable/);
@@ -88,7 +88,7 @@ test("genuine repeated completed share actions are distinct observations", async
   for (let i = 0; i < 2; i++) {
     await shareAndRecordObservedAction({
       share: async () => ({ action: "sharedAction" }),
-      canVerifyCompletion: true,
+      platform: "ios",
     trackingContext: () => 8,
       record: async () => { count++; },
     });
@@ -97,13 +97,13 @@ test("genuine repeated completed share actions are distinct observations", async
 });
 
 test("Android chooser sharedAction never claims successful sharing", async () => {
-  let observations = 0;
+  const observations: string[] = [];
   const response = await shareAndRecordObservedAction({
     share: async () => ({ action: "sharedAction" }),
-    canVerifyCompletion: false,
+    platform: "android",
     trackingContext: () => 99,
-    record: async () => { observations++; },
+    record: async (_context, action) => { observations.push(action); },
   });
   assert.equal(response.action, "sharedAction");
-  assert.equal(observations, 0);
+  assert.deepEqual(observations, ["share_sheet_requested"]);
 });

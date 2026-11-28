@@ -654,3 +654,70 @@ test("PostgreSQL Essential account audits remain exactly once after canonical jo
   assert.equal(await db.analyticsEvent.count({ where: { id: { in: audits }, userId: owner.id, visitorId: null } }), 3,
     "Withdrawal retains each original source-owned Essential account audit");
 });
+
+test("unified registered activity scopes security audits by viewer, actor, environment and interface", async () => {
+  const { loadAdminIdentityActivity } = identityActivityReader();
+  const actor = await account({ role: "ADMIN" });
+  const subject = await account();
+  const linked = await visitor(actor.id);
+  const at = time(19);
+  const filters: ActivityFilters = { tab: "all", stage: "all", product: "all", ...window(19), q: "", order: "newest" };
+  const draft = { adminUserId: actor.id, adminEmail: actor.email, targetId: subject.id, targetEmail: subject.email,
+    targetType: "User", action: "USER_ROLE_UPDATED", createdAt: at };
+  const auditIds = [];
+  for (let index = 0; index < 22; index++) {
+    const row = await db.adminAuditLog.create({ data: { ...draft, metadata: { environment: "staging", payload: "private-audit" } } });
+    auditIds.push("a-" + row.id);
+  }
+  for (const data of [
+    { ...draft, metadata: { environment: "production" } },
+    { ...draft, metadata: {} },
+    { ...draft, metadata: { environment: "staging" }, action: "UNAPPROVED_OPERATION" },
+    { ...draft, metadata: { environment: "staging" }, targetType: "UnapprovedTarget" },
+    { ...draft, metadata: { environment: "staging" }, adminUserId: null },
+  ]) await db.adminAuditLog.create({ data });
+  const page = await db.analyticsEvent.create({ data: { userId: actor.id, visitorId: linked.id, type: "PAGE_VIEW", name: "page_viewed", createdAt: at,
+    metadata: { environment: "staging", transport: "web", platform: "Desktop web (reported)", pageKey: "home", interface: "customer", originalIdentity: "registered" } } });
+  const packageSearch = await search(linked.id, at, { userId: actor.id, type: "PACKAGE", resultCount: 2,
+    query: { environment: "staging", applicationSource: "WEB", resultUnit: "component_results" } });
+  const packageSubmission = await db.analyticsEvent.create({ data: { userId: actor.id, visitorId: linked.id, type: "SEARCH", name: "package_search_submitted", createdAt: at,
+    metadata: { environment: "staging", applicationSource: "WEB", interface: "customer", product: "PACKAGE", recordPurpose: "optional_analytics" } } });
+  const unknownDiagnostics = await db.analyticsEvent.create({ data: { userId: actor.id, type: "PROVIDER_FAILURE", name: "provider_diagnostic", createdAt: at,
+    metadata: { environment: "staging" } } });
+  const customerIds = ["e-" + page.id, "s-" + packageSearch.id, "e-" + packageSubmission.id].sort();
+  const authorize = async () => true;
+  const denied = await loadAdminIdentityActivity("user", actor.id, filters, undefined, "all", undefined, async () => false);
+  const unrestricted = await loadAdminIdentityActivity("user", actor.id, filters, undefined, "all", undefined, authorize);
+  const getRows = (result: Awaited<ReturnType<typeof loadAdminIdentityActivity>>) => {
+    if (result.status !== "ok") throw new Error("Expected available activity, received " + result.status);
+    return result.data;
+  };
+  assert.deepEqual(getRows(denied).events.map(row => row.id), [...customerIds, "e-" + unknownDiagnostics.id].sort());
+  const all = getRows(unrestricted);
+  assert.deepEqual(all.events.map(row => row.id), [...auditIds, ...customerIds, "e-" + unknownDiagnostics.id].sort());
+  assert.equal(all.summary.recordedActions, 26);
+  assert.equal(all.summary.searches, 1);
+  assert.equal(all.summary.searchProducts?.packages, 1);
+  assert.equal(all.events.find(row => row.id === "s-" + packageSearch.id)?.resultUnit, "component_results");
+  const customer = getRows(await loadAdminIdentityActivity("user", actor.id, { ...filters, interface: "customer" }, undefined, "all", undefined, authorize));
+  assert.deepEqual(customer.events.map(row => row.id), customerIds);
+  assert.equal(customer.summary.recordedActions, 3);
+  assert.equal(customer.summary.pagesVisited, 1);
+  const submissions = getRows(await loadAdminIdentityActivity("user", actor.id, { ...filters, tab: "searches", stage: "PACKAGE_SEARCH_SUBMITTED", product: "PACKAGE" }));
+  assert.deepEqual(submissions.events.map(row => [row.stage, row.label]), [["PACKAGE_SEARCH_SUBMITTED", "Package search submitted"]]);
+  assert.equal(submissions.summary.searches, 0);
+  const subjectHistory = getRows(await loadAdminIdentityActivity("user", subject.id, filters, undefined, "all", undefined, authorize));
+  assert.deepEqual(subjectHistory.events, [], "Admin audit targets never inherit the actor's history");
+  const adminFilters = { ...filters, interface: "admin", q: "role" } as const;
+  const first = getRows(await loadAdminIdentityActivity("user", actor.id, adminFilters, undefined, "page", undefined, authorize));
+  const second = getRows(await loadAdminIdentityActivity("user", actor.id, adminFilters, first.nextCursor!, "page", undefined, authorize));
+  assert.ok(first.nextCursor);
+  assert.equal(second.nextCursor, null);
+  assert.deepEqual([...first.events, ...second.events].map(row => row.id), auditIds.sort());
+  assert.equal(first.summary.recordedActions, 22);
+  assert.equal(second.summary.recordedActions, 22);
+  assert.deepEqual(first.events[0], { id: auditIds[0], at, stage: "ADMIN_SECURITY_AUDIT", interface: "admin", originalIdentity: "administrator",
+    outcome: "succeeded", label: "Updated account role", detail: "Administrative security audit" });
+  assert.deepEqual(await loadAdminIdentityActivity("user", actor.id, { ...adminFilters, interface: "customer" }, first.nextCursor!, "page", undefined, authorize),
+    { status: "invalid_cursor" });
+});

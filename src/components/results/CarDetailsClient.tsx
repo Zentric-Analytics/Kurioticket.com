@@ -52,7 +52,7 @@ import { getDealsGuidedConfirmationActionId } from "@/lib/deals/dealsConfirmatio
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
 import { recordCarHandoffClick } from "@/lib/cars/carHandoffTracking";
 import { shareProductLink } from "@/lib/shareProductLink";
-import { recordCustomerInteraction } from "@/lib/customerInteractionClient";
+import { beginCustomerInteraction, recordCustomerInteraction } from "@/lib/customerInteractionClient";
 
 export type CarDetailsPrimaryAction =
   | { kind: "standalone-disabled-provider"; label: string }
@@ -299,9 +299,10 @@ export function CarDetailsExperience({
       isFallbackRate: rates.isFallback,
     });
   async function shareCar() {
+    const analyticsConsent = beginCustomerInteraction();
     const outcome = await shareProductLink({ title: car.modelName, url: new URL(buildCarShareHref(car.id, search), window.location.origin).toString() });
     if (outcome === "shared" || outcome === "copied") {
-      recordCustomerInteraction({
+      recordCustomerInteraction(analyticsConsent, {
         action: outcome === "shared" ? "share_sheet_completed" : "share_link_copied",
         product: "CAR", resultId: car.id, requestId,
       });

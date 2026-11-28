@@ -4,6 +4,7 @@ import { useSandboxResultState } from "./useSandboxResults";
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import { normalizeJourneySortMode, normalizeJourneySortChoice, boundedJourneyFilterSelections, type JourneyFilterSelectionGroup } from "@/lib/search-journey";
 import { displayedJourneyRequest, journeyRequestId } from "@/lib/journeyEventClient";
+import { changedJourneySearchFields } from "@/lib/journeySearchEdit";
 import { resultIdKey, VirtualResultsList } from "./VirtualResultsList";
 import { readHotelDestinationSelection } from "@/lib/hotels/destinationSelection";
 import { hotelOccupancy } from "@/lib/hotels/hotelOccupancy";
@@ -1491,6 +1492,13 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
 
   const ResultsRoot = guided ? "div" : "main";
   const stayNights = Math.max(1, Math.round((new Date(`${body.checkOut}T00:00:00Z`).getTime() - new Date(`${body.checkIn}T00:00:00Z`).getTime()) / 86_400_000));
+  const handleHotelSearchSubmission = (nextParams: URLSearchParams) => {
+    mobileHotelSearchModalityRef.current = "programmatic";
+    triggerSearchApplying();
+    if (journeyResponse?.searchKey !== bodySearchKey || !journeyResponse.requestId) return;
+    const editFields = changedJourneySearchFields("HOTEL", new URLSearchParams(window.location.search), nextParams);
+    if (editFields.length) journeyEvents.workflowDecision("SEARCH_EDIT_APPLIED", journeyResponse.requestId, { editFields });
+  };
   const renderDesktopHotelSearch = (idPrefix: string) => (
     <HotelSearchBar
       key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
@@ -1509,10 +1517,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       idPrefix={idPrefix}
       className="min-w-0"
       onDesktopDraftChange={updateDesktopHotelSearchDraft}
-      onSubmitStart={() => {
-        mobileHotelSearchModalityRef.current = "programmatic";
-        triggerSearchApplying();
-      }}
+      onSubmitStart={handleHotelSearchSubmission}
     />
   );
 
@@ -1587,10 +1592,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         onCloseMobileSearch={closeMobileHotelSearch}
         onMobileDraftChange={updateMobileHotelSearchDraft}
         onMobileNestedLayerChange={setMobileHotelNestedLayerOpen}
-        onSubmitStart={() => {
-          mobileHotelSearchModalityRef.current = "programmatic";
-          triggerSearchApplying();
-        }}
+        onSubmitStart={handleHotelSearchSubmission}
       />
     </MobileResultsEditSheet>
   ) : null;

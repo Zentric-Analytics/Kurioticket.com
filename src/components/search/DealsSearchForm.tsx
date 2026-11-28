@@ -13,6 +13,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
+import { recordPackageSearchSubmission } from "@/lib/deals/packageSearchActivityClient";
 import {
   ArrowRightLeft,
   Armchair,
@@ -2242,6 +2243,7 @@ export function DealsSearchForm({
     removeDealsStagedJourneyPlan();
     setSubmitting(true);
     start();
+    recordPackageSearchSubmission(submittedSearch.mode);
     router.push(
       buildDealsJourneyUrl(
         getFirstDealsJourneyStage(submittedSearch.mode),
@@ -2257,6 +2259,7 @@ export function DealsSearchForm({
     const destination = buildDealsJourneyUrl(firstStage, search);
     setSubmitting(true);
     start();
+    recordPackageSearchSubmission(search.mode);
     router.push(destination);
   };
   const errorBlock = (product: DealsProduct) =>
