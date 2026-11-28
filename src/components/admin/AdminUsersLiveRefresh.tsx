@@ -7,6 +7,9 @@ import {
   probeAdminUsersRefresh, type AdminUsersRefreshState,
 } from "@/lib/adminUsersLiveRefresh";
 
+import { liveBotActivityPath, onlineUsersPath } from "@/lib/adminLiveBotNavigation";
+import { onlinePresenceHeartbeatMs } from "@/lib/onlinePresence";
+
 type Position = { x: number; y: number; scrollVersion: number; route: string; anchors: { key: string; top: number }[] };
 const routeNow = () => window.location.pathname + window.location.search;
 
@@ -43,7 +46,10 @@ export function AdminUsersLiveRefresh({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const search = useSearchParams().toString();
   const scope = pathname + (search ? "?" + search : "");
-  const enabled = isAdminUsersRefreshPath(pathname);
+  const tabs = new URLSearchParams(search).getAll("tab");
+  const liveBot = pathname === liveBotActivityPath
+    || (pathname === onlineUsersPath && tabs.length === 1 && tabs[0] === "active-bot");
+  const enabled = liveBot || isAdminUsersRefreshPath(pathname);
   const usersControls = enabled || pathname === "/admin/users/online";
   const root = useRef<HTMLDivElement>(null);
   const [observation, setObservation] = useState<{ scope: string; state: AdminUsersRefreshState }>({ scope, state: "live" });
@@ -82,6 +88,7 @@ export function AdminUsersLiveRefresh({ children }: { children: ReactNode }) {
     let active = true;
     const startedRoute = routeNow();
     const controller = createAdminUsersRefreshController({
+      intervalMs: liveBot ? onlinePresenceHeartbeatMs : undefined,
       availability: () => {
         if (document.visibilityState !== "visible") return "hidden";
         if (!navigator.onLine) return "offline";
@@ -134,7 +141,7 @@ export function AdminUsersLiveRefresh({ children }: { children: ReactNode }) {
       document.removeEventListener("toggle", reviewChanged, true);
       window.removeEventListener("scroll", scrolled, true);
     };
-  }, [enabled, scope, router]);
+  }, [enabled, liveBot, scope, router]);
 
   const message = state === "offline" ? "Offline · updates resume when connected"
     : state === "delayed" ? "Updates delayed · retrying automatically"

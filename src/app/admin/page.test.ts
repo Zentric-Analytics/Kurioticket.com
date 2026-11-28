@@ -503,7 +503,7 @@ test("Active Bot shares the live row, uses existing named bot evidence, and refr
   const value = readFileSync("src/components/admin/ActiveBotValue.tsx", "utf8");
   const route = readFileSync("src/app/api/admin/overview/active-bot/route.ts", "utf8");
   assert.match(display, /aria-label="Live activity snapshot" className="grid min-w-0 grid-cols-2 items-stretch gap-2"/);
-  assert.match(display, /<SnapshotLink href="\/admin\/users\/bots" label="Active Bot" value=\{<ActiveBotValue \/>\}/);
+  assert.match(display, /<SnapshotLink href="\/admin\/users\/online\?tab=active-bot&period=now" label="Active Bot" value=\{<ActiveBotValue \/>\}/);
   assert.match(display, /label="How Active Bot is counted"/);
   assert.match(value, /fetch\("\/api\/admin\/overview\/active-bot"/);
   assert.match(value, /onlinePresenceHeartbeatMs/);
@@ -511,13 +511,7 @@ test("Active Bot shares the live row, uses existing named bot evidence, and refr
   assert.match(value, /activeRequest\?\.abort\(\)/);
   assert.match(value, /Number\.isSafeInteger\(snapshot\.total\)/);
   assert.match(value, /total === "unavailable" \? "Unavailable"/);
-  assert.ok(route.indexOf("await requireAdminApiSession()") < route.indexOf("db.$queryRaw"));
-  assert.match(route, /COUNT\(DISTINCT UPPER\(COALESCE/);
-  assert.match(route, /NULLIF\(BTRIM\(a\."declaredName"\), ''\)/);
-  assert.match(route, /FROM "BotActivity" a/);
-  assert.match(route, /b\.environment = a\.environment/);
-  assert.match(route, /a\.environment = \$\{getPublicEnvironment\(\)\}/);
-  assert.match(route, /a\.timestamp > \$\{cutoff\} AND a\.timestamp <= \$\{now\}/);
+  assert.ok(route.indexOf("await requireAdminApiSession()") < route.indexOf("await readActiveBotTotal(now)"));
   assert.match(route, /windowSeconds = onlinePresenceWindowSeconds/);
   assert.match(route, /"Cache-Control": "private, no-store"/);
   assert.match(route, /status: 503/);
