@@ -2,10 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { getPrisma } from "./prisma";
+import { visitorFreeAccountAnalyticsWhere } from "./adminAnalyticsVisibility";
 import { guestAccessHistorySql, guestLatestRecordedLocationsSql } from "./adminGuestAccessSql";
 import { recordedGuestAccessLocation, recordedGuestLocationSummary } from "./guestAccessObservation";
 import { operationalGuestDeviceObservation } from "./operationalGuestDeviceObservation";
-import { adminIdentityPageSql, type AdminIdentityDirectoryRow, type AdminIdentityPageRequest, type AdminIdentitySort } from "./adminIdentityDirectory";
+import { adminIdentityPageSql, adminRegisteredIdentityCountSql, type AdminIdentityDirectoryRow, type AdminIdentityPageRequest, type AdminIdentitySort } from "./adminIdentityDirectory";
 
 /** Disposable CI database only. Proves the actual SQL retains exact record
  * ownership and environment without importing a different search's country. */
@@ -241,5 +242,62 @@ test("directory PostgreSQL pages retain mixed identity ordering and independent 
     await db.user.deleteMany({ where: { id: { in: users } } });
     await db.$disconnect();
     if (previous === undefined) delete process.env.DATABASE_URL; else process.env.DATABASE_URL = previous;
+  }
+});
+
+test("registered directory dates and Last Seen respect Visitor withdrawal in PostgreSQL", {
+  skip: !process.env.GUEST_COUNTRY_TEST_DATABASE_URL,
+}, async () => {
+  const previous = process.env.DATABASE_URL;
+  process.env.DATABASE_URL = process.env.GUEST_COUNTRY_TEST_DATABASE_URL!;
+  const db = getPrisma();
+  const userId = randomUUID(), visitorId = randomUUID();
+  const at = new Date("2026-11-26T12:00:00Z");
+  const now = new Date(+at + 60_000);
+  const request = {
+    query: userId, role: "ALL", status: "ACTIVE", showUsers: true, showGuests: false,
+    limit: 20, offset: 0, date: "today", environment: "staging", timeZone: "UTC", now,
+  } satisfies AdminIdentityPageRequest;
+  const snapshot = async (input = request) => {
+    const [counts, rows] = await db.$transaction([
+      db.$queryRaw<{ count: bigint }[]>(adminRegisteredIdentityCountSql(input)),
+      db.$queryRaw<AdminIdentityDirectoryRow[]>(adminIdentityPageSql(input)!),
+    ]);
+    assert.equal(Number(counts[0].count), rows.length);
+    return rows;
+  };
+  try {
+    await db.user.create({ data: { id: userId, email: userId + "@example.invalid", emailVerified: at,
+      createdAt: new Date("2026-10-01T00:00:00Z"), status: "ACTIVE" } });
+    await db.visitor.create({ data: { id: visitorId, tokenHash: randomUUID(), currentUserId: userId,
+      consentStatus: "GRANTED", identityLinks: { create: { userId, source: "SIGN_IN" } } } });
+    await db.analyticsEvent.create({ data: { userId, visitorId, createdAt: at, type: "SHARE", name: "share_link_copied",
+      metadata: { environment: "staging", recordPurpose: "optional_analytics" } } });
+    assert.equal((await snapshot())[0].lastSeenAt?.getTime(), +at);
+    await db.visitor.update({ where: { id: visitorId }, data: { consentStatus: "WITHDRAWN", trackingDisabledAt: now } });
+    assert.deepEqual(await snapshot(), []);
+    const after = await db.$queryRaw<AdminIdentityDirectoryRow[]>(adminIdentityPageSql({ ...request, date: "all" })!);
+    assert.equal(after[0].lastSeenAt, null);
+    assert.equal(await db.analyticsEvent.count({ where: { visitorId } }), 1);
+    const essentialAt = new Date(+at - 1000);
+    await db.analyticsEvent.createMany({ data: [
+      { userId, createdAt: essentialAt, type: "SAVE", name: "saved_item_confirmed", metadata: { environment: "staging" } },
+      { userId, createdAt: at, type: "SAVE", name: "local_saved", metadata: { environment: "staging" } },
+      { userId, createdAt: at, type: "SAVE", name: "saved_item_confirmed", metadata: { environment: "staging", recordPurpose: "optional_analytics" } },
+      { userId, createdAt: at, type: "SAVE", name: "saved_item_confirmed", metadata: { environment: "production" } },
+    ] });
+    assert.equal((await snapshot())[0].lastSeenAt?.getTime(), +essentialAt);
+    const visitorFree = await db.analyticsEvent.findMany({ where: { userId, AND: [
+      visitorFreeAccountAnalyticsWhere(), { metadata: { path: ["environment"], equals: "staging" } },
+    ] } });
+    assert.equal(visitorFree.length, 1);
+    assert.equal(visitorFree[0].name, "saved_item_confirmed");
+  } finally {
+    await db.analyticsEvent.deleteMany({ where: { userId } });
+    await db.visitor.deleteMany({ where: { id: visitorId } });
+    await db.user.deleteMany({ where: { id: userId } });
+    await db.$disconnect();
+    if (previous === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = previous;
   }
 });

@@ -9,6 +9,8 @@ import {
   type ActivityCursor, type ActivityFilters, type JourneyStage,
 } from "@/lib/adminIdentityActivity";
 import { completeActivityReadTimeout, countEligibleActivitySource, readCompleteActivitySource, readEligibleActivitySource, type ActivitySourcePrefix, type ActivitySourceRow } from "@/lib/adminIdentityActivityComplete";
+import { visitorFreeAccountAnalyticsWhere } from "@/lib/adminAnalyticsVisibility";
+import { essentialAccountAuditPurpose } from "@/lib/activityTrackingContract";
 import { adminRegisteredLastSeenSql, escapePrismaContainsQuery } from "@/lib/adminIdentityDirectory";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
@@ -83,7 +85,7 @@ function essentialAuditLink(event: AnalyticsActivityRecord, kind: IdentityKind, 
   if (kind !== "user" || event.userId !== id || event.visitorId !== null
     || !event.metadata || typeof event.metadata !== "object" || Array.isArray(event.metadata)) return null;
   const metadata = event.metadata as Record<string, unknown>;
-  if (metadata.recordPurpose !== "essential_account_audit" || metadata.outcome !== "confirmed"
+  if (metadata.recordPurpose !== essentialAccountAuditPurpose || metadata.outcome !== "confirmed"
     || typeof metadata.linkedJourneyId !== "string" || typeof metadata.linkedSearchHistoryId !== "string") return null;
   const type = event.type === "SAVE" && event.name === "saved_item_confirmed" ? "RESULT_SAVED"
     : event.type === "SAVE" && event.name === "saved_item_removed" ? "RESULT_UNSAVED"
@@ -246,14 +248,15 @@ export async function loadAdminIdentityActivity(
     const redirectOwner: Prisma.RedirectLogWhereInput = isOperationalGuest ? operationalRedirectOwner : kind === "guest"
       ? { userId: null, visitorId: id, visitor: { is: eligibleGuestVisitorWhere(id) } }
       : { OR: [{ userId: id }, { userId: null, visitor: { is: linked } }] };
-    // The registered timeline includes consented pre-login events belonging
-    // to exclusively linked visitors. Never take other accounts' events,
-    // withdrawn identities, or anonymous operational records as account history.
+    // Direct account ownership only suffices for visitor-free account
+    // activity. Any Visitor-backed row remains subject to current consent
+    // and the same exclusive linkage as page and journey records.
+    const accountVisitor = eligibleJourneyLinkedVisitorWhere(id);
     const analyticsOwner: Prisma.AnalyticsEventWhereInput = kind === "guest"
       ? { userId: null, visitorId: id, visitor: { is: eligibleGuestVisitorWhere(id) } }
       : { OR: [
-          { userId: id },
-          { userId: null, visitor: { is: linked } },
+          { userId: id, ...visitorFreeAccountAnalyticsWhere() },
+          { OR: [{ userId: id }, { userId: null }], visitor: { is: accountVisitor } },
         ] };
     const journeyOwner: Prisma.JourneyEventWhereInput = {
       journey: { visitor: kind === "guest" ? eligibleGuestVisitorWhere(id) : eligibleJourneyLinkedVisitorWhere(id) },
@@ -341,7 +344,7 @@ export async function loadAdminIdentityActivity(
     // the linked visitor's current eligibility even for direct account rows.
     const pageOwner: Prisma.AnalyticsEventWhereInput = kind === "guest"
       ? { userId: null, visitorId: id, visitor: { is: eligibleGuestVisitorWhere(id) } }
-      : { OR: [{ userId: id }, { userId: null }], visitor: { is: eligibleJourneyLinkedVisitorWhere(id) } };
+      : { OR: [{ userId: id }, { userId: null }], visitor: { is: accountVisitor } };
     const pageKeys = (Object.keys(pageViewCatalog) as PageViewKey[]).filter(key => {
       const info = pageViewInfo(key)!;
       const text = [info.label, info.webPath, info.nativePath].join(" ").toLowerCase();

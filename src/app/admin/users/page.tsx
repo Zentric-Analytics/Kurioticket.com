@@ -10,7 +10,7 @@ import { loadAdminGuestRecordedLocations, guestRecordedLocationKey } from "@/ser
 import { getAdminViewerTimeZone } from "@/lib/adminViewerTimeZone.server";
 import { formatAdminTimeZoneLabel } from "@/lib/adminLocalTime";
 import { requireAdminSession } from "@/lib/auth-guards";
-import { adminIdentityPageSql, adminRegisteredActivityDateWhere, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityDirectoryRow } from "@/lib/adminIdentityDirectory";
+import { adminIdentityPageSql, adminRegisteredIdentityCountSql, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityDirectoryRow } from "@/lib/adminIdentityDirectory";
 import { ADMIN_USERS_DIRECTORY_PAGE_SIZE, adminUsersDirectoryPageBounds, adminUsersDirectoryPageHref, parseAdminUsersDirectoryPage } from "@/lib/adminUsersDirectoryPagination";
 import { adminUsersActivityHref } from "@/lib/adminUsersNavigation";
 
@@ -58,12 +58,9 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   if (params?.page !== undefined && params.page !== String(requestedPage)) redirect(link);
   const registeredEligibleForFilters = status !== "INACTIVE" && status !== "UNAVAILABLE";
   const where = {
-    // Date means a recorded account/session/search/handoff in this window,
-    // not only the date the account was originally registered.
-    AND: [
-      adminRegisteredActivityDateWhere(bounds, environment),
-      ...(q ? [{ OR: [{ email: { contains: prismaQuery, mode: "insensitive" as const } }, { name: { contains: prismaQuery, mode: "insensitive" as const } }, { id: { contains: prismaQuery, mode: "insensitive" as const } }] }] : []),
-    ],
+    // The SQL count and ordered query apply the shared activity-date
+    // predicate. Hydration runs in the same repeatable-read snapshot.
+    ...(q ? { OR: [{ email: { contains: prismaQuery, mode: "insensitive" as const } }, { name: { contains: prismaQuery, mode: "insensitive" as const } }, { id: { contains: prismaQuery, mode: "insensitive" as const } }] } : {}),
     ...(role !== "ALL" ? { role: role as never } : {}),
     ...(registeredEligibleForFilters && status !== "ALL" ? { status: status as never } : {}),
   };
@@ -89,10 +86,14 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   // A single identity query supplies the operational guest cohort, timestamps,
   // and total. Account and consented visitor counts remain independent of tab.
   const result = await withOptionalDb<DirectoryResult | null>(async db => db.$transaction(async tx => {
-    const [registeredCount, consentedGuestCount] = await Promise.all([
-      registeredEligibleForFilters ? tx.user.count({ where }) : Promise.resolve(0),
+    const [registeredRows, consentedGuestCount] = await Promise.all([
+      registeredEligibleForFilters ? tx.$queryRaw<{ count: bigint }[]>(adminRegisteredIdentityCountSql({
+        query: q, role, status, date, from, to, now, timeZone, environment,
+      })) : Promise.resolve([{ count: BigInt(0) }]),
       consentedGuestsEligible ? tx.visitor.count({ where: guestWhere }) : Promise.resolve(0),
     ]);
+    const registeredCount = Number(registeredRows[0]?.count);
+    if (!Number.isSafeInteger(registeredCount) || registeredCount < 0) throw new Error("Invalid registered identity count");
     const sql = adminIdentityPageSql({
       query: q, role, status, showUsers, showGuests,
       showOperationalGuests, withOperationalSummary: true,

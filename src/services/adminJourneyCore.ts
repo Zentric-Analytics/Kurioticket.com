@@ -44,6 +44,7 @@ type EventRecord = {
   alertMode?: string | null; alertCurrency?: string | null; alertTargetPrice?: string | null; alertBaselinePrice?: string | null;
   observedResult?: unknown;
   pageViewMetadata?: unknown;
+  pageViewUserId?: string | null;
   provider: string | null; sourcePage: string | null;
   searchHistoryId: string | null; requestId: string | null; searchProduct: AdminJourneyProduct | null;
   origin: string | null; destination: string | null; checkIn: Date | null; checkOut: Date | null; searchQuery?: unknown;
@@ -179,14 +180,14 @@ function detailSql(query: AdminJourneyQuery, journeyId: string) {
       FROM scoped_events WHERE "type" = 'SEARCH_COMPLETED'
       ORDER BY "journeyId", "searchHistoryId", "createdAt", "id"
     ), detail_events AS (
-      SELECT *, NULL::jsonb AS "pageViewMetadata" FROM scoped_events
+      SELECT *, NULL::jsonb AS "pageViewMetadata", NULL::text AS "pageViewUserId" FROM scoped_events
       UNION ALL
       SELECT 'pv-' || a."id", s."journeyId", 'PAGE_VIEW', s."product", NULL, a."createdAt",
         NULL, NULL, NULL, NULL::jsonb, NULL, NULL::jsonb, NULL, NULL, NULL, NULL, NULL, NULL,
         s."visitorId", s."userId", s."startedAt",
         s."searchHistoryId", s."requestId", s."searchProduct", s."origin", s."destination",
         s."checkIn", s."checkOut", s."searchQuery", s."searchStatus", s."resultCount", s."latencyMs",
-        NULL, NULL, NULL, NULL, a."metadata"
+        NULL, NULL, NULL, NULL, a."metadata", a."userId"
       FROM "AnalyticsEvent" a
       JOIN exact_searches s ON s."visitorId" = a."visitorId"
         AND s."journeyId" = a."metadata"->>'linkedJourneyId'
@@ -344,7 +345,7 @@ function safeObservedResult(value: unknown): AdminJourneyEvent["observedResult"]
   };
 }
 function eventDto(row: EventRecord): AdminJourneyEvent {
-  const page = row.type === "PAGE_VIEW" ? toAdminPageView({ id: row.id, createdAt: row.createdAt, metadata: row.pageViewMetadata }, (row.pageViewMetadata as { environment?: string } | null)?.environment === "staging" ? "staging" : "production") : null;
+  const page = row.type === "PAGE_VIEW" ? toAdminPageView({ id: row.id, createdAt: row.createdAt, metadata: row.pageViewMetadata, userId: row.pageViewUserId }, (row.pageViewMetadata as { environment?: string } | null)?.environment === "staging" ? "staging" : "production") : null;
   return {
     id: row.id, type: row.type, createdAt: row.createdAt.toISOString(), product: row.product,
     ...(page?.pageView ? { pageView: { ...page.pageView, label: page.label } } : {}),

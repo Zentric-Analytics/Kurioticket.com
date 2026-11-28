@@ -23,7 +23,10 @@ export async function lockVisitorCredential(tx: Prisma.TransactionClient, tokenH
 }
 
 /** Hold these locks until the consented activity has been written in this transaction. */
-export async function lockConsentedVisitor(tx: Prisma.TransactionClient, visitorId: string, userId: string | null): Promise<boolean> {
+export async function lockConsentedVisitor(
+  tx: Prisma.TransactionClient, visitorId: string, userId: string | null,
+  options?: { requireExclusiveLink: boolean },
+): Promise<boolean> {
   if (userId && !isEligibleVisitorAccount(await lockVisitorAccount(tx, userId))) return false;
 
   await tx.$queryRaw`SELECT "id" FROM "Visitor" WHERE "id" = ${visitorId} FOR UPDATE`;
@@ -34,5 +37,7 @@ export async function lockConsentedVisitor(tx: Prisma.TransactionClient, visitor
   return Boolean(visitor
     && visitor.consentStatus === "GRANTED" && visitor.trackingDisabledAt === null
     && (!visitor.currentUserId || visitor.currentUserId === userId)
-    && visitor.identityLinks.every(link => link.userId === userId));
+    && visitor.identityLinks.every(link => link.userId === userId)
+    && (!options?.requireExclusiveLink || userId === null
+      || (visitor.currentUserId === userId && visitor.identityLinks.length > 0)));
 }

@@ -34,6 +34,7 @@ function fixture(size = 45, queryFailure = false) {
       operationalGuestCount: BigInt(0), operationalAllTimeCount: BigInt(0), operationalNewCount: BigInt(0) });
   }
   const requests: identity.AdminIdentityPageRequest[] = [];
+  let countInput: Parameters<typeof identity.adminRegisteredIdentityCountSql>[0] | undefined;
   const hydrated: { kind: string; ids: string[] }[] = [];
   const locations: string[][] = [];
   const transactionOptions: unknown[] = [];
@@ -46,9 +47,6 @@ function fixture(size = 45, queryFailure = false) {
   const userMatches = (where: { role?: string; status?: string }, row: User) => (!where.role || where.role === row.role) && (!where.status || where.status === row.status);
   const tx = {
     user: {
-      count: async ({ where }: { where: { role?: string; status?: string } }) => {
-        assert.equal(inTransaction, true); return users.filter(row => userMatches(where, row)).length;
-      },
       findMany: async ({ where }: { where: { id: { in: string[] }; role?: string; status?: string } }) => {
         assert.equal(inTransaction, true); hydrated.push({ kind: "user", ids: where.id.in });
         return users.filter(row => where.id.in.includes(row.id) && userMatches(where, row)).reverse();
@@ -61,9 +59,15 @@ function fixture(size = 45, queryFailure = false) {
         return guests.filter(row => where.id.in.includes(row.id)).reverse();
       },
     },
-    $queryRaw: async () => {
+    $queryRaw: async (statement: { sql: string }) => {
       assert.equal(inTransaction, true);
       if (queryFailure) throw new Error("Unavailable database");
+      if (statement.sql.includes('SELECT COUNT(*) AS "count" FROM "User" u')) {
+        assert.ok(countInput);
+        const { role, status } = countInput;
+        return [{ count: BigInt(users.filter(row => userMatches({ role: role === "ALL" ? undefined : role,
+          status: status === "ALL" ? undefined : status }, row)).length) }];
+      }
       const query = requests.at(-1)!;
       const operational = ordered.filter(row => row.guestSource === "operational");
       const scopedOperational = operational.filter(row => query.status === "ALL" || query.status === row.guestStatus);
@@ -106,9 +110,17 @@ function fixture(size = 45, queryFailure = false) {
     "@/lib/adminLocalTime": { formatAdminTimeZoneLabel: () => "UTC" },
     "@/lib/auth-guards": { requireAdminSession: async () => { authorized += 1; return { user: { id: "fixture-admin" } }; } },
     "@/lib/stagingSafety": { getPublicEnvironment: () => "staging" },
-    "@/lib/adminIdentityDirectory": { ...identity, adminIdentityPageSql: (input: identity.AdminIdentityPageRequest) => {
-      requests.push(input); return identity.adminIdentityPageSql(input);
-    } },
+    "@/lib/adminIdentityDirectory": {
+      ...identity,
+      adminRegisteredIdentityCountSql: (input: Parameters<typeof identity.adminRegisteredIdentityCountSql>[0]) => {
+        countInput = input;
+        return identity.adminRegisteredIdentityCountSql(input);
+      },
+      adminIdentityPageSql: (input: identity.AdminIdentityPageRequest) => {
+        requests.push(input);
+        return identity.adminIdentityPageSql(input);
+      },
+    },
     "@/lib/adminUsersDirectoryPagination": pagination,
     "@/lib/adminUsersNavigation": navigation,
   };
