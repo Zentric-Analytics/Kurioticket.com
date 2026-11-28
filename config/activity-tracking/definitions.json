@@ -227,6 +227,9 @@
     "customer.navigation-proposed": "Deferred account, legal, packages or in-page navigation gap. Collection requires approval."
   },
   "reviews": {
+    "src/components/admin/AdminOverviewDashboard.tsx#ba09c2b7555d1d58": {
+      "definition": "admin.navigation-proposed"
+    },
     "src/app/admin/searches/activity/page.tsx#3d30a77d75da0538": {
       "definition": "admin.navigation-proposed"
     },
