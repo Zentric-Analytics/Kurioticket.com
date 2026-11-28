@@ -35,6 +35,7 @@ for (const [name, environment, expected] of [
     const calls: unknown[] = [];
     const middleware = load("src/proxy.ts", {
       "@/lib/requestIngress": { proxy: () => NextResponse.next() },
+      "@/lib/stagingSafety": { isStagingEnvironment: () => false },
       "@/lib/botPolicy": { automationSignal: () => null },
       "next/server": { NextResponse },
       "next-auth/jwt": { getToken: async (input: { secret: string }) => { calls.push(input.secret); return null; } },
@@ -67,6 +68,7 @@ test("middleware preserves MFA redirects, API denial, exemptions, and verified a
   let verified = false;
   const boundary = load("src/proxy.ts", {
     "@/lib/requestIngress": { proxy: () => NextResponse.next() },
+      "@/lib/stagingSafety": { isStagingEnvironment: () => false },
     "@/lib/botPolicy": { automationSignal: () => null },
     "next/server": { NextResponse },
     "next-auth/jwt": { getToken: async () => ({ twoFactorEnabled: true, twoFactorVerified: verified }) },
@@ -178,4 +180,39 @@ test("dashboard profile reads enforce the account guard even when Next reuses th
     const guard = page.indexOf(`await requireUserSession("${path}")`);
     assert.ok(guard >= 0 && guard < page.indexOf("db.userProfile.findUnique"));
   }
+});
+
+
+test("staging noindex covers the actual proxy's bot early returns without changing access or existing directives", async () => {
+  let response: Response = NextResponse.next();
+  let staging = true;
+  const boundary = load("src/proxy.ts", {
+    "@/lib/requestIngress": { proxy: () => response },
+    "@/lib/stagingSafety": { isStagingEnvironment: () => staging },
+    "@/lib/botPolicy": { automationSignal: () => ({ declared: "GOOGLEBOT" }) },
+    "next/server": { NextResponse },
+    "next-auth/jwt": { getToken: () => assert.fail("Bot requests must not enter account authentication") },
+    "@/config/regionConfig": { REGION_COOKIE_KEY: "region", REGION_OVERRIDE_COOKIE_KEY: "override" },
+    "@/lib/region/detectRegion": { normalizeRegion: () => null, countryToRegion: () => null },
+    "@/lib/authSecret": { resolveAuthSecret },
+  });
+  const req = new NextRequest("https://fixture.invalid/flights/results");
+  for (const candidate of [
+    NextResponse.next(),
+    NextResponse.redirect("https://fixture.invalid/packages", 308),
+    Response.json({ error: "Bot access denied." }, { status: 403 }),
+  ]) {
+    response = candidate;
+    response.headers.set("X-Robots-Tag", "nofollow");
+    const status = response.status;
+    const observed = await boundary.proxy(req) as Response;
+    assert.equal(observed, response);
+    assert.equal(observed.status, status);
+    assert.match(observed.headers.get("X-Robots-Tag") ?? "", /nofollow/);
+    assert.match(observed.headers.get("X-Robots-Tag") ?? "", /noindex/);
+  }
+  staging = false;
+  response = NextResponse.next();
+  response.headers.set("X-Robots-Tag", "nofollow");
+  assert.equal((await boundary.proxy(new NextRequest("https://kurioticket.com/")) as Response).headers.get("X-Robots-Tag"), "nofollow");
 });
