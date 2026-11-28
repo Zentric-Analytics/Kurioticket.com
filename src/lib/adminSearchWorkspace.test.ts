@@ -68,7 +68,8 @@ test("Search Activity filters use one consistent boxed dropdown treatment and ex
   assert.doesNotMatch(activity, /<ApplicationSourceSelect/);
   assert.doesNotMatch(activity, /autoSubmit/);
   assert.match(activity, /\{ value: "", label: "All platforms" \}/);
-  assert.match(activity, /clearFieldNamesOnChange=\{\["userId", "visitorId"\]\}/);
+  assert.match(activity, /clearFieldNamesOnChange=\{\["userId", "visitorId", "botId"\]\}/);
+  assert.match(activity, /name="botId" value=\{one\(raw\.botId\)\}/);
   assert.match(activity, /action="\/admin\/searches\/activity"/);
   assert.match(activity, /bg-\[#004BB8\] px-3/);
   assert.match(activity, /data-testid="search-records-filter-row"/);
