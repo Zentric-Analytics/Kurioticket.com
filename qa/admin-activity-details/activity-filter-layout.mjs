@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { expect } from "@playwright/test";
 
-/** Real rendered geometry: full-width search, then the four filter controls. */
-export async function expectActivityFilterLayout(page, context = "All activity") {
+/** Measure the full-width search and the visible filter controls. */
+export async function expectActivityFilterLayout(page, context = "All activity", { showInterface = false } = {}) {
   const search = page.getByRole("textbox", { name: "Search activity", exact: true });
   if (!await search.isVisible()) {
     const toggle = page.getByRole("button", { name: "Filters", exact: true });
@@ -26,21 +26,22 @@ export async function expectActivityFilterLayout(page, context = "All activity")
     };
   });
   const evidence = context + ": " + JSON.stringify(geometry);
-  assert.equal(geometry.controls.length, 5, evidence);
+  assert.equal(geometry.controls.length, showInterface ? 6 : 5, evidence);
   const [searchBox, ...filters] = geometry.controls;
   assert.equal(searchBox.label, "Search activity", evidence);
   assert.match(filters[0].label, /^Date range:/, evidence);
   assert.match(filters[1].label, /^Activity product:/, evidence);
   assert.match(filters[2].label, /^Activity type:/, evidence);
-  assert.equal(filters[3].label, "Apply filters", evidence);
+  if (showInterface) assert.match(filters[3].label, /^Activity interface:/, evidence);
+  assert.equal(filters.at(-1).label, "Apply filters", evidence);
   assert.ok(Math.abs(searchBox.left - geometry.grid.left) <= 1
     && Math.abs(searchBox.right - geometry.grid.right) <= 1, "Search fills its own row. " + evidence);
-  assert.ok(filters.every(box => box.top >= searchBox.bottom + 6), "The four filters follow the search row. " + evidence);
+  assert.ok(filters.every(box => box.top >= searchBox.bottom + 6), "The filter controls follow the search row. " + evidence);
   // Chromium reports 43.993px for declared 44px controls at 90% tab zoom.
   // Permit subpixel layout rounding while still rejecting a 43px target.
   assert.ok(geometry.controls.every(box => box.height >= 44 - 0.1 && box.width > 0
     && box.left >= geometry.grid.left - 1 && box.right <= geometry.grid.right + 1), "Every control stays inside the grid and retains its touch target. " + evidence);
-  const columns = geometry.viewport >= 1024 ? 4 : geometry.viewport >= 640 ? 2 : 1;
+  const columns = geometry.viewport >= 1024 ? filters.length : geometry.viewport >= 640 ? 2 : 1;
   for (let index = 0; index < filters.length; index++) {
     const rowStart = Math.floor(index / columns) * columns;
     assert.ok(Math.abs(filters[index].top - filters[rowStart].top) <= 1

@@ -36,6 +36,7 @@ await put("next.config.mjs",
   'config.resolve.alias["@/lib/prisma"]=path.resolve("mocks/prisma.js");\n' +
   'config.resolve.alias["@/services/adminIdentityActivityService"]=path.resolve("mocks/activity.js");\n' +
   'config.resolve.alias["@/services/adminUnifiedActivityService"]=path.resolve("mocks/activity.js");\n' +
+  'config.resolve.alias["@/services/adminAuditReadService"]=path.resolve("mocks/audit-read.js");\n' +
   'config.resolve.alias["@/services/adminOnlineUsersService"]=path.resolve("mocks/online-users.js");\n' +
   'config.resolve.alias["@/services/adminLiveGuestHistoryService"]=path.resolve("mocks/online-users.js");\n' +
   'config.resolve.alias["@/services/adminHistoryDirectoryService"]=path.resolve("mocks/history-directory.js");\n' +
@@ -111,6 +112,9 @@ await put("mocks/auth-guards.js", [
 ].join("\n"));
 await put("mocks/stagingSafety.js", 'export function getPublicEnvironment(){return "staging";}');
 await put("mocks/activity.js", await readFile(path.join(qa, "activity-fixture.js"), "utf8"));
+// This visual fixture has no audit records. Its account and storage boundaries
+// are synthetic, and the PostgreSQL suite covers the real audit authorization.
+await put("mocks/audit-read.js", 'export async function canReadAdminAudit(){return false;}');
 // Preserve the previous reader's summary contract in before screenshots; the
 // current route receives only five global actions from the current mock.
 await put("mocks/baseline-activity.js", [

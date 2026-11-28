@@ -590,7 +590,7 @@ try {
   await expect(page).toHaveURL(u=>u.pathname===todayPath+"/activity/all"&&u.searchParams.get("range")==="today"&&u.searchParams.get("usersReturn")===todayOrigin);
   await expect(activityRows).toHaveCount(0);
   await expect(page.getByRole("button",{name:/Remove filter: Today/})).toHaveCount(0);
-  await expectActivityFilterLayout(page, "Today full activity");
+  await expectActivityFilterLayout(page, "Today full activity", { showInterface: true });
   await page.getByRole("link",{name:"Back to Activity",exact:true}).click();
   await expect(page).toHaveURL(todayProfile);
   for(const [name,suffix,dateLabel] of [

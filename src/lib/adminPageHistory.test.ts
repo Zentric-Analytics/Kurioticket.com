@@ -148,7 +148,7 @@ test("the dedicated history requires admin access and both activity summaries st
   assert.match(history, /Back to Activity/);
   assert.match(history, /page: query\.page, platform: query\.platform/);
   assert.match(history, /key=\{pageHistoryFiltersKey\(query, timeZone\)\}/);
-  assert.match(activity, /loadAdminIdentityActivity\(kind, id, filters, undefined, "summary"\)/);
+  assert.match(activity, /loadAdminIdentityActivity\(kind, id, filters, undefined, "summary", undefined, canReadAdminAudit\)/);
   assert.match(activity, /summary=\{data\.summary\}/);
   assert.doesNotMatch(activity, /loadAdminIdentityActivity\(kind, id, pageFilters/);
   assert.match(activity, /pageFilters: ActivityFilters = \{ \.\.\.filters, tab: "pages", stage: "all", product: "all", q: "", order: "newest" \}/);
