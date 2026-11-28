@@ -44,6 +44,9 @@ const additionalCrawlers = new Map([
   ["AASA-BOT", { agent: "AASA-BOT", category: "association", owner: "Apple" }],
 ]);
 
+export const recognizedCrawlerAgents = [...Object.values(crawlerCatalog), ...additionalCrawlers.values()]
+  .map(entry => entry.agent);
+
 export function recognizedCrawler(token: string | null) {
   return knownCrawler(token) ?? additionalCrawlers.get(token ?? "") ?? null;
 }
