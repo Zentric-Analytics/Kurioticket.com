@@ -11,7 +11,7 @@ import { RequestEvidence } from "./request-evidence";
 import { BotIcon, ReportPagination, ReportUnavailable, reportHead, reportLink, reportPanel, reportRow } from "../report-ui";
 
 function Fields({ entries, threeColumns = false }: { entries: [string, ReactNode][]; threeColumns?: boolean }) {
-  return <dl className={"grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2" + (threeColumns ? " md:grid-cols-3" : "")}>
+  return <dl className={"grid gap-x-4 gap-y-3 sm:gap-x-6 " + (threeColumns ? "grid-cols-2 md:grid-cols-3" : "grid-cols-1 sm:grid-cols-2")}>
     {entries.map(([label, value]) => <div key={label} className="min-w-0">
       <dt className="text-xs text-slate-600">{label}</dt>
       <dd className="mt-0.5 wrap-anywhere text-sm text-slate-950">{value ?? "—"}</dd>
