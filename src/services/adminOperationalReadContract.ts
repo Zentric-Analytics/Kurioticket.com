@@ -40,6 +40,7 @@ export type AdminSearchActivityScope = Omit<AdminSearchScope, "surface" | "appli
   surface: "activity";
   applicationSource: Exclude<ApplicationSource, "BOT"> | null;
   identity: AdminSearchActivityIdentityFilter;
+  botId?: string;
 };
 export type AdminHandoffScope = ScopeBase & {
   environment: PublicEnvironment;
@@ -356,7 +357,7 @@ export function parseAdminSearchActivityQuery(params: URLSearchParams, fallbackE
 function parseSearchQuery(params: URLSearchParams, fallbackEnvironment: PublicEnvironment): ParseResult<AdminSearchQuery>;
 function parseSearchQuery(params: URLSearchParams, fallbackEnvironment: PublicEnvironment, surface: "activity"): ParseResult<AdminSearchActivityQuery>;
 function parseSearchQuery(params: URLSearchParams, fallbackEnvironment: PublicEnvironment, surface?: "activity"): ParseResult<AdminSearchQuery | AdminSearchActivityQuery> {
-  const raw = values(params, SEARCH_KEYS);
+  const raw = values(params, surface === "activity" ? [...SEARCH_KEYS, "botId"] : SEARCH_KEYS);
   if (raw.status !== "ok") return raw;
   const base = baseScope(raw.data);
   if (base.status !== "ok") return base;
@@ -388,7 +389,13 @@ function parseSearchQuery(params: URLSearchParams, fallbackEnvironment: PublicEn
   if (provider.status !== "ok") return provider;
   if (filters.surface === "activity") {
     if (filters.identity.data === "guest" && userId.data) return invalid("userId", "userId conflicts with this identity filter.");
+    const botId = raw.data.botId;
+    if (botId !== null) {
+      if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(botId)) return invalid("botId", "Use a valid bot registry ID.");
+      if (filters.identity.data !== "bot") return invalid("botId", "A bot registry ID requires the Bot identity filter.");
+    }
     const scope: AdminSearchActivityScope = {
+      ...(botId ? { botId } : {}),
       ...base.data, surface: filters.surface, applicationSource: filters.applicationSource.data, environment: env.data,
       product: product.data, status: status.data, identity: filters.identity.data ?? "all",
       userId: userId.data, visitorId: visitorId.data, provider: provider.data,

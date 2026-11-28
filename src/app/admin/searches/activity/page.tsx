@@ -105,8 +105,16 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
               <Metric label="Failed" value={summary.data.failed} tone="failed" />
             </div>
 
+            {one(raw.botId) && (
+              <div className="flex flex-wrap items-center gap-x-3 border-b border-[#E5E7EB] py-3 text-[13px] text-slate-700">
+                <span>Filtered to the selected bot identity</span>
+                <Link href={searchActivityReturnHref({ ...raw, botId: undefined }, range)}
+                  className="font-medium text-[#004BB8] hover:underline">Clear bot filter</Link>
+              </div>
+            )}
             <form action="/admin/searches/activity" className="border-b border-[#E5E7EB]">
               {one(raw.product) ? <input type="hidden" name="product" value={one(raw.product)} /> : null}
+              {one(raw.botId) ? <input type="hidden" name="botId" value={one(raw.botId)} /> : null}
               {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
               {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
 
@@ -133,7 +141,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                 <div className="min-w-0">
                   <SearchMonitorSelect label="Identity" appearance="fare" name="identity"
                     value={one(raw.identity) || "all"}
-                    clearFieldNamesOnChange={["userId", "visitorId"]}
+                    clearFieldNamesOnChange={["userId", "visitorId", "botId"]}
                     options={identityOptions} truncateLabel />
                 </div>
                 <div className="min-w-0">

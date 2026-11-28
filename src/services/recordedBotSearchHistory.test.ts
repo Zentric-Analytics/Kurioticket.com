@@ -3,10 +3,10 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { Prisma } from "@/generated/prisma/client";
 import { BOT_PAGE_SIZE, botFilters } from "@/lib/adminBotReport";
-import { combinedBotHistory } from "./adminBotHistory";
+import { botRequestHistory, combinedBotHistory } from "./adminBotHistory";
 import { getPrisma } from "@/lib/prisma";
 import { recordedSearchNetwork } from "@/lib/searchNetworkObservation";
-import { recordedSearchCrawler } from "./adminOperationalReadCore";
+import { createAdminOperationalReadService, recordedSearchCrawler } from "./adminOperationalReadCore";
 import { declareBotNetworkIpCursor, detailHistoryQuery, recordedBotSearchRows, summarizeBotNetwork, summarizeBotNetworkPaged, type BotNetworkIpCandidate, type RecordedBotSearch } from "./recordedBotSearchHistory";
 
 test("recorded bot searches reconcile legacy and linked records exactly once, without changing authorization", { skip: !process.env.BOT_TEST_DATABASE_URL }, async t => {
@@ -82,6 +82,42 @@ test("recorded bot searches reconcile legacy and linked records exactly once, wi
   const isolated = await db.$queryRaw<RecordedBotSearch[]>(recordedBotSearchRows(elsewhere));
   assert.equal(isolated.length, 1);
   assert.equal(isolated[0].botId, foreign.id);
+  const reads = createAdminOperationalReadService({
+    authorize: async () => true,
+    database: () => db,
+    environment: () => environment as "production",
+  }).searchActivity;
+  for (const [id, expected] of [
+    [verified.id, [a.id, b.id]],
+    [declared.id, [c.id, f.id]],
+    [other.id, [d.id]],
+    [unknown.id, [e.id]],
+    [foreign.id, []],
+  ] as const) {
+    const params = new URLSearchParams({ identity: "bot", botId: id, limit: "1" });
+    const summary = await reads.summary(params);
+    assert.equal(summary.status, "ok");
+    assert.equal(summary.data.total, expected.length);
+    const ids: string[] = [];
+    do {
+      const list = await reads.list(params);
+      assert.equal(list.status, "ok");
+      ids.push(...list.data.items.map(item => item.id));
+      if (!list.data.nextCursor) break;
+      params.set("cursor", list.data.nextCursor);
+    } while (ids.length <= expected.length);
+    assert.deepEqual(ids.sort(), [...expected].sort());
+  }
+  assert.equal((await reads.list(new URLSearchParams({ identity: "guest", botId: verified.id }))).status, "invalid");
+
+  const [requestOnly] = await db.$queryRaw<{ actual: number; historicalActual: number; total: number; pointers: { id: string }[] }[]>(
+    detailHistoryQuery(environment, declared.id, declared.name,
+      botRequestHistory(environment, declared.id, { window: undefined }), true, 1, 1));
+  assert.equal(requestOnly.actual, 2);
+  assert.equal(requestOnly.historicalActual, 1);
+  assert.equal(requestOnly.total, 1);
+  assert.deepEqual(requestOnly.pointers.map(row => row.id), [activity.id]);
+
   const now = new Date("2026-11-24T12:00:00Z");
   for (const [query, expected] of [
     [{ range: "all" }, 2],
